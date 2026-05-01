@@ -1,6 +1,6 @@
 {
-  "name": "@collabdt/core",
-  "version": "0.1.33",
+  "name": "@CollabDigitalTwins/core",
+  "version": "0.0.0",
   "description": "CDT Core will contains all the core technology for you CDT platform",
   "type": "module",
   "main": "dist/index.js",
@@ -31,7 +31,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/collabdt/core.git"
+    "url": "git+https://github.com/CollabDigitalTwins/core.git"
   },
   "keywords": [
     "core",
@@ -41,9 +41,9 @@
   "author": "Collab Digital Twins",
   "license": "AGPL-3.0-or-later",
   "bugs": {
-    "url": "https://github.com/collabdt/core/issues"
+    "url": "https://github.com/CollabDigitalTwins/core/issues"
   },
-  "homepage": "https://github.com/collabdt/core#readme",
+  "homepage": "https://github.com/CollabDigitalTwins/core#readme",
   "peerDependencies": {
     "framer-motion": "^12.0.0",
     "lucide-react": "^0.500.0",

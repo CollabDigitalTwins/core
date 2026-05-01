@@ -1,0 +1,5 @@
+export * from './IdsIcon'
+export * from './IfcIcon'
+export * from './BcfIcon'
+export * from './CdtIcon'
+export * from './FloorPlanIcon'

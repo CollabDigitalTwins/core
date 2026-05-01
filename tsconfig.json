@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "incremental": false,
+    "target": "ES2017",
+    "jsx": "preserve",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "paths": {
+      "@/*": ["./*"]
+    },
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "strict": false,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "types/**/*.ts",
+    ".next/types/**/*.ts",
+    "src/core/components/viewers/pointcloud/utils/copy-potree.js",
+    "src"
+  ],
+
+  "exclude": ["node_modules", "datasets/reference from prev version/**", "dist"]
+}

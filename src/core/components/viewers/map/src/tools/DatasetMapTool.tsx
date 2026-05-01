@@ -1,0 +1,36 @@
+"use client"
+
+import * as React from "react";
+import { usePermissions } from '../../../../../store'
+
+import * as LR from 'lucide-react'
+import { Button } from '../../../../ui/Button'
+import Datasets from '../../datasets'
+
+export default function DatasetMapTool(props) {
+  // Permissions
+  const { ability } = usePermissions()
+
+  const [isOpen, setIsOpen] = React.useState(false)
+  const { tool } = props
+
+  return (
+    <>
+      <Button
+        size="icon"
+        variant="ghost"
+        className="flex justify-center items-center h-9 w-9 pointer-events-auto"
+        onClick={() => setIsOpen(true)}
+        title={tool?.title}
+        disabled={!ability.can('read', 'File')}
+
+      >
+        <LR.Database />
+      </Button>
+      <Datasets
+        isOpen={isOpen}
+        setIsOpenAction={setIsOpen}
+      />
+    </>
+  )
+}

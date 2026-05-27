@@ -1,0 +1,28 @@
+{
+  // Declaration-only build config. tsup (esbuild) emits the JS; plain tsc emits
+  // the .d.ts tree. rollup-dts (tsup's `dts: true`) OOMs when bundling types
+  // across ~500 multi-entry outputs, so we generate per-file declarations with
+  // tsc instead — far lighter, and the output mirrors the JS file-per-output
+  // structure so `exports` subpaths line up.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationMap": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "allowJs": false,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.spec.ts",
+    "src/**/*.spec.tsx",
+    "src/**/__tests__/**"
+  ]
+}

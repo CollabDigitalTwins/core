@@ -27,7 +27,9 @@
     "config"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && tsc -p tsconfig.build.json",
+    "build:js": "tsup",
+    "build:types": "tsc -p tsconfig.build.json",
     "dev": "tsup --watch",
     "lint": "eslint src --ext .ts,.tsx",
     "prepublishOnly": "npm run build",
@@ -159,6 +161,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-google-recaptcha": "^2.1.9",
+    "esbuild-plugin-preserve-directives": "^0.0.11",
     "eslint": "^9.32.0",
     "eslint-config-next": "^15.3.1",
     "eslint-formatter-summary": "^2.0.2",

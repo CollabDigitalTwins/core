@@ -159,7 +159,8 @@ export async function fetchCkanDatasets(
             const featuresKey = `features:ckan:${geoJsonResource.id}:${pkg.metadata_modified || pkg.metadata_created || ''}`
             const cached = getCache<AllGeoJSON>(featuresKey)
             if (cached) {
-              console.log(`✅ CKAN getFeatures: Returning ${cached.features?.length || 0} cached features for "${pkg.name}"`)
+              const cachedCount = 'features' in cached ? cached.features?.length ?? 0 : 0
+              console.log(`✅ CKAN getFeatures: Returning ${cachedCount} cached features for "${pkg.name}"`)
               return cached
             }
 

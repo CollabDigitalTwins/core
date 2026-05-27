@@ -1,3 +1,8 @@
+// Anchor the base module so the augmentation below resolves under tsup's
+// isolated DTS pass (rollup-dts doesn't deep-resolve externalized value
+// imports, so without this `declare module 'next-auth'` fails TS2664).
+import type {} from 'next-auth'
+
 declare module 'next-auth' {
   /**
    * The shape of the user object returned in the OAuth providers' `profile` callback,

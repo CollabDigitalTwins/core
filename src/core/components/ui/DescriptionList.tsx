@@ -1,5 +1,6 @@
 'use client'
 
+import type React from 'react'
 import { Button } from './Button'
 import { Separator } from './Separator'
 import { Card, CardContent } from './Card'

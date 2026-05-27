@@ -5599,6 +5599,11 @@ es-toolkit@^1.39.3:
   resolved "https://registry.yarnpkg.com/es-toolkit/-/es-toolkit-1.47.0.tgz#846778dac47af951f9917363ec5a3b94beeb8ddc"
   integrity sha512-n1GuoD0WEQZMBk5tttoZSqwgyLx01oqa5XsBmCHwPyNe1S9jPBEmtR2pSgp2kJuWE3ciFZ6yRHmY4pM4C3OOkw==
 
+esbuild-plugin-preserve-directives@^0.0.11:
+  version "0.0.11"
+  resolved "https://registry.yarnpkg.com/esbuild-plugin-preserve-directives/-/esbuild-plugin-preserve-directives-0.0.11.tgz#09d1d9c97a4a0b418b702ee7dcc82e7b74a57c8c"
+  integrity sha512-OolFhx1h/1ADEEoPjVi0hYWru1pTZBHki7XozawYVkhRhO63mwZT6isLylbwPs7dJ72doVQJGHCT2I1l9z8DcA==
+
 esbuild@^0.27.0:
   version "0.27.7"
   resolved "https://registry.yarnpkg.com/esbuild/-/esbuild-0.27.7.tgz#bcadce22b2f3fd76f257e3a64f83a64986fea11f"

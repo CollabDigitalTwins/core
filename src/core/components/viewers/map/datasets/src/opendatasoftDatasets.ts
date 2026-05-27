@@ -160,7 +160,8 @@ export async function fetchOpenDataSoftDatasets(
         const featuresKey = `features:opendatasoft:${datasetId}:${datasetModified ?? ''}`
         const cached = getCache<AllGeoJSON>(featuresKey)
         if (cached) {
-          console.log(`✅ OpenDataSoft getFeatures: Returning ${cached.features?.length || 0} cached features for dataset "${datasetId}"`)
+          const cachedCount = 'features' in cached ? cached.features?.length ?? 0 : 0
+          console.log(`✅ OpenDataSoft getFeatures: Returning ${cachedCount} cached features for dataset "${datasetId}"`)
           return cached
         }
 

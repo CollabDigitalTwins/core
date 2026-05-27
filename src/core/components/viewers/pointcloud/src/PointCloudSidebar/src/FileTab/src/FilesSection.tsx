@@ -10,6 +10,10 @@ import { useUploadFileToBuilding, useDeleteFile } from '../../../../../../../../
 import { useFileUploadHandler, useFileDeleteHandler, FileItemComponent, useFileActions, useCommonFileUpload } from '../../../../../../../ui/FilesManager'
 import { DbFile as IFile } from '../../../../../../../../types/dbTypes'
 
+// Audit Phase 1.C (F-19): hoist so React.memo on FileItemComponent isn't
+// defeated by per-render array identity.
+const PC_FILE_OPTIONS: import('../../../../../../../../types/global').FileAction[] = ['download', 'view', 'move', 'info', 'delete']
+
 interface FilesSectionProps {
   files: IFile[]
 }
@@ -49,15 +53,20 @@ export function FilesSection({ files }: FilesSectionProps) {
     setLocalFiles(files.map(file => ({ ...file, isVisible: (file as any).isVisible ?? false })).sort((a, b) => a.name.localeCompare(b.name)))
   }, [files])
 
+  // Audit Phase 1.C (F-19b): useCallback so onView prop identity stays stable
+  // and useFileActions returns a stable handleAction. Without this, the
+  // F-19 React.memo on FileItemComponent is defeated by per-render prop churn.
+  const handleViewFile = React.useCallback((file: IFile, newVisibility: boolean) => {
+    console.log(`Point cloud file ${file.name} visibility toggled to ${newVisibility}`)
+  }, [])
+
   // Use the common file actions hook
   const { handleAction, deleteDialog } = useFileActions({
     files: localFiles,
     setFiles: setLocalFiles,
     buildingId,
     handleDeleteFile,
-    onView: (file, newVisibility) => {
-      console.log(`Point cloud file ${file.name} visibility toggled to ${newVisibility}`)
-    }
+    onView: handleViewFile,
   })
 
   // Use the common file upload hook
@@ -86,16 +95,16 @@ export function FilesSection({ files }: FilesSectionProps) {
         addItemTitle={t('addFileTitle')}
       >
         <div className="space-y-1">
-          {localFiles.map((item, index) => {
-            return <FileItemComponent
-              key={index}
+          {localFiles.map((item) => (
+            <FileItemComponent
+              key={item.id}
               file={item}
               onAction={handleAction}
-              options={['download', 'view', 'move', 'info', 'delete']}
+              options={PC_FILE_OPTIONS}
               translationKey="FileSelection"
               confirmDelete={false}
             />
-          })}
+          ))}
         </div>
       </CollapsibleSection>
 

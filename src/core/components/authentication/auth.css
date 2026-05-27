@@ -20,11 +20,22 @@
 }
 
 /* ── Tonal Card — for the form panel ─────────────────── */
+/* Vertical gradient: starts at the page-bg color at the top (so the top edge
+   blends into the page) and transitions to reCAPTCHA's fixed widget color
+   (#f9f9f9 light / #222222 dark) by ~75% down, where the captcha sits — that
+   way the captcha tile lands on a solid color match with no seam. */
 .auth-card {
-  background: rgba(232, 228, 224, 0.9);
+  background: linear-gradient(
+    180deg,
+    rgba(230, 224, 234, 0.78) 0%,
+    rgba(235, 229, 234, 0.8) 18%,
+    rgba(240, 234, 239, 0.82) 40%,
+    rgba(245, 241, 243, 0.84) 60%,
+    rgba(249, 249, 249, 0.86) 78%
+  );
   border-radius: 1rem;
   position: relative;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.04);
 }
 
 .auth-card::before {
@@ -33,7 +44,7 @@
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 50%);
+  background: linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 50%);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
@@ -41,6 +52,83 @@
 }
 
 /* ── Auth input fields ──────────────────────────────── */
+.auth-card input {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+.auth-card input::placeholder {
+  color: #6b7280 !important;
+  opacity: 1;
+}
+
+.auth-page.dark .auth-card input {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--hp-on-surface) !important;
+  border: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+
+.auth-page.dark .auth-card input::placeholder {
+  color: var(--hp-on-surface-variant) !important;
+  opacity: 0.6;
+}
+
+/* Browser autofill (Chrome/Edge/Safari) overrides input bg & text colors with
+   its own yellow/white. Pin them back to the auth-card tokens.
+   - background-color via inset box-shadow (the only way to defeat autofill bg)
+   - text-fill-color, since autofill sets -webkit-text-fill-color (not `color`) */
+.auth-card input:-webkit-autofill,
+.auth-card input:-webkit-autofill:hover,
+.auth-card input:-webkit-autofill:focus,
+.auth-card input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #000000 !important;
+  caret-color: #000000;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.auth-page.dark .auth-card input:-webkit-autofill,
+.auth-page.dark .auth-card input:-webkit-autofill:hover,
+.auth-page.dark .auth-card input:-webkit-autofill:focus,
+.auth-page.dark .auth-card input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #222222 inset !important;
+  -webkit-text-fill-color: var(--hp-on-surface) !important;
+  caret-color: var(--hp-on-surface);
+}
+
+/* ── Google sign-in square button ───────────────────── */
+.auth-google-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  background: var(--hp-mid);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.auth-google-btn:hover:not(:disabled) {
+  background: var(--hp-high);
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.auth-google-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.auth-page.dark .auth-google-btn {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.auth-page.dark .auth-google-btn:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
 .auth-input {
   background: var(--hp-lowest) !important;
   border: 1px solid transparent !important;
@@ -187,8 +275,8 @@
   border-radius: 0.5rem;
   overflow: hidden;
   width: 100%;
-  height: 96px;
-  padding: 0.5rem;
+  height: 76px;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -198,13 +286,16 @@
 /* Scale the captcha to fill the card width (300px → ~380px).
    transform creates its own stacking context, so mix-blend-mode goes here —
    the whole scaled block blends against the card behind it.
-   multiply: white × card-color = card-color  (white bg disappears in light mode)
-   screen:   black × card-color = card-color  (dark bg disappears in dark mode) */
+   multiply: white × card-color = card-color  (white bg disappears in light mode) */
 .auth-captcha-wrapper > div {
-  transform: scale(1.26);
+  transform: scale(1.0);
   transform-origin: center center;
   flex-shrink: 0;
   mix-blend-mode: multiply;
+  /* clip the widget's own border + drop-shadow on all sides so the wrapper's
+     border reads as the only visible border. The right edge needs more inset
+     because the widget's drop-shadow falls further on that side. */
+  clip-path: inset(2px 6px 3px 3px);
 }
 
 @media (max-width: 767px) {
@@ -218,7 +309,37 @@
   }
 }
 
-/* In dark mode, multiply makes light text invisible — reset so the dark widget renders normally */
+/* Narrow phones — the card's p-10 padding leaves <200px of inner width, so
+   the widget needs a tighter scale to avoid being clipped by overflow:hidden. */
+@media (max-width: 480px) {
+  .auth-captcha-wrapper {
+    height: 68px;
+    padding: 0.25rem;
+  }
+
+  .auth-captcha-wrapper > div {
+    transform: scale(0.7);
+  }
+}
+
+@media (max-width: 360px) {
+  .auth-captcha-wrapper {
+    height: 60px;
+  }
+
+  .auth-captcha-wrapper > div {
+    transform: scale(0.6);
+  }
+}
+
+/* Dark mode: reCAPTCHA's dark theme paints itself on #222222 and the widget's
+   background cannot be themed, so match the wrapper to that exact color —
+   the seam between wrapper and widget disappears. */
+.dark .auth-captcha-wrapper {
+  background: #222222 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
 .dark .auth-captcha-wrapper > div {
   mix-blend-mode: normal;
 }
@@ -232,7 +353,7 @@
   background: linear-gradient(
     to right,
     var(--hp-mid) 0%,
-    rgba(232, 228, 224, 0.6) 60%,
+    rgba(230, 224, 234, 0.6) 60%,
     transparent 100%
   );
 }
@@ -241,7 +362,7 @@
   background: linear-gradient(
     to right,
     var(--hp-mid) 0%,
-    rgba(32, 31, 31, 0.6) 60%,
+    rgba(35, 32, 45, 0.6) 60%,
     transparent 100%
   );
 }
@@ -251,7 +372,14 @@
    ==================================================== */
 
 .dark .auth-card {
-  background: rgba(32, 31, 31, 0.9);
+  background: linear-gradient(
+    180deg,
+    rgba(35, 32, 45, 0.78) 0%,
+    rgba(37, 35, 48, 0.8) 18%,
+    rgba(37, 35, 43, 0.82) 40%,
+    rgba(35, 34, 38, 0.84) 60%,
+    rgba(34, 34, 34, 0.86) 78%
+  );
   box-shadow: none;
 }
 
@@ -288,6 +416,5 @@
 }
 
 .dark .auth-captcha-wrapper {
-  background: transparent;
   border-color: rgba(255, 255, 255, 0.06);
 }

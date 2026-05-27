@@ -173,7 +173,13 @@ export interface FileItemComponentProps {
   confirmDelete?: boolean
 }
 
-export function FileItemComponent({
+// Audit Phase 1.C (F-19): React.memo so a sidebar-toggle re-render of the
+// parent section (FilesSection / ModelsSection / etc.) doesn't cascade
+// into every item in a 20–30-item list. Consumers must pass referentially
+// stable `onAction` + `options` props (see the section files) for memo to
+// take effect — they were the cumulative cost of the 344 ms sidebar-toggle
+// commit captured in the Phase 0 React Profiler baseline.
+export const FileItemComponent = React.memo(function FileItemComponent({
   file,
   onAction,
   options,
@@ -211,4 +217,4 @@ export function FileItemComponent({
       </DropdownMenu>
     </div>
   )
-}
+})

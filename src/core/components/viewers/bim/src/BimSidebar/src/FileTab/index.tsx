@@ -1,13 +1,11 @@
 'use client'
 
 import * as React from 'react'
-import { FloorplanSection } from './src/FloorplanSection'
 import { ModelsSection } from './src/ModelsSection'
 import { FilesSection } from './src/FilesSection'
 import { BuildingsContext } from '../../../../../../../store'
 import { useSearchParams } from 'next/navigation'
 import { useFilesByBuildingId } from '../../../../../../../hooks/files/files'
-import { ElevationSection } from './src/ElevationsSection'
 import { DbFile } from '../../../../../../../types/dbTypes'
 import { SearchInput } from '../../../../../../ui'
   
@@ -52,8 +50,6 @@ import { SearchInput } from '../../../../../../ui'
       </div>
       <ModelsSection files={bimFiles} query={searchQuery} />
       <FilesSection files={nonBimFiles} query={searchQuery} />
-      {/* <FloorplanSection query={searchQuery} />
-      <ElevationSection query={searchQuery} /> */}
     </div>
   )
 }

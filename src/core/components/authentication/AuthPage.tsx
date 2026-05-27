@@ -9,6 +9,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Sun, Moon } from 'lucide-react'
 import AuthSimpleMap from '../viewers/map/src/SimpleMap'
+import { CdtIcon } from '../ui/Icons/CdtIcon'
 import './auth.css'
 
 const AnimatedBackground = dynamic(() => import('../ui/AnimatedBackground'), {
@@ -29,9 +30,9 @@ export function AuthPage({ children }: AuthPageProps) {
   const logo = minioBaseUrl
     ? `${minioBaseUrl}/org-logos/${orgName}-logo.png`
     : `/images/cdt-logo-stroke.svg`
-  const title = orgName === 'cdt'
-    ? "Collab Digital Twins' Platform"
-    : orgName.charAt(0).toUpperCase() + orgName.slice(1) + ' Digital Twin'
+  const brandPrefix = orgName === 'cdt' ? 'collab' : orgName
+  const brandSuffix = orgName === 'cdt' ? 'digitaltwins' : 'digitaltwin'
+  const title = `${brandPrefix}${brandSuffix}`
   const t = useTranslations('AuthPage')
 
   const [theme, setTheme] = useState<'light' | 'dark'>('dark')
@@ -62,7 +63,7 @@ export function AuthPage({ children }: AuthPageProps) {
       {/* Toggle .dark on THIS div — CSS vars cascade to all children, no global html conflict */}
       <div
         className={`auth-page relative flex min-h-screen w-screen flex-col md:flex-row${theme === 'dark' ? ' dark' : ''}`}
-        style={{ background: theme === 'dark' ? '#201f1f' : '#e8e4e0' }}
+        style={{ background: 'var(--hp-mid)' }}
       >
         {/* Animated background — bottom layer */}
         <div className="absolute inset-0 z-0 pointer-events-none">
@@ -74,7 +75,7 @@ export function AuthPage({ children }: AuthPageProps) {
           <AuthSimpleMap
             width="100%"
             height="100%"
-            mapStyleUrl={'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'}
+            mapStyleUrl={'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'}
             showCountryLayer={false}
             padding={globePadding}
           />
@@ -84,13 +85,15 @@ export function AuthPage({ children }: AuthPageProps) {
         <div className="relative z-10 w-full md:w-1/2 flex min-h-screen md:min-h-0 flex-col">
           {/* Top bar: logo + language */}
           <div className="flex items-center justify-between px-8 pt-8 pb-4">
-            <div className="flex items-center gap-3">
-              <Logo image={logo} title={title} className="w-8 h-8" />
-              <span
-                className="font-display text-sm font-semibold"
-                style={{ color: 'var(--hp-on-surface)', fontFamily: "'Space Grotesk', sans-serif" }}
-              >
-                {title}
+            <div className="flex items-center gap-3" style={{ color: 'var(--hp-on-surface)' }}>
+              {orgName === 'cdt' ? (
+                <CdtIcon className="w-8 h-8" />
+              ) : (
+                <Logo image={logo} title={title} className="w-8 h-8" />
+              )}
+              <span className="font-display text-xl tracking-wide max-xs:text-sm max-xs:text-nowrap lowercase transition-colors duration-200">
+                <span style={{ color: 'var(--hp-primary-container)' }}>{brandPrefix}</span>
+                {brandSuffix}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -118,7 +121,7 @@ export function AuthPage({ children }: AuthPageProps) {
           {/* Footer (mobile) */}
           {isMobile ? (
             <div className="mt-auto px-3 pb-8 flex flex-row items-center justify-center flex-shrink-0">
-              <Link href="/home" className="text-xs text-center" style={{ color: 'var(--hp-outline)' }}>
+              <Link href="https://collabdt.org/" className="text-xs text-center" style={{ color: 'var(--hp-outline)' }}>
                 {t('footerText')}
               </Link>
             </div>
@@ -137,7 +140,7 @@ export function AuthPage({ children }: AuthPageProps) {
               {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
             </button>
             <Link
-              href="/home"
+              href="https://collabdt.org/"
               className="fixed bottom-8 left-1/2 z-30 -translate-x-1/2 text-center text-xs"
               style={{ color: 'var(--hp-outline)' }}
             >

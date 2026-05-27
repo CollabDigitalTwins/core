@@ -38,14 +38,14 @@ export function PointCloudViewer() {
   const searchParams = useSearchParams()
 
   // Get files for the building to check if there are LAZ/LAS files
-  const { files } = useFilesByBuildingId(building?.id)
+  const { files, isError: filesError } = useFilesByBuildingId(building?.id)
   const hasPointCloudFiles = React.useMemo(() =>
-    files.some(file => {
+    !filesError && files.some(file => {
       const ext = file.extension?.toLowerCase()
       if (!ext) return false
       return ext === "laz" || ext === "las"
     }),
-    [files])
+    [files, filesError])
 
   // --- Load CSS/JS assets once
   React.useEffect(() => {

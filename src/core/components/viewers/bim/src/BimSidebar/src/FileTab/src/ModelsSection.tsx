@@ -16,6 +16,10 @@ import { useUploadFileToBuilding, useDeleteFile, useFile } from '../../../../../
 import { useFileUploadHandler, useFileDeleteHandler, FileItemComponent, useFileActions, useCommonFileUpload } from '../../../../../../../ui/FilesManager'
 import type { DbFile as DbFile } from '../../../../../../../../types/dbTypes'
 
+// Audit Phase 1.C (F-19): hoist out of JSX so React.memo on FileItemComponent
+// isn't defeated by per-render array identity churn.
+const BIM_MODEL_OPTIONS: import('../../../../../../../../types/global').FileAction[] = ['view', 'ghost', 'move', 'info', 'delete']
+
 interface ModelsSectionProps {
   files: DbFile[]
   query?: string
@@ -312,12 +316,12 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
         switchVariant={handleSwitchVariant()}
       >
         <div className="space-y-1">
-          {filteredModels.map((file, index) => (
+          {filteredModels.map((file) => (
             <FileItemComponent
-              key={index}
+              key={file.id}
               file={file}
               onAction={handleAction}
-              options={['view', 'ghost', 'move', 'info', 'delete']}
+              options={BIM_MODEL_OPTIONS}
               confirmDelete={false}
             />
           ))}

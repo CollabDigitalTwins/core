@@ -1,6 +1,7 @@
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import type { ApiAdapter } from "../ports/apiAdapter";
 import type { OpenDataPortal, DatasetGroup } from "../../types/dbTypes";
+import useSWRMutation from "swr/mutation";
 
 export function createOpenDataPortalHooks(adapter: ApiAdapter) {
   // Call adapter methods inside hooks
@@ -15,6 +16,20 @@ export function createOpenDataPortalHooks(adapter: ApiAdapter) {
     const key = id ? (["openDataPortal", id] as const) : null;
     const { data, error, isLoading } = useSWR<OpenDataPortal>(key, () => adapter.getOpenDataPortal(id as number));
     return { openDataPortal: data ?? null, isLoading, isError: error };
+  };
+
+  const useCreateOpenDataPortal = () => {
+    const { trigger: createOpenDataPortal, isMutating, data: createdData, error } = useSWRMutation(
+      ["createOpenDataPortal"],
+      async (_k, { arg }: { arg: Partial<OpenDataPortal> }) => adapter.createOpenDataPortal(arg),
+      {
+        onSuccess: () => {
+          mutate(["openDataPortals"]);
+        },
+      }
+    );
+
+    return { createOpenDataPortal, isMutating, createError: error, createdData };
   };
 
   const useOpenDataPortalsByMunicipality = (municipality: string | null) => {
@@ -68,6 +83,7 @@ export function createOpenDataPortalHooks(adapter: ApiAdapter) {
   return {
     useOpenDataPortals,
     useOpenDataPortalById,
+    useCreateOpenDataPortal,
     useOpenDataPortalsByMunicipality,
     useOpenDataPortalsByMunicipalityAndCountrySubdivision,
     useOpenDataPortalsByCountrySubdivision,

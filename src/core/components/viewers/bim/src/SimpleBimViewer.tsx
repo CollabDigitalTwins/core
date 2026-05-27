@@ -12,11 +12,13 @@ import { CurrentCamera } from '../src/CurrentCamera';
 import { FitCamera } from './FitCamera';
 import { CameraProjection } from './CameraProjection';
 import { SpatialStructure } from './SpatialStructure';
-import { ViewsList } from './ViewsList';
 import { LoadModels } from './LoadModels';
 import { IfcToFragments } from './IfcToFragments';
 import { DbFile } from '../../../../types/dbTypes';
 import { ModelManager } from './ModelManager';
+import { FloorplanTool } from './FloorplanTool';
+import { ElevationsTool } from './ElevationsTool';
+import { ViewModeCoordinator } from './lib/ViewModeCoordinator';
 
 interface Props {
     file: DbFile
@@ -127,8 +129,16 @@ export function SimpleBimViewer({file, width = "100%", height = "100%"}: Props) 
             components.get(FitCamera);
             components.get(CameraProjection);
             components.get(SpatialStructure);
-            components.get(ViewsList);
             components.get(LoadModels);
+            components.get(ViewModeCoordinator);
+            components.get(FloorplanTool);
+            components.get(ElevationsTool);
+
+            // Grid injection is safe here — fragments.core is initialized.
+            if (grid) {
+                components.get(FloorplanTool).setGrid(grid);
+                components.get(ElevationsTool).setGrid(grid);
+            }
             const ifcToFragments = components.get(IfcToFragments);
             const loadModels = components.get(LoadModels);
             const modelManager = components.get(ModelManager);
@@ -140,15 +150,19 @@ export function SimpleBimViewer({file, width = "100%", height = "100%"}: Props) 
                 world.renderer?.resize(new THREE.Vector2(width, height));
             };
             
-            // Watch for container size changes using ResizeObserver
+            // Watch for container size changes using ResizeObserver. This
+            // already covers the window-resize case: when the window resizes,
+            // the flex layout reshapes this container, and ResizeObserver
+            // fires.
             const resizeObserver = new ResizeObserver(() => {
                 handleResize();
             });
             resizeObserver.observe(container);
             resizeObserverRef.current = resizeObserver;
-            
-            // Also handle window resize
-            window.addEventListener('resize', handleResize);
+
+            // Audit Phase 1.E (F-18): same fix as BimViewer.tsx — removed
+            // the unmatched window.addEventListener('resize', handleResize)
+            // that leaked one listener per SimpleBimViewer mount.
 
             // Listen to loading state changes from both components
             ifcToFragments.onLoadingStateChanged.add(({ isLoading, message }) => {

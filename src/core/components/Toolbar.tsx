@@ -1,57 +1,43 @@
+'use client'
+
 // Components
 import * as React from 'react'
-import { Menubar } from './ui/Menubar'
+import dynamic from 'next/dynamic'
 import { ViewerNames } from '../types'
-import { Tool } from '../types/tools'
 import { mapToolbarTools } from '../components/viewers/map/src/tools/mapTools'
-import { bimToolbarTools } from '../components/viewers/bim/src/tools/bimToolbar'
+import { ToolbarBody } from './ToolbarBody'
 
-import ToolbarButton from './ui/ToolbarButton'
-import { SubmenuProvider } from './ToolbarSubmenu'
-import { pointcloudToolbarTools } from './viewers/pointcloud/src/tools'
-// Store
-import { MenusContext, ToolsContext } from '../store'
+// Audit Phase 1.A (F-1e): the BIM and PointCloud toolbar tool registries
+// transitively import @thatopen and Potree-adjacent code. Statically
+// importing them here (which Toolbar.tsx used to do, eagerly mounted by
+// Viewer.tsx) kept ~456 KB of @thatopen on the map route's first-load JS
+// even after F-1, F-1b, F-1c and F-1d. Dynamic-importing both per-viewer
+// toolbars finally cuts that path.
+//
+// MapToolbar stays inline (no separate file, no dynamic) because the map
+// is the default landing surface and every user pays its cost anyway.
+const BimToolbar = dynamic(
+  () => import('./viewers/bim/BimToolbar').then(m => ({ default: m.BimToolbar })),
+  { ssr: false },
+)
+const PointCloudToolbar = dynamic(
+  () => import('./viewers/pointcloud/PointCloudToolbar').then(m => ({ default: m.PointCloudToolbar })),
+  { ssr: false },
+)
 
 interface Props {
   viewer: ViewerNames
 }
 
 export function Toolbar({ viewer }: Props) {
-  let tools: Tool[] | null = null
-
-  switch (viewer) {
-    case ViewerNames.map:
-      tools = mapToolbarTools()
-      break
-    case ViewerNames.bim:
-      tools = bimToolbarTools()
-      break
-    case ViewerNames.pointcloud:
-      tools = pointcloudToolbarTools()
-      break
-    default:
-      tools = null
+  if (viewer === ViewerNames.map) {
+    return <ToolbarBody viewer="map" tools={mapToolbarTools()} />
   }
-
-  return (
-    <>
-      {tools
-        && (
-          <div className="fixed left-1/2 transform -translate-x-1/2 bottom-[10px] flex items-center pointer-events-none z-10">
-            <SubmenuProvider>
-              <Menubar
-                id={`${viewer}-toolbar`}
-                className="flex flex-row px-1 gap-1 justify-center w-fit bg-primary-light rounded space-y-0"
-              >
-                {tools.map((tool, index) => (
-                  <div key={index} className="flex items-center">
-                    <ToolbarButton tool={tool} />
-                  </div>
-                ))}
-              </Menubar>
-            </SubmenuProvider>
-          </div>
-        )}
-    </>
-  )
+  if (viewer === ViewerNames.bim) {
+    return <BimToolbar />
+  }
+  if (viewer === ViewerNames.pointcloud) {
+    return <PointCloudToolbar />
+  }
+  return null
 }

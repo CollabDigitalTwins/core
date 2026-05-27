@@ -12,6 +12,12 @@ import { useDeleteFile } from '../../../../../../../../hooks/files/files'
 import { mutate } from 'swr'
 import { LoadingSpinner } from '../../../../../../../ui/LoadingSpinner'
 
+// Audit Phase 1.C (F-19): hoist out of the JSX so the array reference is
+// stable across renders. Inline `options={['view','move','info','delete']}`
+// gets a new array identity on every render, defeating React.memo on
+// FileItemComponent.
+const FILE_OPTIONS: import('../../../../../../../../types/global').FileAction[] = ['view', 'move', 'info', 'delete']
+
 const shouldExcludeByTag = (tag?: string | null): boolean => {
   if (!tag) return false
   return tag === 'user' || tag === 'bim-file' || tag === 'fragment-file' || tag === 'bimModel'
@@ -83,17 +89,23 @@ export function FilesSection({ files: _filesProp, query = '' }: FilesSectionProp
     fileDispatch({ type: 'EDIT_FILE', payload: { file } })
   }, [fileDispatch])
 
+  // Audit Phase 1.C (F-19b): useCallback so the onView prop identity stays
+  // stable across renders. Otherwise useFileActions' internal useCallback
+  // dep on onView re-fires every render, producing a new handleAction
+  // identity, which defeats React.memo on FileItemComponent.
+  const handleViewFile = React.useCallback((file: IFile, newVisibility: boolean) => {
+    fileDispatch({
+      type: newVisibility ? 'ADD_TO_MAP' : 'REMOVE_FROM_MAP',
+      payload: { id: file.id },
+    })
+  }, [fileDispatch])
+
   const { handleAction, deleteDialog } = useFileActions({
     files: localFiles,
     setFiles: setLocalFiles,
     buildingId,
     handleDeleteFile,
-    onView: (file, newVisibility) => {
-      fileDispatch({
-        type: newVisibility ? 'ADD_TO_MAP' : 'REMOVE_FROM_MAP',
-        payload: { id: file.id },
-      })
-    },
+    onView: handleViewFile,
     onMove: handleMoveFile,
   })
 
@@ -140,12 +152,12 @@ export function FilesSection({ files: _filesProp, query = '' }: FilesSectionProp
               <span>{t('uploadingFile')} {uploadState.progress}%</span>
             </div>
           )}
-          {filteredFiles.map((item, index) => (
+          {filteredFiles.map((item) => (
             <FileItemComponent
-              key={index}
+              key={item.id}
               file={item}
               onAction={handleAction}
-              options={['view', 'move', 'info', 'delete']}
+              options={FILE_OPTIONS}
               translationKey="FileSelection"
               confirmDelete={false}
             />

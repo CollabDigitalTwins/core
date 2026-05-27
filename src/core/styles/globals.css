@@ -97,10 +97,6 @@ ul {
   list-style-type: none;
 }
 
-input {
-  color: black;
-}
-
 .viewer-grid {
   display: grid;
   grid-template-rows: 6rem 1fr 4rem;

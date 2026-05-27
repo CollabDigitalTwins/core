@@ -1,12 +1,16 @@
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
-import * as OBC from '@thatopen/components'
 import { uploadFile as performUploadFile } from '../../uploadFile'
 
 import { getFileExtension } from '../../../../utils/utils'
-import { IfcToFragments } from '../../../viewers/bim/src/IfcToFragments'
 import { useBuilding } from '../../../../hooks/buildings/buildings'
+
+// Audit Phase 1.A (F-1d): the @thatopen and IfcToFragments dependencies
+// are NOT imported statically. They are pulled in via a dynamic import
+// inside the IFC branch of handleFileUpload below, so non-IFC sessions
+// (and sessions where this hook is loaded but never invoked with an IFC)
+// never load ~456 KB of @thatopen/* into the eager bundle.
 
 interface UseFileUploadHandlerProps {
   buildingId: number
@@ -67,25 +71,11 @@ export function useFileUploadHandler({
     try {
       const ext = getFileExtension(file)?.toLowerCase()
 
-      const bimComponents = new OBC.Components()
       if (ext === 'ifc') {
-        if (!bimComponents) {
-          throw new Error('Missing BIM components to convert IFC to fragments')
-        }
-
-        const converter = bimComponents.get(IfcToFragments)
-
-        const fragmentBytes = await converter.loadFromFile(file)
-
-        // Convert Uint8Array to ArrayBuffer slice to satisfy Blob typing
-        const arrayBuffer = (fragmentBytes.buffer as ArrayBuffer).slice(
-          fragmentBytes.byteOffset,
-          fragmentBytes.byteOffset + fragmentBytes.byteLength,
-        )
-        const fragBlob = new Blob([arrayBuffer], { type: 'application/octet-stream' })
-        const baseName = file.name.replace(/\.[^.]+$/, '')
-        const fragName = `${baseName}(ifc).frag`
-        const fragFile = new File([fragBlob], fragName, { type: 'application/octet-stream' })
+        // F-1d: load the @thatopen-based converter only when actually needed.
+        // First IFC upload pays ~456 KB chunk download; subsequent uploads are cached.
+        const { convertIfcToFragmentsFile } = await import('./convertIfcToFragmentsFile')
+        const fragFile = await convertIfcToFragmentsFile(file)
 
         await performUploadFile({
           // files: [file, fragFile], // Upload both IFC and fragments

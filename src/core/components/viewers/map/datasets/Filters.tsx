@@ -27,8 +27,9 @@ type FiltersProps = {
     countrySubdivisions: string[]
     municipalities: string[]
     types: string[]
+    sources: string[]
   }
-  onFiltersChange: (filters: { countrySubdivisions: string[], municipalities: string[], types: string[] }) => void
+  onFiltersChange: (filters: { countrySubdivisions: string[], municipalities: string[], types: string[], sources: string[] }) => void
 }
 
 export default function Filters({ datasets, appliedFilters, onFiltersChange }: FiltersProps) {
@@ -64,9 +65,11 @@ export default function Filters({ datasets, appliedFilters, onFiltersChange }: F
   // Get unique values for each filter type from datasets
   const getUniqueValues = (field: string) => {
     const values = new Set<string>()
+    const isSource = field === t('sourceLower')
     for (const dataset of datasets) {
-      if (dataset[field] && dataset[field] !== '') {
-        values.add(dataset[field])
+      const value = isSource ? (dataset.portal?.name ?? dataset.publisher) : dataset[field]
+      if (value && value !== '') {
+        values.add(value)
       }
     }
     return [...values].sort()
@@ -88,6 +91,11 @@ export default function Filters({ datasets, appliedFilters, onFiltersChange }: F
       }
       case 'type': {
         newFilters.types = selectedValues
+
+        break
+      }
+      case 'source': {
+        newFilters.sources = selectedValues
 
         break
       }
@@ -136,6 +144,11 @@ export default function Filters({ datasets, appliedFilters, onFiltersChange }: F
                 >
                   {t('type')}
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => { handleContent(e, t('sourceLower')) }}
+                >
+                  {t('source')}
+                </DropdownMenuItem>
 
               </DropdownMenuContent>
             )
@@ -151,7 +164,9 @@ export default function Filters({ datasets, appliedFilters, onFiltersChange }: F
                     ? appliedFilters.countrySubdivisions
                     : label === t('municipalityLower')
                       ? appliedFilters.municipalities
-                      : label === t('typeLower') ? appliedFilters.types : []
+                      : label === t('typeLower')
+                          ? appliedFilters.types
+                          : label === t('sourceLower') ? appliedFilters.sources : []
                 }
                 onSelectionChange={selectedValues => handleFilterChange(label, selectedValues)}
               />

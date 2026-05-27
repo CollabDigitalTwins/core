@@ -10,6 +10,9 @@ import { ToolsContext, BimContext, MenusContext } from "../../../store";
 import { CurrentWorld } from "./src/CurrentWorld";
 import { CurrentCamera } from './src/CurrentCamera';
 import { Highlighter } from "./src/Highlighter";
+import { FloorplanTool } from "./src/FloorplanTool";
+import { ElevationsTool } from "./src/ElevationsTool";
+import { ViewModeCoordinator } from "./src/lib/ViewModeCoordinator";
 
 import { PropertiesMenu } from "./src/propertiesMenu";
 import { BimLoadingState } from "./src/BimLoadingState";
@@ -61,10 +64,12 @@ export function BimViewer() {
             const grids = components.get(OBC.Grids);
             const grid = grids.create(world);
 
-            if (grid) bimDispatch({
-                "type": "SET_GRID",
-                "payload": { grid }
-            });
+            if (grid) {
+                bimDispatch({
+                    "type": "SET_GRID",
+                    "payload": { grid }
+                });
+            }
 
             const axesHelper = new THREE.AxesHelper(5);
             world.scene.three.add(axesHelper);
@@ -94,6 +99,15 @@ export function BimViewer() {
             components.get(CurrentWorld).world = world;
             components.get(CurrentCamera).camera = world.camera;
             components.get(Highlighter);
+            components.get(ViewModeCoordinator);
+            components.get(FloorplanTool);
+            components.get(ElevationsTool);
+
+            // Grid injection is safe here — fragments.core is initialized.
+            if (grid) {
+                components.get(FloorplanTool).setGrid(grid);
+                components.get(ElevationsTool).setGrid(grid);
+            }
 
             // Enable shadows
             world.renderer.three.shadowMap.enabled = true;
@@ -140,16 +154,22 @@ export function BimViewer() {
             // Initial resize
             handleResize();
             
-            // Watch for container size changes using ResizeObserver
+            // Watch for container size changes using ResizeObserver. This
+            // already covers the window-resize case: when the window resizes,
+            // the flex layout reshapes this container, and ResizeObserver
+            // fires.
             const resizeObserver = new ResizeObserver(() => {
                 handleResize();
             });
             resizeObserver.observe(container);
             resizeObserverRef.current = resizeObserver;
-            
-            // Also handle window resize
-            window.addEventListener('resize', handleResize);
-          
+
+            // Audit Phase 1.E (F-18 / F-B6): the previous
+            // `window.addEventListener('resize', handleResize)` here had no
+            // matching removeEventListener — every BimViewer mount leaked a
+            // listener (Phase 0 baseline measured ~+9 listeners/min during
+            // active use). Removed entirely; the ResizeObserver above is
+            // sufficient for the redraw case.
         }, []
     );
 

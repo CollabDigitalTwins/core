@@ -258,7 +258,7 @@ export default function DatasetManagerMenu() {
   return (
     <>
       {!openInfo && addedDatasets.length > 0 && (
-        <div data-state={menuOpen ? 'open' : 'closed'} className={`${openAnimation} absolute bottom-[10px] left-3 z-10`}>
+        <div data-state={menuOpen ? 'open' : 'closed'} className={openAnimation}>
           <Menubar className="pointer-events-auto w-96 h-auto">
             <Command>
               <div>

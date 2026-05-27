@@ -6,6 +6,8 @@ export const useOpenDataPortals = () => useCoreHooks().openData.useOpenDataPorta
 
 export const useOpenDataPortalById = (id: number | null) => useCoreHooks().openData.useOpenDataPortalById(id);
 
+export const useCreateOpenDataPortal = () => useCoreHooks().openData.useCreateOpenDataPortal();
+
 export const useOpenDataPortalsByMunicipality = (municipality: string | null) =>
   useCoreHooks().openData.useOpenDataPortalsByMunicipality(municipality);
 

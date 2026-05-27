@@ -7,44 +7,44 @@
 
 /* ── Light mode tokens (default) ────────────────────── */
 :root {
-  --hp-lowest:             #f5f2ef;
-  --hp-surface:            #faf9f7;
-  --hp-low:                #f0edea;
-  --hp-mid:                #e8e4e0;
-  --hp-high:               #ddd8d4;
-  --hp-highest:            #d0cac5;
-  --hp-variant:            #d0cac5;
+  --hp-lowest:             linear-gradient(90deg, #f1ecf5 0%, #f3eef2 40%, #f5efed 70%, #f7f0e8 100%);
+  --hp-surface:            linear-gradient(90deg, #f8f5fc 0%, #faf6f8 40%, #fbf7f3 70%, #fdf8ee 100%);
+  --hp-low:                #eee9f1;
+  --hp-mid:                #e6e0ea;
+  --hp-high:               #dad3e0;
+  --hp-highest:            #cdc5d6;
+  --hp-variant:            #cdc5d6;
 
   --hp-primary:            #d4673a;
   --hp-primary-container:  #c05520;
   --hp-primary-fixed:      #f5d0b8;
   --hp-on-primary-ctr:     #ffffff;
 
-  --hp-on-surface:         #1a1816;
-  --hp-on-surface-variant: #5a524c;
-  --hp-outline:            #8a7e78;
-  --hp-outline-variant:    #c4bbb5;
+  --hp-on-surface:         #181425;
+  --hp-on-surface-variant: #4d4260;
+  --hp-outline:            #85789c;
+  --hp-outline-variant:    #bcb1ca;
 }
 
 /* ── Dark mode overrides ────────────────────────────── */
 .dark {
-  --hp-lowest:             #0e0e0e;
-  --hp-surface:            #131313;
-  --hp-low:                #1c1b1b;
-  --hp-mid:                #201f1f;
-  --hp-high:               #2a2a2a;
-  --hp-highest:            #353534;
-  --hp-variant:            #353534;
+  --hp-lowest:             linear-gradient(90deg, #120b16 0%, #17101a 40%, #1f161b 70%, #281a17 100%);
+  --hp-surface:            linear-gradient(90deg, #16101c 0%, #1c1420 40%, #251a20 70%, #2e1f1b 100%);
+  --hp-low:                #1e1b27;
+  --hp-mid:                #23202d;
+  --hp-high:               #2e2a3a;
+  --hp-highest:            #3a3548;
+  --hp-variant:            #3a3548;
 
   --hp-primary:            #ffb692;
   --hp-primary-container:  #ef9161;
   --hp-primary-fixed:      #ffdbcb;
   --hp-on-primary-ctr:     #6a2a01;
 
-  --hp-on-surface:         #e5e2e1;
-  --hp-on-surface-variant: #dac1b7;
-  --hp-outline:            #a28c83;
-  --hp-outline-variant:    #54433b;
+  --hp-on-surface:         #e5e2e8;
+  --hp-on-surface-variant: #cfc1d6;
+  --hp-outline:            #9788a8;
+  --hp-outline-variant:    #4a3d5c;
 }
 
 /* ── Display font ───────────────────────────────────── */

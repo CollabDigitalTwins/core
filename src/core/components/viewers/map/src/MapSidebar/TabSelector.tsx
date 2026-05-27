@@ -15,10 +15,9 @@ export function TabSelector({ activeTab, onTabChangeAction }: TabSelectorProps) 
 
   const tabs = [
     { id: 'file', label: t('fileLabel') },
+    { id: 'layers', label: t('layersTitle') },
     { id: 'communication', label: t('communicationTitle') },
     { id: 'sensors', label: t('sensorsTitle') },
-    // { id: 'datasets', label: t('datasetsTitle') },
-    
     { id: 'settings', label: t('settingsTitle') },
   ]
 
@@ -43,7 +42,6 @@ export function TabSelector({ activeTab, onTabChangeAction }: TabSelectorProps) 
               </div>
             ))}
           </div>
-          {/* <LR.Search className="h-4 w-4 text-muted-foreground" /> */}
         </div>
       </div>
 

@@ -13,6 +13,12 @@ import { mutate } from 'swr'
 import { LoadingSpinner } from '../../../../../../../ui/LoadingSpinner'
 import { toggleBimToMap as dispatchToggleBimToMap } from '../../../../../utils/toggleBimToMap'
 
+// Audit Phase 1.C (F-19): hoist options arrays so React.memo on
+// FileItemComponent isn't defeated by per-render array identity churn.
+type FileAction = import('../../../../../../../../types/global').FileAction
+const OPTIONS_ON_MAP: FileAction[] = ['download', 'view', 'move', 'info', 'delete']
+const OPTIONS_OFF_MAP: FileAction[] = ['download', 'view', 'info', 'delete']
+
 interface ModelsSectionProps {
   files: DbFile[]
   query?: string
@@ -56,10 +62,13 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
     const bimFiles = files.filter(file => file.extension === 'frag')
     
     return bimFiles
-      .map(file => ({
-        ...file,
-        isAddedToMap: bimModelsAddedToMap.some(model => model.bimFile.id === file.id)
-      }))
+      .map(file => {
+        const isAddedToMap = bimModelsAddedToMap.some(model => model.bimFile.id === file.id)
+        // F-19: bake isVisible in here so the JSX below doesn't have to
+        // spread `{...file, isVisible: ...}` (which would create a new
+        // identity per render and defeat React.memo on FileItemComponent).
+        return { ...file, isAddedToMap, isVisible: isAddedToMap }
+      })
       .sort((a, b) => {
         // Models added to map come first
         if (a.isAddedToMap && !b.isAddedToMap) return -1
@@ -176,20 +185,12 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
               <span>{t('uploadingFile')} {uploadState.progress}%</span>
             </div>
           )}
-          {filteredModels.map((file, index) => (
-            <div
-              key={index}
-              // className={cn(
-              //   (file as any).isAddedToMap ? 'text-foreground' : 'text-muted-foreground'
-              // )}
-            >
+          {filteredModels.map((file) => (
+            <div key={file.id}>
               <FileItemComponent
-                file={{
-                  ...file,
-                  isVisible: (file as any).isAddedToMap
-                }}
+                file={file}
                 onAction={handleAction}
-                options={(file as any).isAddedToMap ? ['download', 'view', 'move', 'info', 'delete'] : ['download', 'view', 'info', 'delete']}
+                options={file.isAddedToMap ? OPTIONS_ON_MAP : OPTIONS_OFF_MAP}
                 confirmDelete={false}
               />
             </div>

@@ -381,14 +381,6 @@ export class ModelManager extends OBC.Component {
         }
       }
 
-      try {
-        const viewportGizmo = this._components.get(ViewportGizmo)
-        if (viewportGizmo && viewportGizmo.enabled) {
-          viewportGizmo.render()
-        }
-      }
-      catch {}
-
       this._animationId = requestAnimationFrame(animate)
     }
 

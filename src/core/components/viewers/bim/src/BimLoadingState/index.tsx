@@ -60,6 +60,7 @@ export function BimLoadingState() {
   const [currentState, setCurrentState] = React.useState<bimViewerState>('opening')
   const [hasLoadedModels, setHasLoadedModels] = React.useState(false)
   const [cameraHasMoved, setCameraHasMoved] = React.useState(false)
+  const isLoadingModelsRef = React.useRef(false)
   const [searchTerm, setSearchTerm] = React.useState('')
   const [searchResults, setSearchResults] = React.useState<any[]>([])
   const [selectedBuilding, setSelectedBuilding] = React.useState<any>(null)
@@ -154,6 +155,9 @@ export function BimLoadingState() {
 
   const loadBimModels = React.useCallback(async () => {
     if (!bimComponents || bimFiles.length === 0) return
+    if (isLoadingModelsRef.current) return
+
+    isLoadingModelsRef.current = true
 
     try {
       // State should already be 'loading' when this is called
@@ -194,6 +198,8 @@ export function BimLoadingState() {
     } catch (error) {
       console.error('Error loading BIM models:', error)
       setCurrentState('error')
+    } finally {
+      isLoadingModelsRef.current = false
     }
   }, [bimComponents, bimFiles, fragments])
 

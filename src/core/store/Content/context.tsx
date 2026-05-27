@@ -25,7 +25,9 @@ export function ContentProvider({
   const [currentContent, setCurrentContent] = React.useState<ContentType>(initialContent)
   const [instance, setInstance] = React.useState<string>(initialInstance)
 
-  const changeContent = (content: ContentType, params?: Partial<CurrentLocation>) => {
+  // Audit Phase 1.A (F-3): useCallback so the function identity is stable.
+  // Closes over `instance` so the dep must be listed.
+  const changeContent = React.useCallback((content: ContentType, params?: Partial<CurrentLocation>) => {
     setCurrentContent(content)
 
     window.history.pushState(
@@ -33,10 +35,15 @@ export function ContentProvider({
       '',
       `/${instance}/${content === 'map' ? content : ''}`,
     )
-  }
+  }, [instance])
+
+  const value = React.useMemo(
+    () => ({ currentContent, changeContent, instance }),
+    [currentContent, changeContent, instance],
+  )
 
   return (
-    <ContentContext.Provider value={{ currentContent, changeContent, instance }}>
+    <ContentContext.Provider value={value}>
       {children}
     </ContentContext.Provider>
   )

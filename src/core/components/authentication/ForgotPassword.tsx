@@ -3,7 +3,9 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { Button, Input } from '../ui'
+// Audit Phase 1.B (F-2b): direct file imports — see Signin.tsx for rationale.
+import { Button } from '../ui/Button'
+import { Input } from '../ui/Input'
 import { Eye, EyeClosed } from 'lucide-react'
 import { PasswordError } from './PasswordError'
 import { AuthPage } from './AuthPage'

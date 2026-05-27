@@ -7,7 +7,10 @@ export interface IfcIconProps {
 }
 
 // IFC logo icon
-export const IfcIcon = ({ className = 'h-4 w-4', size, monochromatic = true }: IfcIconProps) => {
+// Audit Phase 1.C (F-19): React.memo — pure presentational SVG, props are
+// primitive. Skips re-render whenever parent re-renders with the same props
+// (common in sidebar file lists where many IfcIcon instances render).
+export const IfcIcon = React.memo(function IfcIcon({ className = 'h-4 w-4', size, monochromatic = true }: IfcIconProps) {
   return (
     <svg
       id="ifc-logo"
@@ -28,4 +31,4 @@ export const IfcIcon = ({ className = 'h-4 w-4', size, monochromatic = true }: I
       <path fill={monochromatic ? "currentColor" : "#1c1c1b"} d="m189.7,199.19c-4.81,0-8.73-3.99-8.73-8.9s3.92-8.9,8.73-8.9,8.78,3.99,8.78,8.9-3.94,8.9-8.78,8.9Zm0-16.52c-1.99,0-3.85.8-5.22,2.26-1.35,1.43-2.09,3.34-2.09,5.35s.74,3.92,2.09,5.35c1.37,1.46,3.22,2.26,5.22,2.26,4.05,0,7.35-3.42,7.35-7.62s-3.3-7.62-7.35-7.62Zm4.67,12.98h-1.74l-2.91-4.79h-2.17v4.79h-1.28v-10.53h4.01c2.26,0,3.36.93,3.36,2.86s-1.22,2.59-2.38,2.83l3.11,4.84Zm-6.82-6.03h1.79c1.71,0,2.92-.12,2.92-1.67,0-1.08-.74-1.6-2.27-1.6h-2.44v3.27Z" />
     </svg>
   )
-}
+})

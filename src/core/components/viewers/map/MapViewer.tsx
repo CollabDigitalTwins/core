@@ -11,12 +11,24 @@ import { resolveBounds } from './utils/validateBounds'
 
 import { MapClickManager } from './utils/MapEventManager/MapClickManager'
 import DatasetManagerMenu from './datasets/DatasetManager'
+import { MapLegendHost } from './legends/MapLegendHost'
 import { StatsOverlay } from '../../ui/stats'
 import { MapHoverManager } from './utils/MapEventManager/MapHoverManager'
 import { Organization } from '../../../types/dbTypes'
 import { CurrentLocation } from '../../../types/map'
 import { MapLayers } from './src/MapLayers'
 import SettingsButton from '../../ui/SettingsButton'
+
+// Audit Phase 1.D (F-4): hoist out of the component body so the object
+// identity is stable across renders. Was being recreated per render.
+const CANADA_DEFAULTS = {
+  maxBounds: [-141.0, 41.6751050889, -52.6480987209, 83.23324] as LngLatBoundsLike,
+  zoom: 3,
+  lat: 56.415,
+  long: -98.74,
+} as const
+
+const DEFAULT_MAP_STYLE = { name: 'Satellite', url: 'mapStyles/satellite.json' } as const
 
 interface Props {
   width?: string
@@ -31,28 +43,39 @@ export function MapViewer({ width = '100%', height = '100%', organization  }: Pr
   // Add state to track if map is loaded
   const [isMapLoaded, setIsMapLoaded] = React.useState(false)
 
-    const canada = {
-    maxBounds: [-141.0, 41.6751050889, -52.6480987209, 83.23324],
-    zoom: 3,
-    lat: 56.415,
-    long: -98.74,
-  }
+  // Audit Phase 1.D (F-4): memoize viewState so the Map sees a stable
+  // initialViewState prop across re-renders. Was recreated every render.
+  const viewState = React.useMemo(() => {
+    return searchParams.size === 0
+      ? {
+          zoom: organization.zoom ?? CANADA_DEFAULTS.zoom,
+          bearing: organization.bearing ?? 0,
+          pitch: organization.pitch ?? 0,
+          longitude: organization.long ?? CANADA_DEFAULTS.long,
+          latitude: organization.lat ?? CANADA_DEFAULTS.lat,
+        }
+      : {
+          latitude: searchParams.has('lat') ? Number.parseFloat(searchParams.get('lat')) : organization.lat ?? CANADA_DEFAULTS.lat,
+          longitude: searchParams.has('lng') ? Number.parseFloat(searchParams.get('lng')) : organization.long ?? CANADA_DEFAULTS.long,
+          bearing: searchParams.has('bearing') ? Number.parseFloat(searchParams.get('bearing')) : organization.bearing ?? 0,
+          pitch: searchParams.has('pitch') ? Number.parseFloat(searchParams.get('pitch')) : organization.pitch ?? 0,
+          zoom: searchParams.has('zoom') ? Number.parseFloat(searchParams.get('zoom')) : organization.zoom ?? CANADA_DEFAULTS.zoom,
+        }
+  }, [searchParams, organization])
 
-  const viewState = searchParams.size === 0
-    ? {
-        zoom: organization.zoom ?? canada.zoom,
-        bearing: organization.bearing ?? 0,
-        pitch: organization.pitch ?? 0,
-        longitude: organization.long ?? canada.long,
-        latitude: organization.lat ?? canada.lat,
-      }
-    : {
-        latitude: searchParams.has('lat') ? Number.parseFloat(searchParams.get('lat')) : organization.lat ?? canada.lat,
-        longitude: searchParams.has('lng') ? Number.parseFloat(searchParams.get('lng')) : organization.long ?? canada.long,
-        bearing: searchParams.has('bearing') ? Number.parseFloat(searchParams.get('bearing')) : organization.bearing ?? 0,
-        pitch: searchParams.has('pitch') ? Number.parseFloat(searchParams.get('pitch')) : organization.pitch ?? 0,
-        zoom: searchParams.has('zoom') ? Number.parseFloat(searchParams.get('zoom')) : organization.zoom ?? canada.zoom,
-      }
+  // Audit Phase 1.D (F-4): memoize the inline style object that gets passed to <Map>.
+  const mapContainerStyle = React.useMemo(
+    () => ({ width, height, backgroundColor: 'black' }),
+    [width, height],
+  )
+
+  // Audit Phase 1.D (F-8): adaptive pixel ratio. Was hardcoded `2` which on a
+  // 1× DPR desktop monitor doubles the fragment-shader cost for zero visual
+  // gain. On phones with DPR 3-4 the cap of 2 stays effective.
+  const pixelRatio = React.useMemo(
+    () => Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 2),
+    [],
+  )
 
   const mapRef = React.useRef<MapRef>(null)
   const { dispatch: mapDispatch, state: mapState } = React.useContext(MapContext)
@@ -83,11 +106,11 @@ export function MapViewer({ width = '100%', height = '100%', organization  }: Pr
     // update current Location with URL params or fallback to theme location
     const updatedLocation: CurrentLocation = {
       // Then override with URL params (this ensures URL params take precedence)
-      lat: searchParams.has('lat') ? Number.parseFloat(searchParams.get('lat')) : organization.lat ?? canada.lat,
-      lng: searchParams.has('lng') ? Number.parseFloat(searchParams.get('lng')) : organization.long ?? canada.long,
+      lat: searchParams.has('lat') ? Number.parseFloat(searchParams.get('lat')) : organization.lat ?? CANADA_DEFAULTS.lat,
+      lng: searchParams.has('lng') ? Number.parseFloat(searchParams.get('lng')) : organization.long ?? CANADA_DEFAULTS.long,
       bearing: searchParams.has('bearing') ? Number.parseFloat(searchParams.get('bearing')) : organization.bearing ?? 0,
       pitch: searchParams.has('pitch') ? Number.parseFloat(searchParams.get('pitch')) : organization.pitch ?? 0,
-      zoom: searchParams.has('zoom') ? Number.parseFloat(searchParams.get('zoom')) : organization.zoom ?? canada.zoom,
+      zoom: searchParams.has('zoom') ? Number.parseFloat(searchParams.get('zoom')) : organization.zoom ?? CANADA_DEFAULTS.zoom,
       // Add location details from URL params if available
       countrySubdivision: searchParams.has('countrySubdivision') ? searchParams.get('countrySubdivision') : (organization.countrySubdivision ?? ''),
       municipality: searchParams.has('municipality') ? searchParams.get('municipality') : (organization.municipality ?? ''),
@@ -105,17 +128,23 @@ export function MapViewer({ width = '100%', height = '100%', organization  }: Pr
     setIsMapLoaded(true)
   }
 
-  // enable to this show stat
-  const DEBUG = false
+  // Audit Phase 0: enable the perf HUD by appending ?debug=1 to the URL.
+  // Never reaches production users unless they explicitly opt in.
+  const isDebug = searchParams.get('debug') === '1'
 
-  const onDblClick = (e) => {
+  // Audit Phase 1.D (F-10): useCallback so the onDblClick prop identity is
+  // stable across renders of MapViewer (was a new function each render,
+  // causing react-map-gl to detach/re-attach the listener). Also gated the
+  // console.log behind a dev-mode check.
+  const onDblClick = React.useCallback((e) => {
+    if (process.env.NODE_ENV === 'production') return
     const { lng, lat } = e.lngLat
     const elevation = mapRef.current?.queryTerrainElevation([lng, lat]) || 0
     const coordinates = { lng, lat, elevation, zoom: mapRef.current?.getZoom() }
     console.log('📍 Map coordinates:', coordinates)
-  }
+  }, [])
 
-  const mapStyle = mapState?.map.mapStyle ?? { name: 'Satellite', url: 'mapStyles/satellite.json' };
+  const mapStyle = mapState?.map.mapStyle ?? DEFAULT_MAP_STYLE;
 
   return (
     <>
@@ -125,19 +154,15 @@ export function MapViewer({ width = '100%', height = '100%', organization  }: Pr
         mapLib={maplibregl}
         onLoad={handleMapLoad}
         ref={mapRef}
-        style={{
-          width,
-          height,
-          backgroundColor: 'black',
-        }}
+        style={mapContainerStyle}
         initialViewState={viewState}
         maxPitch={60}
-        minZoom={organization?.minZoom ?? canada.zoom}
-        maxBounds={resolveBounds(organization?.maxBounds, canada.maxBounds as LngLatBoundsLike)}
+        minZoom={organization?.minZoom ?? CANADA_DEFAULTS.zoom}
+        maxBounds={resolveBounds(organization?.maxBounds, CANADA_DEFAULTS.maxBounds)}
         projection="globe"
         doubleClickZoom={false}
         onDblClick={onDblClick}
-        pixelRatio={2} 
+        pixelRatio={pixelRatio}
       >
         <NavigationControl visualizePitch />
         <SettingsButton /> 
@@ -145,11 +170,15 @@ export function MapViewer({ width = '100%', height = '100%', organization  }: Pr
           && (
             <>
               <MapLayers />
-              <DatasetManagerMenu />
+              {/* Bottom-left stack: legend above the layers/styling card, gap auto-managed by flex. */}
+              <div className="absolute bottom-[10px] left-3 z-10 flex flex-col gap-2 pointer-events-none">
+                <MapLegendHost />
+                <DatasetManagerMenu />
+              </div>
             </>
           )}
       </Map>
-      {/* <StatsOverlay mapRef={mapRef} enabled={DEBUG} /> */}
+      <StatsOverlay mapRef={mapRef} enabled={isDebug} />
     </>
 
   )

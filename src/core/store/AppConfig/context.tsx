@@ -28,8 +28,11 @@ export const AppConfigContext = React.createContext<{
 
 export const AppConfigProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState)
+  // Audit Phase 1.A (F-3): memoize value so consumers don't re-render
+  // every time this provider's parent renders. dispatch is reference-stable.
+  const value = React.useMemo(() => ({ state, dispatch }), [state])
   return (
-    <AppConfigContext.Provider value={{ state, dispatch }}>
+    <AppConfigContext.Provider value={value}>
       {children}
     </AppConfigContext.Provider>
   )

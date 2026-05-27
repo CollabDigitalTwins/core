@@ -29,6 +29,10 @@ type StartConversionResponse = {
   jobId: string
 }
 
+// Audit Phase 1.C (F-19): hoist so React.memo on FileItemComponent isn't
+// defeated by per-render array identity.
+const POINT_CLOUD_OPTIONS: import('../../../../../../../../types/global').FileAction[] = ['view', 'delete', 'info']
+
 interface PointCloudsSectionProps {
   files: DbFile[]
 }
@@ -137,17 +141,23 @@ export function PointCloudsSection({ files }: PointCloudsSectionProps) {
     subscribeToProgress(jobId, file.id)
   }, [])
 
+  // Audit Phase 1.C (F-19b): pass useCallback'd handlers so the
+  // onView/onDelete prop identities stay stable. Previously these were
+  // inline arrows, defeating React.memo on FileItemComponent transitively
+  // via useFileActions' internal memo dep list.
+  // handleView is already useCallback'd above — pass it directly.
+  const handleDeletePointCloud = React.useCallback((file: DbFile) => {
+    pointCloudDispatch({ type: 'UNLOAD_POINT_CLOUD', payload: { id: String(file.id) } })
+  }, [pointCloudDispatch])
+
   // Use the generic file actions hook
   const { handleAction, deleteDialog } = useFileActions({
     files: pointcloudsFiles,
     setFiles: setPointcloudsFiles as React.Dispatch<React.SetStateAction<(DbFile & { isVisible?: boolean })[]>>,
     buildingId: 0,
     handleDeleteFile,
-    onView: (file, newVisibility) => handleView(file, newVisibility),
-    onDelete: (file) => {
-      // Ensure the cloud is unloaded from the viewer when deleted
-      pointCloudDispatch({ type: 'UNLOAD_POINT_CLOUD', payload: { id: String(file.id) } })
-    },
+    onView: handleView,
+    onDelete: handleDeletePointCloud,
   })
 
   // Sort: visible (loaded) files at the top, preserving relative order within each group
@@ -396,7 +406,7 @@ export function PointCloudsSection({ files }: PointCloudsSectionProps) {
                   <FileItemComponent
                     file={file}
                     onAction={handleAction}
-                    options={['view', 'delete', 'info']}
+                    options={POINT_CLOUD_OPTIONS}
                   />
                 </div>
                 {Boolean(file.pointCloudUploaded) && !Boolean(file.pointCloudPotreeConverted) && (

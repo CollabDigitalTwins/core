@@ -74,6 +74,12 @@ export interface Role {
     orgId: number;
 }
 
+export type Permission = {
+  action: string;
+  subject: string;
+  description?: string;
+};
+
 export interface Account {
     id: number;
     type: string;
@@ -503,7 +509,7 @@ export interface Site {
 }
 
 export interface OpenDataPortal {
-    id: number                    
+    id: number
     name: string
     group: DatasetGroup | `${DatasetGroup}`
     portalUrl?: string
@@ -512,6 +518,7 @@ export interface OpenDataPortal {
     countrySubdivision?: string
     municipality?: string
     country?: string
+    live?: boolean
 }
 
 export interface Infrastructure {

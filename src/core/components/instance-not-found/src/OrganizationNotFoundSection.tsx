@@ -7,7 +7,7 @@ import { Input } from '../../ui/Input'
 import { Textarea } from '../../ui/Textarea'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
-import Footer from '../../../../app/home/src/Footer'
+import Footer from '../../ui/Footer'
 import { useState } from 'react'
 
 interface OrganizationNotFoundSectionProps {
@@ -78,7 +78,7 @@ export default function OrganizationNotFoundSection({
               </p>
             </div>
             <div className="pt-4 flex flex-col sm:flex-row items-stretch justify-center gap-4">
-              <Link href="/home">
+              <Link href="https://collabdt.org/">
                 <Button variant="outline" size="lg" className="text-base px-8 w-full sm:w-auto">
                   {t('backToHome')}
                 </Button>

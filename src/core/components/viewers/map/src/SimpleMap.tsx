@@ -26,6 +26,10 @@ interface Props {
 
 const ROTATION_SPEED = 0.1 // degrees longitude per frame
 
+// Empirically tuned so the whole sphere fits inside the container.
+// Globe diameter ≈ FIT_DIVISOR * 2^zoom, so larger values yield more margin.
+const FIT_DIVISOR = 160
+
 export default function SimpleMap({
   width = '100vw',
   height = '100vh',
@@ -33,6 +37,7 @@ export default function SimpleMap({
   showCountryLayer = true,
   padding,
 }: Props) {
+  const containerRef = React.useRef<HTMLDivElement>(null)
   const [zoom, setZoom] = React.useState(2.8)
   const mapRef = React.useRef<MapRef>(null)
   const paddingRef = React.useRef<PaddingOptions | undefined>(padding)
@@ -45,14 +50,21 @@ export default function SimpleMap({
   }, [padding])
 
   React.useEffect(() => {
-    const updateZoom = () => {
-      setZoom(window.innerWidth < 768 ? 1.8 : 2.8)
+    const el = containerRef.current
+    if (!el) return
+
+    const computeZoom = () => {
+      const { clientWidth, clientHeight } = el
+      const minDim = Math.min(clientWidth, clientHeight)
+      if (minDim <= 0) return
+      const next = Math.log2(minDim / FIT_DIVISOR)
+      setZoom(Math.max(-1, Math.min(3.5, next)))
     }
 
-    updateZoom()
-    window.addEventListener('resize', updateZoom)
-
-    return () => window.removeEventListener('resize', updateZoom)
+    computeZoom()
+    const observer = new ResizeObserver(computeZoom)
+    observer.observe(el)
+    return () => observer.disconnect()
   }, [])
 
   // Cleanup animation on unmount
@@ -63,16 +75,25 @@ export default function SimpleMap({
     }
   }, [])
 
-  // Keep padding in sync whenever the prop changes
+  // Apply min/max zoom safely — lower the floor first so maxZoom can never
+  // be set below the current minZoom (which maplibre rejects).
+  const applyZoomBounds = React.useCallback((map: maplibregl.Map, target: number) => {
+    map.setMinZoom(-2)
+    map.setMaxZoom(target + 0.2)
+    map.setMinZoom(target)
+  }, [])
+
+  // Keep padding and zoom in sync whenever the prop changes
   React.useEffect(() => {
     const map = mapRef.current?.getMap()
     if (!map) return
+    applyZoomBounds(map, zoom)
     map.setZoom(zoom)
 
     const currentPadding = paddingRef.current
     if (!currentPadding) return
     map.setPadding(currentPadding)
-  }, [padding, zoom])
+  }, [padding, zoom, applyZoomBounds])
 
   const viewState = {
     longitude: -75.74,
@@ -108,6 +129,8 @@ export default function SimpleMap({
   const handleMapLoad = React.useCallback(() => {
     const map = mapRef.current?.getMap()
     if (!map) return
+
+    applyZoomBounds(map, zoom)
 
     const applyCurrentPadding = () => {
       const currentPadding = paddingRef.current
@@ -153,7 +176,7 @@ export default function SimpleMap({
   }, [])
 
   return (
-    <div className="pointer-events-auto relative z-10 h-full w-full">
+    <div ref={containerRef} className="pointer-events-auto relative z-10 h-full w-full">
       <Map
         ref={mapRef}
         mapStyle={resolvedStyle}

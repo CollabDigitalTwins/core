@@ -1,7 +1,9 @@
 'use client'
 
 import * as React from 'react'
-import { Button, Badge } from '..'
+// Audit Phase 1.F (F-2c): direct file imports — bypass ui barrel.
+import { Button } from '../Button'
+import { Badge } from '../Badge'
 import { Avatar, AvatarFallback } from '../Avatar'
 import { UserAvatar } from '../UserAvatar'
 import * as LR from 'lucide-react'

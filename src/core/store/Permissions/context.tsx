@@ -4,8 +4,8 @@ import React, { createContext, useContext, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { AbilityBuilder, createMongoAbility } from '@casl/ability'
 import type { MongoAbility } from '@casl/ability'
-import type { Permission } from '../../../app/lib/permissions/type'
 import { useUserRole } from '../../hooks/users/users'
+import { Permission } from '../../types/dbTypes'
 
 interface PermissionsContextValue {
   ability: MongoAbility
@@ -32,12 +32,15 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     return build()
   }, [permissions])
 
-  const value = {
+  // Audit Phase 1.A (F-3): memoize the value object. `ability` was
+  // already memoized above; the surrounding value object was not, so
+  // every consumer still re-rendered on every parent render.
+  const value = useMemo(() => ({
     ability,
     permissions,
     isLoading,
     role: userRole,
-  }
+  }), [ability, permissions, isLoading, userRole])
 
   return (
     <PermissionsContext.Provider value={value}>

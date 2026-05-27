@@ -37,12 +37,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../components
 import { useColumns } from './data'
 import DatasetDetails from './DatasetDetails'
 // Custom components
+import { AddPortalDialog } from './AddPortalDialog'
 import DatasetSkeleton from './DatasetSkeleton'
 import Filters from './Filters'
 import RowActions from './RowActions'
 import { useDatasetsForPortals } from './src/useDatasetsForPortals'
 import { handleFavouriteDataset } from './utils'
 import { fetchLocalDatasets } from './src/localDatasets'
+import { fetchOrganizationalMinioDatasets } from './src/minioDatasets'
 import { useFastDatasetCache } from './src/useFastDatasetCache'
 import { DatasetGroup } from '../../../../types/dbTypes'
 
@@ -137,8 +139,9 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
   const [selectedDataset, setSelectedDataset] = React.useState<Dataset | null>(null)
   const [favouriteDatasets, setFavouriteDatasets] = React.useState<Dataset[]>([])
   const [searchTerm, setSearchTerm] = React.useState('')
-  const [appliedFilters, setAppliedFilters] = React.useState({ countrySubdivisions: [], municipalities: [], types: [] })
+  const [appliedFilters, setAppliedFilters] = React.useState<{ countrySubdivisions: string[], municipalities: string[], types: string[], sources: string[] }>({ countrySubdivisions: [], municipalities: [], types: [], sources: [] })
   const [currentTab, setCurrentTab] = React.useState('all')
+  const [isAddPortalOpen, setIsAddPortalOpen] = React.useState(false)
   const showMunicipalTab = React.useMemo(() => Boolean(municipality), [municipality])
 
   const { openDataPortals: municipalPortals } = useOpenDataPortalsByMunicipality(municipality)
@@ -177,50 +180,71 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
   const national = useDatasetsForPortals(filteredNationalPortals, { rowsPerPage })
   React.useEffect(() => {
     const loadOrganizationalDatasets = async () => {
-      try {
+      // Two parallel sources: Martin vector tiles (if configured) and MinIO-
+      // backed GeoJSON uploads (the "Add Dataset" path). Errors from either
+      // are isolated so a failure on one side does not block the other.
+      const martinBaseUrl = process.env.NEXT_PUBLIC_MARTIN_SERVER_URL?.replace(/\/+$/, '')
 
-        const martinBaseUrl = process.env.NEXT_PUBLIC_MARTIN_SERVER_URL?.replace(/\/+$/, '')
+      const martinPromise: Promise<Dataset[]> = martinBaseUrl
+        ? (async () => {
+            const datasetsUrl = martinBaseUrl.includes('/tiles/index.json')
+              ? martinBaseUrl
+              : `${martinBaseUrl}/tiles/index.json`
 
-        if (!martinBaseUrl) {
-          console.warn('NEXT_PUBLIC_MARTIN_SERVER_URL not configured')
-          return
-        }
+            const localPortal = {
+              id: -1,
+              name: 'Organizational Datasets',
+              apiUrl: datasetsUrl,
+              dataManagementSystem: 'Other' as const,
+              countrySubdivision: null,
+              municipality: null,
+              group: 'Organizational' as const,
+            }
 
-        const datasetsUrl = martinBaseUrl.includes('/tiles/index.json')
-          ? martinBaseUrl
-          : `${martinBaseUrl}/tiles/index.json`
-        
-        const localPortal = {
-          id: -1,
-          name: 'Organizational Datasets',
-          apiUrl: datasetsUrl,
-          dataManagementSystem: 'Other' as const,
-          countrySubdivision: null,
-          municipality: null,
-          group: 'Organizational' as const,
-        }
-        
-        const organizationalDatasets = await fetchLocalDatasets(localPortal as any)
-        const visibleOrgDatasets = organizationalDatasets.filter(ds => datasetVisibleForOrg(ds, orgVisibility))
-        
-        // console.log(`Loaded ${visibleOrgDatasets.length} organizational datasets:`, 
-        //   visibleOrgDatasets.map(d => d.name))
-        
-        if (visibleOrgDatasets.length > 0) {
-          datasetDispatch({
-            type: 'SET_DATASETS',
-            payload: { datasets: visibleOrgDatasets },
+            try {
+              return await fetchLocalDatasets(localPortal as any)
+            }
+            catch (err) {
+              console.error('Failed to load Martin organizational datasets:', err)
+              return []
+            }
+          })()
+        : Promise.resolve([])
+
+      if (!martinBaseUrl) {
+        console.warn('NEXT_PUBLIC_MARTIN_SERVER_URL not configured — skipping Martin pre-load')
+      }
+
+      // The MinIO key prefix is the *session* organization (set server-side
+      // by the upload route), not orgVisibility.currentOrgId (which is
+      // path-derived and hardcoded for admin routes like /cdt).
+      const sessionOrgId = typeof org?.id === 'number'
+        ? org.id
+        : Number.parseInt(String(org?.id ?? ''), 10)
+      const minioPromise: Promise<Dataset[]> = Number.isFinite(sessionOrgId)
+        ? fetchOrganizationalMinioDatasets(sessionOrgId).catch((err) => {
+            console.error('Failed to load MinIO organizational datasets:', err)
+            return []
           })
-        } else {
-          console.warn('No organizational datasets found')
-        }
-      } catch (error) {
-        console.error('Failed to load organizational datasets:', error)
+        : Promise.resolve([])
+
+      const [martinDatasets, minioDatasets] = await Promise.all([martinPromise, minioPromise])
+      const combined = [...martinDatasets, ...minioDatasets]
+      const visibleOrgDatasets = combined.filter(ds => datasetVisibleForOrg(ds, orgVisibility))
+
+      if (visibleOrgDatasets.length > 0) {
+        datasetDispatch({
+          type: 'SET_DATASETS',
+          payload: { datasets: visibleOrgDatasets },
+        })
+      }
+      else {
+        console.warn('No organizational datasets found')
       }
     }
-    
+
     loadOrganizationalDatasets()
-  }, [datasetDispatch, orgVisibility])
+  }, [datasetDispatch, orgVisibility, org?.id])
 
   const nationalDatasets = national.datasets
   const subdivisionDatasets = subdivision.datasets
@@ -253,7 +277,6 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
 
   const currentTabLoading = React.useMemo(() => {
     switch (currentTab) {
-      case 'national':
       case 'national':
         return isLoadingNational
       case 'countrySubdivision':
@@ -288,7 +311,8 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
         return allDatasets.filter(ds => favouriteDatasets.some(fav => fav.name === ds.name))
       case 'organizational':
         return allDatasets.filter(ds => ds.group === 'Organizational')
-      case 'national':
+      case 'liveData':
+        return allDatasets.filter(ds => ds.portal?.live === true)
       case 'national':
         return nationalDatasets
       case 'countrySubdivision':
@@ -328,7 +352,13 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
         = appliedFilters.types.length === 0
           || appliedFilters.types.includes(dataset.type)
 
-      return matchesSubdivision && matchesMunicipality && matchesType
+      // Source filter (dataset.portal?.name, falling back to publisher)
+      const datasetSource = dataset.portal?.name ?? dataset.publisher
+      const matchesSource
+        = appliedFilters.sources.length === 0
+          || (datasetSource ? appliedFilters.sources.includes(datasetSource) : false)
+
+      return matchesSubdivision && matchesMunicipality && matchesType && matchesSource
     })
   }, [currentTabDatasets, searchTerm, appliedFilters])
 
@@ -423,7 +453,7 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
   // UI
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpenAction}>
-      <DialogContent className="h-screen sm:h-auto sm:max-h-[90vh] w-full max-w-full sm:max-w-[90vw] xl:max-w-[1200px] p-0 gap-0 overflow-hidden">
+      <DialogContent className="h-screen sm:h-[90vh] sm:max-h-[90vh] w-full max-w-full sm:w-[88vw] sm:max-w-[88vw] p-0 gap-0 overflow-hidden flex flex-col">
         {view === 'table' ? (
           <>
             <DialogHeader className="bg-background z-50 sticky top-0 p-6 flex flex-row flex-wrap justify-between items-end gap-2 text-left">
@@ -451,6 +481,15 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
                       appliedFilters={appliedFilters}
                       onFiltersChange={setAppliedFilters}
                     />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsAddPortalOpen(true)}
+                      title="Register a new open data portal"
+                    >
+                      <LR.Plus className="h-4 w-4 mr-1" />
+                      Add Portal
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -458,7 +497,7 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
                 <LR.X className="!h-4 !w-4" />
               </DialogClose>
             </DialogHeader>
-            <div className="relative flex flex-col h-[600px]">
+            <div className="relative flex flex-col flex-1 min-h-0">
               <Tabs value={currentTab} className="flex flex-col gap-0 h-full" onValueChange={handleTabChange}>
                 <div className="hidden md:!flex justify-between px-3 flex-shrink-0">
                   {' '}
@@ -478,6 +517,7 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
                     {showMunicipalTab && (
                       <TabsTrigger className="hover:text-foreground" value="municipal">{t('municipalTab')}</TabsTrigger>
                     )}
+                    <TabsTrigger className="hover:text-foreground" value="liveData">{t('liveDataTab')}</TabsTrigger>
                   </TabsList>
                 </div>
                 <TabsContent
@@ -612,6 +652,7 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
           </>
         )}
       </DialogContent>
+      <AddPortalDialog open={isAddPortalOpen} onOpenChange={setIsAddPortalOpen} />
     </Dialog>
   )
 }

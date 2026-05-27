@@ -54,8 +54,9 @@ export const BuildingsProvider: React.FC<React.PropsWithChildren> = ({ children 
   const [compareItems, setCompareItems] = React.useState<CompareItem[]>([])
   const [comparing, setComparing] = React.useState<boolean>(false)
 
-  // Add item to compare (max 3, FIFO)
-  const addItemToCompare = (item: CompareItem) => {
+  // Audit Phase 1.A (F-3): useCallback so the function identity is stable —
+  // otherwise the context value object changes every render and every consumer re-renders.
+  const addItemToCompare = React.useCallback((item: CompareItem) => {
     setCompareItems((current) => {
       if (current.some(i => i.id === item.id)) {
         return current
@@ -65,27 +66,28 @@ export const BuildingsProvider: React.FC<React.PropsWithChildren> = ({ children 
       }
       return [...current, item]
     })
-  }
+  }, [])
 
-  // Remove item from compare
-  const removeItemFromCompare = (itemId: string) => {
+  const removeItemFromCompare = React.useCallback((itemId: string) => {
     setCompareItems(current =>
       current.filter(i => i.id !== itemId),
     )
-  }
+  }, [])
+
+  // Audit Phase 1.A (F-3): memoize value. dispatch + setState setters are stable.
+  const value = React.useMemo(() => ({
+    state,
+    dispatch,
+    compareItems,
+    setCompareItems,
+    comparing,
+    setComparing,
+    addItemToCompare,
+    removeItemFromCompare,
+  }), [state, compareItems, comparing, addItemToCompare, removeItemFromCompare])
 
   return (
-    <BuildingsContext.Provider value={{
-      state,
-      dispatch,
-      compareItems,
-      setCompareItems,
-      comparing,
-      setComparing,
-      addItemToCompare,
-      removeItemFromCompare,
-    }}
-    >
+    <BuildingsContext.Provider value={value}>
       {children}
     </BuildingsContext.Provider>
   )

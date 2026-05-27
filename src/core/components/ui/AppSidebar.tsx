@@ -94,7 +94,7 @@ export function AppSidebar({ children, signOut }: AppSidebarProps) {
         <div className={`w-full flex flex-col ${sidebarState === 'expanded' ? 'items-center justify-center' : 'justify-center'}`}>
           {/*  Nav User */}
           <NavUser signOut={signOut} />
-          <Link href="/home" className={sidebarState === 'expanded' ? 'w-full' : ''} target="_blank" rel="noopener noreferrer">
+          <Link href="https://collabdt.org/" className={sidebarState === 'expanded' ? 'w-full' : ''} target="_blank" rel="noopener noreferrer">
             <Button
               title={isCollapsed ? t('home') : undefined}
               variant="ghost"

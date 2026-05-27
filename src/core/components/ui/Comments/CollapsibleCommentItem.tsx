@@ -3,7 +3,11 @@
 import * as React from 'react'
 import { usePermissions } from '../../../store'
 
-import { Button, Badge, Input } from '..'
+// Audit Phase 1.F (F-2c): direct file imports — `from '..'` lands at the
+// ui barrel which re-exports heavy modules (InfoSidebar, useFileUploadHandler).
+import { Button } from '../Button'
+import { Badge } from '../Badge'
+import { Input } from '../Input'
 import { Avatar } from '../Avatar'
 import { UserAvatar } from '../UserAvatar'
 import * as LR from 'lucide-react'

@@ -38,11 +38,12 @@ export default function RowActions({
   // Check if this specific dataset is in favourites
   const isFavourite = favouriteDatasets.some(item => item.name === dataset.name)
 
-  // derive instead of local state
-  const checked
-    = dataset.type === 'Organizational'
-      ? dataset.visible
-      : addedDatasets.some(d => d.name === dataset.name)
+  // "Checked" means the dataset is applied to the map. All dataset types —
+  // including Organizational (MinIO/Martin-hydrated uploads) — toggle their
+  // membership in addedDatasets, which is the only list OpenDataLayers renders.
+  // (Previously Organizational datasets toggled a `visible` flag on the
+  // available list, which nothing renders from, so they never appeared.)
+  const checked = addedDatasets.some(d => d.name === dataset.name)
 
   const handleApplyDataset = () => {
     if (!dataset) {
@@ -50,23 +51,8 @@ export default function RowActions({
       return
     }
 
-    // LOGIC FOR ONLY ORGANIZATIONAL DATASET FOR NOW
-    if (dataset.type == 'Organizational') {
-      const datasetId = dataset.id
-      if (dataset.visible) {
-        datasetsDispatch({ type: 'HIDE_DATASET_BY_ID', payload: { datasetId } })
-      }
-      else {
-        datasetsDispatch({ type: 'UNHIDE_DATASET_BY_ID', payload: { datasetId } })
-      }
-      return
-    }
-
-    // Trigger checkbox
     const isAdded = addedDatasets.some(d => d.name === dataset.name)
-    // setChecked(isAdded);
 
-    // TODO: Dataset action logic
     if (isAdded) {
       datasetsDispatch({
         type: 'REMOVE_DATASET_FROM_MAP',

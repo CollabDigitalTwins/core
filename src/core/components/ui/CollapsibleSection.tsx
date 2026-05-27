@@ -24,6 +24,9 @@ interface CollapsibleSectionProps {
   onToggleVisibility?: (visibility: boolean) => void
   addItemTitle?: string
   colour?: string
+  /** Extra buttons rendered in the header next to the chevron. Click events
+   *  on this content are not propagated to the section's collapse toggle. */
+  headerActions?: React.ReactNode
 }
 
 export function CollapsibleSection({
@@ -39,7 +42,8 @@ export function CollapsibleSection({
   onAddItem,
   onToggleVisibility,
   addItemTitle = 'Add item',
-  colour
+  colour,
+  headerActions,
 }: CollapsibleSectionProps) {
   const [isOpen, setIsOpen] = React.useState(defaultOpen)
   const prevCheckedRef = React.useRef(switchVariant?.checked)
@@ -63,8 +67,8 @@ export function CollapsibleSection({
   }, [switchVariant?.checked])
 
   return (
-    <div className="w-full min-h-0 flex flex-col" style={style}>
-      <div className="px-3 flex-shrink-0">
+    <div className="w-full min-h-0 flex flex-col p-2 pb-2 " style={style}>
+      <div className="flex-shrink-0">
         <div
           className="flex items-center overflow-hidden gap-2 cursor-pointer hover:bg-accent/50 rounded-md p-1 -m-1 transition-colors"
           onClick={(e) => {
@@ -94,6 +98,14 @@ export function CollapsibleSection({
 
           {/* Switch and chevron positioning */}
           <div className="flex items-center gap-2 ml-auto">
+            {headerActions && (
+              <div
+                className="flex items-center gap-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {headerActions}
+              </div>
+            )}
             {onAddItem && (
               <Button
                 size="sm"

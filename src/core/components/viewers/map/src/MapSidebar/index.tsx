@@ -4,6 +4,7 @@ import { TabSelector } from './TabSelector'
 import { MenusContext, usePermissions } from '../../../../../store'
 import { SidebarTabType } from '../../../../../store/Menus/reducer'
 import { FileTab } from './src/FileTab'
+import { LayersTab } from './src/LayersTab'
 // import { DatasetsTab } from './src/DatasetsTab'
 
 import { SettingsTab } from './src/SettingsTab'
@@ -32,6 +33,7 @@ export function MapSidebar() {
       }
     >
       {selectedTab === 'file' && ability.can('read', 'File') && <FileTab />}
+      {selectedTab === 'layers' && ability.can('read', 'File') && <LayersTab />}
       {selectedTab === 'communication' && ability.can('read', 'Comment') && <CommunicationTab />}
       {selectedTab === 'sensors' && ability.can('read', 'Sensor') && <SensorsTab />}
       {selectedTab === 'settings' && <SettingsTab />} 

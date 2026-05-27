@@ -88,6 +88,20 @@ export function useColumns<TData = Dataset>(): ColumnDef<TData>[] {
       meta: { columnClasses: '!hidden md:!table-cell whitespace-nowrap' } as ColumnMeta,
     },
     {
+      id: 'source',
+      accessorFn: (row: any) => row?.portal?.name ?? row?.publisher ?? '',
+      header: t('source'),
+      cell: ({ getValue }) => {
+        const value = (getValue() as string) || ''
+        return (
+          <div className="whitespace-nowrap max-w-[240px] truncate" title={value}>
+            {value}
+          </div>
+        )
+      },
+      meta: { columnClasses: '!hidden md:!table-cell whitespace-nowrap' } as ColumnMeta,
+    },
+    {
       accessorKey: 'type',
       header: t('type'),
       cell: ({ getValue }) => {

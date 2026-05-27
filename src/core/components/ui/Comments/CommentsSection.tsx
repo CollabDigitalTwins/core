@@ -3,7 +3,9 @@
 import * as React from 'react'
 import * as LR from 'lucide-react'
 import { BuildingsContext, MenusContext, ToolsContext, usePermissions } from '../../../store'
-import { CollapsibleSection, SearchInput } from '..'
+// Audit Phase 1.F (F-2c): direct file imports — bypass ui barrel.
+import { CollapsibleSection } from '../CollapsibleSection'
+import { SearchInput } from '../SearchInput'
 import { useTranslations } from 'next-intl'
 import { CollapsibleCommentItem } from './CollapsibleCommentItem'
 import { useComment, useComments } from '../../../hooks/comments/comments';

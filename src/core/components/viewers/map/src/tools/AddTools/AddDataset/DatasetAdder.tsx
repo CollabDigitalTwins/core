@@ -1,329 +1,350 @@
 'use client'
+
 import * as React from 'react'
-import {
-  LayerProps,
-} from 'react-map-gl/maplibre'
-import { DatasetsContext } from '../../../../../../../store'
-import { useTranslations } from 'next-intl'
+import { Upload } from 'lucide-react'
 
-// Sahadcn Components
-import { Button, Input, Label } from '../../../../../../ui/'
-
-import {
-  Table,
-  TableCell,
-  TableRow,
-} from '../../../../../../ui/Table'
-
-// Icons
-import * as LR from 'lucide-react'
-import type { Dataset } from '../../../../../../../types/datasetTypes'
+import { DatasetsContext, MapContext } from '../../../../../../../store'
+import { Button, Input } from '../../../../../../ui/'
 import { layerColorByName } from '../../../../utils/stringToColour'
-import type { AllGeoJSON } from '@turf/turf'
 import { DatasetGroup } from '../../../../../../../types/dbTypes'
+import type { Dataset } from '../../../../../../../types/datasetTypes'
+import { parseGeoJSON, type GeoJSONSummary } from '../../../../datasets/src/geojsonFile'
+import {
+  addWmsToMap,
+  detectSourceType,
+  extractWmsLayers,
+  loadVectorUrl,
+  nameFromUrl,
+  type UrlSourceType,
+} from '../../../../datasets/src/urlSources'
+import { uploadToPresignedUrl } from '../AddFile/utils/uploadToPresignedURLS'
 
-const getPointLayerProps = (sourceID: string, layerStyles): LayerProps => ({
-  id: `${sourceID}-points`,
-  type: 'circle',
-  filter: ['in', '$type', 'Point'],
-  paint: {
-    ...layerStyles, // override default values
-  },
-})
+/** Bucket uploaded org datasets land in (orgId prefix added server-side). */
+const DATASETS_BUCKET = 'pointclouds-demo'
 
-const getLineLayerProps = (sourceID: string, layerStyles): LayerProps => ({
-  id: `${sourceID}-lines`,
-  type: 'line',
-  source: 'all-geometries',
-  filter: ['in', '$type', 'LineString'],
-  paint: {
-    ...layerStyles,
-  },
-})
-
-const getPolygonLayerProps = (sourceID: string, layerStyles): LayerProps => ({
-  id: `${sourceID}-polygons`,
-  type: 'fill',
-  source: 'all-geometries',
-  filter: ['in', '$type', 'Polygon'],
-  paint: {
-    ...layerStyles,
-  },
-})
-
-enum GeojsonGeometry {
-  LINES = 'lines',
-  POLYGONS = 'polygons',
-  POINTS = 'points',
+/** Default per-geometry paint, persisted so reload hydration can restyle. */
+const DEFAULT_LAYER_STYLES = {
+  lineLayerStyle: { 'line-color': '#0d9488', 'line-width': 4 },
+  pointLayerStyle: { 'circle-color': '#0d9488', 'circle-radius': 8 },
+  polygonLayerStyle: { 'fill-color': '#0d9488', 'fill-opacity': 0.8 },
 }
 
-export const DatasetAdder = () => {
-  // Translation
-  const t = useTranslations('DatasetAdder')
+type PersistGeometry = 'points' | 'lines' | 'polygons'
 
-  const [selectedFile, setSelectedFile] = React.useState(null)
-  const [geometryTypeSelected, setGeometryTypeSelected] = React.useState(null)
-  const { state: datasetState, dispatch: datasetDispatch } = React.useContext(DatasetsContext)
-  const { datasets } = datasetState.datasets
+/** Pick the dominant geometry family for the persisted File row's layerType hint. */
+function dominantGeometry(summary: GeoJSONSummary): PersistGeometry {
+  let points = 0
+  let lines = 0
+  let polygons = 0
+  for (const [type, count] of Object.entries(summary.geometryTypes)) {
+    if (type.includes('Point')) points += count
+    else if (type.includes('LineString')) lines += count
+    else if (type.includes('Polygon')) polygons += count
+  }
+  if (polygons >= lines && polygons >= points) return 'polygons'
+  if (lines >= points) return 'lines'
+  return 'points'
+}
 
-  // at the top of your component
-  const [layerStyles, setLayerStyles] = React.useState({
-    lineLayerStyle: {
-      'line-color': '#0d9488',
-      'line-width': 4,
-    },
-    pointLayerStyle: {
-      'circle-color': '#0d9488',
-      'circle-radius': 8,
-    },
-    polygonLayerStyle: {
-      'fill-color': '#0d9488',
-      'fill-opacity': 0.8,
-    },
-  })
+interface Loaded {
+  sourceName: string
+  featureCollection: GeoJSON.FeatureCollection
+  summary: GeoJSONSummary
+  /** Present only for file sources — enables MinIO persistence on add. */
+  file?: File
+}
 
-  // handle the file selection
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      setSelectedFile(file)
+interface DatasetAdderProps {
+  onClose?: () => void
+}
+
+/**
+ * Add a dataset to the map — from a dropped/picked GeoJSON file, or from a
+ * pasted URL (GeoJSON, ArcGIS Feature Service, or WMS).
+ *
+ * Vector sources (file / GeoJSON URL / ArcGIS) are parsed client-side and
+ * registered into DatasetsContext; the existing OpenDataLayers renderer draws
+ * them. WMS is a raster overlay added straight to the map.
+ *
+ * File uploads are additionally persisted: the raw GeoJSON is uploaded to MinIO
+ * and a File row is created so the dataset re-hydrates on the next load (via
+ * minioDatasets.ts). URL/WMS imports are session-only — there is no file to
+ * persist.
+ */
+export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
+  const { dispatch: datasetDispatch } = React.useContext(DatasetsContext)
+  const { state: mapState } = React.useContext(MapContext)
+  const map = mapState.map.map
+
+  const [loaded, setLoaded] = React.useState<Loaded | null>(null)
+  const [error, setError] = React.useState<string | null>(null)
+  const [dragActive, setDragActive] = React.useState(false)
+
+  const [url, setUrl] = React.useState('')
+  const [urlType, setUrlType] = React.useState<UrlSourceType>('geojson')
+  const [wmsLayers, setWmsLayers] = React.useState('')
+  const [busy, setBusy] = React.useState(false)
+  const [saving, setSaving] = React.useState(false)
+
+  const handleFile = React.useCallback(async (file: File) => {
+    setError(null)
+    try {
+      const { featureCollection, summary } = parseGeoJSON(await file.text())
+      setLoaded({ sourceName: file.name, featureCollection, summary, file })
+    }
+    catch (e) {
+      setLoaded(null)
+      setError(e instanceof Error ? e.message : 'Failed to read file')
+    }
+  }, [])
+
+  const onDrop = React.useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setDragActive(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file) void handleFile(file)
+  }, [handleFile])
+
+  const handleUrlChange = (value: string) => {
+    setUrl(value)
+    if (!value.trim()) return
+    const detected = detectSourceType(value)
+    setUrlType(detected)
+    if (detected === 'wms') {
+      const layers = extractWmsLayers(value)
+      if (layers) setWmsLayers(layers)
     }
   }
 
-  // //how to read the file
-  // React.useEffect(() => {
-  //   if (selectedFile) {
-  //     const reader = new FileReader();
-  //     reader.onload = (event) => {
-  //       try {
-  //         const json = JSON.parse(event.target?.result as string);
-  //         console.log("Parsed JSON:", json);
-  //       } catch (e) {
-  //         console.error("Invalid JSON file", e);
-  //       }
-  //     };
-  //     reader.readAsText(selectedFile);
-  //   }
-  // }, [selectedFile]);
-
-  const handleAddDataset = () => {
-    if (!selectedFile) return
-    if (!geometryTypeSelected) return
-
-    let layerConstructor, styleConstructor
-    if (geometryTypeSelected === GeojsonGeometry.LINES) {
-      layerConstructor = getLineLayerProps
-      styleConstructor = layerStyles.lineLayerStyle
+  const loadFromUrl = React.useCallback(async () => {
+    const trimmed = url.trim()
+    if (!trimmed) return
+    setError(null)
+    setBusy(true)
+    try {
+      const { featureCollection, summary } = await loadVectorUrl(
+        trimmed,
+        urlType === 'arcgis' ? 'arcgis' : 'geojson',
+      )
+      setLoaded({ sourceName: nameFromUrl(trimmed), featureCollection, summary })
     }
-    else if (geometryTypeSelected === GeojsonGeometry.POINTS) {
-      layerConstructor = getPointLayerProps
-      styleConstructor = layerStyles.pointLayerStyle
+    catch (e) {
+      setLoaded(null)
+      setError(e instanceof Error ? e.message : 'Failed to load URL')
     }
-    else {
-      layerConstructor = getPolygonLayerProps
-      styleConstructor = layerStyles.polygonLayerStyle
+    finally {
+      setBusy(false)
     }
+  }, [url, urlType])
 
-    const newDatasetURL = URL.createObjectURL(selectedFile)
-    const randomID = Math.random() * 10_000_000
-
-    const layerColor = layerColorByName(String(randomID))
-
-    const getFields = async () => {
-      return []
+  const addWms = React.useCallback(() => {
+    const trimmed = url.trim()
+    if (!map) { setError('Open the Map viewer first.'); return }
+    if (!trimmed || !wmsLayers.trim()) { setError('A WMS URL and layer name are required.'); return }
+    try {
+      addWmsToMap(map, trimmed, wmsLayers.trim())
+      onClose?.()
     }
-    const getFeatures = async (): Promise<AllGeoJSON> => {
-      // TODO: Implement actual file reading and parsing logic here
-      return {
-        type: 'FeatureCollection',
-        features: [],
+    catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to add WMS layer')
+    }
+  }, [map, url, wmsLayers, onClose])
+
+  /**
+   * Upload the dropped/picked file to MinIO and create a File row so the
+   * dataset survives a reload. Best-effort: a failure leaves the dataset
+   * session-only rather than blocking the add.
+   */
+  const persistFile = React.useCallback(async (file: File, geometry: PersistGeometry) => {
+    const assetId = `${crypto.randomUUID()}.geojson`
+    const presignedRes = await fetch(
+      `/api/presigned-url-upload?asset=${encodeURIComponent(assetId)}&bucket=${DATASETS_BUCKET}`,
+    )
+    if (!presignedRes.ok) throw new Error(`presigned URL failed: ${presignedRes.status}`)
+    const { presignedUrl } = await presignedRes.json()
+    await uploadToPresignedUrl(presignedUrl, file)
+
+    const fileRow = {
+      type: 'map-file',
+      name: file.name,
+      assetId,
+      mimeType: 'application/geo+json',
+      extension: 'geojson',
+      sizeBytes: file.size,
+      tag: 'organizational-dataset',
+      isVisible: true,
+      description: JSON.stringify({
+        bucket: DATASETS_BUCKET,
+        geometryType: geometry,
+        layerStyles: DEFAULT_LAYER_STYLES,
+      }),
+    }
+    const fileRes = await fetch('/api/files/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fileRow),
+    })
+    if (!fileRes.ok) {
+      console.warn(`DatasetAdder: File row create returned ${fileRes.status}; dataset will be session-only`)
+    }
+  }, [])
+
+  const addToMap = React.useCallback(async () => {
+    if (!loaded) return
+    const name = loaded.sourceName.replace(/\.(geo)?json$/i, '') || loaded.sourceName
+    const featureCollection = loaded.featureCollection
+
+    // File sources persist to MinIO; URL/WMS imports are session-only.
+    if (loaded.file) {
+      setSaving(true)
+      try {
+        await persistFile(loaded.file, dominantGeometry(loaded.summary))
+      }
+      catch (e) {
+        console.warn('DatasetAdder: MinIO persistence failed; dataset will be session-only', e)
+      }
+      finally {
+        setSaving(false)
       }
     }
 
-    const newDataset: Dataset = {
-      id: String(randomID),
-      name: 'Test adding dataset',
+    const dataset: Dataset = {
+      id: `local-${Date.now()}`,
+      name,
       type: 'Organizational',
-      publisher: 'CDT',
+      publisher: loaded.file ? 'Organizational' : 'Local / URL',
       license: 'Unknown',
-      contact: 'CDT@cims.ca',
-      description:
-        'This is a test dataset that is added through the dataset adder',
-      dateReleased: 'Today',
-      dateUpdated: 'Today',
+      contact: '',
+      description: `Imported: ${loaded.sourceName}`,
       countrySubdivision: '',
-      municipality: 'Ottawa',
-      sourceUrl: newDatasetURL,
+      municipality: '',
       clickable: true,
+      visible: true,
       properties: {},
-      getFeatures,
-      getFields,
+      getFeatures: async () => featureCollection,
+      getFields: async () => [],
       dataManagementSystem: 'other',
       datasetType: 'GeoJSON',
       group: DatasetGroup.Organizational,
-      layerColor,
+      layerColor: layerColorByName(name),
     }
 
-    datasetDispatch({ type: 'ADD_DATASET', payload: { dataset: newDataset } })
-    // reset fields
-    setSelectedFile(null)
-    setGeometryTypeSelected(null)
-  }
+    datasetDispatch({ type: 'ADD_DATASET', payload: { dataset } })
+    datasetDispatch({ type: 'ADD_DATASET_TO_MAP', payload: { dataset } })
 
-  // handle style input selection
-  const handleChange = (
-    geomKey: keyof typeof layerStyles,
-    styleName: string,
-    rawValue: string | number,
-  ) => {
-    setLayerStyles({
-      ...layerStyles,
-      [geomKey]: {
-        ...layerStyles[geomKey],
-        [styleName]: rawValue,
-      },
-    })
-  }
+    const bbox = loaded.summary.bbox
+    if (map && bbox) {
+      map.fitBounds([[bbox[0], bbox[1]], [bbox[2], bbox[3]]], { padding: 48, duration: 800 })
+    }
+
+    setLoaded(null)
+    setError(null)
+    onClose?.()
+  }, [loaded, map, datasetDispatch, persistFile, onClose])
 
   return (
-    <div className="flex flex-col gap-2 mt-2 pointer-events-auto">
-      {!selectedFile && (
+    <div className="flex flex-col gap-3 mt-2">
+      {!loaded && (
         <>
-          <Label htmlFor="file-input">{t('fileLabel')}</Label>
-          <Input
-            id="file-input"
-            type="file"
-            accept=".geojson,application/geo+json"
-            className="cursor-pointer"
-            onChange={handleFileSelect}
+          <div
+            onDragOver={(e) => { e.preventDefault(); setDragActive(true) }}
+            onDragLeave={() => setDragActive(false)}
+            onDrop={onDrop}
+            className={`rounded-md border-2 border-dashed p-6 text-center text-sm transition-colors ${
+              dragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/30'
+            }`}
           >
-          </Input>
+            <Upload className="mx-auto mb-2 text-muted-foreground" size={24} />
+            <p className="text-muted-foreground">Drag &amp; drop a GeoJSON file here</p>
+            <label className="mt-2 inline-block cursor-pointer text-primary underline">
+              or browse
+              <input
+                type="file"
+                accept=".geojson,.json,application/geo+json,application/json"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) void handleFile(file)
+                }}
+              />
+            </label>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="h-px flex-1 bg-border" />
+            or paste a URL
+            <span className="h-px flex-1 bg-border" />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Input
+              placeholder="https://… (GeoJSON, ArcGIS FeatureServer, or WMS)"
+              value={url}
+              onChange={(e) => handleUrlChange(e.target.value)}
+            />
+            <div className="flex items-center gap-2">
+              <select
+                className="border border-input rounded p-1 text-sm bg-background"
+                value={urlType}
+                onChange={(e) => setUrlType(e.target.value as UrlSourceType)}
+              >
+                <option value="geojson">GeoJSON</option>
+                <option value="arcgis">ArcGIS Feature Service</option>
+                <option value="wms">WMS</option>
+              </select>
+
+              {urlType === 'wms'
+                ? (
+                    <>
+                      <Input
+                        placeholder="WMS layer name(s)"
+                        value={wmsLayers}
+                        onChange={(e) => setWmsLayers(e.target.value)}
+                      />
+                      <Button onClick={addWms} disabled={!url.trim() || !wmsLayers.trim()}>
+                        Add WMS
+                      </Button>
+                    </>
+                  )
+                : (
+                    <Button onClick={() => void loadFromUrl()} disabled={!url.trim() || busy}>
+                      {busy ? 'Loading…' : 'Load'}
+                    </Button>
+                  )}
+            </div>
+            {urlType === 'wms' && (
+              <p className="text-xs text-muted-foreground">
+                WMS is added as a raster overlay (not a dataset) — it won’t appear in “view datasets”.
+              </p>
+            )}
+          </div>
+
+          {error && <p className="text-sm text-red-600">{error}</p>}
         </>
       )}
 
-      {selectedFile && (
-        <div className="flex flex-col items-center gap-3">
-          <p className="text-xs text-muted-foreground break-words">
-            {t('dataset')}
-            {' '}
-            &quot;
-            <span className="break-all">{selectedFile.name}</span>
-            &quot;
-            {' '}
-            {t('selected')}
-          </p>
-          {/* Dataset default style setting */}
-          <div className="flex flex-row items-start gap-2 items-center">
-            <Label htmlFor="layer-type-select">{t('selectLayerLabel')}</Label>
-            <select
-              id="layer-type-select"
-              className="max-w-20 border border-gray-300 rounded p-1 text-sm"
-              value={geometryTypeSelected || ''}
-              onChange={e =>
-                setGeometryTypeSelected(e.target.value as GeojsonGeometry)}
-            >
-              <option value="" disabled>
-                {t('chooseLayerType')}
-              </option>
-              <option value={GeojsonGeometry.POINTS}>{t('points')}</option>
-              <option value={GeojsonGeometry.LINES}>{t('lines')}</option>
-              <option value={GeojsonGeometry.POLYGONS}>{t('polygons')}</option>
-            </select>
-          </div>
-
-          {geometryTypeSelected
-            && (
-              <div className="w-full flex flex-col items-center">
-                <Table>
-                  {/* <TableRow className="h-8">
-                      <TableHead className="text-xs">Property Name</TableHead>
-                      <TableHead className="text-xs">Value</TableHead>
-                    </TableRow> */}
-                  {(
-                    Object.entries(layerStyles) as Array<
-                        [
-                          keyof typeof layerStyles,
-                          Record<string, string | number>,
-                        ]
-                      >
-                  ).filter(
-                    ([geomKey, styles]) => {
-                      if (geometryTypeSelected == GeojsonGeometry.POINTS) return geomKey == 'pointLayerStyle'
-                      else if (geometryTypeSelected == GeojsonGeometry.POLYGONS) return geomKey == 'polygonLayerStyle'
-                      else if (geometryTypeSelected == GeojsonGeometry.LINES) return geomKey == 'lineLayerStyle'
-                    },
-                  )
-
-                    .map(([geomKey, styles]) =>
-                      Object.entries(styles).map(([styleName, styleValue]) => {
-                        const isColor = styleName.includes('color')
-                        return (
-                          <TableRow
-                            key={`${geomKey}-${styleName}`}
-                            className="h-4"
-                          >
-                            <TableCell className="py-0 text-sm">
-                              {styleName}
-                            </TableCell>
-                            <TableCell>
-                              {isColor
-                                ? (
-                                    <div className="w-5 h-5 rounded-md overflow-hidden border border-gray-300 shadow-sm">
-                                      <Input
-                                        type="color"
-                                        value={styleValue as string}
-                                        onChange={e =>
-                                          handleChange(
-                                            geomKey,
-                                            styleName,
-                                            e.target.value,
-                                          )}
-                                        className="
-                        w-5 h-5 p-0 border-0 cursor-pointer
-                        [&::-webkit-color-swatch-wrapper]:p-0
-                        [&::-webkit-color-swatch]:border-0
-                        [&::-webkit-color-swatch]:rounded-none
-                      "
-                                      />
-                                    </div>
-                                  )
-                                : (
-                                    <Input
-                                      type="number"
-                                      min={0}
-                                      step={0.1}
-                                      value={Number(styleValue)}
-                                      onChange={e =>
-                                        handleChange(
-                                          geomKey,
-                                          styleName,
-                                          Number(e.target.value),
-                                        )}
-                                      className="w-16 text-sm p-1 border border-gray-300 rounded"
-                                    />
-                                  )}
-                            </TableCell>
-                          </TableRow>
-                        )
-                      }),
-                    )}
-                </Table>
-              </div>
-            )}
-          <div className="flex gap-1">
-            <Button
-              disabled={!geometryTypeSelected}
-              onClick={() => handleAddDataset()}
-              title={geometryTypeSelected ? '' : 'Select layer type to add'}
-            >
-              {t('addButton')}
+      {loaded && (
+        <div className="flex flex-col gap-2 text-sm">
+          <p className="font-medium break-all">{loaded.sourceName}</p>
+          <ul className="text-xs space-y-1 text-muted-foreground">
+            <li><strong>Features:</strong> {loaded.summary.featureCount}</li>
+            <li>
+              <strong>Geometry:</strong>{' '}
+              {Object.entries(loaded.summary.geometryTypes)
+                .map(([type, count]) => `${type} (${count})`)
+                .join(', ') || '—'}
+            </li>
+            <li>
+              <strong>Properties:</strong>{' '}
+              {loaded.summary.propertyKeys.join(', ') || '—'}
+            </li>
+          </ul>
+          <div className="flex gap-2">
+            <Button onClick={() => void addToMap()} disabled={saving}>
+              {saving ? 'Saving…' : 'Add to map'}
             </Button>
-            <Button
-              onClick={() => {
-                setSelectedFile(null)
-              }}
-            >
-              {t('cancelButton')}
+            <Button variant="ghost" disabled={saving} onClick={() => { setLoaded(null); setError(null) }}>
+              Choose another
             </Button>
           </div>
         </div>

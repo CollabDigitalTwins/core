@@ -5,7 +5,6 @@ import { CurrentWorld } from "./CurrentWorld";
 import { FitCamera } from "./FitCamera";
 import { CameraProjection } from "./CameraProjection";
 import { SpatialStructure } from "./SpatialStructure";
-import { ViewsList } from './ViewsList';
 
 export class LoadModels extends OBC.Component {
 
@@ -259,13 +258,8 @@ export class LoadModels extends OBC.Component {
             );
         }
 
-        const floorplanList = this.components.get(ViewsList);
-        if (floorplanList) {
-            await floorplanList.createFloorplanViews();
-        }
-
         if (this.spatialStructure) {
-            await this.spatialStructure.getSpatialStructure(modelId);
+            void this.spatialStructure.getSpatialStructure(modelId);
         }
 
         this.fragments?.core.update(true);

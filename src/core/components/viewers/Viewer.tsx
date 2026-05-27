@@ -2,18 +2,54 @@
 
 // Dependencies
 import * as React from 'react'
+import dynamic from 'next/dynamic'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { ViewerNames } from '../../types'
 import { BuildingsContext, MenusContext } from '../../store'
-import { BimViewer } from './bim/BimViewer'
-import { PointCloudViewer } from './pointcloud/PointCloudViewer'
-import { DataMenu } from './Data/DataMenu'
 import { MapViewer } from './map/MapViewer'
-import { SidebarTrigger } from '../ui'
+// Audit Phase 1.F (F-2c): direct file import to bypass the ui barrel
+// (`src/core/components/ui/index.ts`), which re-exports `InfoSidebar` and
+// `useFileUploadHandler` and other heavy modules. Viewer.tsx is on the
+// eager map route, so any pull-through-the-barrel here lands in the
+// /[instance] First Load JS.
+import { SidebarTrigger } from '../ui/Sidebar'
 import { UserSettings } from '../settings'
 import { Toolbar } from '../Toolbar'
 import { switchLanguage } from '../../utils/utils'
 import { Organization } from '../../types/dbTypes'
+
+// Audit Phase 1.A (F-1): code-split heavy viewers. BimViewer pulls in
+// ~456 KB gzipped of @thatopen/*; PointCloudViewer pulls in the Potree
+// loader stack. Both are loaded only when the user actually selects them,
+// so map-only sessions never pay their cost. MapViewer stays statically
+// imported because every user lands on it.
+const BimViewer = dynamic(
+  () => import('./bim/BimViewer').then(m => ({ default: m.BimViewer })),
+  { ssr: false, loading: () => <ViewerLoadingFallback label="Loading BIM viewer…" /> },
+)
+const PointCloudViewer = dynamic(
+  () => import('./pointcloud/PointCloudViewer').then(m => ({ default: m.PointCloudViewer })),
+  { ssr: false, loading: () => <ViewerLoadingFallback label="Loading point cloud viewer…" /> },
+)
+
+// Audit Phase 1.B (F-13): DataMenu transitively imports FilePreview which
+// imports BimViewer directly (not via the dynamic wrapper above) — so the
+// previous static import of DataMenu re-introduced @thatopen + three/webgpu
+// into the eager bundle. Now lazy alongside BimViewer / PointCloudViewer.
+// DataMenu is only rendered when the user picks viewer=buildings|sites|
+// files|land|infrastructure|extensions|users, so map-only sessions skip it.
+const DataMenu = dynamic(
+  () => import('./Data/DataMenu').then(m => ({ default: m.DataMenu })),
+  { ssr: false, loading: () => <ViewerLoadingFallback label="Loading data…" /> },
+)
+
+function ViewerLoadingFallback({ label }: { label: string }) {
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888' }}>
+      {label}
+    </div>
+  )
+}
 
 interface ViewerProps {
   organization: Organization

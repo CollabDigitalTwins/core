@@ -1,7 +1,7 @@
 {
-  "name": "@CollabDigitalTwins/core",
-  "version": "0.0.0",
-  "description": "CDT Core will contains all the core technology for you CDT platform",
+  "name": "@collabdt/core",
+  "version": "0.0.1",
+  "description": "CDT Core contains all the core technology for your CDT platform",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -10,8 +10,15 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js"
     }
   },
+  "sideEffects": [
+    "**/*.css"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -45,8 +52,13 @@
   },
   "homepage": "https://github.com/CollabDigitalTwins/core#readme",
   "peerDependencies": {
+    "@thatopen/components": "~3.4.0",
+    "@thatopen/components-front": "~3.4.0",
+    "@thatopen/fragments": "~3.4.0",
+    "@thatopen/ui": "~3.4.0",
+    "@thatopen/ui-obc": "~3.4.0",
     "framer-motion": "^12.0.0",
-    "lucide-react": "^0.500.0",
+    "lucide-react": ">=0.500.0",
     "maplibre-gl": "^5.0.0",
     "next": "^15.0.0",
     "next-auth": "^5.0.0-beta.0",
@@ -57,19 +69,36 @@
     "react-map-gl": "^8.0.0",
     "sonner": "^2.0.0",
     "swr": "^2.0.0",
-    "three": "0.175.0"
+    "three": ">=0.175.0",
+    "web-ifc": ">=0.0.72"
   },
-  "devDependencies": {
-    "@auth/prisma-adapter": "^2.10.0",
-    "@aws-sdk/client-s3": "^3.830.0",
-    "@aws-sdk/s3-request-presigner": "^3.830.0",
+  "peerDependenciesMeta": {
+    "@thatopen/components": {
+      "optional": true
+    },
+    "@thatopen/components-front": {
+      "optional": true
+    },
+    "@thatopen/fragments": {
+      "optional": true
+    },
+    "@thatopen/ui": {
+      "optional": true
+    },
+    "@thatopen/ui-obc": {
+      "optional": true
+    },
+    "web-ifc": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@casl/ability": "^6.7.5",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@lucide/lab": "^0.1.2",
     "@mapbox/vector-tile": "^2.0.4",
-    "@next/eslint-plugin-next": "^15.4.5",
-    "@prisma/client": "6",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-avatar": "^1.1.4",
@@ -91,76 +120,71 @@
     "@radix-ui/react-toggle-group": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.8",
     "@radix-ui/react-visually-hidden": "^1.1.2",
-    "@semantic-release/github": "^11.0.3",
-    "@stylistic/eslint-plugin": "^5.2.2",
     "@tanstack/react-table": "^8.21.3",
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^6.6.4",
-    "@testing-library/react": "^16.3.0",
-    "@thatopen/components": "~3.2.0",
-    "@thatopen/components-front": "~3.2.0",
-    "@thatopen/fragments": "~3.2.0",
-    "@thatopen/ui": "~3.2.0",
-    "@thatopen/ui-obc": "~3.2.0",
     "@turf/turf": "^7.2.0",
-    "@types/jest": "^30.0.0",
-    "@types/memjs": "^1.3.3",
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "@casl/ability": "^6.8.0",
-    "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
-    "dotenv": "^17.2.1",
     "dxf-viewer": "^1.0.42",
+    "jspdf": "^4.2.1",
+    "maplibre-gl-measures": "^0.0.16",
+    "memjs": "^1.3.2",
+    "pbf": "^4.0.1",
+    "potree": "^0.1.0",
+    "potree-cdt": "^0.0.1",
+    "proj4": "^2.15.0",
+    "react-day-picker": "^9.8.0",
+    "react-google-recaptcha": "^3.1.0",
+    "recharts": "^3.7.0",
+    "tailwind-merge": "^3.2.0",
+    "three-viewport-gizmo": "^2.2.0"
+  },
+  "devDependencies": {
+    "@next/eslint-plugin-next": "^15.4.5",
+    "@stylistic/eslint-plugin": "^5.2.2",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.6.4",
+    "@testing-library/react": "^16.3.0",
+    "@thatopen/components": "~3.4.0",
+    "@thatopen/components-front": "~3.4.0",
+    "@thatopen/fragments": "~3.4.0",
+    "@thatopen/ui": "~3.4.0",
+    "@thatopen/ui-obc": "~3.4.0",
+    "@types/geojson": "^7946.0.14",
+    "@types/jest": "^30.0.0",
+    "@types/memjs": "^1.3.3",
+    "@types/node": "^20",
+    "@types/proj4": "^2.5.5",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/react-google-recaptcha": "^2.1.9",
     "eslint": "^9.32.0",
     "eslint-config-next": "^15.3.1",
     "eslint-formatter-summary": "^2.0.2",
     "eslint-plugin-sonarjs": "^3.0.4",
     "eslint-plugin-unicorn": "^60.0.0",
-    "framer-motion": "^12.23.25",
+    "framer-motion": "^12.23.24",
+    "geojson": "^0.5.0",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
-    "jspdf": "^4.2.1",
-    "logger": "^0.0.1",
     "lucide-react": "^0.503.0",
     "maplibre-gl": "^5.7.3",
-    "maplibre-gl-measures": "^0.0.16",
-    "memjs": "^1.3.2",
-    "next": "^15.3.1",
+    "next": "15.5.13",
     "next-auth": "^5.0.0-beta.29",
     "next-intl": "^4.3.4",
     "next-themes": "^0.4.6",
     "postcss": "^8",
-    "potree": "^0.1.0",
-    "potree-cdt": "^0.0.1",
-    "prisma": "^6.13.0",
-    "proj4": "^2.15.0",
     "react": "^19.1.0",
-    "react-day-picker": "^9.8.0",
-    "react-google-recaptcha": "^3.1.0",
     "react-dom": "^19.1.0",
     "react-map-gl": "^8.0.4",
-    "recharts": "^3.8.1",
-    "semantic-release": "^24.2.7",
     "sonner": "^2.0.5",
-    "swr": "^2.3.3",
-    "tailwind-merge": "^3.2.0",
+    "swr": "^2.4.0",
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
-    "three": "0.175.0",
-    "three-viewport-gizmo": "^2.2.0",
-    "ts-node": "^10.9.2",
+    "three": "0.184.0",
     "tsup": "^8.5.0",
     "typescript": "^5.9.3",
-    "web-ifc": "0.0.72",
-    "winston": "^3.17.0"
-  },
-  "prisma": {
-    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts",
-    "schema": "prisma/schema.prisma"
+    "web-ifc": "0.0.77"
   }
 }

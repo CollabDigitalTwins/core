@@ -14,6 +14,7 @@ export const VALID_CAPABILITIES = [
   'jobs',
   'commands',
   'widgets',
+  'map.legends',
 ] as const
 
 export type PluginCapability = typeof VALID_CAPABILITIES[number]
@@ -116,6 +117,27 @@ export interface WidgetRegistration {
   height?: string
 }
 
+export interface LegendRow {
+  label: string
+  color: string
+  count?: number
+}
+
+export interface LegendRegistration {
+  id: string
+  title: string
+  // Called by <MapLegendHost> on each render. Re-runs when the plugin's live
+  // store changes (live counts) and reads the plugin's enabled flag (active).
+  // active:false ⇒ host omits this section.
+  useLegend: () => {
+    active: boolean
+    // Overrides registration.title when set (e.g. a city-scoped label). Host resolves title ?? registration.title.
+    title?: string
+    unavailable?: boolean
+    rows: LegendRow[]
+  }
+}
+
 // --- Capability → registration type map ---
 // Adding a new contribution point: add one entry here, define the type above,
 // add a consumer that calls `registry.getAll('your.key')`. No host changes.
@@ -132,6 +154,7 @@ export interface CapabilityRegistry {
   'jobs': JobRegistration
   'commands': CommandRegistration
   'widgets': WidgetRegistration
+  'map.legends': LegendRegistration
 }
 
 // Compile-time assertion: VALID_CAPABILITIES and keyof CapabilityRegistry must stay in sync.

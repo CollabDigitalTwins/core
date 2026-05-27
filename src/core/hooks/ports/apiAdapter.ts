@@ -24,6 +24,7 @@ export interface ApiAdapter {
     //Open Data Portals
     listOpenDataPortals(): Promise<OpenDataPortal[]>;
     getOpenDataPortal(id: number): Promise<OpenDataPortal | null>;
+    createOpenDataPortal(input: Partial<OpenDataPortal>): Promise<OpenDataPortal>;
     listOpenDataPortalsByMunicipality(municipality: string): Promise<OpenDataPortal[]>;
     listOpenDataPortalsByMunicipalityAndCountrySubdivision(municipality: string, countrySubdivision: string): Promise<OpenDataPortal[]>;
     listOpenDataPortalsByCountrySubdivision(countrySubdivision: string): Promise<OpenDataPortal[]>;

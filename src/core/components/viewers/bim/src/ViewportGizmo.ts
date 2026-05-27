@@ -16,6 +16,10 @@ export class ViewportGizmo extends OBC.Component implements OBC.Disposable {
 
   set enabled(value: boolean) {
     this._enabled = value
+    const gizmoDom = (this.gizmo as any)?.domElement
+    if (gizmoDom) {
+      gizmoDom.style.pointerEvents = this._enabled ? 'auto' : 'none'
+    }
   }
 
   private _labels = {
@@ -35,6 +39,18 @@ export class ViewportGizmo extends OBC.Component implements OBC.Disposable {
     front: string
     back: string
   }) {
+    const labelsChanged =
+      this._labels.top !== labels.top ||
+      this._labels.right !== labels.right ||
+      this._labels.bottom !== labels.bottom ||
+      this._labels.left !== labels.left ||
+      this._labels.front !== labels.front ||
+      this._labels.back !== labels.back
+
+    if (!labelsChanged) {
+      return
+    }
+
     this._labels = labels
     // If gizmo is already created, recreate it with new labels
     if (this.gizmo) {
@@ -46,6 +62,8 @@ export class ViewportGizmo extends OBC.Component implements OBC.Disposable {
   private camera: OBC.OrthoPerspectiveCamera | null = null
   private world: OBC.World | null = null
   private gizmo: ThreeViewportGizmo | null = null
+  private restoreRenderHook: (() => void) | null = null
+  private isRenderingFromHook = false
 
   constructor(components: OBC.Components) {
     super(components)
@@ -56,6 +74,10 @@ export class ViewportGizmo extends OBC.Component implements OBC.Disposable {
   }
 
   add() {
+    if (this.gizmo) {
+      return
+    }
+
     if (this.camera && this.world && this.world.renderer) {
       const gizmoConfig = this.getGizmoConfig()
 
@@ -66,6 +88,8 @@ export class ViewportGizmo extends OBC.Component implements OBC.Disposable {
       )
 
       if (this.gizmo) {
+        this.hookRenderer()
+
         // Store references to event handlers for proper cleanup
         const startHandler = () => {
           if (this.world?.camera.controls) {
@@ -87,7 +111,7 @@ export class ViewportGizmo extends OBC.Component implements OBC.Disposable {
         };
 
         const updateHandler = () => {
-          if (this.gizmo && this.world?.camera.controls) {
+          if (this.gizmo && this.enabled && this.world?.camera.controls) {
             this.world.camera.controls.getTarget(this.gizmo.target)
             this.gizmo.update()
           }
@@ -140,9 +164,14 @@ export class ViewportGizmo extends OBC.Component implements OBC.Disposable {
         (this.gizmo as any).removeEventListener('change', gizmoChangeHandler);
       }
 
-      // Remove camera controls event listener - check that camera is initialized
-      if (this.camera && this.world?.camera?.controls && controlsUpdateHandler) {
+      // Remove camera controls event listener
+      if (this.world?.camera?.controls && controlsUpdateHandler) {
         this.world.camera.controls.removeEventListener('update', controlsUpdateHandler);
+      }
+
+      if (this.restoreRenderHook) {
+        this.restoreRenderHook()
+        this.restoreRenderHook = null
       }
 
       // Remove the DOM element from the document
@@ -177,9 +206,7 @@ export class ViewportGizmo extends OBC.Component implements OBC.Disposable {
   }
 
   update() {
-    if (this.gizmo && this.enabled) {
-      this.gizmo.update()
-    }
+    // Keep this empty to avoid duplicate updates with controls 'update' events.
   }
 
   private getGizmoConfig() {
@@ -193,6 +220,35 @@ export class ViewportGizmo extends OBC.Component implements OBC.Disposable {
       left: {label: this._labels.left},
       front: {label: this._labels.front},
       back: {label: this._labels.back},
+    }
+  }
+
+  private hookRenderer() {
+    if (this.restoreRenderHook || !this.world?.renderer?.three) {
+      return
+    }
+
+    const renderer = this.world.renderer.three as any
+    const originalRender = renderer.render
+    const self = this
+
+    renderer.render = function (...args: any[]) {
+      const result = originalRender.apply(this, args)
+
+      if (self.gizmo && self.enabled && !self.isRenderingFromHook) {
+        self.isRenderingFromHook = true
+        try {
+          self.gizmo.render()
+        } finally {
+          self.isRenderingFromHook = false
+        }
+      }
+
+      return result
+    }
+
+    this.restoreRenderHook = () => {
+      renderer.render = originalRender
     }
   }
 }

@@ -52,27 +52,14 @@ export class ViewportGizmo {
   }
 
   add() {
-    console.log('[ViewportGizmo] add() called', {
-      hasViewer: !!this.viewer,
-      hasRenderer: !!this.viewer?.renderer,
-      hasCamera: !!this.viewer?.scene?.getActiveCamera?.()
-    });
-
     if (this.viewer && this.viewer.renderer && this.viewer.scene.getActiveCamera()) {
       const gizmoConfig = this.getGizmoConfig()
       const camera = this.viewer.scene.getActiveCamera()
-
-      console.log('[ViewportGizmo] Creating gizmo with config:', gizmoConfig);
-      console.log('[ViewportGizmo] Camera:', camera);
-      console.log('[ViewportGizmo] Renderer:', this.viewer.renderer);
-
       this.gizmo = new ThreeViewportGizmo(
         camera,
         this.viewer.renderer,
         gizmoConfig,
       )
-
-      console.log('[ViewportGizmo] Gizmo created:', this.gizmo);
 
       if (this.gizmo) {
         // Store references to event handlers for proper cleanup
@@ -94,9 +81,6 @@ export class ViewportGizmo {
             this.viewer.controls.setPosition?.(...position)
           }
         }
-
-        console.log('[ViewportGizmo] Setting up event handlers');
-
         // Store handlers on the gizmo for cleanup
         ;(this.gizmo as any)._startHandler = startHandler
         ;(this.gizmo as any)._endHandler = endHandler
@@ -114,12 +98,10 @@ export class ViewportGizmo {
 
         // Set initial pointer events based on enabled state
         const gizmoDom = (this.gizmo as any).domElement
-        console.log('[ViewportGizmo] Gizmo DOM element:', gizmoDom);
         if (gizmoDom) {
           // Disable clicking - only show as visual indicator
           gizmoDom.style.pointerEvents = 'none'
-          console.log('[ViewportGizmo] Gizmo pointer events disabled');
-        }
+          }
 
         // Start animation loop
         this.startAnimationLoop()

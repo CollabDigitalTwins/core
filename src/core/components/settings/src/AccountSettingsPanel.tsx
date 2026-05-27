@@ -1,6 +1,6 @@
 "use client"
 
-import { useSession } from 'next-auth/react'
+import { useSession, signIn } from 'next-auth/react'
 import * as React from 'react'
 import { useTranslations } from 'next-intl'
 import * as LR from 'lucide-react'
@@ -11,11 +11,13 @@ import { UserAvatar } from '../../ui/UserAvatar'
 import { useUploadFileToUser } from '../../../hooks/files/files'
 import { getFileExtension } from '../../../utils/utils'
 import { DescriptionListItem } from '../../ui/DescriptionList'
+import { useParams,useSearchParams  } from 'next/navigation'
 
 import ChangePassword from './ChangePassword'
 import SettingsSkeleton from './SettingsSkeleton'
 
-import { useUser, useUserRole } from '../../../hooks/users/users'
+import { useUser, useUserRole, useUsers } from '../../../hooks/users/users'
+import { useChangePassword, useVerifyPassword } from '../../../hooks/users/users';
 import { usePermissions } from '../../../store'
 
 
@@ -43,13 +45,72 @@ export default function AccountSettingsPanel() {
   const { ability } = usePermissions()
 
   const { data: session } = useSession()
+  const userId = session?.user?.id
   const { user, isLoading, updateUser, isMutating } = useUser(session?.user?.id || '')
   const { uploadFile: uploadUserImage } = useUploadFileToUser(user?.id ?? 0)
 
   const { userRole } = useUserRole(user?.id ? String(user.id) : '')
+  const [isGoogleLinked, setIsGoogleLinked] = React.useState(false)
+
+  //EXTRA SEC LAYER
+const [confirmPassword, setConfirmPassword] = React.useState('')
+const [showGoogleSecurityPrompt, setShowGoogleSecurityPrompt] = React.useState(false)
+const [googleAction, setGoogleAction] = React.useState<'link' | 'unlink' | null>(null)
+const { verifyPassword, isLoading: isVerifying, error: verifyError, isValid } = useVerifyPassword(userId)
+//EXTRA SEC LAYER
+React.useEffect(() => {
+
+  const fetchGoogleStatus = async () => {
+
+    try {
+      const res = await fetch('/api/google-link-status')
+
+      const data = await res.json()
+
+      setIsGoogleLinked(data.GoogleLinked)
+
+    } catch {
+      setIsGoogleLinked(false)
+    }
+  }
+
+  fetchGoogleStatus()
+
+}, [])
 
   const [isEditing, setIsEditing] = React.useState(false)
   const [editValues, setEditValues] = React.useState<EditValues>({})
+  const params = useParams()
+  const searchParams = useSearchParams()
+  const orgName = params.instance ?? 'canada'
+  const [googleError, setGoogleError] = React.useState(
+    searchParams.get('error')
+    )
+  const [googleSuccess, setGoogleSuccess] = React.useState(
+    searchParams.get('success')
+    )
+
+  React.useEffect(() => {
+  if(googleSuccess){
+    toast.success("Successfully Linked Google account")
+    setGoogleSuccess(null)
+
+  }
+
+  if (googleError) {
+
+    toast.error('Your Google account has already been linked to a different user.');
+    setGoogleError(null)
+  }
+
+    window.history.replaceState(
+      {},
+      '',
+      `/${orgName}?viewer=settings`
+    )
+
+
+}, [googleError, googleSuccess, orgName])
 
   const entries = React.useMemo<UserEntry[]>(() => {
     if (!user) return []
@@ -131,6 +192,69 @@ export default function AccountSettingsPanel() {
     }
   }
 
+  const handleGoogleLink = async () => {
+  try {
+    const resultt=await signIn('google', {
+      redirect:true,
+      redirectTo: '/${orgName}?&viewer=settings&error=provider_already_linked',
+    });
+
+  }
+  catch {
+    toast.error('Failed to start Google linking process')
+  }
+
+}
+
+const handleGoogleUnlink = async () => {
+
+  try {
+
+    const res = await fetch('/api/google-unlink', {
+      method: 'DELETE',
+    }) 
+
+    if (!res.ok) {
+      throw new Error()
+    }
+
+
+
+    toast.success('Google account unlinked successfully')
+    setIsGoogleLinked(false)
+
+  } catch {
+
+    toast.error('Failed to unlink Google account')
+  }
+}
+
+const handleGoogleSecurityConfirm = async () => {
+
+  try {
+
+    const isCurrentPasswordCorrect = await verifyPassword(confirmPassword)
+
+    if (!isCurrentPasswordCorrect) {
+      toast.error('Incorrect password')
+      return
+    }
+
+    setShowGoogleSecurityPrompt(false)
+
+    if (googleAction === 'link') {
+      await handleGoogleLink()
+    }
+
+    if (googleAction === 'unlink') {
+      await handleGoogleUnlink()
+    }
+
+  } catch {
+
+    toast.error('Verification failed')
+  }
+}
   return (
     <>
       {isLoading ? (
@@ -287,7 +411,91 @@ export default function AccountSettingsPanel() {
       )}
 
       {user && <Separator className={isEditing ? 'my-6' : ''} />}
+      {user && (
+  <div className="px-6 py-4 flex items-center justify-between gap-4">
+    <div>
+      <p className="font-medium">Google Account</p>
 
+      {isGoogleLinked ? (
+        <p className="text-sm text-muted-foreground">
+          Linked successfully
+        </p>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          No Google account linked
+        </p>
+      )}
+    </div>
+    {/* {googleError === 'provider_already_linked' && (
+  <div className="auth-pw-error">
+    Your Google account has already been linked to a different user.
+  </div>
+
+)} */}
+
+    <Button
+
+  // onClick={
+  //   isGoogleLinked
+  //     ? handleGoogleUnlink
+  //     : handleGoogleLink
+  // }
+  onClick={() => {
+  setGoogleAction(isGoogleLinked ? 'unlink' : 'link')
+  setShowGoogleSecurityPrompt(true)
+}}
+
+  variant="outline"
+>
+  {isGoogleLinked
+    ? 'Deactivate Google'
+    : 'Link Google Account'}
+</Button>
+  </div>
+)}
+
+  {showGoogleSecurityPrompt && (
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+    <div className="bg-background p-6 rounded-xl w-full max-w-md space-y-4 border">
+
+      <h2 className="text-lg font-semibold">
+        Confirm Password
+      </h2>
+
+      <p className="text-sm text-muted-foreground">
+        Please confirm your password to continue.
+      </p>
+
+      <Input
+        type="password"
+        value={confirmPassword}
+        onChange={(e) => setConfirmPassword(e.target.value)}
+        placeholder="Enter password"
+      />
+
+      <div className="flex justify-end gap-2">
+
+        <Button
+          variant="outline"
+          onClick={() => {
+            setShowGoogleSecurityPrompt(false)
+            setConfirmPassword('')
+          }}
+        >
+          Cancel
+        </Button>
+
+        <Button
+          onClick={handleGoogleSecurityConfirm}
+        >
+          Confirm
+        </Button>
+
+      </div>
+    </div>
+  </div>
+)}
       <ChangePassword isEditing={isEditing} />
     </>
   )

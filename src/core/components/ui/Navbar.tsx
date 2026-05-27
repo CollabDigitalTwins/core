@@ -14,7 +14,7 @@ import { useState, useEffect } from 'react'
 import { Button } from './Button'
 import LanguageToggle from './LanguageToggle'
 import { CdtIcon } from './Icons/CdtIcon'
-import type { Language } from '../../types/dbTypes'
+import { Language } from '../../types/dbTypes'
 
 interface NavbarProps {
   activeSection: string

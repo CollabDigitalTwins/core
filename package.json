@@ -27,9 +27,10 @@
     "config"
   ],
   "scripts": {
-    "build": "tsup && tsc -p tsconfig.build.json",
+    "build": "tsup && node scripts/build-types.mjs",
     "build:js": "tsup",
-    "build:types": "tsc -p tsconfig.build.json",
+    "build:types": "node scripts/build-types.mjs",
+    "build:types:strict": "tsc -p tsconfig.build.json",
     "dev": "tsup --watch",
     "lint": "eslint src --ext .ts,.tsx",
     "prepublishOnly": "npm run build",

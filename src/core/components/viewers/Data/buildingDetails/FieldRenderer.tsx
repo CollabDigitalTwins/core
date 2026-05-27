@@ -511,7 +511,7 @@ const FieldRenderer = ({
             <SelectValue placeholder="Select management type" />
           </SelectTrigger>
           <SelectContent>
-            {Object.values(BuildingType).map(type => (
+            {BuildingTypeEnum.map(type => (
               <SelectItem key={type} value={type}>
                 {type.replaceAll('_', ' ').replace('Plus', '+')}
               </SelectItem>

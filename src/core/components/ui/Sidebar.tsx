@@ -31,7 +31,7 @@ import { MenusContext } from '../../store/Menus/context'
 // Custom components
 import NavigationBar from '../TopNavigationBar'
 import { InfoSidebar } from './InfoSidebar'
-import { useIsMobile } from '../../../../src/core/hooks/ui/use-mobile'
+import { useIsMobile } from '../../hooks/ui/use-mobile'
 
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state'

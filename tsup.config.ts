@@ -25,13 +25,20 @@ export default defineConfig({
     // across ~500 multi-entry outputs; plain tsc emits per-file declarations
     // cheaply and mirrors this JS output structure.
     dts: false,
-    // splitting must be on for multi-entry so shared internal code is deduped
-    // into chunks instead of being copied into every output file.
-    splitting: true,
+    // Preserve modules — each source file becomes its own output file with
+    // imports kept intact, no shared chunks. Critical for 'use client'
+    // correctness: `esbuild-plugin-preserve-directives` keeps directives on
+    // individual files but does NOT propagate them onto shared chunks created
+    // by splitting, so any barrel import that pulled a 'use client' file
+    // through a shared chunk leaked into the server graph and Next refused
+    // it ("`ssr: false` is not allowed ... in Server Components"). With
+    // bundle:false there are no chunks, the consumer's bundler does the
+    // tree-shaking, and every directive lands on the right file.
+    splitting: false,
     sourcemap: true,
     clean: true,
     treeshake: false,
-    bundle: true,
+    bundle: false,
     // NOTE: the blanket `banner: { js: "'use client';" }` was removed. It marked
     // the entire bundle as a client boundary, which poisoned server-only exports
     // (memcache, dataset fetchers) imported by the app's API routes. Directives

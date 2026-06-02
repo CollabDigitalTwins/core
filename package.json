@@ -27,8 +27,8 @@
     "config"
   ],
   "scripts": {
-    "build": "tsup && node scripts/build-types.mjs",
-    "build:js": "tsup",
+    "build": "tsup && node scripts/copy-css.mjs && node scripts/build-types.mjs",
+    "build:js": "tsup && node scripts/copy-css.mjs",
     "build:types": "node scripts/build-types.mjs",
     "build:types:strict": "tsc -p tsconfig.build.json",
     "dev": "tsup --watch",

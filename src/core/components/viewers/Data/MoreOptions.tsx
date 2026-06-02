@@ -4,7 +4,7 @@
 import * as React from 'react'
 import { BuildingsContext, DatasetsContext, MapContext, MenusContext } from '../../../store'
 
-import type { Building, Site, User } from '../../../../../src/core/types/dbTypes'
+import type { Building, Site, User } from '../../../types/dbTypes'
 import { usePermissions } from '../../../store'
 
 // Shadcn Components

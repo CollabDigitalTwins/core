@@ -58,7 +58,7 @@ import { useBuildingHeaders, useInfrastructureHeaders, useSiteHeaders } from './
 import { DataTypes, DataTypesNames, ViewerNames } from '../../../types'
 import { useSession } from 'next-auth/react'
 import InfrastructureDetails from './infrastructureDetails/InfrastructureDetails'
-import { useCreateInfrastructure, useInfrastructures } from '../../../../../src/core/hooks/infrastructures/infrastructures'
+import { useCreateInfrastructure, useInfrastructures } from '../../../hooks/infrastructures/infrastructures'
 
 type DataMenuProps = {
   currentViewer: ViewerNames

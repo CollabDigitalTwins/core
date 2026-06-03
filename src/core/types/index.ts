@@ -13,6 +13,7 @@ export type {
   Site,
   OpenDataPortal,
   Infrastructure,
+  Permission,
 } from './dbTypes'
 export {
   ViewerNames,

@@ -58,9 +58,20 @@ export const CustomModelLayer = (
   let cameraRef: THREE.Camera | null = null
   let sceneRef: THREE.Scene | null = null
 
+  // Reused temps for hitTest raycasting — avoid per-call allocation (audit B3).
+  const _hitInv = new THREE.Matrix4()
+  const _hitNear = new THREE.Vector3()
+  const _hitFar = new THREE.Vector3()
+  const _hitDir = new THREE.Vector3()
+  const _raycaster = new THREE.Raycaster()
+
   const createCustomLayer = (): CustomLayerInterface => {
     // Track last applied rotation so we can apply delta increments (same as BimLayer)
     let lastAppliedRotation = modelFile.rotation ?? 0
+    // Layer-removed-mid-load guard (audit B4) + reused per-frame matrices (audit B2)
+    let disposed = false
+    const _m = new THREE.Matrix4()
+    const _l = new THREE.Matrix4()
 
     return {
       id: `model-${modelFile.id}`,
@@ -106,6 +117,9 @@ export const CustomModelLayer = (
         loader.load(
           modelFile.url!,
           (gltf) => {
+            // Layer was removed before the async load resolved — don't attach to a
+            // dead scene; let the gltf be GC'd (no GPU upload happened yet). (audit B4)
+            if (disposed) return
             gltf.scene.scale.setScalar(1)
 
             if (gltf.animations && gltf.animations.length > 0) {
@@ -164,12 +178,11 @@ export const CustomModelLayer = (
         const altitude = terrainAltitude + fileElevation
 
         const modelMatrix = map.transform.getMatrixForModel(modelOrigin, altitude)
-        const m = new THREE.Matrix4().fromArray(args.defaultProjectionData.mainMatrix)
-        const l = new THREE.Matrix4()
-          .fromArray(modelMatrix)
-          .scale(new THREE.Vector3(1, 1, 1))
-
-        this.camera.projectionMatrix = m.multiply(l)
+        // Reuse temps and write into the camera's own matrix — no per-frame
+        // allocation. The previous `.scale(1,1,1)` was an identity no-op. (audit B2)
+        _m.fromArray(args.defaultProjectionData.mainMatrix)
+        _l.fromArray(modelMatrix)
+        this.camera.projectionMatrix.multiplyMatrices(_m, _l)
 
         if (this.mixer) {
           this.mixer.update((this.clock as THREE.Clock).getDelta())
@@ -182,6 +195,13 @@ export const CustomModelLayer = (
       },
 
       onRemove() {
+        disposed = true
+        // Stop + release the animation mixer so it isn't left running/holding the
+        // scene after removal (audit B5).
+        if (this.mixer) {
+          ;(this.mixer as THREE.AnimationMixer).stopAllAction()
+          this.mixer = null
+        }
         if (this.scene) disposeThreeScene(this.scene as THREE.Scene)
         cameraRef = null
         sceneRef = null
@@ -203,19 +223,19 @@ export const CustomModelLayer = (
   const hitTest = (ndcX: number, ndcY: number): boolean => {
     if (!cameraRef || !sceneRef) return false
 
-    // Invert the combined VP*M matrix to go clip-space → model-space
-    const inverseMatrix = cameraRef.projectionMatrix.clone().invert()
+    // Invert the combined VP*M matrix to go clip-space → model-space.
+    // Reuses module-scope temps + a singleton raycaster (audit B3).
+    _hitInv.copy(cameraRef.projectionMatrix).invert()
 
     // Unproject near and far clip-space points into model space
-    const near = new THREE.Vector3(ndcX, ndcY, -1).applyMatrix4(inverseMatrix)
-    const far  = new THREE.Vector3(ndcX, ndcY,  1).applyMatrix4(inverseMatrix)
+    _hitNear.set(ndcX, ndcY, -1).applyMatrix4(_hitInv)
+    _hitFar.set(ndcX, ndcY, 1).applyMatrix4(_hitInv)
 
-    const direction = far.clone().sub(near).normalize()
+    _hitDir.copy(_hitFar).sub(_hitNear).normalize()
 
-    const raycaster = new THREE.Raycaster()
-    raycaster.set(near, direction)
+    _raycaster.set(_hitNear, _hitDir)
 
-    const intersects = raycaster.intersectObjects(sceneRef.children, true)
+    const intersects = _raycaster.intersectObjects(sceneRef.children, true)
     return intersects.length > 0
   }
 

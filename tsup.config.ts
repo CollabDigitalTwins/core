@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsup';
 import { preserveDirectivesPlugin } from 'esbuild-plugin-preserve-directives';
 
-export default defineConfig({
+export default defineConfig((opts) => ({
     // Multi-entry (file-per-output). This is what lets per-file 'use client'
     // directives survive: the barrel (src/index.ts) is a thin re-export layer
     // with NO directive, while each emitted file keeps its own. A server route
@@ -36,7 +36,11 @@ export default defineConfig({
     // tree-shaking, and every directive lands on the right file.
     splitting: false,
     sourcemap: true,
-    clean: true,
+    // Clean only for one-shot production builds. During --watch, NOT cleaning
+    // keeps dist populated across rebuilds so the copied CSS (copy-css.mjs in the
+    // dev/dev:link onSuccess) never disappears — kills the "Can't resolve ./auth.css"
+    // race where a rebuild wiped dist before CSS was re-copied.
+    clean: !opts.watch,
     treeshake: false,
     bundle: false,
     // NOTE: the blanket `banner: { js: "'use client';" }` was removed. It marked
@@ -157,4 +161,4 @@ export default defineConfig({
     esbuildOptions(options) {
         options.jsx = 'automatic';
     },
-});
+}));

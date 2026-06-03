@@ -189,6 +189,15 @@ export const BimLayer = () => {
             let onMapMoveEnd: () => void;
             const renderCamera = new THREE.PerspectiveCamera();
             const lodCamera    = new THREE.PerspectiveCamera();
+            // Reused per-frame matrices/vectors — render() must not allocate (audit B1).
+            const _vp = new THREE.Matrix4();
+            const _m = new THREE.Matrix4();
+            const _p = new THREE.Matrix4();
+            const _vm = new THREE.Matrix4();
+            const _camPos = new THREE.Vector3();
+            const _center = new THREE.Vector3();
+            const _lookTarget = new THREE.Vector3();
+            const _scaleVec = new THREE.Vector3(1, 1, 1);
 
             return {
                 id: bimFile.name,
@@ -264,24 +273,27 @@ export const BimLayer = () => {
                     const scaling       = 1;
 
                     // ── Build renderCamera (VP × M, for Three.js rendering) ───
+                    // Reused temps — render() allocates nothing (audit B1). Math is
+                    // identical to the prior allocate-every-frame version.
                     const modelMatrix = map.transform.getMatrixForModel(modelOrigin, modelAltitude);
-                    const VP = new THREE.Matrix4().fromArray(args.defaultProjectionData.mainMatrix);
-                    const M  = new THREE.Matrix4()
-                        .fromArray(modelMatrix)
-                        .scale(new THREE.Vector3(scaling, scaling, scaling));
+                    _scaleVec.set(scaling, scaling, scaling);
+                    _vp.fromArray(args.defaultProjectionData.mainMatrix);
+                    _m.fromArray(modelMatrix).scale(_scaleVec);
+                    renderCamera.projectionMatrix.multiplyMatrices(_vp, _m);   // VP × M, into the camera's own matrix
 
-                    renderCamera.projectionMatrix = VP.multiply(M);
-                    const P    = new THREE.Matrix4().fromArray(args.projectionMatrix);
-                    const invP = P.clone().invert();
-                    const VM   = new THREE.Matrix4().multiplyMatrices(invP, renderCamera.projectionMatrix);
-                    const camIFCPos = new THREE.Vector3().setFromMatrixPosition(VM.clone().invert());
+                    // camIFCPos = translation of (P⁻¹ · (VP×M))⁻¹
+                    _p.fromArray(args.projectionMatrix).invert();              // _p = P⁻¹
+                    _vm.multiplyMatrices(_p, renderCamera.projectionMatrix).invert();
+                    _camPos.setFromMatrixPosition(_vm);
+                    lodCamera.position.copy(_camPos);
 
-                    lodCamera.position.copy(camIFCPos);
-
-                    const lookTarget = model
-                        ? new THREE.Vector3(0, model.box.getCenter(new THREE.Vector3()).y, 0)
-                        : new THREE.Vector3(0, 0, 0);
-                    lodCamera.lookAt(lookTarget);
+                    if (model) {
+                        model.box.getCenter(_center);
+                        _lookTarget.set(0, _center.y, 0);
+                    } else {
+                        _lookTarget.set(0, 0, 0);
+                    }
+                    lodCamera.lookAt(_lookTarget);
                     lodCamera.fov    = args.fov * (180 / Math.PI) + 40;
                     lodCamera.aspect = map.getCanvas().width / map.getCanvas().height;
                     lodCamera.updateProjectionMatrix();  // rebuilds projectionMatrix from fov/aspect

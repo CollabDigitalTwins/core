@@ -145,5 +145,21 @@ export const FileModelLayer = ({
     return () => canvas.removeEventListener('contextmenu', handleContextMenu, true)
   }, [map])
 
+  // ── Teardown: remove all model layers + dispose the shared renderer on unmount
+  // (or map change). Previously this component never disposed its WebGLRenderer
+  // and left its CustomModelLayers on the map when it unmounted → renderer +
+  // scene/GPU-resource leak across viewer switches. (audit B9)
+  React.useEffect(() => {
+    return () => {
+      for (const model of loadedModelsRef.current) {
+        try { model.cleanUpFunction() } catch { /* layer or map may already be gone */ }
+      }
+      if (rendererRef.current) {
+        rendererRef.current.dispose()
+        rendererRef.current = null
+      }
+    }
+  }, [map])
+
   return null
 }

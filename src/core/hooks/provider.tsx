@@ -12,6 +12,11 @@ import { createSensorHooks } from "./sensors/createSensorHooks";
 import { createInfrastructureHooks } from './infrastructures/createInfrastructureHooks';
 import { createSensorTypeHooks } from "./sensorTypes/createSensorTypeHooks";
 
+// CoreHooksProvider takes an ApiAdapter (the object that knows how to fetch data) and
+// creates all the app's data-fetching hooks from it. Mount it once at the root so every
+// page has access. Inside any component, call useCoreHooks() to get the hooks, or import
+// from the per-domain convenience wrappers (e.g. useGetBuildings from hooks/buildings/buildings.ts).
+
 export type HooksBag = {
   building: ReturnType<typeof createBuildingHooks>;
   file: ReturnType<typeof createFileHooks>;

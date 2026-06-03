@@ -1,5 +1,29 @@
 import type { Building, DbFile, Site, OpenDataPortal, DatasetGroup, User, Role, Organization, Comment, Sensor, Infrastructure, SensorType } from '../../../core/types/dbTypes'
 
+/*
+ * ApiAdapter is the seam between the core package and whatever backend the app uses.
+ * The core package defines this interface; the app provides a concrete implementation.
+ *
+ * Data flow (browser → DB):
+ *   Component
+ *     → convenience hook  (e.g. useGetBuildings from hooks/buildings/buildings.ts)
+ *         Calls useCoreHooks() to retrieve the hook set that CoreHooksProvider already
+ *         built and stored in React context, then calls the specific hook from it.
+ *     → createXxxHooks(adapter)  (e.g. createBuildingHooks)
+ *         Wraps each ApiAdapter method in a SWR hook. Knows nothing about HTTP or Prisma,
+ *         it only calls methods on whatever adapter it was given.
+ *     → CoreHooksProvider  (hooks/provider.tsx)
+ *         Receives one ApiAdapter instance, calls every createXxxHooks factory once
+ *         (via useMemo), and stores the resulting hook sets in React context.
+ *     → ApiAdapter implementation  (e.g. httpAdapter in src/hooks/httpAdapter.ts)
+ *         The concrete browser implementation: makes fetch() calls to this app's
+ *         Next.js /api routes and returns plain objects shaped as core types.
+ *         Lives outside src/core/ because it knows about app-specific route URLs.
+ *     → Next.js API route  →  Prisma  →  prismaToCore adapter  →  JSON response
+ *
+ * To use the hooks with a different backend (e.g. tests, a different server),
+ * implement this interface and pass it to <CoreHooksProvider adapter={...}>.
+ */
 export interface ApiAdapter {
     //Buildings
     getBuildings(): Promise<Building[]>

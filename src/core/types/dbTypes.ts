@@ -390,6 +390,7 @@ export interface DbFile {
   potreeMetadataFileKey?: string | null
   pointCloudUploaded?: boolean | null
   pointCloudPotreeConverted?: boolean | null
+  bucket?: string | null
   fileCommentId?: number | null
   fileOrganizationId: number
   attachedFilesBuildingId?: number | null

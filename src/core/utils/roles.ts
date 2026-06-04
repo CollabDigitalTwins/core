@@ -11,4 +11,7 @@ export const getNormalizedRoleNames = (userRoles?: Role[] | null) => {
 }
 
 export const isAdminUser = (userRoles?: Role[] | null) =>
-  getNormalizedRoleNames(userRoles).includes(RoleNames.admin)
+  // getNormalizedRoleNames() lowercases every role name, so the needle must be
+  // lowercased too — RoleNames.admin is 'Admin' (capital A), which would never
+  // match the lowercased list. (Bug found via unit test; helper was unused.)
+  getNormalizedRoleNames(userRoles).includes(RoleNames.admin.toLowerCase())

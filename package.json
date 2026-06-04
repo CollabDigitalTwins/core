@@ -36,6 +36,8 @@
     "lint": "eslint src --ext .ts,.tsx",
     "prepublishOnly": "npm run build",
     "test": "jest",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
     "patch": "git add . && git commit -m \"$npm_config_m\" && git push && npm version patch",
     "minor": "git add . && git commit -m \"$npm_config_m\" && git push && npm version minor",
     "major": "git add . && git commit -m \"$npm_config_m\" && git push && npm version major"
@@ -190,6 +192,7 @@
     "three": "0.184.0",
     "tsup": "^8.5.0",
     "typescript": "^5.9.3",
+    "vitest": "^4.1.8",
     "web-ifc": "0.0.77"
   }
 }

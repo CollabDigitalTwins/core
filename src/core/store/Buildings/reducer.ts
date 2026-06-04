@@ -39,16 +39,17 @@ export const BuildingsReducer = (state: BuildingsState, action: BuildingsActions
       return {
         ...state,
         buildings: state.buildings.filter(building => building.id !== buildingId),
-        currentBuilding: state.building?.id === buildingId  
-          ? null 
-          : state.building,
+        // Fix: clear the selected `building` (the actual state field). Was writing a
+        // stray `currentBuilding` key, so the selection never cleared. (Bug found via
+        // unit test; action is currently unused → zero blast radius.)
+        building: state.building?.id === buildingId ? null : state.building,
       };
     case 'CLEAR-BUILDINGS':
       return {
         ...state,
         buildings: [],
-        currentBuilding: null,
-        newBuilding: null,
+        // Fix: clear `building` (was writing stray `currentBuilding`/`newBuilding` keys).
+        building: null,
       }
 
     default:

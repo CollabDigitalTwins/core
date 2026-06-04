@@ -99,7 +99,10 @@ export const MapReducer = (state: MapState, action: MapActions) => {
     case 'SET_BOUNDARY_GEOJSON':
       return {
         ...state,
-        boundaryGeojson: action.payload.geojson,
+        // Fix: write the real `geojson` state field. Was writing a stray
+        // `boundaryGeojson` key, so the geojson never updated. (Bug found via unit
+        // test; action is currently unused → zero blast radius.)
+        geojson: action.payload.geojson,
       }
     case 'SET_MAP':
       return {

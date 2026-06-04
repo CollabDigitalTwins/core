@@ -1,0 +1,8 @@
+﻿{
+  "permissions": {
+    "allow": [
+      "Grep",
+      "Read(c:\\Users\\nico1\\Desktop\\cims-digital-twin\\CollabDigitalTwins\\*)"
+    ]
+  }
+}

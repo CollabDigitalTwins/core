@@ -38,8 +38,8 @@
     "test": "jest",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
-    "patch": "git add . && git commit -m \"$npm_config_m\" && git push && npm version patch",
-    "minor": "git add . && git commit -m \"$npm_config_m\" && git push && npm version minor",
+    "patch": "git add . && git commit -m \"$npm_config_m\" && git push && npm version patch && npm publish",
+    "minor": "git add . && git commit -m \"$npm_config_m\" && git push && npm version minor && npm publish",
     "major": "git add . && git commit -m \"$npm_config_m\" && git push && npm version major"
   },
   "repository": {

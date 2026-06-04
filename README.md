@@ -1,6 +1,6 @@
 <div align="center">
   <br />
-  <img src="src/resources/cdt-logo-stroke.svg" alt="Collab Digital Twins Logo" height="72" />
+  <img src="cdt-logo.svg" alt="Collab Digital Twins Logo" height="72" />
   <br /><br />
 
   <h1>COLLAB DIGITAL TWINS</h1>

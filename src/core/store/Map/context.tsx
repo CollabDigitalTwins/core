@@ -47,7 +47,6 @@ export const MapContext = React.createContext<{
 
 export const MapProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState)
-  // Audit Phase 1.A (F-3): memoize value — see AppConfig/context.tsx note.
   const value = React.useMemo(() => ({ state, dispatch }), [state])
   return (
     <MapContext.Provider value={value}>

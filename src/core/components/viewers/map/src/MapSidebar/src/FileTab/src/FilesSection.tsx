@@ -12,10 +12,9 @@ import { useDeleteFile } from '../../../../../../../../hooks/files/files'
 import { mutate } from 'swr'
 import { LoadingSpinner } from '../../../../../../../ui/LoadingSpinner'
 
-// Audit Phase 1.C (F-19): hoist out of the JSX so the array reference is
-// stable across renders. Inline `options={['view','move','info','delete']}`
-// gets a new array identity on every render, defeating React.memo on
-// FileItemComponent.
+// Hoisted out of the JSX so the array reference is stable across renders.
+// Inline `options={['view','move','info','delete']}` gets a new array identity
+// on every render, defeating React.memo on FileItemComponent.
 const FILE_OPTIONS: import('../../../../../../../../types/global').FileAction[] = ['view', 'move', 'info', 'delete']
 
 const shouldExcludeByTag = (tag?: string | null): boolean => {
@@ -89,10 +88,10 @@ export function FilesSection({ files: _filesProp, query = '' }: FilesSectionProp
     fileDispatch({ type: 'EDIT_FILE', payload: { file } })
   }, [fileDispatch])
 
-  // Audit Phase 1.C (F-19b): useCallback so the onView prop identity stays
-  // stable across renders. Otherwise useFileActions' internal useCallback
-  // dep on onView re-fires every render, producing a new handleAction
-  // identity, which defeats React.memo on FileItemComponent.
+  // useCallback so the onView prop identity stays stable across renders.
+  // Otherwise useFileActions' internal useCallback dep on onView re-fires every
+  // render, producing a new handleAction identity, which defeats React.memo on
+  // FileItemComponent.
   const handleViewFile = React.useCallback((file: IFile, newVisibility: boolean) => {
     fileDispatch({
       type: newVisibility ? 'ADD_TO_MAP' : 'REMOVE_FROM_MAP',

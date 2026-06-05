@@ -19,8 +19,6 @@ import { CurrentLocation } from '../../../types/map'
 import { MapLayers } from './src/MapLayers'
 import SettingsButton from '../../ui/SettingsButton'
 
-// Hoisted out of the component body so the object identity is stable across
-// renders instead of being recreated per render.
 const CANADA_DEFAULTS = {
   maxBounds: [-141.0, 41.6751050889, -52.6480987209, 83.23324] as LngLatBoundsLike,
   zoom: 3,
@@ -43,8 +41,6 @@ export function MapViewer({ width = '100%', height = '100%', organization  }: Pr
   // Add state to track if map is loaded
   const [isMapLoaded, setIsMapLoaded] = React.useState(false)
 
-  // Memoize viewState so the Map sees a stable initialViewState prop across
-  // re-renders instead of a new object every render.
   const viewState = React.useMemo(() => {
     return searchParams.size === 0
       ? {
@@ -69,9 +65,8 @@ export function MapViewer({ width = '100%', height = '100%', organization  }: Pr
     [width, height],
   )
 
-  // Audit Phase 1.D (F-8): adaptive pixel ratio. Was hardcoded `2` which on a
-  // 1× DPR desktop monitor doubles the fragment-shader cost for zero visual
-  // gain. On phones with DPR 3-4 the cap of 2 stays effective.
+  // Adaptive pixel ratio. A hardcoded 2 doubled fragment-shader cost on 1× DPR
+  // desktops for zero visual gain; capping at 2 keeps phones (DPR 3-4) effective.
   const pixelRatio = React.useMemo(
     () => Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 2),
     [],
@@ -128,14 +123,13 @@ export function MapViewer({ width = '100%', height = '100%', organization  }: Pr
     setIsMapLoaded(true)
   }
 
-  // Audit Phase 0: enable the perf HUD by appending ?debug=1 to the URL.
-  // Never reaches production users unless they explicitly opt in.
+  // Enable the perf HUD by appending ?debug=1 to the URL. Never reaches
+  // production users unless they explicitly opt in.
   const isDebug = searchParams.get('debug') === '1'
 
-  // Audit Phase 1.D (F-10): useCallback so the onDblClick prop identity is
-  // stable across renders of MapViewer (was a new function each render,
-  // causing react-map-gl to detach/re-attach the listener). Also gated the
-  // console.log behind a dev-mode check.
+  // useCallback so the onDblClick prop identity is stable across renders of
+  // MapViewer; a new function each render caused react-map-gl to detach/re-attach
+  // the listener. The console.log is gated behind a dev-mode check.
   const onDblClick = React.useCallback((e) => {
     if (process.env.NODE_ENV === 'production') return
     const { lng, lat } = e.lngLat

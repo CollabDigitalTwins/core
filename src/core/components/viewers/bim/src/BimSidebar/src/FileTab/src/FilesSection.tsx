@@ -16,9 +16,8 @@ import { IDSManager } from '../../../../IDSManager'
 import { BCFTopicsManager } from '../../../../BCFTopicsManager'
 import { DbFile as IFile } from '../../../../../../../../types/dbTypes'
 
-// Audit Phase 1.C (F-19): hoist options arrays so the array identity is
-// stable across renders. Inline `options={[...]}` defeats React.memo on
-// FileItemComponent.
+// Hoist options arrays so the array identity is stable across renders.
+// Inline `options={[...]}` defeats React.memo on FileItemComponent.
 type FileAction = import('../../../../../../../../types/global').FileAction
 const OPTIONS_3D: FileAction[] = ['download', 'view', 'move', 'info', 'delete']
 const OPTIONS_NON_3D: FileAction[] = ['download', 'view', 'delete']

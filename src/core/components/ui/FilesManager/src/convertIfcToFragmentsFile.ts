@@ -1,8 +1,3 @@
-// Audit Phase 1.A (F-1d): isolated IFC->fragments conversion so the
-// @thatopen runtime can be code-split out of the eager bundle.
-//
-// This file is only imported via a dynamic `import()` inside
-// useFileUploadHandler. Map-only and non-IFC sessions never load it.
 import * as OBC from '@thatopen/components'
 import { IfcToFragments } from '../../../viewers/bim/src/IfcToFragments'
 

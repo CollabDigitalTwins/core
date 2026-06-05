@@ -2,7 +2,6 @@
 
 import * as React from 'react'
 import { BuildingsContext, MenusContext, ToolsContext } from '../../../store'
-// Audit Phase 1.F (F-2c): direct file imports — bypass ui barrel.
 import { Button } from '../Button'
 import { CollapsibleSection } from '../CollapsibleSection'
 import { SearchInput } from '../SearchInput'

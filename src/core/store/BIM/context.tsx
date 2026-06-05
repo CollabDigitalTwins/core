@@ -44,7 +44,6 @@ export const BimContext = React.createContext<{
 
 export const BimProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState)
-  // Audit Phase 1.A (F-3): memoize value — see AppConfig/context.tsx note.
   const value = React.useMemo(() => ({ state, dispatch }), [state])
   return (
     <BimContext.Provider value={value}>

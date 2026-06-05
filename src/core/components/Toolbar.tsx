@@ -7,12 +7,10 @@ import { ViewerNames } from '../types'
 import { mapToolbarTools } from '../components/viewers/map/src/tools/mapTools'
 import { ToolbarBody } from './ToolbarBody'
 
-// Audit Phase 1.A (F-1e): the BIM and PointCloud toolbar tool registries
-// transitively import @thatopen and Potree-adjacent code. Statically
-// importing them here (which Toolbar.tsx used to do, eagerly mounted by
-// Viewer.tsx) kept ~456 KB of @thatopen on the map route's first-load JS
-// even after F-1, F-1b, F-1c and F-1d. Dynamic-importing both per-viewer
-// toolbars finally cuts that path.
+// The BIM and PointCloud toolbar tool registries transitively import
+// @thatopen and Potree-adjacent code. Statically importing them here (eagerly
+// mounted by Viewer.tsx) kept ~456 KB of @thatopen on the map route's
+// first-load JS. Dynamic-importing both per-viewer toolbars cuts that path.
 //
 // MapToolbar stays inline (no separate file, no dynamic) because the map
 // is the default landing surface and every user pays its cost anyway.

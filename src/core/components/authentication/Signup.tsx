@@ -4,7 +4,7 @@ import * as React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { AuthPage } from './AuthPage'
-// Audit Phase 1.B (F-2b): direct file imports — see Signin.tsx for rationale.
+// Direct file imports (not the ui barrel) — see Signin.tsx for rationale.
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Eye, EyeClosed } from 'lucide-react'

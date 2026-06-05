@@ -114,13 +114,6 @@ export const MenusProvider: React.FC<React.PropsWithChildren> = ({ children }) =
         }
     }, [pathname, isAuthPage, state.menus.currentViewer])
 
-    // Audit Phase 1.A (F-3): memoize the value. This is the biggest
-    // single offender in the cascade — 17 fields, 9 useState hooks plus
-    // a reducer. Before this fix, every state change (e.g. toggling the
-    // sidebar) caused every consumer of MenusContext anywhere in the app
-    // to re-render — including map layer children, confirmed in the
-    // React Profiler baseline. dispatch + setState setters are
-    // reference-stable so they don't need to be in the deps.
     const value = React.useMemo(() => ({
         state,
         dispatch,

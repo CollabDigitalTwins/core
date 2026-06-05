@@ -16,8 +16,6 @@ import { useUploadFileToBuilding, useDeleteFile, useFile } from '../../../../../
 import { useFileUploadHandler, useFileDeleteHandler, FileItemComponent, useFileActions, useCommonFileUpload } from '../../../../../../../ui/FilesManager'
 import type { DbFile as DbFile } from '../../../../../../../../types/dbTypes'
 
-// Hoisted out of JSX so React.memo on FileItemComponent isn't defeated by
-// per-render array identity churn.
 const BIM_MODEL_OPTIONS: import('../../../../../../../../types/global').FileAction[] = ['view', 'ghost', 'move', 'info', 'delete']
 
 interface ModelsSectionProps {

@@ -1,5 +1,5 @@
 
-// Audit Phase 1.F (F-2c): direct file imports to bypass the ui barrel.
+// Direct file imports to bypass the ui barrel.
 import { Separator } from '../../ui/Separator';
 import { Skeleton } from '../../ui/Skeleton';
 

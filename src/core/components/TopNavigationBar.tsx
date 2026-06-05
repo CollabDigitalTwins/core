@@ -19,11 +19,11 @@ import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { ViewerNames } from '../types'
 import Geocoder from './viewers/map/src/Geocoder'
 
-// Audit Phase 1.A (F-1e): the BIM and PointCloud search tools used to be
-// statically imported at the top of this file, even though the JSX below
-// only renders them when the matching viewer is active. The static imports
-// pulled @thatopen and Potree-adjacent code into the eager bundle. Switching
-// to next/dynamic ties their code to the matching viewer's lazy chunk.
+// The BIM and PointCloud search tools used to be statically imported at the
+// top of this file, even though the JSX below only renders them when the
+// matching viewer is active. The static imports pulled @thatopen and
+// Potree-adjacent code into the eager bundle. Switching to next/dynamic ties
+// their code to the matching viewer's lazy chunk.
 const BIMSearchTool = dynamic(
   () => import('./viewers/bim/src/tools/BIMSearchTool'),
   { ssr: false },

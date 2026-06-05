@@ -32,9 +32,6 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     return build()
   }, [permissions])
 
-  // Audit Phase 1.A (F-3): memoize the value object. `ability` was
-  // already memoized above; the surrounding value object was not, so
-  // every consumer still re-rendered on every parent render.
   const value = useMemo(() => ({
     ability,
     permissions,

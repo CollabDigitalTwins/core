@@ -7,9 +7,6 @@ export interface IfcIconProps {
 }
 
 // IFC logo icon
-// Audit Phase 1.C (F-19): React.memo — pure presentational SVG, props are
-// primitive. Skips re-render whenever parent re-renders with the same props
-// (common in sidebar file lists where many IfcIcon instances render).
 export const IfcIcon = React.memo(function IfcIcon({ className = 'h-4 w-4', size, monochromatic = true }: IfcIconProps) {
   return (
     <svg

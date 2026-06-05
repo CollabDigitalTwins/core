@@ -72,6 +72,22 @@ export const CustomModelLayer = (
     let disposed = false
     const _m = new THREE.Matrix4()
     const _l = new THREE.Matrix4()
+    // Render-on-demand (audit C1/C2): cache terrain elevation off the per-frame
+    // path and only keep repainting while the camera recently moved or an
+    // animation is playing, so an idle map with a placed model stops re-rendering
+    // instead of pinning the main thread (the freeze after a flyTo to high zoom).
+    let cachedTerrainElev = 0
+    let lastMoveTime = performance.now()
+    const SETTLE_MS = 1000
+    let onMapMove: (() => void) | undefined
+    let onMapMoveEnd: (() => void) | undefined
+    const recomputeTerrainElev = () => {
+      const { lng, lat } = resolveModelCoordinates(modelFile)
+      if (!(lng === 0 && lat === 0)) {
+        const e = map.queryTerrainElevation([lng, lat])
+        if (e !== null && e !== undefined) cachedTerrainElev = e
+      }
+    }
 
     return {
       id: `model-${modelFile.id}`,
@@ -130,10 +146,25 @@ export const CustomModelLayer = (
             }
 
             scene.add(gltf.scene)
+            // Open the settle window so the just-loaded model paints, then idle.
+            lastMoveTime = performance.now()
+            recomputeTerrainElev()
+            map.triggerRepaint()
           },
           undefined,
           (error) => { console.error('Error loading model:', error) },
         )
+
+        // Track camera movement for render-on-demand (C2): keep repainting only
+        // during/just-after movement; refresh cached terrain elevation on settle.
+        onMapMove = () => { lastMoveTime = performance.now() }
+        onMapMoveEnd = () => {
+          lastMoveTime = performance.now()
+          recomputeTerrainElev()
+          map.triggerRepaint()
+        }
+        map.on('move', onMapMove)
+        map.on('moveend', onMapMoveEnd)
       },
 
       render(gl, args) {

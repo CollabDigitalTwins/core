@@ -184,6 +184,20 @@ export const BimLayer = () => {
             let model: FRAGS.FragmentsModel | null = null;
             let lastAppliedRotation = originalRotation;
             let lastLodUpdate = 0;
+            // Render-on-demand (audit C1/C2): cache terrain elevation off the
+            // per-frame path and only keep repainting while the camera recently
+            // moved, so an idle map with a placed model stops re-rendering instead
+            // of pinning the main thread (the freeze after a geocoder flyTo to z18).
+            let cachedTerrainElev = 0;
+            let lastMoveTime = performance.now();
+            const SETTLE_MS = 1000;
+            const recomputeTerrainElev = () => {
+                const { lng, lat } = extractPositionAndRotation(bimFile, building);
+                if (lng !== null && lat !== null) {
+                    const e = map.queryTerrainElevation([lng, lat]);
+                    if (e !== null && e !== undefined) cachedTerrainElev = e;
+                }
+            };
 
             let onMapMove: () => void;
             let onMapMoveEnd: () => void;
@@ -210,6 +224,10 @@ export const BimLayer = () => {
 
                     loadModel(buildingModel, fragments, scene, map, lodCamera).then(loaded => {
                         model = loaded;
+                        // Open the settle window so the just-loaded fragments stream
+                        // in and paint over the next frames, then idle.
+                        lastMoveTime = performance.now();
+                        recomputeTerrainElev();
                         map.triggerRepaint();
                     });
 
@@ -222,9 +240,14 @@ export const BimLayer = () => {
                         rendererRef.current.autoClear = false;
                     }
                     this.renderer = rendererRef.current;
-                    onMapMove = () => { /* render() loop handles updates during movement */ };
+                    // Track movement so render() knows when it may stop repainting (C2).
+                    onMapMove = () => { lastMoveTime = performance.now(); };
                     onMapMoveEnd = () => {
+                        lastMoveTime = performance.now();
                         if (model) fragments.core.update(true);
+                        // Terrain tiles for the new view are loaded once the camera
+                        // settles — refresh the cached elevation here, not per frame.
+                        recomputeTerrainElev();
                         map.triggerRepaint();
                     };
                     map.on("move",    onMapMove);
@@ -268,7 +291,14 @@ export const BimLayer = () => {
                     }
 
                     const modelOrigin   = [modelLongitude, modelLatitude] as LngLatLike;
-                    const terrainElev   = map.queryTerrainElevation([modelLongitude, modelLatitude]) ?? 0;
+                    // Use the cached terrain elevation (refreshed on moveend); query
+                    // live only while actively editing this model's position. Keeps
+                    // the expensive queryTerrainElevation off the hot path (audit
+                    // C1/C2 — the per-frame query was a main driver of the freeze
+                    // after flying to high zoom over loaded terrain).
+                    const terrainElev   = editingBimModelRef.current === bimFile.name
+                        ? (map.queryTerrainElevation([modelLongitude, modelLatitude]) ?? cachedTerrainElev)
+                        : cachedTerrainElev;
                     const modelAltitude = modelElevation + terrainElev;
                     const scaling       = 1;
 
@@ -306,7 +336,16 @@ export const BimLayer = () => {
                             lastLodUpdate = now;
                             fragments.core.update();
                         }
-                        map.triggerRepaint();
+                        // Render-on-demand (C2): only keep the frame loop alive while
+                        // the camera recently moved (settle window, for fragment
+                        // streaming) or this model is being edited. Idle map ⇒ no
+                        // self-scheduled repaints ⇒ main thread freed (no freeze).
+                        if (
+                            editingBimModelRef.current === bimFile.name ||
+                            now - lastMoveTime < SETTLE_MS
+                        ) {
+                            map.triggerRepaint();
+                        }
                     }
 
                     this.renderer.resetState();

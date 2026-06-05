@@ -5,12 +5,6 @@ import { Moon, Sun, Menu, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-// import { Button, LanguageToggle, CdtIcon, Language } from '@collabdt/core'
-// Audit Phase 1.B (F-2): the old `from '../..'` reached the components
-// barrel (src/core/components/index.ts) which re-exports `./viewers/*` —
-// causing Navbar's consumers (e.g. /instance-not-found) to ship the full
-// BIM / PointCloud / Map viewer trees (~1.5 MB gzipped extra). Imports
-// below are now from specific files so webpack only follows what's used.
 import { Button } from './Button'
 import LanguageToggle from './LanguageToggle'
 import { CdtIcon } from './Icons/CdtIcon'

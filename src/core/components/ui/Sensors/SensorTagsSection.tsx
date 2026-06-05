@@ -1,7 +1,6 @@
 'use client'
 
 import * as React from 'react'
-// Audit Phase 1.F (F-2c): direct file imports — bypass ui barrel.
 import { Button } from '../Button'
 import { Badge } from '../Badge'
 import { Input } from '../Input'

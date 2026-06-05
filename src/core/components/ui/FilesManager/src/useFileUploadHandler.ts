@@ -6,11 +6,8 @@ import { uploadFile as performUploadFile } from '../../uploadFile'
 import { getFileExtension } from '../../../../utils/utils'
 import { useBuilding } from '../../../../hooks/buildings/buildings'
 
-// Audit Phase 1.A (F-1d): the @thatopen and IfcToFragments dependencies
-// are NOT imported statically. They are pulled in via a dynamic import
-// inside the IFC branch of handleFileUpload below, so non-IFC sessions
-// (and sessions where this hook is loaded but never invoked with an IFC)
-// never load ~456 KB of @thatopen/* into the eager bundle.
+// @thatopen/IfcToFragments are imported dynamically in the IFC branch below
+// (not statically) to keep ~456 KB out of the eager bundle.
 
 interface UseFileUploadHandlerProps {
   buildingId: number

@@ -3,8 +3,6 @@
 import * as React from 'react'
 import { usePermissions } from '../../../store'
 
-// Audit Phase 1.F (F-2c): direct file imports — `from '..'` lands at the
-// ui barrel which re-exports heavy modules (InfoSidebar, useFileUploadHandler).
 import { Button } from '../Button'
 import { Badge } from '../Badge'
 import { Input } from '../Input'

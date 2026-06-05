@@ -19,8 +19,8 @@ import { CurrentLocation } from '../../../types/map'
 import { MapLayers } from './src/MapLayers'
 import SettingsButton from '../../ui/SettingsButton'
 
-// Audit Phase 1.D (F-4): hoist out of the component body so the object
-// identity is stable across renders. Was being recreated per render.
+// Hoisted out of the component body so the object identity is stable across
+// renders instead of being recreated per render.
 const CANADA_DEFAULTS = {
   maxBounds: [-141.0, 41.6751050889, -52.6480987209, 83.23324] as LngLatBoundsLike,
   zoom: 3,
@@ -43,8 +43,8 @@ export function MapViewer({ width = '100%', height = '100%', organization  }: Pr
   // Add state to track if map is loaded
   const [isMapLoaded, setIsMapLoaded] = React.useState(false)
 
-  // Audit Phase 1.D (F-4): memoize viewState so the Map sees a stable
-  // initialViewState prop across re-renders. Was recreated every render.
+  // Memoize viewState so the Map sees a stable initialViewState prop across
+  // re-renders instead of a new object every render.
   const viewState = React.useMemo(() => {
     return searchParams.size === 0
       ? {
@@ -63,7 +63,7 @@ export function MapViewer({ width = '100%', height = '100%', organization  }: Pr
         }
   }, [searchParams, organization])
 
-  // Audit Phase 1.D (F-4): memoize the inline style object that gets passed to <Map>.
+  // Memoize the inline style object that gets passed to <Map> for a stable prop identity.
   const mapContainerStyle = React.useMemo(
     () => ({ width, height, backgroundColor: 'black' }),
     [width, height],

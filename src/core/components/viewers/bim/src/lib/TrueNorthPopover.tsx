@@ -27,8 +27,9 @@ interface Props {
  * Compass-icon button + popover that lets the user set the building's
  * true north for floorplan views. Two ways to set it:
  *  1. Type a value 0-360 °.
- *  2. Click "Pick line", then click any line on the active floorplan —
- *     the line's bearing becomes the new north.
+ *  2. Click "Pick line", then draw a line by clicking two points on the
+ *     active floorplan — each point snaps to the nearest geometry vertex,
+ *     and the bearing between them becomes the new north (Esc cancels).
  *
  * The popover closes when the user starts a pick (so the canvas isn't
  * obscured) and stays in sync via the `northAngle` / `pickingNorth` props

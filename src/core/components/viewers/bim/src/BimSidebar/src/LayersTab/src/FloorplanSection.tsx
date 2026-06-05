@@ -117,9 +117,11 @@ export function FloorplanSection({ query = '' }: FloorplanSectionProps) {
     const fpEntry = entries.find((e) => e.id === entry.id)
     if (!fpEntry?.drawing) return
     const fileName = `${buildingName(fpEntry.modelId)}-${fpEntry.name}`
-    // Bake the building's true-north rotation into the exported geometry
-    // so the DXF matches the on-screen orientation.
-    exportDrawingToDxf(bimComponents, fpEntry.drawing, fileName, northAngle)
+    // Bake the on-screen orientation into the exported geometry. `northAngle`
+    // is the camera azimuth, which rotates the floorplan clockwise on screen;
+    // the DXF exporter rotates its image counter-clockwise, so we negate to
+    // make the DXF land in the same orientation the user sees.
+    exportDrawingToDxf(bimComponents, fpEntry.drawing, fileName, -northAngle)
   }
 
   const handleToggleLayer = (className: string, visible: boolean) => {

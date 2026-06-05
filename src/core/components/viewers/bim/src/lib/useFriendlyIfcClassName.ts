@@ -12,10 +12,14 @@ export function useFriendlyIfcClassName(): (className: string) => string {
 
   return React.useCallback(
     (className: string) => {
-      if (!className.startsWith('IFC') && tLayers.has(className)) {
-        return tLayers(className)
-      }
-      return className
+      if (className.startsWith('IFC')) return className
+      // The Fill/Cut group rows arrive fully qualified ("DrawingLayers.cut").
+      // Strip the namespace prefix so the lookup lands on the bare key ("cut")
+      // instead of resolving the dotted path as nested keys (which misses).
+      const key = className.startsWith('DrawingLayers.')
+        ? className.slice('DrawingLayers.'.length)
+        : className
+      return tLayers.has(key) ? tLayers(key) : className
     },
     [tLayers],
   )

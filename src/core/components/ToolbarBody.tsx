@@ -6,10 +6,10 @@ import { Tool } from '../types/tools'
 import ToolbarButton from './ui/ToolbarButton'
 import { SubmenuProvider } from './ToolbarSubmenu'
 
-// Audit Phase 1.A (F-1e): shared menubar wrapper used by the per-viewer
-// toolbars (MapToolbar inline in Toolbar.tsx, BimToolbar + PointCloudToolbar
-// in their respective viewer folders so they ride the viewer's lazy chunk).
-// Extracted from Toolbar.tsx to avoid duplicating the JSX across three sites.
+// Shared menubar wrapper used by the per-viewer toolbars (MapToolbar inline
+// in Toolbar.tsx, BimToolbar + PointCloudToolbar in their respective viewer
+// folders so they ride the viewer's lazy chunk). Extracted from Toolbar.tsx
+// to avoid duplicating the JSX across three sites.
 
 interface Props {
   viewer: string

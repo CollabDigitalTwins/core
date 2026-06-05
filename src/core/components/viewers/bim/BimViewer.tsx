@@ -186,12 +186,9 @@ export function BimViewer() {
             resizeObserver.observe(container);
             resizeObserverRef.current = resizeObserver;
 
-            // Audit Phase 1.E (F-18 / F-B6): the previous
-            // `window.addEventListener('resize', handleResize)` here had no
-            // matching removeEventListener — every BimViewer mount leaked a
-            // listener (Phase 0 baseline measured ~+9 listeners/min during
-            // active use). Removed entirely; the ResizeObserver above is
-            // sufficient for the redraw case.
+            // The ResizeObserver above is sufficient for redraws. A window
+            // 'resize' listener here previously leaked on every mount (no matching
+            // removeEventListener), so it was removed.
         }, []
     );
 

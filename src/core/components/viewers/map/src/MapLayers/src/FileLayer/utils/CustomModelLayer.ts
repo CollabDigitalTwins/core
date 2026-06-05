@@ -58,7 +58,7 @@ export const CustomModelLayer = (
   let cameraRef: THREE.Camera | null = null
   let sceneRef: THREE.Scene | null = null
 
-  // Reused temps for hitTest raycasting — avoid per-call allocation (audit B3).
+  // Reused temps for hitTest raycasting — avoid per-call allocation.
   const _hitInv = new THREE.Matrix4()
   const _hitNear = new THREE.Vector3()
   const _hitFar = new THREE.Vector3()
@@ -68,14 +68,14 @@ export const CustomModelLayer = (
   const createCustomLayer = (): CustomLayerInterface => {
     // Track last applied rotation so we can apply delta increments (same as BimLayer)
     let lastAppliedRotation = modelFile.rotation ?? 0
-    // Layer-removed-mid-load guard (audit B4) + reused per-frame matrices (audit B2)
+    // Layer-removed-mid-load guard + reused per-frame matrices
     let disposed = false
     const _m = new THREE.Matrix4()
     const _l = new THREE.Matrix4()
-    // Render-on-demand (audit C1/C2): cache terrain elevation off the per-frame
-    // path and only keep repainting while the camera recently moved or an
-    // animation is playing, so an idle map with a placed model stops re-rendering
-    // instead of pinning the main thread (the freeze after a flyTo to high zoom).
+    // Render-on-demand: cache terrain elevation off the per-frame path and only
+    // keep repainting while the camera recently moved or an animation is playing,
+    // so an idle map with a placed model stops re-rendering instead of pinning the
+    // main thread (this was the freeze after a flyTo to high zoom).
     let cachedTerrainElev = 0
     let lastMoveTime = performance.now()
     const SETTLE_MS = 1000
@@ -134,7 +134,7 @@ export const CustomModelLayer = (
           modelFile.url!,
           (gltf) => {
             // Layer was removed before the async load resolved — don't attach to a
-            // dead scene; let the gltf be GC'd (no GPU upload happened yet). (audit B4)
+            // dead scene; let the gltf be GC'd (no GPU upload happened yet).
             if (disposed) return
             gltf.scene.scale.setScalar(1)
 
@@ -155,7 +155,7 @@ export const CustomModelLayer = (
           (error) => { console.error('Error loading model:', error) },
         )
 
-        // Track camera movement for render-on-demand (C2): keep repainting only
+        // Track camera movement for render-on-demand: keep repainting only
         // during/just-after movement; refresh cached terrain elevation on settle.
         onMapMove = () => { lastMoveTime = performance.now() }
         onMapMoveEnd = () => {
@@ -205,12 +205,17 @@ export const CustomModelLayer = (
           : (modelFile.elevation ?? 0)
 
         const modelOrigin = [lng, lat] as LngLatLike
-        const terrainAltitude = map.queryTerrainElevation([lng, lat]) ?? 0
+        // Cached terrain elevation (refreshed on moveend); query live only while
+        // editing this model's position. Keeps queryTerrainElevation off the hot
+        // path — the per-frame query drove the high-zoom freeze.
+        const terrainAltitude = isEditing
+          ? (map.queryTerrainElevation([lng, lat]) ?? cachedTerrainElev)
+          : cachedTerrainElev
         const altitude = terrainAltitude + fileElevation
 
         const modelMatrix = map.transform.getMatrixForModel(modelOrigin, altitude)
         // Reuse temps and write into the camera's own matrix — no per-frame
-        // allocation. The previous `.scale(1,1,1)` was an identity no-op. (audit B2)
+        // allocation. The previous `.scale(1,1,1)` was an identity no-op.
         _m.fromArray(args.defaultProjectionData.mainMatrix)
         _l.fromArray(modelMatrix)
         this.camera.projectionMatrix.multiplyMatrices(_m, _l)
@@ -222,13 +227,20 @@ export const CustomModelLayer = (
         this.renderer.resetState()
         this.renderer.render(this.scene, this.camera)
 
-        map.triggerRepaint()
+        // Render-on-demand: keep the frame loop alive only while an animation is
+        // playing, the camera recently moved (settle window), or this model is
+        // being edited. Idle static model ⇒ no self-scheduled repaints ⇒ no freeze.
+        if (this.mixer || isEditing || performance.now() - lastMoveTime < SETTLE_MS) {
+          map.triggerRepaint()
+        }
       },
 
       onRemove() {
         disposed = true
+        if (onMapMove) map.off('move', onMapMove)
+        if (onMapMoveEnd) map.off('moveend', onMapMoveEnd)
         // Stop + release the animation mixer so it isn't left running/holding the
-        // scene after removal (audit B5).
+        // scene after removal.
         if (this.mixer) {
           ;(this.mixer as THREE.AnimationMixer).stopAllAction()
           this.mixer = null
@@ -255,7 +267,7 @@ export const CustomModelLayer = (
     if (!cameraRef || !sceneRef) return false
 
     // Invert the combined VP*M matrix to go clip-space → model-space.
-    // Reuses module-scope temps + a singleton raycaster (audit B3).
+    // Reuses module-scope temps + a singleton raycaster.
     _hitInv.copy(cameraRef.projectionMatrix).invert()
 
     // Unproject near and far clip-space points into model space

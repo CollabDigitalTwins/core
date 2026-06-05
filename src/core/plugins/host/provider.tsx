@@ -29,9 +29,8 @@ export function PluginHostProvider({ children }: { children: React.ReactNode }) 
     loadPlugins()
   }, [registry])
 
-  // Audit Phase 1.A (F-3): memoize the value object. `registry` was
-  // already memoized above but the surrounding value object was being
-  // recreated every render.
+  // Memoize the value object. `registry` is already memoized above but the
+  // surrounding value object was being recreated every render.
   const value = React.useMemo(() => ({ registry, ready }), [registry, ready])
 
   return (

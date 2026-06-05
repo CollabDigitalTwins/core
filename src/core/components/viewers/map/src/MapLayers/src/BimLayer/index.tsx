@@ -184,10 +184,10 @@ export const BimLayer = () => {
             let model: FRAGS.FragmentsModel | null = null;
             let lastAppliedRotation = originalRotation;
             let lastLodUpdate = 0;
-            // Render-on-demand (audit C1/C2): cache terrain elevation off the
-            // per-frame path and only keep repainting while the camera recently
-            // moved, so an idle map with a placed model stops re-rendering instead
-            // of pinning the main thread (the freeze after a geocoder flyTo to z18).
+            // Render-on-demand: cache terrain elevation off the per-frame path and
+            // only keep repainting while the camera recently moved, so an idle map
+            // with a placed model stops re-rendering instead of pinning the main
+            // thread (this was the freeze after a geocoder flyTo to high zoom).
             let cachedTerrainElev = 0;
             let lastMoveTime = performance.now();
             const SETTLE_MS = 1000;
@@ -203,7 +203,7 @@ export const BimLayer = () => {
             let onMapMoveEnd: () => void;
             const renderCamera = new THREE.PerspectiveCamera();
             const lodCamera    = new THREE.PerspectiveCamera();
-            // Reused per-frame matrices/vectors — render() must not allocate (audit B1).
+            // Reused per-frame matrices/vectors — render() must not allocate.
             const _vp = new THREE.Matrix4();
             const _m = new THREE.Matrix4();
             const _p = new THREE.Matrix4();
@@ -240,7 +240,7 @@ export const BimLayer = () => {
                         rendererRef.current.autoClear = false;
                     }
                     this.renderer = rendererRef.current;
-                    // Track movement so render() knows when it may stop repainting (C2).
+                    // Track movement so render() knows when it may stop repainting.
                     onMapMove = () => { lastMoveTime = performance.now(); };
                     onMapMoveEnd = () => {
                         lastMoveTime = performance.now();
@@ -293,9 +293,8 @@ export const BimLayer = () => {
                     const modelOrigin   = [modelLongitude, modelLatitude] as LngLatLike;
                     // Use the cached terrain elevation (refreshed on moveend); query
                     // live only while actively editing this model's position. Keeps
-                    // the expensive queryTerrainElevation off the hot path (audit
-                    // C1/C2 — the per-frame query was a main driver of the freeze
-                    // after flying to high zoom over loaded terrain).
+                    // the expensive queryTerrainElevation off the hot path — the
+                    // per-frame query was a main driver of the high-zoom freeze.
                     const terrainElev   = editingBimModelRef.current === bimFile.name
                         ? (map.queryTerrainElevation([modelLongitude, modelLatitude]) ?? cachedTerrainElev)
                         : cachedTerrainElev;
@@ -303,8 +302,8 @@ export const BimLayer = () => {
                     const scaling       = 1;
 
                     // ── Build renderCamera (VP × M, for Three.js rendering) ───
-                    // Reused temps — render() allocates nothing (audit B1). Math is
-                    // identical to the prior allocate-every-frame version.
+                    // Reused temps — render() allocates nothing. Math is identical
+                    // to the prior allocate-every-frame version.
                     const modelMatrix = map.transform.getMatrixForModel(modelOrigin, modelAltitude);
                     _scaleVec.set(scaling, scaling, scaling);
                     _vp.fromArray(args.defaultProjectionData.mainMatrix);
@@ -336,8 +335,8 @@ export const BimLayer = () => {
                             lastLodUpdate = now;
                             fragments.core.update();
                         }
-                        // Render-on-demand (C2): only keep the frame loop alive while
-                        // the camera recently moved (settle window, for fragment
+                        // Render-on-demand: only keep the frame loop alive while the
+                        // camera recently moved (settle window, for fragment
                         // streaming) or this model is being edited. Idle map ⇒ no
                         // self-scheduled repaints ⇒ main thread freed (no freeze).
                         if (

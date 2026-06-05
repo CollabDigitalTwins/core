@@ -1,10 +1,9 @@
-// Audit Phase 1.A (F-1c): types-only import. Every reference to OBC in this
-// file is in a type position (OBC.Components | null, OBC.World, etc.) so the
-// import never reaches the runtime. With `import type` TypeScript erases it
-// at compile time and webpack stops bundling @thatopen on behalf of the
-// global BimProvider. Critical: this reducer is loaded on every route via
-// CombineProviders, so without this fix @thatopen leaks into the initial
-// bundle even after F-1 and F-1b.
+// Types-only import. Every reference to OBC in this file is in a type
+// position (OBC.Components | null, OBC.World, etc.) so the import never
+// reaches the runtime. With `import type` TypeScript erases it at compile
+// time and webpack stops bundling @thatopen on behalf of the global
+// BimProvider. Critical: this reducer is loaded on every route via
+// CombineProviders, so without this @thatopen leaks into the initial bundle.
 import type * as OBC from "@thatopen/components";
 import { ActionMap } from "../ActionMap";
 import type { Plan } from "../../types/bim";

@@ -5,11 +5,11 @@ import { signIn } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
 import * as LR from 'lucide-react'
 import { toast, Toaster } from 'sonner'
-// Audit Phase 1.B (F-2b): the ui barrel `src/core/components/ui/index.ts`
-// re-exports dozens of components plus `useFileUploadHandler` and
-// `InfoSidebar`, the latter of which transitively pulls in @thatopen and
-// the BIM viewer tree. Importing through the barrel kept the auth pages
-// at 1.09 MB. Direct file imports drop that significantly.
+// Direct file imports (not the ui barrel). The ui barrel
+// `src/core/components/ui/index.ts` re-exports dozens of components plus
+// `useFileUploadHandler` and `InfoSidebar`, the latter of which transitively
+// pulls in @thatopen and the BIM viewer tree. Importing through the barrel
+// would drag all of that into the auth pages; direct file imports avoid it.
 import { Button } from '../ui/Button'
 import { GoogleIcon } from '../ui/Icons/GoogleIcon'
 import { Input } from '../ui/Input'

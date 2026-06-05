@@ -166,9 +166,11 @@ export function BimLoadingState() {
       const {sharing} = setCameraLookAt(world, searchParams)
       loadModels.sharing = sharing
 
+      let loadedCount = 0
       for (const bimFile of bimFiles) {
         try {
           await loadModels.load(bimFile.url, bimFile.name)
+          loadedCount++
           // Apply saved 3D position after load (setupModel resets to origin)
           if ((bimFile.x != null || bimFile.y != null || bimFile.z != null) && fragments) {
             const fragModel = fragments.core.models.list.get(bimFile.name)
@@ -186,6 +188,13 @@ export function BimLoadingState() {
       // Force update the fragments to render geometry immediately
       if (fragments) {
         fragments.core.update(true)
+      }
+
+      // If every file failed to load, surface an error instead of silently
+      // dismissing the card as though the models were there.
+      if (loadedCount === 0) {
+        setCurrentState('error')
+        return
       }
 
       // Mark each loaded file as visible in the BIM store so ModelsSection reflects it

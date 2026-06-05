@@ -37,10 +37,22 @@ export function BimViewer() {
     const containerRef = React.useRef<HTMLDivElement>(null);
     const workerUrlRef = React.useRef<string | null>(null);
     const resizeObserverRef = React.useRef<ResizeObserver | null>(null);
+    // Tracks the Components instance THIS mount created, so cleanup disposes the
+    // real one and the create-guard can't be defeated by a stale [] closure.
+    const componentsRef = React.useRef<OBC.Components | null>(null);
 
     const createViewer = React.useCallback(
-        async () => {
-            if (!containerRef.current || bimComponents) return;
+        async (isCancelled: () => boolean) => {
+            // Re-entrancy guard keyed to the ref we actually set — NOT the stale
+            // `bimComponents` from this useCallback's [] closure (always null on
+            // first run, so it could never stop a second init). Without this,
+            // React StrictMode (dev) and rapid viewer remounts (prod) build a
+            // second Components + PostproductionRenderer — a second <canvas> —
+            // and whichever instance wins the SET_COMPONENTS race may be the one
+            // whose canvas was detached on remount. Models then load into a scene
+            // that is never painted: the spatial tree builds (metadata) but no
+            // geometry shows and floorplan nav drives the dead world's camera.
+            if (!containerRef.current || componentsRef.current) return;
 
             const container = containerRef.current;
             const components = new OBC.Components();
@@ -129,6 +141,16 @@ export function BimViewer() {
 
             world.scene.three.background = null;
 
+            // If this init was superseded (StrictMode re-run) or the viewer
+            // unmounted while we awaited the worker fetch / shadow update, throw
+            // this instance away instead of publishing it. Prevents an orphaned
+            // world (whose canvas is detached) from winning the store and starving
+            // the visible canvas of geometry.
+            if (isCancelled()) {
+                components.dispose();
+                return;
+            }
+            componentsRef.current = components;
             bimDispatch({
                 type: "SET_COMPONENTS",
                 payload: { bimComponents: components, world, fragments }
@@ -174,15 +196,22 @@ export function BimViewer() {
     );
 
     React.useEffect(() => {
-        createViewer();
+        let cancelled = false;
+        createViewer(() => cancelled);
 
-        // Cleanup function to properly dispose of components when unmounting
+        // Cleanup: mark this init cancelled (so an in-flight createViewer disposes
+        // itself instead of publishing), and dispose the instance we actually
+        // created (componentsRef). The old `if (bimComponents)` read the stale []
+        // closure value (null at mount), so the real Components was never disposed
+        // — leaking its renderer/canvas and letting orphans race the store.
         return () => {
+            cancelled = true;
             if (resizeObserverRef.current) {
                 resizeObserverRef.current.disconnect();
             }
-            if (bimComponents) {
-                bimComponents.dispose();
+            if (componentsRef.current) {
+                componentsRef.current.dispose();
+                componentsRef.current = null;
             }
             bimDispatch({
                 type: "DISPOSE-BIM"

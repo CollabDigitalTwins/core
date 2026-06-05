@@ -3,6 +3,7 @@
 // Dependencies
 import * as React from 'react'
 import dynamic from 'next/dynamic'
+import { Loader2 } from 'lucide-react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { ViewerNames } from '../../types'
 import { BuildingsContext, MenusContext } from '../../store'
@@ -43,10 +44,17 @@ const DataMenu = dynamic(
   { ssr: false, loading: () => <ViewerLoadingFallback label="Loading data…" /> },
 )
 
+// Styled to match the in-viewer loading card (see BimLoadingState): a soft
+// backdrop-blurred overlay with a bordered card, spinner + label. Uses only
+// Tailwind tokens + one lucide icon, so it adds no meaningful weight to the
+// eager map-route bundle (Viewer.tsx is statically imported).
 function ViewerLoadingFallback({ label }: { label: string }) {
   return (
-    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888' }}>
-      {label}
+    <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50 backdrop-blur-[1px]">
+      <div className="flex items-center gap-3 rounded-md border border-border bg-card px-5 py-4 shadow-sm">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        <span className="text-foreground text-base font-medium font-['Inter'] leading-7">{label}</span>
+      </div>
     </div>
   )
 }

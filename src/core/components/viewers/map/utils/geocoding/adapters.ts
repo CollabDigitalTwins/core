@@ -23,15 +23,48 @@ export const osmCategoryToLayer = (category?: string): string => {
   }
 }
 
+// Photon (OSM) returns full subdivision names ("Ontario"); the rest of the app expects
+// Pelias-style abbreviations ("ON"). Map common North American ones so the public
+// fallback populates region_a the way Geocode Earth / Pelias do.
+const SUBDIVISION_ABBREVIATIONS: Record<string, Record<string, string>> = {
+  CA: {
+    'alberta': 'AB', 'british columbia': 'BC', 'manitoba': 'MB', 'new brunswick': 'NB',
+    'newfoundland and labrador': 'NL', 'northwest territories': 'NT', 'nova scotia': 'NS',
+    'nunavut': 'NU', 'ontario': 'ON', 'prince edward island': 'PE', 'quebec': 'QC',
+    'québec': 'QC', 'saskatchewan': 'SK', 'yukon': 'YT',
+  },
+  US: {
+    'alabama': 'AL', 'alaska': 'AK', 'arizona': 'AZ', 'arkansas': 'AR', 'california': 'CA',
+    'colorado': 'CO', 'connecticut': 'CT', 'delaware': 'DE', 'district of columbia': 'DC',
+    'florida': 'FL', 'georgia': 'GA', 'hawaii': 'HI', 'idaho': 'ID', 'illinois': 'IL',
+    'indiana': 'IN', 'iowa': 'IA', 'kansas': 'KS', 'kentucky': 'KY', 'louisiana': 'LA',
+    'maine': 'ME', 'maryland': 'MD', 'massachusetts': 'MA', 'michigan': 'MI', 'minnesota': 'MN',
+    'mississippi': 'MS', 'missouri': 'MO', 'montana': 'MT', 'nebraska': 'NE', 'nevada': 'NV',
+    'new hampshire': 'NH', 'new jersey': 'NJ', 'new mexico': 'NM', 'new york': 'NY',
+    'north carolina': 'NC', 'north dakota': 'ND', 'ohio': 'OH', 'oklahoma': 'OK', 'oregon': 'OR',
+    'pennsylvania': 'PA', 'rhode island': 'RI', 'south carolina': 'SC', 'south dakota': 'SD',
+    'tennessee': 'TN', 'texas': 'TX', 'utah': 'UT', 'vermont': 'VT', 'virginia': 'VA',
+    'washington': 'WA', 'west virginia': 'WV', 'wisconsin': 'WI', 'wyoming': 'WY',
+  },
+}
+
+const subdivisionAbbreviation = (countryCode: string, state?: string): string => {
+  if (!state) return ''
+  const table = SUBDIVISION_ABBREVIATIONS[(countryCode || '').toUpperCase()]
+  return (table && table[state.trim().toLowerCase()]) || ''
+}
+
 // Normalize a Photon autocomplete feature into the Pelias feature shape.
 export const normalizePhotonFeature = (feature: any): Feature => {
   const p = feature.properties || {}
   const region = p.state || ''
   const country = p.country || ''
   const country_a = (p.countrycode || '').toUpperCase()
+  const region_a = subdivisionAbbreviation(country_a, region)
   const locality = p.city || p.town || p.village || p.district || ''
   const name = p.name || [p.housenumber, p.street].filter(Boolean).join(' ') || locality
-  const label = [name, locality && locality !== name ? locality : null, region, country]
+  // Match the Pelias label shape ("Name, City, ON, Country") so label-parsing consumers work.
+  const label = [name, locality && locality !== name ? locality : null, region_a || region, country]
     .filter(Boolean)
     .join(', ')
 
@@ -53,7 +86,7 @@ export const normalizePhotonFeature = (feature: any): Feature => {
       neighbourhood: p.district,
       county: p.county,
       region,
-      region_a: '', // Photon does not expose ISO subdivision codes (ON, BC, ...)
+      region_a, // mapped from the full subdivision name where known (SUBDIVISION_ABBREVIATIONS)
       country,
       country_a,
       postalcode: p.postcode,

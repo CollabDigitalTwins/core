@@ -47,11 +47,11 @@ export const reverseGeocode = async (
   latitude: string,
   longitude: string,
   countryCode: string,
-  { size = 1, coarse = false }: { size?: number; coarse?: boolean } = {},
+  { size = 1, coarse = false, layers }: { size?: number; coarse?: boolean; layers?: string } = {},
 ): Promise<Feature[]> => {
   if (peliasActive()) {
     try {
-      return await peliasReverse(latitude, longitude, countryCode, { size, coarse })
+      return await peliasReverse(latitude, longitude, countryCode, { size, coarse, layers })
     }
     catch (error) {
       handlePeliasFailure(error, 'Nominatim')

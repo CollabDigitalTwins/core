@@ -182,7 +182,10 @@ export const getDetailedAddress = async (coordinates: [number, number], countryC
   const [longitude, latitude] = coordinates
 
   try {
-    const features = await reverseGeocode(latitude.toString(), longitude.toString(), countryCode, { size: 1 })
+    // Restrict to address-layer results (the original popover used layers=address) so
+    // callers get a street address rather than the nearest venue/POI. Nominatim's zoom-18
+    // reverse is already building-level, so this only refines the Pelias path.
+    const features = await reverseGeocode(latitude.toString(), longitude.toString(), countryCode, { size: 1, layers: 'address' })
     return features.length > 0 ? features[0] : null
   }
   catch (error) {

@@ -242,8 +242,8 @@ const AssociatedBuildingsTable: React.FC<AssociatedBuildingsTableProps> = ({
       buildingLongitude: coordinates[0],
       buildingLatitude: coordinates[1],
       buildingStreetName: properties.street,
-      buildingCountrySubdivision: properties.region_a,
-      buildingMunicipality: properties.locality,
+      buildingCountrySubdivision: properties.region_a || properties.region,
+      buildingMunicipality: properties.locality || properties.county,
       buildingPostalCode: properties.postalcode,
     }
     

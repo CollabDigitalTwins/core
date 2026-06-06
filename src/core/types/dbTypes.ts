@@ -7,12 +7,12 @@ export enum BuildingAssessmentConditions  {Excellent = 'Excellent', Good = 'Good
 export enum BuildingProjectPhase  {Inception_Phase = 'Inception_Phase', Conceptualization_Phase = 'Conceptualization_Phase', Criteria_Definition_Phase = 'Criteria_Definition_Phase', Design_Phase = 'Design_Phase', Coordination_Phase = 'Coordination_Phase', Implementation_Phase = 'Implementation_Phase', Handover_Phase = 'Handover_Phase', Operations_Phase = 'Operations_Phase'}
 export enum BuildingProjectType  {Modification = 'Modification', New_Build = 'New_Build', Renovation = 'Renovation', Repair = 'Repair', Operation_Maintenance = 'Operation_Maintenance', Retrofit = 'Retrofit'}
 export enum BuildingManagementType  {Internal = 'Internal', External = 'External', Municipal = 'Municipal', Private = 'Private'}
+export enum BuildingEnergySource  {Gas = 'Gas', Propane = 'Propane', Electric_BB = 'Electric_BB', Oil = 'Oil', Electric = 'Electric', Natural_Gas = 'Natural_Gas', Solar = 'Solar', Wind = 'Wind', Geothermal = 'Geothermal', District_Heating = 'District_Heating'}
 export enum BuildingHeatingEnergySource  {Gas = 'Gas', Propane = 'Propane', Electric_BB = 'Electric_BB', Oil = 'Oil', Electric = 'Electric', Natural_Gas = 'Natural_Gas', Solar = 'Solar', Wind = 'Wind', Geothermal = 'Geothermal', District_Heating = 'District_Heating'}
 export enum BuildingCoolingEnergySource  {Electric = 'Electric', Wind = 'Wind', Geothermal = 'Geothermal', District_Cooling = 'District_Cooling', Solar = 'Solar'}
 export enum BuildingHotWaterEnergySource  {Electric = 'Electric', Natural_Gas = 'Natural_Gas', Propane = 'Propane', Oil = 'Oil', Solar = 'Solar', Wind = 'Wind'}
 export enum BuildingElectricityServiceSize  {Size_60 = 'Size_60', Size_100 = 'Size_100', Size_200 = 'Size_200'}
 export enum BuildingElectricityServiceLocation  {Overhead = 'Overhead', Underhead = 'Underhead'}
-export enum BuildingEnergySource  {Gas = 'Gas', Propane = 'Propane', Electric_BB = 'Electric_BB', Oil = 'Oil', Electric = 'Electric', Natural_Gas = 'Natural_Gas', Solar = 'Solar', Wind = 'Wind', Geothermal = 'Geothermal', District_Heating = 'District_Heating'}
 
 export enum SiteEnergySource  {Gas = 'Gas', Propane = 'Propane', Electric_BB = 'Electric_BB', Oil = 'Oil', Electric = 'Electric', Natural_Gas = 'Natural_Gas', Solar = 'Solar', Wind = 'Wind', Geothermal = 'Geothermal', District_Heating = 'District_Heating'}
 export enum SiteAssessmentConditions  {Excellent = 'Excellent', Good = 'Good', Fair = 'Fair', Poor = 'Poor'}    
@@ -148,9 +148,9 @@ export interface Comment {
     z?: number | null;
     createdAt: Date;
     updatedAt: Date;
-    image?: string | null;
     replyToId?: number | null;
     buildingId?: number | null;
+    image?: string | null;
 }
 
 export interface Sensor {

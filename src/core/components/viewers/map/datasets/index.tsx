@@ -45,6 +45,8 @@ import { useDatasetsForPortals } from './src/useDatasetsForPortals'
 import { handleFavouriteDataset } from './utils'
 import { fetchLocalDatasets } from './src/localDatasets'
 import { fetchOrganizationalMinioDatasets } from './src/minioDatasets'
+import { buildPublishedCatalogMap, stampPublished, type PublishedCatalogEntry } from './src/publishedTiles'
+import { builtinLiveDatasets } from './src/builtinLiveDatasets'
 import { useFastDatasetCache } from './src/useFastDatasetCache'
 import { DatasetGroup } from '../../../../types/dbTypes'
 
@@ -142,6 +144,10 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
   const [appliedFilters, setAppliedFilters] = React.useState<{ countrySubdivisions: string[], municipalities: string[], types: string[], sources: string[] }>({ countrySubdivisions: [], municipalities: [], types: [], sources: [] })
   const [currentTab, setCurrentTab] = React.useState('all')
   const [isAddPortalOpen, setIsAddPortalOpen] = React.useState(false)
+  // Open-data datasets already published to Martin tiles, keyed by
+  // "{portalId}:{datasetId}". Lets the original portal entry (National/Applied/
+  // All tabs) show as converted, not just the organizational-list copy.
+  const [publishedCatalog, setPublishedCatalog] = React.useState<Map<string, PublishedCatalogEntry>>(new Map())
   const showMunicipalTab = React.useMemo(() => Boolean(municipality), [municipality])
 
   const { openDataPortals: municipalPortals } = useOpenDataPortalsByMunicipality(municipality)
@@ -180,6 +186,21 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
   const national = useDatasetsForPortals(filteredNationalPortals, { rowsPerPage })
   React.useEffect(() => {
     const loadOrganizationalDatasets = async () => {
+      // First, refresh the published-catalog lookup (a fast /api/files read) so
+      // converted open-data datasets flip promptly across every tab — ahead of
+      // the slower Martin tile-sampling below. Non-fatal on failure.
+      try {
+        const filesRes = await fetch('/api/files')
+        if (filesRes.ok) {
+          const body = await filesRes.json()
+          const rows = Array.isArray(body?.files) ? body.files : []
+          setPublishedCatalog(buildPublishedCatalogMap(rows))
+        }
+      }
+      catch (err) {
+        console.warn('Failed to refresh published-catalog map:', err)
+      }
+
       // Two parallel sources: Martin vector tiles (if configured) and MinIO-
       // backed GeoJSON uploads (the "Add Dataset" path). Errors from either
       // are isolated so a failure on one side does not block the other.
@@ -221,34 +242,42 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
       const sessionOrgId = typeof org?.id === 'number'
         ? org.id
         : Number.parseInt(String(org?.id ?? ''), 10)
-      const minioPromise: Promise<Dataset[]> = Number.isFinite(sessionOrgId)
-        ? fetchOrganizationalMinioDatasets(sessionOrgId).catch((err) => {
+
+      // Martin must resolve first so MinIO suppression can check live catalog
+      // membership — prevents "file disappeared" during the publish→restart gap.
+      const martinDatasets = await martinPromise
+      const publishedTilesInCatalog = new Set<string>(
+        martinDatasets.map(d => typeof d.id === 'string' ? d.id : '').filter(Boolean),
+      )
+
+      const minioDatasets: Dataset[] = Number.isFinite(sessionOrgId)
+        ? await fetchOrganizationalMinioDatasets(sessionOrgId, publishedTilesInCatalog).catch((err) => {
             console.error('Failed to load MinIO organizational datasets:', err)
             return []
           })
-        : Promise.resolve([])
+        : []
 
-      const [martinDatasets, minioDatasets] = await Promise.all([martinPromise, minioPromise])
       const combined = [...martinDatasets, ...minioDatasets]
       const visibleOrgDatasets = combined.filter(ds => datasetVisibleForOrg(ds, orgVisibility))
 
-      if (visibleOrgDatasets.length > 0) {
-        datasetDispatch({
-          type: 'SET_DATASETS',
-          payload: { datasets: visibleOrgDatasets },
-        })
-      }
-      else {
+      if (visibleOrgDatasets.length === 0) {
         console.warn('No organizational datasets found')
       }
+      datasetDispatch({
+        type: 'SET_DATASETS',
+        payload: { datasets: visibleOrgDatasets },
+      })
     }
 
     loadOrganizationalDatasets()
-  }, [datasetDispatch, orgVisibility, org?.id])
+  }, [datasetDispatch, orgVisibility, org?.id, datasetState.datasets.orgRefreshNonce])
 
-  const nationalDatasets = national.datasets
-  const subdivisionDatasets = subdivision.datasets
-  const municipalDatasets = municipal.datasets
+  // Stamp each portal list with published-tile identity so a converted open-data
+  // dataset shows as converted on its own tab (National/Subdivision/Municipal),
+  // not only on the organizational tab. No-op for unpublished datasets.
+  const nationalDatasets = React.useMemo(() => stampPublished(national.datasets, publishedCatalog), [national.datasets, publishedCatalog])
+  const subdivisionDatasets = React.useMemo(() => stampPublished(subdivision.datasets, publishedCatalog), [subdivision.datasets, publishedCatalog])
+  const municipalDatasets = React.useMemo(() => stampPublished(municipal.datasets, publishedCatalog), [municipal.datasets, publishedCatalog])
 
   const isLoadingNational = national.isLoading && nationalDatasets.length === 0
   const isLoadingSubdivision = subdivision.isLoading && subdivisionDatasets.length === 0
@@ -263,6 +292,7 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
 
   const allDatasets = React.useMemo(() => {
     const unfiltered = [
+      ...builtinLiveDatasets, // curated live feeds (e.g. GeoMet weather radar) → Live Data tab
       ...nationalDatasets,
       ...subdivisionDatasets,
       ...municipalDatasets,
@@ -272,8 +302,11 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
 
     const filtered = unfiltered.filter(ds => datasetVisibleForOrg(ds, orgVisibility))
 
-    return filtered
-  }, [nationalDatasets, subdivisionDatasets, municipalDatasets, datasetState.datasets.datasets, addedDatasets, orgVisibility])
+    // Also stamp here so the addedDatasets snapshot (applied at add-time, before
+    // conversion) and any org-list entries pick up published identity on the
+    // Applied/All tabs. Already-stamped portal entries are unchanged.
+    return stampPublished(filtered, publishedCatalog)
+  }, [nationalDatasets, subdivisionDatasets, municipalDatasets, datasetState.datasets.datasets, addedDatasets, orgVisibility, publishedCatalog])
 
   const currentTabLoading = React.useMemo(() => {
     switch (currentTab) {

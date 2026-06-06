@@ -107,9 +107,14 @@ export function DataTable<TData, TValue>({
     return (tab || currentViewer || '') as DataTypes
   }, [currentViewer, tab])
 
+  // Keep the user on their current page when the data array changes for benign
+  // reasons (a row's publish state refreshing, a checkbox/favourite toggle, etc.).
+  // TanStack's autoResetPageIndex defaults to true, which would snap back to page 1
+  // on every data change. We clamp manually below instead (see effect).
   const table = useReactTable({
     data,
     columns,
+    autoResetPageIndex: false,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
@@ -133,6 +138,15 @@ export function DataTable<TData, TValue>({
       }
     },
   })
+
+  // If the data shrinks (filter/search/un-publish) so the current page no longer
+  // exists, clamp to the last valid page rather than showing an empty table.
+  React.useEffect(() => {
+    const pageCount = Math.max(1, Math.ceil(data.length / rowsPerPage))
+    if (pageIndex > pageCount - 1) {
+      setPageIndex(pageCount - 1)
+    }
+  }, [data.length, rowsPerPage, pageIndex])
 
   // Show skeleton when loading
   if (isLoading) {

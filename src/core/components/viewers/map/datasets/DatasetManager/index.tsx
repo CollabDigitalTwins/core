@@ -70,6 +70,10 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
     opacity: isDragging ? 0.5 : 1,
   }
 
+  // Raster (WMS) layers are server-rendered images with no fields and a server-fixed
+  // colour ramp, so the field-styling table + colour swatch are meaningless — hide them.
+  const isRaster = dataset.datasetType === 'WMS' || dataset.type === 'WMS'
+
   return (
     <>
       <TableRow ref={setNodeRef} style={style} className="hover:bg-muted/50">
@@ -88,7 +92,7 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
               checked={dataset.visible !== false}
               onCheckedChange={() => onToggleDataset(dataset)}
               className="shrink-0"
-              style={dataset.visible === false ? {} : { backgroundColor: dataset.layerColor.color }}
+              style={dataset.visible === false || isRaster ? {} : { backgroundColor: dataset.layerColor.color }}
             />
           </div>
         </TableCell>
@@ -101,19 +105,21 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
           )}
         </TableCell>
         <TableCell>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => openDatasetDetails(dataset.name)}
-            className="shrink-0"
-          >
-            <LR.ChevronDown
-              className={`h-4 w-4 transition-transform duration-200 ${expandedDatasets.has(dataset.name) ? 'rotate-180' : ''}`}
-            />
-          </Button>
+          {!isRaster && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => openDatasetDetails(dataset.name)}
+              className="shrink-0"
+            >
+              <LR.ChevronDown
+                className={`h-4 w-4 transition-transform duration-200 ${expandedDatasets.has(dataset.name) ? 'rotate-180' : ''}`}
+              />
+            </Button>
+          )}
         </TableCell>
       </TableRow>
-      {expandedDatasets.has(dataset.name) && (
+      {!isRaster && expandedDatasets.has(dataset.name) && (
         <TableRow>
           <TableCell colSpan={4} className="p-0 pb-1">
             <FieldsTable

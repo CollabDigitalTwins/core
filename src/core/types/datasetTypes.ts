@@ -67,7 +67,7 @@ export interface Dataset {
   dateUpdated?: string
   lastEditDate?: string
   dataLastEditDate?: string
-  datasetType: 'GeoJSON' | 'MVT'
+  datasetType: 'GeoJSON' | 'MVT' | 'WMS'
   countrySubdivision: string
   municipality: string
   type: string
@@ -89,6 +89,21 @@ export interface Dataset {
   getFeatures: (options?: { bbox?: [number, number, number, number]; zoom?: number }) => Promise<AllGeoJSON>
   portal?: OpenDataPortal // The portal that this dataset belongs to.
   files?: []
+  // Set when this logical dataset has already been published to Martin vector
+  // tiles (via the open-data "Publish as vector tiles" path). The original
+  // portal entry keeps its own id across the national/applied/all tabs, so these
+  // flags carry the published identity so RowActions can show it as converted
+  // (and drive un-publish) on every tab — not just the organizational one.
+  publishedTable?: string // the org_<orgId>_file_<fileId> Martin table name
+  publishedFileId?: number // the (synthetic) File row id backing that table
+  // ── WMS time animation ──
+  // Set on time-enabled WMS live datasets (e.g. the GeoMet radar). When true,
+  // WMSDatasetLayer fetches the layer's GetCapabilities time extent and shows a
+  // scrub/play control that animates the WMS TIME dimension.
+  timeEnabled?: boolean
+  // The raw WMS coordinates the time control needs to rebuild GetMap/GetCapabilities
+  // URLs (the composed `url` already baked LAYERS into a tile template).
+  wms?: { baseUrl: string; layers: string }
 }
 export interface AllDatasets {
   nationalDatasets: OpenDataPortal[]

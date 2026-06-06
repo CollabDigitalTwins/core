@@ -6,6 +6,7 @@ interface DatasetsType {
   datasetId: string | null
   datasets: Dataset[]
   addedDatasets: Dataset[]
+  orgRefreshNonce: number
 }
 
 export type DatasetState = DatasetsType
@@ -21,6 +22,7 @@ export type DatasetPayload = {
   ['REMOVE_DATASET_FROM_MAP']: Pick<DatasetState, 'datasetId'>
 
   ['REMOVE_ALL_DATASETS']: void
+  ['REFRESH_ORG_DATASETS']: void
   ['TOGGLE_DATASET_VISIBILITY']: Pick<DatasetState, 'datasetId'>
 
   ['DATASET_COLOR']: { datasetId: string, layerColor: LayerColors  }
@@ -117,6 +119,11 @@ export const DatasetReducer = (state: DatasetState, action: DatasetActions) => {
       return {
         ...state,
         addedDatasets: [],
+      }
+    case 'REFRESH_ORG_DATASETS':
+      return {
+        ...state,
+        orgRefreshNonce: (state.orgRefreshNonce ?? 0) + 1,
       }
     case 'TOGGLE_DATASET_VISIBILITY': {
       const datasetId = action.payload.datasetId

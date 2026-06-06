@@ -6,6 +6,7 @@ import { layerColorByName } from '../../utils/stringToColour'
 import Pbf from 'pbf'
 import { VectorTile } from '@mapbox/vector-tile'
 import { getCache, setCache } from './cache'
+import { isPublishedOrgTable, buildPublishedTileDatasets, type PublishedFileRow } from './publishedTiles'
 
 
 // Define the structure of local dataset items
@@ -260,6 +261,31 @@ async function resolveDatasetOrganization(tile: NormalizedMartinTile) {
   }
 }
 
+async function fetchPublishedTileLabels(): Promise<Map<string, string>> {
+  try {
+    const res = await fetch('/api/files')
+    if (!res.ok) return new Map()
+    const body = await res.json()
+    const rows: Array<{ name?: string | null, description?: string | null }> =
+      Array.isArray(body?.files) ? body.files : []
+    const map = new Map<string, string>()
+    for (const row of rows) {
+      if (!row?.description || !row?.name) continue
+      try {
+        const desc = JSON.parse(row.description) as { tiledTable?: unknown }
+        if (typeof desc?.tiledTable === 'string') {
+          map.set(desc.tiledTable, row.name.replace(/\.geojson$/i, ''))
+        }
+      }
+      catch { /* skip malformed */ }
+    }
+    return map
+  }
+  catch {
+    return new Map()
+  }
+}
+
 async function fetchMartinServerDatasets(
   portal: OpenDataPortal,
 ): Promise<Dataset[]> {
@@ -276,6 +302,8 @@ async function fetchMartinServerDatasets(
 
     const { indexUrl, tileBaseUrl, fallbackCatalogUrl } = resolveMartinUrls(martinServerUrl)
 
+    const publishedLabels = await fetchPublishedTileLabels()
+
     let response = await fetch(indexUrl)
     if (!response.ok && fallbackCatalogUrl && fallbackCatalogUrl !== indexUrl) {
       console.warn(`Failed to fetch Martin index (${indexUrl}), falling back to catalog...`)
@@ -288,11 +316,15 @@ async function fetchMartinServerDatasets(
 
     const catalog: MartinIndexResponse = await response.json()
     const tiles = normalizeMartinCatalog(catalog, tileBaseUrl)
+      // Drop our published org tables (served via the cdt_tiles function + discovered
+      // from File metadata) and the cdt_tiles function source itself (no ?source= → empty).
+      .filter(t => !isPublishedOrgTable(t.tileName) && t.tileName !== 'cdt_tiles')
 
     console.log('Martin catalog received:', tiles.length, 'tiles')
 
     const datasets: Dataset[] = await Promise.all(tiles.map(async (tileInfo) => {
-      const cleanName = formatName(
+      const publishedLabel = publishedLabels.get(tileInfo.tileName)
+      const cleanName = publishedLabel ?? formatName(
         tileInfo.tileName
           .replace(/_\d{8}$/, '')
           .replace(/__\d+_\d+$/, ''),
@@ -364,7 +396,21 @@ async function fetchMartinServerDatasets(
     }))
 
     console.log(`Transformed ${datasets.length} Martin datasets`)
-    return datasets
+
+    let publishedDatasets: Dataset[] = []
+    try {
+      const fileRes = await fetch('/api/files')
+      if (fileRes.ok) {
+        const fileBody = await fileRes.json()
+        const fileRows: PublishedFileRow[] = Array.isArray(fileBody?.files) ? fileBody.files : []
+        publishedDatasets = buildPublishedTileDatasets(fileRows, tileBaseUrl, portal)
+      }
+    }
+    catch (err) {
+      console.warn('Failed to build published-tile datasets from /api/files', err)
+    }
+
+    return [...datasets, ...publishedDatasets]
   } catch (error) {
     console.error('Error fetching Martin server datasets:', error)
     return []

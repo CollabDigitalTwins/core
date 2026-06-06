@@ -14,6 +14,10 @@ interface OrgDatasetDescription {
   bucket?: string
   geometryType?: 'points' | 'lines' | 'polygons'
   layerStyles?: Record<string, Record<string, string | number>>
+  tiledTable?: string
+  tiledAt?: string
+  featuresIngested?: number
+  featuresSkipped?: number
 }
 
 interface RawFileRow {
@@ -47,6 +51,7 @@ function buildMinioUrl(bucket: string, organizationId: number, assetId: string):
 
 export async function fetchOrganizationalMinioDatasets(
   organizationId: number,
+  publishedTilesInCatalog: ReadonlySet<string> = new Set(),
 ): Promise<Dataset[]> {
   let rows: RawFileRow[] = []
   try {
@@ -70,6 +75,11 @@ export async function fetchOrganizationalMinioDatasets(
     if (!row.assetId) continue
 
     const meta = parseDescription(row.description)
+    // Suppress the MinIO entry only once Martin actually serves the published
+    // table — otherwise the file appears to vanish during the publish→restart
+    // gap. Un-publish drops the table immediately, so the MinIO row reappears
+    // on next reload with no extra plumbing.
+    if (meta?.tiledTable && publishedTilesInCatalog.has(meta.tiledTable)) continue
     const bucket = meta?.bucket
     if (!bucket) continue
 

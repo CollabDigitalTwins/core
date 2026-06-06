@@ -23,7 +23,7 @@ export const peliasReverse = async (
   latitude: string,
   longitude: string,
   countryCode: string,
-  { size, coarse }: { size: number; coarse: boolean },
+  { size, coarse, layers }: { size: number; coarse: boolean; layers?: string },
 ): Promise<Feature[]> => {
   const params = new URLSearchParams({
     'point.lat': latitude,
@@ -31,7 +31,9 @@ export const peliasReverse = async (
     'boundary.country': countryCode.toUpperCase(),
     'size': String(size),
   })
+  // coarse (municipality-level) takes precedence; otherwise honor an explicit layer filter.
   if (coarse) params.set('layers', 'coarse')
+  else if (layers) params.set('layers', layers)
   if (GEOCODE_EARTH_API_KEY) params.set('api_key', GEOCODE_EARTH_API_KEY)
 
   const response = await fetch(`${PELIAS_BASE}/v1/reverse?${params}`)

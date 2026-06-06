@@ -172,17 +172,17 @@ export default function Geocoder({
 
     if (mapDispatch && currentLocation) {
       const [lng, lat] = addressData.coordinates
-      const countrySubdivision: string = addressData.properties?.region_a
-      // Extract municipality (3rd from the right)
+      const props = addressData.properties || {}
       const parts = address.split(',').map(p => p.trim())
-      const partsReverse = [...parts].reverse()
-      console.log('parts', parts, 'partsReverse', partsReverse)
-      let municipality = ''
-      if (partsReverse[1] === countrySubdivision) municipality = partsReverse[2] || ''
+      // Read structured properties (provider-agnostic) instead of parsing label tokens,
+      // which only matched Geocode Earth's "…, ON, Canada" abbreviation format and broke
+      // on the Photon/Nominatim fallback.
+      const countrySubdivision: string = props.region_a || props.region || ''
+      const municipality: string = props.locality || props.neighbourhood || props.county || ''
 
       const newCurrentLocation: CurrentLocation = { ...currentLocation, municipality, countrySubdivision, longitude: lng, latitude: lat, address: parts[0] }
       mapDispatch({ type: 'UPDATE_LOCATION', payload: { currentLocation: newCurrentLocation } })
-      if (municipality && countrySubdivision) {
+      if (municipality || countrySubdivision) {
         const url = new URL(window.location.href)
         url.searchParams.set('municipality', municipality)
         url.searchParams.set('countrySubdivision', countrySubdivision)

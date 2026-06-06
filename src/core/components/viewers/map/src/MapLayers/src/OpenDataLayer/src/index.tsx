@@ -10,6 +10,9 @@ import { DatasetsContext } from '../../../../../../../../store';
 import { MapLayerClickPriority } from "../../../../../utils/MapEventManager/MapClickManager";
 import MapFeaturePopoverMenu from "../../../../MapFeaturePopoverMenu";
 import { fitGeoJsonBounds } from "../../../../../utils/fitGeojsonBounds";
+import { createPortal } from "react-dom";
+import { WmsTimeControl } from "./WmsTimeControl";
+import { fetchWmsFrames, buildWmsTimeUrl, wmsLegendUrl } from "../../../../../datasets/src/wmsTime";
 
 interface BuildingDataset {
     "type": "buildings";
@@ -308,7 +311,11 @@ const MVTDatasetLayer = React.memo(({ dataset, index, onLayerReady, onLayerRemov
     const layerColor = dataset.layerColor?.color || '#0d9488';
     const isPointLayer = dataset.layerType === 'circle' || /point/i.test(sourceLayer);
     const isMartinBuilding = /buildings?/i.test((dataset as any)?.serviceInfo?.sourceLayer || dataset.id || dataset.name);
-    const extraIsBuilding = (dataset.layerType === 'fill' || (isMartinBuilding && !dataset.layerType)) && !isPointLayer;
+    // Only extrude actual building layers. A polygon dataset resolves to layerType
+    // 'fill', so keying extrusion off 'fill' alone routed every polygon (e.g. published
+    // open-data boundaries) into the zero-height, minzoom-15.5 extrusion branch — leaving
+    // only the outline visible. Non-building polygons fall through to the flat-fill branch.
+    const extraIsBuilding = isMartinBuilding && !isPointLayer;
 
     const mainLayerId = isPointLayer
         ? `${dataset.name}-points`
@@ -360,11 +367,98 @@ const MVTDatasetLayer = React.memo(({ dataset, index, onLayerReady, onLayerRemov
     return (
         <Source id={`${dataset.name}-source`} key={`${index}-${dataset.name}-source`} type="vector" tiles={[tileUrl]}>
             <Layer id={mainLayerId} type="fill" source-layer={sourceLayer} paint={{ 'fill-color': layerColor, 'fill-opacity': 0.6 }} />
-            <Layer id={outlineLayerId} type="line" source-layer={sourceLayer} paint={{ 'line-color': layerColor, 'line-width': 1, 'line-opacity': 0.8 }} />
+            {/* White outline (matches the original GeoJSON polygon style) so subdivision
+                boundaries stay legible — a same-colour outline read as one solid blob. */}
+            <Layer id={outlineLayerId} type="line" source-layer={sourceLayer} paint={{ 'line-color': '#ffffff', 'line-width': 2 }} />
         </Source>
     );
 });
 MVTDatasetLayer.displayName = 'MVTDatasetLayer';
+
+
+// ─── Per-dataset WMS raster layer ─────────────────────────────────────
+// Live/federated WMS overlays (e.g. the GeoMet weather radar). The dataset's
+// `url` is a MapLibre raster tile template (GetMap with a literal
+// {bbox-epsg-3857}); MapLibre fetches tiles directly, so there's nothing to
+// parse and no features to query (raster → not interactive).
+
+interface WMSDatasetLayerProps {
+    dataset: any;
+    index: number;
+    onLayerReady: (datasetName: string, layerIds: string[]) => void;
+    onLayerRemoved: (datasetName: string) => void;
+}
+
+const WMSDatasetLayer = React.memo(({ dataset, index, onLayerReady, onLayerRemoved }: WMSDatasetLayerProps) => {
+    const { state: mapState } = React.useContext(MapContext);
+    const { map } = mapState.map;
+
+    const tileUrl = dataset.url || dataset.information;
+    const layerId = `${dataset.name}-wms`;
+    const sourceId = `${dataset.name}-source`;
+
+    const timeEnabled = !!dataset.timeEnabled && !!dataset.wms;
+    const [frames, setFrames] = React.useState<string[]>([]);
+    const [activeTime, setActiveTime] = React.useState<string | null>(null);
+    // The bottom-left overlay stack's portal slot (MapViewer renders it). Resolved
+    // in an effect so the node exists (post-commit) before we portal into it.
+    const [controlSlot, setControlSlot] = React.useState<HTMLElement | null>(null);
+    React.useEffect(() => {
+        if (timeEnabled) setControlSlot(document.getElementById('wms-time-slot'));
+    }, [timeEnabled]);
+
+    // Register with no interactive layer ids — a raster has no queryable features.
+    React.useEffect(() => {
+        onLayerReady(dataset.name, []);
+        return () => { onLayerRemoved(dataset.name); };
+    }, [dataset.name, onLayerReady, onLayerRemoved]);
+
+    // Load the WMS time extent once (time-enabled datasets only).
+    React.useEffect(() => {
+        if (!timeEnabled || !dataset.wms) return;
+        let cancelled = false;
+        fetchWmsFrames(dataset.wms.baseUrl, dataset.wms.layers)
+            .then(f => { if (!cancelled) setFrames(f); })
+            .catch(() => { /* fetchWmsFrames already swallows; keep static */ });
+        return () => { cancelled = true; };
+    }, [timeEnabled, dataset.wms?.baseUrl, dataset.wms?.layers]);
+
+    // Imperatively swap the raster source's tiles per frame. The <Source tiles>
+    // prop below never changes after mount, so there's no react-map-gl tug-of-war
+    // and no flicker — this setTiles call is the single source of truth for TIME.
+    React.useEffect(() => {
+        if (!map || !activeTime || !dataset.wms) return;
+        const src = map.getSource(sourceId) as { setTiles?: (t: string[]) => void } | undefined;
+        if (src?.setTiles) {
+            src.setTiles([buildWmsTimeUrl(dataset.wms.baseUrl, dataset.wms.layers, activeTime)]);
+        }
+    }, [map, activeTime, sourceId, dataset.wms?.baseUrl, dataset.wms?.layers]);
+
+    if (!tileUrl) {
+        console.error(`❌ OpenDataLayers: No tile URL found for WMS dataset "${dataset.name}"`);
+        return null;
+    }
+
+    const showControl = timeEnabled && frames.length > 1 && map && controlSlot;
+
+    return (
+        <>
+            <Source id={sourceId} key={`${index}-${dataset.name}-source`} type="raster" tiles={[tileUrl]} tileSize={256}>
+                <Layer id={layerId} type="raster" paint={{ 'raster-opacity': 0.85 }} />
+            </Source>
+            {showControl && createPortal(
+                <WmsTimeControl
+                    frames={frames}
+                    onTimeChange={setActiveTime}
+                    label={dataset.name}
+                    legendUrl={dataset.wms ? wmsLegendUrl(dataset.wms.baseUrl, dataset.wms.layers) : undefined}
+                />,
+                controlSlot,
+            )}
+        </>
+    );
+});
+WMSDatasetLayer.displayName = 'WMSDatasetLayer';
 
 
 // ─── Main orchestrator ────────────────────────────────────────────────
@@ -525,6 +619,18 @@ export const OpenDataLayers = () => {
             {sortedDatasets.map((dataset, index) => {
                 if (dataset.visible === false) return null;
                 if (isBuildingDataset(dataset)) return null;
+
+                if (dataset.type === 'WMS' || dataset.datasetType === 'WMS') {
+                    return (
+                        <WMSDatasetLayer
+                            key={dataset.name}
+                            dataset={dataset}
+                            index={index}
+                            onLayerReady={handleLayerReady}
+                            onLayerRemoved={handleLayerRemoved}
+                        />
+                    );
+                }
 
                 if (dataset.type === 'MVT' || dataset.datasetType === 'MVT') {
                     return (

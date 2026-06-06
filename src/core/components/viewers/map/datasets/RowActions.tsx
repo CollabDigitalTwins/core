@@ -14,6 +14,7 @@ import { Checkbox, Button } from '../../../ui/'
 import * as LR from 'lucide-react'
 import { DatasetsContext } from '../../../../store'
 import type { Dataset } from '../../../../types/datasetTypes'
+import { buildPublishedTileDatasets } from './src/publishedTiles'
 
 interface RowActionsProps {
   dataset: Dataset
@@ -32,6 +33,7 @@ export default function RowActions({
 
   const { state: datasetsState, dispatch: datasetsDispatch } = React.useContext(DatasetsContext)
   const { addedDatasets } = datasetsState.datasets
+  const orgDatasets = datasetsState.datasets.datasets
 
   // const [checked, setChecked] = useState(false);
 
@@ -69,6 +71,150 @@ export default function RowActions({
 
   const handleFavourite = handleFavouriteDataset(dataset, favouriteDatasets, setFavouriteDatasets)
 
+  const [publishing, setPublishing] = React.useState(false)
+  const [published, setPublished] = React.useState(false)
+
+  const isOrgMinio = typeof dataset.id === 'string' && dataset.id.startsWith('org-minio-')
+  const fileId = isOrgMinio
+    ? Number(String(dataset.id).slice('org-minio-'.length))
+    : null
+
+  const tiledMatch = typeof dataset.id === 'string'
+    ? /^org_(\d+)_file_(\d+)$/.exec(dataset.id)
+    : null
+  // A row is "converted" either because it IS the org_<orgId>_file_<fileId> tile
+  // entry (organizational tab), or because it's the original open-data dataset
+  // stamped with the published File it resolves to (every other tab). Either way
+  // we show the un-publish action and drive it with this fileId.
+  const tiledFileId = tiledMatch
+    ? Number(tiledMatch[2])
+    : (typeof dataset.publishedFileId === 'number' ? dataset.publishedFileId : null)
+
+  const [unpublishing, setUnpublishing] = React.useState(false)
+  const [unpublished, setUnpublished] = React.useState(false)
+
+  const onUnpublish = async () => {
+    if (tiledFileId == null) return
+    if (!window.confirm(`Un-publish "${dataset.name}"? The Martin table will be dropped; the original GeoJSON in MinIO is untouched.`)) return
+    setUnpublishing(true)
+    try {
+      const res = await fetch('/api/datasets/publish-tiles', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileId: tiledFileId }),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        console.error('un-publish failed', res.status, body)
+        window.alert(`Un-publish failed: ${body?.error ?? res.status}`)
+        return
+      }
+      setUnpublished(true)
+      datasetsDispatch({ type: 'REFRESH_ORG_DATASETS' })
+      window.alert(`Un-published. The dataset list has been refreshed.`)
+    }
+    finally {
+      setUnpublishing(false)
+    }
+  }
+
+  const onPublish = async () => {
+    if (fileId == null || Number.isNaN(fileId)) return
+    setPublishing(true)
+    try {
+      const res = await fetch('/api/datasets/publish-tiles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileId }),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        console.error('publish-tiles failed', res.status, body)
+        window.alert(`Publish failed: ${body?.error ?? res.status}`)
+        return
+      }
+      const result = await res.json()
+      setPublished(true)
+
+      // Optimistically swap the MinIO upload row for its published-tile form so the
+      // un-publish (CloudOff) icon shows immediately. The full org refetch below
+      // (REFRESH_ORG_DATASETS) re-samples a vector tile per dataset to detect geometry,
+      // which can take several seconds; without this the row only flips after that lands
+      // (or after the dialog is reopened). The refetch reconciles this swap when it finishes.
+      const tileBaseUrl = (process.env.NEXT_PUBLIC_MARTIN_SERVER_URL ?? '').replace(/\/+$/, '')
+      const minioId = `org-minio-${fileId}`
+      const [optimistic] = buildPublishedTileDatasets(
+        [{
+          name: dataset.name,
+          description: JSON.stringify({ tiledTable: result.table, geometryType: result.geometryType }),
+        }],
+        tileBaseUrl,
+        { countrySubdivision: dataset.countrySubdivision ?? '', municipality: dataset.municipality ?? '' } as any,
+      )
+      if (optimistic) {
+        const current = orgDatasets ?? []
+        const swapped = current.some(d => d.id === minioId)
+          ? current.map(d => (d.id === minioId ? optimistic : d))
+          : [...current, optimistic]
+        datasetsDispatch({ type: 'SET_DATASETS', payload: { datasets: swapped } })
+        // Keep the map layer in sync if this dataset was already applied.
+        if (addedDatasets.some(d => d.id === minioId)) {
+          datasetsDispatch({ type: 'REMOVE_DATASET_FROM_MAP', payload: { datasetId: minioId } })
+          datasetsDispatch({ type: 'ADD_DATASET_TO_MAP', payload: { dataset: optimistic } })
+        }
+      }
+
+      datasetsDispatch({ type: 'REFRESH_ORG_DATASETS' })
+      window.alert(
+        `Tiled as ${result.table}. The dataset list has been refreshed.\n\n`
+        + `Features ingested: ${result.featuresIngested}, skipped: ${result.featuresSkipped}.`,
+      )
+    }
+    finally {
+      setPublishing(false)
+    }
+  }
+
+  // Catalog (open-data-portal) GeoJSON datasets: not a MinIO upload, not an already-tiled
+  // table, carry a portal + are typed GeoJSON. MVT catalog datasets are already tiles.
+  const isCatalogGeoJson =
+    !isOrgMinio
+    && tiledFileId == null
+    && dataset.datasetType === 'GeoJSON'
+    && !!dataset.portal
+    && dataset.id != null
+
+  const [publishingCatalog, setPublishingCatalog] = React.useState(false)
+  const [publishedCatalog, setPublishedCatalog] = React.useState(false)
+
+  const onPublishCatalog = async () => {
+    if (!dataset.portal || dataset.id == null) return
+    setPublishingCatalog(true)
+    try {
+      const res = await fetch('/api/datasets/publish-catalog-tiles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ portal: dataset.portal, datasetId: dataset.id }),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        console.error('publish-catalog-tiles failed', res.status, body)
+        window.alert(`Publish failed: ${body?.error ?? res.status}`)
+        return
+      }
+      const result = await res.json()
+      setPublishedCatalog(true)
+      datasetsDispatch({ type: 'REFRESH_ORG_DATASETS' })
+      window.alert(
+        `Tiled as ${result.table}. The dataset list has been refreshed.\n\n`
+        + `Features ingested: ${result.featuresIngested}, skipped: ${result.featuresSkipped}.`,
+      )
+    }
+    finally {
+      setPublishingCatalog(false)
+    }
+  }
+
   return (
     <div className="flex items-center">
       <Button
@@ -99,6 +245,45 @@ export default function RowActions({
           fill={`${isFavourite ? 'hsl(var(--chart-5))' : 'none'} `}
         />
       </Button>
+
+      {isOrgMinio && (
+        <Button
+          variant="ghost"
+          size="icon"
+          title={published ? 'Tiled' : 'Publish as vector tiles'}
+          className="opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent"
+          onClick={onPublish}
+          disabled={publishing || published || !ability.can('update', 'File')}
+        >
+          <LR.UploadCloud color={published ? 'hsl(var(--chart-2))' : 'black'} />
+        </Button>
+      )}
+
+      {isCatalogGeoJson && (
+        <Button
+          variant="ghost"
+          size="icon"
+          title={publishedCatalog ? 'Tiled' : 'Publish open-data dataset as vector tiles'}
+          className="opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent"
+          onClick={onPublishCatalog}
+          disabled={publishingCatalog || publishedCatalog || !ability.can('update', 'File')}
+        >
+          <LR.CloudDownload color={publishedCatalog ? 'hsl(var(--chart-2))' : 'black'} />
+        </Button>
+      )}
+
+      {tiledFileId != null && (
+        <Button
+          variant="ghost"
+          size="icon"
+          title={unpublished ? 'Un-published' : 'Un-publish vector tiles'}
+          className="opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent"
+          onClick={onUnpublish}
+          disabled={unpublishing || unpublished || !ability.can('update', 'File')}
+        >
+          <LR.CloudOff color={unpublished ? 'hsl(var(--chart-5))' : 'black'} />
+        </Button>
+      )}
     </div>
   )
 }

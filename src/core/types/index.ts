@@ -22,4 +22,4 @@ export {
   DatasetGroup,
   Language,
 } from './dbTypes'
-export type { Dataset } from './datasetTypes'
+export type { Dataset, LayerGeometryType } from './datasetTypes'

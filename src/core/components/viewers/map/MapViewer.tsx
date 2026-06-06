@@ -166,6 +166,10 @@ export function MapViewer({ width = '100%', height = '100%', organization  }: Pr
               <MapLayers />
               {/* Bottom-left stack: legend above the layers/styling card, gap auto-managed by flex. */}
               <div className="absolute bottom-[10px] left-3 z-10 flex flex-col gap-2 pointer-events-none">
+                {/* Portal slot for on-map WMS time controls; display:contents so an
+                    empty slot adds no flex item / gap, but a mounted control stacks
+                    above the legend + dataset-manager cards. */}
+                <div id="wms-time-slot" style={{ display: 'contents' }} />
                 <MapLegendHost />
                 <DatasetManagerMenu />
               </div>

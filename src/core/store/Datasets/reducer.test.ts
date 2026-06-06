@@ -3,7 +3,13 @@ import { DatasetReducer, type DatasetState } from './reducer'
 import type { Dataset } from '../../types/datasetTypes'
 
 const ds = (id: string, extra: Partial<Dataset> = {}) => ({ id, name: id, ...extra }) as unknown as Dataset
-const base: DatasetState = { dataset: null, datasetId: null, datasets: [], addedDatasets: [] }
+const base: DatasetState = {
+  dataset: null,
+  datasetId: null,
+  datasets: [],
+  addedDatasets: [],
+  orgRefreshNonce: 0,
+}
 
 describe('DatasetReducer', () => {
   it('SET_DATASETS / ADD_DATASET', () => {
@@ -39,5 +45,24 @@ describe('DatasetReducer', () => {
     const next = DatasetReducer(s0, { type: 'REMOVE_ALL_DATASETS' } as never)
     expect(next.addedDatasets).toEqual([])
     expect(next.datasets.map((d) => d.id)).toEqual(['a'])
+  })
+})
+
+describe('DatasetReducer — REFRESH_ORG_DATASETS', () => {
+  it('increments orgRefreshNonce', () => {
+    const next = DatasetReducer(base, { type: 'REFRESH_ORG_DATASETS' } as never)
+    expect(next.orgRefreshNonce).toBe(1)
+  })
+
+  it('treats a missing nonce as 0 → 1', () => {
+    const { orgRefreshNonce: _omit, ...noNonce } = base
+    const next = DatasetReducer(noNonce as never, { type: 'REFRESH_ORG_DATASETS' } as never)
+    expect(next.orgRefreshNonce).toBe(1)
+  })
+
+  it('SET_DATASETS preserves orgRefreshNonce', () => {
+    const seeded: DatasetState = { ...base, orgRefreshNonce: 3 }
+    const next = DatasetReducer(seeded, { type: 'SET_DATASETS', payload: { datasets: [] } } as never)
+    expect(next.orgRefreshNonce).toBe(3)
   })
 })

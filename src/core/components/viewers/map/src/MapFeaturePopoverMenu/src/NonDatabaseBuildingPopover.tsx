@@ -26,6 +26,7 @@ import { MapContext } from '../../../../../../store'
 import { useMenusContext } from '../../../../../../store'
 import type { Building } from '../../../../../../types/dbTypes'
 import { MarkerManager } from '../../../utils/MarkerManager'
+import { getDetailedAddress } from '../../../utils/geocoder'
 
 // Hooks
 import { useCreateBuilding, useBuildings, useBuilding } from '../../../../../../hooks/buildings/buildings'
@@ -112,65 +113,44 @@ export default function NonDatabaseBuildingPopover({
 
   // Get address and search for matching buildings
   React.useEffect(() => {
-    const getAddress = async (latitude: string, longitude: string) => {
-      const params = new URLSearchParams({
-        'api_key': process.env.NEXT_PUBLIC_GEOCODE_EARTH_API_KEY,
-        'point.lat': latitude,
-        'point.lon': longitude,
-        'boundary.country': 'CA',
-        'layers': 'address',
-        'size': '1', // Limit to 1 result
-      })
-    
-      const reverseGeocoderUrl = `https://api.geocode.earth/v1/reverse?${params}`
-    
+    const getAddress = async (longitude: number, latitude: number) => {
       try {
-        const response = await fetch(reverseGeocoderUrl, {
-          headers: {
-            'User-Agent': 'CDT/1.0 (cdt@email.com)',
-          },
-        })
-    
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
+        // Reverse geocode through the shared provider (Geocode Earth / self-hosted
+        // Pelias, falling back to public OSM) so this stays in sync with the geocoder.
+        const result = await getDetailedAddress([longitude, latitude], 'CA')
+        const geocodedAddress = result?.properties?.name as string | undefined
+
+        if (!geocodedAddress) {
+          clearExistingBuildingMatches()
+          return
         }
 
-        const data = await response.json()
-    
-        if (data.features && data.features.length > 0) {
-          const feature = data.features[0]
-          const properties = feature.properties
-          
-          const geocodedAddress = properties.name
-          setAddress(geocodedAddress)
-          
-          // Search for existing buildings with this address
-          if (geocodedAddress && buildings && buildings.length > 0) {
-            const normalizedGeocodedAddress = normalizeAddress(geocodedAddress)
+        setAddress(geocodedAddress)
 
-            const matches = buildings.filter((building) => {
-              if (!building.buildingAddress) return false
+        // Search for existing buildings with this address
+        if (buildings && buildings.length > 0) {
+          const normalizedGeocodedAddress = normalizeAddress(geocodedAddress)
 
-              const normalizedBuildingAddress = normalizeAddress(building.buildingAddress)
-              return (
-                normalizedBuildingAddress === normalizedGeocodedAddress ||
-                normalizedBuildingAddress.includes(normalizedGeocodedAddress) ||
-                normalizedGeocodedAddress.includes(normalizedBuildingAddress)
-              )
-            })
-            
-            if (matches.length > 0) {
-              setMatchingBuildings(matches)
-              setSelectedMatchingBuildingId(matches[0].id.toString())
-              setShowExistingBuildings(true)
-              
-              // Set the first match as the selected item for the update hook
-              if (setSelectedItem) {
-                setSelectedItem(matches[0])
-                didSetSelectedItemRef.current = true
-              }
-            } else {
-              clearExistingBuildingMatches()
+          const matches = buildings.filter((building) => {
+            if (!building.buildingAddress) return false
+
+            const normalizedBuildingAddress = normalizeAddress(building.buildingAddress)
+            return (
+              normalizedBuildingAddress === normalizedGeocodedAddress ||
+              normalizedBuildingAddress.includes(normalizedGeocodedAddress) ||
+              normalizedGeocodedAddress.includes(normalizedBuildingAddress)
+            )
+          })
+
+          if (matches.length > 0) {
+            setMatchingBuildings(matches)
+            setSelectedMatchingBuildingId(matches[0].id.toString())
+            setShowExistingBuildings(true)
+
+            // Set the first match as the selected item for the update hook
+            if (setSelectedItem) {
+              setSelectedItem(matches[0])
+              didSetSelectedItemRef.current = true
             }
           } else {
             clearExistingBuildingMatches()
@@ -183,11 +163,11 @@ export default function NonDatabaseBuildingPopover({
         console.error('Error fetching municipality and countrySubdivision:', error)
       }
     }
-    
+
     if (feature.properties?.coordinates) {
       const longitude = feature.properties.coordinates[0]
       const latitude = feature.properties.coordinates[1]
-      getAddress(latitude, longitude)
+      getAddress(longitude, latitude)
     }
   }, [feature, buildings, setSelectedItem, normalizeAddress, clearExistingBuildingMatches])
 

@@ -1,7 +1,6 @@
-import { Feature, Point, Polygon, MultiPolygon, LineString, MultiLineString } from 'geojson'
+import { Feature, Point } from 'geojson'
 import { MarkerManager } from './MarkerManager'
-
-const GEOCODE_EARTH_API_KEY = process.env.NEXT_PUBLIC_GEOCODE_EARTH_API_KEY
+import { autocompleteGeocode, reverseGeocode } from './geocoding'
 
 // Global marker manager instance for geocoder
 let geocoderMarkerManager: MarkerManager | null = null
@@ -16,34 +15,11 @@ const getGeocoderMarkerManager = (): MarkerManager => {
 
 // Convert longitude and latitude into Municipality and Country Subdivision
 export const getMunicipalityAndProvince = async (latitude: string, longitude: string, countryCode = 'CA') => {
-  const params = new URLSearchParams({
-    'api_key': GEOCODE_EARTH_API_KEY,
-    'point.lat': latitude,
-    'point.lon': longitude,
-    'boundary.country': countryCode.toUpperCase(),
-    'layers': 'coarse',
-    'size': '1', // Limit to 1 result
-  })
-
-  const reverseGeocoderUrl = `https://api.geocode.earth/v1/reverse?${params}`
-
   try {
-    const response = await fetch(reverseGeocoderUrl, {
-      headers: {
-        'User-Agent': 'CDT/1.0 (cdt@email.com)',
-      },
-    })
+    const features = await reverseGeocode(latitude, longitude, countryCode, { size: 1, coarse: true })
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
-    const data = await response.json()
-    console.log('Reverse geocoding response:', data)
-
-    if (data.features && data.features.length > 0) {
-      const feature = data.features[0]
-      const properties = feature.properties
+    if (features.length > 0) {
+      const properties = features[0].properties as any
 
       const municipality = properties.locality || properties.neighbourhood || properties.county || ''
       const countrySubdivision = properties.region_a || properties.region || '' // region_a gives abbreviation like "ON", "BC"
@@ -59,35 +35,14 @@ export const getMunicipalityAndProvince = async (latitude: string, longitude: st
   }
 }
 
-// Fetch address suggestions from Geocode Earth Autocomplete API
+// Fetch address suggestions from the active autocomplete provider
 export const fetchSuggestions = async (input: string, countryCode = 'CA') => {
   if (!input || input.length < 3) {
     return []
   }
 
   try {
-    const params = new URLSearchParams({
-      'api_key': GEOCODE_EARTH_API_KEY,
-      'text': input,
-      'boundary.country': countryCode.toUpperCase(),
-      'size': '5', // Limit results
-    })
-
-    const request = `https://api.geocode.earth/v1/autocomplete?${params}`
-
-    const response = await fetch(request, {
-      headers: {
-        'User-Agent': 'GIS-App/1.0',
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
-    const geojson = await response.json()
-
-    return geojson.features && geojson.features.length > 0 ? geojson.features : []
+    return await autocompleteGeocode(input, countryCode, 5)
   }
   catch (error) {
     console.error('Error fetching address suggestions:', error)
@@ -226,30 +181,9 @@ export const handleLocationSelect = (feature: Feature, map: any, type: string, o
 export const getDetailedAddress = async (coordinates: [number, number], countryCode = 'CA') => {
   const [longitude, latitude] = coordinates
 
-  const params = new URLSearchParams({
-    'api_key': GEOCODE_EARTH_API_KEY,
-    'point.lat': latitude.toString(),
-    'point.lon': longitude.toString(),
-    'boundary.country': countryCode.toUpperCase(),
-    'size': '1',
-  })
-
-  const reverseGeocoderUrl = `https://api.geocode.earth/v1/reverse?${params}`
-
   try {
-    const response = await fetch(reverseGeocoderUrl)
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
-    const data = await response.json()
-
-    if (data.features && data.features.length > 0) {
-      return data.features[0]
-    }
-
-    return null
+    const features = await reverseGeocode(latitude.toString(), longitude.toString(), countryCode, { size: 1 })
+    return features.length > 0 ? features[0] : null
   }
   catch (error) {
     console.error('Error fetching detailed address:', error)

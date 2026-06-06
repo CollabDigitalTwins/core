@@ -29,8 +29,6 @@ type StartConversionResponse = {
   jobId: string
 }
 
-// Audit Phase 1.C (F-19): hoist so React.memo on FileItemComponent isn't
-// defeated by per-render array identity.
 const POINT_CLOUD_OPTIONS: import('../../../../../../../../types/global').FileAction[] = ['view', 'delete', 'info']
 
 interface PointCloudsSectionProps {
@@ -141,11 +139,6 @@ export function PointCloudsSection({ files }: PointCloudsSectionProps) {
     subscribeToProgress(jobId, file.id)
   }, [])
 
-  // Audit Phase 1.C (F-19b): pass useCallback'd handlers so the
-  // onView/onDelete prop identities stay stable. Previously these were
-  // inline arrows, defeating React.memo on FileItemComponent transitively
-  // via useFileActions' internal memo dep list.
-  // handleView is already useCallback'd above — pass it directly.
   const handleDeletePointCloud = React.useCallback((file: DbFile) => {
     pointCloudDispatch({ type: 'UNLOAD_POINT_CLOUD', payload: { id: String(file.id) } })
   }, [pointCloudDispatch])

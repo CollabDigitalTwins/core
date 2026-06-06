@@ -31,13 +31,6 @@ import {
   ChevronDown,
 } from 'lucide-react'
 
-// Audit Phase 1.B (F-jspdf): jsPDF and its transitive html2canvas
-// (~150 KB gzipped combined) used to be statically imported here.
-// ShareToolSubmenu is rendered on the map/BIM/PointCloud toolbar, so
-// the static import shipped jspdf on every page load even though most
-// share interactions don't choose PDF format. Loading it inside the
-// PDF branch defers the chunk until the user actually picks PDF.
-
 // Custom components
 import QRCodeWithLink from './QRCodeWithLink'
 import { ToolbarSubmenu } from '../../ToolbarSubmenu'
@@ -225,9 +218,7 @@ export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({
     if (!screenshotUrl) return
 
     if (exportFormat === 'pdf') {
-      // F-jspdf: dynamic-import the PDF library only when the user picks PDF.
       const { default: jsPDF } = await import('jspdf')
-      // Create PDF with the screenshot
       const img = new Image()
       img.onload = () => {
         // Calculate dimensions to fit on page while maintaining aspect ratio

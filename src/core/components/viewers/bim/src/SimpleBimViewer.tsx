@@ -160,10 +160,6 @@ export function SimpleBimViewer({file, width = "100%", height = "100%"}: Props) 
             resizeObserver.observe(container);
             resizeObserverRef.current = resizeObserver;
 
-            // Audit Phase 1.E (F-18): same fix as BimViewer.tsx — removed
-            // the unmatched window.addEventListener('resize', handleResize)
-            // that leaked one listener per SimpleBimViewer mount.
-
             // Listen to loading state changes from both components
             ifcToFragments.onLoadingStateChanged.add(({ isLoading, message }) => {
                 setIsLoading(isLoading);

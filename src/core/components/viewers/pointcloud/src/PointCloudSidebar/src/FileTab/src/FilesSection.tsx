@@ -10,8 +10,6 @@ import { useUploadFileToBuilding, useDeleteFile } from '../../../../../../../../
 import { useFileUploadHandler, useFileDeleteHandler, FileItemComponent, useFileActions, useCommonFileUpload } from '../../../../../../../ui/FilesManager'
 import { DbFile as IFile } from '../../../../../../../../types/dbTypes'
 
-// Audit Phase 1.C (F-19): hoist so React.memo on FileItemComponent isn't
-// defeated by per-render array identity.
 const PC_FILE_OPTIONS: import('../../../../../../../../types/global').FileAction[] = ['download', 'view', 'move', 'info', 'delete']
 
 interface FilesSectionProps {
@@ -53,9 +51,6 @@ export function FilesSection({ files }: FilesSectionProps) {
     setLocalFiles(files.map(file => ({ ...file, isVisible: (file as any).isVisible ?? false })).sort((a, b) => a.name.localeCompare(b.name)))
   }, [files])
 
-  // Audit Phase 1.C (F-19b): useCallback so onView prop identity stays stable
-  // and useFileActions returns a stable handleAction. Without this, the
-  // F-19 React.memo on FileItemComponent is defeated by per-render prop churn.
   const handleViewFile = React.useCallback((file: IFile, newVisibility: boolean) => {
     console.log(`Point cloud file ${file.name} visibility toggled to ${newVisibility}`)
   }, [])

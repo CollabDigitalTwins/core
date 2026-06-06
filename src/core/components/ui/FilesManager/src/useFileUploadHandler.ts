@@ -69,8 +69,6 @@ export function useFileUploadHandler({
       const ext = getFileExtension(file)?.toLowerCase()
 
       if (ext === 'ifc') {
-        // F-1d: load the @thatopen-based converter only when actually needed.
-        // First IFC upload pays ~456 KB chunk download; subsequent uploads are cached.
         const { convertIfcToFragmentsFile } = await import('./convertIfcToFragmentsFile')
         const fragFile = await convertIfcToFragmentsFile(file)
 

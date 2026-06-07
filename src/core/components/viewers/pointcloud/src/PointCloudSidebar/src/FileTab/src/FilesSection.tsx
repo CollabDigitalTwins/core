@@ -43,12 +43,12 @@ export function FilesSection({ files }: FilesSectionProps) {
 
   // Local state for file management with isVisible property
   const [localFiles, setLocalFiles] = React.useState<(IFile & { isVisible?: boolean })[]>(
-    files.map(file => ({ ...file, isVisible: (file as any).isVisible ?? false })).sort((a, b) => a.name.localeCompare(b.name))
+    files.map(file => ({ ...file, isVisible: (file as any).isVisible ?? false })).sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
   )
 
   // Keep local list in sync with incoming props
   React.useEffect(() => {
-    setLocalFiles(files.map(file => ({ ...file, isVisible: (file as any).isVisible ?? false })).sort((a, b) => a.name.localeCompare(b.name)))
+    setLocalFiles(files.map(file => ({ ...file, isVisible: (file as any).isVisible ?? false })).sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '')))
   }, [files])
 
   const handleViewFile = React.useCallback((file: IFile, newVisibility: boolean) => {

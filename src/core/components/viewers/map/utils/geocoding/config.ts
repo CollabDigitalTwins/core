@@ -16,9 +16,10 @@
 export const GEOCODE_EARTH_API_KEY = process.env.NEXT_PUBLIC_GEOCODE_EARTH_API_KEY
 // Self-hosted Pelias-compatible endpoint (no key). e.g. https://pelias.example.com
 const PELIAS_URL = process.env.NEXT_PUBLIC_GEOCODER_URL
-// Public OSM fallbacks (overridable for self-hosters running their own instances).
-export const PHOTON_URL = 'https://photon.komoot.io'
-export const NOMINATIM_URL = 'https://nominatim.openstreetmap.org'
+// Public OSM fallbacks. Default to the community instances; self-hosters can point at
+// their own Photon/Nominatim via env to avoid the public instances' rate limits.
+export const PHOTON_URL = process.env.NEXT_PUBLIC_PHOTON_URL || 'https://photon.komoot.io'
+export const NOMINATIM_URL = process.env.NEXT_PUBLIC_NOMINATIM_URL || 'https://nominatim.openstreetmap.org'
 
 // Key wins (best quality), then self-hosted Pelias, otherwise public OSM.
 export const PELIAS_BASE = GEOCODE_EARTH_API_KEY ? 'https://api.geocode.earth' : PELIAS_URL || null

@@ -4523,6 +4523,13 @@
   dependencies:
     "@maplibre/maplibre-gl-style-spec" "^19.2.1"
 
+"@vitejs/plugin-react@^6.0.2":
+  version "6.0.2"
+  resolved "https://registry.yarnpkg.com/@vitejs/plugin-react/-/plugin-react-6.0.2.tgz#f70cb8ed0ce225dbc3055d78070f820d8aa35eda"
+  integrity sha512-DlSMqo4WhThw4vB8Mpn0Woe9J+Jfq1geJ61AKW0QEgLzGMNwtIMdxbDUzLxcun8W7NbJO0e2Jg/Nxm3cCSVzzg==
+  dependencies:
+    "@rolldown/pluginutils" "^1.0.0"
+
 "@vitest/expect@4.1.8":
   version "4.1.8"
   resolved "https://registry.yarnpkg.com/@vitest/expect/-/expect-4.1.8.tgz#45154f1f8559f55c5281eb0dcb1ac37b581a87d8"

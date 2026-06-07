@@ -29,7 +29,7 @@ describe('BimReducer', () => {
   })
 
   it('TOGGLE_BIM_TO_MAP adds, then a second toggle removes it (dedup by bimFile.id)', () => {
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => { })
     const payload = { buildingModel: { bimFile: { id: 1, name: 'a.ifc' }, building: null } }
     let s = BimReducer(base, { type: 'TOGGLE_BIM_TO_MAP', payload } as never)
     expect(s.bimModelsAddedToMap).toHaveLength(1)
@@ -60,7 +60,6 @@ describe('BimReducer', () => {
     s = BimReducer(s, { type: 'SET_MODEL_UI_STATE', payload: { fileId: 5, isGhost: true } } as never)
     expect(s.modelUIState[5]).toEqual({ isVisible: true, isGhost: true })
   })
-
 
   it('unknown action returns the same state', () => {
     expect(BimReducer(base, { type: 'NOPE' } as never)).toBe(base)

@@ -8,6 +8,7 @@ describe('hexToRgba', () => {
   })
 
   it('expands 3-digit shorthand (the #abc → NaN bug)', () => {
+    // '#abc' → 'aabbcc'
     expect(hexToRgba('#abc', 0.5)).toBe('rgba(170, 187, 204, 0.5)')
     expect(hexToRgba('#000', 1)).toBe('rgba(0, 0, 0, 1)')
   })

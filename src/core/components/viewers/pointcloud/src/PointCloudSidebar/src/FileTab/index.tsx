@@ -11,12 +11,11 @@ import { DbFile } from '../../../../../../../types/dbTypes'
 export function FileTab() {
   const { state: buildingState } = React.useContext(BuildingsContext)
   const { building } = buildingState.buildings
-  let buildingId:number;
 
   const urlBuildingId = useSearchParams().get('buildingId')
-
-  if (building) buildingId = building.id
-  else if (urlBuildingId) buildingId = Number(urlBuildingId)
+  // Resolve from the store building, else the URL param; undefined if neither is
+  // ready yet (e.g. mid viewer-switch) — the hook handles undefined → no files.
+  const buildingId = building?.id ?? (urlBuildingId ? Number(urlBuildingId) : undefined)
 
   const filesData: DbFile[] = useFilesByBuildingId(buildingId).files || []
 

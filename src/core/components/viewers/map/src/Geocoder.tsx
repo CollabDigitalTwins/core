@@ -184,8 +184,12 @@ export default function Geocoder({
       mapDispatch({ type: 'UPDATE_LOCATION', payload: { currentLocation: newCurrentLocation } })
       if (municipality || countrySubdivision) {
         const url = new URL(window.location.href)
-        url.searchParams.set('municipality', municipality)
-        url.searchParams.set('countrySubdivision', countrySubdivision)
+        // Write each field only when present, so an empty param doesn't shadow the
+        // organization fallback MapViewer applies on reload.
+        if (municipality) url.searchParams.set('municipality', municipality)
+        else url.searchParams.delete('municipality')
+        if (countrySubdivision) url.searchParams.set('countrySubdivision', countrySubdivision)
+        else url.searchParams.delete('countrySubdivision')
         url.searchParams.set('address', parts[0])
         url.searchParams.set('lng', lng.toString())
         url.searchParams.set('lat', lat.toString())

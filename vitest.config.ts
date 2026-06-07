@@ -1,13 +1,16 @@
 import { defineConfig } from 'vitest/config'
+import react from '@vitejs/plugin-react'
 
-// Track B.1 (unit tests). Vitest is ESM-native (the package is `"type": "module"`),
-// so it runs the TS sources directly via esbuild — no jest transform wiring needed.
-// Scope to *.test.ts (pure logic, node env). Component tests (*.test.tsx, jsdom +
-// Testing Library) come in Track B.2 and will get their own jsdom project/config.
+// Vitest is ESM-native (the package is `"type": "module"`). *.test.ts run in the
+// node env (pure logic); *.test.tsx are component tests that opt into jsdom via a
+// per-file `// @vitest-environment jsdom` pragma + Testing Library. The React
+// plugin provides the JSX transform; vitest.setup.ts registers jest-dom matchers.
 export default defineConfig({
+  plugins: [react()],
   test: {
     environment: 'node',
     globals: true,
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
+    setupFiles: ['./vitest.setup.ts'],
   },
 })

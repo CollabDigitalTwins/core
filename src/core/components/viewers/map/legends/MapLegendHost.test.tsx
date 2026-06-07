@@ -1,10 +1,11 @@
+// @vitest-environment jsdom
 import * as React from 'react'
 import { render, screen } from '@testing-library/react'
 import type { LegendRegistration } from '../../../../plugins/sdk/types'
 import { MapLegendHost } from './MapLegendHost'
 
-const mockRegistry = { getAll: jest.fn() }
-jest.mock('../../../../plugins/host/provider', () => ({
+const { mockRegistry } = vi.hoisted(() => ({ mockRegistry: { getAll: vi.fn() } }))
+vi.mock('../../../../plugins/host/provider', () => ({
   usePluginRegistry: () => mockRegistry,
   usePluginsReady: () => true,
 }))

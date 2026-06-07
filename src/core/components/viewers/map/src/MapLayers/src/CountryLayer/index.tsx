@@ -6,8 +6,8 @@ import type { MapMouseEvent } from 'maplibre-gl'
 import { MapContext } from '../../../../../../../store/Map/context'
 import { useAppConfigContext } from '../../../../../../../store/AppConfig/context'
 import { useSearchParams, useRouter } from 'next/navigation'
-
 import { hexToRgba, buildSubdivisionUrl } from './countryLayerUtils'
+
 const DEFAULT_BORDER_COLOR = '#73cee2'
 // satellite.json's openmaptiles source uses MapTiler's 'tiles/buildings' tileset which lacks the boundary + place layers. Pull both from the full openmaptiles v3 schema (same tileset blank.json uses).
 const BOUNDARIES_SOURCE_ID = 'openmaptiles-boundaries'
@@ -43,7 +43,7 @@ function addGlobalBorderLayer(map: any, color: string) {
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': color,
-          'line-width': { base: 1, stops: [[0, 0.8], [4, 1.4], [10, 1.4], [14, 1] ] },
+          'line-width': { base: 1, stops: [[0, 0.8], [4, 1.4], [10, 1.4], [14, 1]] },
         },
       })
     }
@@ -147,8 +147,6 @@ function addGlobalBorderLayer(map: any, color: string) {
   }
 }
 
-
-
 export const CountryLayer = () => {
   const { state: mapState, dispatch: mapDispatch } = React.useContext(MapContext)
   const { map, currentLocation } = mapState.map
@@ -196,7 +194,7 @@ export const CountryLayer = () => {
         } as any,
       },
     })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orgHasLocation])
 
   React.useEffect(() => {

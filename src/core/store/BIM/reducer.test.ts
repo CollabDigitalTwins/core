@@ -61,11 +61,6 @@ describe('BimReducer', () => {
     expect(s.modelUIState[5]).toEqual({ isVisible: true, isGhost: true })
   })
 
-  it('DISPOSE-BIM-VIEWER is declared in the payload but has no case → no-op (documents dead action)', () => {
-    // FINDING (Track B): 'DISPOSE-BIM-VIEWER' is in BimPayload yet has no reducer case
-    // and is dispatched nowhere in core. Currently a silent no-op; flagged as cleanup.
-    expect(BimReducer(base, { type: 'DISPOSE-BIM-VIEWER' } as never)).toBe(base)
-  })
 
   it('unknown action returns the same state', () => {
     expect(BimReducer(base, { type: 'NOPE' } as never)).toBe(base)

@@ -164,6 +164,9 @@ export function PointCloudViewer() {
 
           Potree.loadPointCloud(url, id, (e: any) => {
             pendingIdsRef.current.delete(id);
+            // Bail if the viewer was torn down (or re-init'd) while this load was in flight —
+            // the init-effect cleanup nulls viewerRef, so this guard avoids attaching to a dead viewer.
+            if (viewerRef.current !== viewer) return;
             try {
               viewer.scene.addPointCloud(e.pointcloud);
               loadedCloudsRef.current.set(id, e.pointcloud);
@@ -171,9 +174,6 @@ export function PointCloudViewer() {
               const mat = e.pointcloud.material;
               mat.size = 1;
               mat.pointSizeType = Potree.PointSizeType.ADAPTIVE;
-              e.pointcloud.position.x += 3;
-              e.pointcloud.position.y -= 3;
-              e.pointcloud.position.z += 4;
 
               const restored = !cameraRestoredRef.current && restoreCameraFromUrl(viewer, searchParams)
               cameraRestoredRef.current = true;

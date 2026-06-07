@@ -71,30 +71,30 @@ export const NodeSizeSelectionTool: React.FC<NodeSizeSelectionToolProps> = ({
     React.useEffect(() => {
         if (!viewer) return
 
-        let pointcloud = viewer.scene.pointclouds[0];
-        let material = pointcloud.material;
+        const pointcloud = viewer.scene.pointclouds[0];
+        if (!pointcloud) return // viewer can exist before any cloud is loaded
 
-        material.minSize = minNodeSize[0];
+        pointcloud.material.minSize = minNodeSize[0];
 
     }, [viewer, minNodeSize])
 
     React.useEffect(() => {
         if (!viewer) return
 
-        let pointcloud = viewer.scene.pointclouds[0];
-        let material = pointcloud.material;
+        const pointcloud = viewer.scene.pointclouds[0];
+        if (!pointcloud) return
 
-        material.maxSize = maxNodeSize[0];
+        pointcloud.material.maxSize = maxNodeSize[0];
 
     }, [viewer, maxNodeSize])
 
     React.useEffect(() => {
         if (!viewer) return
 
-        let pointcloud = viewer.scene.pointclouds[0];
-        let material = pointcloud.material;
+        const pointcloud = viewer.scene.pointclouds[0];
+        if (!pointcloud) return
 
-        material.pointSizeType = pointSizeType;
+        pointcloud.material.pointSizeType = pointSizeType;
 
     }, [viewer, pointSizeType])
 

@@ -43,7 +43,6 @@ export type BimPayload = {
     ["SET_FLOORPLANS"]: Pick<BimTypes, "floorplans">;
     ["SET_GRID"]: Pick<BimTypes, "grid">;
     ["DISPOSE-BIM"]: void;
-    ["DISPOSE-BIM-VIEWER"]: void;
     ["TOGGLE_BIM_TO_MAP"]: Pick<BimTypes, "buildingModel">;
     ["REMOVE_BIM_FROM_MAP"]: Pick<BimTypes, "bimModelName">;
     ["REMOVE_ALL_BIM_FROM_MAP"]: void;
@@ -110,10 +109,6 @@ export const BimReducer = (state: BimState, action: BimActions) => {
                         "building": action.payload.buildingModel.building
                     },
                 ];
-            console.log(
-                "BimReducer - ADD_BIM_TO_MAP",
-                { bimModelsAddedToMap }
-            );
             return {
                 ...state,
                 bimModelsAddedToMap

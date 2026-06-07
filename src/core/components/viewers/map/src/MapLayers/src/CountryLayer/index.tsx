@@ -6,8 +6,8 @@ import type { MapMouseEvent } from 'maplibre-gl'
 import { MapContext } from '../../../../../../../store/Map/context'
 import { useAppConfigContext } from '../../../../../../../store/AppConfig/context'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { hexToRgba, buildSubdivisionUrl } from './countryLayerUtils'
 
-const ARCGIS_BASE = 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/World_Administrative_Divisions/FeatureServer/0/query'
 const DEFAULT_BORDER_COLOR = '#73cee2'
 // satellite.json's openmaptiles source uses MapTiler's 'tiles/buildings' tileset which lacks the boundary + place layers. Pull both from the full openmaptiles v3 schema (same tileset blank.json uses).
 const BOUNDARIES_SOURCE_ID = 'openmaptiles-boundaries'
@@ -147,22 +147,6 @@ function addGlobalBorderLayer(map: any, color: string) {
   }
 }
 
-function hexToRgba(hex: string, opacity: number): string {
-  const clean = hex.replace('#', '')
-  const r = parseInt(clean.slice(0, 2), 16)
-  const g = parseInt(clean.slice(2, 4), 16)
-  const b = parseInt(clean.slice(4, 6), 16)
-  return `rgba(${r}, ${g}, ${b}, ${opacity})`
-}
-
-const buildSubdivisionUrl = (countryCode: string) => {
-  const params = new URLSearchParams({
-    outFields: 'NAME,ISO_CC,ISO_CODE,ADMINTYPE',
-    where: `ISO_CC='${countryCode}'`,
-    f: 'geojson',
-  })
-  return `${ARCGIS_BASE}?${params.toString()}`
-}
 
 export const CountryLayer = () => {
   const { state: mapState, dispatch: mapDispatch } = React.useContext(MapContext)

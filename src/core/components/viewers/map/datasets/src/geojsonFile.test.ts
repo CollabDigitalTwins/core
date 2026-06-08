@@ -1,61 +1,101 @@
-import { describe, it, expect } from 'vitest'
 import { parseGeoJSON, summarizeFeatures } from './geojsonFile'
 
-describe('geojsonFile: parseGeoJSON', () => {
-  it('normalises a bare geometry into a FeatureCollection', () => {
-    const { featureCollection, summary } = parseGeoJSON(JSON.stringify({ type: 'Point', coordinates: [1, 2] }))
-    expect(featureCollection.type).toBe('FeatureCollection')
-    expect(featureCollection.features).toHaveLength(1)
-    expect(summary.geometryTypes).toEqual({ Point: 1 })
-    expect(summary.bbox).toEqual([1, 2, 1, 2])
-  })
-
-  it('unwraps a single Feature', () => {
-    const { featureCollection } = parseGeoJSON(JSON.stringify({
-      type: 'Feature', geometry: { type: 'Point', coordinates: [0, 0] }, properties: { a: 1 },
-    }))
-    expect(featureCollection.features).toHaveLength(1)
-  })
-
-  it('keeps FeatureCollection features and summarises them (sorted property union)', () => {
-    const fc = {
+describe('parseGeoJSON', () => {
+  it('normalises a FeatureCollection input', () => {
+    const text = JSON.stringify({
       type: 'FeatureCollection',
       features: [
-        { type: 'Feature', geometry: { type: 'Point', coordinates: [0, 0] }, properties: { name: 'a' } },
-        { type: 'Feature', geometry: { type: 'LineString', coordinates: [[1, 1], [3, 4]] }, properties: { id: 9 } },
+        { type: 'Feature', geometry: { type: 'Point', coordinates: [1, 2] }, properties: { a: 1 } },
       ],
-    }
-    const { summary } = parseGeoJSON(JSON.stringify(fc))
-    expect(summary.featureCount).toBe(2)
-    expect(summary.geometryTypes).toEqual({ Point: 1, LineString: 1 })
-    expect(summary.propertyKeys).toEqual(['id', 'name'])
-    expect(summary.bbox).toEqual([0, 0, 3, 4])
+    })
+    const result = parseGeoJSON(text)
+    expect(result.featureCollection.type).toBe('FeatureCollection')
+    expect(result.featureCollection.features).toHaveLength(1)
+    expect(result.summary.featureCount).toBe(1)
   })
 
-  it('throws on invalid JSON', () => {
-    expect(() => parseGeoJSON('{not json')).toThrow()
+  it('wraps a single Feature into a FeatureCollection', () => {
+    const text = JSON.stringify({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [3, 4] },
+      properties: {},
+    })
+    const result = parseGeoJSON(text)
+    expect(result.featureCollection.features).toHaveLength(1)
+    expect(result.featureCollection.features[0].geometry.type).toBe('Point')
   })
 
-  it('throws on an unrecognised GeoJSON type', () => {
+  it('wraps a bare Geometry into a Feature', () => {
+    const text = JSON.stringify({ type: 'Polygon', coordinates: [[[0, 0], [1, 0], [1, 1], [0, 0]]] })
+    const result = parseGeoJSON(text)
+    expect(result.featureCollection.features).toHaveLength(1)
+    expect(result.featureCollection.features[0].geometry.type).toBe('Polygon')
+    expect(result.featureCollection.features[0].properties).toEqual({})
+  })
+
+  it('treats a FeatureCollection with no features array as empty', () => {
+    const text = JSON.stringify({ type: 'FeatureCollection' })
+    const result = parseGeoJSON(text)
+    expect(result.featureCollection.features).toEqual([])
+    expect(result.summary.featureCount).toBe(0)
+  })
+
+  it('throws on non-object input', () => {
+    expect(() => parseGeoJSON(JSON.stringify('hello'))).toThrow('File is not a JSON object')
+  })
+
+  it('throws on unknown type', () => {
     expect(() => parseGeoJSON(JSON.stringify({ type: 'Banana' }))).toThrow(/Unrecognised GeoJSON type/)
+  })
+
+  it('throws on malformed JSON', () => {
+    expect(() => parseGeoJSON('{not json')).toThrow()
   })
 })
 
-describe('geojsonFile: summarizeFeatures', () => {
-  it('returns a null bbox + null sample when given no features', () => {
-    const s = summarizeFeatures([])
-    expect(s.featureCount).toBe(0)
-    expect(s.bbox).toBeNull()
-    expect(s.sample).toBeNull()
+describe('summarizeFeatures', () => {
+  it('counts features and geometry types', () => {
+    const features: GeoJSON.Feature[] = [
+      { type: 'Feature', geometry: { type: 'Point', coordinates: [0, 0] }, properties: {} },
+      { type: 'Feature', geometry: { type: 'Point', coordinates: [1, 1] }, properties: {} },
+      { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[0, 0], [1, 1], [2, 2], [0, 0]]] }, properties: {} },
+    ]
+    const summary = summarizeFeatures(features)
+    expect(summary.featureCount).toBe(3)
+    expect(summary.geometryTypes).toEqual({ Point: 2, Polygon: 1 })
   })
 
-  it('walks nested coordinates (Polygon ring) to compute the bbox', () => {
-    const polygon = {
+  it('returns a sorted union of property keys', () => {
+    const features: GeoJSON.Feature[] = [
+      { type: 'Feature', geometry: { type: 'Point', coordinates: [0, 0] }, properties: { zeta: 1, alpha: 2 } },
+      { type: 'Feature', geometry: { type: 'Point', coordinates: [1, 1] }, properties: { mu: 3, alpha: 4 } },
+    ]
+    expect(summarizeFeatures(features).propertyKeys).toEqual(['alpha', 'mu', 'zeta'])
+  })
+
+  it('computes the bbox across mixed geometry types', () => {
+    const features: GeoJSON.Feature[] = [
+      { type: 'Feature', geometry: { type: 'Point', coordinates: [-5, -3] }, properties: {} },
+      { type: 'Feature', geometry: { type: 'LineString', coordinates: [[10, 20], [-1, 8]] }, properties: {} },
+    ]
+    expect(summarizeFeatures(features).bbox).toEqual([-5, -3, 10, 20])
+  })
+
+  it('returns null bbox when no positional coordinates are found', () => {
+    const features: GeoJSON.Feature[] = [
+      { type: 'Feature', geometry: { type: 'GeometryCollection', geometries: [] } as any, properties: {} },
+    ]
+    expect(summarizeFeatures(features).bbox).toBeNull()
+  })
+
+  it('exposes the first feature as `sample` and null when empty', () => {
+    const f: GeoJSON.Feature = {
       type: 'Feature',
-      geometry: { type: 'Polygon', coordinates: [[[-1, -2], [5, 6], [2, 9], [-1, -2]]] },
-      properties: {},
-    } as never
-    expect(summarizeFeatures([polygon]).bbox).toEqual([-1, -2, 5, 9])
+      geometry: { type: 'Point', coordinates: [0, 0] },
+      properties: { id: 1 },
+    }
+    expect(summarizeFeatures([f]).sample).toBe(f)
+    expect(summarizeFeatures([]).sample).toBeNull()
   })
 
   it('ignores a z value in 3D coordinates when computing the bbox', () => {

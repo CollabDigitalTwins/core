@@ -99,9 +99,9 @@ export const createGenericFileMarker = (
   return { marker, object3D: sphere }
 }
 
-export const removeMarker = (marker: CSS2DObject | null, world: any) => {
-  if (!marker || !world) return
-  world.scene.three.remove(marker)
+export const removeMarker = (marker: CSS2DObject | null, world?: any) => {
+  if (!marker) return
+  if (world) world.scene.three.remove(marker)
   const el = marker.element as HTMLElement | undefined
   el?.parentElement?.removeChild(el)
 }

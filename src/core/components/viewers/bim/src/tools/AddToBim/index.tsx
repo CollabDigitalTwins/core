@@ -3,6 +3,7 @@
 import * as React from "react"
 import * as LR from "lucide-react"
 import Image from "next/image"
+import { useTranslations } from 'next-intl'
 
 import { BuildingsContext, MenusContext, ToolsContext } from "../../../../../../store"
 import { BimContext } from "../../../../../../store/BIM/context"
@@ -20,8 +21,9 @@ import Position3DCard from "./src/Position3DCard"
 import { FileAdderDialog } from "../../../../map/src/tools/AddTools/AddFile/FileAdder"
 import { CommentInput } from "../../../../../ui/Comments/CommentInput"
 import { SensorInput } from "../../../../../ui/Sensors/SensorInput"
-import { useFilesByBuildingId, useUploadFileToBuilding } from "../../../../../../hooks/files/files"
+import { useFilesByBuildingId, useUploadFileToBuilding, useDeleteFile } from "../../../../../../hooks/files/files"
 import { ViewerContextMenu } from "../../../../../ui/FilesManager"
+import type { FileMarkerAction } from "../../../../../ui/FilesManager/src/FileMarker"
 import type { DbFile } from "../../../../../../types/dbTypes"
 import type { FileAction } from "../../../../../../types/global"
 
@@ -62,6 +64,7 @@ const FilePreview: React.FC<{
 }
 
 export default function AddToBim({ tool }: AddToBimProps) {
+  const t = useTranslations('AddToBim')
   const { dispatch: toolsDispatch, state: toolsState } = React.useContext(ToolsContext)
   const { state: bimState } = React.useContext(BimContext)
   const { bimComponents, world, fragments } = bimState.bim
@@ -79,16 +82,39 @@ export default function AddToBim({ tool }: AddToBimProps) {
   const { addPendingComment, removePendingComment, commentCount } = useCommentMarkers(world, buildingId)
   const { addPendingSensor, removePendingSensor, sensorCount } = useSensorMarkers(world, buildingId)
   const { uploadFile } = useUploadFileToBuilding(buildingId)
-  const filePlacement = useFilePlacement(
-    bimComponents, world, fragments, toolsDispatch, buildingId, uploadFile,
-  )
+  const { deleteFile } = useDeleteFile(buildingId)
 
-  // File count for badge: only visible (added to scene) non-BIM files
+  // Visible (added-to-scene) non-BIM files; also used to resolve a marker to its DB record.
   const filesData = useFilesByBuildingId(buildingId).files || []
+  const filesDataRef = React.useRef(filesData)
+  filesDataRef.current = filesData
   const visibleFileCount = filesData.filter(f => {
     const ext = f.extension?.toLowerCase()
-    return ext !== "ifc" && ext !== "frag" && f.tag !== "user" && f.tag !== "bim-file"  && f.isVisible
+    return ext !== "ifc" && ext !== "frag" && f.tag !== "user" && f.tag !== "bim-file" && f.isVisible
   }).length
+
+  // Marker actions reach into the placement API after it is created, so route through a ref.
+  const placementRef = React.useRef<ReturnType<typeof useFilePlacement> | null>(null)
+  const handleMarkerAction = React.useCallback((id: string, action: FileMarkerAction) => {
+    const api = placementRef.current
+    if (!api) return
+    if (action === "delete") {
+      const placed = api.getPlacedFile(id)
+      api.removePlacedFile(id)
+      const dbFile = placed
+        ? filesDataRef.current.find(f => f.name === placed.name && (f.id ?? 0) > 0)
+        : undefined
+      if (dbFile?.id) deleteFile(dbFile.id).catch(() => { })
+      return
+    }
+    api.editPlacedFile(id, action === "move" ? "translate" : action)
+  }, [deleteFile])
+
+  const filePlacement = useFilePlacement(
+    bimComponents, world, fragments, toolsDispatch, buildingId, uploadFile,
+    handleMarkerAction,
+  )
+  placementRef.current = filePlacement
 
   // Initialize CSS2D renderer
   React.useEffect(() => {
@@ -96,9 +122,6 @@ export default function AddToBim({ tool }: AddToBimProps) {
   }, [world])
 
   // Canvas-level right-click: raycast to detect hit, show context menu
-  const filesDataRef = React.useRef(filesData)
-  filesDataRef.current = filesData
-
   React.useEffect(() => {
     if (!world || !fragments) return
     const canvas = world.renderer?.three?.domElement
@@ -124,7 +147,7 @@ export default function AddToBim({ tool }: AddToBimProps) {
       setContextMenu({
         x: e.clientX,
         y: e.clientY,
-        file: matchedFile ?? { id: 0, name: "BIM Object", url: "", type: "bim-file" } as DbFile,
+        file: matchedFile ?? { id: 0, name: t('bimObject'), url: "", type: "bim-file" } as DbFile,
       })
     }
 
@@ -220,13 +243,13 @@ export default function AddToBim({ tool }: AddToBimProps) {
         <FileAdderDialog
           isOpen={true}
           onClose={cancelAdding}
-          title="Add File"
+          title={t('addFile')}
           icon={LR.FilePlus}
           accept="*/*"
           onFileSelect={(e) => filePlacement.handleFileSelect(e, addingMode)}
           onFileDrop={(file) => filePlacement.handleFileDrop(file, addingMode)}
-          dropZoneTitle="Drag and drop a file"
-          dropZoneSubtext="or click to browse"
+          dropZoneTitle={t('dropZoneTitle')}
+          dropZoneSubtext={t('dropZoneSubtext')}
           hide={filePlacement.isPlacingFile && !!filePlacement.selectedFile}
         />
       )}
@@ -235,13 +258,13 @@ export default function AddToBim({ tool }: AddToBimProps) {
         <FileAdderDialog
           isOpen={true}
           onClose={cancelAdding}
-          title="Add CAD File"
-          icon={LR.FileCode2}
+          title={t('addCadFile')}
+          icon={LR.DraftingCompass}
           accept=".dxf,.dwg"
           onFileSelect={(e) => filePlacement.handleFileSelect(e, addingMode)}
           onFileDrop={(file) => filePlacement.handleFileDrop(file, addingMode)}
-          dropZoneTitle="Drag and drop a CAD file"
-          dropZoneSubtext="DXF is currently supported"
+          dropZoneTitle={t('dropZoneTitleCad')}
+          dropZoneSubtext={t('dropZoneSubtextCad')}
           hide={filePlacement.isPlacingFile && !!filePlacement.selectedFile}
         />
       )}
@@ -278,7 +301,7 @@ export default function AddToBim({ tool }: AddToBimProps) {
         }}
       />
 
-      {/* Right-click context menu on file markers */}
+      {/* Right-click context menu on BIM scene objects */}
       {contextMenu && (
         <ViewerContextMenu
           x={contextMenu.x}

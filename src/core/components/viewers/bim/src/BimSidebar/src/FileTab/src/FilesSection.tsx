@@ -2,6 +2,7 @@ import * as React from 'react'
 import * as LR from 'lucide-react'
 import { BimContext, BuildingsContext, MenusContext } from '../../../../../../../../store'
 import { ModelManager } from '../../../../ModelManager'
+import { DXFManager } from '../../../../DXFLoader'
 import * as THREE from 'three'
 import { GizmoController } from '../../../../../utils/GizmoController'
 import { CurrentWorld } from '../../../../CurrentWorld'
@@ -113,6 +114,44 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
   const modelManagerRef = React.useRef(modelManager)
   React.useEffect(() => { modelManagerRef.current = modelManager }, [modelManager])
 
+  const dxfManager = React.useMemo(() => {
+    if (!bimComponents) return null
+    try { return bimComponents.get(DXFManager) } catch { return null }
+  }, [bimComponents])
+  // Loaded DXF groups keyed by file id, so visibility toggles can show/hide them.
+  const dxfGroupsRef = React.useRef<Map<string, THREE.Group>>(new Map())
+
+  const toggleDxfVisibility = React.useCallback(async (file: IFile, visible: boolean) => {
+    if (!dxfManager || !bimComponents) return
+    const world = bimComponents.get(CurrentWorld).world
+    if (!world) return
+
+    const key = file.id.toString()
+    const existing = dxfGroupsRef.current.get(key)
+    if (visible) {
+      if (existing) { existing.visible = true; return }
+      try {
+        const res = await fetch(`/api/presignedUrlDownload/${file.id}`)
+        if (!res.ok) throw new Error(`Failed to get download URL: ${res.status}`)
+        const { presignedUrl } = await res.json()
+        const group = await dxfManager.parse(presignedUrl)
+        group.name = key
+        const placed = file.x != null && file.y != null && file.z != null
+        group.position.copy(placed
+          ? new THREE.Vector3(file.x as number, file.y as number, file.z as number)
+          : new THREE.Vector3())
+        group.scale.setScalar(0.001)
+        if (file.rotation != null) group.rotation.y = file.rotation as number
+        world.scene.three.add(group)
+        dxfGroupsRef.current.set(key, group)
+      } catch (err) {
+        console.error(`[FilesSection] Failed to load DXF "${file.name}":`, err)
+      }
+    } else if (existing) {
+      existing.visible = false
+    }
+  }, [dxfManager, bimComponents])
+
   // Gizmo controllers keyed by file name (one gizmo per file at most)
   const gizmoControllersRef = React.useRef<Map<string, GizmoController>>(new Map())
 
@@ -206,7 +245,13 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
       }
       if (fragments) fragments.core.update(true)
     }
-  }, [bimComponents, menusDispatch, bimState, bimDispatch, modelManager, fragments])
+
+    // DXF files managed via DXFManager
+    if (file.extension === 'dxf') {
+      await toggleDxfVisibility(file, newVisibility)
+      if (fragments) fragments.core.update(true)
+    }
+  }, [bimComponents, menusDispatch, bimState, bimDispatch, modelManager, fragments, toggleDxfVisibility])
 
   const highlighter = React.useMemo(() => {
     if (!bimComponents) return null
@@ -399,9 +444,8 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
     checked: !areAllHidden,
     onCheckedChange: async (checked: boolean) => {
       setLocalFiles(prev => prev.map(f => ({ ...f, isVisible: checked })))
-      if (modelManager) {
-        for (const f of localFiles) {
-          if (!is3DFile(f.extension)) continue
+      for (const f of localFiles) {
+        if (is3DFile(f.extension) && modelManager) {
           const existingModel = modelManager.getModelByName(f.name)
           if (checked) {
             if (existingModel) {
@@ -423,12 +467,14 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
                 console.error(`[FilesSection] Failed to load model "${f.name}":`, err)
               }
             }
-          } else {
-            if (existingModel) existingModel.model.visible = false
+          } else if (existingModel) {
+            existingModel.model.visible = false
           }
+        } else if (f.extension === 'dxf') {
+          await toggleDxfVisibility(f, checked)
         }
-        if (fragments) fragments.core.update(true)
       }
+      if (fragments) fragments.core.update(true)
     },
   })
 

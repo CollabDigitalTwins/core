@@ -8,10 +8,42 @@ import { ModelManager } from "../../../ModelManager"
 import { Highlighter } from "../../../Highlighter"
 import { Cursor } from "../../../Cursor"
 import { AddDxf } from "./AddDxf"
-import { addFileToScene } from "./FileHandler"
-import type { AddedFile } from "./FileMarkerUtils"
+import { addFileToScene, type PlacedKind } from "./FileHandler"
+import { type AddedFile, removeMarker } from "./FileMarkerUtils"
+import type { FileMarkerAction } from "../../../../../../ui/FilesManager/src/FileMarker"
+import type { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js"
 import type { BimToolbarToolsType } from "../../bimToolbar"
 import { getFileExtension } from "../../../../../../../utils/utils"
+
+export type GizmoMode = "translate" | "rotate" | "scale"
+
+export interface PlacedFile {
+  id: string
+  name: string
+  kind: PlacedKind
+  marker: CSS2DObject | null
+  object3D: THREE.Object3D
+}
+
+// Horizontal floor at world height 0; used when a double-click misses all BIM geometry.
+const GROUND_PLANE = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)
+
+const pointOnGroundPlane = (
+  camera: THREE.Camera,
+  canvas: HTMLCanvasElement,
+  clientX: number,
+  clientY: number,
+): THREE.Vector3 | null => {
+  const rect = canvas.getBoundingClientRect()
+  const ndc = new THREE.Vector2(
+    ((clientX - rect.left) / rect.width) * 2 - 1,
+    -((clientY - rect.top) / rect.height) * 2 + 1,
+  )
+  const raycaster = new THREE.Raycaster()
+  raycaster.setFromCamera(ndc, camera)
+  const target = new THREE.Vector3()
+  return raycaster.ray.intersectPlane(GROUND_PLANE, target) ? target : null
+}
 
 export function useFilePlacement(
   bimComponents: OBC.Components | null,
@@ -20,22 +52,23 @@ export function useFilePlacement(
   toolsDispatch: React.Dispatch<any>,
   buildingId: number,
   uploadFileToDB?: (args: { fileData: any; buildingId: number }) => Promise<any>,
+  onMarkerAction?: (id: string, action: FileMarkerAction) => void,
 ) {
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
-  const [addedFiles, setAddedFiles] = React.useState<AddedFile[]>([])
   const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 })
   const [isPlacingFile, setIsPlacingFile] = React.useState(false)
 
   const [fileScale, setFileScale] = React.useState(1)
   const [fileRotation, setFileRotation] = React.useState(0)
-  const [confirmed3DFiles, setConfirmed3DFiles] = React.useState<Set<string>>(new Set())
   const [show3DScaleCard, setShow3DScaleCard] = React.useState(false)
   const [current3DFileId, setCurrent3DFileId] = React.useState<string | null>(null)
   const [current3DFileType, setCurrent3DFileType] = React.useState<"dxf" | "model" | null>(null)
 
-  // Managers
   const [modelManager, setModelManager] = React.useState<ModelManager | null>(null)
   const [addDxf, setAddDxf] = React.useState<AddDxf | null>(null)
+
+  const placedFilesRef = React.useRef<Map<string, PlacedFile>>(new Map())
+  const [markerCount, setMarkerCount] = React.useState(0)
 
   const highlighter = React.useMemo(() => {
     if (!bimComponents) return null
@@ -48,17 +81,13 @@ export function useFilePlacement(
       const manager = bimComponents.get(ModelManager)
       if (manager) setModelManager(manager)
     }
-    if (!addDxf) {
-      const dxfUtility = new AddDxf(bimComponents, world)
-      setAddDxf(dxfUtility)
-    }
+    if (!addDxf) setAddDxf(new AddDxf(bimComponents, world))
   }, [bimComponents, world, modelManager, addDxf])
 
   const setCursor = React.useCallback((cursor: string) => {
     if (!bimComponents) return
     const currentCursor = bimComponents.get(Cursor)
-    if (!currentCursor) return
-    currentCursor.cursor = cursor as any
+    if (currentCursor) currentCursor.cursor = cursor as any
   }, [bimComponents])
 
   const raycast = React.useCallback(async (data: {
@@ -74,20 +103,13 @@ export function useFilePlacement(
       const result = await model.raycast(data)
       if (result) results.push(result)
     }
-
-    await Promise.all(results)
     if (results.length === 0) return null
 
-    let closestResult = results[0]
-    let minDistance = closestResult.distance
+    let closest = results[0]
     for (let i = 1; i < results.length; i++) {
-      if (results[i].distance < minDistance) {
-        minDistance = results[i].distance
-        closestResult = results[i]
-      }
+      if (results[i].distance < closest.distance) closest = results[i]
     }
-
-    return closestResult
+    return closest
   }, [fragments, highlighter])
 
   const processFileObject = React.useCallback((file: File, addingMode: BimToolbarToolsType) => {
@@ -95,7 +117,7 @@ export function useFilePlacement(
 
     if (addingMode === "bim-add-cad") {
       if (!fileName.endsWith(".dxf")) {
-        alert("Please select a valid CAD file (.dxf)")
+        toast.error("Please select a valid CAD file (.dxf)")
         return
       }
       setShow3DScaleCard(true)
@@ -116,7 +138,7 @@ export function useFilePlacement(
     setSelectedFile(file)
     setIsPlacingFile(true)
     setCursor("crosshair")
-    toast.info(`Double-click on the model to place: "${file.name}"`, {
+    toast.info(`Double-click in the scene to place: "${file.name}"`, {
       id: 'place-bim-file-toast',
       duration: Infinity,
     })
@@ -124,8 +146,7 @@ export function useFilePlacement(
 
   const handleFileSelect = React.useCallback((event: React.ChangeEvent<HTMLInputElement>, addingMode: BimToolbarToolsType) => {
     const file = event.target.files?.[0]
-    if (!file) return
-    processFileObject(file, addingMode)
+    if (file) processFileObject(file, addingMode)
   }, [processFileObject])
 
   const handleFileDrop = React.useCallback((file: File, addingMode: BimToolbarToolsType) => {
@@ -145,11 +166,48 @@ export function useFilePlacement(
     toolsDispatch({ type: "CLEAR-TOOLS" })
   }, [setCursor, toolsDispatch])
 
-  // Handle file placement on double-click
+  const uploadPlacedFile = React.useCallback(async (file: File, point: THREE.Vector3) => {
+    if (!uploadFileToDB || buildingId <= 0) return
+    try {
+      const assetId = crypto.randomUUID()
+      const presignedResponse = await fetch(`/api/presigned-url-upload?asset=${assetId}`)
+      if (!presignedResponse.ok) return
+      const { presignedUrl } = await presignedResponse.json()
+      await fetch(presignedUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      })
+      await uploadFileToDB({
+        fileData: {
+          name: file.name,
+          type: "bim-file",
+          mimeType: file.type,
+          extension: getFileExtension(file),
+          sizeBytes: file.size,
+          tag: "file",
+          uploadedAt: new Date().toISOString(),
+          url: "",
+          assetId,
+          description: "",
+          attachedFilesBuildingId: buildingId,
+          isVisible: true,
+          x: point.x,
+          y: point.y,
+          z: point.z,
+        },
+        buildingId,
+      })
+    } catch (err) {
+      console.error("Error uploading placed file:", err)
+    }
+  }, [uploadFileToDB, buildingId])
+
   React.useEffect(() => {
     if (!selectedFile || !bimComponents || !world || !isPlacingFile) return
 
     const mouse = new THREE.Vector2()
+    const canvas = world.renderer!.three.domElement!
 
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({ x: e.clientX, y: e.clientY })
@@ -161,106 +219,62 @@ export function useFilePlacement(
       mouse.x = e.clientX
       mouse.y = e.clientY
 
-      const result = await raycast({
-        camera: world.camera.three,
-        mouse,
-        dom: world.renderer!.three.domElement!,
-      })
+      const modelHit = await raycast({ camera: world.camera.three, mouse, dom: canvas })
+      const point = modelHit?.point
+        ? modelHit.point.clone()
+        : pointOnGroundPlane(world.camera.three, canvas, e.clientX, e.clientY)
+      if (!point) return
 
-      if (result?.point && (result.point.x !== 0 || result.point.y !== 0 || result.point.z !== 0)) {
-        const newAddedFile: AddedFile = {
-          id: Date.now().toString(),
-          file: selectedFile,
-          position: result.point.clone(),
-          imageUrl: selectedFile.type.startsWith("image/")
-            ? URL.createObjectURL(selectedFile)
-            : undefined,
-        }
-
-        setAddedFiles(prev => [...prev, newAddedFile])
-        await addFileToScene(
-          newAddedFile, fileScale, fileRotation,
-          world, modelManager, addDxf, toolsDispatch, setCurrent3DFileId,
-        )
-
-        // Upload the file to the database with its 3D position
-        if (uploadFileToDB && buildingId > 0) {
-          try {
-            const fileId = crypto.randomUUID()
-            const presignedResponse = await fetch(`/api/presigned-url-upload?asset=${fileId}`)
-            if (presignedResponse.ok) {
-              const { presignedUrl } = await presignedResponse.json()
-              await fetch(presignedUrl, {
-                method: "PUT",
-                body: selectedFile,
-                headers: { "Content-Type": selectedFile.type },
-              })
-              await uploadFileToDB({
-                fileData: {
-                  name: selectedFile.name,
-                  type: "bim-file",
-                  mimeType: selectedFile.type,
-                  extension: getFileExtension(selectedFile),
-                  sizeBytes: selectedFile.size,
-                  tag: "file",
-                  uploadedAt: new Date().toISOString(),
-                  url: "",
-                  assetId: fileId,
-                  description: "",
-                  attachedFilesBuildingId: buildingId,
-                  isVisible: true,
-                  x: result.point.x,
-                  y: result.point.y,
-                  z: result.point.z,
-                },
-                buildingId,
-              })
-            }
-          } catch (err) {
-            console.error("Error uploading file to database:", err)
-          }
-        }
-
-        const fileName = selectedFile.name.toLowerCase()
-        const is3DFile = fileName.endsWith(".dxf") || fileName.endsWith(".glb") || fileName.endsWith(".gltf")
-
-        if (is3DFile) {
-          setIsPlacingFile(false)
-          setCursor("")
-        } else {
-          cancelPlacement()
-        }
+      const addedFile: AddedFile = {
+        id: Date.now().toString(),
+        file: selectedFile,
+        position: point,
+        imageUrl: selectedFile.type.startsWith("image/")
+          ? URL.createObjectURL(selectedFile)
+          : undefined,
       }
 
-      document.removeEventListener("mousemove", handleMouseMove)
-      document.removeEventListener("dblclick", handleDblClick)
+      const placed = await addFileToScene(
+        addedFile, fileScale, fileRotation,
+        world, modelManager, addDxf, setCurrent3DFileId,
+        (action) => onMarkerAction?.(addedFile.id, action),
+      )
+
+      if (placed) {
+        placedFilesRef.current.set(addedFile.id, {
+          id: addedFile.id,
+          name: selectedFile.name,
+          kind: placed.kind,
+          marker: placed.marker,
+          object3D: placed.object3D,
+        })
+        setMarkerCount(c => c + 1)
+      }
+
+      void uploadPlacedFile(selectedFile, point)
+
+      const fileName = selectedFile.name.toLowerCase()
+      const is3DFile = fileName.endsWith(".dxf") || fileName.endsWith(".glb") || fileName.endsWith(".gltf")
+      if (is3DFile) {
+        setIsPlacingFile(false)
+        setCursor("")
+      } else {
+        cancelPlacement()
+      }
     }
 
     document.addEventListener("mousemove", handleMouseMove)
     document.addEventListener("dblclick", handleDblClick)
-
     return () => {
       document.removeEventListener("mousemove", handleMouseMove)
       document.removeEventListener("dblclick", handleDblClick)
     }
-  }, [selectedFile, bimComponents, world, isPlacingFile, fileScale, fileRotation, modelManager, addDxf, toolsDispatch, raycast, cancelPlacement, setCursor])
+  }, [selectedFile, bimComponents, world, isPlacingFile, fileScale, fileRotation, modelManager, addDxf, toolsDispatch, raycast, cancelPlacement, setCursor, uploadPlacedFile, onMarkerAction])
 
   const confirmPlacement = React.useCallback(() => {
-    if (!selectedFile || addedFiles.length === 0 || !current3DFileId) return
-
-    const latest3DFile = addedFiles.findLast(f => {
-      const name = f.file.name.toLowerCase()
-      return name.endsWith(".dxf") || name.endsWith(".glb") || name.endsWith(".gltf")
-    })
-
-    if (latest3DFile) {
-      if (current3DFileType === "dxf" && addDxf) {
-        addDxf.confirmPlacement(current3DFileId)
-      } else if (current3DFileType === "model" && modelManager) {
-        modelManager.toggleGizmo(current3DFileId, false)
-      }
-      setConfirmed3DFiles(prev => new Set(prev).add(latest3DFile.id))
-    }
+    if (!current3DFileId) return
+    if (current3DFileType === "dxf" && addDxf) addDxf.confirmPlacement(current3DFileId)
+    else if (current3DFileType === "model" && modelManager) modelManager.toggleGizmo(current3DFileId, false)
 
     setShow3DScaleCard(false)
     setCurrent3DFileId(null)
@@ -272,12 +286,11 @@ export function useFilePlacement(
     setCursor("")
     toast.dismiss('place-bim-file-toast')
     toolsDispatch({ type: "CLEAR-TOOLS" })
-  }, [selectedFile, addedFiles, current3DFileId, current3DFileType, addDxf, modelManager, setCursor, toolsDispatch])
+  }, [current3DFileId, current3DFileType, addDxf, modelManager, setCursor, toolsDispatch])
 
-  // Real-time scale/rotation updates for 3D files
+  // Real-time scale/rotation updates while the placement card is open.
   React.useEffect(() => {
     if (!current3DFileId || !show3DScaleCard || !current3DFileType) return
-
     if (current3DFileType === "dxf" && addDxf) {
       addDxf.updateScale(current3DFileId, fileScale)
       addDxf.updateRotation(current3DFileId, fileRotation)
@@ -287,9 +300,58 @@ export function useFilePlacement(
     }
   }, [fileScale, fileRotation, current3DFileId, show3DScaleCard, current3DFileType, addDxf, modelManager])
 
+  // Markers follow their object every frame and hide while that object's gizmo is active.
+  React.useEffect(() => {
+    if (!world || markerCount === 0) return
+    let raf = 0
+    const worldPos = new THREE.Vector3()
+    const tick = () => {
+      placedFilesRef.current.forEach((placed) => {
+        if (!placed.marker) return
+        placed.object3D.getWorldPosition(worldPos)
+        placed.marker.position.set(worldPos.x, worldPos.y + 0.2, worldPos.z)
+        const editing = placed.kind === "dxf"
+          ? !!addDxf?.getDxf(placed.id)?.gizmoController
+          : placed.kind === "model"
+            ? !!modelManager?.getModel(placed.id)?.gizmoController
+            : false
+        placed.marker.visible = !editing
+      })
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [world, addDxf, modelManager, markerCount])
+
+  const getPlacedFile = React.useCallback((id: string): PlacedFile | undefined => {
+    return placedFilesRef.current.get(id)
+  }, [])
+
+  const editPlacedFile = React.useCallback((id: string, mode: GizmoMode = "translate") => {
+    const placed = placedFilesRef.current.get(id)
+    if (!placed) return
+    if (placed.kind === "dxf" && addDxf) {
+      addDxf.toggleGizmo(id, true)
+      addDxf.setGizmoMode(id, mode)
+    } else if (placed.kind === "model" && modelManager) {
+      modelManager.toggleGizmo(id, true)
+      modelManager.getModel(id)?.gizmoController?.setMode(mode)
+    }
+  }, [addDxf, modelManager])
+
+  const removePlacedFile = React.useCallback((id: string) => {
+    const placed = placedFilesRef.current.get(id)
+    if (!placed) return
+    if (placed.kind === "dxf") addDxf?.removeDxf(id)
+    else if (placed.kind === "model") modelManager?.remove(id)
+    else if (world) world.scene.three.remove(placed.object3D)
+    removeMarker(placed.marker, world)
+    placedFilesRef.current.delete(id)
+    setMarkerCount(c => Math.max(0, c - 1))
+  }, [addDxf, modelManager, world])
+
   return {
     selectedFile,
-    addedFiles,
     mousePosition,
     isPlacingFile,
     fileScale,
@@ -304,5 +366,8 @@ export function useFilePlacement(
     confirmPlacement,
     setCursor,
     raycast,
+    getPlacedFile,
+    editPlacedFile,
+    removePlacedFile,
   }
 }

@@ -14,7 +14,7 @@ const getGeocoderMarkerManager = (): MarkerManager => {
 }
 
 // Convert longitude and latitude into Municipality and Country Subdivision
-export const getMunicipalityAndProvince = async (latitude: string, longitude: string, countryCode = 'CA') => {
+export const getMunicipalityAndProvince = async (latitude: string, longitude: string, countryCode?: string) => {
   try {
     const features = await reverseGeocode(latitude, longitude, countryCode, { size: 1, coarse: true })
 
@@ -36,7 +36,7 @@ export const getMunicipalityAndProvince = async (latitude: string, longitude: st
 }
 
 // Fetch address suggestions from the active autocomplete provider
-export const fetchSuggestions = async (input: string, countryCode = 'CA') => {
+export const fetchSuggestions = async (input: string, countryCode?: string) => {
   if (!input || input.length < 3) {
     return []
   }
@@ -178,7 +178,7 @@ export const handleLocationSelect = (feature: Feature, map: any, type: string, o
 }
 
 // Util function to get detailed address information
-export const getDetailedAddress = async (coordinates: [number, number], countryCode = 'CA') => {
+export const getDetailedAddress = async (coordinates: [number, number], countryCode?: string) => {
   const [longitude, latitude] = coordinates
 
   try {

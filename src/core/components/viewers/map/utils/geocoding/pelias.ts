@@ -4,12 +4,12 @@ import { GEOCODE_EARTH_API_KEY, PELIAS_BASE } from './config'
 // Geocode Earth and self-hosted Pelias share this dialect; only the base URL and
 // the (optional) api_key differ. Responses already match the shape the app expects.
 
-export const peliasAutocomplete = async (text: string, countryCode: string, size: number): Promise<Feature[]> => {
+export const peliasAutocomplete = async (text: string, countryCode: string | undefined, size: number): Promise<Feature[]> => {
   const params = new URLSearchParams({
     'text': text,
-    'boundary.country': countryCode.toUpperCase(),
     'size': String(size),
   })
+  if (countryCode) params.set('boundary.country', countryCode.toUpperCase())
   if (GEOCODE_EARTH_API_KEY) params.set('api_key', GEOCODE_EARTH_API_KEY)
 
   const response = await fetch(`${PELIAS_BASE}/v1/autocomplete?${params}`)
@@ -22,15 +22,15 @@ export const peliasAutocomplete = async (text: string, countryCode: string, size
 export const peliasReverse = async (
   latitude: string,
   longitude: string,
-  countryCode: string,
+  countryCode: string | undefined,
   { size, coarse, layers }: { size: number; coarse: boolean; layers?: string },
 ): Promise<Feature[]> => {
   const params = new URLSearchParams({
     'point.lat': latitude,
     'point.lon': longitude,
-    'boundary.country': countryCode.toUpperCase(),
     'size': String(size),
   })
+  if (countryCode) params.set('boundary.country', countryCode.toUpperCase())
   // coarse (municipality-level) takes precedence; otherwise honor an explicit layer filter.
   if (coarse) params.set('layers', 'coarse')
   else if (layers) params.set('layers', layers)

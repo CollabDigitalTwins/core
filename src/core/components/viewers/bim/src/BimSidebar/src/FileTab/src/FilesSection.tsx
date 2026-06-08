@@ -33,6 +33,9 @@ const is3DFile = (ext?: string | null): boolean => {
   return ['glb', 'gltf', 'fbx', 'obj', 'collada'].includes(ext.toLowerCase())
 }
 
+// Files that live in the 3D scene and can be moved/scaled (3D models + DXF drawings).
+const isPlaceable = (ext?: string | null): boolean => is3DFile(ext) || ext?.toLowerCase() === 'dxf'
+
 export function FilesSection({ files, query = '' }: FilesSectionProps) {
   const t = useTranslations('FileSelection')
 
@@ -360,53 +363,58 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
     }
   }, [placingFile, bimComponents, raycast])
 
-  // Move handler: unplaced files → click-to-place; placed files → gizmo
+  // Resolve the scene object for a file (loaded 3D model or DXF group), if present.
+  const getSceneObject = React.useCallback((file: IFile): THREE.Object3D | null => {
+    if (file.extension === 'dxf') return dxfGroupsRef.current.get(file.id.toString()) ?? null
+    return modelManager?.getModelByName(file.name)?.model ?? null
+  }, [modelManager])
+
+  // Attach a transform gizmo to a placed object (or re-set its mode); saves on accept.
+  const editObject = React.useCallback((file: IFile, mode: 'translate' | 'rotate' | 'scale' = 'translate') => {
+    if (!bimComponents) return
+    const world = bimComponents.get(CurrentWorld).world
+    if (!world) return
+    const obj = getSceneObject(file)
+    if (!obj) return
+
+    const key = file.id.toString()
+    const existing = gizmoControllersRef.current.get(key)
+    if (existing) { existing.setMode(mode); return }
+
+    const gizmo = new GizmoController(world)
+    const cleanup = (save: boolean) => {
+      if (save) {
+        const { x, y, z } = obj.position
+        const rotation = obj.rotation.y
+        updateFileRef.current({ x, y, z, rotation } as any)
+          .catch((err: unknown) => console.error(`Failed to save position for "${file.name}":`, err))
+        file.x = x; file.y = y; file.z = z; file.rotation = rotation
+      }
+      gizmoControllersRef.current.delete(key)
+      setMoveFileId(null)
+    }
+    gizmo.onAccept = () => cleanup(true)
+    gizmo.onCancel = () => cleanup(false)
+    gizmo.setMode(mode)
+    setMoveFileId(file.id)
+    gizmo.attach(obj)
+    gizmoControllersRef.current.set(key, gizmo)
+  }, [bimComponents, getSceneObject])
+
+  // Move handler: unplaced files → click-to-place; placed files → gizmo (load DXF first if needed)
   const handleBimMove = React.useCallback((file: IFile) => {
     const isPlaced = file.x != null && file.y != null && file.z != null
-
-    // Unplaced file: enter click-to-place mode
     if (!isPlaced) {
       setPlacingFile(file)
       setMoveFileId(file.id)
       return
     }
-
-    // Placed file: attach/detach gizmo
-    if (!bimComponents || !modelManager) return
-
-    const world = bimComponents.get(CurrentWorld).world
-    if (!world) return
-
-    const modelInfo = modelManager.getModelByName(file.name)
-    if (!modelInfo) return
-
-    const existing = gizmoControllersRef.current.get(file.name)
-    if (existing) {
-      existing.dispose()
-      gizmoControllersRef.current.delete(file.name)
-    } else {
-      const gizmo = new GizmoController(world)
-      const cleanupGizmo = (savePosition: boolean) => {
-        if (savePosition) {
-          const { x, y, z } = modelInfo.model.position
-          const rotation = modelInfo.model.rotation.y
-          updateFileRef.current({ x, y, z, rotation } as any)
-            .catch((err: unknown) => console.error(`Failed to save position for "${file.name}":`, err))
-          file.x = x
-          file.y = y
-          file.z = z
-          file.rotation = rotation
-        }
-        gizmoControllersRef.current.delete(file.name)
-        setMoveFileId(null)
-      }
-      gizmo.onAccept = () => cleanupGizmo(true)
-      gizmo.onCancel = () => cleanupGizmo(false)
-      setMoveFileId(file.id)
-      gizmo.attach(modelInfo.model)
-      gizmoControllersRef.current.set(file.name, gizmo)
+    if (file.extension === 'dxf' && !dxfGroupsRef.current.has(file.id.toString())) {
+      void toggleDxfVisibility(file, true).then(() => editObject(file, 'translate'))
+      return
     }
-  }, [bimComponents, modelManager])
+    editObject(file, 'translate')
+  }, [editObject, toggleDxfVisibility])
 
   const { handleAction, deleteDialog } = useFileActions({
     files: localFiles,
@@ -495,7 +503,7 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
               key={item.id}
               file={item}
               onAction={handleAction}
-              options={is3DFile(item.extension) ? OPTIONS_3D : OPTIONS_NON_3D}
+              options={isPlaceable(item.extension) ? OPTIONS_3D : OPTIONS_NON_3D}
               translationKey="FileSelection"
               confirmDelete={false}
             />

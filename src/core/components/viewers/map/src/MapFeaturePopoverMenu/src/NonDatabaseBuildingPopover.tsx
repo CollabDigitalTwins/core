@@ -51,13 +51,13 @@ export default function NonDatabaseBuildingPopover({
   const user = session?.user
 
   const { state: mapState } = React.useContext(MapContext)
-  const { currentLocation, map } = mapState.map
+  const { currentLocation, map, organizationCountry } = mapState.map
 
   const { setSelectedItem } = useMenusContext()
 
   // Use the create building hook
   const { createBuilding, isMutating, createError, createdData } = useCreateBuilding()
-  
+
   // Get all buildings for searching
   const { buildings } = useBuildings()
 
@@ -117,7 +117,7 @@ export default function NonDatabaseBuildingPopover({
       try {
         // Reverse geocode through the shared provider (Geocode Earth / self-hosted
         // Pelias, falling back to public OSM) so this stays in sync with the geocoder.
-        const result = await getDetailedAddress([longitude, latitude], 'CA')
+        const result = await getDetailedAddress([longitude, latitude], organizationCountry)
         const geocodedAddress = result?.properties?.name as string | undefined
 
         if (!geocodedAddress) {
@@ -244,7 +244,7 @@ export default function NonDatabaseBuildingPopover({
 
   const handleAttachExistingBuilding = async (building: Building) => {
     setIsAttaching(true)
-    
+
     try {
       // Add OSM ID to existing building
       const result = await updateBuilding({
@@ -252,21 +252,21 @@ export default function NonDatabaseBuildingPopover({
         // Set default storey number of 2 if building doesn't have one
         ...(building.buildingStoreyNum == null && { buildingStoreyNum: 2 })
       })
-      
+
       toast.success(t('toastAttachSuccess'))
-      
+
       // Clear the selected item after successful update
       if (setSelectedItem) {
         setSelectedItem(null)
         didSetSelectedItemRef.current = false
       }
-      
+
       // Close the popover
       onCloseAction()
-      
+
     } catch (error) {
       console.error('Error attaching building:', error)
-      
+
       if (error?.status !== 401) {
         toast.error(t('toastAttachError'))
       }
@@ -312,9 +312,9 @@ export default function NonDatabaseBuildingPopover({
       if (markerManagerRef.current) {
         markerManagerRef.current.remove()
       }
-      
+
       toast.success(t('toastSuccess'))
-      
+
       // Close the popover on success
       onCloseAction()
     }
@@ -329,7 +329,8 @@ export default function NonDatabaseBuildingPopover({
     if (markerManagerRef.current && coordinates && map) {
       console.log('Creating editable marker at coordinates:', coordinates)
       markerManagerRef.current.create(coordinates as [number, number], map, {
-        editing: true })
+        editing: true
+      })
     }
     else {
       console.warn('Cannot create marker: missing coordinates or map instance')
@@ -349,7 +350,7 @@ export default function NonDatabaseBuildingPopover({
           >
             <LR.X className="w-4 h-4" />
           </Button>
-          
+
           {/* Show existing building if match found */}
           {showExistingBuildings && matchingBuildings.length > 0 && (
             <div className="space-y-1 mt-6">
@@ -399,7 +400,7 @@ export default function NonDatabaseBuildingPopover({
               </div>
             </div>
           )}
-          
+
           <div className="space-y-4">
             <div className="grid gap-2">
               <Label htmlFor="building-name" className="text-xs text-muted-foreground">
@@ -484,17 +485,17 @@ export default function NonDatabaseBuildingPopover({
           >
             {isMutating
               ? (
-                  <>``
-                    <LoadingSpinner />
-                    <span className="text-sm">{t('creating')}</span>
-                  </>
-                )
+                <>``
+                  <LoadingSpinner />
+                  <span className="text-sm">{t('creating')}</span>
+                </>
+              )
               : (
-                  <>
-                    <LR.Building2 className="w-4 h-4" />
-                    <span className="text-sm">{t('addBuilding')}</span>
-                  </>
-                )}
+                <>
+                  <LR.Building2 className="w-4 h-4" />
+                  <span className="text-sm">{t('addBuilding')}</span>
+                </>
+              )}
           </Button>
         </div>
       </form>

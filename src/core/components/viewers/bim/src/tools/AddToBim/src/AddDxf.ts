@@ -11,6 +11,7 @@ export interface DxfInfo {
   position: THREE.Vector3
   scale: number
   rotation: number
+  fileUrl: string
   gizmoController?: GizmoController
 }
 
@@ -21,80 +22,61 @@ export interface DxfLoadOptions {
   enableGizmo?: boolean
 }
 
+const DEFAULT_SCALE = 0.001 // DXF authored in millimetres → metres
+
 export class AddDxf {
-  private _bimComponents: OBC.Components
   private _world: OBC.World
-  private _dxfManager: DXFManager | null = null
+  private _dxfManager: DXFManager | null
   private _loadedDxfs: Map<string, DxfInfo> = new Map()
 
   onDxfLoaded = new OBC.Event<DxfInfo>()
   onDxfTransformed = new OBC.Event<DxfInfo>()
 
   constructor(bimComponents: OBC.Components, world: OBC.World) {
-    this._bimComponents = bimComponents
     this._world = world
     this._dxfManager = bimComponents.get(DXFManager)
   }
 
-  async loadDxf(
-    file: File,
-    id: string,
-    options: DxfLoadOptions,
-  ): Promise<DxfInfo | null> {
+  async loadDxf(file: File, id: string, options: DxfLoadOptions): Promise<DxfInfo | null> {
     if (!this._dxfManager) {
       console.error('DXFManager not available in BIM components')
       return null
     }
 
+    const fileUrl = URL.createObjectURL(file)
     try {
-      const fileUrl = URL.createObjectURL(file)
+      const group = await this._dxfManager.parse(fileUrl)
+      const scale = options.scale ?? DEFAULT_SCALE
+      const rotation = options.rotation ?? 0
 
-      this._dxfManager.scale = options.scale || 0.001
-      this._dxfManager.rotation = options.rotation || 0
-
-      const dxfGroup = await this._dxfManager.load(
-        fileUrl,
-        id,
-        file.name,
-        {
-          x: options.position.x,
-          y: options.position.z, // Y and Z swapped for DXF coordinate system
-          z: -options.position.y,
-        },
-      )
-
-      if (!dxfGroup) {
-        console.error('Failed to load DXF file')
-        URL.revokeObjectURL(fileUrl)
-        return null
-      }
-
-      dxfGroup.position.copy(options.position)
-
-      let gizmoController: GizmoController | undefined
-      if (options.enableGizmo) {
-        gizmoController = this.setupGizmo(dxfGroup, id)
-      }
+      group.name = id
+      group.position.copy(options.position)
+      group.scale.setScalar(scale)
+      group.rotation.y = THREE.MathUtils.degToRad(rotation)
+      this._world.scene.three.add(group)
 
       const dxfInfo: DxfInfo = {
         id,
         name: file.name,
         file,
-        group: dxfGroup,
+        group,
         position: options.position.clone(),
-        scale: options.scale || 0.001,
-        rotation: options.rotation || 0,
-        gizmoController,
+        scale,
+        rotation,
+        fileUrl,
+      }
+
+      if (options.enableGizmo) {
+        dxfInfo.gizmoController = this.setupGizmo(group, id)
       }
 
       this._loadedDxfs.set(id, dxfInfo)
-
       this.onDxfLoaded.trigger(dxfInfo)
-
       return dxfInfo
     }
     catch (error) {
       console.error('Error loading DXF file:', error)
+      URL.revokeObjectURL(fileUrl)
       return null
     }
   }
@@ -102,10 +84,8 @@ export class AddDxf {
   updateScale(id: string, scale: number): boolean {
     const dxfInfo = this._loadedDxfs.get(id)
     if (!dxfInfo) return false
-
     dxfInfo.scale = scale
-    dxfInfo.group.scale.set(scale, scale, scale)
-
+    dxfInfo.group.scale.setScalar(scale)
     this.onDxfTransformed.trigger(dxfInfo)
     return true
   }
@@ -113,10 +93,8 @@ export class AddDxf {
   updateRotation(id: string, rotation: number): boolean {
     const dxfInfo = this._loadedDxfs.get(id)
     if (!dxfInfo) return false
-
     dxfInfo.rotation = rotation
-    dxfInfo.group.rotation.z = THREE.MathUtils.degToRad(rotation)
-
+    dxfInfo.group.rotation.y = THREE.MathUtils.degToRad(rotation)
     this.onDxfTransformed.trigger(dxfInfo)
     return true
   }
@@ -124,10 +102,8 @@ export class AddDxf {
   updatePosition(id: string, position: THREE.Vector3): boolean {
     const dxfInfo = this._loadedDxfs.get(id)
     if (!dxfInfo) return false
-
     dxfInfo.position.copy(position)
     dxfInfo.group.position.copy(position)
-
     this.onDxfTransformed.trigger(dxfInfo)
     return true
   }
@@ -140,43 +116,33 @@ export class AddDxf {
       dxfInfo.gizmoController = this.setupGizmo(dxfInfo.group, id)
       return true
     }
-    else if (!enable && dxfInfo.gizmoController) {
+    if (!enable && dxfInfo.gizmoController) {
       dxfInfo.gizmoController.dispose()
       dxfInfo.gizmoController = undefined
       return true
     }
-
     return false
+  }
+
+  setGizmoMode(id: string, mode: 'translate' | 'rotate' | 'scale'): void {
+    this._loadedDxfs.get(id)?.gizmoController?.setMode(mode)
   }
 
   confirmPlacement(id: string): boolean {
     const dxfInfo = this._loadedDxfs.get(id)
     if (!dxfInfo) return false
-
-    if (dxfInfo.gizmoController) {
-      dxfInfo.gizmoController.dispose()
-      dxfInfo.gizmoController = undefined
-    }
-
-    if (this._dxfManager) {
-      this._dxfManager.removeTransformControls(dxfInfo.name)
-    }
-
+    dxfInfo.gizmoController?.dispose()
+    dxfInfo.gizmoController = undefined
     return true
   }
 
   removeDxf(id: string): boolean {
     const dxfInfo = this._loadedDxfs.get(id)
     if (!dxfInfo) return false
-
     this._world.scene.three.remove(dxfInfo.group)
-
-    if (dxfInfo.gizmoController) {
-      dxfInfo.gizmoController.dispose()
-    }
-
+    dxfInfo.gizmoController?.dispose()
+    URL.revokeObjectURL(dxfInfo.fileUrl)
     this._loadedDxfs.delete(id)
-
     return true
   }
 
@@ -191,18 +157,21 @@ export class AddDxf {
   private setupGizmo(group: THREE.Group, dxfId: string): GizmoController {
     const gizmoController = new GizmoController(this._world)
 
-    const notifyTransform = () => {
+    // Enter/Esc detach the gizmo internally; clear our reference so callers
+    // (and the marker visibility check) know editing has ended.
+    const endEditing = () => {
       const dxfInfo = this._loadedDxfs.get(dxfId)
-      if (dxfInfo) {
-        dxfInfo.position.copy(group.position)
-        this.onDxfTransformed.trigger(dxfInfo)
-      }
+      if (!dxfInfo) return
+      dxfInfo.position.copy(group.position)
+      dxfInfo.scale = group.scale.x
+      dxfInfo.rotation = THREE.MathUtils.radToDeg(group.rotation.y)
+      dxfInfo.gizmoController = undefined
+      this.onDxfTransformed.trigger(dxfInfo)
     }
 
-    gizmoController.onAccept = notifyTransform
-    gizmoController.onCancel = notifyTransform
+    gizmoController.onAccept = endEditing
+    gizmoController.onCancel = endEditing
     gizmoController.setMode('translate')
-
     gizmoController.attach(group)
     return gizmoController
   }
@@ -211,23 +180,12 @@ export class AddDxf {
     return file.name.toLowerCase().endsWith('.dxf')
   }
 
-  static validateDxfFile(file: File): { valid: boolean, error?: string } {
-    if (!this.isDxfFile(file)) {
-      return { valid: false, error: 'File is not a DXF file' }
-    }
-
-    return { valid: true }
-  }
-
   dispose(): void {
     for (const dxfInfo of this._loadedDxfs.values()) {
       this._world.scene.three.remove(dxfInfo.group)
-
-      if (dxfInfo.gizmoController) {
-        dxfInfo.gizmoController.dispose()
-      }
+      dxfInfo.gizmoController?.dispose()
+      URL.revokeObjectURL(dxfInfo.fileUrl)
     }
-
     this._loadedDxfs.clear()
   }
 }

@@ -1,38 +1,60 @@
-import { describe, it, expect } from 'vitest'
 import { getNormalizedRoleNames, isAdminUser } from './roles'
-import { RoleNames } from '../types/global'
-import type { Role } from '../types/dbTypes'
-
-const role = (name: string): Role => ({ id: 1, name, permissions: [], orgId: 1 })
 
 describe('getNormalizedRoleNames', () => {
-  it('returns [] for nullish / non-array input', () => {
+  it('returns an empty array for null / undefined / non-array input', () => {
     expect(getNormalizedRoleNames(null)).toEqual([])
     expect(getNormalizedRoleNames(undefined)).toEqual([])
-    // @ts-expect-error — exercising the runtime Array.isArray guard
-    expect(getNormalizedRoleNames('Admin')).toEqual([])
+    expect(getNormalizedRoleNames('admin' as any)).toEqual([])
   })
+
   it('lowercases and trims role names', () => {
-    expect(getNormalizedRoleNames([role(' Admin '), role('USER')])).toEqual(['admin', 'user'])
+    const result = getNormalizedRoleNames([
+      { name: '  Admin  ' } as any,
+      { name: 'USER' } as any,
+    ])
+    expect(result).toEqual(['admin', 'user'])
   })
-  it('filters out empty / whitespace-only names', () => {
-    expect(getNormalizedRoleNames([role(''), role('   '), role('Viewer')])).toEqual(['viewer'])
+
+  it('filters out roles with empty / nullish names', () => {
+    const result = getNormalizedRoleNames([
+      { name: '' } as any,
+      { name: null } as any,
+      { name: 'viewer' } as any,
+      { name: undefined } as any,
+    ])
+    expect(result).toEqual(['viewer'])
+  })
+
+  it('filters out whitespace-only names', () => {
+    expect(getNormalizedRoleNames([{ name: '   ' } as any, { name: 'Viewer' } as any])).toEqual(['viewer'])
+  })
+
+  it('handles a role with no name field at all', () => {
+    expect(getNormalizedRoleNames([{} as any])).toEqual([])
   })
 })
 
 describe('isAdminUser', () => {
-  // Regression guard: getNormalizedRoleNames lowercases, RoleNames.admin is 'Admin' (capital A).
-  // Before the fix, the case mismatch made this always return false.
-  it('detects the admin role regardless of case/whitespace', () => {
-    expect(isAdminUser([role('Admin')])).toBe(true)
-    expect(isAdminUser([role('admin')])).toBe(true)
-    expect(isAdminUser([role('  ADMIN  ')])).toBe(true)
-    expect(isAdminUser([role('User'), role('Admin')])).toBe(true)
-    expect(isAdminUser([role(RoleNames.admin)])).toBe(true)
+  it('returns true when the user has the Admin role (mixed case)', () => {
+    expect(isAdminUser([{ name: 'Admin' } as any])).toBe(true)
   })
-  it('is false for non-admins and nullish input', () => {
-    expect(isAdminUser([role('User'), role('Viewer')])).toBe(false)
-    expect(isAdminUser([])).toBe(false)
+
+  it('returns true when the user has the admin role (lowercase)', () => {
+    expect(isAdminUser([{ name: 'admin' } as any])).toBe(true)
+  })
+
+  it('returns true when the admin role has surrounding whitespace and uppercase', () => {
+    expect(isAdminUser([{ name: '  ADMIN  ' } as any])).toBe(true)
+    expect(isAdminUser([{ name: 'User' } as any, { name: 'Admin' } as any])).toBe(true)
+  })
+
+  it('returns false when the user has no admin role', () => {
+    expect(isAdminUser([{ name: 'User' } as any, { name: 'Viewer' } as any])).toBe(false)
+  })
+
+  it('returns false for null / undefined / empty role arrays', () => {
     expect(isAdminUser(null)).toBe(false)
+    expect(isAdminUser(undefined)).toBe(false)
+    expect(isAdminUser([])).toBe(false)
   })
 })

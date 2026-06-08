@@ -1,66 +1,163 @@
-import { describe, it, expect } from 'vitest'
 import { MenusReducer, type MenusState } from './reducer'
+import { ViewerNames } from '../../types/dbTypes'
 
-const base = {
-  currentViewer: 'map', rowsPerPage: 10, selectedTab: 'file',
-  commentsVisibleInViewer: [], currentCommentId: null,
-  sensorsVisibleInViewer: [], visibleSensorTypes: {}, visibleSensorTags: {},
-  currentSensorId: null, currentSensorTypeId: null,
-} as unknown as MenusState
+function baseState(overrides: Partial<MenusState> = {}): MenusState {
+  return {
+    currentViewer: ViewerNames.map,
+    rowsPerPage: 10,
+    selectedTab: 'file',
+    commentsVisibleInViewer: [],
+    currentCommentId: null,
+    sensorsVisibleInViewer: [],
+    visibleSensorTypes: {},
+    visibleSensorTags: {},
+    currentSensorId: null,
+    currentSensorTypeId: null,
+    ...overrides,
+  }
+}
 
 describe('MenusReducer', () => {
+  it('SET_VIEWER updates currentViewer', () => {
+    const next = MenusReducer(baseState(), {
+      type: 'SET_VIEWER',
+      payload: { currentViewer: ViewerNames.bim },
+    } as any)
+    expect(next.currentViewer).toBe(ViewerNames.bim)
+  })
+
+  it('SHOW_COMMENTS_IN_VIEWER adds the viewer once and dedupes on re-add', () => {
+    let state = MenusReducer(baseState(), {
+      type: 'SHOW_COMMENTS_IN_VIEWER',
+      payload: { viewer: ViewerNames.map },
+    } as any)
+    expect(state.commentsVisibleInViewer).toEqual([ViewerNames.map])
+
+    state = MenusReducer(state, {
+      type: 'SHOW_COMMENTS_IN_VIEWER',
+      payload: { viewer: ViewerNames.map },
+    } as any)
+    expect(state.commentsVisibleInViewer).toEqual([ViewerNames.map])
+  })
+
+  it('HIDE_COMMENTS_IN_VIEWER removes the viewer', () => {
+    const state = baseState({ commentsVisibleInViewer: [ViewerNames.map, ViewerNames.bim] })
+    const next = MenusReducer(state, {
+      type: 'HIDE_COMMENTS_IN_VIEWER',
+      payload: { viewer: ViewerNames.bim },
+    } as any)
+    expect(next.commentsVisibleInViewer).toEqual([ViewerNames.map])
+  })
+
+  it('HIDE_ALL_SENSORS_IN_VIEWER clears both sensorsVisibleInViewer and visibleSensorTypes for that viewer', () => {
+    const state = baseState({
+      sensorsVisibleInViewer: [ViewerNames.map, ViewerNames.bim],
+      visibleSensorTypes: { [ViewerNames.map]: [1, 2], [ViewerNames.bim]: [3] },
+    })
+    const next = MenusReducer(state, {
+      type: 'HIDE_ALL_SENSORS_IN_VIEWER',
+      payload: { viewer: ViewerNames.map },
+    } as any)
+    expect(next.sensorsVisibleInViewer).toEqual([ViewerNames.bim])
+    expect(next.visibleSensorTypes[ViewerNames.map]).toEqual([])
+    expect(next.visibleSensorTypes[ViewerNames.bim]).toEqual([3])
+  })
+
+  it('TOGGLE_SENSOR_TYPE_VISIBILITY adds the type when not visible', () => {
+    const next = MenusReducer(baseState(), {
+      type: 'TOGGLE_SENSOR_TYPE_VISIBILITY',
+      payload: { viewer: ViewerNames.map, sensorTypeId: 42 },
+    } as any)
+    expect(next.visibleSensorTypes[ViewerNames.map]).toEqual([42])
+  })
+
+  it('TOGGLE_SENSOR_TYPE_VISIBILITY removes the type when already visible', () => {
+    const state = baseState({ visibleSensorTypes: { [ViewerNames.map]: [42, 99] } })
+    const next = MenusReducer(state, {
+      type: 'TOGGLE_SENSOR_TYPE_VISIBILITY',
+      payload: { viewer: ViewerNames.map, sensorTypeId: 42 },
+    } as any)
+    expect(next.visibleSensorTypes[ViewerNames.map]).toEqual([99])
+  })
+
+  it('TOGGLE_SENSOR_TYPE_VISIBILITY with force=true is idempotent when already visible', () => {
+    const state = baseState({ visibleSensorTypes: { [ViewerNames.map]: [42] } })
+    const next = MenusReducer(state, {
+      type: 'TOGGLE_SENSOR_TYPE_VISIBILITY',
+      payload: { viewer: ViewerNames.map, sensorTypeId: 42, force: true },
+    } as any)
+    expect(next).toBe(state)
+  })
+
+  it('TOGGLE_SENSOR_TAG_VISIBILITY removes the tag when already visible', () => {
+    const state = baseState({ visibleSensorTags: { [ViewerNames.map]: ['humidity', 'temp'] } })
+    const next = MenusReducer(state, {
+      type: 'TOGGLE_SENSOR_TAG_VISIBILITY',
+      payload: { viewer: ViewerNames.map, sensorTag: 'humidity' },
+    } as any)
+    expect(next.visibleSensorTags[ViewerNames.map]).toEqual(['temp'])
+  })
+
+  it('returns state unchanged for an unknown action type', () => {
+    const state = baseState()
+    const next = MenusReducer(state, { type: 'UNKNOWN_ACTION', payload: {} } as any)
+    expect(next).toBe(state)
+  })
+
+  it('returns state unchanged when payload viewer is missing', () => {
+    const state = baseState()
+    const next = MenusReducer(state, {
+      type: 'SHOW_COMMENTS_IN_VIEWER',
+      payload: { viewer: undefined as any },
+    } as any)
+    expect(next).toBe(state)
+  })
+
   it('scalar setters each write their own field', () => {
-    expect(MenusReducer(base, { type: 'SET_VIEWER', payload: { currentViewer: 'bim' } } as never).currentViewer).toBe('bim')
-    expect(MenusReducer(base, { type: 'SET_PAGINATION_ROWS_PER_PAGE', payload: { rowsPerPage: 25 } } as never).rowsPerPage).toBe(25)
-    expect(MenusReducer(base, { type: 'SET_SIDEBAR_SELECTED_TAB', payload: { selectedTab: 'sensors' } } as never).selectedTab).toBe('sensors')
-    expect(MenusReducer(base, { type: 'SET_CURRENT_COMMENT_ID', payload: { commentId: 7 } } as never).currentCommentId).toBe(7)
-    expect(MenusReducer(base, { type: 'SET_CURRENT_SENSOR_ID', payload: { currentSensorId: 3 } } as never).currentSensorId).toBe(3)
-    expect(MenusReducer(base, { type: 'SET_CURRENT_SENSOR_TYPE_ID', payload: { currentSensorTypeId: 4 } } as never).currentSensorTypeId).toBe(4)
+    expect(MenusReducer(baseState(), {
+      type: 'SET_PAGINATION_ROWS_PER_PAGE',
+      payload: { rowsPerPage: 25 },
+    } as any).rowsPerPage).toBe(25)
+    expect(MenusReducer(baseState(), {
+      type: 'SET_SIDEBAR_SELECTED_TAB',
+      payload: { selectedTab: 'sensors' },
+    } as any).selectedTab).toBe('sensors')
+    expect(MenusReducer(baseState(), {
+      type: 'SET_CURRENT_COMMENT_ID',
+      payload: { commentId: 7 },
+    } as any).currentCommentId).toBe(7)
+    expect(MenusReducer(baseState(), {
+      type: 'SET_CURRENT_SENSOR_ID',
+      payload: { currentSensorId: 3 },
+    } as any).currentSensorId).toBe(3)
+    expect(MenusReducer(baseState(), {
+      type: 'SET_CURRENT_SENSOR_TYPE_ID',
+      payload: { currentSensorTypeId: 4 },
+    } as any).currentSensorTypeId).toBe(4)
   })
 
-  it('SHOW_COMMENTS_IN_VIEWER dedups; HIDE removes', () => {
-    let s = MenusReducer(base, { type: 'SHOW_COMMENTS_IN_VIEWER', payload: { viewer: 'map' } } as never)
-    s = MenusReducer(s, { type: 'SHOW_COMMENTS_IN_VIEWER', payload: { viewer: 'map' } } as never)
-    expect(s.commentsVisibleInViewer).toEqual(['map'])
-    s = MenusReducer(s, { type: 'HIDE_COMMENTS_IN_VIEWER', payload: { viewer: 'map' } } as never)
-    expect(s.commentsVisibleInViewer).toEqual([])
-  })
-
-  it('TOGGLE_SENSOR_TYPE_VISIBILITY toggles on/off; force only shows (idempotent)', () => {
-    const s = MenusReducer(base, { type: 'TOGGLE_SENSOR_TYPE_VISIBILITY', payload: { viewer: 'map', sensorTypeId: 1 } } as never)
-    expect(s.visibleSensorTypes['map']).toEqual([1])
-    // force=true while already visible → returns the same state reference
-    expect(MenusReducer(s, { type: 'TOGGLE_SENSOR_TYPE_VISIBILITY', payload: { viewer: 'map', sensorTypeId: 1, force: true } } as never)).toBe(s)
-    // no force, already visible → toggles off
-    const off = MenusReducer(s, { type: 'TOGGLE_SENSOR_TYPE_VISIBILITY', payload: { viewer: 'map', sensorTypeId: 1 } } as never)
-    expect(off.visibleSensorTypes['map']).toEqual([])
-  })
-
-  it('TOGGLE_SENSOR_TAG_VISIBILITY toggles tags on/off', () => {
-    let s = MenusReducer(base, { type: 'TOGGLE_SENSOR_TAG_VISIBILITY', payload: { viewer: 'map', sensorTag: 'temp' } } as never)
-    expect(s.visibleSensorTags['map']).toEqual(['temp'])
-    s = MenusReducer(s, { type: 'TOGGLE_SENSOR_TAG_VISIBILITY', payload: { viewer: 'map', sensorTag: 'temp' } } as never)
-    expect(s.visibleSensorTags['map']).toEqual([])
-  })
-
-  it('HIDE_ALL_SENSORS_IN_VIEWER removes the viewer + clears its sensor types', () => {
-    const start = { ...base, sensorsVisibleInViewer: ['map', 'bim'], visibleSensorTypes: { map: [1, 2] } } as never
-    const s = MenusReducer(start, { type: 'HIDE_ALL_SENSORS_IN_VIEWER', payload: { viewer: 'map' } } as never)
-    expect(s.sensorsVisibleInViewer).toEqual(['bim'])
-    expect(s.visibleSensorTypes['map']).toEqual([])
+  it('TOGGLE_SENSOR_TAG_VISIBILITY adds the tag when not visible', () => {
+    const next = MenusReducer(baseState(), {
+      type: 'TOGGLE_SENSOR_TAG_VISIBILITY',
+      payload: { viewer: ViewerNames.map, sensorTag: 'temp' },
+    } as any)
+    expect(next.visibleSensorTags[ViewerNames.map]).toEqual(['temp'])
   })
 
   it('HIDE_ALL_SENSOR_TAGS_IN_VIEWER clears the viewer tags', () => {
-    const start = { ...base, visibleSensorTags: { map: ['a', 'b'] } } as never
-    const s = MenusReducer(start, { type: 'HIDE_ALL_SENSOR_TAGS_IN_VIEWER', payload: { viewer: 'map' } } as never)
-    expect(s.visibleSensorTags['map']).toEqual([])
+    const state = baseState({ visibleSensorTags: { [ViewerNames.map]: ['a', 'b'] } })
+    const next = MenusReducer(state, {
+      type: 'HIDE_ALL_SENSOR_TAGS_IN_VIEWER',
+      payload: { viewer: ViewerNames.map },
+    } as any)
+    expect(next.visibleSensorTags[ViewerNames.map]).toEqual([])
   })
 
   it('SHOW_ALL_SENSOR_IN_VIEWER is intentionally a no-op (returns same state)', () => {
-    expect(MenusReducer(base, { type: 'SHOW_ALL_SENSOR_IN_VIEWER', payload: { viewer: 'map' } } as never)).toBe(base)
-  })
-
-  it('unknown action returns the same state', () => {
-    expect(MenusReducer(base, { type: 'NOPE' } as never)).toBe(base)
+    const state = baseState()
+    expect(MenusReducer(state, {
+      type: 'SHOW_ALL_SENSOR_IN_VIEWER',
+      payload: { viewer: ViewerNames.map },
+    } as any)).toBe(state)
   })
 })

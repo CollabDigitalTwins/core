@@ -52,7 +52,7 @@ export default function BimSensor({
         dataFormat={dataFormat}
         updateFrequency={updateFrequency}
         createdAt={timestamp}
-        // onRemove={onRemove} // Remove is disabled because the card is not clickable for now
+        onRemove={onRemove}
         onClose={onClose}
         enableCollapse
         defaultCollapsed

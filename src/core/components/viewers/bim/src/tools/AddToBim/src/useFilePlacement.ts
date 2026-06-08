@@ -166,7 +166,7 @@ export function useFilePlacement(
     toolsDispatch({ type: "CLEAR-TOOLS" })
   }, [setCursor, toolsDispatch])
 
-  const uploadPlacedFile = React.useCallback(async (file: File, point: THREE.Vector3) => {
+  const uploadPlacedFile = React.useCallback(async (file: File, point: THREE.Vector3, rotation = 0) => {
     if (!uploadFileToDB || buildingId <= 0) return
     try {
       const assetId = crypto.randomUUID()
@@ -195,6 +195,7 @@ export function useFilePlacement(
           x: point.x,
           y: point.y,
           z: point.z,
+          rotation,
         },
         buildingId,
       })
@@ -251,14 +252,14 @@ export function useFilePlacement(
         setMarkerCount(c => c + 1)
       }
 
-      void uploadPlacedFile(selectedFile, point)
-
       const fileName = selectedFile.name.toLowerCase()
       const is3DFile = fileName.endsWith(".dxf") || fileName.endsWith(".glb") || fileName.endsWith(".gltf")
       if (is3DFile) {
+        // Persist on confirm instead, so the final position/rotation is saved.
         setIsPlacingFile(false)
         setCursor("")
       } else {
+        void uploadPlacedFile(selectedFile, point)
         cancelPlacement()
       }
     }
@@ -273,8 +274,26 @@ export function useFilePlacement(
 
   const confirmPlacement = React.useCallback(() => {
     if (!current3DFileId) return
-    if (current3DFileType === "dxf" && addDxf) addDxf.confirmPlacement(current3DFileId)
-    else if (current3DFileType === "model" && modelManager) modelManager.toggleGizmo(current3DFileId, false)
+
+    // Capture the final transform from the placed object, then persist it.
+    let finalPos: THREE.Vector3 | undefined
+    let finalRot = fileRotation
+    if (current3DFileType === "dxf" && addDxf) {
+      const info = addDxf.getDxf(current3DFileId)
+      if (info) {
+        finalPos = info.group.position.clone()
+        finalRot = THREE.MathUtils.radToDeg(info.group.rotation.y)
+      }
+      addDxf.confirmPlacement(current3DFileId)
+    } else if (current3DFileType === "model" && modelManager) {
+      const info = modelManager.getModel(current3DFileId)
+      if (info) {
+        finalPos = info.model.position.clone()
+        finalRot = THREE.MathUtils.radToDeg(info.model.rotation.y)
+      }
+      modelManager.toggleGizmo(current3DFileId, false)
+    }
+    if (selectedFile && finalPos) void uploadPlacedFile(selectedFile, finalPos, finalRot)
 
     setShow3DScaleCard(false)
     setCurrent3DFileId(null)
@@ -286,7 +305,7 @@ export function useFilePlacement(
     setCursor("")
     toast.dismiss('place-bim-file-toast')
     toolsDispatch({ type: "CLEAR-TOOLS" })
-  }, [current3DFileId, current3DFileType, addDxf, modelManager, setCursor, toolsDispatch])
+  }, [current3DFileId, current3DFileType, addDxf, modelManager, selectedFile, fileRotation, uploadPlacedFile, setCursor, toolsDispatch])
 
   // Real-time scale/rotation updates while the placement card is open.
   React.useEffect(() => {

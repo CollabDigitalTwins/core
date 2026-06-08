@@ -15,6 +15,8 @@ import { useUploadFileToBuilding, useDeleteFile, useFile } from '../../../../../
 import { useFileUploadHandler, useFileDeleteHandler, FileItemComponent, useFileActions, useCommonFileUpload } from '../../../../../../../ui/FilesManager'
 import { IDSManager } from '../../../../IDSManager'
 import { BCFTopicsManager } from '../../../../BCFTopicsManager'
+import { createFileMarker, removeMarker, type AddedFile } from '../../../../tools/AddToBim/src/FileMarkerUtils'
+import type { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
 import { DbFile as IFile } from '../../../../../../../../types/dbTypes'
 
 // Hoist options arrays so the array identity is stable across renders.
@@ -76,9 +78,9 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
         .filter(file => file.tag !== 'user')
         .filter(file => (file as any).type !== 'map-file')
         .map(file => {
-          // Preserve user's toggle state for already-tracked files.
-          // All new files start hidden — user explicitly adds them via the eye icon.
-          let isVisible = visibilityMap.has(file.id) ? visibilityMap.get(file.id)! : false
+          // Preserve the user's toggle state for already-tracked files; otherwise honor
+          // the persisted visibility so files added in-session show as added (not disabled).
+          let isVisible = visibilityMap.has(file.id) ? visibilityMap.get(file.id)! : (file.isVisible ?? false)
           if (file.extension === 'ids' && activeIDSFileId === file.id) {
             isVisible = true
           } else if (file.extension === 'ids' && activeIDSFileId !== null && activeIDSFileId !== file.id) {
@@ -124,6 +126,11 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
   // Loaded DXF groups keyed by file id, so visibility toggles can show/hide them.
   const dxfGroupsRef = React.useRef<Map<string, THREE.Group>>(new Map())
 
+  // Floating scene markers (pin + actions card) for visible placeable files.
+  const markersRef = React.useRef<Map<string, { marker: CSS2DObject; file: IFile }>>(new Map())
+  // Bumped after an object finishes loading so the marker reconcile effect re-runs.
+  const [loadedTick, setLoadedTick] = React.useState(0)
+
   const toggleDxfVisibility = React.useCallback(async (file: IFile, visible: boolean) => {
     if (!dxfManager || !bimComponents) return
     const world = bimComponents.get(CurrentWorld).world
@@ -147,6 +154,7 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
         if (file.rotation != null) group.rotation.y = file.rotation as number
         world.scene.three.add(group)
         dxfGroupsRef.current.set(key, group)
+        setLoadedTick(t => t + 1)
       } catch (err) {
         console.error(`[FilesSection] Failed to load DXF "${file.name}":`, err)
       }
@@ -254,6 +262,7 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
       await toggleDxfVisibility(file, newVisibility)
       if (fragments) fragments.core.update(true)
     }
+    setLoadedTick(t => t + 1)
   }, [bimComponents, menusDispatch, bimState, bimDispatch, modelManager, fragments, toggleDxfVisibility])
 
   const highlighter = React.useMemo(() => {
@@ -483,8 +492,76 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
         }
       }
       if (fragments) fragments.core.update(true)
+      setLoadedTick(t => t + 1)
     },
   })
+
+  // createFileMarker expects an AddedFile; build a lightweight one from the DB file.
+  const makeMarkerInput = React.useCallback((file: IFile, position: THREE.Vector3): AddedFile => ({
+    id: file.id.toString(),
+    file: new File([], file.name, { type: (file as any).mimeType ?? '' }),
+    position,
+  }), [])
+
+  // Reconcile floating markers with the visible + loaded placeable files.
+  React.useEffect(() => {
+    if (!bimComponents) return
+    const world = bimComponents.get(CurrentWorld).world
+    if (!world) return
+
+    const wanted = new Map(
+      localFiles
+        .filter(f => f.isVisible && isPlaceable(f.extension))
+        .map(f => [f.id.toString(), f] as const),
+    )
+
+    for (const [key, entry] of markersRef.current) {
+      if (!wanted.has(key)) {
+        removeMarker(entry.marker, world)
+        markersRef.current.delete(key)
+      }
+    }
+
+    for (const [key, file] of wanted) {
+      if (markersRef.current.has(key)) continue
+      const obj = getSceneObject(file)
+      if (!obj) continue // not loaded yet — picked up once loadedTick bumps
+      const marker = createFileMarker(makeMarkerInput(file, obj.position.clone()), obj, world, (action) => {
+        if (action === 'delete') { handleAction('delete', file); return }
+        editObject(file, action === 'move' ? 'translate' : action)
+      })
+      if (marker) markersRef.current.set(key, { marker, file })
+    }
+  }, [localFiles, loadedTick, bimComponents, getSceneObject, editObject, handleAction, makeMarkerInput])
+
+  // Markers follow their object each frame and hide while that object's gizmo is active.
+  React.useEffect(() => {
+    if (!bimComponents) return
+    let raf = 0
+    const worldPos = new THREE.Vector3()
+    const tick = () => {
+      markersRef.current.forEach(({ marker, file }, key) => {
+        const obj = getSceneObject(file)
+        if (!obj) { marker.visible = false; return }
+        obj.getWorldPosition(worldPos)
+        marker.position.set(worldPos.x, worldPos.y + 0.2, worldPos.z)
+        marker.visible = !gizmoControllersRef.current.has(key)
+      })
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [bimComponents, getSceneObject])
+
+  // Clean up all markers on unmount so their DOM/React roots don't leak.
+  const markersCleanupRef = React.useRef(markersRef.current)
+  React.useEffect(() => {
+    const markers = markersCleanupRef.current
+    return () => {
+      markers.forEach(({ marker }) => removeMarker(marker))
+      markers.clear()
+    }
+  }, [])
 
   return (
     <>

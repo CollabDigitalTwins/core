@@ -5,7 +5,7 @@ import { normalizePhotonFeature, normalizeNominatimResult } from './adapters'
 // Free, no-key public OSM fallbacks. Photon serves autocomplete (it is built for
 // per-keystroke search); Nominatim serves reverse lookups (occasional, single point).
 
-export const photonAutocomplete = async (text: string, countryCode: string, size: number): Promise<Feature[]> => {
+export const photonAutocomplete = async (text: string, countryCode: string | undefined, size: number): Promise<Feature[]> => {
   // Photon has no country filter, so over-fetch and post-filter by country code.
   const params = new URLSearchParams({ q: text, limit: String(size * 2), lang: 'en' })
 

@@ -2,14 +2,6 @@
 import React from 'react'
 import { usePermissions } from '../../../../store'
 
-// import {
-//   InfrastructureEnergySource,
-//   InfrastructureAssessmentConditions,
-//   InfrastructureProjectPhase,
-//   InfrastructureProjectType,
-//   InfrastructureLandUse,
-// } from '../../../../types/infrastructure'
-
 // Shadcn Components
 import { Checkbox, Input, Textarea, Button, Badge, DatePicker } from '../../../../components/ui/'
 import {

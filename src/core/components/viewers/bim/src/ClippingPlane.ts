@@ -1,7 +1,5 @@
 import { CurrentWorld } from './CurrentWorld';
 import * as OBC from '@thatopen/components'
-// import * as FRAGS from '@thatopen/fragments'
-// import * as THREE from 'three'
 
 export class ClippingPlane extends OBC.Component {
 

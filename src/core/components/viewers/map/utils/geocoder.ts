@@ -108,7 +108,7 @@ export const handleLocationSelect = (feature: Feature, map: any, type: string, o
 
     if (map && center) {
       // Add marker to the center with editing capability
-      markerManager.create(center as [number, number], map)
+      // markerManager.create(center as [number, number], map)
 
       map.flyTo({
         center: addressData.coordinates,
@@ -160,7 +160,7 @@ export const handleLocationSelect = (feature: Feature, map: any, type: string, o
 
   if (map && center) {
     // Add marker to the center with editing capability
-    markerManager.create(center as [number, number], map, { editing })
+    // markerManager.create(center as [number, number], map, { editing })
 
     if (feature.bbox) {
       map.fitBounds(feature.bbox, { speed: 2 })
@@ -229,16 +229,16 @@ export const buildingToFeature = (building) => {
   }
 }
 
-// Enhanced marker creation with editing capabilities
-export const createGeocoderMarker = (coordinates: [number, number], map: any, options?: { editing?: boolean }) => {
-  const editing = options?.editing || false
-  const markerManager = getGeocoderMarkerManager()
-  markerManager.create(coordinates, map, { editing })
-  return markerManager
-}
+// // Enhanced marker creation with editing capabilities
+// export const createGeocoderMarker = (coordinates: [number, number], map: any, options?: { editing?: boolean }) => {
+//   const editing = options?.editing || false
+//   const markerManager = getGeocoderMarkerManager()
+//   markerManager.create(coordinates, map, { editing })
+//   return markerManager
+// }
 
 // Helper function to remove the current marker
-export const removeGeocoderMarker = (): void => {
-  const markerManager = getGeocoderMarkerManager()
-  markerManager.remove()
-}
+// export const removeGeocoderMarker = (): void => {
+//   const markerManager = getGeocoderMarkerManager()
+//   markerManager.remove()
+// }

@@ -5,7 +5,6 @@ import { MenusContext, usePermissions } from '../../../../../store'
 import { SidebarTabType } from '../../../../../store/Menus/reducer'
 import { FileTab } from './src/FileTab'
 import { LayersTab } from './src/LayersTab'
-// import { DatasetsTab } from './src/DatasetsTab'
 
 import { SettingsTab } from './src/SettingsTab'
 import { InfoSidebarContainer } from '../../../../../components/ui/InfoSidebar/Container'

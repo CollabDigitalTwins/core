@@ -27,6 +27,7 @@ const CANADA_DEFAULTS = {
 } as const
 
 const DEFAULT_MAP_STYLE = { name: 'Satellite', url: 'mapStyles/satellite.json' } as const
+const MAX_GLOBE_ZOOM = 5
 
 interface Props {
   width?: string
@@ -34,7 +35,7 @@ interface Props {
   organization: Organization
 }
 
-export function MapViewer({ width = '100%', height = '100%', organization  }: Props) {
+export function MapViewer({ width = '100%', height = '100%', organization }: Props) {
 
   const searchParams = useSearchParams()
 
@@ -44,20 +45,22 @@ export function MapViewer({ width = '100%', height = '100%', organization  }: Pr
   const viewState = React.useMemo(() => {
     return searchParams.size === 0
       ? {
-          zoom: organization.zoom ?? CANADA_DEFAULTS.zoom,
-          bearing: organization.bearing ?? 0,
-          pitch: organization.pitch ?? 0,
-          longitude: organization.long ?? CANADA_DEFAULTS.long,
-          latitude: organization.lat ?? CANADA_DEFAULTS.lat,
-        }
+        zoom: organization.zoom ?? CANADA_DEFAULTS.zoom,
+        bearing: organization.bearing ?? 0,
+        pitch: organization.pitch ?? 0,
+        longitude: organization.long ?? CANADA_DEFAULTS.long,
+        latitude: organization.lat ?? CANADA_DEFAULTS.lat,
+      }
       : {
-          latitude: searchParams.has('lat') ? Number.parseFloat(searchParams.get('lat')) : organization.lat ?? CANADA_DEFAULTS.lat,
-          longitude: searchParams.has('lng') ? Number.parseFloat(searchParams.get('lng')) : organization.long ?? CANADA_DEFAULTS.long,
-          bearing: searchParams.has('bearing') ? Number.parseFloat(searchParams.get('bearing')) : organization.bearing ?? 0,
-          pitch: searchParams.has('pitch') ? Number.parseFloat(searchParams.get('pitch')) : organization.pitch ?? 0,
-          zoom: searchParams.has('zoom') ? Number.parseFloat(searchParams.get('zoom')) : organization.zoom ?? CANADA_DEFAULTS.zoom,
-        }
+        latitude: searchParams.has('lat') ? Number.parseFloat(searchParams.get('lat')) : organization.lat ?? CANADA_DEFAULTS.lat,
+        longitude: searchParams.has('lng') ? Number.parseFloat(searchParams.get('lng')) : organization.long ?? CANADA_DEFAULTS.long,
+        bearing: searchParams.has('bearing') ? Number.parseFloat(searchParams.get('bearing')) : organization.bearing ?? 0,
+        pitch: searchParams.has('pitch') ? Number.parseFloat(searchParams.get('pitch')) : organization.pitch ?? 0,
+        zoom: searchParams.has('zoom') ? Number.parseFloat(searchParams.get('zoom')) : organization.zoom ?? CANADA_DEFAULTS.zoom,
+      }
   }, [searchParams, organization])
+
+  const initialProjection = viewState.zoom > MAX_GLOBE_ZOOM ? 'mercator' : 'globe'
 
   // Memoize the inline style object that gets passed to <Map> for a stable prop identity.
   const mapContainerStyle = React.useMemo(
@@ -75,8 +78,42 @@ export function MapViewer({ width = '100%', height = '100%', organization  }: Pr
   const mapRef = React.useRef<MapRef>(null)
   const { dispatch: mapDispatch, state: mapState } = React.useContext(MapContext)
 
+  // Keep the projection in sync with zoom at all times — not only while the
+  // map-settings sidebar is mounted. The globe projection degrades past
+  // MAX_GLOBE_ZOOM, so we force mercator regardless of which panels are open.
+  const activeMap = mapState?.map?.map
+
+  React.useEffect(() => {
+    if (!activeMap) return
+
+    const enforceProjectionForZoom = () => {
+      if (activeMap.getZoom() <= MAX_GLOBE_ZOOM) return
+
+      const projection = activeMap.getProjection()
+      const currentType =
+        typeof projection === 'string'
+          ? projection
+          : (projection as { type?: string; name?: string })?.type ?? (projection as { type?: string; name?: string })?.name
+
+      if (currentType !== 'mercator') {
+        activeMap.setProjection({ type: 'mercator' })
+      }
+    }
+
+    enforceProjectionForZoom()
+    activeMap.on('zoom', enforceProjectionForZoom)
+
+    return () => {
+      activeMap.off('zoom', enforceProjectionForZoom)
+    }
+  }, [activeMap])
+
   const handleMapLoad = () => {
     const map = mapRef.current.getMap()
+
+    if (map.getZoom() > MAX_GLOBE_ZOOM) {
+      map.setProjection({ type: 'mercator' })
+    }
 
     // Only dispatch SET_MAP after map is fully loaded
     if (mapRef.current) {
@@ -144,7 +181,7 @@ export function MapViewer({ width = '100%', height = '100%', organization  }: Pr
     <>
       <Map
         id="map-component"
-        mapStyle={ mapStyle.url}
+        mapStyle={mapStyle.url}
         mapLib={maplibregl}
         onLoad={handleMapLoad}
         ref={mapRef}
@@ -153,13 +190,13 @@ export function MapViewer({ width = '100%', height = '100%', organization  }: Pr
         maxPitch={60}
         minZoom={organization?.minZoom ?? CANADA_DEFAULTS.zoom}
         maxBounds={resolveBounds(organization?.maxBounds, CANADA_DEFAULTS.maxBounds)}
-        projection="globe"
+        projection={initialProjection}
         doubleClickZoom={false}
         onDblClick={onDblClick}
         pixelRatio={pixelRatio}
       >
         <NavigationControl visualizePitch />
-        <SettingsButton /> 
+        <SettingsButton />
         {isMapLoaded
           && (
             <>

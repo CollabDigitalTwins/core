@@ -8,6 +8,8 @@ import { MapContext } from '../../../../../../../../store'
 
 type MapProjectionType = 'globe' | 'mercator'
 
+const MAX_GLOBE_ZOOM = 5
+
 export function MapProjection() {
   const tMap = useTranslations('MapCustomization')
   const { state: mapState } = React.useContext(MapContext)
@@ -30,26 +32,44 @@ export function MapProjection() {
     return projectionType === 'globe' ? 'globe' : 'mercator'
   }, [map])
 
-  React.useEffect(() => {
-    if (!map || !map.loaded()) return
-
-    setMapProjection(getCurrentProjection())
-  }, [map, getCurrentProjection])
-
-  const handleMapProjection = () => {
+  // Display-only sync. The zoom-based enforcement (forcing mercator past
+  // MAX_GLOBE_ZOOM) now lives in MapViewer so it runs whether or not this
+  // settings panel is mounted; here we just mirror the map's current projection
+  // into the toggle UI.
+  const syncProjectionDisplay = React.useCallback(() => {
     if (!map) return
 
-    const currentProjection = getCurrentProjection()
-    const nextProjection = currentProjection !== 'globe' ? 'globe' : 'mercator'
+    setMapProjection(getCurrentProjection())
+  }, [getCurrentProjection, map])
 
-    map.setProjection({ type: nextProjection })
-    setMapProjection(nextProjection)
+  React.useEffect(() => {
+    if (!map) return
+
+    syncProjectionDisplay()
+
+    map.on('zoom', syncProjectionDisplay)
+
+    return () => {
+      map.off('zoom', syncProjectionDisplay)
+    }
+  }, [map, syncProjectionDisplay])
+
+  const handleMapProjection = (value: MapProjectionType) => {
+    if (!map) return
+
+    const forcedProjection = map.getZoom() > MAX_GLOBE_ZOOM ? 'mercator' : value
+
+    if (getCurrentProjection() !== forcedProjection) {
+      map.setProjection({ type: forcedProjection })
+    }
+
+    setMapProjection(forcedProjection)
   }
 
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium">{tMap('mapProjection')}</label>
-      <Tabs value={mapProjection} onValueChange={handleMapProjection} variant="switch">
+      <Tabs value={mapProjection} onValueChange={value => handleMapProjection(value as MapProjectionType)} variant="switch">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="globe">
             <LR.Globe className="w-4 h-4 mr-2" />

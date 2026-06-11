@@ -9,16 +9,16 @@ export async function checkImageUrl(url: string): Promise<boolean> {
 }
 
 export async function uploadOrganizationLogoToPublicBucket(file: File): Promise<string> {
-  const uploadUrl = `${process.env.NEXT_PUBLIC_MINIO_BUCKET_URL}/org-logos/${file.name}`
-  const uploadResponse = await fetch(uploadUrl, {
+  const presignedUrlResult = await fetch(`/api/presigned-url-upload?asset=${encodeURIComponent(file.name)}&bucket=org-logos`)
+  if (!presignedUrlResult.ok) throw new Error('Failed to get presigned URL for org logo')
+  const { presignedUrl, key } = await presignedUrlResult.json()
+
+  const uploadResult = await fetch(presignedUrl, {
     method: 'PUT',
     body: file,
     headers: { 'Content-Type': file.type || 'application/octet-stream' },
   })
+  if (!uploadResult.ok) throw new Error('Failed to upload organization logo')
 
-  if (!uploadResponse.ok) {
-    throw new Error('Failed to upload organization logo')
-  }
-
-  return file.name
+  return key
 }

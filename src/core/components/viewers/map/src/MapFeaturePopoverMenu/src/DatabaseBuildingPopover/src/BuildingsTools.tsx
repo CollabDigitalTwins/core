@@ -44,7 +44,7 @@ export default function BuildingTools({
   const { ability } = usePermissions()
 
   const { dispatch: menusDispatch } = React.useContext(MenusContext);
-  const { state: mapState,  } = React.useContext(MapContext);
+  const { state: mapState, } = React.useContext(MapContext);
   const { dispatch: bimDispatch, state: bimState } = React.useContext(BimContext);
   const { bimModelsAddedToMap } = bimState.bim;
   const { dispatch: buildingsDispatch } = React.useContext(BuildingsContext);
@@ -147,7 +147,7 @@ export default function BuildingTools({
   );
 
   const onOpenBimViewer = () => {
-    buildingsDispatch({type: "SET-CURRENT-BUILDING", payload: { building }});
+    buildingsDispatch({ type: "SET-CURRENT-BUILDING", payload: { building } });
     changeViewer(ViewerNames.bim);
     setSelectedItem(building);
   }
@@ -156,17 +156,15 @@ export default function BuildingTools({
     () => files || [],
     [files],
   );
-  
+
   const bimFiles = React.useMemo(
-    () => buildingFiles.filter((file: DbFile) => file.name.toLowerCase().endsWith(".frag")
+    () => buildingFiles.filter((file: DbFile) => file.type === "bim-file" || file.extension === "frag"
     ),
     [buildingFiles],
   )
 
   const pcFiles = React.useMemo(
-    () => buildingFiles.filter((file: DbFile) => file.name.toLowerCase().endsWith(".laz") ||
-      file.name.toLowerCase().endsWith(".las")
-    ),
+    () => buildingFiles.filter((file: DbFile) => file.type === 'point-cloud-file' || ['laz', 'las'].includes(file.extension || '')),
     [buildingFiles],
   )
 
@@ -305,13 +303,13 @@ export default function BuildingTools({
                                 <span>{file.name}</span>
                               </div>
                               {isSelected && (
-                                <Button 
+                                <Button
                                   onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
                                     handleEditClick(file.name);
-                                  }} 
-                                  variant="ghost" 
+                                  }}
+                                  variant="ghost"
                                   size="sm"
                                   className="h-6 w-6 p-0"
                                   title={t('editBimButton')}
@@ -345,9 +343,9 @@ export default function BuildingTools({
                   const selectedModel = bimModelsAddedToMap.find(model => model.building.id === buildingId);
                   console.log('selectedModel', selectedModel);
                   return true ? (
-                    <Button 
-                      onClick={() => handleEditClick(selectedModel.bimFile.name)} 
-                      variant="ghost" 
+                    <Button
+                      onClick={() => handleEditClick(selectedModel.bimFile.name)}
+                      variant="ghost"
                       size="sm"
                       title={t('editBimButton')}
                       disabled={!ability.can('update', 'File')}
@@ -357,8 +355,8 @@ export default function BuildingTools({
                   ) : null;
                 })()}
               </div>
-            ) 
-            }
+            )
+          }
         </div>}
 
       {/* Tool Buttons */}

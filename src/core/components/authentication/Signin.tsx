@@ -15,7 +15,7 @@ import { GoogleIcon } from '../ui/Icons/GoogleIcon'
 import { Input } from '../ui/Input'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
 import { AuthPage, useAuthTheme } from './AuthPage'
-import { useParams,useSearchParams  } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import ReCAPTCHA from 'react-google-recaptcha'
 
 function SignInContent() {
@@ -35,14 +35,14 @@ function SignInContent() {
   const params = useParams()
   const orgName = params.instance ?? 'canada'
   const [googleError, setGoogleError] = React.useState(
-  searchParams.get('error')
+    searchParams.get('error')
   )
   //Clean up the Google query error in URL, and have it only return /orgName/signin to clear frontend error responses 
   React.useEffect(() => {
-  if (googleError) {
-    window.history.replaceState({}, '', `/${orgName}/signin`)
-  }
-}, [googleError, orgName])
+    if (googleError) {
+      window.history.replaceState({}, '', `/${orgName}/signin`)
+    }
+  }, [googleError, orgName])
 
   const t = useTranslations('Signin')
   const tMfa = useTranslations('MFA')
@@ -75,20 +75,20 @@ function SignInContent() {
         if (result.code === 'rate_limit_error') {
 
           setIsLoading(true)
-          setError('Too many failed login attempts. Please try again later.')         
+          setError('Too many failed login attempts. Please try again later.')
           return
         }
-        else if(result.code === 'invalid_credentials'){
+        else if (result.code === 'invalid_credentials') {
           setError('Invalid email or password')
           setIsLoading(false)
-          return          
+          return
         }
         //Commenting out Captcha code for Development 
-        else if(!captchaStatus){
-            setTimeout(() => {
-           setError('Captcha Verification Failed.')
-         }, 500) 
-          setIsLoading(false)         
+        else if (!captchaStatus) {
+          setTimeout(() => {
+            setError('Captcha Verification Failed.')
+          }, 500)
+          setIsLoading(false)
           return
         }
         //MFA TRIGGER
@@ -98,12 +98,12 @@ function SignInContent() {
           return
         }
 
-        else{
-        setError('Captcha Verification Expired. Please try again later.')
-        setIsLoading(false)
-        return
+        else {
+          setError('Captcha Verification Expired. Please try again later.')
+          setIsLoading(false)
+          return
         }
-    }
+      }
 
       // Completed Login + MFA - Redirect to the Platform's Organization Dashboard 
       window.location.href = `/${orgName}`
@@ -200,14 +200,14 @@ function SignInContent() {
               className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
               style={{ color: 'var(--hp-on-surface-variant)' }}
             >
-              {showPassword ? <LR.EyeOff size={16}/> : <LR.Eye size={16}/>}
+              {showPassword ? <LR.EyeOff size={16} /> : <LR.Eye size={16} />}
             </button>
           </div>
           {/* Google Not Linked Error */}
-            {googleError === 'google_not_linked' && (
-              <div className="auth-pw-error">
-                Your Google account is not linked. Please sign in with your credentials first, then link your Google account.
-              </div>
+          {googleError === 'google_not_linked' && (
+            <div className="auth-pw-error">
+              Your Google account is not linked. Please sign in with your credentials first, then link your Google account.
+            </div>
           )}
           {error && <div className="auth-pw-error">{error}</div>}
 
@@ -216,8 +216,8 @@ function SignInContent() {
               {isLoading ? <LoadingSpinner /> : 'Login'}
             </Button>
 
-          {/* Google button */}             
-             { <button 
+            {/* Google button */}
+            {<button
               type="button"
               onClick={() => signIn('google', { redirectTo: `/${orgName}` })}
               disabled={isLoading}
@@ -225,20 +225,20 @@ function SignInContent() {
               className="auth-google-btn"
             >
               <GoogleIcon size={20} />
-            </button>  } 
-            
+            </button>}
+
           </div>
 
           {/* Reset Password link */}
-          <div className="flex justify-start">
-          <a
-            href={`/${orgName}/auth/reset-password`}
-            className="text-sm underline underline-offset-4 hover:opacity-80"
-            style={{ color: 'var(--hp-primary)' }}
-          >
-          Reset your password
-          </a>
-          </div>
+          {/* <div className="flex justify-start">
+            <a
+              href={`/${orgName}/auth/reset-password`}
+              className="text-sm underline underline-offset-4 hover:opacity-80"
+              style={{ color: 'var(--hp-primary)' }}
+            >
+              Reset your password
+            </a>
+          </div> */}
         </form>
       )}
 
@@ -278,7 +278,7 @@ function SignInContent() {
             onChange={onReCaptchaSuccess}
             theme={authTheme}
           />
-        </div>       
+        </div>
       )}
     </>
   )

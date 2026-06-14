@@ -3,7 +3,7 @@
 import Map, { MapRef, NavigationControl } from 'react-map-gl/maplibre'
 import React from 'react'
 
-import maplibregl, { LngLatBoundsLike } from 'maplibre-gl'
+import maplibregl from 'maplibre-gl'
 import { useSearchParams } from 'next/navigation'
 
 import { MapContext } from '../../../store'
@@ -20,7 +20,6 @@ import { MapLayers } from './src/MapLayers'
 import SettingsButton from '../../ui/SettingsButton'
 
 const CANADA_DEFAULTS = {
-  maxBounds: [-141.0, 41.6751050889, -52.6480987209, 83.23324] as LngLatBoundsLike,
   zoom: 3,
   lat: 56.415,
   long: -98.74,
@@ -189,7 +188,7 @@ export function MapViewer({ width = '100%', height = '100%', organization }: Pro
         initialViewState={viewState}
         maxPitch={60}
         minZoom={organization?.minZoom ?? CANADA_DEFAULTS.zoom}
-        maxBounds={resolveBounds(organization?.maxBounds, CANADA_DEFAULTS.maxBounds)}
+        maxBounds={resolveBounds(organization?.maxBounds)}
         projection={initialProjection}
         doubleClickZoom={false}
         onDblClick={onDblClick}

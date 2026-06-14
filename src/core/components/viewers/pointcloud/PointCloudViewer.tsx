@@ -103,6 +103,13 @@ export function PointCloudViewer() {
           gizmoRef.current = null;
         }
         const v = viewerRef.current;
+        // Potree's render loop re-schedules itself via requestAnimationFrame with no stop API;
+        // shadow it with a no-op so it halts on unmount instead of running forever against a
+        // disposed renderer (otherwise a new loop accumulates on every visit).
+        if (v) {
+          v.loop = () => { };
+          v.update = () => { };
+        }
         if (v?.scene?.pointclouds) {
           v.scene.pointclouds.forEach((pc: any) => {
             v.scene.removePointCloud?.(pc) ?? v.scene.scene?.remove?.(pc);
@@ -156,7 +163,7 @@ export function PointCloudViewer() {
       if (alreadyLoadedIds.has(id) || pendingIdsRef.current.has(id)) continue;
 
       pendingIdsRef.current.add(id);
-      ;(async () => {
+      ; (async () => {
         try {
           const res = await fetch(`${API_BASE}/point-cloud/${encodeURIComponent(id)}`);
           const data = await res.json();

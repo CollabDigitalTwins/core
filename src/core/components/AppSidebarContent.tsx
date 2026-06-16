@@ -239,6 +239,11 @@ export function AppSidebarContent({ organization, countrySubdivisionsData }: App
     return item.accessibleTo.some(role => normalizedUserRoles.has(role.toLowerCase()))
   }, [normalizedUserRoles])
 
+  const visibleDatasetItems = datasetItems
+  .filter(item => !appContent || appContent.includes(item.id as ViewerNames))
+  .filter(canRenderItem)
+
+
   return (
     <>
       <SidebarContent className='overflow-hidden'>
@@ -280,34 +285,47 @@ export function AppSidebarContent({ organization, countrySubdivisionsData }: App
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-          {isCollapsed && <Separator className="z-30 w-2/3 mx-auto" />}
-          <SidebarGroup>
-            <SidebarGroupLabel>{t('data')}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {datasetItems.filter(item => !appContent || appContent.includes(item.id as ViewerNames))
-                  .filter(canRenderItem)
-                  .map(item => {
-                    const active = item.id === currentViewer
-                    return (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton asChild>
-                          <Button
-                            onClick={item.onClick}
-                            title={isCollapsed ? item.title : undefined}
-                            className={buildBtnClass(active)}
-                            variant="ghost"
-                          >
-                            <item.icon className={buildIconClass(active)} />
-                            <span className={`${isCollapsed ? 'hidden' : 'inline'} ${active ? 'font-bold text-primary' : ''}`}>{item.title}</span>
-                          </Button>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    )
-                  })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+
+
+          {visibleDatasetItems.length > 0 && (
+            <>
+              {isCollapsed && <Separator className="z-30 w-2/3 mx-auto" />}
+
+              <SidebarGroup>
+                <SidebarGroupLabel>{t('data')}</SidebarGroupLabel>
+
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {visibleDatasetItems.map(item => {
+                      const active = item.id === currentViewer
+
+                      return (
+                        <SidebarMenuItem key={item.title}>
+                          <SidebarMenuButton asChild>
+                            <Button
+                              onClick={item.onClick}
+                              title={isCollapsed ? item.title : undefined}
+                              className={buildBtnClass(active)}
+                              variant="ghost"
+                            >
+                              <item.icon className={buildIconClass(active)} />
+                              <span
+                                className={`${isCollapsed ? 'hidden' : 'inline'} ${
+                                  active ? 'font-bold text-primary' : ''
+                                }`}
+                              >
+                                {item.title}
+                              </span>
+                            </Button>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </>
+          )}
           {isCollapsed && <Separator className="z-30 w-2/3 mx-auto" />}
           <SidebarGroup>
             <SidebarGroupLabel>{t('extensions')}</SidebarGroupLabel>

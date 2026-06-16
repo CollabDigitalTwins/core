@@ -74,13 +74,29 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
       const visibilityMap = new Map(
         prevFiles.map(f => [f.id, f.isVisible ?? false])
       )
+      // A file is "visible" only if it's actually present and shown in the 3D scene
+      // (a loaded model, a loaded DXF group, or the active IDS). This mirrors the Map
+      // viewer, which derives visibility from on-scene state (mapFileIds) rather than
+      // from the persisted `file.isVisible` flag — so nothing shows as visible on open
+      // unless it has been toggled on or just placed/added into the scene.
+      const isFileInScene = (file: IFile): boolean => {
+        if (file.extension === 'ids') return activeIDSFileId === file.id
+        if (file.extension === 'dxf') {
+          return dxfGroupsRef.current.get(file.id.toString())?.visible === true
+        }
+        if (is3DFile(file.extension)) {
+          const info = modelManagerRef.current?.getModelByName(file.name)
+          return info ? info.model.visible !== false : false
+        }
+        return false
+      }
       return files
         .filter(file => file.tag !== 'user')
         .filter(file => (file as any).type !== 'map-file')
         .map(file => {
-          // Preserve the user's toggle state for already-tracked files; otherwise honor
-          // the persisted visibility so files added in-session show as added (not disabled).
-          let isVisible = visibilityMap.has(file.id) ? visibilityMap.get(file.id)! : (file.isVisible ?? false)
+          // Preserve the user's in-session toggle for already-tracked files; for files
+          // seen for the first time, derive visibility from the actual scene state.
+          let isVisible = visibilityMap.has(file.id) ? visibilityMap.get(file.id)! : isFileInScene(file)
           if (file.extension === 'ids' && activeIDSFileId === file.id) {
             isVisible = true
           } else if (file.extension === 'ids' && activeIDSFileId !== null && activeIDSFileId !== file.id) {

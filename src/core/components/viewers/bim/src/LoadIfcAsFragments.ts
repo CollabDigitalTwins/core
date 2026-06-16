@@ -28,7 +28,8 @@ export class LoadIfcAsFragments extends OBC.Component {
   private async initializeSerializer() {
     try {
       this.serializer = new FRAGS.IfcImporter()
-      this.serializer.wasm = { absolute: true, path: 'https://unpkg.com/web-ifc@0.0.71/' }
+      // ⚠️⚠️ IMPORTANT: keep this web-ifc version in sync with the `web-ifc` version
+      this.serializer.wasm = { absolute: true, path: 'https://unpkg.com/web-ifc@0.0.77/' }
     }
     catch (error) {
       console.warn('Could not initialize IFC serializer:', error)

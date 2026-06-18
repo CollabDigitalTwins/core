@@ -2,6 +2,7 @@
 
 # Dist
 /dist
+/docs
 
 # dependencies
 /node_modules

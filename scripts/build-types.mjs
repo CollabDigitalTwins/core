@@ -19,18 +19,33 @@ const res = spawnSync('npx', ['tsc', '-p', 'tsconfig.build.json'], {
 const out = `${res.stdout || ''}${res.stderr || ''}`
 process.stdout.write(out)
 
-const count = (out.match(/error TS\d+/g) || []).length
+// TS5033 ("Could not write file ... EPERM/EBUSY") is NOT a type error — it means a
+// process is holding files in dist/ open so tsc can't overwrite them (a `tsup --watch`
+// dev session, the VS Code TS server, the Windows Search indexer, or antivirus). On
+// Windows these end up "delete-pending" and clear only when the handle closes. Count
+// them separately so a transient file lock never masquerades as a type regression.
+const writeErrors = (out.match(/error TS5033/g) || []).length
+const typeErrors = (out.match(/error TS\d+/g) || []).length - writeErrors
 
-if (count > BASELINE) {
+if (writeErrors > 0) {
   console.error(
-    `\n❌ ${count} type errors — ${count - BASELINE} NEW beyond the baseline of ${BASELINE}. ` +
+    `\n❌ ${writeErrors} declaration file(s) could not be written to dist/ (TS5033) — ` +
+    `a FILE LOCK, not a type error. A process is holding dist/ open. ` +
+    `Stop \`yarn dev:linked\` / tsup --watch, or reboot to release delete-pending handles, then rebuild.`,
+  )
+  process.exit(1)
+}
+
+if (typeErrors > BASELINE) {
+  console.error(
+    `\n❌ ${typeErrors} type errors — ${typeErrors - BASELINE} NEW beyond the baseline of ${BASELINE}. ` +
     `Fix the new error(s), or update BASELINE in scripts/build-types.mjs if intended.`,
   )
   process.exit(1)
 }
-if (count > 0) {
+if (typeErrors > 0) {
   console.warn(
-    `\n⚠️  ${count} pre-existing type error(s) tolerated (baseline ${BASELINE}). ` +
+    `\n⚠️  ${typeErrors} pre-existing type error(s) tolerated (baseline ${BASELINE}). ` +
     `.d.ts emitted best-effort. Run \`yarn build:types:strict\` to list them.`,
   )
 }

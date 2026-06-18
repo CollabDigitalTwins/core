@@ -11,7 +11,7 @@ import { Input } from '../../ui/Input'
 import { Textarea } from '../../ui/Textarea'
 import Footer from '../../ui/Footer'
 
-export default function OrganizationConfig() {
+export default function OrganizationConfigContent() {
   const t = useTranslations('OrganizationConfig')
   const router = useRouter()
 

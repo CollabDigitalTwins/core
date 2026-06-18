@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 
 import Navbar from '../ui/Navbar'
 import AnimatedBackground from '../ui/AnimatedBackground'
-import OrganizationConfigForm from './src/OrganizationConfig'
+import OrganizationConfigContent  from './src/organizationConfigContent'
 
 import { Language } from '../../types/dbTypes'
 
@@ -74,7 +74,7 @@ export default function OrganizationConfigPage() {
         showNavigation={false}
       />
 
-      <OrganizationConfigForm />
+      <OrganizationConfigContent  />
     </div>
   )
 }

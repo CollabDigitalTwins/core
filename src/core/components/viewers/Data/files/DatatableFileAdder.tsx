@@ -8,6 +8,8 @@ import { Button, LoadingSpinner } from '../../../../components/ui/'
 import * as LR from 'lucide-react'
 import { useFileUploadWithProgress } from '../../../../components/ui/FilesManager'
 
+import { toast } from 'sonner'
+
 export default function DatatableFileAdder() {
 
   // Translations
@@ -21,9 +23,11 @@ export default function DatatableFileAdder() {
     acceptedFileTypes: '*',
     onUploadSuccess: () => {
       console.log('File successfully uploaded to API')
+      toast.success(t('uploadSuccess'))
     },
     onUploadError: (error) => {
       console.error('Error uploading file:', error)
+      toast.error(error.message)
     }
   })
 

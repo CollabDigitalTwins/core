@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 // This is enum declaration file, taken from Potree Point Cloud Viewer
 // https://github.com/potree/potree/blob/develop/src/defines.js
 

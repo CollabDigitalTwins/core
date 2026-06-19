@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🔒 Security vulnerability
+    url: https://github.com/collabdt/core/security/policy
+    about: Do not file security issues publicly. Follow our Security Policy and email info@collabdt.org.
+  - name: 💬 Question or discussion
+    url: https://github.com/collabdt/core/discussions
+    about: Ask questions and discuss ideas in GitHub Discussions.
+  - name: 🏢 Commercial licensing & support
+    url: https://collabdt.org/home#contact
+    about: For a commercial license or a support agreement, contact the team.

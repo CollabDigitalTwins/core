@@ -1,19 +1,14 @@
 'use client'
 
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 import * as React from 'react'
 import { signIn } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
 import * as LR from 'lucide-react'
 import { toast, Toaster } from 'sonner'
-// Direct file imports (not the ui barrel). The ui barrel
-// `src/core/components/ui/index.ts` re-exports dozens of components plus
-// `useFileUploadHandler` and `InfoSidebar`, the latter of which transitively
-// pulls in @thatopen and the BIM viewer tree. Importing through the barrel
-// would drag all of that into the auth pages; direct file imports avoid it.
-import { Button } from '../ui/Button'
-import { GoogleIcon } from '../ui/Icons/GoogleIcon'
-import { Input } from '../ui/Input'
-import { LoadingSpinner } from '../ui/LoadingSpinner'
+import { Button, GoogleIcon, Input, LoadingSpinner } from '../ui'
 import { AuthPage, useAuthTheme } from './AuthPage'
 import { useParams, useSearchParams } from 'next/navigation'
 import ReCAPTCHA from 'react-google-recaptcha'
@@ -78,16 +73,22 @@ function SignInContent() {
           setError('Too many failed login attempts. Please try again later.')
           return
         }
-        else if (result.code === 'invalid_credentials') {
+
+        else if (result.code === 'whitelist_invalid_credentials') {
           setError('Invalid email or password')
           setIsLoading(false)
           return
         }
-        //Commenting out Captcha code for Development 
+
         else if (!captchaStatus) {
-          setTimeout(() => {
-            setError('Captcha Verification Failed.')
-          }, 500)
+
+          setError('Captcha Verification Failed.')
+          setIsLoading(false)
+          return
+        }
+
+        else if (result.code === 'invalid_credentials') {
+          setError('Invalid email or password')
           setIsLoading(false)
           return
         }
@@ -98,7 +99,7 @@ function SignInContent() {
           return
         }
 
-        else {
+        else { //result.code === 'expired_recaptcha_token
           setError('Captcha Verification Expired. Please try again later.')
           setIsLoading(false)
           return
@@ -229,6 +230,7 @@ function SignInContent() {
 
           </div>
 
+          {/*⚠️⚠️⚠️⚠️ DISABLED FOR NOW - Password Reset link, will implement in the future when we have the flow ready */}
           {/* Reset Password link */}
           {/* <div className="flex justify-start">
             <a

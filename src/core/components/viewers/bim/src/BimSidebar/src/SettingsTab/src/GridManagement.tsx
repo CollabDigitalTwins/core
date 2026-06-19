@@ -20,7 +20,7 @@ export function GridManagement() {
     return grid?.config?.visible ?? true
   })
   const [gridColor, setGridColor] = React.useState(() => {
-    return grid.config.color ? `#${grid.config.color.getHexString()}` : '#bbbbbb'
+    return grid?.config?.color ? `#${grid.config.color.getHexString()}` : '#bbbbbb'
   })
   const [primarySize, setPrimarySize] = React.useState(() => {
     return [grid?.config?.primarySize ?? 1]

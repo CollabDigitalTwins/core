@@ -1,5 +1,8 @@
 'use client'
 
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 import { AppConfigProvider } from './AppConfig/context'
 import { BimProvider } from './BIM/context'
 import { ContentProvider } from './Content/context'

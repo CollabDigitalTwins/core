@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 import type { JSX } from 'react'
 import { LngLatBounds, LngLatBoundsLike } from 'maplibre-gl'
 import { Feature } from 'geojson'

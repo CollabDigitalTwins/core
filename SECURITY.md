@@ -22,8 +22,9 @@ If you believe you have found a security vulnerability in this repository, **ple
 
 ### **How to Report a Security Issue**  
 
-1. **Do not open a public issue on GitHub.** Instead, report security concerns via email to:  
-   📧 **security@collabdt.org**  
+1. **Do not open a public issue on GitHub.** Instead, report security concerns privately through either channel:  
+   - 📧 Email **[support@collabdt.org](mailto:support@collabdt.org)**, or  
+   - 🔒 Use GitHub's [private vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability) on this repository (**Security → Report a vulnerability**).  
 2. **Provide detailed information about the vulnerability**, including:  
    - A clear description of the issue.  
    - Steps to reproduce the vulnerability.  
@@ -62,4 +63,4 @@ To help maintain security across CDT repositories, we follow these principles:
 
 ---
 
-**Maintained by <a href="www.collabdt.org">Collab Digital Twins(CDT) NFP</a> .**  
+**Maintained by <a href="https://www.collabdt.org">Collab Digital Twins (CDT) NFP</a>.**  

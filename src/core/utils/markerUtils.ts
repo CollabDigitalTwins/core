@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 // Tailwind class string for marker highlight style
 export const markerStyle  =
   'absolute z-[99999] pointer-events-auto rounded-[16px] transition-[box-shadow] ' +

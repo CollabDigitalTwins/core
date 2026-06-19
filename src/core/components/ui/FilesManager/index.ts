@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 // Common UI components for file management
 export { FileItemComponent, FileMenuContent } from './src/FileItemComponent'
 export type { FileItemComponentProps, FileMenuContentProps } from './src/FileItemComponent'

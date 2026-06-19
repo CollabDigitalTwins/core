@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
 
 // Direct file imports to bypass the ui barrel.
 import { Separator } from '../../ui/Separator';

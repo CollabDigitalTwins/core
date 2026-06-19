@@ -4,93 +4,104 @@ Copyright 2025 Collab Digital Twins
 This product includes software developed by:
 
 ===============================================================================
-GNU Affero General Public License (version 3)
+Collab Digital Twins ("CDT Platform")
 ===============================================================================
 
-===============================================================================
-Apache Software Foundation (Apache-2.0):
-===============================================================================
-- @aws-sdk/client-s3
-- @aws-sdk/s3-request-presigner  
-- @prisma/client
-- class-variance-authority
-- prisma
+The CDT Platform itself is licensed under the GNU Affero General Public
+License, version 3.0 (AGPL-3.0); the full license text appears below (after
+the third-party attributions) and in the LICENSE file.
+
+The third-party open-source components bundled with, or required by, the
+Platform are listed below and grouped by license. The full text of each
+license referenced here appears further down in this file.
 
 ===============================================================================
-MIT Licensed Components:
+Apache License 2.0:
 ===============================================================================
-- @auth/prisma-adapter (NextAuth.js contributors)
-- @giro3d/giro3d (Giro3D contributors)
-- @lucide/lab (Lucide contributors)
-- @radix-ui/react-alert-dialog (Radix UI contributors)
-- @radix-ui/react-avatar (Radix UI contributors)
-- @radix-ui/react-checkbox (Radix UI contributors)
-- @radix-ui/react-dialog (Radix UI contributors)
-- @radix-ui/react-dropdown-menu (Radix UI contributors)
-- @radix-ui/react-label (Radix UI contributors)
-- @radix-ui/react-menubar (Radix UI contributors)
-- @radix-ui/react-popover (Radix UI contributors)
-- @radix-ui/react-progress (Radix UI contributors)
-- @radix-ui/react-select (Radix UI contributors)
-- @radix-ui/react-separator (Radix UI contributors)
-- @radix-ui/react-slider (Radix UI contributors)
-- @radix-ui/react-slot (Radix UI contributors)
-- @radix-ui/react-switch (Radix UI contributors)
-- @radix-ui/react-tabs (Radix UI contributors)
-- @radix-ui/react-toggle (Radix UI contributors)
-- @radix-ui/react-toggle-group (Radix UI contributors)
-- @radix-ui/react-tooltip (Radix UI contributors)
-- @radix-ui/react-visually-hidden (Radix UI contributors)
-- @tanstack/react-table (TanStack contributors)
-- @thatopen/components (That Open Company contributors)
-- @thatopen/components-front (That Open Company contributors)
-- @thatopen/fragments (That Open Company contributors)
-- @thatopen/ui (That Open Company contributors)
-- @thatopen/ui-obc (That Open Company contributors)
-- @turf/turf (Turf.js contributors)
-- bcryptjs (dcodeIO contributors)
+- class-variance-authority (Joe Bell)
+
+===============================================================================
+MIT License:
+===============================================================================
+- @casl/ability (Sergii Stotskyi)
+- @dnd-kit/core (Claudéric Demers)
+- @dnd-kit/sortable (Claudéric Demers)
+- @dnd-kit/utilities (Claudéric Demers)
+- @radix-ui/react-accordion (Radix UI / WorkOS)
+- @radix-ui/react-alert-dialog (Radix UI / WorkOS)
+- @radix-ui/react-avatar (Radix UI / WorkOS)
+- @radix-ui/react-checkbox (Radix UI / WorkOS)
+- @radix-ui/react-dialog (Radix UI / WorkOS)
+- @radix-ui/react-dropdown-menu (Radix UI / WorkOS)
+- @radix-ui/react-label (Radix UI / WorkOS)
+- @radix-ui/react-menubar (Radix UI / WorkOS)
+- @radix-ui/react-popover (Radix UI / WorkOS)
+- @radix-ui/react-progress (Radix UI / WorkOS)
+- @radix-ui/react-scroll-area (Radix UI / WorkOS)
+- @radix-ui/react-select (Radix UI / WorkOS)
+- @radix-ui/react-separator (Radix UI / WorkOS)
+- @radix-ui/react-slider (Radix UI / WorkOS)
+- @radix-ui/react-slot (Radix UI / WorkOS)
+- @radix-ui/react-switch (Radix UI / WorkOS)
+- @radix-ui/react-tabs (Radix UI / WorkOS)
+- @radix-ui/react-toggle (Radix UI / WorkOS)
+- @radix-ui/react-toggle-group (Radix UI / WorkOS)
+- @radix-ui/react-tooltip (Radix UI / WorkOS)
+- @radix-ui/react-visually-hidden (Radix UI / WorkOS)
+- @tanstack/react-table (Tanner Linsley / TanStack)
+- @thatopen/components (That Open Company)
+- @thatopen/components-front (That Open Company)
+- @thatopen/fragments (That Open Company)
+- @thatopen/ui (That Open Company)
+- @thatopen/ui-obc (That Open Company)
+- @turf/turf (Turf.js authors)
 - clsx (Luke Edwards)
-- cmdk (Paco contributors)
+- cmdk (Paco Coursey)
 - date-fns (date-fns contributors)
-- dxf-viewer (DXF Viewer contributors)
-- logger (TJ Holowaychuk)
-- lucide-react (Lucide contributors)
+- framer-motion (Framer B.V. / Matt Perry)
+- jspdf (jsPDF contributors)
+- maplibre-gl-measures (Jorge Santos)
+- memjs (Amit Levy)
 - next (Vercel, Inc.)
 - next-intl (Jan Amann)
-- next-themes (Paco contributors)
-- nodemailer (Andris Reinman)
-- postcss (Andrey Sitnik)
-- potree (Potree contributors)
+- next-themes (Paco Coursey)
 - proj4 (proj4js contributors)
-- react (Facebook, Inc.)
-- react-day-picker (Giacomo Debidda)
-- react-dom (Facebook, Inc.)
-- react-map-gl (Mapbox contributors)
+- react (Meta Platforms, Inc.)
+- react-day-picker (Giampaolo Bellavite)
+- react-dom (Meta Platforms, Inc.)
+- react-google-recaptcha (Hugo Dozois)
+- react-map-gl (Foursquare, Inc. and contributors)
+- recharts (Recharts Group)
 - sonner (Emil Kowalski)
 - swr (Vercel, Inc.)
 - tailwind-merge (Dany Castillo)
-- tailwindcss (Tailwind Labs, Inc.)
-- tailwindcss-animate (Jamie Kyle)
-- three (three.js contributors)
+- three (three.js authors)
 - three-viewport-gizmo (Faraz Shaikh)
-- winston (Charlie Robbins)
 
 ===============================================================================
-BSD Licensed Components:
+BSD-2-Clause License:
 ===============================================================================
-- dotenv (motdotla)
-- maplibre-gl (MapLibre Contributors)
-- maplibre-gl-measures (MapLibre contributors)
-- ol (OpenLayers Contributors)
+- potree (Markus Schütz and Potree contributors)
 
 ===============================================================================
-ISC Licensed Components:
+BSD-3-Clause License:
 ===============================================================================
+- @mapbox/vector-tile (Mapbox)
+- maplibre-gl (MapLibre contributors)
+- pbf (Konstantin Kaefer and contributors)
+
+===============================================================================
+ISC License:
+===============================================================================
+- @lucide/lab (Lucide contributors)
+- lucide-react (Lucide contributors)
 - next-auth (Balázs Orbán and contributors)
+- potree-cdt (Collab Digital Twins)
 
 ===============================================================================
 Mozilla Public License 2.0:
 ===============================================================================
+- dxf-viewer (Artyom Lebedev)
 - web-ifc (web-ifc contributors)
 
 ===============================================================================

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 export const updateBuildingOsmId = async (buildingId: number, osmId: number) => {
   try {
     const response = await fetch(`/api/buildings/${buildingId}`, {

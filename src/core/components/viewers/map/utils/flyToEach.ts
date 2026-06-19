@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
 
 import { getOsmIdFromLatLng } from './getOsmIdFromMartin'
 import type { Map } from 'maplibre-gl'

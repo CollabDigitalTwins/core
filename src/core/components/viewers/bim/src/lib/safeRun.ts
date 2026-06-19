@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 /** Run a side-effect helper; log and swallow errors so one failure can't
  *  abort the surrounding sequence. Used in tool activate/deactivate paths
  *  where every cleanup step needs to run independently. */

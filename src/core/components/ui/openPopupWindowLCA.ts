@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 export const openPopupWindow = () => {
   const height = Math.floor(screen.height * 0.8)
   const width = Math.floor(height * (1180 / 776))

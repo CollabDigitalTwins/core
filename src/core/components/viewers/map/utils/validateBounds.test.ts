@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 import { resolveBounds } from './validateBounds'
 
 const FALLBACK: [number, number, number, number] = [-180, -85, 180, 85]

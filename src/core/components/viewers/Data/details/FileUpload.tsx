@@ -1,5 +1,8 @@
 "use client"
 
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 // Icons
 import { Download, FileIcon, FilePlus, Trash2, Upload } from 'lucide-react'
 import { useSession } from 'next-auth/react'

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 /**
  * Resolve the localIds of items contained in the given storey via the IFC
  * `ContainedInStructure` relation. Returns [] if the relation isn't indexed

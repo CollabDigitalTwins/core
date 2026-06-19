@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 import type { Dataset, FieldType } from '../../../../../types/datasetTypes'
 import { formatName, stripHtml } from '../utils'
 import type { AllGeoJSON } from '@turf/turf'

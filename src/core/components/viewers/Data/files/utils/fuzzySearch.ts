@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 // Fuzzy search utility functions
 const fuzzySearchScore = (searchTerm: string, text: string): number => {
   if (!searchTerm || !text) return 0

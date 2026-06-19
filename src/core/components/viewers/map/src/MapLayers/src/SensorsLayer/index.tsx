@@ -1,4 +1,8 @@
 'use client'
+
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 import { MapContext, MenusContext } from '../../../../../../../store'
 import * as React from 'react'
 import { Source, Layer, Popup, Marker } from 'react-map-gl/maplibre'

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 //needs private instance to work
 import useSWR, { mutate } from "swr";
 import useSWRMutation from "swr/mutation";

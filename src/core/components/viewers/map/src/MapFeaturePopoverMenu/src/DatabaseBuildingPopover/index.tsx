@@ -1,4 +1,8 @@
 "use client";
+
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 import type {MapGeoJSONFeature} from "maplibre-gl";
 import * as LR from "lucide-react";
 import * as React from "react";

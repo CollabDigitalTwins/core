@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 import maplibregl from 'maplibre-gl' // or 'mapbox-gl'
 
 export async function getOsmIdFromLatLng(

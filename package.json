@@ -24,7 +24,9 @@
   },
   "files": [
     "dist",
-    "config"
+    "config",
+    "LICENSE",
+    "NOTICE"
   ],
   "scripts": {
     "build": "tsup && node scripts/copy-css.mjs && node scripts/build-types.mjs",
@@ -34,6 +36,8 @@
     "dev": "tsup --watch --onSuccess \"node scripts/copy-css.mjs\"",
     "dev:link": "tsup --watch --onSuccess \"node scripts/copy-css.mjs && yalc push --no-scripts\"",
     "lint": "eslint src --ext .ts,.tsx",
+    "license:headers": "node scripts/add-license-headers.mjs",
+    "license:check": "node scripts/add-license-headers.mjs --check",
     "prepublishOnly": "npm run build",
     "test": "jest",
     "test:unit": "vitest run",

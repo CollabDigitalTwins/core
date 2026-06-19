@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 // Component exports (named exports)
 export { Accordion } from './Accordion';
 export { AlertDialog } from './AlertDialog';

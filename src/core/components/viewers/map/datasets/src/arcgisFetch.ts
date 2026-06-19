@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 /**
  * Minimal ArcGIS Feature Service fetch helpers for the "Add dataset" URL import.
  *

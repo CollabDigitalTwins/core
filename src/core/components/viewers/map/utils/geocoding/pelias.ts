@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 import { Feature } from 'geojson'
 import { GEOCODE_EARTH_API_KEY, PELIAS_BASE } from './config'
 

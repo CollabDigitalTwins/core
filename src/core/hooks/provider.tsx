@@ -1,4 +1,8 @@
 "use client";
+
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 import React, { createContext, useContext, useMemo } from "react";
 import type { ApiAdapter } from "./ports/apiAdapter";
 import { createBuildingHooks } from "./buildings/createBuildingHooks";

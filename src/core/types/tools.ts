@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 import type { BimToolbarToolsType } from '../components/viewers/bim/src/tools/bimToolbar'
 import type { MapToolbarToolType } from '../components/viewers/map/src/tools/mapTools'
 import { PointCloudToolType } from '../components/viewers/pointcloud/src/tools/pointcloudToolbarTools'

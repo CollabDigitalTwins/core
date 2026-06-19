@@ -91,20 +91,43 @@ export function AppSidebar({ children, signOut }: AppSidebarProps) {
           </div>
         )}
         {children}
-        <div className={`w-full flex flex-col ${sidebarState === 'expanded' ? 'items-center justify-center' : 'justify-center'}`}>
-          {/*  Nav User */}
-          <NavUser signOut={signOut} />
-          <Link href="https://collabdt.org/" className={sidebarState === 'expanded' ? 'w-full' : ''} target="_blank" rel="noopener noreferrer">
-            <Button
-              title={isCollapsed ? t('home') : undefined}
-              variant="ghost"
-              className={`text-xs scale-[85%] py-0 my-0 w-full ${sidebarState === 'expanded' ? 'flex flex-row items-center justify-center gap-2' : 'flex flex-col items-center'}`}
+        <div
+            className={`w-full flex flex-col ${
+              sidebarState === 'expanded'
+                ? 'items-center justify-center'
+                : 'justify-center'
+            }`}
+          >
+            {/* Nav User */}
+            <NavUser signOut={signOut} />
+
+            <Link
+              href="https://collabdt.org/"
+              className={sidebarState === 'expanded' ? 'w-full' : ''}
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              {!isCollapsed && <CdtIcon monochromatic={true} />}
-              <span className={isCollapsed ? 'hidden' : 'inline'}>{t('home')}</span>
-            </Button>
-          </Link>
-        </div>
+              <Button
+                title={isCollapsed ? t('home') : undefined}
+                variant="ghost"
+                className={`text-xs scale-[85%] py-0 my-0 w-full ${
+                  sidebarState === 'expanded'
+                    ? 'flex flex-row items-center justify-center gap-2'
+                    : 'flex flex-col items-center'
+                }`}
+              >
+                <>
+                <div className={isCollapsed ? 'scale-75' : ''}>
+                  <CdtIcon monochromatic />
+                </div>
+
+                {!isCollapsed && (
+                  <span>{t('home')}</span>
+                )}
+              </>
+              </Button>
+            </Link>
+          </div>
       </Sidebar>
     </>
   )

@@ -28,13 +28,14 @@ const isValidNestedBounds = (value: unknown): value is [[number, number], [numbe
  * Falls back to the provided fallback bounds if validation fails.
  *
  * @param bounds - The bounds to validate (can be an array or JSON string)
- * @param fallbackBounds - The bounds to use if validation fails
- * @returns Valid LngLatBoundsLike bounds
+ * @param fallbackBounds - The bounds to use if validation fails. When omitted,
+ *   invalid input resolves to `undefined`, i.e. no panning restriction.
+ * @returns Valid LngLatBoundsLike bounds, or the fallback (which may be undefined)
  */
 export const resolveBounds = (
   bounds: unknown,
-  fallbackBounds: LngLatBoundsLike
-): LngLatBoundsLike => {
+  fallbackBounds?: LngLatBoundsLike
+): LngLatBoundsLike | undefined => {
   if (isValidFlatBounds(bounds) || isValidNestedBounds(bounds)) {
     return bounds as LngLatBoundsLike
   }

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 import { Feature } from 'geojson'
 import { PHOTON_URL, NOMINATIM_URL } from './config'
 import { normalizePhotonFeature, normalizeNominatimResult } from './adapters'

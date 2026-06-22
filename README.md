@@ -9,6 +9,7 @@
 
   <p>
     <a href="https://collabdt.org">Website</a> ·
+    <a href="https://app.collabdt.org/cdt">Live Demo</a> ·
     <a href="https://docs.google.com/forms/d/e/1FAIpQLScB12Qc7khiOk4a_E753jDccx6026AjO-_FINBKoZZZtkmqnA/viewform" target="_blank" rel="noopener">Beta Access</a> ·
     <a href="CONTRIBUTING.md">Contributing</a> ·
     <a href="https://collabdt.org/privacypolicy">Privacy Policy</a>
@@ -62,6 +63,24 @@ It also includes a robust authentication system that allows users to form groups
 CDT bridges BIM and GIS using open standards and free and open-source technologies, enabling stakeholders to visualize and analyze data directly in the browser, thereby eliminating proprietary barriers.
 
 CDT is stewarded by [Collab Digital Twins](https://collabdt.org) — a Canadian not-for-profit established to promote openness, innovation, and long-term public benefit. Our mission is to **democratize digital twin technologies**.
+
+---
+
+## Deploying & trying CDT
+
+Weather you want to **self-deploy** CDT or **try it** — here's the map. The full steps live in the documentation; this is just the summary.
+
+| Option | Best for | Where |
+|---|---|---|
+| 🧭 **Live demo (guest mode)** | Exploring instantly — no account, no install | **[app.collabdt.org/cdt](https://app.collabdt.org/cdt)** |
+| 🛠️ **Self-host** | Full control of your data and infrastructure | [Self-Hosting guide](https://docs.collabdt.org/docs/deployment/self-hosting) |
+| ☁️ **CDT Hosted (SaaS)** | A managed instance, hosted in Canada | [CDT Hosted](https://docs.collabdt.org/docs/deployment/cdt-hosted) |
+
+Not sure which fits? The **[Deployment overview](https://docs.collabdt.org/docs/deployment/overview)** helps you choose, and the **[Services reference](https://docs.collabdt.org/docs/deployment/services)** documents each container in the stack.
+
+- **Try it now (guest mode).** A limited guest mode lets you explore a live instance with no signup — just open **[app.collabdt.org/cdt](https://app.collabdt.org/cdt)**. Uploads and comments are capped for guests.
+- **Self-host it.** CDT runs as a containerized stack (PostgreSQL, MinIO, Martin/PostGIS, the Next.js app, and the Open Data service) from a single `docker compose` file — see the [Self-Hosting guide](https://docs.collabdt.org/docs/deployment/self-hosting).
+- **Let us host it.** Prefer not to manage infrastructure? [CDT Hosted](https://docs.collabdt.org/docs/deployment/cdt-hosted) offers a fully managed SaaS instance, or an assisted "we install it on your infrastructure" option — [contact the team](https://collabdt.org/En/#contact).
 
 ---
 

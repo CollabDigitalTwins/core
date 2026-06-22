@@ -27,6 +27,7 @@ import { Button } from './ui/Button'
 
 // Custom Components
 import LanguageSwitch from './LanguageSwitch'
+import GithubReleaseButton from './GithubReleaseButton'
 
 // Icons
 import * as LR from 'lucide-react'
@@ -389,6 +390,9 @@ export function AppSidebarContent({ organization, countrySubdivisionsData }: App
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
+            <SidebarMenuItem>
+              <GithubReleaseButton isCollapsed={isCollapsed} />
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
       </SidebarFooter>

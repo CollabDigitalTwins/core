@@ -178,6 +178,37 @@
   box-shadow: none !important;
 }
 
+/* ── Guest / demo button (deep-purple → terracotta) ──── */
+/* Gradient is 2x wide and slides left→right on hover via background-position. */
+.auth-btn-guest {
+  background: linear-gradient(140deg, #2a1150 0%, #5a2570 35%, #8f3a50 68%, #b4532e 100%) !important;
+  background-size: 200% 100% !important;
+  background-position: 0% 50% !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  font-family: 'Geist', sans-serif;
+  border: none !important;
+  border-radius: 0.5rem;
+  transition: background-position 0.6s ease, transform 0.2s ease, box-shadow 0.3s ease !important;
+  letter-spacing: -0.01em;
+}
+
+.auth-btn-guest:hover {
+  background-position: 100% 50% !important;
+  transform: scale(1.02) !important;
+  box-shadow: 0 8px 32px rgba(90, 37, 112, 0.4) !important;
+}
+
+.auth-btn-guest:active {
+  transform: scale(0.98) !important;
+}
+
+.auth-btn-guest:disabled {
+  opacity: 0.6;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 /* ── Secondary / outline auth button ─────────────────── */
 .auth-btn-outline {
   background: transparent !important;
@@ -245,6 +276,26 @@
   height: 1px;
   background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.08) 50%, transparent 100%);
   border: none;
+}
+
+/* ── "or" divider (sets guest access apart from login) ── */
+.auth-or-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--hp-on-surface-variant);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.auth-or-divider::before,
+.auth-or-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.08) 50%, transparent 100%);
 }
 
 /* ── Theme toggle button ─────────────────────────────── */

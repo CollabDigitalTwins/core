@@ -13,6 +13,13 @@ import { AuthPage, useAuthTheme } from './AuthPage'
 import { useParams, useSearchParams } from 'next/navigation'
 import ReCAPTCHA from 'react-google-recaptcha'
 
+// Where Auth.js sends a guest AFTER they authenticate with Google (the `redirectTo`).
+// The Google provider only authenticates — for a first-time guest the app's signIn
+// callback must create the user and assign the 'guest' role + instance (org id 25);
+// the provider alone won't (today's callback rejects unlinked Google accounts).
+// This is the guest instance route segment (its orgName).
+const GUEST_REDIRECT_PATH = '/guest'
+
 function SignInContent() {
   const [step, setStep] = React.useState<'login' | 'mfa'>('login')
 
@@ -280,6 +287,30 @@ function SignInContent() {
             onChange={onReCaptchaSuccess}
             theme={authTheme}
           />
+        </div>
+      )}
+
+      {step === 'login' && (
+        <div className="space-y-3">
+          <div className="auth-or-divider">or</div>
+
+          <Button
+            type="button"
+            onClick={() => signIn('google', { redirectTo: GUEST_REDIRECT_PATH })}
+            disabled={isLoading}
+            aria-label="Access CDT as a guest"
+            className="w-full inline-flex items-center justify-center gap-2 auth-btn-guest"
+          >
+            <LR.DoorOpen size={16} />
+            Access as Guest
+          </Button>
+
+          <p
+            className="text-center"
+            style={{ color: 'var(--hp-on-surface-variant)', fontSize: '0.8rem' }}
+          >
+            No account needed — explore a live demo instance.
+          </p>
         </div>
       )}
     </>

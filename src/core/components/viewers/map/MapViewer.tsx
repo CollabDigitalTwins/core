@@ -1,5 +1,8 @@
 'use client'
 
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 import Map, { MapRef, NavigationControl } from 'react-map-gl/maplibre'
 import React from 'react'
 

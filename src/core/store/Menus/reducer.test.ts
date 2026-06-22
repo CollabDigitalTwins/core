@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 import { MenusReducer, type MenusState } from './reducer'
 import { ViewerNames } from '../../types/dbTypes'
 

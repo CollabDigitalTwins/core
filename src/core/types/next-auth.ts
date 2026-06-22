@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 // Anchor the base module so the augmentation below resolves under tsup's
 // isolated DTS pass (rollup-dts doesn't deep-resolve externalized value
 // imports, so without this `declare module 'next-auth'` fails TS2664).

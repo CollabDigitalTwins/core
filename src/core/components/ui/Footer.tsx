@@ -1,5 +1,8 @@
 'use client'
 
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 import { useTranslations } from 'next-intl'
 
 export default function Footer() {

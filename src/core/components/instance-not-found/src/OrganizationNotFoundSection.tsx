@@ -1,5 +1,8 @@
 'use client'
 
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 import { motion } from 'framer-motion'
 import { Button } from '../../ui/Button'
 import { Card } from '../../ui/Card'

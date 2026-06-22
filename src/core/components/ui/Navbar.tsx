@@ -6,7 +6,6 @@ import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { Button } from './Button'
-import LanguageToggle from './LanguageToggle'
 import { CdtIcon } from './Icons/CdtIcon'
 import { Language } from '../../types/dbTypes'
 
@@ -34,7 +33,7 @@ export default function Navbar({
   showNavigation = true,
 }: NavbarProps) {
   const tNav = useTranslations('HomePage.nav')
-  const tHero = useTranslations('HomePage.hero')
+ // const tHero = useTranslations('HomePage.hero')
   const nextLocale = locale === Language.En ? Language.Fr : Language.En
   const [onMobile, setOnMobile] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -109,7 +108,7 @@ export default function Navbar({
           {/* Right actions */}
           <div className="flex items-center gap-3 flex-shrink-0 ml-auto">
             <div className={`${onMobile ? 'hidden' : 'flex'} items-center gap-3`}>
-              <LanguageToggle language={nextLocale} onToggle={onToggleLanguage} />
+              
 
               <Button
                 variant="ghost"
@@ -126,9 +125,7 @@ export default function Navbar({
                 className="btn-nav-cta rounded-md px-5 text-sm"
                 asChild
               >
-                <a href="/cdt" target="_blank" rel="noopener noreferrer">
-                  {tHero('platformButton')}
-                </a>
+               
               </Button>
             </div>
 
@@ -189,9 +186,7 @@ export default function Navbar({
                     {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                     <span className="text-sm">{theme === 'dark' ? 'Light' : 'Dark'}</span>
                   </Button>
-                  <div className="flex-1">
-                    <LanguageToggle language={nextLocale} onToggle={onToggleLanguage} />
-                  </div>
+                  
                 </div>
 
                 <div className="pt-2 px-1">
@@ -200,9 +195,7 @@ export default function Navbar({
                     className="btn-sovereign w-full rounded-md"
                     asChild
                   >
-                    <a href="/cdt" target="_blank" rel="noopener noreferrer">
-                      {tHero('platformButton')}
-                    </a>
+                   
                   </Button>
                 </div>
               </div>

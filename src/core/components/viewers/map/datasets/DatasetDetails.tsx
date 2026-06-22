@@ -1,5 +1,8 @@
 "use client"
 
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 // Shadcn Components
 import { DescriptionListItem } from '../../../../components/ui/DescriptionList'
 import { Button, Badge, Separator } from '../../../../components/ui/'

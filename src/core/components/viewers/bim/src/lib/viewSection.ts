@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 /** Loading state shared by tools that drive a "view" sidebar section
  *  (FloorplanTool, ElevationsTool, …). Each tool defines its own concrete
  *  Stage union; the section translates the stage into a localized message. */

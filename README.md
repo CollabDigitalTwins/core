@@ -70,13 +70,41 @@ CDT is stewarded by [Collab Digital Twins](https://collabdt.org) — a Canadian 
 We welcome community contributions to this project.
 
 - Read the [Contributor Guide](CONTRIBUTING.md) to get started.
-- Read the [Contributor Terms](CONTRIBUTING.md#contributor-terms) before submitting.
+- Read the [Contributor Terms](CONTRIBUTING.md#contributor-terms) and sign the [Contributor License Agreement (CLA)](CLA.md) before submitting.
 
-Any contribution intentionally submitted for inclusion in a Collab Digital Twins project shall comply with the standard licensing model (**AGPL 3.0**).
+Because CDT is dual-licensed (see [Licensing](#licensing) below), every contributor signs the CLA. You keep the copyright in your contribution and grant Collab Digital Twins the right to distribute it under both the AGPL-3.0 and our commercial terms. You'll be prompted to sign automatically on your first pull request.
 
-### License
+---
 
-GNU Affero General Public License v3.0 — [https://www.gnu.org/licenses/agpl-3.0.en.html](https://www.gnu.org/licenses/agpl-3.0.en.html)
+## Licensing
+
+Collab Digital Twins is **dual-licensed**.
+
+### Open source — AGPL-3.0
+
+The project is free and open source under the **GNU Affero General Public License, version 3.0** ([full text](LICENSE) · [plain-language summary](https://www.gnu.org/licenses/agpl-3.0.en.html)). You may use, study, modify, and redistribute it under those terms, at no cost.
+
+The AGPL is a strong copyleft license with one obligation that is easy to miss — it applies to **anyone who runs the software as a network service** (AGPL §13). If you make CDT (modified or not) available to others over a network, those users must be able to obtain the *complete corresponding source code* of the exact version you are running. In practice:
+
+- **Self-hosting for others:** you must offer your users the corresponding source — typically via a visible **"Source"** link in the running application that points to the public repository at the deployed version.
+- **Modifications:** any changes you distribute or host must also be licensed under the AGPL-3.0.
+
+If those terms work for you, you are free to self-host with no further obligation to us.
+
+### Commercial license
+
+If you cannot or prefer not to comply with the AGPL — for example, you want to embed CDT in a closed-source product, offer it as a hosted service without releasing your modifications, or need warranty, indemnity, and support terms — a separate **Commercial License Agreement** is available from Collab Digital Twins. Commercial licensing also helps fund the not-for-profit's public-benefit mission.
+
+| | AGPL-3.0 (open source) | Commercial license |
+|---|---|---|
+| Cost | Free | Paid |
+| Must release source of your modifications, including when hosted (§13) | Yes | No |
+| Use in closed-source / proprietary products | No | Yes |
+| Warranty, indemnity & guaranteed support | No (as-is, community) | Yes (per agreement) |
+
+To discuss commercial licensing or a support agreement, contact **[support@collabdt.org](mailto:support@collabdt.org)**.
+
+> Copyright © 2025 Collab Digital Twins. Distributed under AGPL-3.0; see [LICENSE](LICENSE) and third-party attributions in [NOTICE](NOTICE).
 
 ---
 

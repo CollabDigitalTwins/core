@@ -1,0 +1,12 @@
+# Code owners are automatically requested for review on matching paths, and —
+# when "Require review from Code Owners" is enabled in branch protection — must
+# approve before a PR can merge. See https://docs.github.com/articles/about-code-owners
+#
+# List ALL owners for a pattern on a SINGLE line — CODEOWNERS is last-match-wins,
+# so multiple "* ..." lines do NOT combine (only the last would apply). Valid
+# owners are GitHub usernames (@user), teams (@org/team), or emails. A bare org
+# handle (@collabdt) or a display name with spaces (@Collab Digital Twins) is not
+# valid and makes GitHub ignore the file. Add a team like @collabdt/maintainers
+# here once it exists.
+
+* @nicoarellano @ken-99 @gbassali

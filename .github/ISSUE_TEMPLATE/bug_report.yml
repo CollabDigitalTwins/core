@@ -1,0 +1,61 @@
+name: Bug report
+description: Report a problem with Collab Digital Twins
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report.
+
+        ⚠️ **Do not report security vulnerabilities here.** Follow our
+        [Security Policy](https://github.com/collabdt/core/security/policy) and email
+        the details to **info@collabdt.org** instead.
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Before you start
+      options:
+        - label: I am using the latest version.
+          required: true
+        - label: I searched [existing issues](https://github.com/collabdt/core/issues) and this is not a duplicate.
+          required: true
+        - label: This is a bug in CDT itself, not in a dependency (Next.js, Prisma, MapLibre, NextAuth.js, etc.).
+          required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug, including the expected vs. actual behaviour.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Steps someone else can follow from scratch.
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, browser, Node.js version, package manager, and CDT version.
+      placeholder: |
+        - OS: Windows 11
+        - Browser: Chrome 125
+        - Node.js: 20.x
+        - CDT: 0.0.52
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: Relevant stack traces, console output, or screenshots.
+      render: shell
+    validations:
+      required: false

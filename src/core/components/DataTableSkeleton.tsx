@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 import React from 'react'
 import { Skeleton } from '../components/ui/Skeleton'
 import {

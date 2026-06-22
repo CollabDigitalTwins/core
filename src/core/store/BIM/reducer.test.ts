@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 import { describe, it, expect, vi } from 'vitest'
 // @thatopen/components is imported in the reducer only as a TYPE (erased at compile
 // time), so importing the reducer does not pull the BIM runtime into the node test env.

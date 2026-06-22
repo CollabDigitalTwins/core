@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 export type { SearchParams, DataTypes } from './global'
 export { DataTypes as DataTypesNames } from './global'
 export type { BoundingBox } from './map'

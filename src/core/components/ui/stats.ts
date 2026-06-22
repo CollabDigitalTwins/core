@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 import React from 'react'
 import type { MapRef } from 'react-map-gl/maplibre'
 import Stats from 'three/examples/jsm/libs/stats.module.js'

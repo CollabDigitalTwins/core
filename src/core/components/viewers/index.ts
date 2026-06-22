@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 export * from './Viewer'
 export * from './map/MapViewer'
 export { fetchArcGISDatasets } from './map/datasets/src/arcGISDatasets'

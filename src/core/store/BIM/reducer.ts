@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
 // Types-only import. Every reference to OBC in this file is in a type
 // position (OBC.Components | null, OBC.World, etc.) so the import never
 // reaches the runtime. With `import type` TypeScript erases it at compile

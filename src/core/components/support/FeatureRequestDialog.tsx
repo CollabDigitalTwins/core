@@ -95,17 +95,11 @@ export function FeatureRequestDialog({ open, onOpenChange }: Props) {
             rows={5}
           />
 
-          <div className="text-sm text-muted-foreground">
-            Want to build it yourself?{" "}
-            <a
-              href="https://docs.collabdt.org/docs/plugins/overview"
-              target="_blank"
-              rel="noreferrer"
-              className="underline hover:text-foreground"
-            >
-              Plugin documentation
-            </a>
-          </div>
+          <div className="text-sm text-muted-foreground"> {t("wantToBuild")}{" "} 
+            <a href="https://docs.collabdt.org/docs/plugins/overview" target="_blank" rel="noreferrer" className="underline hover:text-foreground" > 
+            {t("pluginDocumentation")}
+             </a> 
+            </div>
 
           <div className="flex justify-end gap-2">
             <Button

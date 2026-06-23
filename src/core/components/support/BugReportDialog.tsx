@@ -15,7 +15,6 @@ import { Textarea } from "../ui/Textarea";
 import { Input } from "../ui/Input";
 
 import * as LR from "lucide-react";
-
 export function BugReportDialog({
   open,
   onOpenChange,
@@ -97,21 +96,19 @@ export function BugReportDialog({
           />
 
           <Textarea
-            placeholder={t("descriptionPlaceholder")}
+            placeholder={t("reproPlaceholder")}
             value={repro}
             onChange={(e) => setRepro(e.target.value)}
           />
 
-          <div className="flex gap-2 items-center">
-            <Button onClick={capture} variant="secondary">
-              Capture screenshot
-            </Button>
-
-            {screenshot && (
-              <span className="text-sm text-muted-foreground">
-                Screenshot attached ✓
-              </span>
-            )}
+          <div className="flex gap-2 items-center"> 
+            <Button onClick={capture} variant="secondary"> 
+              {t("captureScreenshot")} 
+              </Button> 
+              {screenshot && ( 
+                <span className="text-sm text-muted-foreground"> 
+                {t("screenshotAttached")} 
+                </span> )} 
           </div>
 
           <div className="flex justify-end gap-2">

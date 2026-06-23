@@ -1,5 +1,6 @@
 import * as LR from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "next-intl";
 
 import {
   DropdownMenu,
@@ -23,8 +24,19 @@ export function SupportMenu({
   onOpenBug,
   onOpenFeature,
 }: Props) {
+  const t = useTranslations("supportMenu");
+  const [menuOpen, setMenuOpen] = React.useState(false);
+
+  const openDialogAfterMenuCloses = (callback: () => void) => {
+    setMenuOpen(false);
+
+    requestAnimationFrame(() => {
+      callback();
+    });
+  };
+
   return (
-    <DropdownMenu>
+    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
       <DropdownMenuTrigger asChild>
         <SidebarMenuButton
           title={item.tooltip}
@@ -39,7 +51,7 @@ export function SupportMenu({
 
       <DropdownMenuContent align="start">
         <DropdownMenuItem
-          onClick={() =>
+          onSelect={() =>
             window.open(
               "mailto:support@collabdt.org?subject=Support Request",
               "_self"
@@ -47,19 +59,28 @@ export function SupportMenu({
           }
         >
           <LR.Send className="mr-2 h-4 w-4" />
-          Contact Team
+          {t("contactTeam")}
         </DropdownMenuItem>
 
-        <DropdownMenuItem onClick={onOpenFeature}>
+        <DropdownMenuItem
+          onSelect={() =>
+            openDialogAfterMenuCloses(onOpenFeature)
+          }
+        >
           <LR.SquarePlus className="mr-2 h-4 w-4" />
-          Suggest Feature
+          {t("suggestFeature")}
         </DropdownMenuItem>
 
-        <DropdownMenuItem onClick={onOpenBug}>
+        <DropdownMenuItem
+          onSelect={() =>
+            openDialogAfterMenuCloses(onOpenBug)
+          }
+        >
           <LR.Bug className="mr-2 h-4 w-4" />
-          Report Bug
+          {t("reportBug")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
+

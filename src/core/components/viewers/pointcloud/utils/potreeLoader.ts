@@ -4,8 +4,14 @@
 export function loadScript(src: string) {
   return new Promise<void>((resolve, reject) => {
     const s = document.createElement('script');
-    s.src = src; s.async = false; s.onload = () => resolve(); s.onerror = reject;
+    s.src = new URL(src, window.location.href).href; // ← ensure absolute
+    s.async = false;
+    s.onload = () => resolve();
+    s.onerror = reject;
     document.head.appendChild(s);
+
+    // s.src = src; s.async = false; s.onload = () => resolve(); s.onerror = reject;
+    // document.head.appendChild(s);
   });
 }
 

@@ -8,7 +8,8 @@ import * as React from 'react'
 // Dependencies
 import { AppConfigContext, MapContext, useMenusContext } from '../store'
 import { ViewerNames } from '../types/'
-
+import { BugReportDialog } from "../components/support/BugReportDialog";
+import { FeatureRequestDialog } from "../components/support/FeatureRequestDialog";
 // Shadcn Components
 import {
   SidebarContent,
@@ -38,6 +39,10 @@ import { Organization, Language } from '../types/dbTypes'
 import { RoleNames } from '../types/global'
 import { useSession } from 'next-auth/react'
 import { useUserRole } from '../hooks/users/users'
+
+import { SupportMenu } from "../components/support/SupportMenu"
+
+
 
 export const handleChangeViewer = (
   viewer: ViewerNames,
@@ -70,6 +75,8 @@ export function AppSidebarContent({ organization, countrySubdivisionsData }: App
 
   const { dispatch: appConfigDispatch } = React.useContext(AppConfigContext)
   const { dispatch: mapDispatch } = React.useContext(MapContext)
+
+  
 
   React.useEffect(() => {
     appConfigDispatch({
@@ -247,7 +254,9 @@ export function AppSidebarContent({ organization, countrySubdivisionsData }: App
   .filter(item => !appContent || appContent.includes(item.id as ViewerNames))
   .filter(canRenderItem)
 
-
+  const [bugOpen, setBugOpen] = React.useState(false);
+  const [featureOpen, setFeatureOpen] = React.useState(false);
+  
   return (
     <>
       <SidebarContent className='overflow-hidden'>
@@ -375,23 +384,45 @@ export function AppSidebarContent({ organization, countrySubdivisionsData }: App
         <SidebarGroup>
           <SidebarGroupLabel>{t('service')}</SidebarGroupLabel>
           <SidebarMenu>
-            {serviceItems.map((item, index) => (
-              <SidebarMenuItem key={index}>
+          {serviceItems.map((item, index) => (
+            <SidebarMenuItem key={index}>
+              {item.id === "support" ? (
+                <SupportMenu
+                  isCollapsed={isCollapsed}
+                  item={item}
+                  onOpenBug={() => setBugOpen(true)}
+                  onOpenFeature={() => setFeatureOpen(true)}
+                />
+              ) : (
                 <SidebarMenuButton asChild>
-                  <a 
-                    href={item.url} 
-                    className={`text-xs flex items-center gap-2 w-full ${isCollapsed ? 'justify-center p-2' : 'justify-start p-2'}`}
+                  <a
+                    href={item.url}
+                    className={`text-xs flex items-center gap-2 w-full ${
+                      isCollapsed ? "justify-center p-2" : "justify-start p-2"
+                    }`}
                     title={item.tooltip}
                   >
                     <item.icon className="h-4 w-4" />
-                    <span className={isCollapsed ? 'hidden' : 'inline'}>{item.title}</span>
+                    <span className={isCollapsed ? "hidden" : "inline"}>
+                      {item.title}
+                    </span>
                   </a>
                 </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
+              )}
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
         </SidebarGroup>
       </SidebarFooter>
+        <BugReportDialog
+        open={bugOpen}
+        onOpenChange={setBugOpen}
+      />
+
+      <FeatureRequestDialog
+        open={featureOpen}
+        onOpenChange={setFeatureOpen}
+      />
     </>
   )
 }

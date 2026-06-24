@@ -96,41 +96,32 @@ export function AppSidebar({ children, signOut }: AppSidebarProps) {
         )}
         {children}
         <div
-            className={`w-full flex flex-col ${
-              sidebarState === 'expanded'
-                ? 'items-center justify-center'
-                : 'justify-center'
-            }`}
-          >
+          className={`w-full flex flex-col ${
+            sidebarState === 'expanded'
+              ? 'items-center justify-center'
+              : 'justify-center pb-4'
+          }`}
+        >
             {/* Nav User */}
             <NavUser signOut={signOut} />
 
-            <Link
-              href="https://collabdt.org/"
-              className={sidebarState === 'expanded' ? 'w-full' : ''}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button
-                title={isCollapsed ? t('home') : undefined}
-                variant="ghost"
-                className={`text-xs scale-[85%] py-0 my-0 w-full ${
-                  sidebarState === 'expanded'
-                    ? 'flex flex-row items-center justify-center gap-2'
-                    : 'flex flex-col items-center'
-                }`}
+            {!isCollapsed ? (
+              <Link
+                href="https://collabdt.org/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full"
               >
-                <>
-                <div className={isCollapsed ? 'scale-75' : ''}>
+                <Button
+                  title={t('home')}
+                  variant="ghost"
+                  className="text-xs scale-[85%] py-0 my-0 w-full flex flex-row items-center justify-center gap-2"
+                >
                   <CdtIcon monochromatic />
-                </div>
-
-                {!isCollapsed && (
                   <span>{t('home')}</span>
-                )}
-              </>
-              </Button>
-            </Link>
+                </Button>
+              </Link>
+            ) : null}
           </div>
       </Sidebar>
     </>

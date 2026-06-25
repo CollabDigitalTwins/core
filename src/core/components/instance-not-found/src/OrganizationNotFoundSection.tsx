@@ -10,7 +10,6 @@ import { Input } from '../../ui/Input'
 import { Textarea } from '../../ui/Textarea'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
-import Footer from '../../ui/Footer'
 import { useState } from 'react'
 
 interface OrganizationNotFoundSectionProps {
@@ -223,7 +222,7 @@ export default function OrganizationNotFoundSection({
         </motion.div>
       </div>
       </section>
-      <Footer />
+    
     </>
   )
 }

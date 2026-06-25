@@ -6,6 +6,7 @@
 // Dependencies
 import React from 'react'
 import { usePermissions } from '../../../../store'
+import { useAppConfigContext } from '../../../../store/AppConfig/context'
 
 // Utility functions
 import { handleFavouriteDataset } from './utils'
@@ -32,6 +33,7 @@ export default function RowActions({
 }: RowActionsProps) {
   // Permissions
   const { ability } = usePermissions()
+  const { state: appConfigState } = useAppConfigContext()
 
 
   const { state: datasetsState, dispatch: datasetsDispatch } = React.useContext(DatasetsContext)
@@ -144,7 +146,7 @@ export default function RowActions({
       // (REFRESH_ORG_DATASETS) re-samples a vector tile per dataset to detect geometry,
       // which can take several seconds; without this the row only flips after that lands
       // (or after the dialog is reopened). The refetch reconciles this swap when it finishes.
-      const tileBaseUrl = (process.env.NEXT_PUBLIC_MARTIN_SERVER_URL ?? '').replace(/\/+$/, '')
+      const tileBaseUrl = (appConfigState.runtimeConfig.martinUrl ?? '').replace(/\/+$/, '')
       const minioId = `org-minio-${fileId}`
       const [optimistic] = buildPublishedTileDatasets(
         [{

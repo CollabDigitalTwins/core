@@ -10,6 +10,7 @@ import { Input } from '../../../../ui/Input'
 import { LoadingSpinner } from '../../../../ui/LoadingSpinner'
 import * as LR from 'lucide-react'
 import { BuildingsContext, usePermissions } from '../../../../../store'
+import { useAppConfigContext } from '../../../../../store/AppConfig/context'
 import { useTranslations } from 'next-intl'
 import { useFilesByBuildingId } from '../../../../../hooks/files/files'
 import type { DbFile } from '../../../../../types/dbTypes'
@@ -17,8 +18,6 @@ import { cn } from '../../../../../utils/utils'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useBuilding, useBuildings } from '../../../../../hooks/buildings/buildings'
 import { SquareArrowOutUpRight } from 'lucide-react'
-
-const API_BASE = process.env.NEXT_PUBLIC_POINTCLOUD_API_URL ?? 'http://localhost:5101'
 
 type CreatePointCloudResponse = {
   pointCloud: {
@@ -34,6 +33,8 @@ export type pointCloudViewerState = 'opening' | 'loading' | 'ready' | 'error' | 
 
 export function PointCloudLoadingState() {
   const t = useTranslations('PointCloudLoadingState')
+  const { state: appConfigState } = useAppConfigContext()
+  const API_BASE = appConfigState.runtimeConfig.pointcloudApiUrl ?? 'http://localhost:5101'
   // Permissions
   const { ability } = usePermissions()
 

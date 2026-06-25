@@ -26,6 +26,8 @@ import { uploadOrganizationLogoToPublicBucket } from '../../../utils/imageUtils'
 import { useOrganization } from '../../../hooks/organizations/organizations'
 import OrganizationSkeleton from './OrganizationSkeleton'
 
+import { useAppConfigContext } from '../../../store/AppConfig/context'
+
 export default function OrganizationSettingsPanel() {
   const t = useTranslations('OrganizationSettings')
 
@@ -121,18 +123,26 @@ export default function OrganizationSettingsPanel() {
     setSelectedFaviconFile(null)
   }
 
+  const { state: { runtimeConfig: { minioUrl } } } = useAppConfigContext()
+
   const logoUrl = selectedLogoFile
     ? URL.createObjectURL(selectedLogoFile)
-    : organization?.logoKey
-      ? `${process.env.NEXT_PUBLIC_MINIO_BUCKET_URL}/org-logos/${organization.logoKey}`
+    : organization?.logoKey && minioUrl
+      ? `${minioUrl}/org-logos/${organization.logoKey}`
       : null
 
   const faviconUrl = selectedFaviconFile
     ? URL.createObjectURL(selectedFaviconFile)
-    : organization?.faviconKey
-      ? `${process.env.NEXT_PUBLIC_MINIO_BUCKET_URL}/org-logos/${organization.faviconKey}`
+    : organization?.faviconKey && minioUrl
+      ? `${minioUrl}/org-logos/${organization.faviconKey}`
       : null
 
+// const faviconUrl = selectedFaviconFile
+//   ? URL.createObjectURL(selectedFaviconFile)
+//   : organization?.faviconKey && minioUrl
+//     ? `${minioUrl}/org-logos/${organization.faviconKey}`
+//     : null
+    
   if (isOrganizationLoading) {
     return (
       <OrganizationSkeleton />

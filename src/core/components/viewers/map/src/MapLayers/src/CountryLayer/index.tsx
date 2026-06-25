@@ -12,12 +12,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { hexToRgba, buildSubdivisionUrl } from './countryLayerUtils'
 
 const DEFAULT_BORDER_COLOR = '#73cee2'
-// satellite.json's openmaptiles source uses MapTiler's 'tiles/buildings' tileset which lacks the boundary + place layers. Pull both from the full openmaptiles v3 schema (same tileset blank.json uses).
 const BOUNDARIES_SOURCE_ID = 'openmaptiles-boundaries'
-// Key is supplied by the consuming app via NEXT_PUBLIC_MAPTILER_KEY (Next inlines
-// it at build time). Kept out of source so @collabdt/core carries no secret.
-const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_KEY
-const BOUNDARIES_TILESET_URL = `https://api.maptiler.com/tiles/v3/tiles.json?key=${MAPTILER_KEY}`
 const GLOBAL_LAYER_IDS = [
   'global-borders-country',
   'global-borders-region',
@@ -26,12 +21,13 @@ const GLOBAL_LAYER_IDS = [
   'global-labels-city',
 ] as const
 
-function addGlobalBorderLayer(map: any, color: string) {
+function addGlobalBorderLayer(map: any, color: string, maptilerKey?: string) {
+  if (!maptilerKey) return
   try {
     if (!map.getSource(BOUNDARIES_SOURCE_ID)) {
       map.addSource(BOUNDARIES_SOURCE_ID, {
         type: 'vector',
-        url: BOUNDARIES_TILESET_URL,
+        url: `https://api.maptiler.com/tiles/v3/tiles.json?key=${maptilerKey}`,
       })
     }
 
@@ -155,6 +151,7 @@ export const CountryLayer = () => {
   const { map, currentLocation } = mapState.map
   const { state: appConfigState } = useAppConfigContext()
   const organization = appConfigState.appConfig.organization
+  const maptilerKey = appConfigState.runtimeConfig.maptilerKey
   const searchParams = useSearchParams()
   const router = useRouter()
   const debounceRef = React.useRef<NodeJS.Timeout | null>(null)
@@ -166,7 +163,7 @@ export const CountryLayer = () => {
   // Add the global boundary line layer imperatively (vector-tile lines from the style's openmaptiles source). Re-adds on style swap so it survives basemap changes.
   React.useEffect(() => {
     if (!map) return
-    const addNow = () => addGlobalBorderLayer(map, borderColor)
+    const addNow = () => addGlobalBorderLayer(map, borderColor, maptilerKey)
     if (map.isStyleLoaded()) addNow()
     map.on('styledata', addNow)
     return () => {
@@ -179,7 +176,7 @@ export const CountryLayer = () => {
         // map may be destroyed
       }
     }
-  }, [map, borderColor])
+  }, [map, borderColor, maptilerKey])
 
   // If the org already has a fixed subdivision or municipality, lock them in and skip hover
   const orgHasLocation = !!(organization?.countrySubdivision || organization?.municipality)

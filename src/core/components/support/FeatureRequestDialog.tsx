@@ -15,6 +15,7 @@ import { Input } from "../ui/Input";
 import { Textarea } from "../ui/Textarea";
 
 import * as LR from "lucide-react";
+import { toast } from "sonner";
 
 type Props = {
   open: boolean;
@@ -58,6 +59,7 @@ export function FeatureRequestDialog({ open, onOpenChange }: Props) {
 
       reset();
       onOpenChange(false);
+      toast.success(t("featureSubmitSuccess"));
     } catch (err) {
       console.error("Feature request failed:", err);
     } finally {

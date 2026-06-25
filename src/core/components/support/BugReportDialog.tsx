@@ -13,57 +13,78 @@ import {
 import { Button } from "../ui/Button";
 import { Textarea } from "../ui/Textarea";
 import { Input } from "../ui/Input";
+import { useCaptureScreenshot } from "../../hooks/useCaptureScreenshot";
 
 import * as LR from "lucide-react";
+import { toast } from "sonner";
+
 export function BugReportDialog({
   open,
   onOpenChange,
-  onCaptureScreenshot,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  onCaptureScreenshot?: () => Promise<string | null>;
 }) {
   const t = useTranslations("supportDialog");
+  const captureScreenshot = useCaptureScreenshot();
 
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [repro, setRepro] = React.useState("");
   const [screenshot, setScreenshot] = React.useState<string | null>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
   const reset = () => {
     setTitle("");
     setDescription("");
     setRepro("");
     setScreenshot(null);
+    setError(null);
   };
 
   const capture = async () => {
-    if (!onCaptureScreenshot) return;
-    const img = await onCaptureScreenshot();
+    const img = await captureScreenshot();
     setScreenshot(img);
   };
 
   const submit = async () => {
-    await fetch("/api/github-issue", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title,
-        description,
-        type: "bug",
-        labels: ["bug"],
-        meta: {
-          url: window.location.href,
-          userAgent: navigator.userAgent,
-          timestamp: new Date().toISOString(),
-          viewer: "Map",
-        },
-      }),
-    });
+    if (!title.trim()) return;
+    try {
+      setLoading(true);
+      setError(null);
 
-    reset();
-    onOpenChange(false);
+      const res = await fetch("/api/github-issue", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          description,
+          repro,
+          screenshot,
+          type: "bug",
+          labels: ["bug"],
+          meta: {
+            url: window.location.href,
+            userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString(),
+          },
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Submission failed");
+      }
+
+      reset();
+      onOpenChange(false);
+      toast.success(t("submitSuccess"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -84,7 +105,7 @@ export function BugReportDialog({
 
         <div className="space-y-3">
           <Input
-            placeholder={t("bugTitle")}
+            placeholder={t("bugTitlePlaceholder")}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
@@ -101,28 +122,47 @@ export function BugReportDialog({
             onChange={(e) => setRepro(e.target.value)}
           />
 
-          <div className="flex gap-2 items-center"> 
-            <Button onClick={capture} variant="secondary"> 
-              {t("captureScreenshot")} 
-              </Button> 
-              {screenshot && ( 
-                <span className="text-sm text-muted-foreground"> 
-                {t("screenshotAttached")} 
-                </span> )} 
+          <div className="flex gap-2 items-center">
+            <Button onClick={capture} variant="secondary" disabled={loading}>
+              <LR.Camera className="h-4 w-4 mr-1" />
+              {t("captureScreenshot")}
+            </Button>
+            {screenshot && (
+              <span className="text-sm text-muted-foreground flex items-center gap-1">
+                <LR.CheckCircle className="h-3 w-3 text-green-500" />
+                {t("screenshotAttached")}
+              </span>
+            )}
           </div>
+
+          {screenshot && (
+            <img
+              src={screenshot}
+              alt="screenshot preview"
+              className="w-full h-auto rounded border max-h-40 object-contain"
+            />
+          )}
+
+          {error && (
+            <p className="text-sm text-destructive">{error}</p>
+          )}
 
           <div className="flex justify-end gap-2">
             <Button
-                variant="secondary"
-                onClick={() => onOpenChange(false)}
+              variant="secondary"
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
             >
-                {t("cancel")}
+              {t("cancel")}
             </Button>
 
-            <Button onClick={submit}>
-                {t("submit")}
+            <Button
+              onClick={submit}
+              disabled={!title.trim() || loading}
+            >
+              {loading ? "..." : t("submit")}
             </Button>
-            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

@@ -6,10 +6,11 @@
 import * as React from 'react'
 
 // Dependencies
-import { AppConfigContext, MapContext, useMenusContext } from '../store'
+import { AppConfigContext, MapContext, useMenusContext, useAppConfigContext } from '../store'
 import { ViewerNames } from '../types/'
 import { BugReportDialog } from "../components/support/BugReportDialog";
 import { FeatureRequestDialog } from "../components/support/FeatureRequestDialog";
+
 // Shadcn Components
 import {
   SidebarContent,
@@ -106,10 +107,11 @@ export function AppSidebarContent({ organization, countrySubdivisionsData }: App
   }
 
   const logoKey = organization?.logoKey
-  const minioBaseUrl = process.env.NEXT_PUBLIC_MINIO_BUCKET_URL
-  const logoUrl = minioBaseUrl && logoKey
-    ? `${minioBaseUrl}/org-logos/${logoKey}`
+  const { state: { runtimeConfig: { minioUrl } } } = useAppConfigContext()
+  const logoUrl = minioUrl && logoKey
+    ? `${minioUrl}/org-logos/${logoKey}`
     : '/images/cdt-logo-stroke.svg'
+
 
   const { dispatch: menusDispatch, state: menusState } = useMenusContext()
   const { setSelectedItem, setSelectedSite, setSelectedFile, setView } = useMenusContext()

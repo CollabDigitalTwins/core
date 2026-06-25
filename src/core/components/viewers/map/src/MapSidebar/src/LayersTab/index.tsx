@@ -147,7 +147,7 @@ export function LayersTab() {
   React.useEffect(() => {
     const loadOrganizationalDatasets = async () => {
       try {
-        const martinBaseUrl = process.env.NEXT_PUBLIC_MARTIN_SERVER_URL?.replace(/\/+$/, '')
+        const martinBaseUrl = appConfigState.runtimeConfig.martinUrl?.replace(/\/+$/, '')
         if (!martinBaseUrl) return
 
         const datasetsUrl = martinBaseUrl.includes('/tiles/index.json')

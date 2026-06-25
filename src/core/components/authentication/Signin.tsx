@@ -12,14 +12,21 @@ import { Button, GoogleIcon, Input, LoadingSpinner } from '../ui'
 import { AuthPage, useAuthTheme } from './AuthPage'
 import { useParams, useSearchParams } from 'next/navigation'
 import ReCAPTCHA from 'react-google-recaptcha'
+//import { useAppConfigContext } from '../../store/AppConfig/context'
+import { useAppConfigContext } from '../../store/AppConfig/context'
 
-function SignInContent() {
+interface SignInContentProps {
+  recaptchaSiteKey?: string
+}
+
+function SignInContent({ recaptchaSiteKey }) {
   const [step, setStep] = React.useState<'login' | 'mfa'>('login')
 
   const [email, setEmail] = React.useState('')
   const [password, setPassword] = React.useState('')
   const [code, setCode] = React.useState('')
 
+  const recaptchaRef = React.useRef<ReCAPTCHA>(null)
   const [captchaStatus, setCaptchaStatus] = React.useState(false)
   const [captchaToken, setCaptchaToken] = React.useState('')
   const [isLoading, setIsLoading] = React.useState(false)
@@ -43,7 +50,13 @@ function SignInContent() {
   const tMfa = useTranslations('MFA')
   const authTheme = useAuthTheme()
 
-  const reCaptchaSiteKey = `${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}`
+  //const recaptchaSiteKey = `${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}`
+
+  const resetCaptcha = () => {
+    recaptchaRef.current?.reset()
+    setCaptchaToken('')
+    setCaptchaStatus(false)
+  }
 
   const onReCaptchaSuccess = (token) => {
     setCaptchaToken(token)
@@ -77,19 +90,21 @@ function SignInContent() {
         else if (result.code === 'whitelist_invalid_credentials') {
           setError('Invalid email or password')
           setIsLoading(false)
+          resetCaptcha()
           return
         }
 
         else if (!captchaStatus) {
-
           setError('Captcha Verification Failed.')
           setIsLoading(false)
+          resetCaptcha()
           return
         }
 
         else if (result.code === 'invalid_credentials') {
           setError('Invalid email or password')
           setIsLoading(false)
+          resetCaptcha()
           return
         }
         //MFA TRIGGER
@@ -102,6 +117,7 @@ function SignInContent() {
         else { //result.code === 'expired_recaptcha_token
           setError('Captcha Verification Expired. Please try again later.')
           setIsLoading(false)
+          resetCaptcha()
           return
         }
       }
@@ -272,12 +288,14 @@ function SignInContent() {
       )}
 
       {/* CAPTCHA only on Credentials(Username and Password) Provider login */}
+           
       {step === 'login' && (
         <div className="auth-captcha-wrapper">
           <ReCAPTCHA
+            ref={recaptchaRef}
             key={`recaptcha-${authTheme}`}
-            sitekey={reCaptchaSiteKey}
-            onChange={onReCaptchaSuccess}
+            sitekey={recaptchaSiteKey ?? ''}
+            onChange={(token) => onReCaptchaSuccess(token)}
             theme={authTheme}
           />
         </div>
@@ -286,10 +304,14 @@ function SignInContent() {
   )
 }
 
-export function SignIn() {
+interface SignInProps {
+  recaptchaSiteKey?: string
+}
+
+export function SignIn({ recaptchaSiteKey }: SignInProps) {
   return (
     <AuthPage>
-      <SignInContent />
+      <SignInContent recaptchaSiteKey={recaptchaSiteKey} />
     </AuthPage>
   )
 }

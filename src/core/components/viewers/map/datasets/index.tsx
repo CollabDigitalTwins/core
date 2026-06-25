@@ -207,7 +207,7 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
       // Two parallel sources: Martin vector tiles (if configured) and MinIO-
       // backed GeoJSON uploads (the "Add Dataset" path). Errors from either
       // are isolated so a failure on one side does not block the other.
-      const martinBaseUrl = process.env.NEXT_PUBLIC_MARTIN_SERVER_URL?.replace(/\/+$/, '')
+      const martinBaseUrl = appConfigState.runtimeConfig.martinUrl?.replace(/\/+$/, '')
 
       const martinPromise: Promise<Dataset[]> = martinBaseUrl
         ? (async () => {
@@ -254,7 +254,7 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
       )
 
       const minioDatasets: Dataset[] = Number.isFinite(sessionOrgId)
-        ? await fetchOrganizationalMinioDatasets(sessionOrgId, publishedTilesInCatalog).catch((err) => {
+        ? await fetchOrganizationalMinioDatasets(sessionOrgId, publishedTilesInCatalog, appConfigState.runtimeConfig.minioUrl).catch((err) => {
             console.error('Failed to load MinIO organizational datasets:', err)
             return []
           })

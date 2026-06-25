@@ -46,15 +46,14 @@ function parseDescription(value: string | null | undefined): OrgDatasetDescripti
   }
 }
 
-function buildMinioUrl(bucket: string, organizationId: number, assetId: string): string | null {
-  const base = process.env.NEXT_PUBLIC_MINIO_BUCKET_URL
-  if (!base) return null
+function buildMinioUrl(base: string, bucket: string, organizationId: number, assetId: string): string {
   return `${base.replace(/\/+$/, '')}/${bucket}/${organizationId}/${assetId}`
 }
 
 export async function fetchOrganizationalMinioDatasets(
   organizationId: number,
   publishedTilesInCatalog: ReadonlySet<string> = new Set(),
+  minioUrl?: string,
 ): Promise<Dataset[]> {
   let rows: RawFileRow[] = []
   try {
@@ -86,7 +85,7 @@ export async function fetchOrganizationalMinioDatasets(
     const bucket = meta?.bucket
     if (!bucket) continue
 
-    const sourceUrl = buildMinioUrl(bucket, organizationId, row.assetId)
+    const sourceUrl = minioUrl ? buildMinioUrl(minioUrl, bucket, organizationId, row.assetId) : null
     if (!sourceUrl) continue
 
     const name = row.name?.replace(/\.geojson$/i, '') || `Dataset ${row.id}`

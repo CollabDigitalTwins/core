@@ -12,7 +12,6 @@ import { Button } from '../../ui/Button'
 import { Card } from '../../ui/Card'
 import { Input } from '../../ui/Input'
 import { Textarea } from '../../ui/Textarea'
-import Footer from '../../ui/Footer'
 
 export default function OrganizationConfigContent() {
   const t = useTranslations('OrganizationConfig')
@@ -109,7 +108,7 @@ export default function OrganizationConfigContent() {
                 {/* Org Name */}
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-medium">
-                    Organization Name / Slug
+                    Organization Name 
                   </label>
                   <Input
                   name="orgName"
@@ -233,60 +232,47 @@ export default function OrganizationConfigContent() {
                 </Button>
               </form>
               </Card>
+                 {/* Contact Info Card */}
+                <div className="space-y-6">
+                  <Card className="p-6 hover-card">
+                    <h3 className="text-lg font-bold mb-3">{t('contactInfoTitle')}</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">{t('emailLabel')}</p>
+                        <a 
+                          href="mailto:info@collabdt.org" 
+                          className="text-primary hover:underline font-medium text-sm"
+                        >
+                          info@collabdt.org
+                        </a>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">{t('websiteLabel')}</p>
+                        <a 
+                          href="https://collabdt.org" 
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline font-medium text-sm"
+                        >
+                          collabdt.org
+                        </a>
+                      </div>
+                    </div>
+                  </Card>
 
-              <div className="space-y-6">
-              <Card className="p-6 hover-card">
-                <h3 className="text-lg font-bold mb-3">
-                  {t('contactInfoTitle')}
-                </h3>
-
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">
-                      {t('emailLabel')}
+                  <Card className="p-6 hover-card bg-primary/5 border-primary/20">
+                    <h3 className="text-lg font-bold mb-3">{t('needHelpTitle')}</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {t('needHelpDescription')}
                     </p>
-
-                    <a
-                      href="mailto:info@collabdt.org"
-                      className="text-primary hover:underline font-medium text-sm"
-                    >
-                      info@collabdt.org
-                    </a>
-                  </div>
-
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">
-                      {t('websiteLabel')}
-                    </p>
-
-                    <a
-                      href="https://collabdt.org"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline font-medium text-sm"
-                    >
-                      collabdt.org
-                    </a>
-                  </div>
+                  </Card>
                 </div>
-              </Card>
-
-              <Card className="p-6 hover-card bg-primary/5 border-primary/20">
-                <h3 className="text-lg font-bold mb-3">
-                  {t('needHelpTitle')}
-                </h3>
-
-                <p className="text-sm text-muted-foreground">
-                  {t('needHelpDescription')}
-                </p>
-              </Card>
-            </div>
             </div>
           </motion.div>
         </div>
       </section>
 
-      <Footer />
+    
     </>
   )
 }

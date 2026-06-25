@@ -6,6 +6,8 @@
 
 import * as React from "react";
 
+import { useSession } from "next-auth/react";
+import { useOrganization } from "../../../../../hooks/organizations/organizations";
 import { ProgressBar } from "../../../map/src/tools/AddTools/AddFile/ProgressBar";
 import { Button, Input, ScrollArea } from '../../../../ui';
 
@@ -52,6 +54,10 @@ type UploadPointCloudPageProps = {
 export default function UploadPointCloudPage({
   onGoBackButtonClick,
 }: UploadPointCloudPageProps) {
+  const { data: session } = useSession();
+  const organizationId = session?.user?.organizationId ?? null;
+  const { organization } = useOrganization(organizationId ? organizationId.toString() : null);
+
   const [name, setName] = React.useState("");
   const [file, setFile] = React.useState<File | null>(null);
 
@@ -84,7 +90,7 @@ export default function UploadPointCloudPage({
     const res = await fetch(`${API_BASE}/point-cloud`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, organizationId, organizationName: organization?.name }),
     });
 
     if (!res.ok) {

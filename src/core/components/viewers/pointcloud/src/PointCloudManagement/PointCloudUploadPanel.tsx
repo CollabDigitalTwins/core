@@ -8,9 +8,7 @@ import * as React from "react";
 
 import { ProgressBar } from "../../../map/src/tools/AddTools/AddFile/ProgressBar";
 import { Button, Input, ScrollArea } from '../../../../ui';
-
-const API_BASE =
-  process.env.NEXT_PUBLIC_POINTCLOUD_API_URL ?? "http://localhost:5101";
+import { useAppConfigContext } from '../../../../../store/AppConfig/context'
 
 const CONVERSION_STATUS = Object.freeze({
   STARTED: "conversion_started",
@@ -52,6 +50,8 @@ type UploadPointCloudPageProps = {
 export default function UploadPointCloudPage({
   onGoBackButtonClick,
 }: UploadPointCloudPageProps) {
+  const { state: appConfigState } = useAppConfigContext()
+  const API_BASE = appConfigState.runtimeConfig.pointcloudApiUrl ?? 'http://localhost:5101'
   const [name, setName] = React.useState("");
   const [file, setFile] = React.useState<File | null>(null);
 

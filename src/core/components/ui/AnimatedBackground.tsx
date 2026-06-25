@@ -5,6 +5,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useMotionValue, useSpring } from 'framer-motion'
+import { useAppConfigContext } from '../../store/AppConfig/context'
 
 interface Props {
   theme?: 'light' | 'dark'
@@ -226,7 +227,8 @@ export default function AnimatedBackground({ theme }: Props = {}) {
     }
   }, [smoothMouseX, smoothMouseY, isDark])
 
-  const assetsUrl = process.env.NEXT_PUBLIC_MINIO_BUCKET_URL || ''
+  const { state: { runtimeConfig: { minioUrl } } } = useAppConfigContext()
+  const assetsUrl = minioUrl || ''
 
   return (
     <>

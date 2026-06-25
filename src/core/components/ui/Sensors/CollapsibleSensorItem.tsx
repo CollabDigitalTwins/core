@@ -19,6 +19,7 @@ import { useSession } from 'next-auth/react'
 import { SensorChart } from './SensorChart'
 import { SensorTagsSection } from './SensorTagsSection'
 import type { ChartConfig } from '../chart'
+import { useAppConfigContext } from '../../../store/AppConfig/context'
 
 type SensorAction = 'view' | 'edit' | 'delete' | 'reply'
 
@@ -47,8 +48,8 @@ export function CollapsibleSensorItem({
   const [isLoadingData, setIsLoadingData] = React.useState(false)
   const prevVisibleRef = React.useRef(isVisible)
 
-  const dataPath = `${process.env.NEXT_PUBLIC_MINIO_BUCKET_URL}/sensors/${sensor.url}`
-
+  const { state: { runtimeConfig: { minioUrl } } } = useAppConfigContext()
+  const dataPath = `${minioUrl ?? ''}/sensors/${sensor.url}`
   const typeIcon  = sensorType?.icon || 'Radio'
   const typeName = sensorType?.name.replace(/_/g, ' ') ?? 'Unknown'    
 

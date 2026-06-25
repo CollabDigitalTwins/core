@@ -6,8 +6,16 @@
 import * as React from "react";
 import { AppConfigReducer, AppConfigActions, AppConfigState } from './reducer'
 
+export type RuntimeConfig = {
+  minioUrl?: string
+  martinUrl?: string
+  recaptchaSiteKey?: string
+  pointcloudApiUrl?: string
+}
+
 type InitialStateType = {
   appConfig: AppConfigState
+  runtimeConfig: RuntimeConfig
 }
 
 const initialState: InitialStateType = {
@@ -15,10 +23,15 @@ const initialState: InitialStateType = {
     organization: null,
     user: null,
   },
+  runtimeConfig: {},
 }
 
-const reducer = ({ appConfig }: InitialStateType, action: AppConfigActions) => ({
+const reducer = (
+  { appConfig, runtimeConfig }: InitialStateType,
+  action: AppConfigActions,
+): InitialStateType => ({
   appConfig: AppConfigReducer(appConfig, action),
+  runtimeConfig,
 })
 
 export const AppConfigContext = React.createContext<{
@@ -29,8 +42,8 @@ export const AppConfigContext = React.createContext<{
   dispatch: () => null,
 })
 
-export const AppConfigProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const [state, dispatch] = React.useReducer(reducer, initialState)
+export const AppConfigProvider: React.FC<React.PropsWithChildren<{ runtimeConfig?: RuntimeConfig }>> = ({ children, runtimeConfig = {} }) => {
+  const [state, dispatch] = React.useReducer(reducer, { ...initialState, runtimeConfig })
   const value = React.useMemo(() => ({ state, dispatch }), [state])
   return (
     <AppConfigContext.Provider value={value}>

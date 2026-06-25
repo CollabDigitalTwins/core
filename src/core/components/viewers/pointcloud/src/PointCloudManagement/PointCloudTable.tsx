@@ -21,6 +21,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import ConfirmDialog from '../../../../ConfirmDialog'
+import { useAppConfigContext } from '../../../../../store/AppConfig/context'
 
 import {
     Star,
@@ -32,9 +33,6 @@ import {
     ChevronLeft,
     ChevronRight,
 } from "lucide-react";
-
-const API_BASE =
-    process.env.NEXT_PUBLIC_POINTCLOUD_API_URL ?? "http://localhost:5101";
 
 type PointCloud = {
     id: string;
@@ -58,9 +56,11 @@ type PointCloudTableProps = React.HTMLAttributes<HTMLDivElement> & {
 };
 
 export function PointCloudTable({
-    onUploadButtonClick, 
+    onUploadButtonClick,
     ...divProps
 }: PointCloudTableProps) {
+    const { state: appConfigState } = useAppConfigContext()
+    const API_BASE = appConfigState.runtimeConfig.pointcloudApiUrl ?? 'http://localhost:5101'
     const [pointClouds, setPointClouds] = React.useState<PointCloud[]>([]);
     const [loading, setLoading] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);

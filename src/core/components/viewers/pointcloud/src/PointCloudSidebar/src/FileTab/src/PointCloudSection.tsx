@@ -15,8 +15,7 @@ import { Button } from '../../../../../../../ui/Button'
 import { useOrganization } from '../../../../../../../../hooks/organizations/organizations'
 import { DbFile } from '../../../../../../../../types/dbTypes'
 import { PointCloudContext } from '../../../../../../../../store'
-
-const API_BASE = process.env.NEXT_PUBLIC_POINTCLOUD_API_URL ?? 'http://localhost:5101'
+import { useAppConfigContext } from '../../../../../../../../store/AppConfig/context'
 
 type CreatePointCloudResponse = {
   pointCloud: {
@@ -41,6 +40,8 @@ interface PointCloudsSectionProps {
 export function PointCloudsSection({ files }: PointCloudsSectionProps) {
   // Translation
   const t = useTranslations('PointCloudManagement')
+  const { state: appConfigState } = useAppConfigContext()
+  const API_BASE = appConfigState.runtimeConfig.pointcloudApiUrl ?? 'http://localhost:5101'
 
   // Get current user session
   const { data: session } = useSession()

@@ -4,17 +4,14 @@
 import { fetchOrganizationalMinioDatasets } from './minioDatasets'
 
 const realFetch = global.fetch
-const ORIG_ENV = process.env.NEXT_PUBLIC_MINIO_BUCKET_URL
+const TEST_MINIO_URL = 'https://minio.example.com/'
 
 beforeEach(() => {
-  process.env.NEXT_PUBLIC_MINIO_BUCKET_URL = 'https://minio.example.com/'
   vi.spyOn(console, 'warn').mockImplementation(() => {})
 })
 
 afterEach(() => {
   global.fetch = realFetch
-  if (ORIG_ENV === undefined) delete process.env.NEXT_PUBLIC_MINIO_BUCKET_URL
-  else process.env.NEXT_PUBLIC_MINIO_BUCKET_URL = ORIG_ENV
   vi.restoreAllMocks()
 })
 
@@ -40,12 +37,12 @@ const validRow = {
 describe('fetchOrganizationalMinioDatasets', () => {
   it('returns [] when /api/files responds non-ok', async () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 500, json: async () => ({}) }) as any
-    await expect(fetchOrganizationalMinioDatasets(7)).resolves.toEqual([])
+    await expect(fetchOrganizationalMinioDatasets(7, new Set(), TEST_MINIO_URL)).resolves.toEqual([])
   })
 
   it('returns [] when /api/files throws', async () => {
     global.fetch = vi.fn().mockRejectedValue(new Error('net down')) as any
-    await expect(fetchOrganizationalMinioDatasets(7)).resolves.toEqual([])
+    await expect(fetchOrganizationalMinioDatasets(7, new Set(), TEST_MINIO_URL)).resolves.toEqual([])
   })
 
   it('skips rows with the wrong type or tag', async () => {
@@ -53,7 +50,7 @@ describe('fetchOrganizationalMinioDatasets', () => {
       { ...validRow, type: 'other' },
       { ...validRow, tag: 'other' },
     ])
-    await expect(fetchOrganizationalMinioDatasets(7)).resolves.toEqual([])
+    await expect(fetchOrganizationalMinioDatasets(7, new Set(), TEST_MINIO_URL)).resolves.toEqual([])
   })
 
   it('skips rows without an assetId or bucket', async () => {
@@ -62,12 +59,12 @@ describe('fetchOrganizationalMinioDatasets', () => {
       { ...validRow, description: JSON.stringify({ geometryType: 'lines' }) },
       { ...validRow, description: 'not json' },
     ])
-    await expect(fetchOrganizationalMinioDatasets(7)).resolves.toEqual([])
+    await expect(fetchOrganizationalMinioDatasets(7, new Set(), TEST_MINIO_URL)).resolves.toEqual([])
   })
 
   it('builds the source URL using the bucket, org id, and asset id', async () => {
     mockFilesFetch([validRow])
-    const [ds] = await fetchOrganizationalMinioDatasets(42)
+    const [ds] = await fetchOrganizationalMinioDatasets(42, new Set(), TEST_MINIO_URL)
     expect(ds.sourceUrl).toBe('https://minio.example.com/datasets/42/asset-123')
     expect(ds.url).toBe(ds.sourceUrl)
   })
@@ -77,7 +74,7 @@ describe('fetchOrganizationalMinioDatasets', () => {
       validRow,
       { ...validRow, id: 2, assetId: 'asset-2', name: null },
     ])
-    const datasets = await fetchOrganizationalMinioDatasets(42)
+    const datasets = await fetchOrganizationalMinioDatasets(42, new Set(), TEST_MINIO_URL)
     expect(datasets[0].name).toBe('roads')
     expect(datasets[1].name).toBe('Dataset 2')
   })
@@ -89,19 +86,18 @@ describe('fetchOrganizationalMinioDatasets', () => {
       { ...validRow, id: 3, assetId: 'c', description: JSON.stringify({ bucket: 'b', geometryType: 'polygons' }) },
       { ...validRow, id: 4, assetId: 'd', description: JSON.stringify({ bucket: 'b' }) },
     ])
-    const datasets = await fetchOrganizationalMinioDatasets(42)
+    const datasets = await fetchOrganizationalMinioDatasets(42, new Set(), TEST_MINIO_URL)
     expect(datasets.map(d => d.layerType)).toEqual(['line', 'circle', 'fill', undefined])
   })
 
-  it('returns [] when the env var is missing', async () => {
-    delete process.env.NEXT_PUBLIC_MINIO_BUCKET_URL
+  it('returns [] when minioUrl is not provided', async () => {
     mockFilesFetch([validRow])
     await expect(fetchOrganizationalMinioDatasets(42)).resolves.toEqual([])
   })
 
   it('caches getFeatures on the second call', async () => {
     mockFilesFetch([validRow])
-    const [ds] = await fetchOrganizationalMinioDatasets(42)
+    const [ds] = await fetchOrganizationalMinioDatasets(42, new Set(), TEST_MINIO_URL)
 
     const features = { type: 'FeatureCollection', features: [] }
     const downstreamFetch = vi.fn().mockResolvedValue({ ok: true, json: async () => features })
@@ -114,7 +110,7 @@ describe('fetchOrganizationalMinioDatasets', () => {
 
   it('getFeatures throws when MinIO returns non-ok', async () => {
     mockFilesFetch([validRow])
-    const [ds] = await fetchOrganizationalMinioDatasets(42)
+    const [ds] = await fetchOrganizationalMinioDatasets(42, new Set(), TEST_MINIO_URL)
 
     global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 403, json: async () => ({}) }) as any
     await expect(ds.getFeatures()).rejects.toThrow(/403/)

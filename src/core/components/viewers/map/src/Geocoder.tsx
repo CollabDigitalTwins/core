@@ -28,6 +28,7 @@ import { useBuildings } from '../../../../hooks/buildings/buildings'
 import { usePathname } from 'next/navigation'
 import type { CurrentLocation } from '../../../../types/map'
 import { LoadingSpinner } from '../../../ui/LoadingSpinner'
+import { useGeocodingRuntimeConfig } from '../../../../hooks/useGeocodingRuntimeConfig'
 
 interface GeocoderProps {
   onSelect?: (addressData: any) => void
@@ -40,6 +41,9 @@ export default function Geocoder({
   showDatabaseBuildings = true,
   alwaysExpanded = false,
 }: GeocoderProps) {
+  // Sync geocoding env vars from AppConfigContext into the geocoding module
+  useGeocodingRuntimeConfig()
+
   // Translation
   const t = useTranslations('Geocoder')
 

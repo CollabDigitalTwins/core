@@ -50,7 +50,7 @@ function SignInContent({ recaptchaSiteKey }) {
   const tMfa = useTranslations('MFA')
   const authTheme = useAuthTheme()
 
-  //const recaptchaSiteKey = `${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}`
+  
 
   const resetCaptcha = () => {
     recaptchaRef.current?.reset()

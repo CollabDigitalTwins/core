@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 
 // Utilities
 import { Tool } from '../../../../../types/tools'
+import { Organization } from '../../../../../types/dbTypes'
 
 // Icons
 import * as LR from 'lucide-react'
@@ -36,19 +37,28 @@ export type MapToolbarToolType =
 'open-bim-viewer' |
 'open-pointcloud'
 
+type MapToolsConfig = {
+  martinBaseUrl?: string
+  minioBaseUrl?: string
+  organization?: Organization
+}
+
 // Export toolbar configuration
-export function mapToolbarTools(): Tool[] {
+export function mapToolbarTools(config?: MapToolsConfig): Tool[] {
   // Translation
   const t = useTranslations('mapToolbarTools')
 
+  const extraProps = (config ?? {}) as unknown as Record<string, unknown>
+
   return [
     { id: 'map-compare', title: t('compareTitle'), url: '/', icon: LR.Columns3, component: Compare },
-    { id: 'map-database', title: t('datasetsTitle'), url: '/', icon: LR.Database, component: DatasetMapTool },
+    { id: 'map-database', title: t('datasetsTitle'), url: '/', icon: LR.Database, component: DatasetMapTool, extraProps },
     {
       id: 'map-add',
       title: t('addTitle'),
       icon: LR.Plus,
       component: AddToMap,
+      extraProps,
     },
     {
       id: 'map-measure',

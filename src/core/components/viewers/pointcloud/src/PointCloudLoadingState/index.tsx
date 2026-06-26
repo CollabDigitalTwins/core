@@ -10,7 +10,7 @@ import { Input } from '../../../../ui/Input'
 import { LoadingSpinner } from '../../../../ui/LoadingSpinner'
 import * as LR from 'lucide-react'
 import { BuildingsContext, usePermissions } from '../../../../../store'
-import { useAppConfigContext } from '../../../../../store/AppConfig/context'
+// import { useAppConfigContext } from '../../../../../store/AppConfig/context'
 import { useTranslations } from 'next-intl'
 import { useFilesByBuildingId } from '../../../../../hooks/files/files'
 import type { DbFile } from '../../../../../types/dbTypes'
@@ -31,10 +31,9 @@ type CreatePointCloudResponse = {
 
 export type pointCloudViewerState = 'opening' | 'loading' | 'ready' | 'error' | 'noPointCloudFiles' | 'noBuilding'
 
-export function PointCloudLoadingState() {
+export function PointCloudLoadingState({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
   const t = useTranslations('PointCloudLoadingState')
-  const { state: appConfigState } = useAppConfigContext()
-  const API_BASE = appConfigState.runtimeConfig.pointcloudApiUrl ?? 'http://localhost:5101'
+  const API_BASE = pointcloudApiUrl ?? 'http://localhost:5101'
   // Permissions
   const { ability } = usePermissions()
 
@@ -166,7 +165,7 @@ export function PointCloudLoadingState() {
 
   // Create point cloud entry
   async function createPointCloud(name: string): Promise<CreatePointCloudResponse> {
-    const res = await fetch(`${API_BASE}/point-cloud`, {
+    const res = await fetch('/api/point-cloud', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name }),

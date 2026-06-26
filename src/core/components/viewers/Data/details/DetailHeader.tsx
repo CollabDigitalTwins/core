@@ -6,7 +6,6 @@
 import * as LR from 'lucide-react'
 import type { Building, Infrastructure, Site, User } from '../../../../types/dbTypes'
 import type { FileRow } from '../../../../types/files'
-import { useAppConfigContext } from '../../../../store/AppConfig/context'
 
 function getCountryName(code: string | null | undefined): string | null {
   if (!code) return null
@@ -24,6 +23,7 @@ interface DetailHeaderProps {
   selectedInfrastructure?: Infrastructure | null
   selectedFile?: FileRow | null
   selectedUser?: Partial<User> | null
+  countryCode?: string | null
 }
 
 // Sub-components — one per entity type, all follow the same shape:
@@ -114,9 +114,9 @@ export default function DetailHeader({
   selectedInfrastructure,
   selectedFile,
   selectedUser,
+  countryCode,
 }: DetailHeaderProps) {
-  const { state: appConfigState } = useAppConfigContext()
-  const countryName = getCountryName(appConfigState.appConfig.organization?.country)
+  const countryName = getCountryName(countryCode)
 
   return (
     <div className="flex items-center gap-4">

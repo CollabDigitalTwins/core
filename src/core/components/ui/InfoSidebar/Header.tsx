@@ -4,31 +4,30 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
-import type { Building } from '../../../types/dbTypes'
+import type { Building, Organization } from '../../../types/dbTypes'
 import { useTranslations } from 'next-intl'
 import { LoadingSpinner } from '../LoadingSpinner'
 import { useSidebar } from '../Sidebar'
 import { MapContext } from '../../../store'
-import { useAppConfigContext } from '../../../store/AppConfig/context'
 import { Button } from '../Button'
 import * as LR from 'lucide-react'
 
 interface HeaderProps {
   currentBuilding: Building | null
   loadingBuildingInfo: boolean
+  organization?: Organization
 }
 
 export function Header({
   currentBuilding,
   loadingBuildingInfo,
-
+  organization,
 }: HeaderProps) {
   // Translation
   const t = useTranslations('SidebarHeader')
   const { setOpenInfo } = useSidebar()
   const { state: mapState } = React.useContext(MapContext)
-  const { state: appConfigState } = useAppConfigContext()
-  const countryCode = appConfigState.appConfig.organization?.country
+  const countryCode = organization?.country
   const countryName = countryCode
     ? (new Intl.DisplayNames(['en'], { type: 'region' }).of(countryCode.toUpperCase()) ?? countryCode)
     : ''

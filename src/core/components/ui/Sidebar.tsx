@@ -74,6 +74,10 @@ const SidebarProvider = React.forwardRef<
     defaultOpen?: boolean
     open?: boolean
     onOpenChange?: (open: boolean) => void
+    minioBaseUrl?: string
+    martinBaseUrl?: string
+    organization?: import('../../types/dbTypes').Organization
+    pointcloudApiUrl?: string
   }
       >(
       (
@@ -84,6 +88,10 @@ const SidebarProvider = React.forwardRef<
           className,
           style,
           children,
+          minioBaseUrl,
+          martinBaseUrl,
+          organization,
+          pointcloudApiUrl,
           ...props
         },
         ref,
@@ -226,7 +234,7 @@ const SidebarProvider = React.forwardRef<
                     width: '400px',
                   }}
                 >
-                  <InfoSidebar />
+                  <InfoSidebar minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} pointcloudApiUrl={pointcloudApiUrl} />
                 </div>
               </div>
             </TooltipProvider>

@@ -13,13 +13,12 @@ import { AuthPage, useAuthTheme } from './AuthPage'
 import { useParams, useSearchParams } from 'next/navigation'
 import ReCAPTCHA from 'react-google-recaptcha'
 //import { useAppConfigContext } from '../../store/AppConfig/context'
-import { useAppConfigContext } from '../../store/AppConfig/context'
 
 interface SignInContentProps {
   recaptchaSiteKey?: string
 }
 
-function SignInContent({ recaptchaSiteKey }) {
+function SignInContent({ recaptchaSiteKey, }) {
   const [step, setStep] = React.useState<'login' | 'mfa'>('login')
 
   const [email, setEmail] = React.useState('')
@@ -306,11 +305,12 @@ function SignInContent({ recaptchaSiteKey }) {
 
 interface SignInProps {
   recaptchaSiteKey?: string
+  minioBaseUrl?: string
 }
 
-export function SignIn({ recaptchaSiteKey }: SignInProps) {
+export function SignIn({ recaptchaSiteKey,minioBaseUrl, }: SignInProps) {
   return (
-    <AuthPage>
+    <AuthPage minioBaseUrl={minioBaseUrl}>
       <SignInContent recaptchaSiteKey={recaptchaSiteKey} />
     </AuthPage>
   )

@@ -21,7 +21,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import ConfirmDialog from '../../../../ConfirmDialog'
-import { useAppConfigContext } from '../../../../../store/AppConfig/context'
+// import { useAppConfigContext } from '../../../../../store/AppConfig/context'
 
 import {
     Star,
@@ -53,14 +53,15 @@ enum PAGE {
 
 type PointCloudTableProps = React.HTMLAttributes<HTMLDivElement> & {
     onUploadButtonClick: () => void;
+    pointcloudApiUrl?: string;
 };
 
 export function PointCloudTable({
     onUploadButtonClick,
+    pointcloudApiUrl,
     ...divProps
 }: PointCloudTableProps) {
-    const { state: appConfigState } = useAppConfigContext()
-    const API_BASE = appConfigState.runtimeConfig.pointcloudApiUrl ?? 'http://localhost:5101'
+    const API_BASE = pointcloudApiUrl ?? 'http://localhost:5101'
     const [pointClouds, setPointClouds] = React.useState<PointCloud[]>([]);
     const [loading, setLoading] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);

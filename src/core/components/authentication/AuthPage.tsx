@@ -15,7 +15,7 @@ import AuthSimpleMap from '../viewers/map/src/SimpleMap'
 import { CdtIcon } from '../ui/Icons/CdtIcon'
 import './auth.css'
 
-import { useAppConfigContext } from '../../store/AppConfig/context'
+//import { useAppConfigContext } from '../../store/AppConfig/context'
 
 const AnimatedBackground = dynamic(() => import('../ui/AnimatedBackground'), {
   ssr: false,
@@ -27,14 +27,15 @@ export const useAuthTheme = () => useContext(AuthThemeContext)
 
 interface AuthPageProps {
   children: React.ReactNode
+  minioBaseUrl?: string
 }
 
-export function AuthPage({ children }: AuthPageProps) {
+export function AuthPage({ children, minioBaseUrl, }: AuthPageProps) {
   const params = useParams<{ instance: string }>()
   const orgName = params.instance ?? 'cdt'
-  const { state: { runtimeConfig: { minioUrl } } } = useAppConfigContext()
-  const logo = minioUrl
-    ? `${minioUrl}/org-logos/${orgName}-logo.png`
+  //const { state: { runtimeConfig: { minioUrl } } } = useAppConfigContext()
+  const logo = minioBaseUrl
+    ? `${minioBaseUrl}/org-logos/${orgName}-logo.png`
     : `/images/cdt-logo-stroke.svg`
   const brandPrefix = orgName === 'cdt' ? 'collab' : orgName
   const brandSuffix = orgName === 'cdt' ? 'digitaltwins' : 'digitaltwin'
@@ -73,7 +74,7 @@ export function AuthPage({ children }: AuthPageProps) {
       >
         {/* Animated background — bottom layer */}
         <div className="absolute inset-0 z-0 pointer-events-none">
-          <AnimatedBackground theme={theme} />
+          <AnimatedBackground theme={theme} assetsUrl={minioBaseUrl} />
         </div>
 
         {/* Globe — on top of animated background, centered on right half */}

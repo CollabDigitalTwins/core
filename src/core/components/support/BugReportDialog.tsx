@@ -21,9 +21,13 @@ import { toast } from "sonner";
 export function BugReportDialog({
   open,
   onOpenChange,
+  userEmail,
+  viewer,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  userEmail?: string;
+  viewer?: string;
 }) {
   const t = useTranslations("supportDialog");
   const captureScreenshot = useCaptureScreenshot();
@@ -63,11 +67,13 @@ export function BugReportDialog({
           repro,
           screenshot,
           type: "bug",
-          labels: ["bug"],
+          labels: ["users"],
           meta: {
             url: window.location.href,
             userAgent: navigator.userAgent,
             timestamp: new Date().toISOString(),
+            viewer,
+            userEmail,
           },
         }),
       });

@@ -14,18 +14,20 @@ enum PAGE {
   UPLOAD = "upload",
 }
 
-export function PointCloudManagementTable() {
+export function PointCloudManagementTable({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
   const [currentPage, setCurrentPage] = React.useState<PAGE>(PAGE.TABLE)
 
   return(
     <div>
-      {currentPage == PAGE.TABLE ? 
+      {currentPage == PAGE.TABLE ?
         <PointCloudTable
           onUploadButtonClick = {() => setCurrentPage(PAGE.UPLOAD)}
+          pointcloudApiUrl={pointcloudApiUrl}
         />
           :
         <UploadPointCloudPage
           onGoBackButtonClick = {() => setCurrentPage(PAGE.TABLE)}
+          pointcloudApiUrl={pointcloudApiUrl}
         />
       }
     </div>

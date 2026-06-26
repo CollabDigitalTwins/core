@@ -20,9 +20,11 @@ import { toast } from "sonner";
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  userEmail?: string;
+  viewer?: string;
 };
 
-export function FeatureRequestDialog({ open, onOpenChange }: Props) {
+export function FeatureRequestDialog({ open, onOpenChange, userEmail, viewer }: Props) {
   const t = useTranslations("supportDialog");
 
   const [title, setTitle] = React.useState("");
@@ -46,13 +48,14 @@ export function FeatureRequestDialog({ open, onOpenChange }: Props) {
         body: JSON.stringify({
           title,
           description,
-          type: "feature",
-          labels: ["feature"],
+          type: "feature-request",
+          labels: ["users"],
           meta: {
             url: window.location.href,
             userAgent: navigator.userAgent,
             timestamp: new Date().toISOString(),
-            viewer: "BIM",
+            viewer,
+            userEmail,
           },
         }),
       });

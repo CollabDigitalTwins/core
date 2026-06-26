@@ -57,9 +57,13 @@ function ViewerLoadingFallback({ label }: { label: string }) {
 
 interface ViewerProps {
   organization: Organization
+  minioBaseUrl?: string
+  martinBaseUrl?: string
+  pointcloudApiUrl?: string
+  maptilerKey?: string
 }
 
-export function Viewer({ organization }: ViewerProps) {
+export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudApiUrl, maptilerKey }: ViewerProps) {
 
   const searchParams = useSearchParams()
   const viewer = (searchParams.get('viewer') as ViewerNames) || ViewerNames.map
@@ -160,15 +164,15 @@ export function Viewer({ organization }: ViewerProps) {
       {[ViewerNames.map, ViewerNames.bim, ViewerNames.pointcloud].includes(validViewer) && <SidebarTrigger />}
       <div style={{ height: '100%', width: '100%', position: 'relative' }}>
         <div style={{ display: validViewer === ViewerNames.map ? 'block' : 'none', width: '100%', height: '100%' }}>
-          <MapViewer organization={organization} />
+          <MapViewer organization={organization} minioBaseUrl={minioBaseUrl} maptilerKey={maptilerKey} />
         </div>
         {validViewer === ViewerNames.bim && <BimViewer />}
-        {validViewer === ViewerNames.pointcloud && <PointCloudViewer />}
+        {validViewer === ViewerNames.pointcloud && <PointCloudViewer pointcloudApiUrl={pointcloudApiUrl} />}
         {[ViewerNames.buildings, ViewerNames.sites, ViewerNames.files, ViewerNames.land, ViewerNames.infrastructure, ViewerNames.extensions, ViewerNames.users].includes(validViewer) && (
-          <DataMenu currentViewer={validViewer} />
+          <DataMenu currentViewer={validViewer} organization={organization} />
         )}
         {[ViewerNames.settings].includes(validViewer) && (
-          <UserSettings />
+          <UserSettings minioBaseUrl={minioBaseUrl} />
         )}
       </div>
     </>
@@ -177,7 +181,7 @@ export function Viewer({ organization }: ViewerProps) {
   return (
     <>
       {selectedViewer}
-      <Toolbar viewer={validViewer} />
+      <Toolbar viewer={validViewer} minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} />
     </>
   )
 }

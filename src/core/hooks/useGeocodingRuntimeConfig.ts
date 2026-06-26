@@ -4,26 +4,19 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
-import { useAppConfigContext } from '../store'
-import { setGeocodingConfig } from '../components/viewers/map/utils/geocoding/config'
+// import { useAppConfigContext } from '../store'
+import { setGeocodingConfig, GeocodingRuntimeConfig } from '../components/viewers/map/utils/geocoding/config'
 
-// Syncs geocoding runtime values from AppConfigContext into the geocoding
-// module's mutable state. Must be called once in a client component that
-// mounts before any geocoding request fires (e.g. Geocoder.tsx).
-export function useGeocodingRuntimeConfig(): void {
-  const { state: { runtimeConfig } } = useAppConfigContext()
-
+// Syncs geocoding runtime values into the geocoding module's mutable state.
+// Must be called once in a client component before any geocoding request fires.
+// When called without args, falls back to free public services (Photon + Nominatim).
+export function useGeocodingRuntimeConfig(config?: GeocodingRuntimeConfig): void {
   React.useEffect(() => {
-    setGeocodingConfig({
-      geocodeEarthApiKey: runtimeConfig.geocodeEarthApiKey,
-      geocoderUrl: runtimeConfig.geocoderUrl,
-      photonUrl: runtimeConfig.photonUrl,
-      nominatimUrl: runtimeConfig.nominatimUrl,
-    })
+    setGeocodingConfig(config ?? {})
   }, [
-    runtimeConfig.geocodeEarthApiKey,
-    runtimeConfig.geocoderUrl,
-    runtimeConfig.photonUrl,
-    runtimeConfig.nominatimUrl,
+    config?.geocodeEarthApiKey,
+    config?.geocoderUrl,
+    config?.photonUrl,
+    config?.nominatimUrl,
   ])
 }

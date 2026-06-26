@@ -13,12 +13,12 @@ import { useCoreHooks } from "../../../../../../../hooks/provider"
 import { renderCSS2DMarkers, type MarkerRef } from "./renderCSS2DMarkers"
 import BimSensor from "./BimSensor"
 import { UNTAGGED_TAG } from "../../../../../../ui/Sensors/SensorsSection"
-import { useAppConfigContext } from "../../../../../../../store/AppConfig/context"
+//import { useAppConfigContext } from "../../../../../../../store/AppConfig/context"
 
-export function useSensorMarkers(world: any, buildingId: number) {
+export function useSensorMarkers(world: any, buildingId: number, minioBaseUrl?: string) {
   const { state: menusState } = React.useContext(MenusContext)
   const { currentSensorId, visibleSensorTypes, visibleSensorTags } = menusState.menus
-  const { state: appConfigState } = useAppConfigContext()
+  //const { state: appConfigState } = useAppConfigContext()
 
   const registry = React.useRef<Map<string, MarkerRef>>(new Map())
 
@@ -123,7 +123,9 @@ export function useSensorMarkers(world: any, buildingId: number) {
         tags: sensor.tags,
         dataUrl: sensor.url?.startsWith("http")
           ? sensor.url
-          : `${appConfigState.runtimeConfig.minioUrl ?? ''}/sensors/${sensor.url}`,
+          : minioBaseUrl
+            ? `${minioBaseUrl}/sensors/${sensor.url}`
+            : "",
         dataFormat: sensor.dataFormat,
         updateFrequency: sensor.updateFrequency,
         buildingId: sensor.buildingId,

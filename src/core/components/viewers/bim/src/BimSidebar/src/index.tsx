@@ -13,8 +13,9 @@ import { BimContext, MenusContext } from '../../../../../../store'
 import { SidebarTabType } from '../../../../../../store/Menus/reducer'
 import { InfoSidebarContainer } from '../../../../../ui/InfoSidebar/Container'
 import { SensorsTab } from './SensorsTab'
+import type { Organization } from '../../../../../../types/dbTypes'
 
-export function BimSidebar() {
+export function BimSidebar({ minioBaseUrl, organization }: { minioBaseUrl?: string; organization?: Organization }) {
   const { state: bimState } = React.useContext(BimContext)
   const { modelId } = bimState.bim
   const { state: menusState, dispatch: menusDispatch } = React.useContext(MenusContext)
@@ -26,6 +27,7 @@ export function BimSidebar() {
 
   return (
     <InfoSidebarContainer
+      organization={organization}
       tabSelector={
         <TabSelector
           activeTab={selectedTab}
@@ -36,7 +38,7 @@ export function BimSidebar() {
       {selectedTab === 'file' && <FileTab />}
       {selectedTab === 'layers' && <LayersTab modelId={modelId} />}
       {selectedTab === 'communication' && <CommunicationTab />}
-      {selectedTab === 'sensors' && <SensorsTab />}
+      {selectedTab === 'sensors' && <SensorsTab minioBaseUrl={minioBaseUrl} />}
       {selectedTab === 'settings' && <SettingsTab />}
     </InfoSidebarContainer>
   )

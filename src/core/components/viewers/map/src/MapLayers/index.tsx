@@ -7,6 +7,7 @@ import * as React from 'react'
 import dynamic from 'next/dynamic'
 
 import { CountryLayer } from './src/CountryLayer'
+import { SiteLayer } from './src/SiteLayer/SiteLayer'
 import { CommentLayer } from './src/CommentLayer'
 import { SensorLayers } from './src/SensorsLayer'
 import { FileLayers } from './src/FileLayer'
@@ -28,6 +29,7 @@ function BimLayerGate() {
 export const MapLayers = () => {
   return (
     <>
+      <SiteLayer />
       <CountryLayer />
       <OpenDataLayers />
       <BuildingLayer />

@@ -1,8 +1,13 @@
-﻿{
+{
   "permissions": {
     "allow": [
       "Grep",
-      "Read(c:\\Users\\nico1\\Desktop\\cims-digital-twin\\CollabDigitalTwins\\*)"
+      "Read(c:\\Users\\nico1\\Desktop\\cims-digital-twin\\CollabDigitalTwins\\*)",
+      "Read(//c/CollabDigitalTwins/cdt-na/prisma/services/**)",
+      "Read(//c/CollabDigitalTwins/cdt-na/src/app/adapters/**)",
+      "Read(//c/CollabDigitalTwins/cdt-na/src/app/lib/files/**)",
+      "Bash(cd /c/CollabDigitalTwins/cdt-na && find src app -path '*files/site*' -o -path '*presigned-url-upload*' 2>/dev/null | grep -i route)",
+      "Read(//c/CollabDigitalTwins/cdt-na/**)"
     ]
   }
 }

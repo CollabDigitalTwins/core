@@ -2,17 +2,19 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { Feature } from 'geojson'
-import { PHOTON_URL, NOMINATIM_URL } from './config'
+import { getGeocodingConfig } from './config'
 import { normalizePhotonFeature, normalizeNominatimResult } from './adapters'
 
 // Free, no-key public OSM fallbacks. Photon serves autocomplete (it is built for
 // per-keystroke search); Nominatim serves reverse lookups (occasional, single point).
 
 export const photonAutocomplete = async (text: string, countryCode: string | undefined, size: number): Promise<Feature[]> => {
+  const { photonUrl } = getGeocodingConfig()
+
   // Photon has no country filter, so over-fetch and post-filter by country code.
   const params = new URLSearchParams({ q: text, limit: String(size * 2), lang: 'en' })
 
-  const response = await fetch(`${PHOTON_URL}/api?${params}`)
+  const response = await fetch(`${photonUrl}/api?${params}`)
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
 
   const data = await response.json()
@@ -35,15 +37,17 @@ export const nominatimReverse = async (
   longitude: string,
   { coarse }: { coarse: boolean },
 ): Promise<Feature[]> => {
+  const { nominatimUrl } = getGeocodingConfig()
+
   const params = new URLSearchParams({
     format: 'jsonv2',
     lat: latitude,
     lon: longitude,
     addressdetails: '1',
-    zoom: coarse ? '10' : '18', // coarse -> city level, otherwise building level
+    zoom: coarse ? '10' : '18',
   })
 
-  const response = await fetch(`${NOMINATIM_URL}/reverse?${params}`)
+  const response = await fetch(`${nominatimUrl}/reverse?${params}`)
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
 
   const data = await response.json()

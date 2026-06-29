@@ -8,7 +8,7 @@ import * as THREE from "three";
 import { useSearchParams } from "next/navigation";
 import { loadAllAssets } from "./utils/potreeLoader";
 import { BuildingsContext, PointCloudContext } from '../../../store'
-import { useAppConfigContext } from '../../../store/AppConfig/context'
+// import { useAppConfigContext } from '../../../store/AppConfig/context'
 import { restoreCameraFromUrl } from "./utils/restoreCameraFromUrl";
 import { PointCloudLoadingState } from "./src/PointCloudLoadingState";
 import { useFilesByBuildingId } from '../../../hooks/files/files'
@@ -16,12 +16,11 @@ import { ViewportGizmo } from './src/ViewportGizmo';
 import { usePointCloudCoordinateSystem } from '../useCoordinateSystem';
 
 
-export function PointCloudViewer() {
+export function PointCloudViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
   // Enforce Z-up coordinate system for Potree. Resets to Y-up on unmount
   // so the BIM viewer doesn't inherit Z-up when switching viewers.
   usePointCloudCoordinateSystem();
-  const { state: appConfigState } = useAppConfigContext()
-  const API_BASE = appConfigState.runtimeConfig.pointcloudApiUrl ?? 'http://localhost:5101'
+  const API_BASE = pointcloudApiUrl ?? 'http://localhost:5101'
 
   const containerRef = React.useRef<HTMLDivElement>(null);
   const viewerRef = React.useRef<any | null>(null);
@@ -243,7 +242,7 @@ export function PointCloudViewer() {
           Rendered after the container so it layers on top (higher DOM order = higher paint order). */}
       {!hasPointCloudFiles && !hasLoadedClouds && (
         <div className="absolute inset-0" style={{ zIndex: 10 }}>
-          <PointCloudLoadingState />
+          <PointCloudLoadingState pointcloudApiUrl={pointcloudApiUrl} />
         </div>
       )}
     </div>

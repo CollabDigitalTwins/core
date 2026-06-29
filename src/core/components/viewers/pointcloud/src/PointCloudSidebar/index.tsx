@@ -12,8 +12,9 @@ import { FileTab } from './src/FileTab'
 
 import { SettingsTab } from './src/SettingsTab'
 import { InfoSidebarContainer } from '../../../../../components/ui/InfoSidebar/Container'
+import type { Organization } from '../../../../../types/dbTypes'
 
-export function PointCloudSidebar() {
+export function PointCloudSidebar({ pointcloudApiUrl, organization }: { pointcloudApiUrl?: string; organization?: Organization }) {
   const { state: pointCloudState } = React.useContext(PointCloudContext)
   const { state: menusState, dispatch: menusDispatch } = React.useContext(MenusContext)
   const { selectedTab } = menusState.menus
@@ -24,6 +25,7 @@ export function PointCloudSidebar() {
 
   return (
     <InfoSidebarContainer
+      organization={organization}
       tabSelector={
         <TabSelector
           activeTab={selectedTab}
@@ -31,7 +33,7 @@ export function PointCloudSidebar() {
         />
       }
     >
-      {selectedTab === 'file' && <FileTab />}
+      {selectedTab === 'file' && <FileTab pointcloudApiUrl={pointcloudApiUrl} />}
       {/* {selectedTab === 'layers' && <PointCloudLayersTab />}*/}
       {selectedTab === 'settings' && <SettingsTab />} 
     </InfoSidebarContainer>

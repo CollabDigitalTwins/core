@@ -11,7 +11,7 @@ import { useSearchParams } from 'next/navigation'
 import { useFilesByBuildingId } from '../../../../../../../hooks/files/files'
 import { DbFile } from '../../../../../../../types/dbTypes'
 
-export function FileTab() {
+export function FileTab({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
   const { state: buildingState } = React.useContext(BuildingsContext)
   const { building } = buildingState.buildings
 
@@ -40,7 +40,7 @@ export function FileTab() {
 
   return (
     <div className="flex-1 flex flex-col space-y-6 h-full py-4 overflow-hidden">
-      <PointCloudsSection files={pointCloudFiles} />
+      <PointCloudsSection files={pointCloudFiles} pointcloudApiUrl={pointcloudApiUrl} />
       <FilesSection files={nonPointCloudFiles} />
     </div>
   )

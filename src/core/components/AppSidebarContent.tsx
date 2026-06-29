@@ -6,7 +6,7 @@
 import * as React from 'react'
 
 // Dependencies
-import { AppConfigContext, MapContext, useMenusContext, useAppConfigContext } from '../store'
+import { AppConfigContext, MapContext, useMenusContext } from '../store'
 import { ViewerNames } from '../types/'
 import { BugReportDialog } from "../components/support/BugReportDialog";
 import { FeatureRequestDialog } from "../components/support/FeatureRequestDialog";
@@ -68,9 +68,10 @@ export const handleChangeViewer = (
 interface AppSidebarProps {
   organization: Organization
   countrySubdivisionsData?: Record<string, string>;
+  minioBaseUrl?: string
 }
 
-export function AppSidebarContent({ organization, countrySubdivisionsData }: AppSidebarProps) {
+export function AppSidebarContent({ organization, countrySubdivisionsData, minioBaseUrl, }: AppSidebarProps) {
   // Translations
   const t = useTranslations('AppSidebar')
 
@@ -107,9 +108,9 @@ export function AppSidebarContent({ organization, countrySubdivisionsData }: App
   }
 
   const logoKey = organization?.logoKey
-  const { state: { runtimeConfig: { minioUrl } } } = useAppConfigContext()
-  const logoUrl = minioUrl && logoKey
-    ? `${minioUrl}/org-logos/${logoKey}`
+  //const { state: { runtimeConfig: { minioUrl } } } = useAppConfigContext()
+  const logoUrl = minioBaseUrl && logoKey
+    ? `${minioBaseUrl}/org-logos/${logoKey}`
     : '/images/cdt-logo-stroke.svg'
 
 
@@ -419,11 +420,15 @@ export function AppSidebarContent({ organization, countrySubdivisionsData }: App
         <BugReportDialog
         open={bugOpen}
         onOpenChange={setBugOpen}
+        userEmail={session?.user?.email ?? undefined}
+        viewer={currentViewer}
       />
 
       <FeatureRequestDialog
         open={featureOpen}
         onOpenChange={setFeatureOpen}
+        userEmail={session?.user?.email ?? undefined}
+        viewer={currentViewer}
       />
     </>
   )

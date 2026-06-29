@@ -45,6 +45,8 @@ type HeaderButtonsProps = {
   setNewItemName: React.Dispatch<React.SetStateAction<string>>
   filteredData?: Array<Building | Site>
   users?: User[]
+  geocodeEarthApiKey?: string
+  geocoderUrl?: string
 }
 
 export default function HeaderButtons({
@@ -58,6 +60,8 @@ export default function HeaderButtons({
   setNewItemName,
   filteredData,
   users,
+  geocodeEarthApiKey,
+  geocoderUrl,
 }: HeaderButtonsProps) {
   // Translations
   const t = useTranslations('HeaderButtons')
@@ -216,6 +220,8 @@ export default function HeaderButtons({
                     setNewBuildingFields={setNewBuildingFields}
                     open={addBuildingOpen}
                     onOpenChange={setAddBuildingOpen}
+                    geocodeEarthApiKey={geocodeEarthApiKey}
+                    geocoderUrl={geocoderUrl}
                   />
                   <BuildingMoreOptions buildings={filteredData as Building[]} variant="outline" />
                 </>

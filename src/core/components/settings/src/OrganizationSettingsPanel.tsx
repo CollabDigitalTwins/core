@@ -6,6 +6,7 @@
 import * as React from 'react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
+import { mutate } from 'swr'
 import { useTranslations } from 'next-intl'
 import { MapContext, usePermissions } from '../../../store'
 import * as LR from 'lucide-react'
@@ -110,6 +111,7 @@ export default function OrganizationSettingsPanel({
       const responseData = await res.json()
       const updatedOrg = responseData?.organization ?? responseData
       setOrganization(updatedOrg)
+      mutate(['organization', String(userOrganizationId)], updatedOrg, { revalidate: false })
       setEditingValues({})
       setIsEditing(false)
       setHasChanges(false)
@@ -133,14 +135,14 @@ export default function OrganizationSettingsPanel({
 
   const logoUrl = selectedLogoFile
     ? URL.createObjectURL(selectedLogoFile)
-    : organization?.logoKey && minioBaseUrl
-      ? `${minioBaseUrl}/org-logos/${organization.logoKey}`
+    : (getFieldValue('logoKey') as string | null | undefined) && minioBaseUrl
+      ? `${minioBaseUrl}/org-logos/${getFieldValue('logoKey')}`
       : null
 
   const faviconUrl = selectedFaviconFile
     ? URL.createObjectURL(selectedFaviconFile)
-    : organization?.faviconKey && minioBaseUrl
-      ? `${minioBaseUrl}/org-logos/${organization.faviconKey}`
+    : (getFieldValue('faviconKey') as string | null | undefined) && minioBaseUrl
+      ? `${minioBaseUrl}/org-logos/${getFieldValue('faviconKey')}`
       : null
 
 // const faviconUrl = selectedFaviconFile

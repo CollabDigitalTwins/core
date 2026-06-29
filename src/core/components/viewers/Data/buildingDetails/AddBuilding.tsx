@@ -24,6 +24,8 @@ interface AddBuildingProps {
   setNewBuildingFields: (fields: any) => void
   open: boolean
   onOpenChange: (open: boolean) => void
+  geocodeEarthApiKey?: string
+  geocoderUrl?: string
 }
 
 export default function AddBuilding({
@@ -31,6 +33,8 @@ export default function AddBuilding({
   setNewBuildingFields,
   open,
   onOpenChange,
+  geocodeEarthApiKey,
+  geocoderUrl,
 }: AddBuildingProps) {
   // Translations
   const t = useTranslations('AddBuilding')
@@ -67,7 +71,7 @@ export default function AddBuilding({
     >
       <div className="flex flex-col gap-2">
         <div className="text-sm font-medium text-foreground">{t('label')}</div>
-        <GeocoderInput onSelect={handleGeocoderSelect} />
+        <GeocoderInput onSelect={handleGeocoderSelect} geocodeEarthApiKey={geocodeEarthApiKey} geocoderUrl={geocoderUrl} />
         {newBuildingFields.buildingAddress && (
           <div className="text-xs text-muted-foreground mt-1">
             {t('label2')}

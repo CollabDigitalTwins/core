@@ -41,6 +41,8 @@ type MapToolsConfig = {
   martinBaseUrl?: string
   minioBaseUrl?: string
   organization?: Organization
+  geocodeEarthApiKey?: string
+  geocoderUrl?: string
 }
 
 // Export toolbar configuration

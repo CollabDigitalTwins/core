@@ -61,9 +61,11 @@ interface ViewerProps {
   martinBaseUrl?: string
   pointcloudApiUrl?: string
   maptilerKey?: string
+  geocodeEarthApiKey?: string
+  geocoderUrl?: string
 }
 
-export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudApiUrl, maptilerKey }: ViewerProps) {
+export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudApiUrl, maptilerKey, geocodeEarthApiKey, geocoderUrl }: ViewerProps) {
 
   const searchParams = useSearchParams()
   const viewer = (searchParams.get('viewer') as ViewerNames) || ViewerNames.map
@@ -169,7 +171,7 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
         {validViewer === ViewerNames.bim && <BimViewer />}
         {validViewer === ViewerNames.pointcloud && <PointCloudViewer pointcloudApiUrl={pointcloudApiUrl} />}
         {[ViewerNames.buildings, ViewerNames.sites, ViewerNames.files, ViewerNames.land, ViewerNames.infrastructure, ViewerNames.extensions, ViewerNames.users].includes(validViewer) && (
-          <DataMenu currentViewer={validViewer} organization={organization} />
+          <DataMenu currentViewer={validViewer} organization={organization} geocodeEarthApiKey={geocodeEarthApiKey} geocoderUrl={geocoderUrl} />
         )}
         {[ViewerNames.settings].includes(validViewer) && (
           <UserSettings minioBaseUrl={minioBaseUrl} />
@@ -181,7 +183,7 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
   return (
     <>
       {selectedViewer}
-      <Toolbar viewer={validViewer} minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} />
+      <Toolbar viewer={validViewer} minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} geocodeEarthApiKey={geocodeEarthApiKey} geocoderUrl={geocoderUrl} />
     </>
   )
 }

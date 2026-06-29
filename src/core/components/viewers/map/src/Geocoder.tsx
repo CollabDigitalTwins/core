@@ -34,15 +34,18 @@ interface GeocoderProps {
   onSelect?: (addressData: any) => void
   showDatabaseBuildings?: boolean
   alwaysExpanded?: boolean
+  geocodeEarthApiKey?: string
+  geocoderUrl?: string
 }
 
 export default function Geocoder({
   onSelect,
   showDatabaseBuildings = true,
   alwaysExpanded = false,
+  geocodeEarthApiKey,
+  geocoderUrl,
 }: GeocoderProps) {
-  // Sync geocoding env vars from AppConfigContext into the geocoding module
-  useGeocodingRuntimeConfig()
+  useGeocodingRuntimeConfig({ geocodeEarthApiKey, geocoderUrl })
 
   // Translation
   const t = useTranslations('Geocoder')

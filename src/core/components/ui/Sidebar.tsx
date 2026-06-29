@@ -55,6 +55,8 @@ type SidebarContextProps = {
   isMobile: boolean
   toggleMenuSidebar: () => void
   toggleInfoSidebar: () => void
+  geocodeEarthApiKey?: string
+  geocoderUrl?: string
 }
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null)
@@ -74,6 +76,12 @@ const SidebarProvider = React.forwardRef<
     defaultOpen?: boolean
     open?: boolean
     onOpenChange?: (open: boolean) => void
+    minioBaseUrl?: string
+    martinBaseUrl?: string
+    organization?: import('../../types/dbTypes').Organization
+    pointcloudApiUrl?: string
+    geocodeEarthApiKey?: string
+    geocoderUrl?: string
   }
       >(
       (
@@ -84,6 +92,12 @@ const SidebarProvider = React.forwardRef<
           className,
           style,
           children,
+          minioBaseUrl,
+          martinBaseUrl,
+          organization,
+          pointcloudApiUrl,
+          geocodeEarthApiKey,
+          geocoderUrl,
           ...props
         },
         ref,
@@ -184,8 +198,10 @@ const SidebarProvider = React.forwardRef<
             setOpenInfo,
             toggleMenuSidebar,
             toggleInfoSidebar,
+            geocodeEarthApiKey,
+            geocoderUrl,
           }),
-          [sidebarState, open, setOpenMenu, isMobile, openMobile, setOpenMobile, openInfo, setOpenInfo, toggleMenuSidebar, toggleInfoSidebar],
+          [sidebarState, open, setOpenMenu, isMobile, openMobile, setOpenMobile, openInfo, setOpenInfo, toggleMenuSidebar, toggleInfoSidebar, geocodeEarthApiKey, geocoderUrl],
         )
 
         return (
@@ -226,7 +242,7 @@ const SidebarProvider = React.forwardRef<
                     width: '400px',
                   }}
                 >
-                  <InfoSidebar />
+                  <InfoSidebar minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} pointcloudApiUrl={pointcloudApiUrl} />
                 </div>
               </div>
             </TooltipProvider>
@@ -357,7 +373,7 @@ const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button>
 >(({ className, onClick, ...props }, ref) => {
-  const { toggleMenuSidebar } = useSidebar()
+  const { toggleMenuSidebar, geocodeEarthApiKey, geocoderUrl } = useSidebar()
 
   const { state } = React.useContext(MenusContext)
   const currentViewer = state.menus.currentViewer
@@ -366,7 +382,7 @@ const SidebarTrigger = React.forwardRef<
 
   // Render MenuButtons only for interactive viewers
   if (currentViewer === 'map' || currentViewer === 'bim' || currentViewer === 'pointcloud') {
-    return <NavigationBar />
+    return <NavigationBar geocodeEarthApiKey={geocodeEarthApiKey} geocoderUrl={geocoderUrl} />
   }
 
   // Default trigger for all other content types

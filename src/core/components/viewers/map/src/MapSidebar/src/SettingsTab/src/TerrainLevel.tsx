@@ -10,15 +10,12 @@ import { Tabs, TabsList, TabsTrigger } from '../../../../../../../ui/Tabs'
 import { AppConfigContext, MapContext } from '../../../../../../../../store'
 import { TerrainLevel as TerrainLevelType } from '../../../../../../../../types/map'
 
-// Key is supplied by the consuming app via NEXT_PUBLIC_MAPTILER_KEY (Next inlines
-// it at build time). Kept out of source so @collabdt/core carries no secret.
-const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_KEY
-
 export function TerrainLevel() {
   const tMap = useTranslations('MapCustomization')
   const { state: appConfigState } = React.useContext(AppConfigContext)
   const { dispatch: mapDispatch, state: mapState } = React.useContext(MapContext)
   const { map, terrainLevel } = mapState.map
+  const maptilerKey = appConfigState.runtimeConfig.maptilerKey
   const organizationCountry = (appConfigState.appConfig.organization?.country || '').toUpperCase()
   const isCanadaOrg = organizationCountry === 'CA'
 
@@ -30,10 +27,10 @@ export function TerrainLevel() {
 
   // Medium terrain relies on MapTiler; without a key, fall back to disabled.
   React.useEffect(() => {
-    if (!MAPTILER_KEY && terrainLevel === 'medium') {
+    if (!maptilerKey && terrainLevel === 'medium') {
       mapDispatch({ type: 'UPDATE_TERRAIN_LEVEL', payload: { terrainLevel: 'disabled' } })
     }
-  }, [terrainLevel, mapDispatch])
+  }, [maptilerKey, terrainLevel, mapDispatch])
 
   // Terrain control effect
   React.useEffect(() => {
@@ -43,7 +40,7 @@ export function TerrainLevel() {
       if (terrainLevel === 'disabled') {
         // Disable terrain
         map.setTerrain(null)
-      } else if (terrainLevel === 'medium' && MAPTILER_KEY) {
+      } else if (terrainLevel === 'medium' && maptilerKey) {
         // Check if terrain source already exists
         const terrainSourceExists = map.getSource('terrain-source')
 
@@ -51,7 +48,7 @@ export function TerrainLevel() {
         if (!terrainSourceExists) {
           map.addSource('terrain-source', {
             type: 'raster-dem',
-            url: `https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${MAPTILER_KEY}`,
+            url: `https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${maptilerKey}`,
             tileSize: 256,
           })
         }
@@ -117,11 +114,11 @@ export function TerrainLevel() {
     } else {
       map.once('load', updateTerrain)
     }
-  }, [map, terrainLevel, isCanadaOrg])
+  }, [map, terrainLevel, isCanadaOrg, maptilerKey])
 
   const handleTerrainLevel = (value: TerrainLevelType) => {
     if (!isCanadaOrg && value === 'high') return
-    if (!MAPTILER_KEY && value === 'medium') return
+    if (!maptilerKey && value === 'medium') return
 
     mapDispatch({ type: 'UPDATE_TERRAIN_LEVEL', payload: { terrainLevel: value } })
   }
@@ -135,7 +132,7 @@ export function TerrainLevel() {
             <LR.ArrowDownToLine className="w-4 h-4 mr-2" />
             {tMap('disabled')}
           </TabsTrigger>
-          <TabsTrigger value="medium" disabled={!MAPTILER_KEY}>
+          <TabsTrigger value="medium" disabled={!maptilerKey}>
             <LR.Mountain className="w-4 h-4 mr-2" />
             {tMap('medium')}
           </TabsTrigger>

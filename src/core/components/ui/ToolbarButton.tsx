@@ -26,7 +26,7 @@ export default function ToolbarButton({ tool, onClick }: Props) {
   // If this tool has a custom component, render that instead
   if (tool.component) {
     const CustomComponent = tool.component
-    return <CustomComponent tool={tool} />
+    return <CustomComponent tool={tool} {...(tool.extraProps ?? {})} />
   }
 
   const setCursor = (cursor: CursorType) => {

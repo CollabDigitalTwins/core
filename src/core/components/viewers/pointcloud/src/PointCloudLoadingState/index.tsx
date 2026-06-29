@@ -10,7 +10,7 @@ import { Input } from '../../../../ui/Input'
 import { LoadingSpinner } from '../../../../ui/LoadingSpinner'
 import * as LR from 'lucide-react'
 import { BuildingsContext, usePermissions } from '../../../../../store'
-import { useAppConfigContext } from '../../../../../store/AppConfig/context'
+// import { useAppConfigContext } from '../../../../../store/AppConfig/context'
 import { useTranslations } from 'next-intl'
 import { useFilesByBuildingId } from '../../../../../hooks/files/files'
 import type { DbFile } from '../../../../../types/dbTypes'
@@ -18,23 +18,18 @@ import { cn } from '../../../../../utils/utils'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useBuilding, useBuildings } from '../../../../../hooks/buildings/buildings'
 import { SquareArrowOutUpRight } from 'lucide-react'
+import { toast } from 'sonner'
 
-type CreatePointCloudResponse = {
-  pointCloud: {
-    id: string
-    name: string
-  }
-  upload: {
-    uploadUrl: string
-  }
+type PresignedUploadResponse = {
+  presignedUrl: string
+  key: string
 }
 
 export type pointCloudViewerState = 'opening' | 'loading' | 'ready' | 'error' | 'noPointCloudFiles' | 'noBuilding'
 
-export function PointCloudLoadingState() {
+export function PointCloudLoadingState({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
   const t = useTranslations('PointCloudLoadingState')
-  const { state: appConfigState } = useAppConfigContext()
-  const API_BASE = appConfigState.runtimeConfig.pointcloudApiUrl ?? 'http://localhost:5101'
+  const API_BASE = pointcloudApiUrl ?? 'http://localhost:5101'
   // Permissions
   const { ability } = usePermissions()
 
@@ -164,55 +159,6 @@ export function PointCloudLoadingState() {
     router.push(url.toString())
   }
 
-  // Create point cloud entry
-  async function createPointCloud(name: string): Promise<CreatePointCloudResponse> {
-    const res = await fetch(`${API_BASE}/point-cloud`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
-    })
-
-    if (!res.ok) {
-      const msg = await res.text()
-      throw new Error(`Create point-cloud failed: ${msg || res.status}`)
-    }
-
-    return res.json()
-  }
-
-  // Upload to presigned URL
-  function uploadToPresignedUrl(
-    url: string,
-    file: File,
-    onProgress?: (pct: number) => void
-  ): Promise<void> {
-    return new Promise((resolve, reject) => {
-      try {
-        const xhr = new XMLHttpRequest()
-        xhr.open('PUT', url, true)
-
-        if (onProgress) {
-          xhr.upload.onprogress = (evt) => {
-            if (evt.lengthComputable) {
-              const pct = Math.round((evt.loaded / evt.total) * 100)
-              onProgress(pct)
-            }
-          }
-        }
-
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) resolve()
-          else reject(new Error(`Upload failed with status ${xhr.status}`))
-        }
-
-        xhr.onerror = () => reject(new Error('Network error during upload'))
-        xhr.send(file)
-      } catch (err) {
-        reject(err)
-      }
-    })
-  }
-
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files
     if (!files || files.length === 0) return
@@ -221,26 +167,53 @@ export function PointCloudLoadingState() {
     const fileName = file.name
     const fileExt = fileName.toLowerCase()
 
-    // Validate file extension
     if (!fileExt.endsWith('.laz') && !fileExt.endsWith('.las')) {
       alert('Please select a LAZ or LAS file.')
+      return
+    }
+
+    if (!building?.id) {
+      alert('No building selected.')
       return
     }
 
     setUploading(true)
 
     try {
-      console.log('Creating point cloud entry...')
-      const { pointCloud, upload } = await createPointCloud(fileName)
-      console.log('Point cloud created:', pointCloud.id)
+      const assetId = crypto.randomUUID()
+      const assetName = `${assetId}.laz`
 
-      console.log('Uploading file...')
-      await uploadToPresignedUrl(upload.uploadUrl, file, (pct) => {
-        console.log(`Upload progress: ${pct}%`)
+      // 1. Get presigned upload URL
+      const presignedRes = await fetch(
+        `/api/presigned-url-upload?asset=${encodeURIComponent(assetName)}&bucket=pointclouds-demo`
+      )
+      if (!presignedRes.ok) throw new Error('Failed to get upload URL')
+      const { presignedUrl, key }: PresignedUploadResponse = await presignedRes.json()
+
+      // 2. Upload LAZ directly to MinIO
+      const uploadRes = await fetch(presignedUrl, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': 'application/octet-stream' },
       })
-      console.log('Upload complete!')
+      if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.status}`)
 
-      // Trigger a refresh of the files - the state will update automatically
+      // 3. Create file record attached to the building
+      const fileRes = await fetch(`/api/files/building/${building.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'point-cloud-file',
+          name: fileName,
+          assetId,
+          lazFileKey: key,
+          bucket: 'pointclouds-demo',
+          extension: fileExt.endsWith('.las') ? 'las' : 'laz',
+        }),
+      })
+      if (!fileRes.ok) throw new Error('Failed to create file record')
+
+      toast.success('LAZ file uploaded successfully', { duration: 6000 })
       window.location.reload()
     }
     catch (error) {

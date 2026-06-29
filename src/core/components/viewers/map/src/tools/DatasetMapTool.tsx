@@ -9,13 +9,22 @@ import { usePermissions } from '../../../../../store'
 import * as LR from 'lucide-react'
 import { Button } from '../../../../ui/Button'
 import Datasets from '../../datasets'
+import { Tool } from '../../../../../types/tools'
+import { Organization } from '../../../../../types/dbTypes'
 
-export default function DatasetMapTool(props) {
+interface DatasetMapToolProps {
+  tool: Tool
+  organization?: Organization
+  minioBaseUrl?: string
+  martinBaseUrl?: string
+  [key: string]: unknown
+}
+
+export default function DatasetMapTool({ tool, organization, minioBaseUrl, martinBaseUrl }: DatasetMapToolProps) {
   // Permissions
   const { ability } = usePermissions()
 
   const [isOpen, setIsOpen] = React.useState(false)
-  const { tool } = props
 
   return (
     <>
@@ -33,6 +42,9 @@ export default function DatasetMapTool(props) {
       <Datasets
         isOpen={isOpen}
         setIsOpenAction={setIsOpen}
+        organization={organization}
+        minioBaseUrl={minioBaseUrl}
+        martinBaseUrl={martinBaseUrl}
       />
     </>
   )

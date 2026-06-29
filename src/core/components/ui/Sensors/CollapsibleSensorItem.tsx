@@ -19,8 +19,6 @@ import { useSession } from 'next-auth/react'
 import { SensorChart } from './SensorChart'
 import { SensorTagsSection } from './SensorTagsSection'
 import type { ChartConfig } from '../chart'
-import { useAppConfigContext } from '../../../store/AppConfig/context'
-
 type SensorAction = 'view' | 'edit' | 'delete' | 'reply'
 
 interface CollapsibleSensorItemProps {
@@ -31,6 +29,7 @@ interface CollapsibleSensorItemProps {
   isVisible?: boolean
   onMouseEnter?: () => void
   onMouseLeave?: () => void
+  minioBaseUrl?: string
 }
 
 export function CollapsibleSensorItem({
@@ -40,7 +39,8 @@ export function CollapsibleSensorItem({
   depth = 0,
   isVisible = true,
   onMouseEnter,
-  onMouseLeave
+  onMouseLeave,
+  minioBaseUrl
 }: CollapsibleSensorItemProps) {
   const t = useTranslations('SensorsSection')
   const [isExpanded, setIsExpanded] = React.useState(false)
@@ -48,8 +48,12 @@ export function CollapsibleSensorItem({
   const [isLoadingData, setIsLoadingData] = React.useState(false)
   const prevVisibleRef = React.useRef(isVisible)
 
-  const { state: { runtimeConfig: { minioUrl } } } = useAppConfigContext()
-  const dataPath = `${minioUrl ?? ''}/sensors/${sensor.url}`
+  //const { state: { runtimeConfig: { minioUrl } } } = useAppConfigContext()
+
+  //const dataPath = `${minioUrl ?? ''}/sensors/${sensor.url}`
+  const dataPath = minioBaseUrl
+  ? `${minioBaseUrl}/sensors/${sensor.url}`
+  : ''
   const typeIcon  = sensorType?.icon || 'Radio'
   const typeName = sensorType?.name.replace(/_/g, ' ') ?? 'Unknown'    
 

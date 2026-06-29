@@ -13,7 +13,7 @@ import { handleApiError } from '../../../utils/errorHandler'
 import { useViewerData } from './utils/useViewerData'
 import { VIEWER_CONFIG } from './utils/viewerConfig'
 
-import type { Building, Site, User, Infrastructure } from '../../../types/dbTypes'
+import type { Building, Site, User, Infrastructure, Organization } from '../../../types/dbTypes'
 import type { FilterState } from '../../../types/global'
 
 // Custom hooks
@@ -69,9 +69,12 @@ type DataMenuProps = {
   hideFrame?: boolean
   hideTitle?: boolean
   hideActions?: boolean
+  organization?: Organization
+  geocodeEarthApiKey?: string
+  geocoderUrl?: string
 }
 
-export function DataMenu({ currentViewer, height, hideTitle, hideActions, hideFrame }: DataMenuProps) {
+export function DataMenu({ currentViewer, height, hideTitle, hideActions, hideFrame, organization, geocodeEarthApiKey, geocoderUrl }: DataMenuProps) {
   // Translations
   const t = useTranslations('DataMenu')
 
@@ -451,6 +454,8 @@ const handleBackToTable = () => {
                           : undefined
                       }
                       users={currentViewer === ViewerNames.users ? users : undefined}
+                      geocodeEarthApiKey={geocodeEarthApiKey}
+                      geocoderUrl={geocoderUrl}
                     />
                   </div>
                 </div>
@@ -466,6 +471,7 @@ const handleBackToTable = () => {
                   selectedInfrastructure={selectedInfrastructure}
                   selectedFile={selectedFile}
                   selectedUser={selectedUser}
+                  countryCode={organization?.country}
                 />
 
                 <DetailActions

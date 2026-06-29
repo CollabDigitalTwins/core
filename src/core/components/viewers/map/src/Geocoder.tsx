@@ -28,18 +28,25 @@ import { useBuildings } from '../../../../hooks/buildings/buildings'
 import { usePathname } from 'next/navigation'
 import type { CurrentLocation } from '../../../../types/map'
 import { LoadingSpinner } from '../../../ui/LoadingSpinner'
+import { useGeocodingRuntimeConfig } from '../../../../hooks/useGeocodingRuntimeConfig'
 
 interface GeocoderProps {
   onSelect?: (addressData: any) => void
   showDatabaseBuildings?: boolean
   alwaysExpanded?: boolean
+  geocodeEarthApiKey?: string
+  geocoderUrl?: string
 }
 
 export default function Geocoder({
   onSelect,
   showDatabaseBuildings = true,
   alwaysExpanded = false,
+  geocodeEarthApiKey,
+  geocoderUrl,
 }: GeocoderProps) {
+  useGeocodingRuntimeConfig({ geocodeEarthApiKey, geocoderUrl })
+
   // Translation
   const t = useTranslations('Geocoder')
 

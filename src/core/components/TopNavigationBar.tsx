@@ -40,7 +40,12 @@ const PCSearchTool = dynamic(
 
 // Components
 
-export default function NavigationBar() {
+interface NavigationBarProps {
+  geocodeEarthApiKey?: string
+  geocoderUrl?: string
+}
+
+export default function NavigationBar({ geocodeEarthApiKey, geocoderUrl }: NavigationBarProps) {
   // Translations
   const t = useTranslations('NavigationBar')
 
@@ -79,7 +84,7 @@ export default function NavigationBar() {
           )}
 
       {/* geocode search */}
-      {currentViewer === ViewerNames.map && <Geocoder />}
+      {currentViewer === ViewerNames.map && <Geocoder geocodeEarthApiKey={geocodeEarthApiKey} geocoderUrl={geocoderUrl} />}
       {currentViewer === ViewerNames.bim && <BIMSearchTool />}
       {currentViewer === ViewerNames.pointcloud && <PCSearchTool />}
       </Menubar>

@@ -40,9 +40,8 @@ export function SupportMenu({
       <DropdownMenuTrigger asChild>
         <SidebarMenuButton
           title={item.tooltip}
-          className={`text-xs flex items-center gap-2 w-full ${
-            isCollapsed ? "justify-center p-2" : "justify-start p-2"
-          }`}
+          className={`text-xs flex items-center gap-2 w-full ${isCollapsed ? "justify-center p-2" : "justify-start p-2"
+            }`}
         >
           <LR.LifeBuoy className="h-4 w-4" />
           {!isCollapsed && <span>{item.title}</span>}
@@ -52,10 +51,7 @@ export function SupportMenu({
       <DropdownMenuContent align="start">
         <DropdownMenuItem
           onSelect={() =>
-            window.open(
-              "mailto:support@collabdt.org?subject=Support Request",
-              "_self"
-            )
+            window.open("https://collabdt.org/En/contact", "_blank")
           }
         >
           <LR.Send className="mr-2 h-4 w-4" />

@@ -10,15 +10,18 @@ import { BuildingsContext } from '../../../store'
 
 // New structured components
 import { Header } from './Header'
+import type { Organization } from '../../../types/dbTypes'
 
 interface InfoSidebarProps {
   children?: React.ReactNode
   tabSelector?: React.ReactNode
+  organization?: Organization
 }
 
 export function InfoSidebarContainer({
   children,
   tabSelector,
+  organization,
 }: InfoSidebarProps) {
   const { state: buildingState } = React.useContext(BuildingsContext);
   const { building: currentBuilding } = buildingState.buildings;
@@ -31,6 +34,7 @@ export function InfoSidebarContainer({
       <Header
         currentBuilding={currentBuilding}
         loadingBuildingInfo={loadingBuildingInfo}
+        organization={organization}
       />
 
       {/* Tab Selector */}

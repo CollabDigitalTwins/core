@@ -14,8 +14,9 @@ import { SettingsTab } from './src/SettingsTab'
 import { InfoSidebarContainer } from '../../../../../components/ui/InfoSidebar/Container'
 import { CommunicationTab } from './src/CommunicationTab'
 import { SensorsTab } from './src/SensorsTab'
+import { Organization } from '../../../../../types/dbTypes'
 
-export function MapSidebar() {
+export function MapSidebar({ minioBaseUrl, martinBaseUrl, organization }: { minioBaseUrl?: string; martinBaseUrl?: string; organization?: Organization }) {
   // Permissions
   const { ability } = usePermissions()
 
@@ -28,6 +29,7 @@ export function MapSidebar() {
 
   return (
     <InfoSidebarContainer
+      organization={organization}
       tabSelector={
         <TabSelector
           activeTab={selectedTab}
@@ -36,10 +38,10 @@ export function MapSidebar() {
       }
     >
       {selectedTab === 'file' && ability.can('read', 'File') && <FileTab />}
-      {selectedTab === 'layers' && ability.can('read', 'File') && <LayersTab />}
+      {selectedTab === 'layers' && ability.can('read', 'File') && <LayersTab martinBaseUrl={martinBaseUrl} organization={organization} />}
       {selectedTab === 'communication' && ability.can('read', 'Comment') && <CommunicationTab />}
-      {selectedTab === 'sensors' && ability.can('read', 'Sensor') && <SensorsTab />}
-      {selectedTab === 'settings' && <SettingsTab />} 
+      {selectedTab === 'sensors' && ability.can('read', 'Sensor') && <SensorsTab minioBaseUrl={minioBaseUrl} />}
+      {selectedTab === 'settings' && <SettingsTab countryCode={organization?.country} />}
     </InfoSidebarContainer>
   )
 }

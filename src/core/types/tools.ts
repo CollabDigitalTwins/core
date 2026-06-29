@@ -21,7 +21,8 @@ export interface Tool {
   children?: Tool[]
   width?: string
   height?: string
-  component?: React.ComponentType<{ tool: Tool, building?: Building }>
+  component?: React.ComponentType<{ tool: Tool, building?: Building } & Record<string, unknown>>
+  extraProps?: Record<string, unknown>
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void
   measure?: () => {
     enable: () => void

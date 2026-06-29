@@ -5,7 +5,8 @@
 
 // Dependencies
 import * as React from 'react'
-import { BuildingsContext, DatasetsContext, MapContext, MenusContext } from '../../../store'
+import { BuildingsContext, DatasetsContext, MapContext, MenusContext, useMapSitesContext } from '../../../store'
+import { useShowSitesOnMap } from '../map/src/MapLayers/src/SiteLayer/useShowSitesOnMap'
 
 import type { Building, Site, User } from '../../../types/dbTypes'
 import { usePermissions } from '../../../store'
@@ -33,7 +34,6 @@ import {
 import ExportData from '../../../components/ui/ExportData'
 import FileMoreOptions from './files/FileMoreOptions'
 import type { FileRow } from '../../../types/files'
-import { MarkerManager } from '../map/utils/MarkerManager'
 import { createBuildingsDataset } from '../map/src/MapLayers/src/BuildingLayers/src/databaseBuildings'
 import type { Dataset } from '../../../types/datasetTypes'
 import ConfirmDialog from '../../../components/ConfirmDialog'
@@ -61,6 +61,8 @@ export default function MoreOptions({ row, dataType, variant, setView, hideViewO
   const { dispatch: menusDispatch } = React.useContext(MenusContext)
   const { dispatch: datasetDispatch } = React.useContext(DatasetsContext)
   const { dispatch: buildingsDispatch } = React.useContext(BuildingsContext)
+  const { dispatch: mapSitesDispatch } = useMapSitesContext()
+  const showSitesOnMap = useShowSitesOnMap()
 
   // States
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = React.useState(false)
@@ -78,6 +80,9 @@ export default function MoreOptions({ row, dataType, variant, setView, hideViewO
     if (!siteId) return
     try {
       await deleteSite(siteId)
+      // Remove the polygon from the map if it is currently shown, so it doesn't
+      // linger as an un-backed "ghost" that still opens the context menu.
+      mapSitesDispatch({ type: 'HIDE_SITE', payload: { id: Number(siteId) } })
       toast.success("Site deleted successfully")
       setIsConfirmDialogOpen(false)
       setView('table')
@@ -101,8 +106,15 @@ export default function MoreOptions({ row, dataType, variant, setView, hideViewO
     }
   }
 
-  const handleViewOnMap = (row: Building | Site | FileRow | Partial<User>) => {
-    let coordinates: [number, number]
+  const handleViewOnMap = async (row: Building | Site | FileRow | Partial<User>) => {
+    // Sites: switch to the map and render the saved polygon boundary (falls
+    // back to the site's point if it has no drawn boundary yet).
+    if (dataType === 'site' && 'id' in row && row.id) {
+      await showSitesOnMap([row as Site])
+      return
+    }
+
+    // Buildings: add as a dataset and fly to it.
     if (
       dataType === 'building'
       && 'buildingLatitude' in row
@@ -111,52 +123,15 @@ export default function MoreOptions({ row, dataType, variant, setView, hideViewO
       && typeof row.buildingLongitude === 'number'
     ) {
       const building = row as Building
-      coordinates = [building.buildingLongitude, building.buildingLatitude]
+      const coordinates: [number, number] = [building.buildingLongitude, building.buildingLatitude]
       const name = building.buildingName || building.buildingAddress || 'Unnamed Building'
-
-      // Create a dataset for the building
       const dataset: Dataset = createBuildingsDataset([building], name)
-
-      // Add buildings as a dataset to the map state
-      datasetDispatch({
-        type: 'ADD_DATASET_TO_MAP',
-        payload: { dataset },
-      })
-    }
-    else if (
-      dataType === 'site'
-      && 'siteLatitude' in row
-      && 'siteLongitude' in row
-      && typeof row.siteLatitude === 'number'
-      && typeof row.siteLongitude === 'number'
-    ) {
-      coordinates = [row.siteLongitude, row.siteLatitude]
-    }
-    else {
-      // console.log('No coordinates available for the selected row.')
-      return
-    }
-
-    // set the current viewer to map
-    menusDispatch({
-      type: 'SET_VIEWER',
-      payload: { currentViewer: ViewerNames.map },
-    })
-    // Fly to location on the map WIP
-    const markerManager = new MarkerManager()
-
-    if (coordinates) {
-      // markerManager.create(coordinates, map)
-      map.flyTo({
-        center: coordinates,
-        zoom: 18,
-        duration: 1000,
-      })
-    }
-    else {
-      console.warn('No coordinates available for the selected row.')
+      datasetDispatch({ type: 'ADD_DATASET_TO_MAP', payload: { dataset } })
+      menusDispatch({ type: 'SET_VIEWER', payload: { currentViewer: ViewerNames.map } })
+      if (map) map.flyTo({ center: coordinates, zoom: 18, duration: 1000 })
     }
   }
+
   const handleViewBIM = (row: Building | Site | FileRow | Partial<User>) => {
     const building = row as Building
            buildingsDispatch({

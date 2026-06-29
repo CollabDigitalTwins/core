@@ -145,9 +145,18 @@ export function DataMenu({ currentViewer, height, hideTitle, hideActions, hideFr
     removeItemFromCompare,
   } = useBuildingsContext()
 
-  // Sync dataType with current viewer
+  // Sync dataType with current viewer. ViewerNames are plural ('sites',
+  // 'buildings', …) while DataTypes are singular ('site', 'building', …), so a
+  // direct index returns undefined for most viewers — map explicitly.
   React.useEffect(() => {
-    setDataType(DataTypesNames[currentViewer])
+    const viewerToDataType: Partial<Record<string, DataTypes>> = {
+      [ViewerNames.buildings]: DataTypesNames.building,
+      [ViewerNames.sites]: DataTypesNames.site,
+      [ViewerNames.infrastructure]: DataTypesNames.infrastructure,
+      [ViewerNames.files]: DataTypesNames.file,
+      [ViewerNames.users]: DataTypesNames.user,
+    }
+    setDataType(viewerToDataType[currentViewer] ?? DataTypesNames.building)
   }, [currentViewer])
 
   // Reset compare state when viewer changes

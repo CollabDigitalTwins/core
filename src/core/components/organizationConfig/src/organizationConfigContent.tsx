@@ -33,13 +33,11 @@ function CheckboxCard({
 
   return (
     <label
-      className={`flex items-center gap-2.5 rounded-md border p-3 select-none transition-colors ${
-        locked ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'
-      } ${
-        isChecked
+      className={`flex items-center gap-2.5 rounded-md border p-3 select-none transition-colors ${locked ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'
+        } ${isChecked
           ? 'border-primary bg-primary/5 text-foreground'
           : 'border-input hover:bg-muted/50 text-muted-foreground'
-      }`}
+        }`}
     >
       <input
         type="checkbox"
@@ -50,9 +48,8 @@ function CheckboxCard({
         className="sr-only"
       />
       <span
-        className={`flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-          isChecked ? 'bg-primary border-primary' : 'border-input bg-background'
-        }`}
+        className={`flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-colors ${isChecked ? 'bg-primary border-primary' : 'border-input bg-background'
+          }`}
       >
         {isChecked && <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />}
       </span>
@@ -133,7 +130,7 @@ export default function OrganizationConfigContent() {
     { value: 'files', label: t('dataFiles'), defaultChecked: true },
   ]
 
-  
+
   return (
     <>
       <section className="min-h-screen py-32 relative flex items-center z-10">
@@ -308,7 +305,7 @@ export default function OrganizationConfigContent() {
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">{t('emailLabel')}</p>
                       <a
-                        href="https://collabdt.org/En/#contact"
+                        href="https://collabdt.org/En/contact"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-primary hover:underline font-medium text-sm"

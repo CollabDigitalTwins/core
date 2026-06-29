@@ -13,8 +13,11 @@ import { BoxSelect } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { useCreateSite } from '../../../../../../../hooks/sites/sites'
+import { useBuildings } from '../../../../../../../hooks/buildings/buildings'
+import type { Building } from '../../../../../../../types/dbTypes'
 import { persistDrawnSite } from './persistSite'
-import { polygonCentroid } from '../../../MapLayers/src/SiteLayer/siteGeometry'
+import { polygonCentroid, filterPointsInRing } from '../../../MapLayers/src/SiteLayer/siteGeometry'
+import { AssociateBuildingsDialog } from './AssociateBuildingsDialog'
 
 interface SiteAdderProps {
   isOpen?: boolean
@@ -48,6 +51,21 @@ export const SiteAdder = ({ isOpen = false, onCancel }: SiteAdderProps) => {
   // hand the polygon to the SiteLayer (via the MapSites store) for rendering.
   const { createSite } = useCreateSite()
   const { dispatch: mapSitesDispatch } = useMapSitesContext()
+
+  // Database buildings (for detecting which fall inside a freshly drawn site).
+  const { buildings, isLoading: buildingsLoading } = useBuildings()
+
+  // A site that was just created and whose inside-buildings still need to be
+  // detected. Held in state so detection re-runs once the buildings list loads.
+  const [pendingDetection, setPendingDetection] = React.useState<
+    { siteId: number, siteName: string, ring: [number, number][] } | null
+  >(null)
+
+  // When buildings are detected inside a freshly drawn site, prompt the user to
+  // associate them (multi-select). Independent of the add-site dialog.
+  const [associateState, setAssociateState] = React.useState<
+    { siteId: number, siteName: string, buildings: Building[] } | null
+  >(null)
   // A ref (not state) so all event-handler closures observe the live value and
   // a rapid second finish (double Enter / click + toast "Finish") can't create
   // a duplicate site before the first persist resolves.
@@ -210,6 +228,11 @@ export const SiteAdder = ({ isOpen = false, onCancel }: SiteAdderProps) => {
       resetDrawingState()
       setSiteName('')
       isPersistingRef.current = false
+
+      // Detect buildings inside the polygon (deferred to the effect below so it
+      // still works if the buildings list hasn't finished loading yet).
+      setPendingDetection({ siteId, siteName: name, ring })
+
       // Don't reopen the Add Site dialog — creation is finished.
       onCancel?.()
     }
@@ -392,18 +415,47 @@ export const SiteAdder = ({ isOpen = false, onCancel }: SiteAdderProps) => {
   // Dismiss the instruction toast if the component unmounts while drawing.
   React.useEffect(() => () => { toast.dismiss(DRAW_TOAST_ID) }, [])
 
+  // After a site is created, detect the database buildings inside it and prompt
+  // to associate them. Waits for the buildings list to load before deciding, so
+  // a quick draw on a cold cache doesn't silently skip the prompt.
+  React.useEffect(() => {
+    if (!pendingDetection) return
+    if (buildingsLoading && buildings.length === 0) return
+    const inside = filterPointsInRing(pendingDetection.ring, buildings, b =>
+      (typeof b.buildingLongitude === 'number' && typeof b.buildingLatitude === 'number')
+        ? [b.buildingLongitude, b.buildingLatitude]
+        : null)
+    if (inside.length > 0) {
+      setAssociateState({
+        siteId: pendingDetection.siteId,
+        siteName: pendingDetection.siteName,
+        buildings: inside,
+      })
+    }
+    setPendingDetection(null)
+  }, [pendingDetection, buildings, buildingsLoading])
+
   // When drawing is active, hide the dialog so the map is fully interactive.
   // The component stays mounted so useEffect listeners remain active and the
   // instruction toast guides the user through finishing the polygon.
   if (isDrawing) return null
 
   return (
-    <AddItemDialog
-      open={isOpen}
-      onOpenChange={open => !open && onCancel?.()}
-      title={t('title')}
-      icon={BoxSelect}
-    >
+    <>
+      {associateState && (
+        <AssociateBuildingsDialog
+          siteId={associateState.siteId}
+          siteName={associateState.siteName}
+          buildings={associateState.buildings}
+          onClose={() => setAssociateState(null)}
+        />
+      )}
+      <AddItemDialog
+        open={isOpen}
+        onOpenChange={open => !open && onCancel?.()}
+        title={t('title')}
+        icon={BoxSelect}
+      >
       <div className="flex flex-col gap-3 pointer-events-auto">
         <div className="flex flex-col gap-2">
           <Label htmlFor="site-name">{t('nameLabel')}</Label>
@@ -430,6 +482,7 @@ export const SiteAdder = ({ isOpen = false, onCancel }: SiteAdderProps) => {
           </Button>
         </div>
       </div>
-    </AddItemDialog>
+      </AddItemDialog>
+    </>
   )
 }

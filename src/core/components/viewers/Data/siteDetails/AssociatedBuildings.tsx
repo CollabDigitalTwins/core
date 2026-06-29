@@ -13,6 +13,8 @@ import { toast } from 'sonner'
 import { useAssociatedBuildingsColumns } from '../utils/Columns'
 import { filterHelper } from '../utils/filterHelper'
 import { fetchSuggestions, parseLocation } from '../../map/utils/geocoder'
+import { filterPointsInRing, fetchSiteBoundaryRing, type Ring } from '../../map/src/MapLayers/src/SiteLayer/siteGeometry'
+import { AssociateBuildingsDialog } from '../../map/src/tools/AddTools/AddSite/AssociateBuildingsDialog'
 import { useMapContext } from '../../../../store'
 
 // Shadcn Components
@@ -40,6 +42,7 @@ interface AssociatedBuildingsTableProps {
   buildings: Building[]
   onRowClick?: (building: Building) => void
   siteId?: number
+  siteName?: string
   onAttachBuilding?: (building: Building) => void
   editing?: boolean
   setEditing?: (editing: boolean) => void
@@ -49,12 +52,15 @@ const AssociatedBuildingsTable: React.FC<AssociatedBuildingsTableProps> = ({
   buildings,
   onRowClick,
   siteId,
+  siteName,
   onAttachBuilding,
   editing,
   setEditing,
 }) => {
   // Translations
   const t = useTranslations('AssociatedBuildings')
+  const tf = (key: string, fallback: string, values?: Record<string, string | number>) =>
+    (t.has(key) ? t(key, values) : fallback)
 
   const [searchTerm, setSearchTerm] = React.useState('')
   const [attachSearchTerm, setAttachSearchTerm] = React.useState('')
@@ -82,6 +88,29 @@ const AssociatedBuildingsTable: React.FC<AssociatedBuildingsTableProps> = ({
 
   // Fetch all available buildings
   const { buildings: allBuildings, isLoading } = useBuildings()
+
+  // The site's saved boundary polygon (loaded from minio) used to suggest the
+  // buildings that fall inside it when attaching.
+  const [boundaryRing, setBoundaryRing] = React.useState<Ring | null>(null)
+  const [showSuggestDialog, setShowSuggestDialog] = React.useState(false)
+
+  React.useEffect(() => {
+    if (!siteId || siteId < 0) { setBoundaryRing(null); return }
+    let cancelled = false
+    fetchSiteBoundaryRing(siteId).then(ring => { if (!cancelled) setBoundaryRing(ring) })
+    return () => { cancelled = true }
+  }, [siteId])
+
+  // Buildings inside the boundary that aren't already attached/previewed.
+  const suggestedBuildings = React.useMemo(() => {
+    if (!boundaryRing || !allBuildings) return []
+    const excluded = new Set([...buildings, ...previewBuildings].map(b => b.id))
+    return filterPointsInRing(boundaryRing, allBuildings, b =>
+      (typeof b.buildingLongitude === 'number' && typeof b.buildingLatitude === 'number')
+        ? [b.buildingLongitude, b.buildingLatitude]
+        : null)
+      .filter(b => !excluded.has(b.id))
+  }, [boundaryRing, allBuildings, buildings, previewBuildings])
   
   const { createBuilding } = useCreateBuilding()
   
@@ -307,6 +336,18 @@ const AssociatedBuildingsTable: React.FC<AssociatedBuildingsTableProps> = ({
             <Button variant="secondary">{t('attachTrigger')}</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[300px]">
+            {suggestedBuildings.length > 0 && (
+              <>
+                <DropdownMenuItem
+                  onClick={() => setShowSuggestDialog(true)}
+                  className="font-medium"
+                >
+                  <LR.MapPin className="h-4 w-4" />
+                  {tf('suggestInside', `Review ${suggestedBuildings.length} building(s) inside the boundary`, { count: suggestedBuildings.length })}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <div className="relative">
               <LR.Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -422,6 +463,23 @@ const AssociatedBuildingsTable: React.FC<AssociatedBuildingsTableProps> = ({
           showPagination={true}
         />
       </div>
+
+      {showSuggestDialog && siteId && (
+        <AssociateBuildingsDialog
+          siteId={siteId}
+          siteName={siteName ?? ''}
+          buildings={suggestedBuildings}
+          onClose={() => setShowSuggestDialog(false)}
+          onAssociated={(associated) => {
+            // The dialog already persisted the association via updateSite; just
+            // reflect it in the visible list (previewBuildings feeds the table).
+            setPreviewBuildings(prev => [
+              ...prev,
+              ...associated.filter(b => !prev.some(p => p.id === b.id)),
+            ])
+          }}
+        />
+      )}
     </div>
   )
 }

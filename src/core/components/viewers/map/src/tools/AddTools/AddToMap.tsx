@@ -39,10 +39,12 @@ interface AddToMapToolProps {
   organization?: Organization
   minioBaseUrl?: string
   martinBaseUrl?: string
+  geocodeEarthApiKey?: string
+  geocoderUrl?: string
   [key: string]: unknown
 }
 
-export default function AddToMap({ tool, organization, minioBaseUrl, martinBaseUrl }: AddToMapToolProps) {
+export default function AddToMap({ tool, organization, minioBaseUrl, martinBaseUrl, geocodeEarthApiKey, geocoderUrl }: AddToMapToolProps) {
   // Translation
   const t = useTranslations('AddToMap')
 
@@ -252,6 +254,8 @@ export default function AddToMap({ tool, organization, minioBaseUrl, martinBaseU
         setNewBuildingFields={setNewBuildingFields}
         open={buildingDialogOpen}
         onOpenChange={setBuildingDialogOpen}
+        geocodeEarthApiKey={geocodeEarthApiKey}
+        geocoderUrl={geocoderUrl}
       />
 
       <Datasets

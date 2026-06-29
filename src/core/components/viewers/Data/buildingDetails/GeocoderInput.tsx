@@ -14,13 +14,17 @@ interface GeocoderInputProps {
     buildingMunicipality?: string
     buildingPostalCode?: string
   }) => void
+  geocodeEarthApiKey?: string
+  geocoderUrl?: string
 }
 
-export default function GeocoderInput({ onSelect }: GeocoderInputProps) {
+export default function GeocoderInput({ onSelect, geocodeEarthApiKey, geocoderUrl }: GeocoderInputProps) {
   return (
     <Geocoder
       showDatabaseBuildings={false}
       alwaysExpanded={true}
+      geocodeEarthApiKey={geocodeEarthApiKey}
+      geocoderUrl={geocoderUrl}
       onSelect={(addressData: any) => {
         if (!addressData) return
         const { formatted_address, coordinates, properties } = addressData

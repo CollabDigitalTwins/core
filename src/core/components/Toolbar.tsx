@@ -32,11 +32,13 @@ interface Props {
   minioBaseUrl?: string
   martinBaseUrl?: string
   organization?: Organization
+  geocodeEarthApiKey?: string
+  geocoderUrl?: string
 }
 
-export function Toolbar({ viewer, minioBaseUrl, martinBaseUrl, organization }: Props) {
+export function Toolbar({ viewer, minioBaseUrl, martinBaseUrl, organization, geocodeEarthApiKey, geocoderUrl }: Props) {
   if (viewer === ViewerNames.map) {
-    return <ToolbarBody viewer="map" tools={mapToolbarTools({ minioBaseUrl, martinBaseUrl, organization })} />
+    return <ToolbarBody viewer="map" tools={mapToolbarTools({ minioBaseUrl, martinBaseUrl, organization, geocodeEarthApiKey, geocoderUrl })} />
   }
   if (viewer === ViewerNames.bim) {
     return <BimToolbar minioBaseUrl={minioBaseUrl} />

@@ -70,9 +70,11 @@ type DataMenuProps = {
   hideTitle?: boolean
   hideActions?: boolean
   organization?: Organization
+  geocodeEarthApiKey?: string
+  geocoderUrl?: string
 }
 
-export function DataMenu({ currentViewer, height, hideTitle, hideActions, hideFrame, organization }: DataMenuProps) {
+export function DataMenu({ currentViewer, height, hideTitle, hideActions, hideFrame, organization, geocodeEarthApiKey, geocoderUrl }: DataMenuProps) {
   // Translations
   const t = useTranslations('DataMenu')
 
@@ -452,6 +454,8 @@ const handleBackToTable = () => {
                           : undefined
                       }
                       users={currentViewer === ViewerNames.users ? users : undefined}
+                      geocodeEarthApiKey={geocodeEarthApiKey}
+                      geocoderUrl={geocoderUrl}
                     />
                   </div>
                 </div>

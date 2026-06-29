@@ -33,7 +33,10 @@ export function createSiteHooks(adapter: ApiAdapter) {
         onSuccess: () => {
           mutate(["site", siteId]);
           mutate(["sites"]);
-          mutate(["buildings"]); // Revalidate buildings in case any were associated with the site and changed 
+          // NOTE: intentionally not revalidating ["buildings"] — associating a
+          // building to a site doesn't change the buildings list's displayed
+          // data, and revalidating it re-renders the always-mounted map's
+          // building layer (a heavy, jank-inducing churn after bulk associate).
         },
       }
     );

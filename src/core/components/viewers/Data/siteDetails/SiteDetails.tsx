@@ -156,12 +156,14 @@ const SiteDetails = React.forwardRef<SiteDetailsRef, SiteDetailsProps>(({
     }
   }
 
-  // Update selectedSite to grab the latest site data
+  // Update selectedSite to grab the latest site data. Prefer the freshly
+  // fetched associations (latestSite) — keeping selectedSite's stale array here
+  // meant newly associated buildings never appeared (badge stuck at 0).
   React.useEffect(() => {
     if (latestSite && selectedSite?.id === latestSite.id) {
       setSelectedSite({
         ...latestSite,
-        siteBuildings: selectedSite.siteBuildings || latestSite.siteBuildings || []
+        siteBuildings: (latestSite as SiteWithAssociatedBuildings).siteBuildings ?? selectedSite.siteBuildings ?? []
       })
     }
   }, [latestSite])

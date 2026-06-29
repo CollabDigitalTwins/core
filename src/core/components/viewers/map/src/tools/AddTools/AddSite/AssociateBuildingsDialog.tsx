@@ -78,7 +78,7 @@ export const AssociateBuildingsDialog = ({
       description={tf('subtitle', `These buildings fall within "${siteName}". Choose which to associate with it.`, { name: siteName })}
       icon={Building2}
     >
-      <div className="flex flex-col gap-3 pointer-events-auto">
+      <div className="flex flex-col gap-3 pointer-events-auto min-w-0">
         <button
           type="button"
           onClick={toggleAll}
@@ -91,9 +91,9 @@ export const AssociateBuildingsDialog = ({
           {buildings.map(b => (
             <label
               key={b.id}
-              className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-accent cursor-pointer"
+              className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-accent cursor-pointer min-w-0"
             >
-              <Checkbox checked={selected.has(b.id)} onCheckedChange={() => toggle(b.id)} />
+              <Checkbox className="shrink-0" checked={selected.has(b.id)} onCheckedChange={() => toggle(b.id)} />
               <div className="flex flex-col min-w-0">
                 <span className="text-sm truncate">{b.buildingName || tf('unnamed', 'Unnamed building')}</span>
                 {b.buildingAddress && (

@@ -318,6 +318,7 @@ const SiteDetails = React.forwardRef<SiteDetailsRef, SiteDetailsProps>(({
             editing={editing}
             setEditing={setEditing}
             siteId={selectedSite.id}
+            siteName={selectedSite.siteName}
           />
         </div>
       )

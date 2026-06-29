@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { booleanPointInPolygon, polygon as turfPolygon } from '@turf/turf'
 import { uploadToPresignedUrl } from '../../../tools/AddTools/AddFile/utils/uploadToPresignedURLS'
 
 export type Ring = [number, number][]
@@ -61,6 +62,28 @@ export const ringToFeatureCollection = (ring: Ring, name: string): GeoJSON.Featu
 })
 
 /**
+ * Return the items whose [lng, lat] point falls inside the polygon ring.
+ * The Turf polygon is built once, so this is cheap for many points.
+ */
+export const filterPointsInRing = <T>(
+  ring: Ring,
+  items: T[],
+  getLngLat: (item: T) => [number, number] | null,
+): T[] => {
+  if (ring.length < 3) return []
+  try {
+    const poly = turfPolygon([[...ring, ring[0]]])
+    return (items ?? []).filter((item) => {
+      const c = getLngLat(item)
+      return c != null && booleanPointInPolygon(c, poly)
+    })
+  }
+  catch {
+    return []
+  }
+}
+
+/**
  * Extract the outer ring (open, no repeated closing point) from a stored
  * GeoJSON value, accepting a FeatureCollection, Feature, or bare geometry.
  */
@@ -90,6 +113,27 @@ export const ringFromGeoJson = (geo: any): Ring | null => {
   const last = ring[ring.length - 1]
   if (ring.length > 1 && first[0] === last[0] && first[1] === last[1]) ring.pop()
   return ring
+}
+
+/**
+ * Load a site's saved boundary ring from minio (via its attached geometry
+ * file). Returns null if the site has no saved boundary or it can't be read.
+ */
+export const fetchSiteBoundaryRing = async (siteId: number): Promise<Ring | null> => {
+  try {
+    const res = await fetch(`/api/files/site/${siteId}`)
+    if (!res.ok) return null
+    const { files } = await res.json()
+    const geomFile = (files ?? []).find((f: any) => f.tag === 'site-geometry' && f.url)
+      ?? (files ?? []).find((f: any) =>
+        (f.extension === 'geojson' || (f.mimeType && String(f.mimeType).includes('geo+json'))) && f.url)
+    if (!geomFile?.url) return null
+    const geo = await fetch(geomFile.url).then(r => r.json())
+    return ringFromGeoJson(geo)
+  }
+  catch {
+    return null
+  }
 }
 
 /**

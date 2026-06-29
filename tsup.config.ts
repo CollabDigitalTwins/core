@@ -143,9 +143,6 @@ export default defineConfig((opts) => ({
 
         // Other dependencies
         'web-ifc',
-        // dxf-viewer is rebuilt by a SECOND bundled pass (tsup.dxf.config.ts) that
-        // inlines it and keeps `three` external — see that file for why. This main
-        // pass still emits a thin DXFLoader/index.js; the dxf pass overwrites it.
         'dxf-viewer',
         'potree',
         'potree-cdt',

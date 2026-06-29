@@ -7,11 +7,10 @@ import * as React from "react";
 import { useTranslations } from 'next-intl'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../../../ui/Select'
 import { MapContext } from '../../../../../../../../store';
-import { useAppConfigContext } from '../../../../../../../../store/AppConfig/context';
 import { Input, CollapsibleSection } from '../../../../../../../ui/';
 import { useState } from 'react';
 
-export function LocationSettings() {
+export function LocationSettings({ countryCode }: { countryCode?: string }) {
     // Municipality autocomplete state
     const [municipalityInput, setMunicipalityInput] = useState('');
     const [municipalitySuggestions, setMunicipalitySuggestions] = useState<Array<{ name: string, lat: number, lng: number }>>([]);
@@ -20,8 +19,7 @@ export function LocationSettings() {
   const t = useTranslations('SettingsTab')
   const {dispatch: mapDispatch, state: mapState} = React.useContext(MapContext)
   const { currentLocation, map, countrySubdivisionsData } = mapState.map;
-  const { state: appConfigState } = useAppConfigContext()
-  const orgCountryCode = (appConfigState.appConfig.organization?.country || 'CA').toLowerCase()
+  const orgCountryCode = (countryCode || 'CA').toLowerCase()
 
   // Local input states for lat/lng/zoom
   const [currentLat, setCurrentLat] = React.useState<number>();

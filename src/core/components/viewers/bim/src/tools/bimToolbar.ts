@@ -21,9 +21,11 @@ export type BimToolbarToolsType =
  'bim-clipping' |
  'bim-camera-fit' | 'bim-selection' | 'bim-camera' | 'bim-dimensions' | 'bim-inspect' | 'bim-share' | 'bim-explode'
 
-export function bimToolbarTools(): Tool[] {
+export function bimToolbarTools(config?: { minioBaseUrl?: string }): Tool[] {
   // Translation
   const t = useTranslations('bimToolbarTools')
+
+  const bimAddExtraProps = (config ?? {}) as unknown as Record<string, unknown>
 
   return [
     // {
@@ -55,6 +57,7 @@ export function bimToolbarTools(): Tool[] {
       title: t('add'),
       icon: LR.Plus,
       component: AddToBim,
+      extraProps: bimAddExtraProps,
     },
     {
       id: 'bim-dimensions',

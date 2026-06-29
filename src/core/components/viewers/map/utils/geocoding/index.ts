@@ -2,20 +2,21 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { Feature } from 'geojson'
-import { USE_PELIAS } from './config'
+import { getGeocodingConfig } from './config'
 import { peliasAutocomplete, peliasReverse } from './pelias'
 import { photonAutocomplete, nominatimReverse } from './osm'
 
 // Provider-agnostic entry points. The preferred provider (Geocode Earth or a
-// self-hosted Pelias) is resolved in ./config from env vars; if it fails we fall
-// back to the free public OSM services so address search keeps working.
+// self-hosted Pelias) is resolved in ./config from runtime-injected values;
+// if it fails we fall back to the free public OSM services so address search
+// keeps working.
 //
 // A bad/expired/origin-restricted key surfaces as a 401/403. Autocomplete fires
 // on every keystroke, so once we see an auth failure we stop retrying the keyed
 // provider for the rest of the session and serve results directly from public OSM.
 let peliasAuthFailed = false
 
-const peliasActive = (): boolean => USE_PELIAS && !peliasAuthFailed
+const peliasActive = (): boolean => getGeocodingConfig().usePelias && !peliasAuthFailed
 
 const isAuthError = (error: unknown): boolean => {
   const message = error instanceof Error ? error.message : String(error)

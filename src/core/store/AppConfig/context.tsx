@@ -11,6 +11,11 @@ export type RuntimeConfig = {
   martinUrl?: string
   recaptchaSiteKey?: string
   pointcloudApiUrl?: string
+  geocodeEarthApiKey?: string
+  geocoderUrl?: string
+  photonUrl?: string
+  nominatimUrl?: string
+  maptilerKey?: string
 }
 
 type InitialStateType = {

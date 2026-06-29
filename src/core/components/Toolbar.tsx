@@ -9,6 +9,7 @@ import dynamic from 'next/dynamic'
 import { ViewerNames } from '../types'
 import { mapToolbarTools } from '../components/viewers/map/src/tools/mapTools'
 import { ToolbarBody } from './ToolbarBody'
+import { Organization } from '../types/dbTypes'
 
 // The BIM and PointCloud toolbar tool registries transitively import
 // @thatopen and Potree-adjacent code. Statically importing them here (eagerly
@@ -28,14 +29,19 @@ const PointCloudToolbar = dynamic(
 
 interface Props {
   viewer: ViewerNames
+  minioBaseUrl?: string
+  martinBaseUrl?: string
+  organization?: Organization
+  geocodeEarthApiKey?: string
+  geocoderUrl?: string
 }
 
-export function Toolbar({ viewer }: Props) {
+export function Toolbar({ viewer, minioBaseUrl, martinBaseUrl, organization, geocodeEarthApiKey, geocoderUrl }: Props) {
   if (viewer === ViewerNames.map) {
-    return <ToolbarBody viewer="map" tools={mapToolbarTools()} />
+    return <ToolbarBody viewer="map" tools={mapToolbarTools({ minioBaseUrl, martinBaseUrl, organization, geocodeEarthApiKey, geocoderUrl })} />
   }
   if (viewer === ViewerNames.bim) {
-    return <BimToolbar />
+    return <BimToolbar minioBaseUrl={minioBaseUrl} />
   }
   if (viewer === ViewerNames.pointcloud) {
     return <PointCloudToolbar />

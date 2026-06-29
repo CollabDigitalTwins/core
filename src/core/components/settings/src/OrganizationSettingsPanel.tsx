@@ -6,6 +6,7 @@
 import * as React from 'react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
+import { mutate } from 'swr'
 import { useTranslations } from 'next-intl'
 import { MapContext, usePermissions } from '../../../store'
 import * as LR from 'lucide-react'
@@ -26,9 +27,15 @@ import { uploadOrganizationLogoToPublicBucket } from '../../../utils/imageUtils'
 import { useOrganization } from '../../../hooks/organizations/organizations'
 import OrganizationSkeleton from './OrganizationSkeleton'
 
-import { useAppConfigContext } from '../../../store/AppConfig/context'
+//import { useAppConfigContext } from '../../../store/AppConfig/context'
 
-export default function OrganizationSettingsPanel() {
+interface OrganizationSettingsPanelProps {
+  minioBaseUrl?: string
+}
+
+export default function OrganizationSettingsPanel({
+  minioBaseUrl,
+}: OrganizationSettingsPanelProps) {
   const t = useTranslations('OrganizationSettings')
 
    // Permissions
@@ -104,6 +111,7 @@ export default function OrganizationSettingsPanel() {
       const responseData = await res.json()
       const updatedOrg = responseData?.organization ?? responseData
       setOrganization(updatedOrg)
+      mutate(['organization', String(userOrganizationId)], updatedOrg, { revalidate: false })
       setEditingValues({})
       setIsEditing(false)
       setHasChanges(false)
@@ -123,18 +131,18 @@ export default function OrganizationSettingsPanel() {
     setSelectedFaviconFile(null)
   }
 
-  const { state: { runtimeConfig: { minioUrl } } } = useAppConfigContext()
+  //const { state: { runtimeConfig: { minioUrl } } } = useAppConfigContext()
 
   const logoUrl = selectedLogoFile
     ? URL.createObjectURL(selectedLogoFile)
-    : organization?.logoKey && minioUrl
-      ? `${minioUrl}/org-logos/${organization.logoKey}`
+    : (getFieldValue('logoKey') as string | null | undefined) && minioBaseUrl
+      ? `${minioBaseUrl}/org-logos/${getFieldValue('logoKey')}`
       : null
 
   const faviconUrl = selectedFaviconFile
     ? URL.createObjectURL(selectedFaviconFile)
-    : organization?.faviconKey && minioUrl
-      ? `${minioUrl}/org-logos/${organization.faviconKey}`
+    : (getFieldValue('faviconKey') as string | null | undefined) && minioBaseUrl
+      ? `${minioBaseUrl}/org-logos/${getFieldValue('faviconKey')}`
       : null
 
 // const faviconUrl = selectedFaviconFile

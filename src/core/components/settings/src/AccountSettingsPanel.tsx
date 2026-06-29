@@ -83,6 +83,7 @@ React.useEffect(() => {
 
   const [isEditing, setIsEditing] = React.useState(false)
   const [editValues, setEditValues] = React.useState<EditValues>({})
+  const [imageUploaded, setImageUploaded] = React.useState(false)
   const params = useParams()
   const searchParams = useSearchParams()
   const orgName = params.instance ?? 'canada'
@@ -127,6 +128,7 @@ React.useEffect(() => {
   const resetEdits = React.useCallback(() => {
     setIsEditing(false)
     setEditValues({})
+    setImageUploaded(false)
   }, [])
 
   const getUpdatePayload = React.useCallback(() => {
@@ -149,6 +151,7 @@ React.useEffect(() => {
 
   const hasChanges = React.useCallback(() => {
     if (!user) return false
+    if (imageUploaded) return true
 
     if (
       (editValues.firstName && editValues.firstName !== user.name?.split(' ')[0])
@@ -161,7 +164,7 @@ React.useEffect(() => {
       if (key === 'firstName' || key === 'lastName') return false
       return user[key as keyof typeof user] !== value
     })
-  }, [editValues, user])
+  }, [editValues, user, imageUploaded])
 
   const handleUserImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
@@ -190,6 +193,7 @@ React.useEffect(() => {
           uploadedAt: new Date().toISOString(),
         },
       })
+      setImageUploaded(true)
     } catch {
       toast.error(t('toastError'))
     }
@@ -382,7 +386,10 @@ const handleGoogleSecurityConfirm = async () => {
                   disabled={!hasChanges() || isMutating || !ability.can('update', 'User')}
                   onClick={async () => {
                     try {
-                      await updateUser(getUpdatePayload())
+                      const payload = getUpdatePayload()
+                      if (Object.keys(payload).length > 0) {
+                        await updateUser(payload)
+                      }
                       toast.success(t('toastSuccess'))
                       resetEdits()
                     }

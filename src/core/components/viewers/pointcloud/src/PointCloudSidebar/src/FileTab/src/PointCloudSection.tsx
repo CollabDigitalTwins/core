@@ -12,10 +12,9 @@ import { FileItemComponent } from '../../../../../../../ui/FilesManager/src/File
 import { useFileActions } from '../../../../../../../ui/FilesManager/src/useFileActions'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { Button } from '../../../../../../../ui/Button'
-import { useOrganization } from '../../../../../../../../hooks/organizations/organizations'
 import { DbFile } from '../../../../../../../../types/dbTypes'
 import { PointCloudContext } from '../../../../../../../../store'
-import { useAppConfigContext } from '../../../../../../../../store/AppConfig/context'
+// import { useAppConfigContext } from '../../../../../../../../store/AppConfig/context'
 
 type CreatePointCloudResponse = {
   pointCloud: {
@@ -35,18 +34,16 @@ const POINT_CLOUD_OPTIONS: import('../../../../../../../../types/global').FileAc
 
 interface PointCloudsSectionProps {
   files: DbFile[]
+  pointcloudApiUrl?: string
 }
 
-export function PointCloudsSection({ files }: PointCloudsSectionProps) {
+export function PointCloudsSection({ files, pointcloudApiUrl }: PointCloudsSectionProps) {
   // Translation
   const t = useTranslations('PointCloudManagement')
-  const { state: appConfigState } = useAppConfigContext()
-  const API_BASE = appConfigState.runtimeConfig.pointcloudApiUrl ?? 'http://localhost:5101'
+  const API_BASE = pointcloudApiUrl ?? 'http://localhost:5101'
 
-  // Get current user session
+  // Get current user session (needed for uploadedBy)
   const { data: session } = useSession()
-  const organizationId = session?.user?.organizationId ?? null;
-  const { organization } = useOrganization(organizationId ? organizationId.toString() : null);
 
   // Point cloud context for loading/unloading clouds in the viewer
   const { dispatch: pointCloudDispatch } = React.useContext(PointCloudContext)
@@ -166,17 +163,13 @@ export function PointCloudsSection({ files }: PointCloudsSectionProps) {
     })
   }, [pointcloudsFiles])
 
-  // Create point cloud entry
+  // Create point cloud entry — routed through the CDT proxy so that
+  // organizationId is injected server-side from the authenticated session.
   async function createPointCloud(name: string, uploadedBy: string | null): Promise<CreatePointCloudResponse> {
-    const res = await fetch(`${API_BASE}/point-cloud`, {
+    const res = await fetch('/api/point-cloud', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        name, 
-        uploadedBy,
-        organizationName: organization?.name,
-        organizationId: organizationId
-      }),
+      body: JSON.stringify({ name, uploadedBy }),
     })
 
     if (!res.ok) {

@@ -7,13 +7,13 @@ import * as React from 'react'
 import { usePathname } from 'next/navigation'
 
 import { DatasetsContext, MenusContext, useMapContext } from '../../../../../../../store'
-import { useAppConfigContext } from '../../../../../../../store/AppConfig/context'
+// import { useAppConfigContext } from '../../../../../../../store/AppConfig/context'
 import {
   useOpenDataPortalsByCountrySubdivision,
   useOpenDataPortalsByGroup,
   useOpenDataPortalsByMunicipality,
 } from '../../../../../../../hooks/openDataPortals/openDataPortals'
-import { DatasetGroup } from '../../../../../../../types/dbTypes'
+import { DatasetGroup, Organization } from '../../../../../../../types/dbTypes'
 import type { Dataset } from '../../../../../../../types/datasetTypes'
 import { useDatasetsForPortals } from '../../../../datasets/src/useDatasetsForPortals'
 import { fetchLocalDatasets } from '../../../../datasets/src/localDatasets'
@@ -92,14 +92,13 @@ function sanitizeDatasets(list: Dataset[]) {
   return filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
 }
 
-export function LayersTab() {
+export function LayersTab({ martinBaseUrl, organization }: { martinBaseUrl?: string; organization?: Organization }) {
   const [searchQuery, setSearchQuery] = React.useState('')
   const [favourites, setFavourites] = React.useState<Dataset[]>([])
 
   const { state: mapState } = useMapContext()
   const { currentLocation } = mapState.map
-  const { state: appConfigState } = useAppConfigContext()
-  const org = appConfigState.appConfig.organization
+  const org = organization
   const orgCountry = (org?.country || '').toUpperCase()
 
   const municipality = currentLocation?.municipality ?? org?.municipality ?? null
@@ -147,12 +146,12 @@ export function LayersTab() {
   React.useEffect(() => {
     const loadOrganizationalDatasets = async () => {
       try {
-        const martinBaseUrl = appConfigState.runtimeConfig.martinUrl?.replace(/\/+$/, '')
-        if (!martinBaseUrl) return
+        const martinBaseUrlClean = (martinBaseUrl ?? '').replace(/\/+$/, '')
+        if (!martinBaseUrlClean) return
 
-        const datasetsUrl = martinBaseUrl.includes('/tiles/index.json')
-          ? martinBaseUrl
-          : `${martinBaseUrl}/tiles/index.json`
+        const datasetsUrl = martinBaseUrlClean.includes('/tiles/index.json')
+          ? martinBaseUrlClean
+          : `${martinBaseUrlClean}/tiles/index.json`
 
         const localPortal = {
           id: -1,

@@ -20,7 +20,6 @@ import { useSession } from 'next-auth/react'
 import { createClusterLayer, createClusterCountLayer, createUnclusteredPointLayer } from '../mapLayersUtils'
 import { useSensorTypes } from '../../../../../../../hooks/sensorTypes/sensorTypes'
 import * as LR from 'lucide-react'
-import { useAppConfigContext } from '../../../../../../../store/AppConfig/context'
 import { UNTAGGED_TAG } from '../../../../../../ui/Sensors/SensorsSection'
 
 const SensorIconMarker = ({ feature, isHighlighted, onMouseEnter, onMouseLeave, sensorTypes }: { feature: MapGeoJSONFeature; isHighlighted?: boolean; onMouseEnter?: () => void; onMouseLeave?: () => void; sensorTypes: SensorType[] }) => {
@@ -57,7 +56,7 @@ const SensorIconMarker = ({ feature, isHighlighted, onMouseEnter, onMouseLeave, 
   )
 }
 
-export const SensorLayers = () => {
+export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
     const [hoveredSensorId, setHoveredSensorId] = React.useState<number | null>(null)
   const clusterLayer = createClusterLayer('sensors')
   const clusterCountLayer = createClusterCountLayer('sensors')
@@ -68,7 +67,6 @@ export const SensorLayers = () => {
   const t = useTranslations('SensorLayers')
   const tSensors = useTranslations('SensorsSection')
 
-  const { state: appConfigState } = useAppConfigContext()
   const { state: mapState } = React.useContext(MapContext)
   const { map, mapClickManager } = mapState.map
   const { sensors } = useSensors()
@@ -256,7 +254,7 @@ export const SensorLayers = () => {
     const sensorType = sensorTypes.find(t => t.id === popupInfo.typeId)
     const liveSensor = sensors.find(s => s.id === popupInfo.id)
     const dataUrl = popupInfo.url
-      ? `${appConfigState.runtimeConfig.minioUrl ?? ''}/sensors/${popupInfo.url}`
+      ? `${minioBaseUrl ?? ''}/sensors/${popupInfo.url}`
       : popupInfo.data || ''
     
     return (

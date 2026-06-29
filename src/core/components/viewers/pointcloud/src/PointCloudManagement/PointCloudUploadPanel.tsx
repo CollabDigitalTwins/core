@@ -10,7 +10,7 @@ import { useSession } from "next-auth/react";
 import { useOrganization } from "../../../../../hooks/organizations/organizations";
 import { ProgressBar } from "../../../map/src/tools/AddTools/AddFile/ProgressBar";
 import { Button, Input, ScrollArea } from '../../../../ui';
-import { useAppConfigContext } from '../../../../../store/AppConfig/context'
+import { toast } from 'sonner'
 
 const CONVERSION_STATUS = Object.freeze({
   STARTED: "conversion_started",
@@ -47,19 +47,21 @@ type StartConversionResponse = {
 
 type UploadPointCloudPageProps = {
   onGoBackButtonClick?: () => void;
+  pointcloudApiUrl?: string;
 };
 
 export default function UploadPointCloudPage({
   onGoBackButtonClick,
+  pointcloudApiUrl,
 }: UploadPointCloudPageProps) {
-  const { state: appConfigState } = useAppConfigContext()
-  const API_BASE = appConfigState.runtimeConfig.pointcloudApiUrl ?? 'http://localhost:5101'
+  const API_BASE = pointcloudApiUrl ?? 'http://localhost:5101'
   const { data: session } = useSession();
   const organizationId = session?.user?.organizationId ?? null;
   const { organization } = useOrganization(organizationId ? organizationId.toString() : null);
 
   const [name, setName] = React.useState("");
   const [file, setFile] = React.useState<File | null>(null);
+  const [uploadSuccess, setUploadSuccess] = React.useState(false);
 
   const [progress, setProgress] = React.useState(0);
   const [status, setStatus] = React.useState<ConversionStatus>("idle");
@@ -206,6 +208,7 @@ export default function UploadPointCloudPage({
       appendLog("[finished] Conversion completed");
       setStatus(CONVERSION_STATUS.FINISHED);
       setProgress(100);
+      toast.success("Point cloud conversion completed");
       es.close();
       esRef.current = null;
     });
@@ -239,6 +242,7 @@ export default function UploadPointCloudPage({
     setPointCloudId(null);
     setJobId(null);
     setStatus("idle");
+    setUploadSuccess(false);
 
     try {
       appendLog("🟦 1) Creating point cloud...");
@@ -254,6 +258,8 @@ export default function UploadPointCloudPage({
         setProgress(pct),
       );
       appendLog("✔ Upload finished");
+      setUploadSuccess(true);
+      toast.success("LAZ file uploaded successfully", { duration: 6000 });
 
       appendLog("🟦 3) Starting conversion...");
       // Mark that the conversion has started (using backend status constant)
@@ -391,6 +397,12 @@ export default function UploadPointCloudPage({
               </div>
               <ProgressBar value={progress} />
             </div>
+
+            {uploadSuccess && (
+              <div className="rounded-md bg-green-50 border border-green-200 px-3 py-2 text-sm text-green-800 font-medium">
+                ✔ LAZ file uploaded successfully — conversion in progress
+              </div>
+            )}
           </form>
         </div>
 

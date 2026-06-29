@@ -14,7 +14,7 @@ import { usePathname } from 'next/navigation'
 import type { Dataset } from '../../../../types/datasetTypes'
 import { useOpenDataPortalsByCountrySubdivision, useOpenDataPortalsByGroup, useOpenDataPortalsByMunicipality } from '../../../../hooks/openDataPortals/openDataPortals'
 import { DatasetsContext, MenusContext, useMapContext } from '../../../../store'
-import { useAppConfigContext } from '../../../../store/AppConfig/context'
+// import { useAppConfigContext } from '../../../../store/AppConfig/context'
 import { Badge } from '../../../../components/ui/Badge'
 import {
   Breadcrumb,
@@ -51,7 +51,7 @@ import { fetchOrganizationalMinioDatasets } from './src/minioDatasets'
 import { buildPublishedCatalogMap, stampPublished, type PublishedCatalogEntry } from './src/publishedTiles'
 import { builtinLiveDatasets } from './src/builtinLiveDatasets'
 import { useFastDatasetCache } from './src/useFastDatasetCache'
-import { DatasetGroup } from '../../../../types/dbTypes'
+import { DatasetGroup, Organization } from '../../../../types/dbTypes'
 
 type OrgVisibility = {
   isAdmin: boolean
@@ -111,9 +111,12 @@ function datasetVisibleForOrg(dataset: Dataset, visibility: OrgVisibility) {
 type DatasetsProps = {
   isOpen: boolean
   setIsOpenAction: (open: boolean) => void
+  organization?: Organization
+  minioBaseUrl?: string
+  martinBaseUrl?: string
 }
 
-export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
+export default function Datasets({ isOpen, setIsOpenAction, organization, minioBaseUrl, martinBaseUrl }: DatasetsProps) {
   // Translation
   const t = useTranslations('Datasets')
 
@@ -125,9 +128,8 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
   // Contexts
   const { state: mapState } = useMapContext()
   const { currentLocation } = mapState.map
-  const { state: appConfigState } = useAppConfigContext()
-  const orgCountry = (appConfigState.appConfig.organization?.country || '').toUpperCase()
-  const org = appConfigState.appConfig.organization
+  const orgCountry = (organization?.country || '').toUpperCase()
+  const org = organization
   // Fall back to org fixed location when currentLocation hasn't been set yet (e.g. before map hover)
   const municipality = currentLocation?.municipality ?? org?.municipality ?? null
   const countrySubdivision = currentLocation?.countrySubdivision ?? org?.countrySubdivision ?? null
@@ -207,13 +209,13 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
       // Two parallel sources: Martin vector tiles (if configured) and MinIO-
       // backed GeoJSON uploads (the "Add Dataset" path). Errors from either
       // are isolated so a failure on one side does not block the other.
-      const martinBaseUrl = appConfigState.runtimeConfig.martinUrl?.replace(/\/+$/, '')
+      const martinBaseUrlClean = (martinBaseUrl ?? '').replace(/\/+$/, '')
 
-      const martinPromise: Promise<Dataset[]> = martinBaseUrl
+      const martinPromise: Promise<Dataset[]> = martinBaseUrlClean
         ? (async () => {
-            const datasetsUrl = martinBaseUrl.includes('/tiles/index.json')
-              ? martinBaseUrl
-              : `${martinBaseUrl}/tiles/index.json`
+            const datasetsUrl = martinBaseUrlClean.includes('/tiles/index.json')
+              ? martinBaseUrlClean
+              : `${martinBaseUrlClean}/tiles/index.json`
 
             const localPortal = {
               id: -1,
@@ -235,7 +237,7 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
           })()
         : Promise.resolve([])
 
-      if (!martinBaseUrl) {
+      if (!martinBaseUrlClean) {
         console.warn('NEXT_PUBLIC_MARTIN_SERVER_URL not configured — skipping Martin pre-load')
       }
 
@@ -254,7 +256,7 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
       )
 
       const minioDatasets: Dataset[] = Number.isFinite(sessionOrgId)
-        ? await fetchOrganizationalMinioDatasets(sessionOrgId, publishedTilesInCatalog, appConfigState.runtimeConfig.minioUrl).catch((err) => {
+        ? await fetchOrganizationalMinioDatasets(sessionOrgId, publishedTilesInCatalog, minioBaseUrl).catch((err) => {
             console.error('Failed to load MinIO organizational datasets:', err)
             return []
           })
@@ -587,6 +589,7 @@ export default function Datasets({ isOpen, setIsOpenAction }: DatasetsProps) {
                           {...props}
                           favouriteDatasets={favouriteDatasets}
                           setFavouriteDatasets={setFavouriteDatasets}
+                          martinBaseUrl={martinBaseUrl}
                         />
                       )}
                       trailingCell={({ row, index }) => (

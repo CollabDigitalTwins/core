@@ -11,7 +11,8 @@ export async function checkImageUrl(url: string): Promise<boolean> {
 }
 
 export async function uploadOrganizationLogoToPublicBucket(file: File): Promise<string> {
-  const presignedUrlResult = await fetch(`/api/presigned-url-upload?asset=${encodeURIComponent(file.name)}&bucket=org-logos`)
+  const uniqueName = `${crypto.randomUUID()}-${file.name}`
+  const presignedUrlResult = await fetch(`/api/presigned-url-upload?asset=${encodeURIComponent(uniqueName)}&bucket=org-logos`)
   if (!presignedUrlResult.ok) throw new Error('Failed to get presigned URL for org logo')
   const { presignedUrl, key } = await presignedUrlResult.json()
 

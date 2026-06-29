@@ -52,10 +52,7 @@ export function SupportMenu({
       <DropdownMenuContent align="start">
         <DropdownMenuItem
           onSelect={() =>
-            window.open(
-              "mailto:support@collabdt.org?subject=Support Request",
-              "_self"
-            )
+            window.open("https://collabdt.org/En/#contact", "_blank")
           }
         >
           <LR.Send className="mr-2 h-4 w-4" />

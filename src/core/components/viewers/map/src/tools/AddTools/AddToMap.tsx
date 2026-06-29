@@ -30,15 +30,21 @@ import { DatasetAdder } from './AddDataset/DatasetAdder'
 import { SiteAdder } from './AddSite/SiteAdder'
 import Datasets from '../../../datasets'
 import AddBuilding from '../../../../Data/buildingDetails/AddBuilding'
-import { DbFile } from '../../../../../../types/dbTypes';
+import { DbFile, Organization } from '../../../../../../types/dbTypes';
 import { useComments } from '../../../../../../hooks/comments/comments';
 import { useSensors } from '../../../../../../hooks/sensors/sensors';
 
 interface AddToMapToolProps {
   tool: Tool
+  organization?: Organization
+  minioBaseUrl?: string
+  martinBaseUrl?: string
+  geocodeEarthApiKey?: string
+  geocoderUrl?: string
+  [key: string]: unknown
 }
 
-export default function AddToMap({ tool }: AddToMapToolProps) {
+export default function AddToMap({ tool, organization, minioBaseUrl, martinBaseUrl, geocodeEarthApiKey, geocoderUrl }: AddToMapToolProps) {
   // Translation
   const t = useTranslations('AddToMap')
 
@@ -248,11 +254,16 @@ export default function AddToMap({ tool }: AddToMapToolProps) {
         setNewBuildingFields={setNewBuildingFields}
         open={buildingDialogOpen}
         onOpenChange={setBuildingDialogOpen}
+        geocodeEarthApiKey={geocodeEarthApiKey}
+        geocoderUrl={geocoderUrl}
       />
 
       <Datasets
         isOpen={datasetOpen}
         setIsOpenAction={setDatasetOpen}
+        organization={organization}
+        minioBaseUrl={minioBaseUrl}
+        martinBaseUrl={martinBaseUrl}
       />
     </>
   )

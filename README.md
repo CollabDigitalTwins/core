@@ -38,18 +38,9 @@
 
 Collab Digital Twins is the technology to power web-based, non-proprietary platforms designed for the visualization and interaction of multi-scale geospatial information systems (GIS), open data, open building information modelling (BIM), and a wide range of other digital media — including text, images, animated and static 3D models, IFCs, and point clouds.
 
-The technology is built with full-stack web development frameworks, using **React.js** for the user interface, state management, and memory optimization, and **Next.js** for file organization, routing, and server-side rendering (SSR). It integrates multiple open-source packages to support maps and 3D models:
+The technology is built with full-stack web development frameworks, using **React.js** for the user interface, state management, and memory optimization, and **Next.js** for file organization, routing, and server-side rendering (SSR). It integrates multiple open-source packages to support maps and 3D models. 
 
-| Layer | Technology |
-|---|---|
-| Web map renderer | MapLibre |
-| Vector tile server | Martin (PostGIS) |
-| 3D graphics | Three.js |
-| IFC parsing | Web-IFC (That Open Company) — with IDS & BCF |
-| Point cloud streaming | COPC / Potree |
-| Object storage | MinIO |
-| Database | PostgreSQL |
-| Infrastructure | Fullhost (Canada) |
+For more information about the tech-stack, visit: https://docs.collabdt.org/docs/architecture/overview
 
 CDT efficiently incorporates multi-scale open data (federal, provincial, municipal), fetched directly from organizational APIs without requiring local data storage. Rather than functioning as a system of record, it serves as a **framework and infrastructure for referencing and linking distributed data sources**.
 
@@ -78,8 +69,6 @@ Because CDT is dual-licensed (see [Licensing](#licensing) below), every contribu
 
 ## Licensing
 
-Collab Digital Twins is **dual-licensed**.
-
 ### Open source — AGPL-3.0
 
 The project is free and open source under the **GNU Affero General Public License, version 3.0** ([full text](LICENSE) · [plain-language summary](https://www.gnu.org/licenses/agpl-3.0.en.html)). You may use, study, modify, and redistribute it under those terms, at no cost.
@@ -91,18 +80,7 @@ The AGPL is a strong copyleft license with one obligation that is easy to miss �
 
 If those terms work for you, you are free to self-host with no further obligation to us.
 
-### Commercial license
-
-If you cannot or prefer not to comply with the AGPL — for example, you want to embed CDT in a closed-source product, offer it as a hosted service without releasing your modifications, or need warranty, indemnity, and support terms — a separate **Commercial License Agreement** is available from Collab Digital Twins. Commercial licensing also helps fund the not-for-profit's public-benefit mission.
-
-| | AGPL-3.0 (open source) | Commercial license |
-|---|---|---|
-| Cost | Free | Paid |
-| Must release source of your modifications, including when hosted (§13) | Yes | No |
-| Use in closed-source / proprietary products | No | Yes |
-| Warranty, indemnity & guaranteed support | No (as-is, community) | Yes (per agreement) |
-
-To discuss commercial licensing or a support agreement, contact **[support@collabdt.org](mailto:support@collabdt.org)**.
+To discuss commercial licensing or a support agreement, contact **[info@collabdt.org](mailto:info@collabdt.org)**.
 
 > Copyright © 2025 Collab Digital Twins. Distributed under AGPL-3.0; see [LICENSE](LICENSE) and third-party attributions in [NOTICE](NOTICE).
 

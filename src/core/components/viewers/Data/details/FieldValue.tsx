@@ -10,6 +10,7 @@ import { Badge } from '../../../../components/ui/Badge'
 // Custom components
 import FileUpload from './FileUpload'
 import { useMapContext } from '../../../../store'
+import { useSites } from '../../../../hooks/sites/sites'
 
 interface FieldValueProps {
   value: any
@@ -29,6 +30,15 @@ const SUBDIVISION_PROPERTIES = [
 const FieldValue = ({ value, label, isFile = false, property = '', onChange = () => {}, editing = false }: FieldValueProps) => {
   const { state: mapState } = useMapContext()
   const countrySubdivisionsData = mapState.map.countrySubdivisionsData
+  const { sites } = useSites()
+
+  // Resolve the associated-site id(s) → site name(s); showing the raw id is
+  // meaningless to the user.
+  if (property === 'buildingParentSiteId' && value != null && value !== '') {
+    const ids = Array.isArray(value) ? value : [value]
+    const names = ids.map(id => sites.find(s => String(s.id) === String(id))?.siteName || String(id))
+    value = names.length <= 1 ? (names[0] ?? value) : names
+  }
 
   // Resolve subdivision code → display name (handles "CA-ON" and short "ON" formats)
   if (SUBDIVISION_PROPERTIES.includes(property) && typeof value === 'string' && value) {

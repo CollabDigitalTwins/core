@@ -13,6 +13,7 @@ import { ToolsProvider } from './Tools/context'
 import { FilesProvider } from './Files/context'
 import { BuildingsProvider } from './Buildings/context'
 import { DatasetsProvider } from './Datasets/context'
+import { MapSitesProvider } from './MapSites/context'
 import { PointCloudProvider } from './PointCloud/context'
 import { PermissionsProvider } from './Permissions/context'
 import { PluginHostProvider } from '../plugins/host/provider'
@@ -36,6 +37,7 @@ const InnerProviders = compose([
   ToolsProvider,
   ContentProvider,
   DatasetsProvider,
+  MapSitesProvider,
   FilesProvider,
   BuildingsProvider,
   PointCloudProvider,

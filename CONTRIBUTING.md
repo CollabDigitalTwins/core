@@ -177,7 +177,7 @@ Keep the subject under ~72 characters and use the body to explain the *why* when
 
 ## Join The Project Team
 
-Collab Digital Twins is stewarded by a Canadian not-for-profit. If you would like to take on a larger or ongoing role — maintaining a subsystem, triaging issues, or joining the core team — reach out via [collabdt.org](https://collabdt.org/home#contact) or **[info@collabdt.org](mailto:info@collabdt.org)** after a few merged contributions.
+Collab Digital Twins is stewarded by a Canadian not-for-profit. If you would like to take on a larger or ongoing role — maintaining a subsystem, triaging issues, or joining the core team — reach out via [collabdt.org](https://collabdt.org/En/contact) or **[info@collabdt.org](mailto:info@collabdt.org)** after a few merged contributions.
 
 <!-- omit in toc -->
 ## Attribution

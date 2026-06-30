@@ -571,71 +571,70 @@ const FieldRenderer = ({
   if (property === 'buildingParentSiteId' && setActiveChanges) {
     const { sites, isLoading } = useSites()
     const [search, setSearch] = React.useState('')
-    const selectedIds = Array.isArray(value) ? value : (value ? [value] : [])
+    // A building has a single parent site (buildingParentSiteId is a scalar FK),
+    // so this is single-select: pick one, show it once, X clears it.
+    const selectedId = Array.isArray(value) ? (value[0] ?? null) : (value ?? null)
     const filteredSites = React.useMemo(() => {
       if (!sites) return []
-      if (!search) return sites
       const lower = search.toLowerCase()
       return sites.filter(site =>
         (site.siteName && site.siteName.toLowerCase().includes(lower))
         || (site.siteAddress && site.siteAddress.toLowerCase().includes(lower)),
       )
     }, [sites, search])
-    const selectedSites = sites?.filter(site => selectedIds.includes(site.id)) || []
+    const selectedSite = sites?.find(site => site.id === selectedId) || null
 
     return (
       <div className="space-y-2">
-        <Command>
+        <Command shouldFilter={false}>
           <CommandInput
             placeholder="Search for a site..."
             value={search}
             onValueChange={setSearch}
             disabled={isLoading}
           />
-          <CommandList>
-            {isLoading && <CommandEmpty><LoadingSpinner /></CommandEmpty>}
-            {!isLoading && filteredSites.length === 0 && (
-              <CommandEmpty>{t('empty')}</CommandEmpty>
-            )}
-            <CommandGroup>
-              {filteredSites.map(site => (
-                <CommandItem
-                  key={site.id}
-                  value={site.id.toString()}
-                  onSelect={() => {
-                    if (!selectedIds.includes(site.id)) {
-                      handleInputChange(property, [...selectedIds, site.id])
-                    }
-                  }}
-                  disabled={selectedIds.includes(site.id)}
-                >
-                  <div>
-                    <div className="font-medium">{site.siteName}</div>
-                    <div className="text-xs text-muted-foreground">{site.siteAddress}</div>
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
+          {search.trim() !== '' && (
+            <CommandList>
+              {isLoading && <CommandEmpty><LoadingSpinner /></CommandEmpty>}
+              {!isLoading && filteredSites.length === 0 && (
+                <CommandEmpty>{t('empty')}</CommandEmpty>
+              )}
+              <CommandGroup>
+                {filteredSites.map(site => (
+                  <CommandItem
+                    key={site.id}
+                    value={site.id.toString()}
+                    onSelect={() => {
+                      handleInputChange(property, site.id)
+                      setSearch('')
+                    }}
+                  >
+                    <div>
+                      <div className="font-medium">{site.siteName}</div>
+                      <div className="text-xs text-muted-foreground">{site.siteAddress}</div>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          )}
         </Command>
-        <div className="flex flex-wrap gap-1">
-          {selectedSites.map(site => (
-            <Badge key={site.id} className="gap-1" variant="secondary">
-              {site.siteName}
+        {selectedSite && (
+          <div className="flex flex-wrap gap-1">
+            <Badge className="gap-1" variant="secondary">
+              {selectedSite.siteName}
               <Button
                 variant="ghost"
                 size="icon"
                 className="p-0 hover:bg-transparent w-auto h-auto"
-                onClick={() => {
-                  handleInputChange(property, selectedIds.filter(id => id !== site.id))
-                }}
+                onClick={() => handleInputChange(property, null)}
                 disabled={!ability.can('update', 'Building')}
               >
                 <X className="!w-3 !h-3" size={8} />
               </Button>
             </Badge>
-          ))}
-        </div>
+          </div>
+        )}
       </div>
     )
   }

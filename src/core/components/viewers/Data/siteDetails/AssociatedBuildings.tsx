@@ -13,6 +13,8 @@ import { toast } from 'sonner'
 import { useAssociatedBuildingsColumns } from '../utils/Columns'
 import { filterHelper } from '../utils/filterHelper'
 import { fetchSuggestions, parseLocation } from '../../map/utils/geocoder'
+import { filterPointsInRing, fetchSiteBoundaryRing, type Ring } from '../../map/src/MapLayers/src/SiteLayer/siteGeometry'
+import { AssociateBuildingsDialog } from '../../map/src/tools/AddTools/AddSite/AssociateBuildingsDialog'
 import { useMapContext } from '../../../../store'
 
 // Shadcn Components
@@ -40,7 +42,9 @@ interface AssociatedBuildingsTableProps {
   buildings: Building[]
   onRowClick?: (building: Building) => void
   siteId?: number
+  siteName?: string
   onAttachBuilding?: (building: Building) => void
+  onDetachBuilding?: (building: Building) => void
   editing?: boolean
   setEditing?: (editing: boolean) => void
 }
@@ -49,12 +53,16 @@ const AssociatedBuildingsTable: React.FC<AssociatedBuildingsTableProps> = ({
   buildings,
   onRowClick,
   siteId,
+  siteName,
   onAttachBuilding,
+  onDetachBuilding,
   editing,
   setEditing,
 }) => {
   // Translations
   const t = useTranslations('AssociatedBuildings')
+  const tf = (key: string, fallback: string, values?: Record<string, string | number>) =>
+    (t.has(key) ? t(key, values) : fallback)
 
   const [searchTerm, setSearchTerm] = React.useState('')
   const [attachSearchTerm, setAttachSearchTerm] = React.useState('')
@@ -71,9 +79,12 @@ const AssociatedBuildingsTable: React.FC<AssociatedBuildingsTableProps> = ({
   const [activeFilters, setActiveFilters] = React.useState([])
   // Track newly attached buildings for preview
   const [previewBuildings, setPreviewBuildings] = React.useState<Building[]>([])
-  
+  // Buildings detached this session — hidden from the list; the disconnect is
+  // staged on the parent (via onDetachBuilding) and persisted on Save.
+  const [detachedIds, setDetachedIds] = React.useState<Set<number>>(new Set())
+
   const [isCreatingBuilding, setIsCreatingBuilding] = React.useState(false)
-  
+
   const [geocodedSuggestions, setGeocodedSuggestions] = React.useState([])
   const [isLoadingGeocoded, setIsLoadingGeocoded] = React.useState(false)
 
@@ -82,9 +93,32 @@ const AssociatedBuildingsTable: React.FC<AssociatedBuildingsTableProps> = ({
 
   // Fetch all available buildings
   const { buildings: allBuildings, isLoading } = useBuildings()
-  
+
+  // The site's saved boundary polygon (loaded from minio) used to suggest the
+  // buildings that fall inside it when attaching.
+  const [boundaryRing, setBoundaryRing] = React.useState<Ring | null>(null)
+  const [showSuggestDialog, setShowSuggestDialog] = React.useState(false)
+
+  React.useEffect(() => {
+    if (!siteId || siteId < 0) { setBoundaryRing(null); return }
+    let cancelled = false
+    fetchSiteBoundaryRing(siteId).then(ring => { if (!cancelled) setBoundaryRing(ring) })
+    return () => { cancelled = true }
+  }, [siteId])
+
+  // Buildings inside the boundary that aren't already attached/previewed.
+  const suggestedBuildings = React.useMemo(() => {
+    if (!boundaryRing || !allBuildings) return []
+    const excluded = new Set([...buildings, ...previewBuildings].map(b => b.id))
+    return filterPointsInRing(boundaryRing, allBuildings, b =>
+      (typeof b.buildingLongitude === 'number' && typeof b.buildingLatitude === 'number')
+        ? [b.buildingLongitude, b.buildingLatitude]
+        : null)
+      .filter(b => !excluded.has(b.id))
+  }, [boundaryRing, allBuildings, buildings, previewBuildings])
+
   const { createBuilding } = useCreateBuilding()
-  
+
   // Session and user data
   const { data: session, status } = useSession()
   const { user, isError, updateUser } = useUser(session?.user?.id || '')
@@ -103,8 +137,26 @@ const AssociatedBuildingsTable: React.FC<AssociatedBuildingsTableProps> = ({
       }
     }
 
-    return combinedBuildings
-  }, [buildings, previewBuildings])
+    return combinedBuildings.filter(b => !detachedIds.has(b.id))
+  }, [buildings, previewBuildings, detachedIds])
+
+  // Detach a building from the site (staged on the parent, persisted on Save).
+  const handleDetach = (building: Building) => {
+    if (setEditing) setEditing(true)
+    setDetachedIds(prev => {
+      const next = new Set(prev)
+      next.add(building.id)
+      return next
+    })
+    setPreviewBuildings(prev => prev.filter(b => b.id !== building.id))
+    onDetachBuilding?.(building)
+  }
+
+  // Leaving edit mode (Save or Cancel) discards the staged detaches: on Save the
+  // buildings prop already reflects the removals; on Cancel the rows reappear.
+  React.useEffect(() => {
+    if (!editing) setDetachedIds(new Set())
+  }, [editing])
 
   // Apply filters to the buildings data
   const filteredBuildings = React.useMemo(() => {
@@ -229,54 +281,54 @@ const AssociatedBuildingsTable: React.FC<AssociatedBuildingsTableProps> = ({
   }
 
   const handleCreateAndAttach = async (feature: any) => {
-  if (!user?.organizationId) {
-    toast.error('Organization not found')
-    return
-  }
+    if (!user?.organizationId) {
+      toast.error('Organization not found')
+      return
+    }
 
-  setIsCreatingBuilding(true)
-  try {
-    // Parse the feature data
-    const coordinates = feature.geometry?.coordinates || []
-    const properties = feature.properties || {}
-    
-    const buildingData = {
-      buildingAddress: properties.label || attachSearchTerm,
-      buildingLongitude: coordinates[0],
-      buildingLatitude: coordinates[1],
-      buildingStreetName: properties.street,
-      buildingCountrySubdivision: properties.region_a || properties.region,
-      buildingMunicipality: properties.locality || properties.county,
-      buildingPostalCode: properties.postalcode,
-    }
-    
-    // Create the building
-    const result = await createBuilding({
-      buildingData,
-      organizationId: user?.organizationId ? String(user.organizationId) : null,
-    })
-    // Auto-attach the newly created building
-    if (result) {
-      if (setEditing) {
-        setEditing(true)
+    setIsCreatingBuilding(true)
+    try {
+      // Parse the feature data
+      const coordinates = feature.geometry?.coordinates || []
+      const properties = feature.properties || {}
+
+      const buildingData = {
+        buildingAddress: properties.label || attachSearchTerm,
+        buildingLongitude: coordinates[0],
+        buildingLatitude: coordinates[1],
+        buildingStreetName: properties.street,
+        buildingCountrySubdivision: properties.region_a || properties.region,
+        buildingMunicipality: properties.locality || properties.county,
+        buildingPostalCode: properties.postalcode,
       }
-      setPreviewBuildings(prev => {
-        const updated = [...prev, result]
-        return updated
+
+      // Create the building
+      const result = await createBuilding({
+        buildingData,
+        organizationId: user?.organizationId ? String(user.organizationId) : null,
       })
-      if (onAttachBuilding) {
-        onAttachBuilding(result)
+      // Auto-attach the newly created building
+      if (result) {
+        if (setEditing) {
+          setEditing(true)
+        }
+        setPreviewBuildings(prev => {
+          const updated = [...prev, result]
+          return updated
+        })
+        if (onAttachBuilding) {
+          onAttachBuilding(result)
+        }
+        toast.success(t('createAttachToastSuccess'))
       }
-      toast.success(t('createAttachToastSuccess'))
+      setAttachSearchTerm('')
+      setGeocodedSuggestions([])
+    } catch (error) {
+      toast.error(t('createAttachToastError'))
+    } finally {
+      setIsCreatingBuilding(false)
     }
-    setAttachSearchTerm('')
-    setGeocodedSuggestions([])
-  } catch (error) {
-    toast.error(t('createAttachToastError'))
-  } finally {
-    setIsCreatingBuilding(false)
   }
-} 
 
   return (
     <div className="flex flex-col">
@@ -307,6 +359,18 @@ const AssociatedBuildingsTable: React.FC<AssociatedBuildingsTableProps> = ({
             <Button variant="secondary">{t('attachTrigger')}</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[300px]">
+            {suggestedBuildings.length > 0 && (
+              <>
+                <DropdownMenuItem
+                  onClick={() => setShowSuggestDialog(true)}
+                  className="font-medium"
+                >
+                  <LR.MapPin className="h-4 w-4" />
+                  {tf('suggestInside', `Review ${suggestedBuildings.length} building(s) inside the boundary`, { count: suggestedBuildings.length })}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <div className="relative">
               <LR.Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -418,10 +482,39 @@ const AssociatedBuildingsTable: React.FC<AssociatedBuildingsTableProps> = ({
           columns={useAssociatedBuildingsColumns()}
           data={filteredBuildings || []}
           onRowClick={onRowClick}
+          trailingCell={editing
+            ? (({ row }: any) => (
+              <button
+                type="button"
+                title={tf('detachTitle', 'Detach building')}
+                onClick={(e) => { e.stopPropagation(); handleDetach(row.original as Building) }}
+                className="hover:opacity-70 p-1"
+              >
+                <LR.X className="h-4 w-4" />
+              </button>
+            ))
+            : undefined}
           className=""
           showPagination={true}
         />
       </div>
+
+      {showSuggestDialog && siteId && (
+        <AssociateBuildingsDialog
+          siteId={siteId}
+          siteName={siteName ?? ''}
+          buildings={suggestedBuildings}
+          onClose={() => setShowSuggestDialog(false)}
+          onAssociated={(associated) => {
+            // The dialog already persisted the association via updateSite; just
+            // reflect it in the visible list (previewBuildings feeds the table).
+            setPreviewBuildings(prev => [
+              ...prev,
+              ...associated.filter(b => !prev.some(p => p.id === b.id)),
+            ])
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -10,6 +10,9 @@ import type maplibregl from 'maplibre-gl'
  * Higher priority is clicked first.
  */
 export enum MapLayerClickPriority {
+  // Lowest priority: a site polygon only handles a click when no other
+  // interactive layer (buildings, comments, sensors, files, ...) was hit.
+  SiteLayerClickPriority = 50,
   BuildingLayersClickPriority = 100,
   CommentLayersClickPriority = 200,
   MartinLayerClickPriority = 300,

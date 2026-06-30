@@ -6,11 +6,13 @@
 // Dependencies
 import * as React from 'react'
 import type { Site, Building } from '../../../../types/dbTypes'
+import { ViewerNames } from '../../../../types/dbTypes'
 import { handleApiError } from '../../../../utils/errorHandler'
 import { useTranslations } from 'next-intl'
 
 // Custom hooks
 import { useSite, useCreateSite } from '../../../../hooks/sites/sites'
+import { useMenusContext } from '../../../../store'
 
 // Utilities
 import { useSiteHeaders } from '../utils/Headers'
@@ -68,6 +70,9 @@ const SiteDetails = React.forwardRef<SiteDetailsRef, SiteDetailsProps>(({
 }, ref) => {
 // Translations
   const t = useTranslations('SiteDetails')
+
+  // Navigation to a building's detail page (from the associated-buildings table).
+  const { setSelectedItem, setView, dispatch: menusDispatch } = useMenusContext()
 
   const siteHeaders = useSiteHeaders()
   const associatedBuildingsCount = selectedSite?.siteBuildings?.length || 0
@@ -296,7 +301,10 @@ const SiteDetails = React.forwardRef<SiteDetailsRef, SiteDetailsProps>(({
           <AssociatedBuildingsTable
             buildings={selectedSite.siteBuildings || []}
             onRowClick={(building) => {
-            // TODO: handle row click
+              // Open the building's detail page.
+              setSelectedItem(building)
+              setView('detail')
+              menusDispatch({ type: 'SET_VIEWER', payload: { currentViewer: ViewerNames.buildings } })
             }}
             onAttachBuilding={(building) => {
             // Check if building is already attached
@@ -316,6 +324,21 @@ const SiteDetails = React.forwardRef<SiteDetailsRef, SiteDetailsProps>(({
                 // Trigger active changes state
                 setActiveChanges?.(true)
               }
+            }}
+            onDetachBuilding={(building) => {
+              // Cancel any staged connect for it, and disconnect it (only if it
+              // is actually persisted) so the DB link is broken on Save.
+              const isPersisted = (selectedSite.siteBuildings || []).some(b => b.id === building.id)
+              setEditingValues(prev => ({
+                ...prev,
+                siteBuildings: {
+                  connect: (prev.siteBuildings?.connect || []).filter(c => c.id !== building.id),
+                  disconnect: isPersisted
+                    ? [...(prev.siteBuildings?.disconnect || []), { id: building.id }]
+                    : (prev.siteBuildings?.disconnect || []),
+                },
+              }))
+              setActiveChanges?.(true)
             }}
             editing={editing}
             setEditing={setEditing}

@@ -1,6 +1,6 @@
 {
   "name": "@collabdt/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CDT Core contains all the core technology for your CDT platform",
   "type": "module",
   "main": "dist/index.js",

@@ -17,6 +17,40 @@ import { Textarea } from "../ui/Textarea";
 import * as LR from "lucide-react";
 import { toast } from "sonner";
 
+function getBrowserInfo(): string {
+  const ua = navigator.userAgent;
+  if ("userAgentData" in navigator) {
+    const uaData = (navigator as any).userAgentData;
+    const brands: Array<{ brand: string; version: string }> = uaData.brands ?? [];
+    const brand =
+      brands.find((b) => !b.brand.includes("Not") && b.brand !== "Chromium") ??
+      brands[0];
+    const name = brand?.brand ?? "Unknown";
+    const version = brand?.version ?? "";
+    return version ? `${name} ${version}` : name;
+  }
+  const checks: Array<[string, RegExp]> = [
+    ["Firefox", /Firefox\/(\d+)/],
+    ["Edge", /Edg\/(\d+)/],
+    ["Chrome", /Chrome\/(\d+)/],
+    ["Safari", /Version\/(\d+).*Safari/],
+  ];
+  for (const [name, re] of checks) {
+    const m = re.exec(ua);
+    if (m) return `${name} ${m[1]}`;
+  }
+  return "Unknown";
+}
+
+function getDeviceInfo(): string {
+  if ("userAgentData" in navigator) {
+    return (navigator as any).userAgentData?.mobile ? "Mobile" : "Desktop";
+  }
+  return /Mobile|Android|iPhone|iPad|iPod/.test(navigator.userAgent)
+    ? "Mobile"
+    : "Desktop";
+}
+
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -53,6 +87,8 @@ export function FeatureRequestDialog({ open, onOpenChange, userEmail, viewer }: 
           meta: {
             url: window.location.href,
             userAgent: navigator.userAgent,
+            browser: getBrowserInfo(),
+            device: getDeviceInfo(),
             timestamp: new Date().toISOString(),
             viewer,
             userEmail,

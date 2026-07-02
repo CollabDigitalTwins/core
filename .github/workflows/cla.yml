@@ -49,7 +49,9 @@ jobs:
           path-to-signatures: 'signatures/version1/cla.json'
           path-to-document: '${{ github.server_url }}/${{ github.repository }}/blob/main/CLA.md'
           branch: 'cla-signatures'
-          allowlist: 'dependabot[bot],github-actions[bot]'
+          # Owners/maintainers are exempt from signing (they set the terms).
+          # Keep in sync with .github/CODEOWNERS. Everyone else must still sign.
+          allowlist: 'dependabot[bot],github-actions[bot],nicoarellano,ken-99,FatemehMashhadi20,gbassali'
           custom-pr-sign-comment: 'I have read the CLA Document and I hereby sign the CLA'
           custom-notsigned-prcomment: |
             Thank you for your contribution to Collab Digital Twins! 🎉

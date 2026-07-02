@@ -12,7 +12,7 @@
     <a href="https://docs.collabdt.org">Docs</a> ·
     <a href="https://docs.google.com/forms/d/e/1FAIpQLScB12Qc7khiOk4a_E753jDccx6026AjO-_FINBKoZZZtkmqnA/viewform" target="_blank" rel="noopener">Beta Access</a> ·
     <a href="CONTRIBUTING.md">Contributing</a> ·
-    <a href="https://collabdt.org/privacypolicy">Privacy Policy</a>
+    <a href="https://collabdt.org/En/privacypolicy/">Privacy Policy</a>
   </p>
 
   <br />

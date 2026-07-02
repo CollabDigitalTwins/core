@@ -5,7 +5,6 @@
 
 import React, { useState, useEffect, createContext, useContext } from 'react'
 import dynamic from 'next/dynamic'
-import { Logo } from '../Logo'
 import { useTranslations } from 'next-intl'
 import LanguageSwitch from '../LanguageSwitch'
 import { useParams } from 'next/navigation'
@@ -37,18 +36,38 @@ export function AuthPage({ children, minioBaseUrl, }: AuthPageProps) {
   const logo = minioBaseUrl
     ? `${minioBaseUrl}/org-logos/${orgName}-logo.png`
     : `/images/cdt-logo-stroke.svg`
-  const brandPrefix = orgName === 'cdt' ? 'collab' : orgName
-  const brandSuffix = orgName === 'cdt' ? 'digitaltwins' : 'digitaltwin'
-  const title = `${brandPrefix}${brandSuffix}`
+  const brandName = 'cdt' // terracotta accent
+  const brandSuffix = 'platform'
+  const orgLabel = orgName === 'cdt' ? '' : orgName
+  const title = orgLabel ? `${brandName}${brandSuffix} | ${orgLabel}` : `${brandName}${brandSuffix}`
   const t = useTranslations('AuthPage')
 
   const [theme, setTheme] = useState<'light' | 'dark'>('dark')
   const [isMobile, setIsMobile] = useState(false)
   const [globePadding, setGlobePadding] = useState({ top: 0, bottom: 0, left: 0, right: 0 })
+  const [logoError, setLogoError] = useState(false)
 
   useEffect(() => {
     setTheme('dark')
   }, [])
+
+  // Probe the org logo with a detached Image() so a missing file falls back to
+  // the CdtIcon. Doing the check here (rather than via the rendered <img>'s
+  // onError) avoids the SSR/hydration race where the image errors before React
+  // can attach a handler — and keeps reset + detection in one effect so they
+  // can't clobber each other.
+  useEffect(() => {
+    if (orgName === 'cdt') return
+    setLogoError(false)
+    const probe = new window.Image()
+    probe.onload = () => setLogoError(probe.naturalWidth === 0)
+    probe.onerror = () => setLogoError(true)
+    probe.src = logo
+    return () => {
+      probe.onload = null
+      probe.onerror = null
+    }
+  }, [logo, orgName])
 
   useEffect(() => {
     const update = () => {
@@ -93,14 +112,25 @@ export function AuthPage({ children, minioBaseUrl, }: AuthPageProps) {
           {/* Top bar: logo + language */}
           <div className="flex items-center justify-between px-8 pt-8 pb-4">
             <div className="flex items-center gap-3" style={{ color: 'var(--hp-on-surface)' }}>
-              {orgName === 'cdt' ? (
+              {orgName === 'cdt' || logoError ? (
                 <CdtIcon className="w-8 h-8" />
               ) : (
-                <Logo image={logo} title={title} className="w-8 h-8" />
+                <img
+                  src={logo}
+                  alt={title}
+                  title={title}
+                  className="w-8 h-8 object-contain"
+                />
               )}
               <span className="font-display text-xl tracking-wide max-xs:text-sm max-xs:text-nowrap lowercase transition-colors duration-200">
-                <span style={{ color: 'var(--hp-primary-container)' }}>{brandPrefix}</span>
+                <span style={{ color: 'var(--hp-primary-container)' }}>{brandName}</span>
                 {brandSuffix}
+                {orgLabel && (
+                  <>
+                    <span style={{ color: 'var(--hp-primary-container)' }}> | </span>
+                    {orgLabel}
+                  </>
+                )}
               </span>
             </div>
             <div className="flex items-center gap-2">

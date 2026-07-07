@@ -223,7 +223,13 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
     // BCF files
     if (file.extension === 'bcf') {
       menusDispatch({ type: 'SET_SIDEBAR_SELECTED_TAB', payload: { selectedTab: 'communication' } })
-      const bcfManager = bimComponents?.get(BCFTopicsManager)
+      if (!bimComponents) return
+      let bcfManager: BCFTopicsManager | undefined
+      try {
+        bcfManager = bimComponents.get(BCFTopicsManager)
+      } catch {
+        bcfManager = new BCFTopicsManager(bimComponents)
+      }
       if (!bcfManager) return
       try {
         const { topics } = await bcfManager.loadBCFFromUrl(file.url)

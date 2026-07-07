@@ -963,29 +963,6 @@ ul {
   color: white;
 }
 
-/* smooths any reverse transitions */
-.maplibregl-ctrl-bottom-left,
-.maplibregl-ctrl-bottom-right {
-  transform: translateY(-75px);
-  transition: transform 400ms ease-in-out;
-}
-
-.map-ctrls-init {
-  transform: translateY(0px);
-  transition: transform 400ms ease-in-out;
-}
-
-/* sliding to match toolbar behavior */
-.mobile-map-ctrls {
-  transform: translateY(-75px);
-  transition: transform 300ms ease-in-out;
-}
-
-.mobile-map-ctrls-expanded {
-  transform: translateY(-255px);
-  transition: transform 250ms ease-in-out;
-}
-
 .center-align {
   display: flex;
   flex-direction: column;
@@ -998,7 +975,6 @@ ul {
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
-  z-index: -1 !important;
 }
 
 .maplibregl-ctrl-bottom-right details:hover {
@@ -1008,15 +984,6 @@ ul {
 
 .maplibregl-ctrl-attrib-button {
   background-color: white !important;
-}
-
-@media only screen and (min-width: 475px) {
-  /* smooths any reverse transitions */
-  .maplibregl-ctrl-bottom-left,
-  .maplibregl-ctrl-bottom-right {
-    transform: translateY(0px);
-    transition: transform 400ms ease-in-out;
-  }
 }
 
 @media only screen and (max-width: 600px) {
@@ -1049,6 +1016,51 @@ ul {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+  }
+  /* MapLibre's own AttributionControl auto-expands the compact attribution
+     once on load for narrow/mobile maps (see _updateCompact() in
+     attribution_control.ts — it sets the `open` attribute and adds
+     `.maplibregl-compact-show` before any user interaction), only
+     collapsing it back once the user drags the map. Ignore those
+     JS-managed classes/attributes entirely and force it closed by default;
+     reveal it only on genuine, real-time user interaction (:hover for
+     pointer devices, :focus-within once the icon is tapped/focused) so it
+     never shows automatically on load. */
+  .maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib-inner {
+    display: none !important;
+  }
+
+  .maplibregl-ctrl-bottom-right details:hover,
+  .maplibregl-ctrl-bottom-right details:focus-within,
+  .maplibregl-ctrl-bottom-right details:active {
+    /* The base rule sets overflow:hidden !important on this element (for the
+       collapsed icon's ellipsis truncation) — without overriding it here,
+       that clips the absolutely-positioned popup below into invisibility. */
+    overflow: visible !important;
+  }
+
+  /* On mobile, expanding the attribution in place (growing right/down from
+     the bottom-right corner) pushes it toward — or past — the edge of the
+     screen. Anchor it to the bottom-right of the icon instead, so it pops
+     up and grows upward, staying fully on-screen.
+     :active is a defensive fallback — iOS Safari doesn't reliably move
+     focus to tapped button-like elements, so :focus-within alone could
+     miss a tap; :active is guaranteed to fire on touch across browsers. */
+  .maplibregl-ctrl-bottom-right details:hover .maplibregl-ctrl-attrib-inner,
+  .maplibregl-ctrl-bottom-right details:focus-within .maplibregl-ctrl-attrib-inner,
+  .maplibregl-ctrl-bottom-right details:active .maplibregl-ctrl-attrib-inner {
+    display: block !important;
+    position: absolute !important;
+    bottom: 100% !important;
+    right: 0 !important;
+    left: auto !important;
+    margin-bottom: 6px !important;
+    max-width: min(85vw, 300px) !important;
+    white-space: normal !important;
+    background: #fff;
+    border-radius: 4px;
+    padding: 6px 10px;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
   }
 }
 

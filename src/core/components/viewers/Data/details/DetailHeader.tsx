@@ -39,9 +39,9 @@ function BuildingHeader({ building, countryName }: { building: Building; country
   return (
     <>
       <LR.Building2 className="h-8 w-8 shrink-0" />
-      <div>
-        <h1 className="text-2xl font-semibold">{title}</h1>
-        <p className="text-muted-foreground">{subtitle}</p>
+      <div className="min-w-0">
+        <h1 className="text-2xl font-semibold truncate">{title}</h1>
+        <p className="text-muted-foreground truncate">{subtitle}</p>
       </div>
     </>
   )
@@ -57,9 +57,9 @@ function SiteHeader({ site, countryName }: { site: Site; countryName: string | n
   return (
     <>
       <LR.BoxSelect className="h-8 w-8 shrink-0" />
-      <div>
-        <h1 className="text-2xl font-semibold">{title}</h1>
-        <p className="text-muted-foreground">{subtitle}</p>
+      <div className="min-w-0">
+        <h1 className="text-2xl font-semibold truncate">{title}</h1>
+        <p className="text-muted-foreground truncate">{subtitle}</p>
       </div>
     </>
   )
@@ -75,9 +75,9 @@ function InfrastructureHeader({ infrastructure, countryName }: { infrastructure:
   return (
     <>
       <LR.TrainTrack className="h-8 w-8 shrink-0" />
-      <div>
-        <h1 className="text-2xl font-semibold">{title}</h1>
-        <p className="text-muted-foreground">{subtitle}</p>
+      <div className="min-w-0">
+        <h1 className="text-2xl font-semibold truncate">{title}</h1>
+        <p className="text-muted-foreground truncate">{subtitle}</p>
       </div>
     </>
   )
@@ -87,8 +87,8 @@ function FileHeader({ file }: { file: FileRow }) {
   return (
     <>
       <LR.File className="h-8 w-8 shrink-0" />
-      <div>
-        <h1 className="text-2xl font-semibold">{file.name}</h1>
+      <div className="min-w-0">
+        <h1 className="text-2xl font-semibold truncate">{file.name}</h1>
       </div>
     </>
   )
@@ -98,9 +98,9 @@ function UserHeader({ user }: { user: Partial<User> }) {
   return (
     <>
       <LR.Users className="h-8 w-8 shrink-0" />
-      <div>
-        <h1 className="text-2xl font-semibold">{user.name || 'New User'}</h1>
-        {user.email && <p className="text-muted-foreground">{user.email}</p>}
+      <div className="min-w-0">
+        <h1 className="text-2xl font-semibold truncate">{user.name || 'New User'}</h1>
+        {user.email && <p className="text-muted-foreground truncate">{user.email}</p>}
       </div>
     </>
   )
@@ -119,7 +119,7 @@ export default function DetailHeader({
   const countryName = getCountryName(countryCode)
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-4 min-w-0">
       {selectedItem
         ? <BuildingHeader building={selectedItem} countryName={countryName} />
         : selectedSite

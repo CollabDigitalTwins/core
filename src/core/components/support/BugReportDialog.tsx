@@ -14,6 +14,8 @@ import { Button } from "../ui/Button";
 import { Textarea } from "../ui/Textarea";
 import { Input } from "../ui/Input";
 import { useCaptureScreenshot } from "../../hooks/useCaptureScreenshot";
+import { useCurrentViewerPosition } from "../../hooks/useCurrentViewerPosition";
+import { useShareUrl } from "../../hooks/useShareUrl";
 
 import * as LR from "lucide-react";
 import { toast } from "sonner";
@@ -44,12 +46,44 @@ function getBrowserInfo(): string {
 }
 
 function getDeviceInfo(): string {
-  if ("userAgentData" in navigator) {
-    return (navigator as any).userAgentData?.mobile ? "Mobile" : "Desktop";
+  const ua = navigator.userAgent;
+
+  // Mobile
+  if (/iPhone/i.test(ua)) {
+    return "Mobile - iPhone";
   }
-  return /Mobile|Android|iPhone|iPad|iPod/.test(navigator.userAgent)
-    ? "Mobile"
-    : "Desktop";
+
+  if (/Android/i.test(ua) && /Mobile/i.test(ua)) {
+    return "Mobile - Android";
+  }
+
+  // Tablets
+  if (/iPad/i.test(ua)) {
+    return "Tablet - iPad";
+  }
+
+  if (/Android/i.test(ua) && !/Mobile/i.test(ua)) {
+    return "Tablet - Android";
+  }
+
+  // Desktop OS
+  if (/Windows NT/i.test(ua)) {
+    return "Desktop - Windows";
+  }
+
+  if (/Macintosh|Mac OS X/i.test(ua)) {
+    return "Desktop - macOS";
+  }
+
+  if (/CrOS/i.test(ua)) {
+    return "Desktop - ChromeOS";
+  }
+
+  if (/Linux/i.test(ua)) {
+    return "Desktop - Linux";
+  }
+
+  return "Unknown";
 }
 
 export function BugReportDialog({
@@ -65,25 +99,71 @@ export function BugReportDialog({
 }) {
   const t = useTranslations("supportDialog");
   const captureScreenshot = useCaptureScreenshot();
+  const getPosition = useCurrentViewerPosition();
+  const getShareUrl = useShareUrl();
 
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [repro, setRepro] = React.useState("");
   const [screenshot, setScreenshot] = React.useState<string | null>(null);
+  // Holds a just-captured image pending the user's confirmation — not
+  // attached to the report until they explicitly accept it via `OK`.
+  const [previewScreenshot, setPreviewScreenshot] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
+  const [capturing, setCapturing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const previewRef = React.useRef<HTMLDivElement>(null);
+  const errorRef = React.useRef<HTMLParagraphElement>(null);
+
+  // The dialog body scrolls (max-h-[90vh]); on a short mobile viewport the
+  // preview OR the error message can render below whatever's currently in
+  // view with nothing to bring it on-screen automatically — a big desktop
+  // viewport just happens to fit everything so this never showed up there.
+  React.useEffect(() => {
+    if (previewScreenshot) {
+      previewRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [previewScreenshot]);
+
+  React.useEffect(() => {
+    if (error) {
+      errorRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [error]);
 
   const reset = () => {
     setTitle("");
     setDescription("");
     setRepro("");
     setScreenshot(null);
+    setPreviewScreenshot(null);
     setError(null);
   };
 
   const capture = async () => {
-    const img = await captureScreenshot();
-    setScreenshot(img);
+    setCapturing(true);
+    setError(null);
+    try {
+      const img = await captureScreenshot();
+      if (img) {
+        setPreviewScreenshot(img);
+      } else {
+        setError('Screenshot failed — the image came back empty.');
+      }
+    } catch (err) {
+      setError(`Screenshot failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setCapturing(false);
+    }
+  };
+
+  const confirmScreenshot = () => {
+    setScreenshot(previewScreenshot);
+    setPreviewScreenshot(null);
+  };
+
+  const retakeScreenshot = () => {
+    setPreviewScreenshot(null);
   };
 
   const submit = async () => {
@@ -92,6 +172,7 @@ export function BugReportDialog({
       setLoading(true);
       setError(null);
 
+      const shareUrl = await getShareUrl();
       const res = await fetch("/api/github-issue", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -103,13 +184,14 @@ export function BugReportDialog({
           type: "bug",
           labels: ["users"],
           meta: {
-            url: window.location.href,
+            url: shareUrl,
             userAgent: navigator.userAgent,
             browser: getBrowserInfo(),
             device: getDeviceInfo(),
             timestamp: new Date().toISOString(),
             viewer,
             userEmail,
+            position: getPosition(),
           },
         }),
       });
@@ -165,11 +247,11 @@ export function BugReportDialog({
           />
 
           <div className="flex gap-2 items-center">
-            <Button onClick={capture} variant="secondary" disabled={loading}>
+            <Button onClick={capture} variant="secondary" disabled={loading || capturing}>
               <LR.Camera className="h-4 w-4 mr-1" />
-              {t("captureScreenshot")}
+              {capturing ? t("capturing") : t("captureScreenshot")}
             </Button>
-            {screenshot && (
+            {screenshot && !previewScreenshot && (
               <span className="text-sm text-muted-foreground flex items-center gap-1">
                 <LR.CheckCircle className="h-3 w-3 text-green-500" />
                 {t("screenshotAttached")}
@@ -177,7 +259,27 @@ export function BugReportDialog({
             )}
           </div>
 
-          {screenshot && (
+          {previewScreenshot && (
+            <div ref={previewRef} className="flex flex-col gap-2 rounded border p-2">
+              <p className="text-sm font-medium">{t("screenshotPreviewTitle")}</p>
+              <img
+                src={previewScreenshot}
+                alt="screenshot preview"
+                className="w-full h-auto rounded border object-contain max-h-[60vh]"
+              />
+              <div className="flex justify-end gap-2">
+                <Button variant="secondary" onClick={retakeScreenshot}>
+                  {t("retake")}
+                </Button>
+                <Button onClick={confirmScreenshot}>
+                  <LR.Check className="h-4 w-4 mr-1" />
+                  {t("attachScreenshot")}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {screenshot && !previewScreenshot && (
             <img
               src={screenshot}
               alt="screenshot preview"
@@ -186,7 +288,7 @@ export function BugReportDialog({
           )}
 
           {error && (
-            <p className="text-sm text-destructive">{error}</p>
+            <p ref={errorRef} className="text-sm text-destructive">{error}</p>
           )}
 
           <div className="flex justify-end gap-2">

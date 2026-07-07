@@ -9,8 +9,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '../../ui/Sidebar'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/Select'
 import type { SettingsTabKey } from './types'
 import { usePermissions } from '../../../store'
+import { useIsMobile } from '../../../hooks/ui/use-mobile'
 
 type SettingsTab = {
   key: SettingsTabKey
@@ -25,10 +27,12 @@ type SettingsSidebarProps = {
 }
 
 export default function SettingsSidebar({ tabs, activeTab, onTabChange }: SettingsSidebarProps) {
-  
+
   // Permissions
   const { ability } = usePermissions()
-  
+
+  const isMobile = useIsMobile()
+
   // Helper to check if tab should be visible
   const isTabVisible = (tabKey: SettingsTabKey) => {
     if (tabKey === 'users') {
@@ -39,10 +43,36 @@ export default function SettingsSidebar({ tabs, activeTab, onTabChange }: Settin
     }
     return true
   }
-  
+
+  const visibleTabs = tabs.filter(tab => isTabVisible(tab.key))
+
+  // Mobile: the desktop sidebar list below is `hidden` under md, with no
+  // other way to reach it — swap to a dropdown so tabs (e.g. "Organization")
+  // stay reachable on narrow viewports. Branching on isMobile (rather than
+  // hiding via CSS classes on the desktop markup) keeps the desktop render
+  // path byte-for-byte unchanged from before.
+  if (isMobile) {
+    return (
+      <div className="w-full">
+        <Select value={activeTab} onValueChange={value => onTabChange(value as SettingsTabKey)}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {visibleTabs.map(tab => (
+              <SelectItem key={tab.key} value={tab.key} disabled={tab.disabled}>
+                {tab.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    )
+  }
+
   return (
     <SidebarMenu className="w-full">
-      {tabs.filter(tab => isTabVisible(tab.key)).map(tab => (
+      {visibleTabs.map(tab => (
         <SidebarMenuItem key={tab.key}>
           <SidebarMenuButton asChild>
             <Button

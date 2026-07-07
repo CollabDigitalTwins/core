@@ -31,58 +31,97 @@ export function useCaptureScreenshot(): () => Promise<string | null> {
   const { state: bimState } = React.useContext(BimContext)
   const { world } = bimState.bim
 
-  return React.useCallback((): Promise<string | null> => {
-    const capture = async (): Promise<string | null> => {
+  return React.useCallback(async (): Promise<string | null> => {
+    try {
       let viewerDataUrl: string | null = null
+      let viewerCanvas: HTMLCanvasElement | null = null
       let viewerBounds: DOMRect | null = null
-      let viewerCanvasElement: HTMLCanvasElement | null = null
 
-      // WebGL canvases clear their back-buffer after each frame, so we must
-      // read them synchronously at the exact moment they have valid content —
-      // before yielding to the event loop for html2canvas.
       if (currentViewer === ViewerNames.map && map) {
-        await new Promise<void>((res) => {
-          map.once('render', () => {
-            const canvas = map.getCanvas()
-            viewerCanvasElement = canvas
-            viewerBounds = canvas.getBoundingClientRect()
-            try { viewerDataUrl = canvas.toDataURL('image/png') } catch { /* cross-origin taint */ }
-            res()
-          })
-          map.triggerRepaint()
-        })
+        await Promise.race([
+          new Promise<void>((res) => {
+            map.once('render', () => {
+              viewerCanvas = map.getCanvas()
+              viewerBounds = viewerCanvas.getBoundingClientRect()
+              try { viewerDataUrl = viewerCanvas.toDataURL('image/png') } catch { /* cross-origin */ }
+              res()
+            })
+            map.triggerRepaint()
+          }),
+          new Promise<void>((r) => setTimeout(r, 3000)),
+        ])
       } else if (currentViewer === ViewerNames.bim && world?.renderer && world?.scene && world?.camera) {
         world.renderer.three.render(world.scene.three, world.camera.three)
-        const canvas = document.querySelector<HTMLCanvasElement>('#bim-viewer-container canvas')
-        if (canvas) {
-          viewerCanvasElement = canvas
-          viewerBounds = canvas.getBoundingClientRect()
-          try { viewerDataUrl = canvas.toDataURL('image/png') } catch { /* ignore */ }
+        viewerCanvas = document.querySelector<HTMLCanvasElement>('#bim-viewer-container canvas')
+        if (viewerCanvas) {
+          viewerBounds = viewerCanvas.getBoundingClientRect()
+          try { viewerDataUrl = viewerCanvas.toDataURL('image/png') } catch { /* ignore */ }
         }
       } else {
-        const canvas = currentViewer === ViewerNames.pointcloud
-          ? document.querySelector<HTMLCanvasElement>('#pointcloud-viewer-container canvas')
+        const sel = currentViewer === ViewerNames.pointcloud ? '#pointcloud-viewer-container' : null
+        viewerCanvas = sel
+          ? document.querySelector<HTMLCanvasElement>(`${sel} canvas`)
           : document.querySelector<HTMLCanvasElement>('canvas')
-        if (canvas) {
-          viewerCanvasElement = canvas
-          viewerBounds = canvas.getBoundingClientRect()
-          try { viewerDataUrl = canvas.toDataURL('image/png') } catch { /* ignore */ }
+        if (viewerCanvas) {
+          viewerBounds = viewerCanvas.getBoundingClientRect()
+          try { viewerDataUrl = viewerCanvas.toDataURL('image/png') } catch { /* ignore */ }
         }
       }
 
-      // Capture the full DOM — sidebar, toolbar, all UI panels — but skip the
-      // viewer canvas (we have its pixels already; html2canvas can't read WebGL).
       const { default: html2canvas } = await import('html2canvas')
-      const uiCanvas = await html2canvas(document.body, {
+
+      // Find the dialog portal: walk up from [role="dialog"] to its direct
+      // child-of-body ancestor. We hide it with display:none before capture
+      // and restore it after. This avoids ignoreElements on a body child,
+      // which causes "Unable to find element in cloned iframe".
+      let dialogPortal: HTMLElement | null = null
+      const dialogEl = document.querySelector('[role="dialog"]')
+      if (dialogEl) {
+        let node: Element | null = dialogEl
+        while (node && node.parentElement !== document.body) {
+          node = node.parentElement
+        }
+        if (node && node !== document.body) dialogPortal = node as HTMLElement
+      }
+
+      if (dialogPortal) dialogPortal.style.display = 'none'
+
+      const captureUi = (ignoreImages: boolean) => html2canvas(document.body, {
         useCORS: true,
         allowTaint: false,
         logging: false,
-        removeContainer: true,
         scale: window.devicePixelRatio || 1,
-        ignoreElements: (el) => el === viewerCanvasElement,
+        width: window.innerWidth,
+        height: window.innerHeight,
+        x: window.scrollX,
+        y: window.scrollY,
+        windowWidth: window.innerWidth,
+        windowHeight: window.innerHeight,
+        scrollX: -window.scrollX,
+        scrollY: -window.scrollY,
+        ignoreElements: (el: Element) =>
+          el === viewerCanvas || (ignoreImages && el.tagName === 'IMG'),
       })
 
-      // Draw the pre-captured viewer image into the blank region.
+      let uiCanvas: HTMLCanvasElement
+      try {
+        try {
+          uiCanvas = await captureUi(false)
+        } catch (err) {
+          // Safari throws "The operation is insecure" when a cross-origin
+          // image (org logo, user avatar, ...) taints html2canvas's internal
+          // canvas even with allowTaint:false — retry once with all <img>
+          // elements excluded so the capture still succeeds, just without
+          // those images. Chrome is more lenient here, which is why this
+          // only shows up on mobile Safari.
+          console.warn('[useCaptureScreenshot] retrying without <img> elements after taint error:', err)
+          uiCanvas = await captureUi(true)
+        }
+      } finally {
+        if (dialogPortal) dialogPortal.style.display = ''
+      }
+
+      // Composite the pre-captured viewer image at the exact canvas bounds.
       if (viewerDataUrl && viewerBounds) {
         const ctx = uiCanvas.getContext('2d')
         if (ctx) {
@@ -106,8 +145,9 @@ export function useCaptureScreenshot(): () => Promise<string | null> {
           blobToBase64(blob).then(resolve)
         }, 'image/png', 1.0)
       })
+    } catch (err) {
+      console.error('[useCaptureScreenshot] failed:', err)
+      throw err instanceof Error ? err : new Error(String(err))
     }
-
-    return capture().catch(() => null)
   }, [currentViewer, map, world])
 }

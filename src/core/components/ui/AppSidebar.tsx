@@ -12,11 +12,14 @@ import { Button } from './Button'
 import * as LR from 'lucide-react'
 
 import { useTranslations } from 'next-intl'
+import { useSession } from 'next-auth/react'
 import { CdtIcon } from './Icons/CdtIcon'
 import Link from 'next/link'
 import { Sidebar, useSidebar, NavUser } from './'
 import { ViewerNames } from '../../types'
 import { useMenusContext } from '../../store'
+import { BugReportDialog } from '../support/BugReportDialog'
+import { FeatureRequestDialog } from '../support/FeatureRequestDialog'
 
 export const handleChangeViewer = (
   viewer: ViewerNames,
@@ -48,8 +51,12 @@ export function AppSidebar({ children, signOut }: AppSidebarProps) {
   const t = useTranslations('AppSidebar')
 
   const { state: menusState } = useMenusContext()
+  const { data: session } = useSession()
 
-  const { sidebarState, isMobile, openMobile, toggleMenuSidebar } = useSidebar()
+  const {
+    sidebarState, isMobile, openMobile, toggleMenuSidebar,
+    bugReportOpen, setBugReportOpen, featureRequestOpen, setFeatureRequestOpen,
+  } = useSidebar()
 
   const { currentViewer } = menusState.menus
 
@@ -124,6 +131,21 @@ export function AppSidebar({ children, signOut }: AppSidebarProps) {
             ) : null}
           </div>
       </Sidebar>
+
+      {/* Rendered outside <Sidebar> (and its mobile Sheet) so they survive the
+          Sheet closing — see the SidebarContext comment for why. */}
+      <BugReportDialog
+        open={bugReportOpen}
+        onOpenChange={setBugReportOpen}
+        userEmail={session?.user?.email ?? undefined}
+        viewer={currentViewer}
+      />
+      <FeatureRequestDialog
+        open={featureRequestOpen}
+        onOpenChange={setFeatureRequestOpen}
+        userEmail={session?.user?.email ?? undefined}
+        viewer={currentViewer}
+      />
     </>
   )
 }

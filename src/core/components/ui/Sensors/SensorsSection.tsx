@@ -26,6 +26,7 @@ import type { Sensor } from '../../../types/dbTypes';
 import { useSensorTypes } from '../../../hooks/sensorTypes/sensorTypes'
 import * as LR from 'lucide-react'
 import { stringToColour } from '../../viewers/map/utils/stringToColour'
+import { resolveLucideIcon } from './sensorUtils'
 
 type SensorAction = 'view' | 'edit' | 'delete'
 
@@ -232,7 +233,7 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
           const viewerTypes = visibleSensorTypes?.[currentViewer]
           const isTypeVisible = viewerTypes?.length > 0 && viewerTypes.includes(typeId)
 
-          const sensorIcon = LR[type?.icon] || LR.Radio
+          const sensorIcon = resolveLucideIcon(type?.icon)
 
           return (
             <CollapsibleSection

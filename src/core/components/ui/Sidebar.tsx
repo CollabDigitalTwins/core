@@ -57,6 +57,13 @@ type SidebarContextProps = {
   toggleInfoSidebar: () => void
   geocodeEarthApiKey?: string
   geocoderUrl?: string
+  // Rendered outside the mobile Sheet (see AppSidebar) so they survive the
+  // Sheet closing — Radix unmounts the Sheet's whole subtree on close, which
+  // would otherwise take these dialogs down with it right after they open.
+  bugReportOpen: boolean
+  setBugReportOpen: (open: boolean) => void
+  featureRequestOpen: boolean
+  setFeatureRequestOpen: (open: boolean) => void
 }
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null)
@@ -105,6 +112,8 @@ const SidebarProvider = React.forwardRef<
         const isMobile = useIsMobile()
         const [openMobile, setOpenMobile] = React.useState(false)
         const [openInfo, setOpenInfo] = React.useState(false)
+        const [bugReportOpen, setBugReportOpen] = React.useState(false)
+        const [featureRequestOpen, setFeatureRequestOpen] = React.useState(false)
 
         // This is the internal state of the sidebar.
         // We use openProp and setOpenProp for control from outside the component.
@@ -200,8 +209,12 @@ const SidebarProvider = React.forwardRef<
             toggleInfoSidebar,
             geocodeEarthApiKey,
             geocoderUrl,
+            bugReportOpen,
+            setBugReportOpen,
+            featureRequestOpen,
+            setFeatureRequestOpen,
           }),
-          [sidebarState, open, setOpenMenu, isMobile, openMobile, setOpenMobile, openInfo, setOpenInfo, toggleMenuSidebar, toggleInfoSidebar, geocodeEarthApiKey, geocoderUrl],
+          [sidebarState, open, setOpenMenu, isMobile, openMobile, setOpenMobile, openInfo, setOpenInfo, toggleMenuSidebar, toggleInfoSidebar, geocodeEarthApiKey, geocoderUrl, bugReportOpen, featureRequestOpen],
         )
 
         return (
@@ -230,16 +243,16 @@ const SidebarProvider = React.forwardRef<
                   data-state={openInfo ? 'open' : 'closed'}
                   aria-hidden={!openInfo}
                   className={cn(
-                    'fixed inset-y-0 z-40 w-[410px] transition-[transform,opacity] duration-300 ease-in-out will-change-transform',
+                    'fixed inset-y-0 z-40 w-full sm:w-[410px] overflow-hidden transition-[transform,opacity] duration-300 ease-in-out will-change-transform',
                     openInfo
                       ? 'translate-x-0 opacity-100'
                       : '-translate-x-full opacity-0 pointer-events-none'
                   )}
                   style={{
-                    left: open
-                      ? 'var(--sidebar-width)'
-                      : (isMobile ? '0' : 'var(--sidebar-width-icon)'),
-                    width: '400px',
+                    left: isMobile
+                      ? '0'
+                      : (open ? 'var(--sidebar-width)' : 'var(--sidebar-width-icon)'),
+                    width: isMobile ? '100%' : '400px',
                   }}
                 >
                   <InfoSidebar minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} pointcloudApiUrl={pointcloudApiUrl} />

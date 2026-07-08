@@ -14,6 +14,17 @@ import { useParams, useSearchParams } from 'next/navigation'
 import ReCAPTCHA from 'react-google-recaptcha'
 //import { useAppConfigContext } from '../../store/AppConfig/context'
 
+// Where Auth.js sends a guest AFTER they authenticate with Google (the redirectTo).
+// The app's signIn callback provisions the guest (Guest role + guest org) on this path.
+const GUEST_REDIRECT_PATH = '/guest'
+
+// Set ONLY by the "Access as Guest" button right before signIn('google'), and read
+// by the server signIn callback to tell guest intent from a plain "Sign in with
+// Google" click (which must keep the existing link flow and show google_not_linked
+// for unlinked accounts). Must match the name read on the server (auth.ts:
+// GUEST_INTENT_COOKIE). Short-lived; only the guest button ever sets it.
+const GUEST_INTENT_COOKIE = 'cdt_guest_intent'
+
 interface SignInContentProps {
   recaptchaSiteKey?: string
 }
@@ -38,12 +49,19 @@ function SignInContent({ recaptchaSiteKey, }) {
   const [googleError, setGoogleError] = React.useState(
     searchParams.get('error')
   )
-  //Clean up the Google query error in URL, and have it only return /orgName/signin to clear frontend error responses 
+  //Clean up the Google query error in URL, and have it only return /orgName/signin to clear frontend error responses
   React.useEffect(() => {
     if (googleError) {
       window.history.replaceState({}, '', `/${orgName}/signin`)
     }
   }, [googleError, orgName])
+
+  // Clear any stale guest-intent marker when the sign-in page loads, so it only
+  // ever reflects a fresh "Access as Guest" click (and never bleeds into a later
+  // plain "Sign in with Google" click).
+  React.useEffect(() => {
+    document.cookie = `${GUEST_INTENT_COOKIE}=; path=/; max-age=0; samesite=lax`
+  }, [])
 
   const t = useTranslations('Signin')
   const tMfa = useTranslations('MFA')
@@ -297,6 +315,36 @@ function SignInContent({ recaptchaSiteKey, }) {
             onChange={(token) => onReCaptchaSuccess(token)}
             theme={authTheme}
           />
+        </div>
+      )}
+
+      {/* GUEST ACCESS — explore a live demo instance without an account */}
+      {step === 'login' && (
+        <div className="space-y-3">
+          <div className="auth-or-divider">{t('guestDivider')}</div>
+
+          <Button
+            type="button"
+            onClick={() => {
+              // Mark THIS click as guest intent so the server's signIn callback
+              // can tell it apart from the plain "Sign in with Google" icon.
+              document.cookie = `${GUEST_INTENT_COOKIE}=1; path=/; max-age=300; samesite=lax`
+              signIn('google', { redirectTo: GUEST_REDIRECT_PATH })
+            }}
+            disabled={isLoading}
+            aria-label={t('guestAriaLabel')}
+            className="w-full inline-flex items-center justify-center gap-2 auth-btn-guest"
+          >
+            <LR.DoorOpen size={16} />
+            {t('guestButton')}
+          </Button>
+
+          <p
+            className="text-center"
+            style={{ color: 'var(--hp-on-surface-variant)', fontSize: '0.8rem' }}
+          >
+            {t('guestSubtitle')}
+          </p>
         </div>
       )}
     </>

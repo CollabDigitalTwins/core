@@ -230,7 +230,7 @@ export function PointCloudLoadingState({ pointcloudApiUrl }: { pointcloudApiUrl?
 
     try {
       console.log('Creating point cloud entry...')
-      const { pointCloud, upload } = await createPointCloud(fileName)
+      const { pointCloud, upload } = await createPointCloud(fileName, building.id)
       console.log('Point cloud created:', pointCloud.id)
 
       console.log('Uploading file...')
@@ -239,7 +239,18 @@ export function PointCloudLoadingState({ pointcloudApiUrl }: { pointcloudApiUrl?
       })
       console.log('Upload complete!')
 
-      // Trigger a refresh of the files - the state will update automatically
+      console.log('Starting conversion...')
+      const convertRes = await fetch(
+        `${API_BASE}/point-cloud/${encodeURIComponent(String(pointCloud.id))}/convert-to-potree`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ options: { sampling_method: 'poisson' } }),
+        }
+      )
+      if (!convertRes.ok) throw new Error('Failed to start conversion')
+      console.log('Conversion started!')
+
       window.location.reload()
     }
     catch (error) {

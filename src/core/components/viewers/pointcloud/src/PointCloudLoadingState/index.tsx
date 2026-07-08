@@ -164,11 +164,11 @@ export function PointCloudLoadingState({ pointcloudApiUrl }: { pointcloudApiUrl?
   }
 
   // Create point cloud entry
-  async function createPointCloud(name: string): Promise<CreatePointCloudResponse> {
+  async function createPointCloud(name: string, buildingId: number): Promise<CreatePointCloudResponse> {
     const res = await fetch('/api/point-cloud', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, buildingId }),
     })
 
     if (!res.ok) {

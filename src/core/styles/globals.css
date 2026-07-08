@@ -1017,50 +1017,51 @@ ul {
     justify-content: center;
     align-items: center;
   }
-  /* MapLibre's own AttributionControl auto-expands the compact attribution
-     once on load for narrow/mobile maps (see _updateCompact() in
-     attribution_control.ts — it sets the `open` attribute and adds
-     `.maplibregl-compact-show` before any user interaction), only
-     collapsing it back once the user drags the map. Ignore those
-     JS-managed classes/attributes entirely and force it closed by default;
-     reveal it only on genuine, real-time user interaction (:hover for
-     pointer devices, :focus-within once the icon is tapped/focused) so it
-     never shows automatically on load. */
+}
+
+@media (max-width: 768px) {
+  .maplibregl-ctrl-bottom-right {
+    margin-bottom: 48px !important;
+    font-size: 10px !important;
+    /* The floating map toolbar (bottom, centered) sits at z-10 — without
+       this, it renders on top of (hides) the attribution popup instead of
+       the popup coming forward/in front of it when tapped open. This
+       container is already `position: absolute` via MapLibre's own base
+       CSS, so z-index applies directly here. */
+    z-index: 30 !important;
+  }
+
+  /* MapLibre auto-adds `open` + `.maplibregl-compact-show` together once on
+     mount for narrow viewports (attribution_control.ts _updateCompact()).
+     Trying to distinguish that from a genuine tap via those same
+     classes/attributes is unreliable — tapping <summary> fires BOTH the
+     browser's native <details> toggle AND MapLibre's own JS toggle at once,
+     which can reproduce the same "both present" combination on a real tap
+     too. Side-step MapLibre's class bookkeeping entirely: force hidden
+     always, reveal only on real, live interaction (:hover for pointer
+     devices, :focus-within once tapped/focused, :active as a fallback for
+     iOS Safari's unreliable tap-to-focus on button-like elements). */
   .maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib-inner {
     display: none !important;
+  }
+
+  .maplibregl-ctrl-bottom-right details:hover .maplibregl-ctrl-attrib-inner,
+  .maplibregl-ctrl-bottom-right details:focus-within .maplibregl-ctrl-attrib-inner,
+  .maplibregl-ctrl-bottom-right details:active .maplibregl-ctrl-attrib-inner {
+    display: block !important;
+    max-width: calc(100vw - 20px) !important;
+    width: auto !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    font-size: 10px !important;
+    box-sizing: border-box !important;
   }
 
   .maplibregl-ctrl-bottom-right details:hover,
   .maplibregl-ctrl-bottom-right details:focus-within,
   .maplibregl-ctrl-bottom-right details:active {
-    /* The base rule sets overflow:hidden !important on this element (for the
-       collapsed icon's ellipsis truncation) — without overriding it here,
-       that clips the absolutely-positioned popup below into invisibility. */
     overflow: visible !important;
-  }
-
-  /* On mobile, expanding the attribution in place (growing right/down from
-     the bottom-right corner) pushes it toward — or past — the edge of the
-     screen. Anchor it to the bottom-right of the icon instead, so it pops
-     up and grows upward, staying fully on-screen.
-     :active is a defensive fallback — iOS Safari doesn't reliably move
-     focus to tapped button-like elements, so :focus-within alone could
-     miss a tap; :active is guaranteed to fire on touch across browsers. */
-  .maplibregl-ctrl-bottom-right details:hover .maplibregl-ctrl-attrib-inner,
-  .maplibregl-ctrl-bottom-right details:focus-within .maplibregl-ctrl-attrib-inner,
-  .maplibregl-ctrl-bottom-right details:active .maplibregl-ctrl-attrib-inner {
-    display: block !important;
-    position: absolute !important;
-    bottom: 100% !important;
-    right: 0 !important;
-    left: auto !important;
-    margin-bottom: 6px !important;
-    max-width: min(85vw, 300px) !important;
-    white-space: normal !important;
-    background: #fff;
-    border-radius: 4px;
-    padding: 6px 10px;
-    box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
   }
 }
 

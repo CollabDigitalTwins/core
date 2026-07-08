@@ -495,20 +495,20 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, minioB
       <DialogContent className="h-screen sm:h-[90vh] sm:max-h-[90vh] w-full max-w-full sm:w-[88vw] sm:max-w-[88vw] p-0 gap-0 overflow-hidden flex flex-col">
         {view === 'table' ? (
           <>
-            <DialogHeader className="bg-background z-50 sticky top-0 p-6 flex flex-row flex-wrap justify-between items-end gap-2 text-left">
+            <DialogHeader className="bg-background z-50 sticky top-0 p-4 sm:p-6 flex flex-row flex-wrap justify-between items-end gap-2 text-left">
               <div className="flex flex-col justify-end p-0">
                 <DialogTitle className="text-2xl">{t('dialogTitle')}</DialogTitle>
                 <DialogDescription className="text-sm">
                   {t('dialogDescription')}
                 </DialogDescription>
               </div>
-              <div className="flex flex-row flex-wrap justify-between items-center">
-                <div className="flex flex-wrap gap-2 font-medium">
-                  <div className="relative">
+              <div className="flex flex-row flex-wrap justify-between items-center w-full sm:w-auto">
+                <div className="flex flex-wrap gap-2 font-medium w-full sm:w-auto">
+                  <div className="relative flex-1 min-w-[140px] sm:flex-none">
                     <LR.Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder="Search"
-                      className="pl-8 w-[250px]"
+                      className="pl-8 w-full sm:w-[250px]"
                       value={searchTerm}
                       onChange={e => setSearchTerm(e.target.value)}
                       disabled={!ability.can('read', 'File')}

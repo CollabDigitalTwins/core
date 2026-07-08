@@ -178,6 +178,44 @@
   box-shadow: none !important;
 }
 
+/* ── "or" divider (above the guest button) ───────────── */
+.auth-or-divider {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hp-on-surface-variant);
+  opacity: 0.7;
+}
+
+/* ── "Access as Guest" button ───────────────────────── */
+.auth-btn-guest {
+  background: linear-gradient(135deg, #5b2a9e, #7c2d8f 55%, #a8406f) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-family: 'Geist', sans-serif;
+  border: none !important;
+  border-radius: 0.5rem;
+  transition: transform 0.2s ease, box-shadow 0.3s ease !important;
+  letter-spacing: -0.01em;
+}
+
+.auth-btn-guest:hover:not(:disabled) {
+  transform: scale(1.02) !important;
+  box-shadow: 0 8px 32px rgba(124, 45, 143, 0.35) !important;
+}
+
+.auth-btn-guest:active {
+  transform: scale(0.98) !important;
+}
+
+.auth-btn-guest:disabled {
+  opacity: 0.6;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 /* ── Secondary / outline auth button ─────────────────── */
 .auth-btn-outline {
   background: transparent !important;

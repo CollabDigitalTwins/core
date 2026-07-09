@@ -115,7 +115,7 @@ export function useColumns<TData = Dataset>(): ColumnDef<TData>[] {
           </div>
         )
       },
-      meta: { columnClasses: 'whitespace-nowrap' } as ColumnMeta,
+      meta: { columnClasses: '!hidden md:!table-cell whitespace-nowrap' } as ColumnMeta,
     },
   ]
 }

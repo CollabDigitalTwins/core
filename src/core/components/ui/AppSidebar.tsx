@@ -12,11 +12,14 @@ import { Button } from './Button'
 import * as LR from 'lucide-react'
 
 import { useTranslations } from 'next-intl'
+import { useSession } from 'next-auth/react'
 import { CdtIcon } from './Icons/CdtIcon'
 import Link from 'next/link'
 import { Sidebar, useSidebar, NavUser } from './'
 import { ViewerNames } from '../../types'
 import { useMenusContext } from '../../store'
+import { BugReportDialog } from '../support/BugReportDialog'
+import { FeatureRequestDialog } from '../support/FeatureRequestDialog'
 
 export const handleChangeViewer = (
   viewer: ViewerNames,
@@ -48,8 +51,12 @@ export function AppSidebar({ children, signOut }: AppSidebarProps) {
   const t = useTranslations('AppSidebar')
 
   const { state: menusState } = useMenusContext()
+  const { data: session } = useSession()
 
-  const { sidebarState, isMobile, openMobile, toggleMenuSidebar } = useSidebar()
+  const {
+    sidebarState, isMobile, openMobile, toggleMenuSidebar,
+    bugReportOpen, setBugReportOpen, featureRequestOpen, setFeatureRequestOpen,
+  } = useSidebar()
 
   const { currentViewer } = menusState.menus
 
@@ -63,13 +70,20 @@ export function AppSidebar({ children, signOut }: AppSidebarProps) {
     <>
       {/* Always show toggle button on mobile when collapsed */}
       {isMobile && isCollapsed && (
-        <div id='sidebar-toggle-button-mobile' className='fixed left-0 top-1/2 -translate-y-1/2 z-[100] flex items-center justify-center pointer-events-auto'>
+        <div
+          id="sidebar-toggle-button-mobile"
+          className="fixed left-0 top-[93dvh] z-[100] flex items-center justify-center pointer-events-auto"
+        >
           <button
             onClick={toggleMenuSidebar}
-            className="text-muted-foreground hover:text-primary p-[2px] rounded-r-md bg-sidebar"
-            style={{ border: '1px solid rgba(128,128,128,0.2)', borderLeft: 'none', boxShadow: '4px 0 8px -4px rgba(0,0,0,0.12)' }}
+            className="text-muted-foreground hover:text-primary px-2 py-1.5 rounded-r-lg bg-sidebar"
+            style={{
+              border: '1px solid rgba(128,128,128,0.2)',
+              borderLeft: 'none',
+              boxShadow: '4px 0 8px -4px rgba(0,0,0,0.12)',
+            }}
           >
-            <LR.ChevronRight className="w-5" />
+            <LR.ChevronRight className="w-6 h-6" />
           </button>
         </div>
       )}
@@ -124,6 +138,21 @@ export function AppSidebar({ children, signOut }: AppSidebarProps) {
             ) : null}
           </div>
       </Sidebar>
+
+      {/* Rendered outside <Sidebar> (and its mobile Sheet) so they survive the
+          Sheet closing — see the SidebarContext comment for why. */}
+      <BugReportDialog
+        open={bugReportOpen}
+        onOpenChange={setBugReportOpen}
+        userEmail={session?.user?.email ?? undefined}
+        viewer={currentViewer}
+      />
+      <FeatureRequestDialog
+        open={featureRequestOpen}
+        onOpenChange={setFeatureRequestOpen}
+        userEmail={session?.user?.email ?? undefined}
+        viewer={currentViewer}
+      />
     </>
   )
 }

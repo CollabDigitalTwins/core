@@ -8,8 +8,6 @@ import * as React from 'react'
 // Dependencies
 import { AppConfigContext, MapContext, useMenusContext } from '../store'
 import { ViewerNames } from '../types/'
-import { BugReportDialog } from "../components/support/BugReportDialog";
-import { FeatureRequestDialog } from "../components/support/FeatureRequestDialog";
 
 // Shadcn Components
 import {
@@ -108,7 +106,6 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
   }
 
   const logoKey = organization?.logoKey
-  //const { state: { runtimeConfig: { minioUrl } } } = useAppConfigContext()
   const logoUrl = minioBaseUrl && logoKey
     ? `${minioBaseUrl}/org-logos/${logoKey}`
     : '/images/cdt-logo-stroke.svg'
@@ -124,7 +121,10 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
     [userRole]
   )
 
-  const { sidebarState, setOpenInfo, isMobile, openMobile } = useSidebar()
+  const {
+    sidebarState, setOpenInfo, isMobile, openMobile, setOpenMobile,
+    setBugReportOpen, setFeatureRequestOpen,
+  } = useSidebar()
 
   const changeViewer = (viewer: ViewerNames) => {
     handleChangeViewer(viewer, setSelectedItem, setSelectedSite, setSelectedFile, setView, menusDispatch)
@@ -257,9 +257,22 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
   .filter(item => !appContent || appContent.includes(item.id as ViewerNames))
   .filter(canRenderItem)
 
-  const [bugOpen, setBugOpen] = React.useState(false);
-  const [featureOpen, setFeatureOpen] = React.useState(false);
-  
+  // BugReportDialog/FeatureRequestDialog are rendered by AppSidebar, outside
+  // the mobile Sheet's subtree — see the SidebarContext fields for why: this
+  // component (AppSidebarContent) is itself the Sheet's children on mobile,
+  // so a dialog rendered here would get unmounted along with the Sheet
+  // shortly after closing it, right after it opens.
+  // On mobile, also close the sidebar Sheet first so it doesn't end up behind
+  // the dialog (e.g. visible in a "Capture Screenshot").
+  const openBugDialog = () => {
+    if (isMobile) setOpenMobile(false)
+    setBugReportOpen(true)
+  }
+  const openFeatureDialog = () => {
+    if (isMobile) setOpenMobile(false)
+    setFeatureRequestOpen(true)
+  }
+
   return (
     <>
       <SidebarContent className='overflow-hidden'>
@@ -393,8 +406,8 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
                 <SupportMenu
                   isCollapsed={isCollapsed}
                   item={item}
-                  onOpenBug={() => setBugOpen(true)}
-                  onOpenFeature={() => setFeatureOpen(true)}
+                  onOpenBug={openBugDialog}
+                  onOpenFeature={openFeatureDialog}
                 />
               ) : (
                 <SidebarMenuButton asChild>
@@ -417,19 +430,6 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
         </SidebarMenu>
         </SidebarGroup>
       </SidebarFooter>
-        <BugReportDialog
-        open={bugOpen}
-        onOpenChange={setBugOpen}
-        userEmail={session?.user?.email ?? undefined}
-        viewer={currentViewer}
-      />
-
-      <FeatureRequestDialog
-        open={featureOpen}
-        onOpenChange={setFeatureOpen}
-        userEmail={session?.user?.email ?? undefined}
-        viewer={currentViewer}
-      />
     </>
   )
 }

@@ -427,8 +427,8 @@ const handleBackToTable = () => {
                 )}
 
                 {/* Search & Filter & Actions Row */}
-                <div className={`flex ${hideTitle ? 'justify-between' : 'justify-end'} items-center px-6 py-4 gap-4`}>
-                  <div className={hideTitle ? 'w-64' : 'w-96'}>
+                <div className={`flex flex-col sm:flex-row ${hideTitle ? 'sm:justify-between' : 'sm:justify-end'} items-stretch sm:items-center px-3 sm:px-6 py-4 gap-3 sm:gap-4`}>
+                  <div className={`w-full ${hideTitle ? 'sm:w-64' : 'sm:w-96'}`}>
                     <Input
                       placeholder={`${t('searchPlaceholder')} ${headerTitle}...`}
                       value={searchTerm}
@@ -436,7 +436,7 @@ const handleBackToTable = () => {
                     />
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <FilterButtons
                       currentViewer={currentViewer}
                       filters={filters}
@@ -473,45 +473,49 @@ const handleBackToTable = () => {
               </>
             ) : (
               // Detail View Header
-              <div className="flex justify-between items-center px-6 py-6">
-                <DetailHeader
-                  selectedItem={selectedItem}
-                  selectedSite={selectedSite}
-                  selectedInfrastructure={selectedInfrastructure}
-                  selectedFile={selectedFile}
-                  selectedUser={selectedUser}
-                  countryCode={organization?.country}
-                />
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 px-4 sm:px-6 py-4 sm:py-6">
+                <div className="min-w-0">
+                  <DetailHeader
+                    selectedItem={selectedItem}
+                    selectedSite={selectedSite}
+                    selectedInfrastructure={selectedInfrastructure}
+                    selectedFile={selectedFile}
+                    selectedUser={selectedUser}
+                    countryCode={organization?.country}
+                  />
+                </div>
 
-                <DetailActions
-                  editing={editing}
-                  activeChanges={activeChanges}
-                  currentViewer={currentViewer}
-                  selectedItem={selectedItem}
-                  selectedSite={selectedSite}
-                  selectedInfrastructure={selectedInfrastructure}
-                  selectedFile={selectedFile}
-                  selectedUser={selectedUser}
-                  activeBuildingTab={activeBuildingTab}
-                  activeSiteTab={activeSiteTab}
-                  onSave={async () => {
-                    await handleCreateNewItem()
-                    setEditing(false)
-                  }}
-                  onEdit={() => {
-                    setEditing(true)
-                    if (isNewItem) setActiveChanges(true)
-                  }}
-                  onCancel={() => {
-                    setEditing(false)
-                    if (isNewItem) handleBackToTable()
-                  }}
-                  onDeleteUser={() => {
-                    setSelectedUser(null)
-                    setView('table')
-                  }}
-                  setView={setView}
-                />
+                <div className="flex flex-wrap shrink-0 gap-2">
+                  <DetailActions
+                    editing={editing}
+                    activeChanges={activeChanges}
+                    currentViewer={currentViewer}
+                    selectedItem={selectedItem}
+                    selectedSite={selectedSite}
+                    selectedInfrastructure={selectedInfrastructure}
+                    selectedFile={selectedFile}
+                    selectedUser={selectedUser}
+                    activeBuildingTab={activeBuildingTab}
+                    activeSiteTab={activeSiteTab}
+                    onSave={async () => {
+                      await handleCreateNewItem()
+                      setEditing(false)
+                    }}
+                    onEdit={() => {
+                      setEditing(true)
+                      if (isNewItem) setActiveChanges(true)
+                    }}
+                    onCancel={() => {
+                      setEditing(false)
+                      if (isNewItem) handleBackToTable()
+                    }}
+                    onDeleteUser={() => {
+                      setSelectedUser(null)
+                      setView('table')
+                    }}
+                    setView={setView}
+                  />
+                </div>
               </div>
             )}
 

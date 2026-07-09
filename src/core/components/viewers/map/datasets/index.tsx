@@ -36,6 +36,7 @@ import {
 } from '../../../../components/ui/Dialog'
 import { Input } from '../../../../components/ui/Input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../components/ui/Tabs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/Select'
 // Data
 import { useColumns } from './data'
 import DatasetDetails from './DatasetDetails'
@@ -494,20 +495,20 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, minioB
       <DialogContent className="h-screen sm:h-[90vh] sm:max-h-[90vh] w-full max-w-full sm:w-[88vw] sm:max-w-[88vw] p-0 gap-0 overflow-hidden flex flex-col">
         {view === 'table' ? (
           <>
-            <DialogHeader className="bg-background z-50 sticky top-0 p-6 flex flex-row flex-wrap justify-between items-end gap-2 text-left">
+            <DialogHeader className="bg-background z-50 sticky top-0 p-4 sm:p-6 flex flex-row flex-wrap justify-between items-end gap-2 text-left">
               <div className="flex flex-col justify-end p-0">
                 <DialogTitle className="text-2xl">{t('dialogTitle')}</DialogTitle>
                 <DialogDescription className="text-sm">
                   {t('dialogDescription')}
                 </DialogDescription>
               </div>
-              <div className="flex flex-row flex-wrap justify-between items-center">
-                <div className="flex flex-wrap gap-2 font-medium">
-                  <div className="relative">
+              <div className="flex flex-row flex-wrap justify-between items-center w-full sm:w-auto">
+                <div className="flex flex-wrap gap-2 font-medium w-full sm:w-auto">
+                  <div className="relative flex-1 min-w-[140px] sm:flex-none">
                     <LR.Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder="Search"
-                      className="pl-8 w-[250px]"
+                      className="pl-8 w-full sm:w-[250px]"
                       value={searchTerm}
                       onChange={e => setSearchTerm(e.target.value)}
                       disabled={!ability.can('read', 'File')}
@@ -537,6 +538,27 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, minioB
             </DialogHeader>
             <div className="relative flex flex-col flex-1 min-h-0">
               <Tabs value={currentTab} className="flex flex-col gap-0 h-full" onValueChange={handleTabChange}>
+                {/* Mobile: TabsList below doesn't wrap and has no room to render below md,
+                    so it's replaced with a Select driving the same currentTab state. */}
+                <div className="md:hidden px-3 pb-2 flex-shrink-0">
+                  <Select value={currentTab} onValueChange={handleTabChange}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="applied">{t('appliedTab')} ({addedDatasets.length})</SelectItem>
+                      <SelectItem value="favourites">{t('favoritesTab')}</SelectItem>
+                      <SelectItem value="organizational">{t('organizationalTab')}</SelectItem>
+                      <SelectItem value="all">{t('allDataTab')}</SelectItem>
+                      <SelectItem value="national">{t('nationalTab')}</SelectItem>
+                      <SelectItem value="countrySubdivision">{t('countrySubdivisionTab')}</SelectItem>
+                      {showMunicipalTab && (
+                        <SelectItem value="municipal">{t('municipalTab')}</SelectItem>
+                      )}
+                      <SelectItem value="liveData">{t('liveDataTab')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="hidden md:!flex justify-between px-3 flex-shrink-0">
                   {' '}
                   {/* Prevent tabs from shrinking */}
@@ -646,12 +668,12 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, minioB
                   </BreadcrumbList>
                 </Breadcrumb>
               </div>
-              <div className="flex flex-row justify-between">
-                <div className="flex items-center">
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
+                <div className="flex items-center min-w-0 gap-1">
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent ${selectedDataset && favouriteDatasets.includes(selectedDataset) ? 'opacity-100' : ''}`}
+                    className={`shrink-0 opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent ${selectedDataset && favouriteDatasets.includes(selectedDataset) ? 'opacity-100' : ''}`}
                     onClick={handleFavourite}
                   >
                     <LR.Star
@@ -661,9 +683,9 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, minioB
                       fill={`${selectedDataset && favouriteDatasets.includes(selectedDataset) ? 'hsl(var(--chart-5))' : 'none'} `}
                     />
                   </Button>
-                  <DialogTitle>{selectedDataset?.name}</DialogTitle>
+                  <DialogTitle className="truncate">{selectedDataset?.name}</DialogTitle>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2 shrink-0">
                   <Button
                     variant="secondary"
                     onClick={handleBackToTable}

@@ -135,7 +135,7 @@ export function useColumns(buildings?: Building[]): ColumnDef<Building | Site | 
         return buildingName
       },
       enableSorting: true,
-      meta: { columnClasses: 'invisible absolute sm:visible sm:static sm:table-cell' } as ColumnMeta,
+      meta: { columnClasses: '' } as ColumnMeta,
     },
     {
       accessorKey: 'buildingCountrySubdivision',
@@ -316,7 +316,7 @@ export function useColumns(buildings?: Building[]): ColumnDef<Building | Site | 
       return infraName
     },
     enableSorting: true,
-    meta: { columnClasses: 'invisible absolute sm:visible sm:static sm:table-cell' } as ColumnMeta,
+    meta: { columnClasses: '' } as ColumnMeta,
   },
   {
     accessorKey: 'infrastructureCountrySubdivision',

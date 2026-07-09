@@ -30,7 +30,7 @@ export function InfoSidebarContainer({
   const [loadingBuildingInfo] = React.useState(false)
 
   return (
-    <div className="w-[410px] flex flex-col h-screen bg-background border-r border-border ">
+    <div className="w-full sm:w-[410px] flex flex-col h-full min-h-0 bg-background border-r border-border ">
       <Header
         currentBuilding={currentBuilding}
         loadingBuildingInfo={loadingBuildingInfo}

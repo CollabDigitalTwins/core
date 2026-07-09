@@ -227,7 +227,7 @@ export function DataTable<TData, TValue>({
                     {/* leading cell(s) */}
                     {LeadingCell
                       && (
-                        <TableCell className="w-10 p-2">
+                        <TableCell className="w-px p-1 sm:p-2">
                           <LeadingCell dataset={row.original} />
                         </TableCell>
                       )}
@@ -248,7 +248,7 @@ export function DataTable<TData, TValue>({
                     {/* trailing cell(s) */}
                     {TrailingCell
                       && (
-                        <TableCell className="w-10 p-2">
+                        <TableCell className="w-px p-1 sm:p-2">
                           <TrailingCell row={row} />
                         </TableCell>
                       )}
@@ -275,7 +275,7 @@ export function DataTable<TData, TValue>({
       </div>
       {/* Pagination */}
       {showPagination && (
-        <div className={`flex items-center flex-wrap justify-center sm:justify-end gap-8 px-1 py-4 ${paginationClasses}`}>
+        <div className={`flex items-center flex-wrap justify-center sm:justify-end gap-3 sm:gap-8 px-1 py-4 ${paginationClasses}`}>
           <div className="flex flex-row gap-2 items-center justify-center">
             <span className="text-sm text-foreground text-nowrap">{t('paginationTitle')}</span>
             <Select

@@ -35,9 +35,10 @@ const POINT_CLOUD_OPTIONS: import('../../../../../../../../types/global').FileAc
 interface PointCloudsSectionProps {
   files: DbFile[]
   pointcloudApiUrl?: string
+  buildingId?: number
 }
 
-export function PointCloudsSection({ files, pointcloudApiUrl }: PointCloudsSectionProps) {
+export function PointCloudsSection({ files, pointcloudApiUrl, buildingId }: PointCloudsSectionProps) {
   // Translation
   const t = useTranslations('PointCloudManagement')
   const API_BASE = pointcloudApiUrl ?? 'http://localhost:5101'
@@ -165,11 +166,11 @@ export function PointCloudsSection({ files, pointcloudApiUrl }: PointCloudsSecti
 
   // Create point cloud entry — routed through the CDT proxy so that
   // organizationId is injected server-side from the authenticated session.
-  async function createPointCloud(name: string, uploadedBy: string | null): Promise<CreatePointCloudResponse> {
+  async function createPointCloud(name: string, buildingId?: number): Promise<CreatePointCloudResponse> {
     const res = await fetch('/api/point-cloud', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, uploadedBy }),
+      body: JSON.stringify({ name, buildingId }),
     })
 
     if (!res.ok) {
@@ -291,6 +292,7 @@ export function PointCloudsSection({ files, pointcloudApiUrl }: PointCloudsSecti
       )
       es.close()
       esRef.current = null
+      window.location.reload()
     })
 
     es.addEventListener('failed', () => {
@@ -334,7 +336,7 @@ export function PointCloudsSection({ files, pointcloudApiUrl }: PointCloudsSecti
     try {
       console.log('Creating point cloud entry...')
       const userEmail = session?.user?.email || null
-      const { pointCloud, upload } = await createPointCloud(fileName, userEmail)
+      const { pointCloud, upload } = await createPointCloud(fileName, buildingId)
       console.log('Point cloud created:', pointCloud.id)
 
       console.log('Uploading file...')
@@ -347,7 +349,6 @@ export function PointCloudsSection({ files, pointcloudApiUrl }: PointCloudsSecti
       const conversion = await startConversion(pointCloud.id)
       console.log('Conversion started:', conversion.jobId)
 
-      // Subscribe to progress
       subscribeToProgress(conversion.jobId, Number(pointCloud.id))
     } catch (error) {
       console.error('Error uploading point cloud:', error)

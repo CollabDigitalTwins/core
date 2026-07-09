@@ -22,6 +22,21 @@ export function getSensorTypeIcon(sensorType: `${SensorTypes}`): LR.LucideIcon {
   return sensorTypeIcons[sensorType] || LR.Radio
 }
 
+/**
+ * Sensor types also carry a free-text `icon` field (set via an admin UI) that
+ * gets indexed directly into the lucide-react namespace. Unlike a lookup
+ * miss (which just returns `undefined`), a value that happens to match a
+ * non-component export (e.g. a type/helper name) would pass a plain
+ * `LR[name] || LR.Radio` check and throw when rendered as JSX — validate the
+ * resolved value actually looks like a component first.
+ */
+export function resolveLucideIcon(iconName: string | null | undefined): LR.LucideIcon {
+  const candidate = iconName ? (LR as unknown as Record<string, unknown>)[iconName] : undefined
+  const isIconComponent = typeof candidate === 'function'
+    || (typeof candidate === 'object' && candidate !== null && '$$typeof' in candidate)
+  return (isIconComponent ? candidate : LR.Radio) as LR.LucideIcon
+}
+
 // Define a type for your color palette
 type ColorPalette = {
   max: string;   // Main icon color

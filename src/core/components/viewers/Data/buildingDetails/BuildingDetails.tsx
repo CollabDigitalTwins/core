@@ -17,6 +17,7 @@ import { useFilesByBuildingId } from '../../../../hooks/files/files'
 
 // Utilities
 import { useBuildingHeaders } from '../utils/Headers'
+import { useIsMobile } from '../../../../hooks/ui/use-mobile'
 
 // Shadcn Components
 import { DescriptionListItem } from '../../../ui/DescriptionList'
@@ -65,6 +66,8 @@ const BuildingDetails = React.forwardRef<BuildingDetailsRef, BuildingDetailsProp
 
   // Permissions
   const { ability } = usePermissions()
+
+  const isMobile = useIsMobile()
 
   const buildingHeaders = useBuildingHeaders()
 
@@ -677,6 +680,40 @@ const BuildingDetails = React.forwardRef<BuildingDetailsRef, BuildingDetailsProp
             </div>
           )
         })}
+      </div>
+    )
+  }
+
+  // Mobile: stack the tab picker above the content instead of squeezing them
+  // into the same row (the desktop layout below is otherwise untouched).
+  if (isMobile) {
+    return (
+      <div className="flex flex-col gap-2 p-6 h-full overflow-hidden min-h-0">
+        <TabSidebar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          tabOptions={tabOptions}
+          attachedFilesCount={attachedFilesCount}
+        />
+
+        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+          <div className="flex-shrink-0 pb-2 px-6">
+            <p className="text-xl text-foreground font-semibold">{currentTabSection?.title}</p>
+          </div>
+          <div className="flex-1 min-h-0 px-6 overflow-auto">
+            {activeTab === 'attached-files'
+              ? (
+                  <AttachedFiles
+                    buildingId={selectedItem?.id}
+                    files={attachedFiles}
+                    isLoading={filesLoading}
+                  />
+                )
+              : (
+                  selectedItem && renderTabContent()
+                )}
+          </div>
+        </div>
       </div>
     )
   }

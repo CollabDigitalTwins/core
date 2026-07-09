@@ -16,6 +16,7 @@ import { useMenusContext } from '../../../../store'
 
 // Utilities
 import { useSiteHeaders } from '../utils/Headers'
+import { useIsMobile } from '../../../../hooks/ui/use-mobile'
 
 // Shadcn Components
 import { DescriptionListItem } from '../../../../components/ui/DescriptionList'
@@ -73,6 +74,8 @@ const SiteDetails = React.forwardRef<SiteDetailsRef, SiteDetailsProps>(({
 
   // Navigation to a building's detail page (from the associated-buildings table).
   const { setSelectedItem, setView, dispatch: menusDispatch } = useMenusContext()
+
+  const isMobile = useIsMobile()
 
   const siteHeaders = useSiteHeaders()
   const associatedBuildingsCount = selectedSite?.siteBuildings?.length || 0
@@ -534,6 +537,36 @@ const SiteDetails = React.forwardRef<SiteDetailsRef, SiteDetailsProps>(({
       setActiveChanges?.(true)
     }
   }, [selectedSite, setEditing, setActiveChanges])
+
+  // Mobile: stack the tab picker above the content instead of squeezing them
+  // into the same row (the desktop layout below is otherwise untouched).
+  if (isMobile) {
+    return (
+      <div className="flex flex-col gap-2 p-6 h-full overflow-hidden min-h-0">
+        <TabSidebar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          tabOptions={tabOptions}
+          associatedBuildingsCount={associatedBuildingsCount}
+        />
+
+        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+          <div className="flex-shrink-0 pb-2 px-6">
+            <p className="text-xl text-foreground font-semibold">{currentTabSection?.title}</p>
+          </div>
+          <div className="flex-1 min-h-0 px-6 overflow-auto">
+            {activeTab === 'attached-files'
+              ? (
+                  <AttachedFiles />
+                )
+              : (
+                  selectedSite && renderTabContent()
+                )}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-row gap-2 p-6 h-full overflow-hidden">

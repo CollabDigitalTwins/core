@@ -31,7 +31,17 @@ export function TopicsSection() {
   // Get BIM context
   const { state: bimState, dispatch: bimDispatch } = React.useContext(BimContext)
   const { bimComponents, bcfTopics } = bimState.bim
-  const bcfTopicsManager = bimComponents?.get(BCFTopicsManager)
+  // .get() throws if the component hasn't been registered yet (e.g. the BIM
+  // engine is still initializing) — fall back to constructing it directly,
+  // which self-registers (see BCFTopicsManager's constructor).
+  let bcfTopicsManager: BCFTopicsManager | undefined
+  if (bimComponents) {
+    try {
+      bcfTopicsManager = bimComponents.get(BCFTopicsManager)
+    } catch {
+      bcfTopicsManager = new BCFTopicsManager(bimComponents)
+    }
+  }
 
   // Get Buildings context
   const { state: buildingState } = React.useContext(BuildingsContext)

@@ -349,10 +349,11 @@ export default function OrganizationSettingsPanel({
               <div className="space-y-2">
                 <label className="text-sm font-medium">{t('fields.name')}</label>
                 <Input
-                  value={(getFieldValue('name') as string) || ''}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  disabled={!isEditing || !ability.can('update', "Organization")}
+                  value={(organization?.name as string) || ''}
+                  disabled
+                  readOnly
                 />
+                <p className="text-xs text-muted-foreground">{t('fields.nameLocked')}</p>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">{t('fields.title')}</label>

@@ -16,6 +16,8 @@ import { Textarea } from "../ui/Textarea";
 
 import * as LR from "lucide-react";
 import { toast } from "sonner";
+import { useCurrentViewerPosition } from "../../hooks/useCurrentViewerPosition";
+import { useShareUrl } from "../../hooks/useShareUrl";
 
 function getBrowserInfo(): string {
   const ua = navigator.userAgent;
@@ -43,12 +45,44 @@ function getBrowserInfo(): string {
 }
 
 function getDeviceInfo(): string {
-  if ("userAgentData" in navigator) {
-    return (navigator as any).userAgentData?.mobile ? "Mobile" : "Desktop";
+  const ua = navigator.userAgent;
+
+  // Mobile
+  if (/iPhone/i.test(ua)) {
+    return "Mobile - iPhone";
   }
-  return /Mobile|Android|iPhone|iPad|iPod/.test(navigator.userAgent)
-    ? "Mobile"
-    : "Desktop";
+
+  if (/Android/i.test(ua) && /Mobile/i.test(ua)) {
+    return "Mobile - Android";
+  }
+
+  // Tablets
+  if (/iPad/i.test(ua)) {
+    return "Tablet - iPad";
+  }
+
+  if (/Android/i.test(ua) && !/Mobile/i.test(ua)) {
+    return "Tablet - Android";
+  }
+
+  // Desktop OS
+  if (/Windows NT/i.test(ua)) {
+    return "Desktop - Windows";
+  }
+
+  if (/Macintosh|Mac OS X/i.test(ua)) {
+    return "Desktop - macOS";
+  }
+
+  if (/CrOS/i.test(ua)) {
+    return "Desktop - ChromeOS";
+  }
+
+  if (/Linux/i.test(ua)) {
+    return "Desktop - Linux";
+  }
+
+  return "Unknown";
 }
 
 type Props = {
@@ -60,6 +94,8 @@ type Props = {
 
 export function FeatureRequestDialog({ open, onOpenChange, userEmail, viewer }: Props) {
   const t = useTranslations("supportDialog");
+  const getPosition = useCurrentViewerPosition();
+  const getShareUrl = useShareUrl();
 
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
@@ -76,6 +112,7 @@ export function FeatureRequestDialog({ open, onOpenChange, userEmail, viewer }: 
     try {
       setLoading(true);
 
+      const shareUrl = await getShareUrl();
       await fetch("/api/github-issue", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -85,13 +122,14 @@ export function FeatureRequestDialog({ open, onOpenChange, userEmail, viewer }: 
           type: "feature-request",
           labels: ["users"],
           meta: {
-            url: window.location.href,
+            url: shareUrl,
             userAgent: navigator.userAgent,
             browser: getBrowserInfo(),
             device: getDeviceInfo(),
             timestamp: new Date().toISOString(),
             viewer,
             userEmail,
+            position: getPosition(),
           },
         }),
       });

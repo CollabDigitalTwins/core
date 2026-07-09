@@ -40,7 +40,7 @@ export function FileTab({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
 
   return (
     <div className="flex-1 flex flex-col space-y-6 h-full py-4 overflow-hidden">
-      <PointCloudsSection files={pointCloudFiles} pointcloudApiUrl={pointcloudApiUrl} />
+      <PointCloudsSection files={pointCloudFiles} pointcloudApiUrl={pointcloudApiUrl} buildingId={buildingId} />
       <FilesSection files={nonPointCloudFiles} />
     </div>
   )

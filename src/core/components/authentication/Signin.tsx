@@ -13,6 +13,7 @@ import { AuthPage, useAuthTheme } from './AuthPage'
 import { useParams, useSearchParams } from 'next/navigation'
 import ReCAPTCHA from 'react-google-recaptcha'
 import { PasswordError } from '../authentication/PasswordError'
+import { AuthHeader } from './SignInAuthHeader'
 //import { useAppConfigContext } from '../../store/AppConfig/context'
 
 interface SignInContentProps {
@@ -68,6 +69,7 @@ function SignInContent({ recaptchaSiteKey, }) {
   const t = useTranslations('Signin')
   const tMfa = useTranslations('MFA')
   const tforgotPassword = useTranslations('forgotPassword')
+  const tresetPassword = useTranslations('resetPassword')
   const authTheme = useAuthTheme()
 
   
@@ -222,8 +224,6 @@ function SignInContent({ recaptchaSiteKey, }) {
     setConfirmPassword(value)
     setConfirmPasswordError(value === newPassword ? '' : tforgotPassword('noMatch'))
   } 
-  const canProceed = currentPassword.length >= 12
-  const canSave = newPassword.length >= 12 && confirmPassword.length >= 12 && !isLoading
 
   //Forgot Password Flow: 1. User Clicks Reset Password > 2. OTP is emailed(forgotpassword API)
   //  > 3. OTP is verified(verifyotp API) > 4. User chooses a new password(resetpassword API)
@@ -324,9 +324,10 @@ const handleResetPassword = async () => {
 
   }
 
-  if (errors.length > 0)
+  if (errors.length > 0){
+    toast.error(tforgotPassword('passwordPolicyError'))
     return
-
+  }
   setIsLoading(true)
   setError('')
 
@@ -352,7 +353,8 @@ const handleResetPassword = async () => {
 
     if (!res.ok) {
 
-      setError('Session Expired: Unable to reset password.')
+      toast.error('Session Expired: Unable to reset password.')
+      setStep('login')
       return
 
     }
@@ -375,27 +377,30 @@ const handleResetPassword = async () => {
   return (
     <>
       <Toaster richColors position="top-right" />
-      {/* Header */}
-      <div className="space-y-2 text-left">
+
+      {/* LOGIN FORM */}
+      {step === 'login' && (
+        <form onSubmit={handleSubmit} className="space-y-4">
+           {/* LOGIN Header */}
+          <div className="space-y-2 text-left">
+
         <h1 className="font-display font-bold" style={{
           fontSize: '1.75rem',
           lineHeight: '1.1',
           letterSpacing: '-0.02em',
           color: 'var(--hp-on-surface)',
         }}>
-          {step === 'login' ? t('title') : tMfa('title')}
+         {/*  {step === 'login' ? t('title') : tMfa('title')} */}
+         {t('title')}
         </h1>
 
         <p style={{ color: 'var(--hp-on-surface-variant)', fontSize: '0.9rem' }}>
-          {step === 'login'
+         {/* {step === 'login'
             ? t('message')
-            : tMfa('subtitle', { email })}
+            : tMfa('subtitle', { email })} */}
+          {t('message')}
         </p>
-      </div>
-
-      {/* LOGIN FORM */}
-      {step === 'login' && (
-        <form onSubmit={handleSubmit} className="space-y-4">
+      </div> 
 
           <Input
             type="email"
@@ -470,6 +475,24 @@ const handleResetPassword = async () => {
       {/* MFA FORM */}
       {step === 'mfa' && (
         <div className="space-y-4">
+                <div className="space-y-2 text-left">
+        <h1 className="font-display font-bold" style={{
+          fontSize: '1.75rem',
+          lineHeight: '1.1',
+          letterSpacing: '-0.02em',
+          color: 'var(--hp-on-surface)',
+        }}>
+         {/*  {step === 'login' ? t('title') : tMfa('title')} */}
+         {tMfa('title')}
+        </h1>
+
+        <p style={{ color: 'var(--hp-on-surface-variant)', fontSize: '0.9rem' }}>
+         {/* {step === 'login'
+            ? t('message')
+            : tMfa('subtitle', { email })} */}
+          {tMfa('subtitle',{email})}
+        </p>
+      </div>
 
           <Input
             placeholder={tMfa('placeholder')}
@@ -496,6 +519,24 @@ const handleResetPassword = async () => {
       {/*Forgot Password step: Send OTP for Reset */}
       {step === 'forgotPassword' && (
   <div className="space-y-4">
+        <div className="space-y-2 text-left">
+        <h1 className="font-display font-bold" style={{
+          fontSize: '1.75rem',
+          lineHeight: '1.1',
+          letterSpacing: '-0.02em',
+          color: 'var(--hp-on-surface)',
+        }}>
+         {/*  {step === 'login' ? t('title') : tMfa('title')} */}
+         {tresetPassword('title')}
+        </h1>
+
+        <p style={{ color: 'var(--hp-on-surface-variant)', fontSize: '0.9rem' }}>
+         {/* {step === 'login'
+            ? t('message')
+            : tMfa('subtitle', { email })} */}
+          {tresetPassword('subtitle')}
+        </p>
+      </div> 
 
     <Input
       type="email"
@@ -535,14 +576,24 @@ const handleResetPassword = async () => {
 {/* Verify OTP for Password Change */}
 {step === 'forgotPasswordSent' && (
   <div className="space-y-4">
+                        <div className="space-y-2 text-left">
+        <h1 className="font-display font-bold" style={{
+          fontSize: '1.75rem',
+          lineHeight: '1.1',
+          letterSpacing: '-0.02em',
+          color: 'var(--hp-on-surface)',
+        }}>
+         {/*  {step === 'login' ? t('title') : tMfa('title')} */}
+         {tresetPassword('title')}
+        </h1>
 
-    <p
-      className="text-sm"
-      style={{ color: 'var(--hp-on-surface-variant)' }}
-    >
-      If an account exists for <strong>{email}</strong>,
-      a password reset code has been sent.
-    </p>
+        <p style={{ color: 'var(--hp-on-surface-variant)', fontSize: '0.9rem' }}>
+         {/* {step === 'login'
+            ? t('message')
+            : tMfa('subtitle', { email })} */}
+          {tresetPassword('ifAnAccountExists',{email})}
+        </p>
+      </div>
               <Input
             placeholder={tMfa('placeholder')}
             value={code}
@@ -572,6 +623,31 @@ const handleResetPassword = async () => {
 {step === 'changePassword' && (
 
 <div className="space-y-4">
+                          <div className="space-y-2 text-left">
+        <h1 className="font-display font-bold" style={{
+          fontSize: '1.75rem',
+          lineHeight: '1.1',
+          letterSpacing: '-0.02em',
+          color: 'var(--hp-on-surface)',
+        }}>
+         {/*  {step === 'login' ? t('title') : tMfa('title')} */}
+         {tresetPassword('newPasswordTitle')}
+        </h1>
+
+        <p style={{ color: 'var(--hp-on-surface-variant)', fontSize: '0.9rem' }}>
+         {/* {step === 'login'
+            ? t('message')
+            : tMfa('subtitle', { email })} */}
+          {tresetPassword('newPasswordMessage')}<br /> <br />
+          {tresetPassword('lowercase')} <br />
+          {tresetPassword('lowercase')} <br />
+          {tresetPassword('uppercase')} <br />
+          {tresetPassword('digit')} <br />
+          {tresetPassword('specialchar')} <br />
+          {tresetPassword('minmax')} <br />
+        </p>
+
+      </div>
   
                                      
   <Input

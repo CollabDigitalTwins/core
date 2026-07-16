@@ -4,7 +4,7 @@ First off, thanks for taking the time to contribute! ❤️
 
 All types of contributions are encouraged and valued. See the [Table of Contents](#table-of-contents) for different ways to help and details about how this project handles them. Please make sure to read the relevant section before making your contribution. It will make it a lot easier for us maintainers and smooth out the experience for all involved. The community looks forward to your contributions. 🎉
 
-> 📖 **This file is the quick reference.** The complete contributor guide — [dev environment setup](https://docs.collabdt.org/contributing/dev-environment), [git workflow](https://docs.collabdt.org/contributing/git-workflow), and commit conventions — lives in the documentation at **[docs.collabdt.org/contributing](https://docs.collabdt.org/contributing)**.
+> 📖 **This file is the quick reference.** The complete contributor guide — [dev environment setup](https://docs.collabdt.org/docs/contributing/dev-environment), [git workflow](https://docs.collabdt.org/docs/contributing/git-workflow), and commit conventions — lives in the documentation at **[docs.collabdt.org/docs/contributing](https://docs.collabdt.org/docs/contributing/)**.
 
 > And if you like the project, but just don't have time to contribute, that's fine. There are other easy ways to support the project and show your appreciation, which we would also be very happy about:
 > - Star the project
@@ -139,9 +139,9 @@ Enhancement suggestions are tracked as [GitHub issues](/issues).
 
 ### Your First Code Contribution
 
-The full setup and workflow live in the documentation — see [Dev Environment Setup](https://docs.collabdt.org/contributing/dev-environment) and [Git Workflow](https://docs.collabdt.org/contributing/git-workflow). In short:
+The full setup and workflow live in the documentation — see [Dev Environment Setup](https://docs.collabdt.org/docs/contributing/dev-environment) and [Git Workflow](https://docs.collabdt.org/docs/contributing/git-workflow). In short:
 
-1. Set up your local environment (see [Dev Environment Setup](https://docs.collabdt.org/contributing/dev-environment)).
+1. Set up your local environment (see [Dev Environment Setup](https://docs.collabdt.org/docs/contributing/dev-environment)). Note: this library renders inside the CDT platform — validate your change with the unit test suite (`yarn test:unit`); maintainers exercise every PR inside the platform during review.
 2. **Fork** the repository and clone your fork locally; install dependencies with `yarn install`.
 3. Create a feature branch off **`dev`** (the integration branch), named after your feature or issue.
 4. Make your change, then run the linter and tests before committing:
@@ -150,11 +150,11 @@ The full setup and workflow live in the documentation — see [Dev Environment S
 5. Commit using the [Conventional Commits convention](#commit-messages), push to your fork, and open a pull request **against `dev`** with a clear description of what changed and why.
 6. On your first pull request you will be asked to accept the [Contributor License Agreement](CLA.md) — see [Contributor Terms](#contributor-terms).
 
-`main` is the production branch: only maintainers merge `dev` into `main`, which triggers an automated `semantic-release`. See [TESTING.md](TESTING.md) for the full testing guide.
+`main` is the production branch: only maintainers merge `dev` into `main` and publish releases to npm (release automation via `semantic-release` is being set up — until it lands, maintainers publish manually from `main`). See [TESTING.md](TESTING.md) for the full testing guide.
 
 ### Improving The Documentation
 
-Project documentation lives in the docs repository ([github.com/collabdt/docs](https://github.com/collabdt/docs), published at [docs.collabdt.org](https://docs.collabdt.org)). To propose a change, edit or add the relevant `.md` file under `docs/`, follow the existing page templates, and open a pull request against `main`. Small fixes such as typos or broken links don't need a prior issue. In-repo docs (this file, the [README](README.md), and inline comments) follow the same pull-request workflow as code.
+Project documentation lives in the docs repository ([github.com/CollabDigitalTwins/docs](https://github.com/CollabDigitalTwins/docs), published at [docs.collabdt.org](https://docs.collabdt.org)). To propose a change, edit or add the relevant `.md` file under `docs/`, follow the existing page templates, and open a pull request against `main`. Small fixes such as typos or broken links don't need a prior issue. In-repo docs (this file, the [README](README.md), and inline comments) follow the same pull-request workflow as code.
 
 ## Styleguides
 ### Commit Messages
@@ -170,10 +170,10 @@ CDT follows the [Conventional Commits](https://www.conventionalcommits.org/en/v1
 | `fix` | patch | `fix(api): handle null responses from user endpoint` |
 | `feat` | minor | `feat(map): add layer opacity control` |
 | `perf` | patch | `perf(viewer): reduce re-renders on tile load` |
-| `build`, `ci`, `docs`, `refactor`, `test` | patch | `docs(readme): update setup instructions` |
+| `build`, `ci`, `docs`, `refactor`, `test` | no release | `docs(readme): update setup instructions` |
 | `BREAKING CHANGE:` in the footer (or `!` after the type) | major | `feat!: migrate auth to Auth.js` |
 
-Keep the subject under ~72 characters and use the body to explain the *why* when it isn't obvious. See [Git Workflow → Commit message convention](https://docs.collabdt.org/contributing/git-workflow#commit-message-convention) for the full reference.
+Keep the subject under ~72 characters and use the body to explain the *why* when it isn't obvious. See [Git Workflow → Commit message convention](https://docs.collabdt.org/docs/contributing/git-workflow#commit-message-convention) for the full reference.
 
 ## Join The Project Team
 

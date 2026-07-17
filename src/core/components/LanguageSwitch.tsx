@@ -51,7 +51,7 @@ export default function LanguageSwitch({ showLabel, variant='ghost', languages }
         if (!effectiveLanguages.includes(locale as Language)) {
             switchLanguage(effectiveLanguages[0], setCurrentLocale, router)
         }
-    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [])  
 
     if (options.length <= 1) return null
 

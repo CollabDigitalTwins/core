@@ -88,7 +88,7 @@ export function CollapsibleCommentItem({
   const indentClass = depth > 0 ? `ml-${Math.min(depth * 4, 12)}` : ''
 
   const { user: author } = useUser(String(comment.authorId))
-  let authorName: string | undefined = author?.name ?? 'Unknown User'
+  const authorName: string | undefined = author?.name ?? 'Unknown User'
 
   return (
     <div 

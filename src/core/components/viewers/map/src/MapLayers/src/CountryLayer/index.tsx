@@ -191,7 +191,7 @@ export const CountryLayer = ({ organization, maptilerKey }: { organization?: Org
         } as any,
       },
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [orgHasLocation])
 
   React.useEffect(() => {

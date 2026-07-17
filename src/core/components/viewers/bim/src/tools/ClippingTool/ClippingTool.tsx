@@ -126,7 +126,7 @@ export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
       });
     });
 
-    let result = await clipper.create(world)
+    const result = await clipper.create(world)
 
     if (result) {
       console.log(result)

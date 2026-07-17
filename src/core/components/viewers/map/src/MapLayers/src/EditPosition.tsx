@@ -138,7 +138,7 @@ export const EditPosition: React.FC<EditPositionProps> = ({
             }
             onMapRepaint?.();
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
     }, []);
 
     // Keep refs in sync with local state (drives real-time WebGL rendering in parent layers)
@@ -147,7 +147,7 @@ export const EditPosition: React.FC<EditPositionProps> = ({
             tempPositionsRef.current = { ...tempPositionsRef.current, [key]: position };
         }
         onMapRepaint?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     }, [position]);
 
     React.useEffect(() => {
@@ -155,7 +155,7 @@ export const EditPosition: React.FC<EditPositionProps> = ({
             tempRotationsRef.current = { ...tempRotationsRef.current, [key]: rotation };
         }
         onMapRepaint?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     }, [rotation]);
 
     React.useEffect(() => {
@@ -163,7 +163,7 @@ export const EditPosition: React.FC<EditPositionProps> = ({
             tempElevationsRef.current = { ...tempElevationsRef.current, [key]: elevation };
         }
         onMapRepaint?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     }, [elevation]);
 
     // Esc key exits edit mode; also restore cursor on unmount
@@ -179,7 +179,7 @@ export const EditPosition: React.FC<EditPositionProps> = ({
             document.removeEventListener("keydown", handleKeyDown);
             stopGrabCursor(); // always restore on unmount
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
     }, []);
 
     const handleSave = React.useCallback(async () => {

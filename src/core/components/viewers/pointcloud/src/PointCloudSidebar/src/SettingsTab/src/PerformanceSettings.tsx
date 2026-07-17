@@ -94,24 +94,24 @@ export function PerformanceSettings() {
   // Min Node Size Effect
   React.useEffect(() => {
     if (!viewer) return
-    let pointcloud = viewer.scene.pointclouds[0]
-    let material = pointcloud.material
+    const pointcloud = viewer.scene.pointclouds[0]
+    const material = pointcloud.material
     material.minSize = minNodeSize[0]
   }, [viewer, minNodeSize])
 
   // Max Node Size Effect
   React.useEffect(() => {
     if (!viewer) return
-    let pointcloud = viewer.scene.pointclouds[0]
-    let material = pointcloud.material
+    const pointcloud = viewer.scene.pointclouds[0]
+    const material = pointcloud.material
     material.maxSize = maxNodeSize[0]
   }, [viewer, maxNodeSize])
 
   // Point Size Type Effect
   React.useEffect(() => {
     if (!viewer) return
-    let pointcloud = viewer.scene.pointclouds[0]
-    let material = pointcloud.material
+    const pointcloud = viewer.scene.pointclouds[0]
+    const material = pointcloud.material
     material.pointSizeType = pointSizeType
   }, [viewer, pointSizeType])
 

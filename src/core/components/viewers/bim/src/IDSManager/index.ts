@@ -158,8 +158,8 @@ export class IDSManager extends OBC.Component {
 
         try {
             // Test all specifications and combine results
-            let combinedPass: OBC.ModelIdMap = {};
-            let combinedFail: OBC.ModelIdMap = {};
+            const combinedPass: OBC.ModelIdMap = {};
+            const combinedFail: OBC.ModelIdMap = {};
 
             for (const spec of this._specs) {
                 // Test the specification against all available models using a pattern that matches any model

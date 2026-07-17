@@ -117,21 +117,21 @@ export function useColumns(buildings?: Building[]): ColumnDef<Building | Site | 
         const building = row.original as Building
         const buildingName = building.buildingName
         const buildingAddress = building.buildingAddress
-        
+
         // Get all rows in the current page
         const currentPageData = table.getRowModel().rows.map(r => r.original as Building)
-        
+
         // Check if this building name exists in the current page
         const isDuplicate = buildingName && hasDuplicateName(currentPageData, buildingName)
-        
+
         if (!buildingName) {
           return buildingAddress || ''
         }
-        
+
         if (isDuplicate) {
           return `${buildingName} - ${buildingAddress || ''}`
         }
-        
+
         return buildingName
       },
       enableSorting: true,

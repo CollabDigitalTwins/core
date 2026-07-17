@@ -35,7 +35,7 @@ export function BimViewer() {
 
     const { state: menusState } = React.useContext(MenusContext);
     const { currentViewer } = menusState.menus;
-    
+
 
     const containerRef = React.useRef<HTMLDivElement>(null);
     const workerUrlRef = React.useRef<string | null>(null);
@@ -175,10 +175,10 @@ export function BimViewer() {
                     world.renderer?.resize(new THREE.Vector2(width, height));
                 }
             };
-            
+
             // Initial resize
             handleResize();
-            
+
             // Watch for container size changes using ResizeObserver. This
             // already covers the window-resize case: when the window resizes,
             // the flex layout reshapes this container, and ResizeObserver

@@ -28,14 +28,14 @@ export default function DatasetDetails({ selectedDataset }: DatasetDetailsProps)
 
   React.useEffect(() => {
     let isMounted = true
-    
+
     if (!selectedDataset) {
       setFeaturesData(null)
       return
     }
 
     setFeaturesLoading(true)
-    
+
     getFromCache(selectedDataset).then((data) => {
       if (isMounted) {
         setFeaturesData(data)

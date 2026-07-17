@@ -41,7 +41,7 @@ export function createSensorHooks(adapter: ApiAdapter) {
         const { data, error, isLoading } = useSWR<Sensor>(
             key,
             () => adapter.getSensor(id as number),
-            //{ refreshInterval: 1000 } 
+            //{ refreshInterval: 1000 }
         );
 
         // SWR Mutation for updating a sensor
@@ -57,7 +57,7 @@ export function createSensorHooks(adapter: ApiAdapter) {
                     // Revalidate the same keys used above
                     mutate(["sensor", id]);
                     mutate(["sensors"]);
-                    // If buildingId or authorId changed --> Need to invalidate previous + current building and author lists 
+                    // If buildingId or authorId changed --> Need to invalidate previous + current building and author lists
                     if (prev?.buildingId) mutate(["sensors", "building", prev.buildingId]);
                     if (prev?.authorId) mutate(["sensors", "author", prev.authorId]);
                     if (updatedSensor.buildingId) mutate(["sensors", "building", updatedSensor.buildingId]);
@@ -87,8 +87,8 @@ export function createSensorHooks(adapter: ApiAdapter) {
         isMutating,
         updateError,
         updatedData,
-        deleteSensor, 
-        isDeleting, 
+        deleteSensor,
+        isDeleting,
         deleteError
         };
     };

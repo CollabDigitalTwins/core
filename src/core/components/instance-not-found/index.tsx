@@ -39,13 +39,13 @@ export function InstanceNotFound({ organizationName }: InstanceNotFoundProps) {
   }
 
   const toggleLanguage = () => {
-   
+
     // Set cookie that expires in 1 year
     const expires = new Date()
     expires.setFullYear(expires.getFullYear() + 1)
-    
+
     document.cookie = `NEXT_LOCALE=${locale}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`
-    
+
     // Use router.refresh() to reload server components with new locale
     router.refresh()
   }
@@ -53,10 +53,10 @@ export function InstanceNotFound({ organizationName }: InstanceNotFoundProps) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsSubmitting(true)
-    
+
     // Store form reference before async operations
     const form = e.currentTarget
-    
+
     const formData = new FormData(form)
     const data = {
       firstName: formData.get('firstName') as string,
@@ -79,14 +79,14 @@ export function InstanceNotFound({ organizationName }: InstanceNotFoundProps) {
       if (!response.ok) {
         throw new Error('Failed to send message')
       }
-      
+
       toast.success('Request Sent!', {
         description: 'Thank you for your interest. We will get back to you soon.',
       })
-      
+
       // Use the stored reference
       form.reset()
-      
+
     } catch (error) {
       toast.error('Failed to send request', {
         description: 'Please try again later or email us directly at info@collabdt.org',
@@ -111,9 +111,9 @@ export function InstanceNotFound({ organizationName }: InstanceNotFoundProps) {
         onScrollToSection={() => {}}
         showNavigation={false}
       />
-      <OrganizationNotFoundSection 
+      <OrganizationNotFoundSection
         organizationName={organizationName}
-        onSubmit={handleSubmit} 
+        onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
       />
     </div>

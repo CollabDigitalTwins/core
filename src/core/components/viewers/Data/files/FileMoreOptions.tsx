@@ -178,7 +178,7 @@ export default function FileMoreOptions({ file, buildingId }: FileMoreOptionsPro
         handleConfirm={handleDeleteFileClick}
         itemName={file?.name || file?.metadata?.name}
       />
-      
+
     </>
   )
 }

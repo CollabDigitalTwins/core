@@ -11,7 +11,7 @@ import { useSearchParams } from 'next/navigation'
 import { useFilesByBuildingId } from '../../../../../../../hooks/files/files'
 import { DbFile } from '../../../../../../../types/dbTypes'
 import { SearchInput } from '../../../../../../ui'
-  
+
   export function FileTab() {
     const { state: buildingState } = React.useContext(BuildingsContext)
     const { building } = buildingState.buildings

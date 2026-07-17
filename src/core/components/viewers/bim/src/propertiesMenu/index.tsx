@@ -213,7 +213,7 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
 
     try {
       const idsManager = bimComponents.get(IDSManager)
-      
+
       const handleIDSTest = ({ totalPassed, totalFailed, title, description }: { totalPassed: number; totalFailed: number; title?: string; description?: string }) => {
         setIdsTestResults({ passed: totalPassed, failed: totalFailed })
         setIdsTitle(title || 'IDS Verification')
@@ -292,16 +292,16 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
     }
     else {
       loadElementProperties(currentElementId)
-      
+
       // Check if current element passed or failed IDS test
       if (bimComponents && idsEnabled) {
         try {
           const idsManager = bimComponents.get(IDSManager)
           const passMap = idsManager.pass
           const failMap = idsManager.fail
-          
+
           let elementStatus: 'pass' | 'fail' | null = null
-          
+
           // Check if element is in pass map
           for (const [modelId, expressIds] of Object.entries(passMap || {})) {
             if (expressIds.has(currentElementId)) {
@@ -309,7 +309,7 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
               break
             }
           }
-          
+
           // Check if element is in fail map (only if not already found in pass)
           if (!elementStatus) {
             for (const [modelId, expressIds] of Object.entries(failMap || {})) {
@@ -319,7 +319,7 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
               }
             }
           }
-          
+
           setCurrentElementIdsStatus(elementStatus)
         } catch (error) {
           setCurrentElementIdsStatus(null)
@@ -363,10 +363,10 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
   // Render IDS legend component
   const idsLegendComponent = React.useMemo(() => {
     if (!idsEnabled || !idsTestResults) return null
-    
+
     return (
-      <IDSLegend 
-        idsTestResults={idsTestResults} 
+      <IDSLegend
+        idsTestResults={idsTestResults}
         title={idsTitle}
         description={idsDescription}
         onClose={handleIDSClose}

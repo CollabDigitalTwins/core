@@ -33,7 +33,7 @@ export const GenericTool: React.FC<GenericTool> = ({ tool }) => {
       payload: { currentToolId },
     })
   }
-    
+
   const handleClick = async () => {
     try {
       // TODO: Implement explode by level functionality

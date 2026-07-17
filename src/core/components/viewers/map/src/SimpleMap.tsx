@@ -175,7 +175,7 @@ export default function SimpleMap({
     }
 
     animationRef.current = requestAnimationFrame(rotate)
-   
+
   }, [])
 
   return (

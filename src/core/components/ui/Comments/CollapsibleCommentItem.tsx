@@ -61,12 +61,12 @@ export function CollapsibleCommentItem({
   // Auto-collapse when visibility turns off
   React.useEffect(() => {
     const prevVisible = prevVisibleRef.current
-    
+
     if (prevVisible && !isVisible) {
       // Just turned invisible - collapse
       setIsExpanded(false)
     }
-    
+
     prevVisibleRef.current = isVisible
   }, [isVisible])
 
@@ -91,7 +91,7 @@ export function CollapsibleCommentItem({
   const authorName: string | undefined = author?.name ?? 'Unknown User'
 
   return (
-    <div 
+    <div
       className={cn(
         "border rounded-md overflow-hidden transition-opacity",
         indentClass,

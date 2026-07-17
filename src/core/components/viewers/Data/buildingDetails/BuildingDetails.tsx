@@ -129,7 +129,7 @@ const BuildingDetails = React.forwardRef<BuildingDetailsRef, BuildingDetailsProp
       // Only update if we're not currently editing to avoid overwriting user input
       if (!editing || Object.keys(editingValues).length === 0) {
         const mergedBuilding = { ...latestBuilding }
-        
+
         // Preserve file relationships from selectedItem if they exist
         for (const relationProp of Object.values(tagToRelationMap)) {
           const existingFiles = selectedItem[relationProp as keyof Building]
@@ -249,7 +249,7 @@ const BuildingDetails = React.forwardRef<BuildingDetailsRef, BuildingDetailsProp
         // Update building if there are non-file changes
         if (Object.keys(buildingUpdates).length > 0) {
           const result = await updateBuilding(buildingUpdates)
-          
+
           // Immediately update local state with the result
           if (result && setSelectedItem && selectedItem) {
             setSelectedItem({ ...selectedItem, ...result })
@@ -282,7 +282,7 @@ const BuildingDetails = React.forwardRef<BuildingDetailsRef, BuildingDetailsProp
       if (error?.status !== 401) {
         toast.error(selectedItem.id < 0 ? 'Failed to create building' : 'Failed to update building')
       }
-      
+
     }
     finally {
       setIsUpdating(false)
@@ -436,10 +436,10 @@ const BuildingDetails = React.forwardRef<BuildingDetailsRef, BuildingDetailsProp
       'buildingUnitsBSqft', 'buildingUnits1BSqft', 'buildingUnits2BSqft',
       'buildingUnits3BSqft', 'buildingUnits4BSqft', 'buildingUnits5BSqft', 'buildingUnits6BSqft',
       'buildingUnitsTotal', 'buildingAirQuality', 'buildingAnnualConsumption', 'buildingAssessedValue',
-      'buildingOrthogonalHeight', 'buildingOsmId', 'buildingSourceEui', 'buildingWardNumber', 'buildingCensusTract', 
+      'buildingOrthogonalHeight', 'buildingOsmId', 'buildingSourceEui', 'buildingWardNumber', 'buildingCensusTract',
       'buildingIntensityGhgEmissions', 'buildingPermitNumber', 'buildingProgramLoan','buildingProjectNumber',
-      'buildingRentalMarketSurveyZone', 'buildingSiteEui', 'buildingSolarPotential', 'buildingSubsidies', 
-      'buildingTotalContribution', 'buildingTotalGhgEmissions', 'buildingTotalRentableArea', 'buildingValueOfFundingFlowed', 
+      'buildingRentalMarketSurveyZone', 'buildingSiteEui', 'buildingSolarPotential', 'buildingSubsidies',
+      'buildingTotalContribution', 'buildingTotalGhgEmissions', 'buildingTotalRentableArea', 'buildingValueOfFundingFlowed',
       'buildingWaterUseIntensity', 'buildingParentSiteId', 'buildingAssessmentRatingCondition', 'buildingStoreyNum',
       'buildingElectricityServicePanelSize', 'buildingElectricityServiceSize', 'buildingElectricityServiceSize',
       'buildingElectricityServicePanelSize', 'buildingUnitsBelowMarketRentNum', 'buildingUnitsBelowMarketRentSqft',

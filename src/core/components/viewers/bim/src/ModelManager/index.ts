@@ -40,9 +40,9 @@ export class ModelManager extends OBC.Component {
   private _components: OBC.Components
   private _world: OBC.World | null = null
   private _gltfLoader: GLTFLoader
-  private _objLoader: OBJLoader 
-  private _fbxLoader: FBXLoader 
-  private _colladaLoader: ColladaLoader 
+  private _objLoader: OBJLoader
+  private _fbxLoader: FBXLoader
+  private _colladaLoader: ColladaLoader
   private _models: Map<string, ModelInfo> = new Map()
   private _animationClock: THREE.Clock = new THREE.Clock()
   private _animationId: number | null = null

@@ -11,8 +11,8 @@ import type { BuildingsActions, BuildingsState } from './reducer'
 
 import { BuildingsReducer } from './reducer'
 
-export type CompareItem = { 
-  id: string 
+export type CompareItem = {
+  id: string
 } & Omit<Partial<Building>, 'id'> & Omit<Partial<Site>, 'id'>
 
 type InitialStateType = {

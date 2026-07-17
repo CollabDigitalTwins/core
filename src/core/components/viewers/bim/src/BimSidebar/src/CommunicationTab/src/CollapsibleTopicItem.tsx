@@ -69,14 +69,14 @@ export function CollapsibleTopicItem({ topic, onAction }: CollapsibleTopicItemPr
             className="h-6 w-6 p-0"
             onClick={() => setIsExpanded(!isExpanded)}
           >
-            <LR.ChevronRight 
+            <LR.ChevronRight
               className={cn(
                 "h-4 w-4 transition-transform",
                 isExpanded && "rotate-90"
-              )} 
+              )}
             />
           </Button>
-          
+
           <div className="flex-1 min-w-0">
             <h4 className="text-sm font-medium text-foreground truncate">
               {topic.title}

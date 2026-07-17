@@ -51,16 +51,16 @@ export default function LanguageSwitch({ showLabel, variant='ghost', languages }
         if (!effectiveLanguages.includes(locale as Language)) {
             switchLanguage(effectiveLanguages[0], setCurrentLocale, router)
         }
-    }, [])  
+    }, [])
 
     if (options.length <= 1) return null
 
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-            <Button 
-                variant={variant} 
-                size={showLabel ? "default" : "icon"} 
+            <Button
+                variant={variant}
+                size={showLabel ? "default" : "icon"}
                 className={`text-xs ${showLabel ? 'w-full p-2 justify-start h-auto' : ''}`}
                 title={t('tooltip')}
             >

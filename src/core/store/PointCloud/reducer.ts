@@ -10,7 +10,7 @@ export enum PointCloudTools {
   ANGLE_MEASUREMENT = 'ANGLE_MEASUREMENT',
   AREA_MEASUREMENT = 'AREA_MEASUREMENT',
   VOLUME_MEASUREMENT = 'VOLUME_MEASUREMENT',
-  
+
   CLIPPING_PLANE = 'CLIPPING_PLANE',
   CLIPPING_BOX = 'CLIPPING_BOX',
 }
@@ -63,11 +63,11 @@ export const PointCloudReducer = (
   action: PointCloudActions
 ): PointCloudState => {
   switch (action.type) {
-    case "INIT": 
+    case "INIT":
       return { ...initialPointCloudState, ...action.payload.initialState };
-    case "SET_READY": 
+    case "SET_READY":
       return {...state, ready: action.payload.ready}
-    case "SET_ACTIVE_TOOL": 
+    case "SET_ACTIVE_TOOL":
       return {...state, activeTool: action.payload.activeTool}
     case "SET_CAMERA_PROJECTION":
       return {...state, cameraProjection: action.payload.cameraProjection}

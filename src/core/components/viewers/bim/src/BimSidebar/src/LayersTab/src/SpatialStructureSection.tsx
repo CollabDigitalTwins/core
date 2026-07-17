@@ -206,7 +206,7 @@ export function SpatialStructureSection({ searchQuery, modelId }: Props) {
     expandParents(tree.children)
     setExpandedItems(next)
     // Intentionally no `expandedItems` in deps — that would loop.
-     
+
   }, [searchQuery, tree, getItemId])
 
   const handleNodeClick = React.useCallback((item: SpatialTreeItem) => {

@@ -20,7 +20,7 @@ export class IDSManager extends OBC.Component {
     private _ghostMode: GhostMode | null = null
     private _idsTitle: string = 'IDS Verification'
     private _idsDescription: string = ''
-    
+
     // Custom materials for IDS visualization
     private _passMaterial: THREE.Material
     private _failMaterial: THREE.Material
@@ -29,7 +29,7 @@ export class IDSManager extends OBC.Component {
     private _world: OBC.World | null = null
 
     _pass: OBC.ModelIdMap
-    _fail: OBC.ModelIdMap 
+    _fail: OBC.ModelIdMap
 
     onTest: OBC.Event<{
         totalPassed: number;
@@ -58,7 +58,7 @@ export class IDSManager extends OBC.Component {
 
     get enabled() {
         return this._enabled
-    } 
+    }
 
     set enabled(value: boolean) {
         this._enabled = value
@@ -71,7 +71,7 @@ export class IDSManager extends OBC.Component {
         this._fragments = components.get(OBC.FragmentsManager)
         this._ghostMode = components.get(GhostMode)
         this._world = components.get(CurrentWorld).world
-        
+
         // Create materials for pass/fail visualization
         this._passMaterial = new THREE.MeshBasicMaterial({
             color: 0x22c55e, // Green
@@ -79,30 +79,30 @@ export class IDSManager extends OBC.Component {
             opacity: 0.8,
             depthTest: false,
         })
-        
+
         this._failMaterial = new THREE.MeshBasicMaterial({
             color: 0xff0000, // Red
             transparent: true,
             opacity: 0.8,
             depthTest: false,
         })
-        
+
         // Setup mesh handlers
         this._passMeshes.onItemAdded.add((mesh) => {
             if (!this._world) return
             this._world.scene.three.add(mesh)
         })
-        
+
         this._failMeshes.onItemAdded.add((mesh) => {
             if (!this._world) return
             this._world.scene.three.add(mesh)
         })
-        
+
         this._passMeshes.onBeforeDelete.add((mesh) => {
             mesh.removeFromParent()
             mesh.geometry.dispose()
         })
-        
+
         this._failMeshes.onBeforeDelete.add((mesh) => {
             mesh.removeFromParent()
             mesh.geometry.dispose()
@@ -121,17 +121,17 @@ export class IDSManager extends OBC.Component {
         try {
             // Read the file content as text
             const xmlContent = await idsFile.text();
-            
+
             // Parse the title and description from XML
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(xmlContent, 'text/xml');
-            
+
             const titleElement = xmlDoc.querySelector('ids\\:title, title');
             this._idsTitle = titleElement?.textContent || 'IDS Verification';
-            
+
             const descriptionElement = xmlDoc.querySelector('ids\\:description, description');
             this._idsDescription = descriptionElement?.textContent || '';
-            
+
             // Parse the XML and load specifications
             const specs = this._idsSpecifications.load(xmlContent);
             this._specs = specs;
@@ -164,9 +164,9 @@ export class IDSManager extends OBC.Component {
             for (const spec of this._specs) {
                 // Test the specification against all available models using a pattern that matches any model
                 const result = await spec.test([/.*/]);
-                
+
                 const { fail, pass } = this._idsSpecifications.getModelIdMap(result);
-                
+
                 // Combine results from all specifications
                 // Convert the array of objects with 'value' property to a Set of numbers
                 for (const [modelId, items] of Object.entries(pass)) {
@@ -174,22 +174,22 @@ export class IDSManager extends OBC.Component {
                         combinedPass[modelId] = new Set();
                     }
                     // Extract the actual express IDs from the value property
-                    const expressIds = Array.isArray(items) 
-                        ? items.map((item: any) => item.value) 
+                    const expressIds = Array.isArray(items)
+                        ? items.map((item: any) => item.value)
                         : Array.from(items as Set<number>);
-                    
+
                     expressIds.forEach(id => combinedPass[modelId].add(id));
                 }
-                
+
                 for (const [modelId, items] of Object.entries(fail)) {
                     if (!combinedFail[modelId]) {
                         combinedFail[modelId] = new Set();
                     }
                     // Extract the actual express IDs from the value property
-                    const expressIds = Array.isArray(items) 
-                        ? items.map((item: any) => item.value) 
+                    const expressIds = Array.isArray(items)
+                        ? items.map((item: any) => item.value)
                         : Array.from(items as Set<number>);
-                    
+
                     expressIds.forEach(id => combinedFail[modelId].add(id));
                 }
             }
@@ -280,18 +280,18 @@ export class IDSManager extends OBC.Component {
         // Clear IDS highlight meshes
         this._passMeshes.clear();
         this._failMeshes.clear();
-        
+
         // Restore original materials (disable ghost mode)
         if (this._ghostMode) {
             this._ghostMode.restoreModelMaterials()
         }
-        
+
         if (this._fragments) {
             // Clear current highlights map
             this._currentHighlights.clear();
             await this._fragments.core.update(true);
         }
-        
+
         // Trigger reset event
         this.onReset.trigger();
     }
@@ -307,13 +307,13 @@ export class IDSManager extends OBC.Component {
     async dispose(): Promise<void> {
         // Reset all highlights and restore materials
         await this.reset();
-        
+
         // Clear references
         this._idsSpecifications = null;
         this._fragments = null;
         this._specs = [];
         this._currentHighlights.clear();
-        
+
         this._enabled = false;
     }
 

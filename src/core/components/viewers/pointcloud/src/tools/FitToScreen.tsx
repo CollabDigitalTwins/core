@@ -27,7 +27,7 @@ export const FitToScreen = ({ tool }) => {
   React.useEffect(() => {
     if (!viewer) return
   }, [viewer])
-  
+
   const handleClick = () => {
     console.log("Handle click")
     if (!viewer) return

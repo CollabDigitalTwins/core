@@ -19,7 +19,7 @@ export const AreaMeasurement = ({active = false, currentMeasurements = []} : Are
 
   React.useEffect(() => {
     if (!viewer) return
-    
+
     if (active){
       // Begin insertion and store handle
       viewer.measuringTool.startInsertion({
@@ -45,7 +45,7 @@ export const AreaMeasurement = ({active = false, currentMeasurements = []} : Are
       }
     }
   }, [active, viewer])
-  
+
   return null;
 }
 

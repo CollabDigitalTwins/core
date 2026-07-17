@@ -9,7 +9,7 @@ import {
   SiteProjectPhase,
   SiteProjectType,
   SiteLandUse,
-  
+
 } from '../../../../types/dbTypes'
 import { usePermissions, useMapContext } from '../../../../store'
 
@@ -54,7 +54,7 @@ const FieldRenderer = ({
   getEnumType = () => null,
   isFullWidthField = () => false,
 }: FieldRendererProps) => {
-  
+
   // Permissions
   const { ability } = usePermissions()
   const { state: mapState } = useMapContext()
@@ -219,7 +219,7 @@ const FieldRenderer = ({
         </Select>
       )
     }
-// //Here------------------------------------------------------    
+// //Here------------------------------------------------------
   }
 
   if (isTextAreaField(property)) {

@@ -21,7 +21,7 @@ export class ClippingPlane extends OBC.Component {
     set enabled(value: boolean) {
         this._enabled = value
         this.clipper.enabled = value
-        
+
         if (value) {
             this.setupClippingPlane()
         } else {
@@ -32,17 +32,17 @@ export class ClippingPlane extends OBC.Component {
     constructor(components: OBC.Components) {
         super(components)
         components.add(ClippingPlane.uuid, this)
-        
+
         // Initialize clipper and raycasters
         this.clipper = components.get(OBC.Clipper)
         this.casters = components.get(OBC.Raycasters)
         this.world = components.get(CurrentWorld).world
-        
+
         // Initialize the raycaster for the world
         if (this.world) {
             this.casters.get(this.world)
         }
-        
+
         // Get the container from the world's renderer
         if (this.world?.renderer?.three.domElement.parentElement) {
             this.container = this.world.renderer.three.domElement.parentElement
@@ -82,11 +82,11 @@ export class ClippingPlane extends OBC.Component {
 
     private handleKeyDown = (event: KeyboardEvent) => {
         console.log('Key pressed:', event.code, 'Enabled:', this.enabled); // Debug log
-        
+
         if (event.code === "Delete" || event.code === "Backspace" || event.code === "Escape") {
             if (this.enabled && this.world) {
-                event.preventDefault(); 
-                event.stopPropagation(); 
+                event.preventDefault();
+                event.stopPropagation();
                 this.deletePlanes()
             }
         }

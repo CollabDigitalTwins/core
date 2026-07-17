@@ -114,22 +114,22 @@ export default function Geocoder({
 
         // Fetch geocoding suggestions
         const geocodeResults = await fetchSuggestions(query, organizationCountry)
-        
+
         // Deduplicate geocode results based on name and region
         const deduplicatedResults = geocodeResults.reduce((acc, feature) => {
           const location = parseLocation(feature)
           // Create a unique key based on name and region (case-insensitive)
           const key = `${location.name?.toLowerCase() || ''}_${location.region?.toLowerCase() || ''}`
-          
+
           // Only add if we haven't seen this combination before
           if (!acc.seen.has(key)) {
             acc.seen.add(key)
             acc.features.push(feature)
           }
-          
+
           return acc
         }, { seen: new Set(), features: [] })
-        
+
         setSuggestions(deduplicatedResults.features)
       }
       catch (error) {

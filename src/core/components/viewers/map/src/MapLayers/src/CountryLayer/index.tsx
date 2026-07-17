@@ -191,7 +191,7 @@ export const CountryLayer = ({ organization, maptilerKey }: { organization?: Org
         } as any,
       },
     })
-     
+
   }, [orgHasLocation])
 
   React.useEffect(() => {

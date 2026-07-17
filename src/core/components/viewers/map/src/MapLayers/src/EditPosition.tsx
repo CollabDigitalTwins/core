@@ -138,7 +138,7 @@ export const EditPosition: React.FC<EditPositionProps> = ({
             }
             onMapRepaint?.();
         };
-         
+
     }, []);
 
     // Keep refs in sync with local state (drives real-time WebGL rendering in parent layers)
@@ -147,7 +147,7 @@ export const EditPosition: React.FC<EditPositionProps> = ({
             tempPositionsRef.current = { ...tempPositionsRef.current, [key]: position };
         }
         onMapRepaint?.();
-     
+
     }, [position]);
 
     React.useEffect(() => {
@@ -155,7 +155,7 @@ export const EditPosition: React.FC<EditPositionProps> = ({
             tempRotationsRef.current = { ...tempRotationsRef.current, [key]: rotation };
         }
         onMapRepaint?.();
-     
+
     }, [rotation]);
 
     React.useEffect(() => {
@@ -163,7 +163,7 @@ export const EditPosition: React.FC<EditPositionProps> = ({
             tempElevationsRef.current = { ...tempElevationsRef.current, [key]: elevation };
         }
         onMapRepaint?.();
-     
+
     }, [elevation]);
 
     // Esc key exits edit mode; also restore cursor on unmount
@@ -179,7 +179,7 @@ export const EditPosition: React.FC<EditPositionProps> = ({
             document.removeEventListener("keydown", handleKeyDown);
             stopGrabCursor(); // always restore on unmount
         };
-         
+
     }, []);
 
     const handleSave = React.useCallback(async () => {

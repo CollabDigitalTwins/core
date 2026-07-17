@@ -62,12 +62,12 @@ export function CollapsibleSensorItem({
   // Auto-collapse when visibility turns off
   React.useEffect(() => {
     const prevVisible = prevVisibleRef.current
-    
+
     if (prevVisible && !isVisible) {
       // Just turned invisible - collapse
       setIsExpanded(false)
     }
-    
+
     prevVisibleRef.current = isVisible
   }, [isVisible])
 
@@ -78,7 +78,7 @@ export function CollapsibleSensorItem({
       try {
         const response = await fetch(dataPath)
         const csvText = await response.text()
-        
+
         // Parse CSV: format is "time,value" (e.g., "0:00:00,7.4")
         const lines = csvText.trim().split('\n')
         const parsed = lines.map(line => {
@@ -88,7 +88,7 @@ export function CollapsibleSensorItem({
             value: parseFloat(valueStr.trim())
           }
         }).filter(item => !isNaN(item.value)) // Filter out any invalid entries
-        
+
         setSensorData(parsed)
       } catch (error) {
         console.error('Error fetching sensor data:', error)
@@ -132,7 +132,7 @@ export function CollapsibleSensorItem({
   }
 
   return (
-    <div 
+    <div
       className={cn(
         "border rounded-md overflow-hidden transition-opacity",
         indentClass,
@@ -223,7 +223,7 @@ export function CollapsibleSensorItem({
                 {typeName}
               </Badge>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
                 <span className="text-muted-foreground">Name:</span>

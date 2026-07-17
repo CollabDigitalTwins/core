@@ -8,7 +8,7 @@ async function loadMemjs() {
   if (typeof window !== 'undefined') {
     return null
   }
-  
+
   if (!memjs) {
     try {
       memjs = await import('memjs')
@@ -36,9 +36,9 @@ async function getMemcacheClient() {
     }
 
     const memcacheServer = process.env.MEMCACHE_SERVER
-    
+
     console.log(`Connecting to Memcache server: ${memcacheServer}`)
-    
+
     client = memjsLib.Client.create(memcacheServer, {
       username: process.env.MEMCACHE_USERNAME,
       password: process.env.MEMCACHE_PASSWORD,
@@ -83,7 +83,7 @@ export async function getMemcache<T>(key: string): Promise<T | null> {
 
   try {
     const result = await client.get(key)
-    
+
     if (!result.value) {
       console.log(`Memcache MISS: ${key}`)
       return null

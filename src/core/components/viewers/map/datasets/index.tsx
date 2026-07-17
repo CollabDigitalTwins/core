@@ -324,11 +324,11 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, minioB
         return isLoadingMunicipal
       case 'all':
         // Show loading for "all" if any datasets are loading and we have no data yet
-        return (isLoadingNational || isLoadingSubdivision || isLoadingMunicipal) && 
+        return (isLoadingNational || isLoadingSubdivision || isLoadingMunicipal) &&
                allDatasets.length === 0
       case 'organizational':
         // Show loading for "organizational" if any datasets are loading and we have no organizational data yet
-        return (isLoadingNational || isLoadingSubdivision || isLoadingMunicipal) && 
+        return (isLoadingNational || isLoadingSubdivision || isLoadingMunicipal) &&
                allDatasets.filter(ds => ds.group === 'Organizational').length === 0
       default:
         return false
@@ -459,7 +459,7 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, minioB
   }, [])
   const handleRowHover = React.useCallback((dataset: Dataset) => {
     prefetch(dataset)
-    
+
     const currentIndex = sortedFilteredData.indexOf(dataset)
     if (currentIndex >= 0 && currentIndex < sortedFilteredData.length - 2) {
       setTimeout(() => {
@@ -603,8 +603,8 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, minioB
                       tab={currentTab}
                       onRowClick={handleRowClick}
                       onRowHover={handleRowHover}
-                      className="rounded-none w-auto h-full" 
-                      paginationClasses="bg-background z-20 w-full border-t" 
+                      className="rounded-none w-auto h-full"
+                      paginationClasses="bg-background z-20 w-full border-t"
                       isLoading={currentTabLoading}
                       leadingCell={props => (
                         <RowActions

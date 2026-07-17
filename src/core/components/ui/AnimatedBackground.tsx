@@ -145,14 +145,14 @@ export default function AnimatedBackground({ theme, assetsUrl }: Props = {}) {
       // Theme-aware grid lines
       ctx.strokeStyle = isDark ? 'rgba(239, 145, 97, 0.08)' : 'rgba(239, 146, 98, 0.3)'
       ctx.lineWidth = 0.5
-      
+
       for (let y = canvas.height; y > canvas.height * 0.3; y -= gridSize) {
         ctx.beginPath()
         ctx.moveTo(0, y)
         ctx.lineTo(canvas.width, y)
         ctx.stroke()
       }
-      
+
       const verticalSpacing = gridSize * 1.5
       // Render extra vertical grid lines for seamless wrap
       const gridCols = Math.ceil(canvas.width / verticalSpacing) + 2
@@ -173,7 +173,7 @@ export default function AnimatedBackground({ theme, assetsUrl }: Props = {}) {
         node.connections.forEach(targetIndex => {
           const target = dataNodes[targetIndex]
           const pulse = (Math.sin(time + node.pulse) + 1) / 2
-          
+
           ctx.beginPath()
           ctx.moveTo(node.x, node.y)
           ctx.lineTo(target.x, target.y)
@@ -200,7 +200,7 @@ export default function AnimatedBackground({ theme, assetsUrl }: Props = {}) {
       dataNodes.forEach(node => {
         const pulse = (Math.sin(time + node.pulse) + 1) / 2
         const size = 2.5 + pulse * 1
-        
+
         ctx.beginPath()
         ctx.arc(node.x, node.y, size * 2, 0, Math.PI * 2)
         ctx.fillStyle = isDark

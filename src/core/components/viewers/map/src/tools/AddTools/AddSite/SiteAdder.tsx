@@ -349,7 +349,7 @@ export const SiteAdder = ({ isOpen = false, onCancel }: SiteAdderProps) => {
       map.off('click', clickHandler)
       map.off('mousemove', mouseMoveHandler)
     }
-     
+
   }, [map, isDrawing])
 
   // Keyboard shortcuts while drawing: Enter finishes, Esc cancels, Backspace undoes.
@@ -362,7 +362,7 @@ export const SiteAdder = ({ isOpen = false, onCancel }: SiteAdderProps) => {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-     
+
   }, [isDrawing])
 
   // Persistent instruction / feedback toast that updates as points are added.
@@ -400,7 +400,7 @@ export const SiteAdder = ({ isOpen = false, onCancel }: SiteAdderProps) => {
         : undefined,
       cancel: { label: tf('cancel', 'Cancel'), onClick: () => cancelDrawing() },
     })
-     
+
   }, [isDrawing, drawingPoints.length])
 
   // If the tool is closed (e.g. the user switches tools) mid-draw, clean up.
@@ -409,7 +409,7 @@ export const SiteAdder = ({ isOpen = false, onCancel }: SiteAdderProps) => {
       clearDrawingFeatures()
       resetDrawingState()
     }
-     
+
   }, [isOpen, isDrawing])
 
   // Dismiss the instruction toast if the component unmounts while drawing.

@@ -78,8 +78,8 @@ const InfrastructureDetails = React.forwardRef<InfrastructureDetailsRef, Infrast
   const tabOptions = infrastructureHeaders.map(section => ({
     key: section.title.toLowerCase().replaceAll(/\s/g, '-'),
     label: section.title,
-    badge: section.title.toLowerCase().replaceAll(/\s/g, '-') === 'associated-buildings' 
-    ? associatedBuildingsCount 
+    badge: section.title.toLowerCase().replaceAll(/\s/g, '-') === 'associated-buildings'
+    ? associatedBuildingsCount
     : null,
   }))
 
@@ -128,7 +128,7 @@ const InfrastructureDetails = React.forwardRef<InfrastructureDetailsRef, Infrast
 
         // Call the create API
         const result = await createInfrastructure(infrastructureData)
-        
+
         // Update the selected infrastructure with the newly created one
         if (result && setSelectedInfrastructure) {
           setSelectedInfrastructure(result)

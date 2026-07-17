@@ -219,7 +219,7 @@ const handleGoogleUnlink = async () => {
 
     const res = await fetch('/api/google-unlink', {
       method: 'DELETE',
-    }) 
+    })
 
     if (!res.ok) {
       throw new Error()

@@ -109,7 +109,7 @@ export function useDatasetsForPortals(portals?: OpenDataPortal[], options?: Opti
     return () => {
       cancelled = true
     }
-   
+
   }, [key, rowsPerPage])
 
   return {

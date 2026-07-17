@@ -64,8 +64,8 @@ export function createSensorTypeHooks(adapter: ApiAdapter) {
             isMutating,
             updateError,
             updatedData,
-            deleteSensorType, 
-            isDeleting, 
+            deleteSensorType,
+            isDeleting,
             deleteError
         };
     }

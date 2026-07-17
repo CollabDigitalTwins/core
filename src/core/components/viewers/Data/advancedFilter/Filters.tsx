@@ -23,7 +23,7 @@ type FiltersProps = {
   setFilters: React.Dispatch<React.SetStateAction<any[]>>
   onApplyFilters: (filters: any[]) => void
   organizedFields?: { title: string, fields: filterFieldOptions[] }[]
-  filterSearchState: string 
+  filterSearchState: string
   setFilterSearchState: React.Dispatch<React.SetStateAction<string>>
 }
 

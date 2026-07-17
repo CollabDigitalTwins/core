@@ -34,8 +34,7 @@ export const AppConfigReducer = (state: AppConfigState, action: AppConfigActions
         user,
       }
     default:
-      
+
       return state
   }
 }
-  

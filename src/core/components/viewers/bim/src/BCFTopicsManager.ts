@@ -17,17 +17,17 @@ export class BCFTopicsManager extends OBC.Component {
     constructor(components: OBC.Components) {
         super(components)
         components.add(BCFTopicsManager.uuid, this)
-        
+
         // Initialize BCF components
         this.bcfTopics = components.get(OBC.BCFTopics)
         this.viewpoints = components.get(OBC.Viewpoints)
-        
+
         // Get world from CurrentWorld component
         this.world = components.get(CurrentWorld).world
         if (this.world) {
             this.viewpoints.world = this.world
         }
-        
+
         // Setup BCF Topics with default configuration
         this.bcfTopics.setup({
             author: "info@collabdigitaltwins.com", // This will be overridden when creating topics
@@ -48,11 +48,11 @@ export class BCFTopicsManager extends OBC.Component {
                 const viewpoint = this.viewpoints.create()
                 viewpoint.world = this.world
                 viewpoint.title = `Viewpoint for ${topic.title}`
-                
+
                 // Update camera and take snapshot
                 await viewpoint.updateCamera()
                 viewpoint.takeSnapshot()
-                
+
                 // Link viewpoint to topic
                 topic.viewpoints.add(viewpoint.guid)
             }
@@ -81,7 +81,7 @@ export class BCFTopicsManager extends OBC.Component {
             dueDate: topicData.dueDate,
             labels: topicData.labels || new Set()
         })
-        
+
         const viewpoint = this.createViewpoint(`viewpoint-${topic.title}`)
 
         if (viewpoint) topic.viewpoints.add(viewpoint.guid)
@@ -115,7 +115,7 @@ export class BCFTopicsManager extends OBC.Component {
             for (const viewpointId of topic.viewpoints) {
                 this.viewpoints.list.delete(viewpointId)
             }
-            
+
             // Remove the topic
             const success = this.bcfTopics.list.delete(topicId)
             return success
@@ -150,11 +150,11 @@ export class BCFTopicsManager extends OBC.Component {
         const viewpoint = this.viewpoints.create()
         viewpoint.world = this.world
         viewpoint.title = title
-        
+
         // const highlighter = this.components.get(OBF.Highlighter)
         // const selection = highlighter?.selection
         // console.log('Viewpoint selection:', selection)
-        
+
         // Update camera and take snapshot
         // viewpoint.updateCamera()
         // viewpoint.takeSnapshot()
@@ -166,16 +166,16 @@ export class BCFTopicsManager extends OBC.Component {
         try {
             // Export all topics
             const bcfBuffer = await this.bcfTopics.export()
-            
+
             // Create filename with date and building name
             const currentDate = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
-            const sanitizedBuildingName = buildingName 
+            const sanitizedBuildingName = buildingName
                 ? buildingName.replace(/[^a-zA-Z0-9-_]/g, '_') // Replace invalid filename chars with underscore
                 : 'UnknownBuilding'
             const filename = `${currentDate}_${sanitizedBuildingName}.bcf`
-            
+
             const bcfFile = new File([bcfBuffer], filename, { type: "application/octet-stream" })
-            
+
             return bcfFile
         } catch (error) {
             console.error('Failed to export BCF:', error)
@@ -188,7 +188,7 @@ export class BCFTopicsManager extends OBC.Component {
         try {
             const buffer = await file.arrayBuffer()
             const result = await this.bcfTopics.load(new Uint8Array(buffer))
-            
+
             return result
         } catch (error) {
             console.error('Failed to load BCF:', error)
@@ -208,14 +208,14 @@ export class BCFTopicsManager extends OBC.Component {
         } catch (error) {
             console.error('Failed to load BCF from URL:', error)
             throw error
-        }   
+        }
     }
 
     // Download BCF file
     async downloadBCF(buildingName?: string): Promise<void> {
         try {
             const bcfFile = await this.exportBCF(buildingName)
-            
+
             // Create download link
             const a = document.createElement("a")
             a.href = URL.createObjectURL(bcfFile)
@@ -235,14 +235,14 @@ export class BCFTopicsManager extends OBC.Component {
             input.multiple = false
             input.accept = ".bcf"
             input.type = "file"
-            
+
             input.addEventListener("change", async () => {
                 const file = input.files?.[0]
                 if (!file) {
                     reject(new Error('No file selected'))
                     return
                 }
-                
+
                 try {
                     const result = await this.loadBCF(file)
                     resolve(result)
@@ -250,7 +250,7 @@ export class BCFTopicsManager extends OBC.Component {
                     reject(error)
                 }
             })
-            
+
             input.click()
         })
     }

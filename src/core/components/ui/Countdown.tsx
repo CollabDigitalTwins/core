@@ -25,7 +25,7 @@ export default function Countdown({ targetDate, className }: CountdownProps) {
 
   React.useEffect(() => {
     setMounted(true)
-    
+
     const calculateTimeLeft = () => {
       const now = new Date().getTime()
       const target = targetDate.getTime()
@@ -91,13 +91,13 @@ function TimeUnitDisplay({ value, label, delay }: TimeUnitDisplayProps) {
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <div 
+      <div
         className={cn(
           "w-16 h-16 border-white border rounded-xl shadow-2xl backdrop-blur-sm",
           "flex items-center justify-center transition-all duration-300"
         )}
       >
-        <span 
+        <span
           className={cn(
             "text-primary-light font-black text-2xl font-mono tracking-wider"
           )}

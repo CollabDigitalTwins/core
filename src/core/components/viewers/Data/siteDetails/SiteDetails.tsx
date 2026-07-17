@@ -84,8 +84,8 @@ const SiteDetails = React.forwardRef<SiteDetailsRef, SiteDetailsProps>(({
   const tabOptions = siteHeaders.map(section => ({
     key: section.title.toLowerCase().replaceAll(/\s/g, '-'),
     label: section.title,
-    badge: section.title.toLowerCase().replaceAll(/\s/g, '-') === 'associated-buildings' 
-    ? associatedBuildingsCount 
+    badge: section.title.toLowerCase().replaceAll(/\s/g, '-') === 'associated-buildings'
+    ? associatedBuildingsCount
     : null,
   }))
 
@@ -134,7 +134,7 @@ const SiteDetails = React.forwardRef<SiteDetailsRef, SiteDetailsProps>(({
 
         // Call the create API
         const result = await createSite(siteData)
-        
+
         // Update the selected site with the newly created one
         if (result && setSelectedSite) {
           setSelectedSite(result)

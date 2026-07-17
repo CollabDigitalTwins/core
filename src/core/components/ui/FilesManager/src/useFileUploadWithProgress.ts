@@ -29,7 +29,7 @@ export function useFileUploadWithProgress({
   onUploadSuccess,
   onUploadError
 }: UseFileUploadWithProgressProps = {}) {
-  
+
   const [uploadState, setUploadState] = React.useState<UploadState>({
     uploading: false,
     progress: 0
@@ -85,10 +85,10 @@ export function useFileUploadWithProgress({
       }
 
       console.log('File successfully uploaded to API')
-      
+
       // Revalidate files list
       mutate(['files'])
-      
+
       onUploadSuccess?.()
     } catch (error) {
       console.error('Error uploading file:', error)
@@ -107,13 +107,13 @@ export function useFileUploadWithProgress({
       input.type = 'file'
       input.accept = acceptedFileTypes
       input.style.display = 'none'
-      
+
       input.addEventListener('change', async (e) => {
         const file = (e.target as HTMLInputElement).files?.[0]
         if (!file) return
         await handleFileUpload(file)
       })
-      
+
       inputRef.current = input
       document.body.appendChild(input)
     } else {

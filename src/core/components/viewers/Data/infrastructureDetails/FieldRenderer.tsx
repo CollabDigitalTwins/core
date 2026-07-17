@@ -199,9 +199,9 @@ const FieldRenderer = ({
             placeholder="Add new item"
             disabled={!ability.can('update', 'Infrastructure')}
           />
-          <Button 
-            variant="outline" 
-            size="icon" 
+          <Button
+            variant="outline"
+            size="icon"
             disabled={!ability.can('update', 'Infrastructure')}
           ><LR.Plus /></Button>
         </div>

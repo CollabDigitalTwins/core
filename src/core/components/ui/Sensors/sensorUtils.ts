@@ -46,27 +46,27 @@ type ColorPalette = {
 
 // Muted, non-dramatic color map
 export const sensorTypeColors: Record<SensorTypes, ColorPalette> = {
-  'Temperature': { 
+  'Temperature': {
     max: '#EF4444',   // Bold Red (Hot)
     mid: '#F8FAFC',   // Slate-50 (Neutral/White)
     min: '#3B82F6'    // Bold Blue (Cold)
   },
-  'Energy_Consumption': { 
+  'Energy_Consumption': {
     max: '#B91C1C',   // Deep Red (High Usage)
     mid: '#FACC15',   // Bright Yellow (Moderate)
     min: '#16A34A'    // Green (Efficient)
   },
-  'Air_Quality': { 
+  'Air_Quality': {
     max: '#7F1D1D',   // Dark Maroon (Poor)
     mid: '#F97316',   // Orange (Moderate)
     min: '#10B981'    // Emerald (Clean)
   },
-  'Humidity': { 
+  'Humidity': {
     max: '#1E3A8A',   // Navy (Saturated/Wet)
     mid: '#60A5FA',   // Sky Blue
     min: '#E0F2FE'    // Very Light Blue (Dry)
   },
-  'Light': { 
+  'Light': {
     max: '#FDE047',   // Sun Yellow (Bright)
     mid: '#F59E0B',   // Amber
     min: '#451A03'    // Dark Brown (Dim/Dark)
@@ -76,27 +76,27 @@ export const sensorTypeColors: Record<SensorTypes, ColorPalette> = {
   //   mid: '#EAB308',   // Yellow (Medium)
   //   min: '#DC2626'    // Red (Critical)
   // },
-  'Flow': { 
+  'Flow': {
     max: '#0891B2',   // Dark Cyan (High Flow)
     mid: '#22D3EE',   // Cyan
     min: '#CFFAFE'    // Pale Cyan
   },
-  'Movement': { 
+  'Movement': {
     max: '#475569',   // Slate-600 (Active)
     mid: '#94A3B8',   // Slate-400
     min: '#F1F5F9'    // Slate-100 (Still)
   },
-  'Atmospheric_Pressure': { 
+  'Atmospheric_Pressure': {
     max: '#4338CA',   // Indigo-700
     mid: '#818CF8',   // Indigo-400
     min: '#E0E7FF'    // Indigo-100
   },
-  'Irradiance': { 
+  'Irradiance': {
     max: '#EA580C',   // Deep Orange
     mid: '#FB923C',   // Orange
     min: '#FFF7ED'    // Shell
   },
-  'State': { 
+  'State': {
     max: '#27272A',   // Zinc-800
     mid: '#71717A',   // Zinc-500
     min: '#F4F4F5'    // Zinc-100
@@ -115,6 +115,6 @@ export const defaultPalette: ColorPalette = {
     min: '#16A34A'    // Green (Efficient)
 };
 
-export function getSensorTypeColors(sensorType: `${SensorTypes}`): ColorPalette { 
+export function getSensorTypeColors(sensorType: `${SensorTypes}`): ColorPalette {
   return sensorTypeColors[sensorType] || defaultPalette;
 }

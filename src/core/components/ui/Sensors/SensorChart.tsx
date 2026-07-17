@@ -58,12 +58,12 @@ export function SensorChart({
   midColor,
   maxColor,
 }: SensorChartProps) {
-  
+
     const { maxColour, midColour, minColour } = sensorType || { name: 'Unknown', icon: 'Radio' }
 
-  const finalMin = minColor || minColour || defaultPalette.min 
-  const finalMid = midColor || midColour || defaultPalette.mid 
-  const finalMax = maxColor || maxColour  || defaultPalette.max 
+  const finalMin = minColor || minColour || defaultPalette.min
+  const finalMid = midColor || midColour || defaultPalette.mid
+  const finalMax = maxColor || maxColour  || defaultPalette.max
 
 
 
@@ -72,10 +72,10 @@ export function SensorChart({
     md: { height: 'h-[200px]', titleSize: 'text-base', descSize: 'text-sm', footerSize: 'text-sm' },
     lg: { height: 'h-[300px]', titleSize: 'text-lg', descSize: 'text-base', footerSize: 'text-sm' }
   }
-  
+
   const currentSize = sizeClasses[size]
   const gradientId = `gradient-${sensorName.replace(/\s+/g, '-').toLowerCase()}`
-  
+
   return (
     <Card>
       <CardHeader>
@@ -105,7 +105,7 @@ export function SensorChart({
                   <stop offset="95%" stopColor={finalMin} stopOpacity={0.2} />
                 </linearGradient>
               </defs>
-              
+
               <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.4} />
               <XAxis
                 dataKey="time"

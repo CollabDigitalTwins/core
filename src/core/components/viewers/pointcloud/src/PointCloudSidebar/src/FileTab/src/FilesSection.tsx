@@ -30,7 +30,7 @@ export function FilesSection({ files }: FilesSectionProps) {
 
   const { uploadFile } = useUploadFileToBuilding(buildingId)
   const { deleteFile } = useDeleteFile(buildingId)
-  
+
   const { handleFileUpload } = useFileUploadHandler({
     buildingId,
     tag: 'point-cloud-file',

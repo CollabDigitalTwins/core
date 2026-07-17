@@ -34,7 +34,7 @@ export function parsePosition(position: string | null | undefined): Position | n
 export function formatPosition(position: string | null | undefined): string {
   const parsed = parsePosition(position)
   if (!parsed) return ''
-  
+
   // Check if it's lat/lng format
   if ('lat' in parsed && 'lng' in parsed
     && typeof parsed.lat === 'number' && typeof parsed.lng === 'number') {
@@ -54,7 +54,7 @@ export function formatPosition(position: string | null | undefined): string {
     && typeof parsed.x === 'number' && typeof parsed.y === 'number' && typeof parsed.z === 'number') {
     return `X: ${parsed.x}, Y: ${parsed.y}, Z: ${parsed.z}`
   }
-  
+
   return ''
 }
 

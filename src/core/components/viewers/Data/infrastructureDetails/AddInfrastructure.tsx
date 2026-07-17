@@ -40,7 +40,7 @@ export default function AddInfrastructure({
 }: AddInfrastructureProps) {
   // Translations
   const t = useTranslations('AddInfrastructure')
-  // Permissions  
+  // Permissions
   const { ability } = usePermissions()
 
   const { setSelectedItem, setView } = useMenusContext()

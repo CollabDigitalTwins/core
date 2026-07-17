@@ -16,7 +16,7 @@ export function createOrganizationHooks(adapter: ApiAdapter) {
             key,
             () => adapter.getOrganization(id as string),
         );
-        
+
         const { trigger: updateOrganization, isMutating, data: updatedData, error: updateError } = useSWRMutation(
             id ? ["updateOrganization", id] : null,
             async (_k, { arg }: { arg: Partial<Organization> }) => adapter.updateOrganization(id as string, arg),

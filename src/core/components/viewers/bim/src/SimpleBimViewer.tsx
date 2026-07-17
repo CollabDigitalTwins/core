@@ -152,7 +152,7 @@ export function SimpleBimViewer({file, width = "100%", height = "100%"}: Props) 
                 const height = container.clientHeight || 500;
                 world.renderer?.resize(new THREE.Vector2(width, height));
             };
-            
+
             // Watch for container size changes using ResizeObserver. This
             // already covers the window-resize case: when the window resizes,
             // the flex layout reshapes this container, and ResizeObserver
@@ -177,32 +177,32 @@ export function SimpleBimViewer({file, width = "100%", height = "100%"}: Props) 
             // Load the model based on file extension
             try {
                 const ext = file.extension.toLowerCase();
-                
+
                 if (ext === 'frag') {
                     await loadModels.load(file.url, String(file.id));
                 } else if (ext === 'ifc') {
                     const fetchedFile = await fetch(file.url);
                     const ifcFile = new File([await fetchedFile.arrayBuffer()], file.name, { type: "application/octet-stream" });
                     const fragmentBytes = await ifcToFragments.loadFromFile(ifcFile);
-                    
+
                     const fragmentBuffer = fragmentBytes.buffer as ArrayBuffer;
                     const model = await fragments.core.load(fragmentBuffer, { modelId: String(file.id) });
-                    
+
                     world.scene.three.add(model.object);
                     model.useCamera(world.camera.three);
-                    
+
                     setIsLoading(false);
                     setLoadingMessage('');
                 } else if (['gltf', 'glb', 'fbx', 'obj', 'dae', 'collada'].includes(ext)) {
                     setIsLoading(true);
                     setLoadingMessage('Loading 3D Model...');
-                    
+
                     const urlWithExtension = file.url.includes('.') ? file.url : `${file.url}?ext=${ext}`;
-                    
+
                     const fetchedFile = await fetch(file.url);
                     const blob = await fetchedFile.blob();
                     const modelFile = new File([blob], `${file.name}.${ext}`, { type: blob.type });
-                    
+
                     const modelInfo = await modelManager.load(
                         modelFile,
                         String(file.id),
@@ -212,47 +212,47 @@ export function SimpleBimViewer({file, width = "100%", height = "100%"}: Props) 
                             enableGizmo: false
                         }
                     );
-                    
+
                     if (modelInfo) {
                         const box = new THREE.Box3().setFromObject(modelInfo.model);
                         const center = box.getCenter(new THREE.Vector3());
                         const size = box.getSize(new THREE.Vector3());
-                        
+
                         const maxDim = Math.max(size.x, size.y, size.z);
                         const fov = world.camera.three.fov * (Math.PI / 180);
                         let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
-                        
+
                         cameraZ *= 1.5;
-                        
+
                         const camX = center.x;
                         const camY = center.y;
                         const camZ = center.z + cameraZ;
-                        
+
                         world.camera.controls.setLookAt(
                             camX, camY, camZ,
                             center.x, center.y, center.z,
                             true
                         );
                     }
-                    
+
                     setIsLoading(false);
                     setLoadingMessage('');
                 }
 
                 fragments.core.update(true);
-                
+
                 setTimeout(() => {
                     const width = container.clientWidth || 1303;
                     const height = container.clientHeight || 500;
                     world.renderer.resize(new THREE.Vector2(width, height));
-                    
+
                     window.dispatchEvent(new Event('resize'));
                 }, 100);
             } catch (error) {
                 console.error('Error loading BIM file:', error);
                 setIsLoading(false);
             }
-          
+
         }, []
     );
 

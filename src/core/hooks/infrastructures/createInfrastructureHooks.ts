@@ -8,7 +8,7 @@ import type { Infrastructure } from "../../types/dbTypes";
 
 export function createInfrastructureHooks(adapter: ApiAdapter) {
   // Call adapter methods inside hooks
-  
+
   const useInfrastructures = () => {
     const key = ["infrastructures"];
     const { data, error, isLoading } = useSWR<Infrastructure[]>(key, () => adapter.listInfrastructure());
@@ -61,10 +61,10 @@ export function createInfrastructureHooks(adapter: ApiAdapter) {
     return { deleteInfrastructure, isMutating, deleteError: error, deletedData: data };
   };
 
-  return { 
-    useInfrastructures, 
-    useInfrastructure, 
-    useCreateInfrastructure, 
-    useDeleteInfrastructure 
+  return {
+    useInfrastructures,
+    useInfrastructure,
+    useCreateInfrastructure,
+    useDeleteInfrastructure
   };
 }

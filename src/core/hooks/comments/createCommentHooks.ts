@@ -41,7 +41,7 @@ export function createCommentHooks(adapter: ApiAdapter) {
         const { data, error, isLoading } = useSWR<Comment>(
             key,
             () => adapter.getComment(id as number),
-            //{ refreshInterval: 1000 } 
+            //{ refreshInterval: 1000 }
         );
 
         // SWR Mutation for updating a comment
@@ -88,8 +88,8 @@ export function createCommentHooks(adapter: ApiAdapter) {
         isMutating,
         updateError,
         updatedData,
-        deleteComment, 
-        isDeleting, 
+        deleteComment,
+        isDeleting,
         deleteError
         };
     };

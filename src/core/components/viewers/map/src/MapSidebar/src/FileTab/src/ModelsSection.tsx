@@ -61,7 +61,7 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
   // Filter and sort models: BIM files only, with models added to map at the top
   const sortedModels = React.useMemo(() => {
     const bimFiles = files.filter(file => file.extension === 'frag')
-    
+
     return bimFiles
       .map(file => {
         const isAddedToMap = bimModelsAddedToMap.some(model => model.bimFile.id === file.id)

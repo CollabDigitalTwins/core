@@ -47,7 +47,7 @@ export const AngleMeasurement = ({active = false, currentMeasurements = []} : Ar
       }
     }
   }, [active, viewer])
-  
+
   return null;
 }
 

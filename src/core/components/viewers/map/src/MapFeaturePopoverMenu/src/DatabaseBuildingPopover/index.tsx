@@ -27,7 +27,7 @@ export default function DatabaseBuildingPopover ({
     }: DatabaseBuildingPopoverProps) {
 
     const t = useTranslations('DatabaseBuildingPopover')
-    
+
 
     const {state: mapState} = React.useContext(MapContext);
 

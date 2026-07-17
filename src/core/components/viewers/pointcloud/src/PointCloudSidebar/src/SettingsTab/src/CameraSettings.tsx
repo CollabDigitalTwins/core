@@ -72,7 +72,7 @@ export function CameraSettings() {
 
   const setCameraOption = (cameraOption: CameraControl) => {
     if (!viewer) return
-    
+
     pointCloudDispatch({
       type: 'SET_CAMERA_CONTROL',
       payload: { cameraControl: cameraOption }
@@ -95,12 +95,12 @@ export function CameraSettings() {
 
   const setCameraMode = (cameraMode: CameraMode) => {
     if (!viewer) return
-    
+
     pointCloudDispatch({
       type: 'SET_CAMERA_PROJECTION',
       payload: { cameraProjection: cameraMode }
     })
-    
+
     viewer.setCameraMode(cameraMode)
   }
 
@@ -183,12 +183,12 @@ export function CameraSettings() {
               </div>
               <span className="text-xs tabular-nums opacity-70">{moveSpeed}</span>
             </div>
-            <Slider 
-              value={[moveSpeed]} 
-              onValueChange={handleSpeedChange} 
-              max={10} 
-              min={1} 
-              disabled={!viewer} 
+            <Slider
+              value={[moveSpeed]}
+              onValueChange={handleSpeedChange}
+              max={10}
+              min={1}
+              disabled={!viewer}
             />
             <div className="flex justify-between text-[11px] opacity-60">
               <span>{t('slow')}</span>

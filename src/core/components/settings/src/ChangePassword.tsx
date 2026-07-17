@@ -68,7 +68,7 @@ export default function ChangePassword({ isEditing }: ChangePasswordProps) {
          //errors.push(t('containsUsername'));
          errors.push(t('weakPassword'));
 
-     }      
+     }
 
     return errors
   }
@@ -94,7 +94,7 @@ export default function ChangePassword({ isEditing }: ChangePasswordProps) {
   React.useEffect(() => {
     if (success) {
       toast.success(t('toastSuccess'))
-      
+
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
@@ -214,6 +214,6 @@ export default function ChangePassword({ isEditing }: ChangePasswordProps) {
       </div>
     ) : null
   )
-  
+
 
 }

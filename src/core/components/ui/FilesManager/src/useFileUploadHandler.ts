@@ -67,7 +67,7 @@ export function useFileUploadHandler({
     }
 
     onUploadStart?.()
-    
+
     try {
       const ext = getFileExtension(file)?.toLowerCase()
 
@@ -103,7 +103,7 @@ export function useFileUploadHandler({
         const successMsg = customMessages?.success || t('uploadSuccess', { count: 1 })
         toast.success(successMsg)
       }
-      
+
       if (typeof onFileUpload === 'function') {
         onFileUpload()
       }

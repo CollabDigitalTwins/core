@@ -68,7 +68,7 @@ const FieldValue = ({ value, label, isFile = false, property = '', onChange = ()
       if (!isoDateRegex.test(val)) {
         return false
       }
-      
+
       const date = new Date(val)
       return !isNaN(date.getTime())
     }

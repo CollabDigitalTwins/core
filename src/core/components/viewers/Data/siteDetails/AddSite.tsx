@@ -38,7 +38,7 @@ export default function AddSite({ newItemName, setNewItemName }: AddSiteProps) {
 
   const [open, setOpen] = React.useState(false)
   const { setSelectedSite, setView } = useMenusContext()
-  
+
   const handleInputChange = (e) => {
     setNewItemName(e.target.value)
   }

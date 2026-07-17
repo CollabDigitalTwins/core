@@ -111,7 +111,7 @@ export default function Navbar({
           {/* Right actions */}
           <div className="flex items-center gap-3 flex-shrink-0 ml-auto">
             <div className={`${onMobile ? 'hidden' : 'flex'} items-center gap-3`}>
-              
+
 
               <Button
                 variant="ghost"
@@ -128,7 +128,7 @@ export default function Navbar({
                 className="btn-nav-cta rounded-md px-5 text-sm"
                 asChild
               >
-               
+
               </Button>
             </div>
 
@@ -189,7 +189,7 @@ export default function Navbar({
                     {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                     <span className="text-sm">{theme === 'dark' ? 'Light' : 'Dark'}</span>
                   </Button>
-                  
+
                 </div>
 
                 <div className="pt-2 px-1">
@@ -198,7 +198,7 @@ export default function Navbar({
                     className="btn-sovereign w-full rounded-md"
                     asChild
                   >
-                   
+
                   </Button>
                 </div>
               </div>

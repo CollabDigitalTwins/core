@@ -67,9 +67,9 @@ export function TopicsSection() {
     else if (action === 'delete') {
       bcfTopicsManager?.remove(topic.guid)
       // Remove from BIM state
-      bimDispatch({ 
-        type: 'REMOVE_BCF_TOPIC', 
-        payload: { bcfTopicId: id } 
+      bimDispatch({
+        type: 'REMOVE_BCF_TOPIC',
+        payload: { bcfTopicId: id }
       })
     }
   }, [bcfTopics, bcfTopicsManager, bimDispatch])
@@ -95,7 +95,7 @@ export function TopicsSection() {
       creationAuthor: user?.email || 'anonymous@example.com',
       labels: new Set(formData.labels)
     }
-    
+
     // Add to BCF manager
     const createdTopic = bcfTopicsManager?.create({
       ...newTopic,
@@ -105,14 +105,14 @@ export function TopicsSection() {
     const topicToAdd = createdTopic || newTopic
 
     console.log('New topic to add:', topicToAdd)
-    
+
     // Check if topic already exists in global state before adding
     const existingTopic = bcfTopics.find(existingTopic => existingTopic.guid === topicToAdd.guid)
     if (!existingTopic) {
       // Add to BIM state (use the created topic or fallback to newTopic)
-      bimDispatch({ 
-        type: 'ADD_BCF_TOPIC', 
-        payload: { bcfTopic: topicToAdd } 
+      bimDispatch({
+        type: 'ADD_BCF_TOPIC',
+        payload: { bcfTopic: topicToAdd }
       })
     } else {
       console.log(`BCF topic with ID ${topicToAdd.guid} already exists, skipping...`)
@@ -144,9 +144,9 @@ export function TopicsSection() {
       bcfTopicsManager?.edit(updatedTopic)
 
       // Update in BIM state
-      bimDispatch({ 
-        type: 'EDIT_BCF_TOPIC', 
-        payload: { bcfTopic: updatedTopic } 
+      bimDispatch({
+        type: 'EDIT_BCF_TOPIC',
+        payload: { bcfTopic: updatedTopic }
       })
 
       // Clear editing state
@@ -187,9 +187,9 @@ export function TopicsSection() {
       topics.map((topic: OBC.Topic, index) => {
         // topic.viewpoints.add(viewpoints[index].guid) // I AM NOT GETTING THE VIEWPOINTS
         // console.log('Imported topic:', topic)
-            bimDispatch({ 
-              type: 'ADD_BCF_TOPIC', 
-              payload: { bcfTopic: topic } 
+            bimDispatch({
+              type: 'ADD_BCF_TOPIC',
+              payload: { bcfTopic: topic }
             })
           })
     } catch (error) {

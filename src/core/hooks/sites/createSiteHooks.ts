@@ -15,7 +15,7 @@ type SiteUpdateInput = Partial<Site> & {
 
 export function createSiteHooks(adapter: ApiAdapter) {
   // Call adapter methods inside hooks
-  
+
   const useSites = () => {
     const key = ["sites"];
     const { data, error, isLoading } = useSWR<Site[]>(key, () => adapter.listSites());
@@ -73,10 +73,10 @@ export function createSiteHooks(adapter: ApiAdapter) {
     return { deleteSite, isMutating, deleteError: error, deletedData: data };
   };
 
-  return { 
-    useSites, 
-    useSite, 
-    useCreateSite, 
-    useDeleteSite 
+  return {
+    useSites,
+    useSite,
+    useCreateSite,
+    useDeleteSite
   };
 }

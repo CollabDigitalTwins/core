@@ -614,21 +614,21 @@ export const useSiteHeaders = () => {
                 {" "}
                 <span className="italic !text-xs !font-light">m²</span>
               </>,
-              property: 'siteTotalArea'  
+              property: 'siteTotalArea'
             },
             {label: <>
                  {t('siteTotalBuiltArea')}
                 {" "}
                 <span className="italic !text-xs !font-light">m²</span>
               </>,
-              property: 'siteTotalBuiltArea'  
+              property: 'siteTotalBuiltArea'
             },
             {label: <>
                  {t('siteTotalAvailableArea')}
                 {" "}
                 <span className="italic !text-xs !font-light">m²</span>
               </>,
-              property: 'siteTotalAvailableArea'  
+              property: 'siteTotalAvailableArea'
             },
 
             { label: t('siteYearBuilt'), property: 'siteYearBuilt' },
@@ -707,7 +707,7 @@ export const useSiteHeaders = () => {
           title: t('funding'),
           fields: [
             {
-              label: 
+              label:
               <>
                 {t('siteEstimatedTotalCost')}
                 {" "}
@@ -716,7 +716,7 @@ export const useSiteHeaders = () => {
               property: 'siteEstimatedTotalCost',
             },
             {
-              label: 
+              label:
               <>
                  {t('siteEstimatedConstructionCost')}
                  {" "}
@@ -726,7 +726,7 @@ export const useSiteHeaders = () => {
             },
             { label: t('siteRetrofitFundingNeeds'), property: 'siteRetrofitFundingNeeds' },
             {
-              label: 
+              label:
               <>
                 {t('siteFederalContribution')}
                 {" "}
@@ -769,7 +769,7 @@ export const useSiteHeaders = () => {
               </>,
               property: 'siteEui'
             },
-           
+
             {
               label:
               <>
@@ -803,7 +803,7 @@ export const useSiteHeaders = () => {
             { label: t('siteIntensityGhgEmissions'), property: 'siteIntensityGhgEmissions' },
             { label: t('siteCertifications'), property: 'siteCertifications' },
             { label: t('siteCertificationCertificates'), property: 'siteCertificationCertificates' },
-            
+
             {
               label:
               <>
@@ -980,11 +980,11 @@ export const useInfrastructureHeaders = () => {
           fields: [
             { label: t('linearLRMType'), property: 'linearLRMType' },
             { label: t('linearAlignmentType'), property: 'linearAlignmentType' },
-            { 
+            {
               label: <>
                 {t('linearMeasure')} <span className="italic !text-xs !font-light">(m/km)</span>
-              </>, 
-              property: 'linearMeasure' 
+              </>,
+              property: 'linearMeasure'
             },
             { label: t('linearStartValue'), property: 'linearStartValue' },
             { label: t('infrastructureMaterial'), property: 'infrastructureMaterial' },

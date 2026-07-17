@@ -54,10 +54,10 @@ export function CollapsibleSection({
   // Auto-expand when visibility turns on, auto-collapse when turns off
   React.useEffect(() => {
     if (!switchVariant) return
-    
+
     const prevChecked = prevCheckedRef.current
     const currentChecked = switchVariant.checked
-    
+
     if (!prevChecked && currentChecked) {
       // Just turned visible - expand
       setIsOpen(true)
@@ -65,7 +65,7 @@ export function CollapsibleSection({
       // Just turned invisible - collapse
       setIsOpen(false)
     }
-    
+
     prevCheckedRef.current = currentChecked
   }, [switchVariant?.checked])
 

@@ -138,7 +138,7 @@ export default function UserMoreOptions({ users, variant }: UserMoreOptionsProps
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = '.csv'
-    
+
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (!file) return
@@ -146,7 +146,7 @@ export default function UserMoreOptions({ users, variant }: UserMoreOptionsProps
       setIsImporting(true)
       try {
         const text = await file.text()
-        
+
         // Parse CSV manually
         const lines = text.split('\n').filter(line => line.trim())
         if (lines.length < 2) {
@@ -156,7 +156,7 @@ export default function UserMoreOptions({ users, variant }: UserMoreOptionsProps
 
         // Extract headers
         const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''))
-        
+
         // Validate required headers
         const requiredHeaders = ['name', 'email', 'role', 'password']
         const missingHeaders = requiredHeaders.filter(h => !headers.includes(h))
@@ -175,7 +175,7 @@ export default function UserMoreOptions({ users, variant }: UserMoreOptionsProps
           const values: string[] = []
           let current = ''
           let inQuotes = false
-          
+
           for (let j = 0; j < line.length; j++) {
             const char = line[j]
             if (char === '"') {

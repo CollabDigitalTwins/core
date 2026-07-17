@@ -25,13 +25,13 @@ export function IDSLegend({ idsTestResults, title, description, onClose, onHeigh
   // Memoize the percentage calculations
   const stats = React.useMemo(() => {
     const total = idsTestResults.passed + idsTestResults.failed
-    const passPercentage = total > 0 
-      ? Math.round((idsTestResults.passed / total) * 100) 
+    const passPercentage = total > 0
+      ? Math.round((idsTestResults.passed / total) * 100)
       : 0
-    const failPercentage = total > 0 
-      ? Math.round((idsTestResults.failed / total) * 100) 
+    const failPercentage = total > 0
+      ? Math.round((idsTestResults.failed / total) * 100)
       : 0
-    
+
     return { total, passPercentage, failPercentage }
   }, [idsTestResults.passed, idsTestResults.failed])
 
@@ -47,11 +47,11 @@ export function IDSLegend({ idsTestResults, title, description, onClose, onHeigh
   }, [onHeightChange, stats, description])
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className={`fixed right-2 w-80 z-50 rounded-md bg-background/95 backdrop-blur-sm border shadow-lg ${
-        isInitialMount 
-          ? 'animate-in slide-in-from-right duration-300' 
+        isInitialMount
+          ? 'animate-in slide-in-from-right duration-300'
           : ''
       }`}
       style={{

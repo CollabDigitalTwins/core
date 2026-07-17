@@ -153,7 +153,7 @@ export function SensorInput({
 
   const onCreateSensor = async (sensorData: Partial<Sensor>) => {
     await createSensor({ sensorData })
-    
+
     // Ensure the sensor type is visible after creation
     if (sensorData.typeId) {
       menusDispatch({
@@ -165,7 +165,7 @@ export function SensorInput({
         },
       })
     }
-    
+
     reset()
     onCancel?.()
   }
@@ -377,7 +377,7 @@ export function SensorInput({
       {sensors.map((sensor, index) => (
         <div key={index} className="space-y-4">
           {index > 0 && <Separator />}
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor={`type-${index}`}>{t('type')}</Label>

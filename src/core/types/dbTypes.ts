@@ -18,7 +18,7 @@ export enum BuildingElectricityServiceSize  {Size_60 = 'Size_60', Size_100 = 'Si
 export enum BuildingElectricityServiceLocation  {Overhead = 'Overhead', Underhead = 'Underhead'}
 
 export enum SiteEnergySource  {Gas = 'Gas', Propane = 'Propane', Electric_BB = 'Electric_BB', Oil = 'Oil', Electric = 'Electric', Natural_Gas = 'Natural_Gas', Solar = 'Solar', Wind = 'Wind', Geothermal = 'Geothermal', District_Heating = 'District_Heating'}
-export enum SiteAssessmentConditions  {Excellent = 'Excellent', Good = 'Good', Fair = 'Fair', Poor = 'Poor'}    
+export enum SiteAssessmentConditions  {Excellent = 'Excellent', Good = 'Good', Fair = 'Fair', Poor = 'Poor'}
 export enum SiteLandUse  {Residential = 'Residential', Industry_And_Business = 'Industry_And_Business', Mixed_Use = 'Mixed_Use', Special_Function_Area = 'Special_Function_Area', Monument = 'Monument', Dump = 'Dump', Mining = 'Mining', Park = 'Park', Cemetery = 'Cemetery', Sports_Leisure_and_Recreation = 'Sports_Leisure_and_Recreation', Open_Pit_Quarry = 'Open_Pit_Quarry', Road = 'Road', Railway = 'Railway', Airfield = 'Airfield', Shipping = 'Shipping', Track = 'Track', Square = 'Square', Grassland = 'Grassland', Agriculture = 'Agriculture', Forest = 'Forest', Grove = 'Grove', Heath = 'Heath', Moor = 'Moor', Marsh = 'Marsh', Untilled_Land = 'Untilled_Land', River = 'River', Standing_Waterbody = 'Standing_Waterbody', Harbour = 'Harbour', Sea = 'Sea'}
 export enum SiteProjectPhase  {Inception_Phase = 'Inception_Phase', Conceptualization_Phase = 'Conceptualization_Phase', Criteria_Definition_Phase = 'Criteria_Definition_Phase', Design_Phase = 'Design_Phase', Coordination_Phase = 'Coordination_Phase', Implementation_Phase = 'Implementation_Phase', Handover_Phase = 'Handover_Phase', Operations_Phase = 'Operations_Phase'}
 export enum SiteProjectType  {Modification = 'Modification', New_Build = 'New_Build', Renovation = 'Renovation', Repair = 'Repair', Operation_Maintenance = 'Operation_Maintenance', Retrofit = 'Retrofit'}
@@ -62,10 +62,10 @@ export interface User {
     name: string;
     password: string;
     email: string;
-    emailVerified?: Date | null;   
+    emailVerified?: Date | null;
     imageFileId?: number | null;
-    createdAt: Date; 
-    updatedAt: Date;               
+    createdAt: Date;
+    updatedAt: Date;
     organizationId?: number | null;
     roleId: number;
 }
@@ -194,7 +194,7 @@ export interface SensorType {
 }
 
 export interface Building {
-    id: number                          
+    id: number
     buildingEmail?: string
     buildingPhoneNumber?: string
     buildingAddress?: string
@@ -552,8 +552,8 @@ export interface Infrastructure {
     infrastructureStatus?: string // Generic status string or CodeList URI
     infrastructureValidFrom?: Date
     infrastructureValidTo?: Date
-    infrastructureGeometryId?: number // Reference to geometry in our Files table               
-    infrastructureGeometryType?: GeometryType | `${GeometryType}` 
+    infrastructureGeometryId?: number // Reference to geometry in our Files table
+    infrastructureGeometryType?: GeometryType | `${GeometryType}`
     infrastructureEPSG?: number
     infrastructureLongitude?: number
     infrastructureLatitude?: number

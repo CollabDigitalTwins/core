@@ -23,9 +23,9 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const { data: session } = useSession()
   const userId = session?.user?.id || ''
   const { userRole, isLoading } = useUserRole(userId)
-  
+
   const permissions = (userRole?.permissions as Permission[]) ?? []
-  
+
   // Build CASL ability - memoized to only rebuild when permissions change
   const ability = useMemo(() => {
     const { can, build } = new AbilityBuilder(createMongoAbility)

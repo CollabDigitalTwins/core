@@ -8,7 +8,7 @@ import type { MapGeoJSONFeature } from 'maplibre-gl'
  * Handles multiple coordinate formats:
  * - Standard GeoJSON array: [lng, lat]
  * - Object formats: { lng, lat }, { lon, lat }, { x, y }
- * 
+ *
  * @param feature - The MapGeoJSONFeature to extract coordinates from
  * @returns An object with lng and lat properties, or null if coordinates cannot be extracted
  */

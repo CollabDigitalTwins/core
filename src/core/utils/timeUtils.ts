@@ -21,22 +21,22 @@ export function timeAgo(then: Date): string {
   const diffSeconds = Math.floor((now.getTime() - then.getTime()) / 1000)
 
   if (diffSeconds < 60) return `${diffSeconds}s`
-  
+
   const diffMinutes = Math.floor(diffSeconds / 60)
   if (diffMinutes < 60) return `${diffMinutes} min`
-  
+
   const diffHours = Math.floor(diffMinutes / 60)
   if (diffHours < 24) return `${diffHours}h`
-  
+
   const diffDays = Math.floor(diffHours / 24)
   if (diffDays < 7) return `${diffDays}d`
-  
+
   const diffWeeks = Math.floor(diffDays / 7)
   if (diffWeeks < 4) return `${diffWeeks}w`
-  
+
   const diffMonths = Math.floor(diffDays / 30)
   if (diffMonths < 12) return `${diffMonths}mo`
-  
+
   const diffYears = Math.floor(diffDays / 365)
   return `${diffYears}y`
 }
@@ -66,16 +66,16 @@ export function formatTimestamp(input: string | Date): string {
  */
 export function formatDuration(ms: number): string {
   if (ms < 1000) return `${ms} ms`
-  
+
   const seconds = ms / 1000
   if (seconds < 60) return seconds === 1 ? '1 sec' : `${seconds} sec`
-  
+
   const minutes = seconds / 60
   if (minutes < 60) return minutes === 1 ? '1 min' : `${Math.floor(minutes)} min`
-  
+
   const hours = minutes / 60
   if (hours < 24) return hours === 1 ? '1 hr' : `${Math.floor(hours)} hr`
-  
+
   const days = hours / 24
   return days === 1 ? '1 day' : `${Math.floor(days)} days`
 }

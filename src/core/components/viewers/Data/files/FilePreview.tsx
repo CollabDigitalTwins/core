@@ -28,7 +28,7 @@ interface FilePreviewProps {
 
 export default function FilePreview({ file, showTrigger = true, disableDialogFor3D = false }: FilePreviewProps) {
   // Translations
-  const t = useTranslations('FilePreview')  
+  const t = useTranslations('FilePreview')
 
   const ext = file?.metadata?.extension?.toLowerCase()
   const isVideo = ext === 'mp4'

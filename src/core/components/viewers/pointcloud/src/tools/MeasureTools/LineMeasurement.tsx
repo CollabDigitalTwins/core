@@ -12,11 +12,11 @@ interface MeasurePointCloudType {
   active: boolean;
 }
 
-//custom declarative component 
+//custom declarative component
 const LineMeasurement = ({active = false, currentMeasurements = []} : MeasurePointCloudType) => {
   const {state: pointCloudState, dispatch: pointCloudDispatch} = React.useContext(PointCloudContext);
   const {viewer} = pointCloudState.pointcloud
-  
+
   React.useEffect(() => {
     if (!viewer) return
 
@@ -56,7 +56,7 @@ const LineMeasurement = ({active = false, currentMeasurements = []} : MeasurePoi
     }
 
   }, [active, viewer])
-  
+
   return null;
 }
 

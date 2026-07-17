@@ -61,7 +61,7 @@ export function TerrainLevel() {
         // Check if NRCan terrain sources already exist
         const nrcanTerrainExists = map.getSource('hrdem-terrain')
         const nrcanHillshadeExists = map.getSource('hrdem-hillshade')
-        
+
         // Add NRCan terrain source if it doesn't exist
         if (!nrcanTerrainExists) {
           map.addSource('hrdem-terrain', {
@@ -74,7 +74,7 @@ export function TerrainLevel() {
             attribution: 'Contains information licensed under the Open Government Licence – Canada',
           })
         }
-        
+
         // Add NRCan hillshade source and layer if they don't exist
         if (!nrcanHillshadeExists) {
           map.addSource('hrdem-hillshade', {
@@ -86,7 +86,7 @@ export function TerrainLevel() {
             maxzoom: 15,
             attribution: 'Contains information licensed under the Open Government Licence – Canada',
           })
-          
+
           // Add hillshade layer if it doesn't exist
           if (!map.getLayer('nrcan-hillshade')) {
             map.addLayer({
@@ -99,7 +99,7 @@ export function TerrainLevel() {
             })
           }
         }
-        
+
         // Enable high-resolution terrain with lower exaggeration
         map.setTerrain({
           source: 'hrdem-terrain',

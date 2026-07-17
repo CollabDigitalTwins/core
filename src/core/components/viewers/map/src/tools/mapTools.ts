@@ -18,19 +18,19 @@ import { ShareMapTool } from './shareMapTool'
 import DatasetMapTool from './DatasetMapTool'
 import Compare from '../compare'
 
-export type MapToolbarToolType = 
-'map-dimensions' | 
-'map-media' | 
-'map-compare' | 
-'map-database' | 
-'map-add' | 
+export type MapToolbarToolType =
+'map-dimensions' |
+'map-media' |
+'map-compare' |
+'map-database' |
+'map-add' |
 'map-add-comment' |
 'map-add-dataset' |
 'map-add-site' |
 'map-add-building' |
 'map-add-sensor' |
 'map-add-file' |
-'map-measure' | 
+'map-measure' |
 'map-share' |
 'map-compare-buildings' |
 'open-building-page' |

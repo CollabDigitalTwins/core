@@ -14,6 +14,6 @@
                     world.camera.controls.setLookAt(camX, camY, camZ, tarX, tarY, tarZ, true);
                     return {sharing: true, cameraPosition: { x: camX, y: camY, z: camZ }, targetPosition: { x: tarX, y: tarY, z: tarZ } };
                 }
-            else {world.camera.controls.setLookAt(20, 40, 40, -30, 10, -5, true); 
+            else {world.camera.controls.setLookAt(20, 40, 40, -30, 10, -5, true);
                 return {sharing: false, cameraPosition: { x: 20, y: 40, z: 10 }, targetPosition: { x: -30, y: 10, z: -5 } }};
             }

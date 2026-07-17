@@ -101,7 +101,7 @@ const COMMON_LABELS = [
 
 export function CreateTopicDialog({ open, onOpenChange, onSubmit, existingTopic }: CreateTopicDialogProps) {
   const t = useTranslations('TopicsSection')
-  
+
   const [formData, setFormData] = React.useState<BCFTopicFormData>({
     title: '',
     description: '',
@@ -123,7 +123,7 @@ export function CreateTopicDialog({ open, onOpenChange, onSubmit, existingTopic 
   React.useEffect(() => {
     if (existingTopic) {
       const topic = existingTopic
-      
+
       // Handle date conversion more robustly
       let parsedDueDate: Date | null = null
       if (topic.dueDate) {
@@ -175,7 +175,7 @@ export function CreateTopicDialog({ open, onOpenChange, onSubmit, existingTopic 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     // Validate required fields - ensure title is a string before calling trim
     const title = String(formData.title || '')
     if (!title.trim()) {
@@ -183,7 +183,7 @@ export function CreateTopicDialog({ open, onOpenChange, onSubmit, existingTopic 
     }
 
     onSubmit(formData)
-    
+
     // Reset form
     setFormData({
       title: '',
@@ -238,12 +238,12 @@ export function CreateTopicDialog({ open, onOpenChange, onSubmit, existingTopic 
             {existingTopic ? t('editTopicTitle') : t('createTopicTitle')}
           </DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Required Fields */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-foreground">{t('requiredFields')}</h3>
-            
+
             {/* Title - Required */}
             <div className="space-y-2">
               <Label htmlFor="title">{t('topicTitle')} *</Label>
@@ -290,7 +290,7 @@ export function CreateTopicDialog({ open, onOpenChange, onSubmit, existingTopic 
           {/* Optional Fields */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-foreground">{t('optionalFields')}</h3>
-            
+
             {/* Description */}
             <div className="space-y-2">
               <Label htmlFor="description">{t('topicDescription')}</Label>
@@ -396,7 +396,7 @@ export function CreateTopicDialog({ open, onOpenChange, onSubmit, existingTopic 
                     ))}
                   </div>
                 )}
-                
+
                 {/* Quick add common labels */}
                 <div className="flex flex-wrap gap-2">
                   {COMMON_LABELS

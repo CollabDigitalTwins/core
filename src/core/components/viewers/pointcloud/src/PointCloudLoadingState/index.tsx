@@ -62,7 +62,7 @@ export function PointCloudLoadingState({ pointcloudApiUrl }: { pointcloudApiUrl?
   const [searchTerm, setSearchTerm] = React.useState('')
   const [searchResults, setSearchResults] = React.useState<any[]>([])
   const [selectedBuilding, setSelectedBuilding] = React.useState<any>(null)
-  
+
   const { files, isLoading: filesLoading } = useFilesByBuildingId(building?.id)
   const pointCloudFiles: DbFile[] = React.useMemo(() => (
     files.filter(file => {
@@ -75,16 +75,16 @@ export function PointCloudLoadingState({ pointcloudApiUrl }: { pointcloudApiUrl?
   // Fuzzy search function for buildings
   const fuzzySearchBuildings = React.useCallback((buildings: any[], searchTerm: string) => {
     if (!searchTerm.trim()) return buildings.slice(0, 10)
-    
+
     const fuzzySearchScore = (search: string, text: string): number => {
       if (!search || !text) return 0
       const searchLower = search.toLowerCase()
       const textLower = text.toLowerCase()
-      
+
       if (textLower === searchLower) return 1000
       if (textLower.startsWith(searchLower)) return 800
       if (textLower.includes(searchLower)) return 600
-      
+
       return 0
     }
 
@@ -93,11 +93,11 @@ export function PointCloudLoadingState({ pointcloudApiUrl }: { pointcloudApiUrl?
         const address = building.buildingAddress || ''
         const name = building.buildingName || ''
         const id = building.id.toString()
-        
+
         const addressScore = fuzzySearchScore(searchTerm, address)
         const nameScore = fuzzySearchScore(searchTerm, name)
         const idScore = fuzzySearchScore(searchTerm, id)
-        
+
         const maxScore = Math.max(addressScore, nameScore, idScore)
         return { ...building, searchScore: maxScore }
       })
@@ -332,13 +332,13 @@ export function PointCloudLoadingState({ pointcloudApiUrl }: { pointcloudApiUrl?
                           readOnly
                           className="w-full"
                         />
-                        <LR.X 
-                          className="absolute right-2 cursor-pointer w-4 h-4 text-muted-foreground hover:text-foreground" 
+                        <LR.X
+                          className="absolute right-2 cursor-pointer w-4 h-4 text-muted-foreground hover:text-foreground"
                           onClick={() => {
                             setSelectedBuilding(null)
                             setSearchTerm('')
                             setSearchResults([])
-                          }} 
+                          }}
                         />
                       </div>
                     ) : (
@@ -353,7 +353,7 @@ export function PointCloudLoadingState({ pointcloudApiUrl }: { pointcloudApiUrl?
                         />
                       </div>
                     )}
-                    
+
                     {/* Search results dropdown */}
                     {searchResults.length > 0 && searchTerm !== '' && !selectedBuilding && (
                       <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto z-20">

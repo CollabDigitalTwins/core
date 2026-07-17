@@ -51,7 +51,7 @@ type SortState = false | 'asc' | 'desc'
 const FilterButtons = ({ currentViewer, filters, activeFilters, filterFields, data, setFilters, setActiveFilters }: FilterButtonsProps) => {
   // Translations
   const t = useTranslations('FilterButtons')
-  
+
   // Permissions
   const { ability } = usePermissions()
 
@@ -145,7 +145,7 @@ const FilterButtons = ({ currentViewer, filters, activeFilters, filterFields, da
   const getSiteName = (siteId: number) => {
     const site = sites?.find(s => s.id === siteId)
     return site?.siteName || String(siteId)
-  }  
+  }
 
   const getInfrastructureName = (infrastructureId: number) => {
     const infrastructure = infrastructures?.find(i => i.id === infrastructureId)

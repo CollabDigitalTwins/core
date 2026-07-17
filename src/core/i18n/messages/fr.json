@@ -1817,6 +1817,19 @@
     "floorplanTitle": "Plans d’étage",
     "settingsPanel": "Paramètres"
   },
+  "resetPassword": {
+    "title": "Réinitialiser le mot de passe",
+    "subtitle": "Saisissez l'adresse courriel associée à votre compte. Nous vous enverrons un code de vérification pour réinitialiser votre mot de passe.",
+    "ifAnAccountExists": "Si un compte existe pour {email}, un code de réinitialisation du mot de passe a été envoyé.",
+    "sentVerificationCodeMessage": "Nous avons envoyé un code de vérification à {email}. Saisissez le code ci-dessous pour continuer.",
+    "newPasswordTitle": "Créer un nouveau mot de passe",
+    "newPasswordMessage": "Pour votre sécurité, cette session de réinitialisation du mot de passe expirera dans 10 minutes. Le nouveau mot de passe doit respecter les exigences de sécurité ci-dessous :",
+    "lowercase": "1 minuscule [a-z]",
+    "uppercase": "1 majuscule [A-Z]",
+    "digit": "1 chiffre [0-9]",
+    "specialchar": "1 caractère spécial [@,$,!,%,*,?,&,_]",
+    "minmax": "Minimum de 12 caractères, maximum de 65 caractères"
+  },
   "supportDialog": {
     "featureTitle": "Suggérer une fonctionnalité",
     "bugTitle": "Signaler un bug",

@@ -76,7 +76,7 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
   const { dispatch: appConfigDispatch } = React.useContext(AppConfigContext)
   const { dispatch: mapDispatch } = React.useContext(MapContext)
 
-  
+
 
   React.useEffect(() => {
     appConfigDispatch({
@@ -84,7 +84,7 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
       payload: { organization },
     })
   }, [organization, appConfigDispatch])
-  
+
   React.useEffect(() => {
     if (countrySubdivisionsData) {
       mapDispatch({
@@ -254,8 +254,8 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
   }, [normalizedUserRoles])
 
   const visibleDatasetItems = datasetItems
-  .filter(item => !appContent || appContent.includes(item.id as ViewerNames))
-  .filter(canRenderItem)
+    .filter(item => !appContent || appContent.includes(item.id as ViewerNames))
+    .filter(canRenderItem)
 
   // BugReportDialog/FeatureRequestDialog are rendered by AppSidebar, outside
   // the mobile Sheet's subtree — see the SidebarContext fields for why: this
@@ -339,9 +339,8 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
                             >
                               <item.icon className={buildIconClass(active)} />
                               <span
-                                className={`${isCollapsed ? 'hidden' : 'inline'} ${
-                                  active ? 'font-bold text-primary' : ''
-                                }`}
+                                className={`${isCollapsed ? 'hidden' : 'inline'} ${active ? 'font-bold text-primary' : ''
+                                  }`}
                               >
                                 {item.title}
                               </span>
@@ -400,34 +399,33 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
         <SidebarGroup>
           <SidebarGroupLabel>{t('service')}</SidebarGroupLabel>
           <SidebarMenu>
-          {serviceItems.map((item, index) => (
-            <SidebarMenuItem key={index}>
-              {item.id === "support" ? (
-                <SupportMenu
-                  isCollapsed={isCollapsed}
-                  item={item}
-                  onOpenBug={openBugDialog}
-                  onOpenFeature={openFeatureDialog}
-                />
-              ) : (
-                <SidebarMenuButton asChild>
-                  <a
-                    href={item.url}
-                    className={`text-xs flex items-center gap-2 w-full ${
-                      isCollapsed ? "justify-center p-2" : "justify-start p-2"
-                    }`}
-                    title={item.tooltip}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span className={isCollapsed ? "hidden" : "inline"}>
-                      {item.title}
-                    </span>
-                  </a>
-                </SidebarMenuButton>
-              )}
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
+            {serviceItems.map((item, index) => (
+              <SidebarMenuItem key={index}>
+                {item.id === "support" ? (
+                  <SupportMenu
+                    isCollapsed={isCollapsed}
+                    item={item}
+                    onOpenBug={openBugDialog}
+                    onOpenFeature={openFeatureDialog}
+                  />
+                ) : (
+                  <SidebarMenuButton asChild>
+                    <a
+                      href={item.url}
+                      className={`text-xs flex items-center gap-2 w-full ${isCollapsed ? "justify-center p-2" : "justify-start p-2"
+                        }`}
+                      title={item.tooltip}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span className={isCollapsed ? "hidden" : "inline"}>
+                        {item.title}
+                      </span>
+                    </a>
+                  </SidebarMenuButton>
+                )}
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
         </SidebarGroup>
       </SidebarFooter>
     </>

@@ -1817,6 +1817,19 @@
     "floorplanTitle": "Planos de planta",
     "settingsPanel": "Configuración"
   },
+  "resetPassword": {
+    "title": "Restablecer contraseña",
+    "subtitle": "Ingrese la dirección de correo electrónico asociada a su cuenta. Le enviaremos un código de verificación para restablecer su contraseña.",
+    "ifAnAccountExists": "Si existe una cuenta para {email}, se ha enviado un código para restablecer la contraseña.",
+    "sentVerificationCodeMessage": "Enviamos un código de verificación a {email}. Ingrese el código a continuación para continuar.",
+    "newPasswordTitle": "Crear una nueva contraseña",
+    "newPasswordMessage": "Por su seguridad, esta sesión de restablecimiento de contraseña caducará en 10 minutos. La nueva contraseña debe cumplir los requisitos de seguridad que se indican a continuación:",
+    "lowercase": "1 minúscula [a-z]",
+    "uppercase": "1 mayúscula [A-Z]",
+    "digit": "1 dígito [0-9]",
+    "specialchar": "1 carácter especial [@,$,!,%,*,?,&,_]",
+    "minmax": "Mínimo de 12 caracteres, máximo de 65 caracteres"
+  },
   "supportDialog": {
     "featureTitle": "Sugerir una función",
     "bugTitle": "Reportar un error",

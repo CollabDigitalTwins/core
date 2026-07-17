@@ -11,6 +11,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./messages": {
+      "types": "./dist/core/i18n/index.d.ts",
+      "import": "./dist/core/i18n/index.js"
+    },
     "./*": {
       "types": "./dist/*.d.ts",
       "import": "./dist/*.js"
@@ -29,12 +33,12 @@
     "NOTICE"
   ],
   "scripts": {
-    "build": "tsup && node scripts/copy-css.mjs && node scripts/build-types.mjs",
-    "build:js": "tsup && node scripts/copy-css.mjs",
+    "build": "tsup && node scripts/copy-assets.mjs && node scripts/build-types.mjs",
+    "build:js": "tsup && node scripts/copy-assets.mjs",
     "build:types": "node scripts/build-types.mjs",
     "build:types:strict": "tsc -p tsconfig.build.json",
-    "dev": "tsup --watch --onSuccess \"node scripts/copy-css.mjs\"",
-    "dev:link": "tsup --watch --onSuccess \"node scripts/copy-css.mjs && yalc push --no-scripts\"",
+    "dev": "tsup --watch --onSuccess \"node scripts/copy-assets.mjs\"",
+    "dev:link": "tsup --watch --onSuccess \"node scripts/copy-assets.mjs && yalc push --no-scripts\"",
     "lint": "eslint src --ext .ts,.tsx",
     "license:headers": "node scripts/add-license-headers.mjs",
     "license:check": "node scripts/add-license-headers.mjs --check",

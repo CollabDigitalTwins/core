@@ -60,7 +60,7 @@ export class LengthMeasurement extends OBC.Component {
     createFreeMeasurements() {
         if (!this.measurer || !this.world) return
 
-        
+
         this.enabled = true
         this.measurer.enabled = true
         this.measurer.mode = 'free'
@@ -77,15 +77,15 @@ export class LengthMeasurement extends OBC.Component {
 
     create() {
         if (!this.measurer) return
-        
-        // Create a measurement programmatically 
+
+        // Create a measurement programmatically
         // This will start the measurement creation process
         this.measurer.create()
     }
 
     delete() {
         if (!this.measurer) return
-        
+
         // Delete the last created measurement
         this.measurer.delete()
         this.measurer.endCreation()
@@ -93,7 +93,7 @@ export class LengthMeasurement extends OBC.Component {
 
     deleteAll() {
         if (!this.measurer) return
-        
+
         // Delete all measurements using the list
         this.measurer.list.clear()
         this.measurer.endCreation()
@@ -102,7 +102,7 @@ export class LengthMeasurement extends OBC.Component {
 
     getAllValues() {
         if (!this.measurer) return []
-        
+
         const lengths: number[] = []
         for (const line of this.measurer.list) {
             lengths.push(line.value)

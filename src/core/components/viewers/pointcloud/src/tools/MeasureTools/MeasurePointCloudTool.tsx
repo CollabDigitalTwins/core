@@ -41,7 +41,7 @@ export const MeasurePointCloudTool: React.FC<GenericTool> = ({ tool }) => {
   const setActiveTool = (nextActiveTool: PointCloudTools) => {
     viewer.setLengthUnit('in')
     pointCloudDispatch({
-      type: "SET_ACTIVE_TOOL", 
+      type: "SET_ACTIVE_TOOL",
       payload:{
         activeTool: nextActiveTool
       }
@@ -53,11 +53,11 @@ export const MeasurePointCloudTool: React.FC<GenericTool> = ({ tool }) => {
   }
 
   const removeAllMeasurements = () => {
-    if (!viewer) return 
+    if (!viewer) return
 
     const measurements = viewer.scene.measurements;
     console.log("There are ", measurements.length, " measurements to remove")
-    
+
     for (let i = measurements.length - 1; i >= 0; i--) {
       const measurement = measurements[i];
       viewer.scene.removeMeasurement(measurement);
@@ -92,7 +92,7 @@ export const MeasurePointCloudTool: React.FC<GenericTool> = ({ tool }) => {
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => {setActiveTool(PointCloudTools.AREA_MEASUREMENT)}}>
             <LR.SquareDashed />
-            
+
             <span>{t('area')}</span>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => {setActiveTool(PointCloudTools.ANGLE_MEASUREMENT)}}>
@@ -107,7 +107,7 @@ export const MeasurePointCloudTool: React.FC<GenericTool> = ({ tool }) => {
             <span>{t('clear')}</span>
           </DropdownMenuItem>
         </ToolbarSubmenu>
-        
+
         {/* Place outside of DropdownMenuItem to avoid unmount */}
         <LineMeasurement active={activeTool === PointCloudTools.LINE_MEASUREMENT} currentMeasurements={currentMeasurements}/>
         <AreaMeasurement active={activeTool === PointCloudTools.AREA_MEASUREMENT} currentMeasurements={currentMeasurements}/>

@@ -36,8 +36,8 @@ export default function DatatableFileAdder() {
 
   return (
     <div className="inline-block">
-      <Button 
-        variant="default" 
+      <Button
+        variant="default"
         onClick={handleAddFile}
         disabled={!ability.can('create', 'File') || uploadState.uploading}
       >

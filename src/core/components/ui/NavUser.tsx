@@ -44,7 +44,7 @@ export function NavUser({
   const { data: session } = useSession()
   const { user: freshUser } = useUser(session?.user?.id || '')
   const user = freshUser ?? session?.user
-  let userName: string | undefined = user?.name ?? 'Unknown User'
+  const userName: string | undefined = user?.name ?? 'Unknown User'
 
   const { dispatch: menusDispatch } = useMenusContext()
   const { setSelectedItem, setSelectedSite, setSelectedFile, setView } = useMenusContext()
@@ -54,7 +54,7 @@ export function NavUser({
   const params = useParams()
 
   // Get instance from URL params, defaulting to 'cdt' if not found
-  let instance = (params.instance as string) || 'cdt'
+  const instance = (params.instance as string) || 'cdt'
 
   return (
       <SidebarMenuItem className={useSidebar().sidebarState === 'collapsed' ? 'flex justify-center w-full' : ''}>

@@ -98,13 +98,13 @@ export default function BuildingMoreOptions({ buildings, variant }: BuildingMore
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = '.csv'
-    
+
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (!file) return
 
       setIsImporting(true)
-      
+
       try {
         const text = await file.text()
         const buildingsToImport = parseCSVToBuildings(text)

@@ -35,7 +35,7 @@ export function PointCloudSidebar({ pointcloudApiUrl, organization }: { pointclo
     >
       {selectedTab === 'file' && <FileTab pointcloudApiUrl={pointcloudApiUrl} />}
       {/* {selectedTab === 'layers' && <PointCloudLayersTab />}*/}
-      {selectedTab === 'settings' && <SettingsTab />} 
+      {selectedTab === 'settings' && <SettingsTab />}
     </InfoSidebarContainer>
   )
 }

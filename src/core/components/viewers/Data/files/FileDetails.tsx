@@ -58,7 +58,7 @@ export const FileDetails = React.forwardRef<FileDetailsRef, FileDetailsProps>((
     name: t('fileName'),
     attachedTo: t('attachedTo'),
     dateUploaded: t('dateUploaded'),
-    uploadedBy: t('uploadedBy'), 
+    uploadedBy: t('uploadedBy'),
     fileType: t('fileType'),
     fileSize: t('fileSize'),
     position: t('position'),
@@ -257,10 +257,10 @@ const { data: session } = useSession()
                               && item !== null
                             ) {
                               return (
-                                <Button 
-                                  key={index} 
-                                  variant="ghost" 
-                                  onClick={handleViewBuilding} 
+                                <Button
+                                  key={index}
+                                  variant="ghost"
+                                  onClick={handleViewBuilding}
                                   className="p-0 hover:bg-transparent underline"
                                   disabled={!ability.can('update', 'File')}
                                 >
@@ -271,10 +271,10 @@ const { data: session } = useSession()
                             }
                             else if (typeof item === 'object' && item !== null) {
                               return (
-                                <Button 
-                                  key={index} 
-                                  variant="ghost" 
-                                  onClick={handleViewBuilding} 
+                                <Button
+                                  key={index}
+                                  variant="ghost"
+                                  onClick={handleViewBuilding}
                                   className="p-0 hover:bg-transparent underline"
                                   disabled={!ability.can('update', 'File')}
                                 >
@@ -285,10 +285,10 @@ const { data: session } = useSession()
                             }
                             else {
                               return (
-                                <Button 
-                                  key={index} 
-                                  variant="ghost" 
-                                  onClick={handleViewBuilding} 
+                                <Button
+                                  key={index}
+                                  variant="ghost"
+                                  onClick={handleViewBuilding}
                                   className="p-0 hover:bg-transparent underline"
                                   disabled={!ability.can('update', 'File')}
                                 >
@@ -333,10 +333,10 @@ const { data: session } = useSession()
                                 && item !== null
                               ) {
                                 return (
-                                  <Button 
-                                    key={index} 
-                                    variant="ghost" 
-                                    onClick={handleViewBuilding} 
+                                  <Button
+                                    key={index}
+                                    variant="ghost"
+                                    onClick={handleViewBuilding}
                                     className="p-0 hover:bg-transparent underline"
                                     disabled={!ability.can('update', 'File')}
                                   >
@@ -347,10 +347,10 @@ const { data: session } = useSession()
                               }
                               else if (typeof item === 'object' && item !== null) {
                                 return (
-                                  <Button 
-                                    key={index} 
-                                    variant="ghost" 
-                                    onClick={handleViewBuilding} 
+                                  <Button
+                                    key={index}
+                                    variant="ghost"
+                                    onClick={handleViewBuilding}
                                     className="p-0 hover:bg-transparent underline"
                                     disabled={!ability.can('update', 'File')}
                                   >
@@ -361,10 +361,10 @@ const { data: session } = useSession()
                               }
                               else {
                                 return (
-                                  <Button 
-                                    key={index} 
-                                    variant="ghost" 
-                                    onClick={handleViewBuilding} 
+                                  <Button
+                                    key={index}
+                                    variant="ghost"
+                                    onClick={handleViewBuilding}
                                     className="p-0 hover:bg-transparent underline"
                                     disabled={!ability.can('update', 'File')}
                                   >
@@ -466,8 +466,8 @@ const { data: session } = useSession()
           <>
             <div className="flex flex-row gap-2">
               <Input type="text" value="" onChange={() => {}} />
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="icon"
                 disabled={!ability.can('update', 'File')}
               >
@@ -492,9 +492,9 @@ const { data: session } = useSession()
       else if (value === 'yes' || value === 'no') {
         const bool = value === 'yes'
         return (
-          <Checkbox 
-            checked={bool} 
-            onCheckedChange={() => {}} 
+          <Checkbox
+            checked={bool}
+            onCheckedChange={() => {}}
             disabled={!ability.can('update', 'File')}
           />
         )

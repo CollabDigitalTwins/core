@@ -174,10 +174,10 @@ export function FeatureRequestDialog({ open, onOpenChange, userEmail, viewer }: 
             rows={5}
           />
 
-          <div className="text-sm text-muted-foreground"> {t("wantToBuild")}{" "} 
-            <a href="https://docs.collabdt.org/docs/plugins/overview" target="_blank" rel="noreferrer" className="underline hover:text-foreground" > 
+          <div className="text-sm text-muted-foreground"> {t("wantToBuild")}{" "}
+            <a href="https://docs.collabdt.org/docs/plugins/overview" target="_blank" rel="noreferrer" className="underline hover:text-foreground" >
             {t("pluginDocumentation")}
-             </a> 
+             </a>
             </div>
 
           <div className="flex justify-end gap-2">

@@ -64,31 +64,31 @@ export async function withServerCache<T>(key: string, ttlMs: number, fn: () => P
     const ttlSeconds = Math.floor(ttlMs / 1000)
     try {
       const { getMemcache, setMemcache } = await import('../../../../../utils/memcache')
-      
+
       const cached = await getMemcache<T>(key)
       if (cached !== null) {
         setCache(key, cached, ttlMs)
         return cached
       }
-      
+
       const localCached = getCache<T>(key)
       if (localCached !== undefined) {
         return localCached
       }
 
       const result = await fn()
-      
+
       try {
         await setMemcache(key, result, ttlSeconds)
       } catch (error) {
         console.warn('Memcache write failed:', error)
       }
       setCache(key, result, ttlMs)
-      
+
       return result
     } catch (error) {
       console.warn('Memcache operations failed, falling back to local cache:', error)
-      
+
       const localCached = getCache<T>(key)
       if (localCached !== undefined) {
         return localCached

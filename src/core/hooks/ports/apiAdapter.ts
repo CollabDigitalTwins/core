@@ -118,5 +118,5 @@ export interface ApiAdapter {
     updateInfrastructure(id: number, patch: Partial<Infrastructure>): Promise<Infrastructure>;
     createInfrastructure(input: Partial<Infrastructure>): Promise<Infrastructure>;
     deleteInfrastructure(id: number): Promise<Infrastructure>;
-    
+
 }

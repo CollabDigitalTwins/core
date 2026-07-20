@@ -146,7 +146,7 @@ export const MenusReducer = (state: MenusState, action: MenusActions) => {
             : currentTagsForViewer.filter(t => t !== sensorTag),
         },
       }
-    
+
     case 'SHOW_ALL_SENSOR_IN_VIEWER':
       const showAllViewer = action.payload.viewer
       if (!showAllViewer) return state

@@ -86,7 +86,7 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
 
   // Check if viewer is valid based on appContent
   const isViewerValid = appContent.length === 0 || appContent.includes(viewer)
-  
+
   // Use default viewer (map) if current viewer is not valid
   const validViewer = isViewerValid ? viewer : ViewerNames.map
 

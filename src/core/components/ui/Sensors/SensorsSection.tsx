@@ -46,7 +46,7 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
 
   const {state: buildingsState} = React.useContext(BuildingsContext)
   const buildingId = buildingsState?.buildings?.building?.id || -1
-  
+
   const [sensorToDelete, setSensorToDelete] = React.useState<number | null>(null)
   const [searchQuery, setSearchQuery] = React.useState('')
   const [groupBy, setGroupBy] = React.useState<'type' | 'tag'>('type')
@@ -72,7 +72,7 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
         })
       }
   }, [toolsDispatch, currentViewer])
-  
+
   const handleSensorAction = React.useCallback((action: SensorAction, id: number) => {
     switch (action) {
       case 'view':
@@ -99,7 +99,7 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
   }, [sensorToDelete, deleteSensor])
 
   const currentSensors: Sensor[] = allSensors.filter((sensor) => currentViewer === sensor.viewer && (!sensor.buildingId || sensor.buildingId === buildingId))
-  
+
   // Filter sensors based on search query
   const filteredSensors = React.useMemo(() => {
     if (!searchQuery.trim()) return currentSensors
@@ -114,7 +114,7 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
       )
     })
   }, [currentSensors, searchQuery])
-  
+
   const toggleSensorTypeVisibility = React.useCallback((sensorTypeId: number) => {
     menusDispatch({
       type: 'TOGGLE_SENSOR_TYPE_VISIBILITY',
@@ -213,7 +213,7 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
       </div>
       {isLoading ? (
         <SensorsSectionSkeleton />
-      ) :      
+      ) :
       filteredSensors.length === 0 ? (
         <div className="p-4 text-muted-foreground text-sm flex flex-col items-center">
           <div>{t('noSensorsFound')}</div>

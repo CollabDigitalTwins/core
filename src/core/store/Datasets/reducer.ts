@@ -110,9 +110,9 @@ export const DatasetReducer = (state: DatasetState, action: DatasetActions) => {
       const remaining = state.addedDatasets.filter(dataset => dataset.id !== datasetIdToRemove)
       const sorted = remaining.sort((a, b) => (b.order ?? 0) - (a.order ?? 0))
       const maxOrder = sorted.length - 1
-      const updatedAddedDatasets = sorted.map((dataset, index) => ({ 
-        ...dataset, 
-        order: maxOrder - index 
+      const updatedAddedDatasets = sorted.map((dataset, index) => ({
+        ...dataset,
+        order: maxOrder - index
       }))
       return {
         ...state,

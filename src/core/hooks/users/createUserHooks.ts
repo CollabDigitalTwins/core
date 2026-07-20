@@ -33,7 +33,7 @@ export function createUserHooks(adapter: ApiAdapter) {
       {
         onSuccess: () => {
           mutate(["users"]);
-          mutate(["user", userId]); 
+          mutate(["user", userId]);
         },
       }
     );

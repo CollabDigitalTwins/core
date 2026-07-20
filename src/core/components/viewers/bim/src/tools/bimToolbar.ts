@@ -15,9 +15,9 @@ import { SelectionBimTool } from './selectionBimTool'
 import { FitCameraTool } from './FitCameraTool'
 import { ExplodeByLevelTool } from './ExplodeByLevelTool'
 
-export type BimToolbarToolsType = 
-'bim-add' | 
-'bim-add-comment' | 'bim-add-file' | 'bim-add-ids' | 'bim-add-ifc' | 'bim-add-bcf' | 'bim-add-cad' | 'bim-add-sensor' | 'bim-add-h2k' | 
+export type BimToolbarToolsType =
+'bim-add' |
+'bim-add-comment' | 'bim-add-file' | 'bim-add-ids' | 'bim-add-ifc' | 'bim-add-bcf' | 'bim-add-cad' | 'bim-add-sensor' | 'bim-add-h2k' |
  'bim-clipping' |
  'bim-camera-fit' | 'bim-selection' | 'bim-camera' | 'bim-dimensions' | 'bim-inspect' | 'bim-share' | 'bim-explode'
 

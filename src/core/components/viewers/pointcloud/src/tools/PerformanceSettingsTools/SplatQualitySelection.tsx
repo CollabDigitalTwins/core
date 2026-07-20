@@ -14,7 +14,7 @@ import { DropdownMenuSeparator } from '../../../../../ui/DropdownMenu'
 import * as LR from 'lucide-react'
 
 export enum SplatQuality {
-    HIGH, 
+    HIGH,
     STANDARD
 }
 
@@ -29,7 +29,7 @@ export const SplatQualityTool: React.FC<SplatQualityToolProps> = ({ splatQuality
 
     React.useEffect(() => {
         if (!viewer) return
-        
+
         try {
             viewer.useHQ = splatQuality === SplatQuality.HIGH
 

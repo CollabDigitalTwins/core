@@ -55,7 +55,7 @@ export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
       payload: { currentToolId },
     })
   }
-    
+
   const flipAddingPlaneState = async () => {
     const _active = !active
 
@@ -77,7 +77,7 @@ export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
     const casters = bimComponents.get(OBC.Raycasters)
     casters.get(world)
 
-    //styling 
+    //styling
     const clipStyler = bimComponents.get(OBF.ClipStyler)
     clipStyler.world = world;
     clipStyler.styles.set("Black", {
@@ -126,7 +126,7 @@ export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
       });
     });
 
-    let result = await clipper.create(world)
+    const result = await clipper.create(world)
 
     if (result) {
       console.log(result)
@@ -142,11 +142,11 @@ export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
       }
     }
   }, [world, bimComponents])
-  
+
   const handleKeyDown = React.useCallback((e: KeyboardEvent) => {
     keydownRef.current?.(e)
   }, [])
-  
+
   // Handle deleting plane using Backspace
   React.useEffect(() => {
     if (!active) {
@@ -161,7 +161,7 @@ export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
 
   React.useEffect (() => {
     if (!world || !bimComponents) return
-    
+
     const container = world.renderer.three.domElement
 
     if (active) {
@@ -180,7 +180,7 @@ export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
           <LR.PlusSquare />
           <span>{active? 'Cancel add' : 'Add'} clipping Plane</span>
         </DropdownMenuItem>
-      
+
         <DropdownMenuItem onClick={() => removeAllClippingPlanes()}>
           <LR.Trash2/>
           <span> Delete all clipping planes</span>
@@ -191,10 +191,10 @@ export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
        <Card className="p-3 absolute bottom-10 left-0 bg-background shadow-md z-10 w-full">
             <span className="text-muted-foreground text-xs">
               Double click on the model to add a clipping plane. Press Backspace to remove the clipping plane.
-            </span> 
+            </span>
         </Card>
-      } 
+      }
     </div>
-    
+
   )
 }

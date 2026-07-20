@@ -33,7 +33,7 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
   // Get BIM context
   const { state: bimState, dispatch: bimDispatch } = React.useContext(BimContext)
   const { bimComponents, fragments, modelId, modelUIState } = bimState.bim
-  
+
   // Get Buildings context for buildingId
   const { state: buildingsState } = React.useContext(BuildingsContext)
   const { building } = buildingsState.buildings
@@ -54,7 +54,7 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
   // Use the reusable delete handler
   const { handleDeleteFile } = useFileDeleteHandler({
     deleteFile,
-    
+
   })
 
   // Local state for file management with isVisible property

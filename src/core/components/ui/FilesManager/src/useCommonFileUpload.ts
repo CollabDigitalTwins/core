@@ -23,7 +23,7 @@ export function useCommonFileUpload({
   onUploadSuccess,
   onUploadError
 }: UseCommonFileUploadProps) {
-  
+
   const handleAddFile = React.useCallback(() => {
     // Create file input element
     const input = document.createElement('input')
@@ -47,7 +47,7 @@ export function useCommonFileUpload({
 
         // Revalidate files list so UI updates immediately
         if (buildingId) mutate(`/api/files/building/${buildingId}`)
-        
+
         onUploadSuccess?.()
       } catch (error) {
         console.error('Error uploading file:', error)

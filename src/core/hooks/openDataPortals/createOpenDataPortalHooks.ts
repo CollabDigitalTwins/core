@@ -8,7 +8,7 @@ import useSWRMutation from "swr/mutation";
 
 export function createOpenDataPortalHooks(adapter: ApiAdapter) {
   // Call adapter methods inside hooks
-  
+
   const useOpenDataPortals = () => {
     const key = ["openDataPortals"];
     const { data, error, isLoading } = useSWR<OpenDataPortal[]>(key, () => adapter.listOpenDataPortals());

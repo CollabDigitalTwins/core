@@ -35,11 +35,11 @@ export function PropertiesMenuHeader({ elementName, onCloseAction, idsStatus }: 
           <h2 className="text-base font-semibold">{t('header')}</h2>
         </div>
         {idsStatus && (
-          <Badge 
-            variant="secondary" 
+          <Badge
+            variant="secondary"
             className={`${
-              idsStatus === 'pass' 
-                ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800' 
+              idsStatus === 'pass'
+                ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800'
                 : 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800'
             } flex items-center gap-1.5`}
           >

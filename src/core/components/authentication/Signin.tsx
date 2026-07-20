@@ -51,7 +51,7 @@ function SignInContent({ recaptchaSiteKey, }) {
   const [confirmPasswordError, setConfirmPasswordError] = React.useState('')
   const [hasAttemptedSave, setHasAttemptedSave] = React.useState(false)
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = React.useState(false)
-  
+
 
   const searchParams = useSearchParams()
   const params = useParams()
@@ -59,7 +59,7 @@ function SignInContent({ recaptchaSiteKey, }) {
   const [googleError, setGoogleError] = React.useState(
     searchParams.get('error')
   )
-  //Clean up the Google query error in URL, and have it only return /orgName/signin to clear frontend error responses 
+  //Clean up the Google query error in URL, and have it only return /orgName/signin to clear frontend error responses
   React.useEffect(() => {
     if (googleError) {
       window.history.replaceState({}, '', `/${orgName}/signin`)
@@ -72,7 +72,7 @@ function SignInContent({ recaptchaSiteKey, }) {
   const tresetPassword = useTranslations('resetPassword')
   const authTheme = useAuthTheme()
 
-  
+
 
   const resetCaptcha = () => {
     recaptchaRef.current?.reset()
@@ -144,7 +144,7 @@ function SignInContent({ recaptchaSiteKey, }) {
         }
       }
 
-      // Completed Login + MFA - Redirect to the Platform's Organization Dashboard 
+      // Completed Login + MFA - Redirect to the Platform's Organization Dashboard
       window.location.href = `/${orgName}`
 
     } catch (err) {
@@ -206,7 +206,7 @@ function SignInContent({ recaptchaSiteKey, }) {
     //      //errors.push(t('containsUsername'));
     //      errors.push(t('weakPassword'));
 
-    //  }      
+    //  }
 
     return errors
   }
@@ -223,7 +223,7 @@ function SignInContent({ recaptchaSiteKey, }) {
     const value = e.target.value
     setConfirmPassword(value)
     setConfirmPasswordError(value === newPassword ? '' : tforgotPassword('noMatch'))
-  } 
+  }
 
   //Forgot Password Flow: 1. User Clicks Reset Password > 2. OTP is emailed(forgotpassword API)
   //  > 3. OTP is verified(verifyotp API) > 4. User chooses a new password(resetpassword API)
@@ -250,7 +250,7 @@ function SignInContent({ recaptchaSiteKey, }) {
       return
     }
 
-    //Redirect to Verify OTP flow to enter OTP that has been emailed 
+    //Redirect to Verify OTP flow to enter OTP that has been emailed
     setStep('forgotPasswordSent')
     setIsLoading(false)
 
@@ -307,7 +307,7 @@ function SignInContent({ recaptchaSiteKey, }) {
 
   }
 
-  //Final Step: Reset Password 
+  //Final Step: Reset Password
 const handleResetPassword = async () => {
 
   setHasAttemptedSubmit(true)
@@ -315,7 +315,7 @@ const handleResetPassword = async () => {
   const errors = validatePassword(newPassword)
 
   setPasswordErrors(errors)
-  
+
 
   if (newPassword !== confirmPassword) {
 
@@ -400,7 +400,7 @@ const handleResetPassword = async () => {
             : tMfa('subtitle', { email })} */}
           {t('message')}
         </p>
-      </div> 
+      </div>
 
           <Input
             type="email"
@@ -536,7 +536,7 @@ const handleResetPassword = async () => {
             : tMfa('subtitle', { email })} */}
           {tresetPassword('subtitle')}
         </p>
-      </div> 
+      </div>
 
     <Input
       type="email"
@@ -648,8 +648,8 @@ const handleResetPassword = async () => {
         </p>
 
       </div>
-  
-                                     
+
+
   <Input
     type={showNewPassword ? 'text' : 'password'}
     placeholder="New Password"
@@ -670,7 +670,7 @@ const handleResetPassword = async () => {
     onChange={handleConfirmPasswordChange}
   />
 
-                    
+
                     {hasAttemptedSave && confirmPasswordError && (
                       <PasswordError message={confirmPasswordError} />
                     )}
@@ -705,7 +705,7 @@ const handleResetPassword = async () => {
 
 )}
       {/* CAPTCHA only on Credentials(Username and Password) Provider login */}
-           
+
       {step === 'login' && (
         <div className="auth-captcha-wrapper">
           <ReCAPTCHA

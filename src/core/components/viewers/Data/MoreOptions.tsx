@@ -40,7 +40,7 @@ import ConfirmDialog from '../../../components/ConfirmDialog'
 import { DataTypes, ViewerNames } from '../../../types/'
 import { useDeleteSite } from '../../../hooks/sites/sites'
 import { useUser } from '../../../hooks/users/users'
-  
+
 
 interface MoreOptionsProps {
   row: Building | Site | FileRow | Partial<User>

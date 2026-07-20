@@ -49,7 +49,7 @@ export const SetCameraOption = ({ tool }) => {
 
     const setCameraOption = (cameraOption: CameraControl) => {
         if (!viewer) return;
-        
+
         pointCloudDispatch({
             type: 'SET_CAMERA_CONTROL',
             payload: { cameraControl: cameraOption }
@@ -73,12 +73,12 @@ export const SetCameraOption = ({ tool }) => {
 
     const setCameraMode = (cameraMode: CameraMode) => {
         if (!viewer) return;
-        
+
         pointCloudDispatch({
             type: 'SET_CAMERA_PROJECTION',
             payload: { cameraProjection: cameraMode }
         });
-        
+
         viewer.setCameraMode(cameraMode);
     }
 
@@ -150,7 +150,7 @@ export const SetCameraOption = ({ tool }) => {
                         </div>
                     </div>
                     <DropdownMenuSeparator />
-                
+
                 </div>
             </ToolbarSubmenu>
         </div>

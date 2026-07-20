@@ -142,7 +142,7 @@ export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
           }
         })
 
-        
+
 
       const sensorFC: GeoJSON.FeatureCollection<GeoJSON.Point, { [key: string]: any }> = {
         type: 'FeatureCollection',
@@ -256,7 +256,7 @@ export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
     const dataUrl = popupInfo.url
       ? `${minioBaseUrl ?? ''}/sensors/${popupInfo.url}`
       : popupInfo.data || ''
-    
+
     return (
       <Popup
         className="noBorderPopup"

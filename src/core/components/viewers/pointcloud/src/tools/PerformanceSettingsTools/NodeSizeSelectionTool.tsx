@@ -61,10 +61,10 @@ export const NodeSizeSelectionTool: React.FC<NodeSizeSelectionToolProps> = ({
     minNodeSize,
     setMinNodeSize,
     maxNodeSize,
-    setMaxNodeSize, 
-    pointSizeType, 
+    setMaxNodeSize,
+    pointSizeType,
     setPointSizeType,
-    minLimit, 
+    minLimit,
     maxLimit
 }) => {
     const { state: pointCloudState } = React.useContext(PointCloudContext)

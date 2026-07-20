@@ -150,7 +150,7 @@ export default function OrganizationSettingsPanel({
 //   : organization?.faviconKey && minioUrl
 //     ? `${minioUrl}/org-logos/${organization.faviconKey}`
 //     : null
-    
+
   if (isOrganizationLoading) {
     return (
       <OrganizationSkeleton />
@@ -165,7 +165,7 @@ export default function OrganizationSettingsPanel({
     )
   }
 
-  const countrySubdivisions = 
+  const countrySubdivisions =
   countrySubdivisionsData
     ? Object.values(countrySubdivisionsData).map((subdivision: any) => subdivision.name)
     : []
@@ -307,7 +307,7 @@ export default function OrganizationSettingsPanel({
                     onChange={(e) => handleInputChange('mainColor', e.target.value)}
                     disabled={!isEditing || !ability.can('update', "Organization")}
                     className="w-20 h-10 p-1"
-                    
+
                   />
                   <Input
                     type="text"

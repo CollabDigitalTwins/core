@@ -48,7 +48,7 @@ export const PerformanceSettingTools: React.FC<PerformanceSettingToolsProps> = (
         <div className="p-4 w-80 space-y-4">
             <PointBudgetTool pointBudget={pointBudget} setPointBudget={setPointBudget} />
             <SplatQualityTool splatQuality={quality} setSplatQuality={setQuality} />
-    
+
             <NodeSizeSelectionTool
                 minNodeSize={minNodeSize}
                 setMinNodeSize={setMinNodeSize}

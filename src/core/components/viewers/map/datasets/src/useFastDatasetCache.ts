@@ -30,7 +30,7 @@ export function useFastDatasetCache() {
     if (!dataset || typeof dataset.getFeaturesData !== 'function') return
 
     const key = getCacheKey(dataset)
-    
+
     const cached = globalCache.get(key)
     if (cached && !isExpired(cached.timestamp)) return
     if (prefetchQueue.current.has(key)) return
@@ -56,7 +56,7 @@ export function useFastDatasetCache() {
       timestamp: Date.now(),
       promise,
     })
-    
+
     if (typeof dataset.getFeatures === 'function') {
       const featuresKey = `${dataset.id || dataset.name}_geojson`
       if (!featuresPrefetchQueue.has(featuresKey)) {

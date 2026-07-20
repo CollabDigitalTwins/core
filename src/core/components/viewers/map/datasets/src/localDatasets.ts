@@ -231,7 +231,7 @@ async function fetchOrganizationFromTile(tileUrlTemplate: string, vectorLayerId:
 
     const feature = layer.feature(0)
     const { properties } = feature.toGeoJSON(0, 0, z)
-    
+
     // Determine geometry type
     let geometryType: LayerGeometryType | undefined
     if (feature.type === 1) { // Point
@@ -254,10 +254,10 @@ async function fetchOrganizationFromTile(tileUrlTemplate: string, vectorLayerId:
 
 async function resolveDatasetOrganization(tile: NormalizedMartinTile) {
   const fromTilestats = extractOrganizationFromTilestats(tile.tilestats)
-  
+
   // Always fetch from tile to get geometry type, even if we have organization from tilestats
   const fromTile = await fetchOrganizationFromTile(tile.tileUrl, tile.vectorLayerId, tile.minzoom)
-  
+
   return {
     organization: fromTilestats !== undefined ? fromTilestats : fromTile?.organization,
     geometryType: fromTile?.geometryType
@@ -484,20 +484,20 @@ export async function fetchLocalDatasets(
       const getFeatures = async (): Promise<AllGeoJSON> => {
         // Create a cache key based on the dataset name and features URL
         const featuresKey = `features:local:${datasetItem.name}:${datasetItem.featuresUrl}`
-        
+
         // Check cache first
         const cachedFeatures = getCache<AllGeoJSON>(featuresKey)
         if (cachedFeatures) {
           return cachedFeatures
         }
-        
+
         try {
           // Use the featuresUrl from the dataset item
           let geojsonUrl: string
           if (datasetItem.featuresUrl.startsWith('http://') || datasetItem.featuresUrl.startsWith('https://')) {
             geojsonUrl = datasetItem.featuresUrl
           } else {
-            const baseUrl = apiUrl.endsWith('.json') 
+            const baseUrl = apiUrl.endsWith('.json')
               ? apiUrl.substring(0, apiUrl.lastIndexOf('/'))
               : apiUrl
             geojsonUrl = `${baseUrl}/${datasetItem.featuresUrl}`
@@ -510,10 +510,10 @@ export async function fetchLocalDatasets(
           }
 
           const geojsonData = await response.json() as AllGeoJSON
-          
+
           // Cache for 1 hour
           setCache(featuresKey, geojsonData, 60 * 60 * 1000)
-          
+
           return geojsonData
         } catch (error) {
           console.error(`Error loading GeoJSON for ${datasetItem.name}:`, error)

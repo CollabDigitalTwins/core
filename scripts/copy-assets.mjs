@@ -1,13 +1,13 @@
 // With tsup `bundle: false`, esbuild transpiles each .ts/.tsx file but leaves
-// `import './foo.css'` references alone — it doesn't copy the .css files. Next
-// resolves the import at consume-time, fails because dist/<path>/foo.css
-// doesn't exist. This step mirrors every .css under src/ into dist/ at the
-// same relative path so those imports resolve.
+// `import './foo.css'` and `import './bar.json'` references alone — it doesn't
+// copy those files. This step mirrors every .css and .json under src/ into
+// dist/ at the same relative path so those imports resolve.
 import { readdirSync, mkdirSync, copyFileSync } from 'node:fs'
 import path from 'node:path'
 
 const SRC = 'src'
 const DEST = 'dist'
+const EXTENSIONS = ['.css', '.json']
 
 let copied = 0
 function walk(dir) {
@@ -15,7 +15,7 @@ function walk(dir) {
     const srcPath = path.join(dir, entry.name)
     if (entry.isDirectory()) {
       walk(srcPath)
-    } else if (entry.name.endsWith('.css')) {
+    } else if (EXTENSIONS.some(ext => entry.name.endsWith(ext))) {
       const destPath = path.join(DEST, path.relative(SRC, srcPath))
       mkdirSync(path.dirname(destPath), { recursive: true })
       copyFileSync(srcPath, destPath)
@@ -25,4 +25,4 @@ function walk(dir) {
 }
 
 walk(SRC)
-console.log(`CSS: copied ${copied} file(s) from ${SRC}/ to ${DEST}/`)
+console.log(`Assets: copied ${copied} file(s) from ${SRC}/ to ${DEST}/`)

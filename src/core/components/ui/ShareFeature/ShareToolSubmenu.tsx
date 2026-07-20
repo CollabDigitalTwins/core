@@ -48,14 +48,14 @@ interface ShareToolSubmenuProps {
   dialogTitleKey?: string
 }
 
-export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({ 
-  tool, 
-  constructShareUrl, 
+export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({
+  tool,
+  constructShareUrl,
   translationKey = 'ShareTool',
   dialogTitleKey
 }) => {
   // Translation
- 
+
   const t = useTranslations("ShareTool")
   // Get current viewer from context
   const { state: menusState } = React.useContext(MenusContext)
@@ -154,7 +154,7 @@ export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({
           const mapCanvas = map.getCanvas()
           mapCanvas.toBlob((blob) => {
             if (!blob) return
-            
+
             const url = URL.createObjectURL(blob)
             setScreenshotBlob(blob)
             setScreenshotUrl(url)
@@ -169,18 +169,18 @@ export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({
         map.triggerRepaint()
         return
       }
-      
+
       // For BIM viewer, force a render then capture
       if (currentViewer === ViewerNames.bim && world?.renderer && world?.scene && world?.camera) {
         // Force Three.js to render
         world.renderer.three.render(world.scene.three, world.camera.three)
-        
+
         // Get the canvas and capture immediately after render
         canvas = document.querySelector('#bim-viewer-container canvas')
         if (canvas) {
           canvas.toBlob((blob) => {
             if (!blob) return
-            
+
             const url = URL.createObjectURL(blob)
             setScreenshotBlob(blob)
             setScreenshotUrl(url)
@@ -203,14 +203,14 @@ export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({
       }
       canvas.toBlob((blob) => {
         if (!blob) return
-        
+
         const url = URL.createObjectURL(blob)
         setScreenshotBlob(blob)
         setScreenshotUrl(url)
         setScreenshotName(`screenshot-${currentViewer}-${Date.now()}`)
         setScreenshotDialogOpen(true)
       }, 'image/png', 1.0)
-      
+
     } catch (error) {
       console.error('Screenshot failed:', error)
     }
@@ -247,8 +247,8 @@ export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({
 
   // Check if current viewer supports screenshots
   const canTakeScreenshot = [
-    ViewerNames.map, 
-    ViewerNames.bim, 
+    ViewerNames.map,
+    ViewerNames.bim,
     ViewerNames.pointcloud
   ].includes(currentViewer as ViewerNames)
 
@@ -267,10 +267,10 @@ export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({
         <DialogContent className="flex flex-col items-center gap-4 max-w-sm">
           <DialogHeader>
             <DialogTitle>
-              {dialogTitleKey === 'map' 
-                ? t('mapDialogTitle') 
-                : dialogTitleKey === 'bim' 
-                ? t('bimDialogTitle') 
+              {dialogTitleKey === 'map'
+                ? t('mapDialogTitle')
+                : dialogTitleKey === 'bim'
+                ? t('bimDialogTitle')
                 : t('pointCloudDialogTitle')}
             </DialogTitle>
           </DialogHeader>
@@ -302,16 +302,16 @@ export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({
             <DialogHeader>
               <DialogTitle>{t('ssDownload')}</DialogTitle>
             </DialogHeader>
-            
+
             <div className="flex flex-col gap-4">
               {screenshotUrl && (
-                <img 
-                  src={screenshotUrl} 
-                  alt="Screenshot preview" 
+                <img
+                  src={screenshotUrl}
+                  alt="Screenshot preview"
                   className="w-full h-auto"
                 />
               )}
-              
+
               <div className="flex flex-col gap-2">
                 <label htmlFor="screenshot-name">
                   {t('fileName')}

@@ -8,7 +8,7 @@ import type { Building } from '../../../../types/dbTypes'
  */
 export function generateBuildingSchemaCSV(schemaTemplate: Record<string, string>, fieldNames: string[]): string {
   const headers = fieldNames.join(',')
-  
+
   const example = fieldNames.map(field => {
     const value = schemaTemplate[field]
     // Wrap in quotes if it contains comma or quotes
@@ -17,7 +17,7 @@ export function generateBuildingSchemaCSV(schemaTemplate: Record<string, string>
     }
     return value || ''
   }).join(',')
-  
+
   return `${headers}\n${example}`
 }
 
@@ -31,7 +31,7 @@ export function exportBuildingsToCSV(buildings: Building[]): string {
 
   // Get all field names from the first building
   const buildingFields = Object.keys(buildings[0])
-  
+
   // Create headers
   const headers = buildingFields.join(',')
 
@@ -39,7 +39,7 @@ export function exportBuildingsToCSV(buildings: Building[]): string {
   const rows = buildings.map(building => {
     return buildingFields.map(field => {
       const value = building[field as keyof Building]
-      
+
       // Handle different data types
       if (value == null) return ''
       if (Array.isArray(value)) return `"${value.join(';')}"`
@@ -59,14 +59,14 @@ export function exportBuildingsToCSV(buildings: Building[]): string {
 export function parseCSVToBuildings(csvText: string): any[] {
   // Parse CSV manually
   const lines = csvText.split('\n').filter(line => line.trim())
-  
+
   if (lines.length < 2) {
     throw new Error('CSV file is empty')
   }
 
   // Extract headers
   const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''))
-  
+
   // Check if buildingAddress exists
   if (!headers.includes('buildingAddress')) {
     throw new Error('CSV must include buildingAddress column')
@@ -80,7 +80,7 @@ export function parseCSVToBuildings(csvText: string): any[] {
 
     // Simple CSV parsing
     const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''))
-    
+
     const building: any = {}
     headers.forEach((header, index) => {
       const value = values[index]

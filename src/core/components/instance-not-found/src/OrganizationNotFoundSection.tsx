@@ -18,9 +18,9 @@ interface OrganizationNotFoundSectionProps {
   isSubmitting?: boolean
 }
 
-export default function OrganizationNotFoundSection({ 
-  organizationName, 
-  onSubmit, 
+export default function OrganizationNotFoundSection({
+  organizationName,
+  onSubmit,
   isSubmitting = false
 }: OrganizationNotFoundSectionProps) {
   const t = useTranslations('OrganizationNotFound')
@@ -85,8 +85,8 @@ export default function OrganizationNotFoundSection({
                   {t('backToHome')}
                 </Button>
               </Link>
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 variant="outline"
                 className="text-base px-8 bg-primary-highlight border-secondary/40 hover:bg-orange-400 hover:border-secondary/60 transition-all whitespace-nowrap w-full sm:w-auto"
                 asChild
@@ -105,17 +105,17 @@ export default function OrganizationNotFoundSection({
               <p className="text-muted-foreground mb-8">
                 {t('formDescription')}
               </p>
-              
+
               <form onSubmit={onSubmit} className="space-y-6">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label htmlFor="firstName" className="text-sm font-medium">
                       {t('firstName')}
                     </label>
-                    <Input 
-                      id="firstName" 
-                      name="firstName" 
-                      required 
+                    <Input
+                      id="firstName"
+                      name="firstName"
+                      required
                       className="bg-background"
                     />
                   </div>
@@ -123,10 +123,10 @@ export default function OrganizationNotFoundSection({
                     <label htmlFor="lastName" className="text-sm font-medium">
                       {t('lastName')}
                     </label>
-                    <Input 
-                      id="lastName" 
-                      name="lastName" 
-                      required 
+                    <Input
+                      id="lastName"
+                      name="lastName"
+                      required
                       className="bg-background"
                     />
                   </div>
@@ -136,11 +136,11 @@ export default function OrganizationNotFoundSection({
                   <label htmlFor="email" className="text-sm font-medium">
                     {t('email')}
                   </label>
-                  <Input 
-                    id="email" 
-                    name="email" 
-                    type="email" 
-                    required 
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
                     className="bg-background"
                   />
                 </div>
@@ -149,9 +149,9 @@ export default function OrganizationNotFoundSection({
                   <label htmlFor="organization" className="text-sm font-medium">
                     {t('organization')}
                   </label>
-                  <Input 
-                    id="organization" 
-                    name="organization" 
+                  <Input
+                    id="organization"
+                    name="organization"
                     defaultValue={organizationName}
                     className="bg-background"
                   />
@@ -161,10 +161,10 @@ export default function OrganizationNotFoundSection({
                   <label htmlFor="message" className="text-sm font-medium">
                     {t('message')}
                   </label>
-                  <Textarea 
-                    id="message" 
-                    name="message" 
-                    required 
+                  <Textarea
+                    id="message"
+                    name="message"
+                    required
                     rows={5}
                     className="bg-background resize-none"
                   />
@@ -190,8 +190,8 @@ export default function OrganizationNotFoundSection({
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">{t('emailLabel')}</p>
-                    <a 
-                      href="mailto:info@collabdt.org" 
+                    <a
+                      href="mailto:info@collabdt.org"
                       className="text-primary hover:underline font-medium text-sm"
                     >
                       info@collabdt.org
@@ -199,8 +199,8 @@ export default function OrganizationNotFoundSection({
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">{t('websiteLabel')}</p>
-                    <a 
-                      href="https://collabdt.org" 
+                    <a
+                      href="https://collabdt.org"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:underline font-medium text-sm"
@@ -222,7 +222,7 @@ export default function OrganizationNotFoundSection({
         </motion.div>
       </div>
       </section>
-    
+
     </>
   )
 }

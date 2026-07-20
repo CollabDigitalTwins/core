@@ -17,20 +17,20 @@ export interface DownloadOptions {
  */
 export function downloadFile(url: string, filename: string, options: DownloadOptions = {}) {
   const { useOriginalName = false, addTimestamp = true, customExtension } = options
-  
+
   const link = document.createElement('a')
   link.href = url
-  
+
   let finalFilename = filename
   if (!useOriginalName && addTimestamp) {
     finalFilename = dateName(filename)
   }
-  
+
   if (customExtension) {
     const nameWithoutExt = finalFilename.replace(/\.[^/.]+$/, '')
     finalFilename = `${nameWithoutExt}.${customExtension}`
   }
-  
+
   link.download = finalFilename
   document.body.appendChild(link)
   link.click()

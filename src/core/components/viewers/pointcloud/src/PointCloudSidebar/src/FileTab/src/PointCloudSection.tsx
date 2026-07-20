@@ -327,7 +327,7 @@ export function PointCloudsSection({ files, pointcloudApiUrl, buildingId }: Poin
     let fileName = baseFileName
     let counter = 1
     const existingNames = pointcloudsFiles.map((pc) => pc.name)
-    
+
     while (existingNames.includes(fileName)) {
       fileName = `${baseFileName} (${counter})`
       counter++
@@ -352,7 +352,7 @@ export function PointCloudsSection({ files, pointcloudApiUrl, buildingId }: Poin
       subscribeToProgress(conversion.jobId, Number(pointCloud.id))
     } catch (error) {
       console.error('Error uploading point cloud:', error)
-      
+
       alert(
         error instanceof Error
           ? `Failed to upload: ${error.message}`

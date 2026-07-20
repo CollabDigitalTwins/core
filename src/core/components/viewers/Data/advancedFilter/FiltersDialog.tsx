@@ -160,7 +160,7 @@ const FiltersDialog = ({
 
           // Create label with context if needed
           let displayLabel = field.label || field.property
-          
+
           // Convert React nodes to strings
           if (typeof displayLabel === 'object' && displayLabel?.props?.children) {
             // Extract text from React fragments

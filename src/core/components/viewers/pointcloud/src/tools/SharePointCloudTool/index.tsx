@@ -45,7 +45,7 @@ export const SharePointCloudTool: React.FC<ShareToolProps> = ({ tool }) => {
     params.set('tarX', cameraPos.target.x.toFixed(3))
     params.set('tarY', cameraPos.target.y.toFixed(3))
     params.set('tarZ', cameraPos.target.z.toFixed(3))
-    
+
     // Add building ID if available
     if (building) {
       params.set('buildingId', String(building.id))
@@ -56,8 +56,8 @@ export const SharePointCloudTool: React.FC<ShareToolProps> = ({ tool }) => {
   }
 
   return (
-    <ShareToolSubmenu 
-      tool={tool} 
+    <ShareToolSubmenu
+      tool={tool}
       constructShareUrl={constructShareUrl}
       translationKey="ShareTool"
       dialogTitleKey="SharePointCloudTool"

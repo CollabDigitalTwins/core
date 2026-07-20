@@ -26,7 +26,7 @@ interface ConfirmDialogProps {
 
 export default function ConfirmDialog({ isOpen, isDeleting, onOpenChange, handleConfirm, itemName, dataType }: ConfirmDialogProps) {
     const t = useTranslations('ConfirmDialog')
-    
+
     return (
         <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
             <AlertDialogContent>

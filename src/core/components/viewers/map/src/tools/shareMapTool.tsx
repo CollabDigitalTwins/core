@@ -53,8 +53,8 @@ export const ShareMapTool: React.FC<ShareToolProps> = ({ tool }) => {
   }
 
   return (
-    <ShareToolSubmenu 
-      tool={tool} 
+    <ShareToolSubmenu
+      tool={tool}
       constructShareUrl={constructShareUrl}
       translationKey="ShareTool"
       dialogTitleKey="map"

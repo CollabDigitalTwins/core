@@ -27,7 +27,7 @@ interface MeasureToolProps {
   tool: Tool
 }
 
-type MeasureType = 'free' | 'edge' | 'area' | 'volume' 
+type MeasureType = 'free' | 'edge' | 'area' | 'volume'
 
 export const MeasureBimTool: React.FC<MeasureToolProps> = ({ tool }) => {
   // Translation
@@ -60,7 +60,7 @@ export const MeasureBimTool: React.FC<MeasureToolProps> = ({ tool }) => {
   // When current tool changes
   React.useEffect(() => {
     setActive(currentToolId === toolId)
-    
+
     // Disable measurement when tool is deactivated
     if (currentToolId !== toolId && lengthMeasurement) {
       lengthMeasurement.enabled = false

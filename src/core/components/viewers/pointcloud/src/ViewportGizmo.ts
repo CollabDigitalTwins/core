@@ -4,7 +4,7 @@
 import { ViewportGizmo as ThreeViewportGizmo } from 'three-viewport-gizmo'
 import * as THREE from 'three'
 
-// ⚠️⚠️⚠️ The gizmo will now only serve as a visual orientation indicator and won't respond to clicks. 
+// ⚠️⚠️⚠️ The gizmo will now only serve as a visual orientation indicator and won't respond to clicks.
 export class ViewportGizmo {
   private _enabled = false
   private _animationId: number | null = null
@@ -124,7 +124,7 @@ export class ViewportGizmo {
         if (target) {
           this.gizmo.target.copy(target)
         }
-        
+
         // Update and render the gizmo
         this.gizmo.update()
         this.gizmo.render()

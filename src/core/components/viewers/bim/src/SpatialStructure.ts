@@ -23,7 +23,7 @@ export class SpatialStructure extends OBC.Component {
   readonly onLoadingStateChanged = new OBC.Event<{ isLoading: boolean }>()
 
   private fragments: OBC.FragmentsManager | null = null
-  
+
   private _tree: SpatialTreeItem | null = null
   private _treeByModelId = new Map<string, SpatialTreeItem | null>()
   private _loadingPromises = new Map<string, Promise<SpatialTreeItem | null>>()
@@ -333,12 +333,12 @@ export class SpatialStructure extends OBC.Component {
 
   private findBuilding(item: any): any {
     if (!item) return null
-    
+
     // Check if current item is a building
     if (item?.category === 'IFCBUILDING' || item?.type === 'IFCBUILDING') {
       return item
     }
-    
+
     // Search in children if it's an array
     if (Array.isArray(item)) {
       for (const child of item) {
@@ -346,7 +346,7 @@ export class SpatialStructure extends OBC.Component {
         if (found) return found
       }
     }
-    
+
     // Search in children property
     if (item?.children) {
       for (const child of item.children) {
@@ -354,7 +354,7 @@ export class SpatialStructure extends OBC.Component {
         if (found) return found
       }
     }
-    
+
     return null
   }
 

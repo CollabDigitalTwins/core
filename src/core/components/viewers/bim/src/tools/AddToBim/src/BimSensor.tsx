@@ -17,7 +17,7 @@ interface SensorProps {
   updateFrequency: number
   tags?: string[]
   worldCamera: THREE.Camera
-  targetPoint: THREE.Vector3          
+  targetPoint: THREE.Vector3
   onRemove?: () => void
   onEdit?: () => void
   onClose: () => void

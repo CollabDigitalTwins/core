@@ -28,7 +28,7 @@ export function CommentsSection() {
   const {comments} = useComments()
   const {state: buildingsState} = React.useContext(BuildingsContext)
   const buildingId = buildingsState?.buildings?.building?.id || -1
-  
+
   const [commentToDelete, setCommentToDelete] = React.useState<number | null>(null)
   const [searchQuery, setSearchQuery] = React.useState('')
   const { deleteComment } = useComment(commentToDelete)
@@ -47,7 +47,7 @@ export function CommentsSection() {
         },
       })
   }, [toolsDispatch, currentViewer])
-  
+
   const handleCommentAction = React.useCallback((action: CommentAction, id: number) => {
     switch (action) {
       case 'view':
@@ -91,14 +91,14 @@ export function CommentsSection() {
   // Filter comments based on search query
   const filteredComments = React.useMemo(() => {
     if (!searchQuery.trim()) return currentComments
-    
+
     const query = searchQuery.toLowerCase()
-    return currentComments.filter((comment) => 
+    return currentComments.filter((comment) =>
       comment.text?.toLowerCase().includes(query)
     )
   }, [currentComments, searchQuery])
 
-  const commentsVisible = commentsVisibleInViewer.includes(currentViewer) 
+  const commentsVisible = commentsVisibleInViewer.includes(currentViewer)
 
   const toggleCommentsVisibility = React.useCallback(() => {
       menusDispatch({

@@ -1021,26 +1021,22 @@ ul {
 
 @media (max-width: 768px) {
   .maplibregl-ctrl-bottom-right {
-    margin-bottom: 48px !important;
+
+    margin-bottom: 6px !important;
     font-size: 10px !important;
-    /* The floating map toolbar (bottom, centered) sits at z-10 — without
-       this, it renders on top of (hides) the attribution popup instead of
-       the popup coming forward/in front of it when tapped open. This
-       container is already `position: absolute` via MapLibre's own base
-       CSS, so z-index applies directly here. */
     z-index: 30 !important;
   }
 
-  /* MapLibre auto-adds `open` + `.maplibregl-compact-show` together once on
-     mount for narrow viewports (attribution_control.ts _updateCompact()).
-     Trying to distinguish that from a genuine tap via those same
-     classes/attributes is unreliable — tapping <summary> fires BOTH the
-     browser's native <details> toggle AND MapLibre's own JS toggle at once,
-     which can reproduce the same "both present" combination on a real tap
-     too. Side-step MapLibre's class bookkeeping entirely: force hidden
-     always, reveal only on real, live interaction (:hover for pointer
-     devices, :focus-within once tapped/focused, :active as a fallback for
-     iOS Safari's unreliable tap-to-focus on button-like elements). */
+ 
+  .maplibregl-ctrl-bottom-right details {
+    width: 24px !important;
+    height: 24px !important;
+    max-width: 24px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+  }
+
+
   .maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib-inner {
     display: none !important;
   }
@@ -1061,6 +1057,11 @@ ul {
   .maplibregl-ctrl-bottom-right details:hover,
   .maplibregl-ctrl-bottom-right details:focus-within,
   .maplibregl-ctrl-bottom-right details:active {
+    width: auto !important;
+    height: auto !important;
+    max-width: 100% !important;
+    padding: 2px 24px 2px 8px !important;
+    border-radius: 12px !important;
     overflow: visible !important;
   }
 }

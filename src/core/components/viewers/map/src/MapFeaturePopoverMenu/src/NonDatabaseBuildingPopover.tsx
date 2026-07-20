@@ -69,7 +69,6 @@ export default function NonDatabaseBuildingPopover({
   const featureid = feature?.id
   const [name, setName] = React.useState('')
   const [address, setAddress] = React.useState('')
-  const [type, setType] = React.useState('')
   const [matchingBuildings, setMatchingBuildings] = React.useState<Building[]>([])
   const [selectedMatchingBuildingId, setSelectedMatchingBuildingId] = React.useState<string>('')
   const [showExistingBuildings, setShowExistingBuildings] = React.useState(false)
@@ -238,10 +237,6 @@ export default function NonDatabaseBuildingPopover({
     setAddress(event.target.value)
   }
 
-  const handleBuildingTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setType(event.target.value)
-  }
-
   const selectedMatchingBuilding = matchingBuildings.find(
     building => building.id.toString() === selectedMatchingBuildingId,
   )
@@ -297,7 +292,7 @@ export default function NonDatabaseBuildingPopover({
     const newBuilding: Partial<Building> = {
       buildingName,
       buildingAddress: finalAddress,
-      buildingType: [type || 'Other'],
+      buildingType: ['Other'],
       buildingOsmId,
       buildingLatitude: buildingCoordinates ? buildingCoordinates[1] : null,
       buildingLongitude: buildingCoordinates ? buildingCoordinates[0] : null,
@@ -344,20 +339,24 @@ export default function NonDatabaseBuildingPopover({
   return (
     <PopoverContent className="w-64 -m-1" side="top">
       <form onSubmit={handleCreateNewBuilding}>
-        <div className="grid gap-4">
+        {/* Header row: close button, no overlap with content below */}
+        <div className="flex items-center justify-end mb-1">
           <Button
             type="button"
             onClick={onCloseAction}
             variant="ghost"
-            className="absolute top-1 right-2 p-1 text-muted-foreground hover:text-foreground"
+            size="icon"
+            className="shrink-0 p-0 m-0 text-muted-foreground hover:text-foreground"
             aria-label={t('closeAriaLabel')}
           >
             <LR.X className="w-4 h-4" />
           </Button>
+        </div>
 
+        <div className="grid gap-4">
           {/* Show existing building if match found */}
           {showExistingBuildings && matchingBuildings.length > 0 && (
-            <div className="space-y-1 mt-6">
+            <div className="space-y-1">
               <div className="text-xs text-muted-foreground">
                 {t('existingBuildingFound')}
               </div>
@@ -431,40 +430,12 @@ export default function NonDatabaseBuildingPopover({
                 value={address}
                 onChange={handleAddressChange}
                 placeholder={address || t('addressPlaceholder')}
-                className={`font-medium leading-none bg-transparent border-b border-gray-300 focus:outline-none focus:border-primary px-1 py-1 ${address ? 'placeholder:text-foreground' : 'placeholder:text-muted-foreground'}`}
+                className={`font-medium leading-none bg-transparent focus:outline-none focus:border-primary px-1 py-1 ${address ? 'placeholder:text-foreground' : 'placeholder:text-muted-foreground'}`}
                 aria-label={t('addressAriaLabel')}
                 required
                 disabled={!ability.can('create', 'Building')}
               />
             </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="building-type" className="text-xs text-muted-foreground">
-                {t('typeLabel')}
-              </Label>
-              <select
-                id="building-type"
-                value={type}
-                onChange={handleBuildingTypeChange}
-                className="font-medium leading-none bg-transparent border-b border-gray-300 focus:outline-none focus:border-primary px-1 py-1"
-                aria-label={t('typeAriaLabel')}
-                required
-                disabled={!ability.can('create', 'Building')}
-              >
-                <option value="">{t('defaultOption')}</option>
-                <option value="Townhouses">{t('townhouse')}</option>
-                <option value="<4 Storey MURB">{t('4MURB')}</option>
-                <option value="4+ Storey MURB">{t('4PlusMURB')}</option>
-                <option value="Stacked Townhouses">{t('stackedTownhouses')}</option>
-                <option value="Detached">{t('detached')}</option>
-                <option value="Semi Detached">{t('semiDetached')}</option>
-                <option value="Other">{t('other')}</option>
-              </select>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 py-2 px-1">
-            <Label className="text-xs text-muted-foreground min-w-fit">{t('osmId')}</Label>
-            <span className="text-sm font-medium text-foreground">{buildingOsmId ?? t('na')}</span>
           </div>
         </div>
 

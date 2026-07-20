@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { Feature } from 'geojson'
+import type { Feature } from 'geojson'
 import { getGeocodingConfig } from './config'
 import { peliasAutocomplete, peliasReverse } from './pelias'
 import { photonAutocomplete, nominatimReverse } from './osm'

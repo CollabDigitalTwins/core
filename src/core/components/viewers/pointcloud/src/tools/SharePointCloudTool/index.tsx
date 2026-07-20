@@ -7,7 +7,7 @@ import * as React from "react";
 
 // Utilities
 import { PointCloudContext, BuildingsContext } from '../../../../../../store'
-import { Tool } from '../../../../../../types/tools'
+import type { Tool } from '../../../../../../types/tools'
 import { getCameraPosition } from './src/getCameraPosition'
 
 // Custom components

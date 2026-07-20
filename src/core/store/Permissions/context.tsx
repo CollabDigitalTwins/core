@@ -8,7 +8,7 @@ import { useSession } from 'next-auth/react'
 import { AbilityBuilder, createMongoAbility } from '@casl/ability'
 import type { MongoAbility } from '@casl/ability'
 import { useUserRole } from '../../hooks/users/users'
-import { Permission } from '../../types/dbTypes'
+import type { Permission } from '../../types/dbTypes'
 
 interface PermissionsContextValue {
   ability: MongoAbility

@@ -21,7 +21,7 @@ import {
 } from '../chart'
 import { formatDuration } from '../../../utils/timeUtils'
 import { defaultPalette } from './sensorUtils'
-import { SensorType } from '../../../types/dbTypes'
+import type { SensorType } from '../../../types/dbTypes'
 
 interface SensorChartProps {
   sensorData: { time: string; value: number }[]

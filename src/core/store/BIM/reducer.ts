@@ -8,9 +8,9 @@
 // BimProvider. Critical: this reducer is loaded on every route via
 // CombineProviders, so without this @thatopen leaks into the initial bundle.
 import type * as OBC from "@thatopen/components";
-import { ActionMap } from "../ActionMap";
+import type { ActionMap } from "../ActionMap";
 import type { Plan } from "../../types/bim";
-import { Building, DbFile } from '../../types/dbTypes';
+import type { Building, DbFile } from '../../types/dbTypes';
 
 interface BimTypes {
     bimComponents: OBC.Components | null;

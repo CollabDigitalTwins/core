@@ -5,7 +5,7 @@
 
 // Dependencies
 import * as React from 'react'
-import { ColumnDef } from '@tanstack/react-table'
+import type { ColumnDef } from '@tanstack/react-table'
 import { MenusContext } from '../../../../store'
 import { useSession } from 'next-auth/react'
 
@@ -30,7 +30,7 @@ import { UserAvatar } from '../../../ui/UserAvatar'
 import { MapContext } from '../../../../store/Map/context'
 
 import { useLocale, useTranslations } from 'next-intl'
-import { Building, DbFile, Infrastructure, Site, User } from '../../../../types/dbTypes'
+import type { Building, DbFile, Infrastructure, Site, User } from '../../../../types/dbTypes'
 import { RoleNames } from '../../../../types/global'
 
 export interface ColumnMeta {

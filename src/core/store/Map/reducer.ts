@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import {
+import type {
   Coordinates,
   MapCameraPosition,
   MapStyle,
@@ -9,10 +9,11 @@ import {
   TerrainLevel,
 } from '../../types/map'
 
-import { Feature, Geometry } from 'geojson'
-import { ActionMap } from '../ActionMap'
-import { CursorType } from '../../types/global'
-import { Map, type MapGeoJSONFeature } from 'maplibre-gl'
+import type { Feature, Geometry } from 'geojson'
+import type { ActionMap } from '../ActionMap'
+import type { CursorType } from '../../types/global'
+import type { Map} from 'maplibre-gl';
+import { type MapGeoJSONFeature } from 'maplibre-gl'
 
 import type { MapClickManager } from '../../components/viewers/map/utils/MapEventManager/MapClickManager'
 import type { MapHoverManager } from '../../components/viewers/map/utils/MapEventManager/MapHoverManager'

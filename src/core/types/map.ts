@@ -2,8 +2,8 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import type { JSX } from 'react'
-import { LngLatBounds, LngLatBoundsLike } from 'maplibre-gl'
-import { Feature } from 'geojson'
+import type { LngLatBounds, LngLatBoundsLike } from 'maplibre-gl'
+import type { Feature } from 'geojson'
 
 export interface MapStyle {
   name: string

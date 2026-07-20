@@ -4,7 +4,8 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from "react";
-import { BimReducer, BimActions, BimState } from './reducer'
+import type { BimActions, BimState } from './reducer';
+import { BimReducer } from './reducer'
 
 type InitialStateType = {
   bim: BimState

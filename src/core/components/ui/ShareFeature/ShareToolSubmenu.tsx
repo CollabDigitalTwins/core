@@ -8,7 +8,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 
 // Utilities
-import { Tool } from '../../../types/tools'
+import type { Tool } from '../../../types/tools'
 import { ViewerNames } from '../../../types/'
 
 // Shadcn components

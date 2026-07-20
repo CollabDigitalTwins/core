@@ -4,7 +4,7 @@
 import { getOsmIdFromLatLng } from './getOsmIdFromMartin'
 import type { Map } from 'maplibre-gl'
 import { updateBuildingOsmId } from './updateBuildingOsmId'
-import { Building } from '../../../../types/dbTypes'
+import type { Building } from '../../../../types/dbTypes'
 
 export const flyToEach = async (map: Map, buildings: Building[]) => {
   // Sequentially process each building and wait for each to finish

@@ -4,7 +4,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
-import { DbFile } from '../../../../../../../types/dbTypes'
+import type { DbFile } from '../../../../../../../types/dbTypes'
 import { CommentsSection } from '../../../../../../ui/Comments/CommentsSection'
 export interface FileItem {
   task: DbFile

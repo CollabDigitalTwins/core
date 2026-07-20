@@ -2,7 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import type { Dataset, DatasetField, LayerColors } from '../../types/datasetTypes'
-import { ActionMap } from '../ActionMap'
+import type { ActionMap } from '../ActionMap'
 
 interface DatasetsType {
   dataset: Dataset | null

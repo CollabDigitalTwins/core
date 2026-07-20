@@ -8,11 +8,12 @@ import { useTranslations } from 'next-intl'
 import { BimContext } from '../../../../../../../../store'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { FloorplanIcon } from '../../../../../../../ui/Icons/FloorPlanIcon'
-import {
-  FloorplanTool,
+import type {
   FloorplanEntry,
   FloorplanLoadingStage,
-  FloorplanLoadingState,
+  FloorplanLoadingState} from '../../../../FloorplanTool';
+import {
+  FloorplanTool,
   getFloorplanStagePercent,
 } from '../../../../FloorplanTool'
 import { exportDrawingToDxf } from '../../../../lib/exportDrawingToDxf'
@@ -20,7 +21,7 @@ import { TrueNorthPopover } from '../../../../lib/TrueNorthPopover'
 import { useBuildingName } from '../../../../lib/useBuildingName'
 import { useFriendlyIfcClassName } from '../../../../lib/useFriendlyIfcClassName'
 import { ViewSectionList } from '../../../../lib/ViewSectionList'
-import { ViewListEntry } from '../../../../lib/viewSection'
+import type { ViewListEntry } from '../../../../lib/viewSection'
 
 interface FloorplanSectionProps {
   query?: string

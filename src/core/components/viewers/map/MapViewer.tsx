@@ -3,7 +3,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import Map, { MapRef, NavigationControl } from 'react-map-gl/maplibre'
+import type { MapRef} from 'react-map-gl/maplibre';
+import Map, { NavigationControl } from 'react-map-gl/maplibre'
 import React from 'react'
 
 import maplibregl from 'maplibre-gl'
@@ -17,8 +18,8 @@ import DatasetManagerMenu from './datasets/DatasetManager'
 import { MapLegendHost } from './legends/MapLegendHost'
 import { StatsOverlay } from '../../ui/stats'
 import { MapHoverManager } from './utils/MapEventManager/MapHoverManager'
-import { Organization } from '../../../types/dbTypes'
-import { CurrentLocation } from '../../../types/map'
+import type { Organization } from '../../../types/dbTypes'
+import type { CurrentLocation } from '../../../types/map'
 import { MapLayers } from './src/MapLayers'
 import SettingsButton from '../../ui/SettingsButton'
 

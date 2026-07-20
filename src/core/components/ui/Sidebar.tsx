@@ -5,7 +5,8 @@
 
 import * as React from 'react'
 import { Slot } from '@radix-ui/react-slot'
-import { VariantProps, cva } from 'class-variance-authority'
+import type { VariantProps} from 'class-variance-authority';
+import { cva } from 'class-variance-authority'
 import * as LR from 'lucide-react'
 
 import { cn } from '../../utils/utils'

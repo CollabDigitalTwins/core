@@ -2,7 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import type { ToolbarToolType } from '../../types/tools'
-import { ActionMap } from '../ActionMap'
+import type { ActionMap } from '../ActionMap'
 
 interface ToolsTypes {
   currentToolId: ToolbarToolType

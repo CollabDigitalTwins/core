@@ -3,10 +3,10 @@
 
 import type { BimToolbarToolsType } from '../components/viewers/bim/src/tools/bimToolbar'
 import type { MapToolbarToolType } from '../components/viewers/map/src/tools/mapTools'
-import { PointCloudToolType } from '../components/viewers/pointcloud/src/tools/pointcloudToolbarTools'
+import type { PointCloudToolType } from '../components/viewers/pointcloud/src/tools/pointcloudToolbarTools'
 
-import { CursorType } from './global'
-import { LucideProps } from 'lucide-react'
+import type { CursorType } from './global'
+import type { LucideProps } from 'lucide-react'
 import type { Building } from '../types/dbTypes'
 
 export type ToolbarToolType = BimToolbarToolsType | MapToolbarToolType | PointCloudToolType | 'settings' | 'file-manager' | null

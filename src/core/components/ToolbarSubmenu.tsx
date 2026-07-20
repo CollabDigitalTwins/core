@@ -7,7 +7,8 @@ import * as React from 'react'
 
 // Utilities
 import { ToolsContext } from '../store'
-import { Tool, type ToolbarToolType } from '../types/tools'
+import type { Tool} from '../types/tools';
+import { type ToolbarToolType } from '../types/tools'
 
 // Shadcn components
 import { Button } from '../components/ui/Button'

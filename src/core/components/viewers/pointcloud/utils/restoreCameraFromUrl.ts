@@ -5,7 +5,7 @@
  * Camera restoration utility for PointCloud viewer
  */
 
-import { ReadonlyURLSearchParams } from 'next/navigation'
+import type { ReadonlyURLSearchParams } from 'next/navigation'
 
 /**
  * Restores camera position from URL parameters

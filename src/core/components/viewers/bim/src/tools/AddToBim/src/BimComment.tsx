@@ -4,7 +4,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from "react";
-import * as THREE from 'three'
+import type * as THREE from 'three'
 import Comment from '../../../../../../ui/Comments/Comment'
 import { markerStyle, markerStyleHighlight } from './markerUtils'
 

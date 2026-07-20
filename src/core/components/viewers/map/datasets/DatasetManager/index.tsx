@@ -18,14 +18,15 @@ import { FieldsTable } from './src/FieldsTable'
 import * as LR from 'lucide-react'
 import type { Dataset, BuildingDataset as RawBuildingDataset } from '../../../../../types/datasetTypes'
 import { ClusterManager } from '../../utils/ClusterManager'
+import type {
+  DragEndEvent} from '@dnd-kit/core';
 import {
   DndContext,
   closestCenter,
   KeyboardSensor,
   PointerSensor,
   useSensor,
-  useSensors,
-  DragEndEvent,
+  useSensors
 } from '@dnd-kit/core'
 import {
   arrayMove,

@@ -12,11 +12,14 @@ import { CUT_CLASSES, FILL_CLASSES } from '../lib/drawingLayers'
 import { disposeDrawing } from '../lib/drawingProjection'
 import { GridController } from '../lib/GridController'
 import { safeRun, safeRunAsync } from '../lib/safeRun'
-import { stagePercent, ViewLoadingState } from '../lib/viewSection'
+import type { ViewLoadingState } from '../lib/viewSection';
+import { stagePercent } from '../lib/viewSection'
 import { ViewModeCoordinator } from '../lib/ViewModeCoordinator'
-import { FloorplanRenderer, RenderStage } from './src/FloorplanRenderer'
+import type { RenderStage } from './src/FloorplanRenderer';
+import { FloorplanRenderer } from './src/FloorplanRenderer'
 import { StoreyProjector } from './src/StoreyProjector'
-import { CUT_COLOR, FILL_COLOR, FloorplanEntry, FLOORPLAN_TOOL_UUID } from './src/types'
+import type { FloorplanEntry} from './src/types';
+import { CUT_COLOR, FILL_COLOR, FLOORPLAN_TOOL_UUID } from './src/types'
 import { normalizeElevation } from './src/utils'
 
 const SLOT_SECTION = 'floorplan:section'

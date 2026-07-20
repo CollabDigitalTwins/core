@@ -8,7 +8,7 @@ import { MapContext, FilesContext } from '../../../../../../../../store'
 
 import * as React from 'react'
 import { CustomModelLayer } from '../utils/CustomModelLayer'
-import { DbFile } from '../../../../../../../../types/dbTypes'
+import type { DbFile } from '../../../../../../../../types/dbTypes'
 
 type LoadedModelFiles = {
   file: DbFile

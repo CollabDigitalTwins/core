@@ -11,7 +11,7 @@ import {DialogContent, DialogTitle, DialogTrigger } from '../../../../components
 
 // Icons
 import * as LR from 'lucide-react'
-import { DbFile } from '../../../../types/dbTypes'
+import type { DbFile } from '../../../../types/dbTypes'
 import { ViewerNames } from '../../../../types/'
 import { MenusContext, BimContext } from '../../../../store'
 import { IfcIcon } from '../../../ui/Icons'

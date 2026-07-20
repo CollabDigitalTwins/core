@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import React from 'react'
 import * as LR from 'lucide-react'
-import { Card, CardContent, CardHeader } from '../../../../../../ui/Card'
+import React from 'react'
+
 import { Button } from '../../../../../../ui/Button'
+import { Card, CardContent, CardHeader } from '../../../../../../ui/Card'
 import { Input } from '../../../../../../ui/Input'
 import { Label } from '../../../../../../ui/Label'
 import { Separator } from '../../../../../../ui/Separator'

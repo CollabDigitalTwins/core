@@ -4,9 +4,11 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
-import { PluginRegistry } from './registry'
-import { PluginHost } from './host'
+
 import { INSTALLED_PLUGINS } from '../installed'
+
+import { PluginHost } from './host'
+import { PluginRegistry } from './registry'
 
 interface PluginHostContextValue {
   registry: PluginRegistry

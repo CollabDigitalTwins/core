@@ -5,20 +5,23 @@
 
 // Dependencies
 import * as React from "react";
-import { usePropertyFilesColumns } from '../utils/Columns'
+
 import { useFilesByBuildingId } from '../../../../hooks/files/files'
 
 // Shadcn Components
-import { Input } from '../../../ui/Input'
 import { Button } from '../../../ui/Button'
 import { DataTable } from '../../../ui/DataTable'
 import { Dialog } from '../../../ui/Dialog'
+import { Input } from '../../../ui/Input'
 
 // Custom Components
 import FiltersDialog from '../advancedFilter/FiltersDialog'
-import FilePreview from '../files/FilePreview'
 import FileMoreOptions from '../files/FileMoreOptions'
+import FilePreview from '../files/FilePreview'
+import { usePropertyFilesColumns } from '../utils/Columns'
+
 import FilterFiles from './FilterFiles'
+
 import type { DbFile } from '../../../../types/dbTypes';
 
 interface AttachedFilesProps {

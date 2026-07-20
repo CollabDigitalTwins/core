@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { SensorTypes } from '../../../types/dbTypes';
 import * as LR from 'lucide-react'
+
+import type { SensorTypes } from '../../../types/dbTypes';
 
 export const sensorTypeIcons: Record<SensorTypes, LR.LucideIcon> = {
   'Temperature': LR.Thermometer,

@@ -2,8 +2,8 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // @vitest-environment jsdom
-import * as React from 'react'
 import { renderHook } from '@testing-library/react'
+import * as React from 'react'
 
 // The hook imports the store barrel, which transitively pulls in next-auth/react
 // (an ESM module the bundler can't transform out of the box). We mock the barrel
@@ -17,6 +17,7 @@ vi.mock('../../../../../store', async () => ({
 }))
 
 import { BimContext } from '../../../../../store/BIM/context'
+
 import { useBuildingName } from './useBuildingName'
 
 function withBim(value: any) {

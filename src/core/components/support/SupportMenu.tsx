@@ -1,6 +1,6 @@
 import * as LR from "lucide-react";
-import * as React from "react";
 import { useTranslations } from "next-intl";
+import * as React from "react";
 
 import {
   DropdownMenu,
@@ -8,7 +8,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "../ui/DropdownMenu";
-
 import { SidebarMenuButton } from "../ui/Sidebar";
 
 type Props = {

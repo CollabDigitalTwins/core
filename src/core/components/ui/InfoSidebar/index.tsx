@@ -3,12 +3,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 import dynamic from 'next/dynamic'
+import * as React from 'react'
 
 // Icons
 import { MenusContext } from '../../../store'
 import { MapSidebar } from '../../viewers/map/src/MapSidebar'
+
 import type { Organization } from '../../../types/dbTypes'
 
 const BimSidebar = dynamic(

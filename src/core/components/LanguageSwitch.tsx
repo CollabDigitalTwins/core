@@ -4,23 +4,23 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
+import { Languages } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import * as React from "react";
 import { useTranslations, useLocale } from 'next-intl'
+import * as React from "react";
 
 // Shadcn Components
+import { Button } from '../components/ui/Button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../components/ui/DropdownMenu'
-import { Button } from '../components/ui/Button'
 
 // Icons
-import { Languages } from 'lucide-react'
-import { switchLanguage } from '../utils/utils';
 import { Language } from '../types/dbTypes';
+import { switchLanguage } from '../utils/utils';
 
 const LANGUAGE_OPTIONS: { lang: Language; labelKey: 'english' | 'french' | 'spanish' }[] = [
     { lang: Language.En, labelKey: 'english' },

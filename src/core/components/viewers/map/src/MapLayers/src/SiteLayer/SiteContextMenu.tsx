@@ -3,12 +3,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { Input } from '../../../../../../ui/Input'
-import { Button } from '../../../../../../ui/Button'
+import * as React from 'react'
+
 import ConfirmDialog from '../../../../../../ConfirmDialog'
+import { Button } from '../../../../../../ui/Button'
+import { Input } from '../../../../../../ui/Input'
+
 import type { ShownSite } from '../../../../../../../store/MapSites/reducer'
 
 export interface SiteContextMenuProps {

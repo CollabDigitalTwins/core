@@ -3,22 +3,25 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { Upload, Box, Building2, Search, X, SquareArrowOutUpRight } from 'lucide-react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import React from 'react'
+
+import { useBuilding, useBuildings } from '../../../../../hooks/buildings/buildings'
+import { useFilesByBuildingId, useUploadFileToBuilding } from '../../../../../hooks/files/files'
+import { BimContext, BuildingsContext, usePermissions } from '../../../../../store'
+import { cn } from '../../../../../utils/utils'
 import { Button } from '../../../../ui/Button'
 import { Card, CardContent, CardHeader } from '../../../../ui/Card'
+import { useFileUploadHandler } from '../../../../ui/FilesManager/src/useFileUploadHandler'
 import { Input } from '../../../../ui/Input'
 import { LoadingSpinner } from '../../../../ui/LoadingSpinner'
-import { Upload, Box, Building2, Search, X, SquareArrowOutUpRight } from 'lucide-react'
-import { BimContext, BuildingsContext, usePermissions } from '../../../../../store'
-import { LoadModels } from '../LoadModels'
-import { useTranslations } from 'next-intl'
-import { useFilesByBuildingId, useUploadFileToBuilding } from '../../../../../hooks/files/files'
-import { useFileUploadHandler } from '../../../../ui/FilesManager/src/useFileUploadHandler'
-import type { DbFile as DbFile } from '../../../../../types/dbTypes'
-import { cn } from '../../../../../utils/utils'
-import { useSearchParams, useRouter } from 'next/navigation'
-import { useBuilding, useBuildings } from '../../../../../hooks/buildings/buildings'
 import { setCameraLookAt } from '../../utils/setCameraLookAt'
+import { LoadModels } from '../LoadModels'
+
+import type { DbFile as DbFile } from '../../../../../types/dbTypes'
+
 
 export type bimViewerState = 'opening' | 'loading' | 'ready' | 'error' | 'noBimFiles' | 'noBuilding'
 

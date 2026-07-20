@@ -7,6 +7,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('sonner', () => ({ toast: { error: vi.fn() } }))
 
 import { toast } from 'sonner'
+
 import { handleApiError } from './errorHandler'
 
 const toastError = vi.mocked(toast.error)

@@ -3,14 +3,19 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
-import { useTranslations } from 'next-intl'
-import { useSession } from 'next-auth/react'
-
 import { Radio } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
+import { useCreateSensor } from '../../../hooks/sensors/sensors'
+import { useSensorTypes } from '../../../hooks/sensorTypes/sensorTypes'
+import { AppConfigContext, MapContext, BuildingsContext, MenusContext, ToolsContext } from '../../../store'
+import { ViewerNames, SensorDataFormat } from '../../../types/dbTypes'
+import { frequencyUnits } from '../../../utils/timeUtils'
 import { cn } from '../../../utils/utils'
-import { Button } from '../Button'
 import { AddItemDialog } from '../AddItemDialog'
+import { Button } from '../Button'
 import { Input } from '../Input'
 import { Label } from '../Label'
 import {
@@ -22,13 +27,12 @@ import {
 } from '../Select'
 import { Separator } from '../Separator'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../Tooltip'
-import { AppConfigContext, MapContext, BuildingsContext, MenusContext, ToolsContext } from '../../../store'
-import type { Sensor} from '../../../types/dbTypes';
-import { ViewerNames, SensorDataFormat } from '../../../types/dbTypes'
-import { useCreateSensor } from '../../../hooks/sensors/sensors'
-import { frequencyUnits } from '../../../utils/timeUtils'
-import { useSensorTypes } from '../../../hooks/sensorTypes/sensorTypes'
+
 import { SensorTagsSection } from './SensorTagsSection'
+
+import type { Sensor} from '../../../types/dbTypes';
+
+
 
 export type SensorInputLayout = 'inline' | 'dialog'
 

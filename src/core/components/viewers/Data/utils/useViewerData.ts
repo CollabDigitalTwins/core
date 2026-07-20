@@ -3,12 +3,15 @@
 
 import { useMemo } from 'react'
 
-import type { Building, Infrastructure, Site, User, DbFile } from '../../../../types/dbTypes'
 import { ViewerNames } from '../../../../types/dbTypes'
-import type { FileRow } from '../../../../types/files'
-import type { FilterState } from '../../../../types/global'
+
 import { filterHelper, getNarrowedFilterOptions, getUniqueColumnValues } from './filterHelper'
 import { formatPosition } from './positionParser'
+
+import type { Building, Infrastructure, Site, User, DbFile } from '../../../../types/dbTypes'
+import type { FileRow } from '../../../../types/files'
+import type { FilterState } from '../../../../types/global'
+
 
 // ---------------------------------------------------------------------------
 // Types

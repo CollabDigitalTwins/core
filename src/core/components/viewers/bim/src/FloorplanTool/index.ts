@@ -4,6 +4,7 @@
 import * as OBC from '@thatopen/components'
 import * as OBF from '@thatopen/components-front'
 import * as THREE from 'three'
+
 import { CurrentWorld } from '../CurrentWorld'
 import { CameraController } from '../lib/CameraController'
 import { ChromeController } from '../lib/ChromeController'
@@ -12,15 +13,17 @@ import { CUT_CLASSES, FILL_CLASSES } from '../lib/drawingLayers'
 import { disposeDrawing } from '../lib/drawingProjection'
 import { GridController } from '../lib/GridController'
 import { safeRun, safeRunAsync } from '../lib/safeRun'
-import type { ViewLoadingState } from '../lib/viewSection';
-import { stagePercent } from '../lib/viewSection'
 import { ViewModeCoordinator } from '../lib/ViewModeCoordinator'
-import type { RenderStage } from './src/FloorplanRenderer';
+import { stagePercent } from '../lib/viewSection'
+
 import { FloorplanRenderer } from './src/FloorplanRenderer'
 import { StoreyProjector } from './src/StoreyProjector'
-import type { FloorplanEntry} from './src/types';
 import { CUT_COLOR, FILL_COLOR, FLOORPLAN_TOOL_UUID } from './src/types'
 import { normalizeElevation } from './src/utils'
+
+import type { RenderStage } from './src/FloorplanRenderer';
+import type { FloorplanEntry} from './src/types';
+import type { ViewLoadingState } from '../lib/viewSection';
 
 const SLOT_SECTION = 'floorplan:section'
 const SLOT_LOWER = 'floorplan:lower'

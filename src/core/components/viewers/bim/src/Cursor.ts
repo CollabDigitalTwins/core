@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { CursorType } from '../../../../types/global'
 import * as OBC from '@thatopen/components'
+
 import { CurrentWorld } from './CurrentWorld'
+
+import type { CursorType } from '../../../../types/global'
 
 export class Cursor extends OBC.Component {
   static uuid = 'c2d607c5-4335-4b04-95bb-38c02f0caf5e' as const

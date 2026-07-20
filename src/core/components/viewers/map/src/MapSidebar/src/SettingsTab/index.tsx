@@ -4,6 +4,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from "react";
+
 import { LocationSettings } from './src/LocationSettings';
 import { MapCustomization } from './src/MapCustomization';
 

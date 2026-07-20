@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import type { CursorType } from './global'
 import type { BimToolbarToolsType } from '../components/viewers/bim/src/tools/bimToolbar'
 import type { MapToolbarToolType } from '../components/viewers/map/src/tools/mapTools'
 import type { PointCloudToolType } from '../components/viewers/pointcloud/src/tools/pointcloudToolbarTools'
-
-import type { CursorType } from './global'
-import type { LucideProps } from 'lucide-react'
 import type { Building } from '../types/dbTypes'
+import type { LucideProps } from 'lucide-react'
 
 export type ToolbarToolType = BimToolbarToolsType | MapToolbarToolType | PointCloudToolType | 'settings' | 'file-manager' | null
 export interface Tool {

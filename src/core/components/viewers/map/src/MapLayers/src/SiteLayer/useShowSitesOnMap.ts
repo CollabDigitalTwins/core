@@ -4,8 +4,10 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
+
 import { MapContext, useMenusContext, useMapSitesContext } from '../../../../../../../store'
 import { ViewerNames, type Site } from '../../../../../../../types/dbTypes'
+
 import { ringFromGeoJson, ringBounds, type Ring } from './siteGeometry'
 
 /**

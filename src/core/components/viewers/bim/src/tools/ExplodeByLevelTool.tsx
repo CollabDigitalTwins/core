@@ -6,18 +6,20 @@
 // Use this tutorial https://docs.thatopen.com/Tutorials/Fragments/Fragments/FragmentsModels/EditApi
 
 // Dependencies
-import * as React from "react";
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import * as React from "react";
 
 // Utilities
+import { BimContext } from '../../../../../store/BIM/context'
+import { Button } from '../../../../ui/Button'
+
 import type { Tool } from '../../../../../types/tools'
 
 // Shadcn components
-import { Button } from '../../../../ui/Button'
 
 // Icons
-import * as LR from 'lucide-react'
-import { BimContext } from '../../../../../store/BIM/context'
+
 
 interface ExplodeByLevelProps {
   tool: Tool

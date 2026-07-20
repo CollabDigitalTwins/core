@@ -3,8 +3,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 import * as LR from 'lucide-react'
+import * as React from 'react'
+
+import { useCreateOpenDataPortal } from '../../../../hooks/openDataPortals/openDataPortals'
+import { DatasetGroup, DataManagementSystem } from '../../../../types/dbTypes'
+import { Button } from '../../../ui/Button'
 import {
   Dialog,
   DialogContent,
@@ -12,11 +16,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../../../ui/Dialog'
-import { Button } from '../../../ui/Button'
 import { Input } from '../../../ui/Input'
 import { Label } from '../../../ui/Label'
-import { useCreateOpenDataPortal } from '../../../../hooks/openDataPortals/openDataPortals'
-import { DatasetGroup, DataManagementSystem } from '../../../../types/dbTypes'
+
 import type { OpenDataPortal } from '../../../../types/dbTypes'
 
 interface AddPortalDialogProps {

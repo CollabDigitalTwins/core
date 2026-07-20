@@ -3,13 +3,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from "react"
-import type maplibregl from "maplibre-gl"
-import { MapContext } from "../../../../../../store"
-import type { DbFile } from "../../../../../../types/dbTypes"
-import { useFile } from "../../../../../../hooks/files/files"
-import { toast } from "sonner"
 import { useTranslations } from "next-intl"
+import * as React from "react"
+import { toast } from "sonner"
+
+import { useFile } from "../../../../../../hooks/files/files"
+import { MapContext } from "../../../../../../store"
+
+import type { DbFile } from "../../../../../../types/dbTypes"
+import type maplibregl from "maplibre-gl"
+
+
 
 interface PlaceOnMapProps {
     file: DbFile

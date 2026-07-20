@@ -4,20 +4,22 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from "react";
+import * as LR from "lucide-react";
 import { useTranslations } from "next-intl";
+import * as React from "react";
 
 // Utilities
-import { Tool } from "../../../../../../types/tools";
-
-// Icons
-import * as LR from "lucide-react";
-import { ToolbarSubmenu } from "../../../../../ToolbarSubmenu";
 import { DropdownMenuItem } from "../../../../../../components/ui/DropdownMenu";
 import { PointCloudContext } from "../../../../../../store";
 
+
+// Icons
+import { ToolbarSubmenu } from "../../../../../ToolbarSubmenu";
+
 //typedefs
 import { ClipTask } from '../../../define'
+
+import type { Tool } from "../../../../../../types/tools";
 
 interface GenericTool {
   tool: Tool;

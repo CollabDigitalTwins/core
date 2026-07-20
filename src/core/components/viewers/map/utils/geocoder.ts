@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { Feature, Point } from 'geojson'
-import { MarkerManager } from './MarkerManager'
 import { autocompleteGeocode, reverseGeocode } from './geocoding'
+import { MarkerManager } from './MarkerManager'
+
+import type { Feature, Point } from 'geojson'
 
 // Global marker manager instance for geocoder
 let geocoderMarkerManager: MarkerManager | null = null

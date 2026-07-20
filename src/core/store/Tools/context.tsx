@@ -4,7 +4,10 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from "react";
-import { ToolsReducer, ToolsActions, ToolsState } from './reducer'
+
+import { ToolsReducer } from './reducer'
+
+import type { ToolsActions, ToolsState } from './reducer';
 
 type InitialStateType = {
   tools: ToolsState

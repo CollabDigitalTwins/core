@@ -3,16 +3,20 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
-import { useTranslations } from 'next-intl'
 import * as LR from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
+import { AppConfigContext, MapContext } from '../../../../../../../../store'
 import { ColorInput } from '../../../../../../../ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../../../ui/Select'
 import { Tabs, TabsList, TabsTrigger } from '../../../../../../../ui/Tabs'
-import { AppConfigContext, MapContext } from '../../../../../../../../store'
-import { TerrainLevel } from './TerrainLevel'
 import { buildMapStylesCatalog, resolveMapStyle } from '../../../../../utils/mapStyleCatalog'
+
 import { MapProjection } from './MapProjection'
+import { TerrainLevel } from './TerrainLevel'
+
+
 
 export function MapCustomization() {
   // Translation

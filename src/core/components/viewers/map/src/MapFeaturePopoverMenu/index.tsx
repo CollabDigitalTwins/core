@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { MapGeoJSONFeature } from 'maplibre-gl'
 
 // Dependencies
 import * as React from 'react'
@@ -14,6 +13,8 @@ import DatabaseBuildingPopover from './src/DatabaseBuildingPopover'
 import NonDatabaseBuildingPopover from './src/NonDatabaseBuildingPopover'
 import OpenDataFeaturePopover from './src/OpenDataFeaturePopover'
 import PopoverSkeleton from './src/PopoverSkeleton'
+
+import type { MapGeoJSONFeature } from 'maplibre-gl'
 
 type Props = {
   feature: MapGeoJSONFeature | null

@@ -4,8 +4,10 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
-import { pointcloudToolbarTools } from './src/tools'
+
 import { ToolbarBody } from '../../ToolbarBody'
+
+import { pointcloudToolbarTools } from './src/tools'
 
 export function PointCloudToolbar() {
   return <ToolbarBody viewer="pointcloud" tools={pointcloudToolbarTools()} />

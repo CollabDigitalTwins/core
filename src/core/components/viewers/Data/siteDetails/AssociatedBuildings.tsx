@@ -4,20 +4,20 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from 'react'
-import type { Building } from '../../../../types/dbTypes'
-import { useSession } from 'next-auth/react'
-import { toast } from 'sonner'
 
 // Utils
-import { useAssociatedBuildingsColumns } from '../utils/Columns'
-import { filterHelper } from '../utils/filterHelper'
-import { fetchSuggestions, parseLocation } from '../../map/utils/geocoder'
-import { filterPointsInRing, fetchSiteBoundaryRing, type Ring } from '../../map/src/MapLayers/src/SiteLayer/siteGeometry'
-import { AssociateBuildingsDialog } from '../../map/src/tools/AddTools/AddSite/AssociateBuildingsDialog'
-import { useMapContext } from '../../../../store'
 
 // Shadcn Components
+
+// Custom Components
+
+// Icons
+import * as LR from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+import { toast } from 'sonner'
+
 import { DataTable, Input, Button, LoadingSpinner } from '../../../../components/ui/'
 import {
   DropdownMenu,
@@ -27,15 +27,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from '../../../../components/ui/DropdownMenu'
-
-// Custom Components
-import FiltersDialog from '../advancedFilter/FiltersDialog'
-
-// Icons
-import * as LR from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { useBuildings, useCreateBuilding } from '../../../../hooks/buildings/buildings'
 import { useUser } from '../../../../hooks/users/users'
+import { useMapContext } from '../../../../store'
+import { filterPointsInRing, fetchSiteBoundaryRing, type Ring } from '../../map/src/MapLayers/src/SiteLayer/siteGeometry'
+import { AssociateBuildingsDialog } from '../../map/src/tools/AddTools/AddSite/AssociateBuildingsDialog'
+import { fetchSuggestions, parseLocation } from '../../map/utils/geocoder'
+import FiltersDialog from '../advancedFilter/FiltersDialog'
+import { useAssociatedBuildingsColumns } from '../utils/Columns'
+import { filterHelper } from '../utils/filterHelper'
+
+import type { Building } from '../../../../types/dbTypes'
 
 
 interface AssociatedBuildingsTableProps {

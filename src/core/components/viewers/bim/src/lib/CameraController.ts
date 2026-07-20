@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as OBC from '@thatopen/components'
 import * as THREE from 'three'
+
 import { CurrentWorld } from '../CurrentWorld'
+
+import type * as OBC from '@thatopen/components'
 
 // camera-controls ACTION constants (avoid importing the package directly).
 const ACTION_NONE = 0

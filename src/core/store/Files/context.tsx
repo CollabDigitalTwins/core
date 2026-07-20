@@ -4,8 +4,10 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from "react";
-import type { FilesActions, FilesState } from './reducer';
+
 import { FilesReducer } from './reducer'
+
+import type { FilesActions, FilesState } from './reducer';
 
 type InitialStateType = {
   files: FilesState

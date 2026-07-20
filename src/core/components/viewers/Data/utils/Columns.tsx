@@ -4,15 +4,20 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from 'react'
-import type { ColumnDef } from '@tanstack/react-table'
-import { MenusContext } from '../../../../store'
+import * as LR from 'lucide-react'
 import { useSession } from 'next-auth/react'
+import { useLocale, useTranslations } from 'next-intl'
+import * as React from 'react'
+
+import { useUserRole } from '../../../../hooks/users/users'
+import { MenusContext } from '../../../../store'
 
 // Shadcn Components
-import { Button } from '../../../ui/Button'
+import { MapContext } from '../../../../store/Map/context'
+import { RoleNames } from '../../../../types/global'
 import { Avatar, AvatarFallback, AvatarImage } from '../../../ui/Avatar'
 import { Badge } from '../../../ui/Badge'
+import { Button } from '../../../ui/Button'
 import {
   Select,
   SelectContent,
@@ -22,16 +27,13 @@ import {
 } from '../../../ui/Select'
 
 // Icons
-import * as LR from 'lucide-react'
 
 // Utils
-import { useUserRole } from '../../../../hooks/users/users'
 import { UserAvatar } from '../../../ui/UserAvatar'
-import { MapContext } from '../../../../store/Map/context'
 
-import { useLocale, useTranslations } from 'next-intl'
+
 import type { Building, DbFile, Infrastructure, Site, User } from '../../../../types/dbTypes'
-import { RoleNames } from '../../../../types/global'
+import type { ColumnDef } from '@tanstack/react-table'
 
 export interface ColumnMeta {
   columnClasses: string

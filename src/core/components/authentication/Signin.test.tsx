@@ -2,8 +2,8 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // @vitest-environment jsdom
-import * as React from 'react'
 import { act, render, screen, fireEvent } from '@testing-library/react'
+import * as React from 'react'
 
 const { signInMock } = vi.hoisted(() => ({ signInMock: vi.fn() }))
 

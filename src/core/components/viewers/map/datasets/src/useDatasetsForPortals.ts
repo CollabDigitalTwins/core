@@ -2,13 +2,15 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
-import type { Dataset } from '../../../../../types/datasetTypes'
-import type { OpenDataPortal } from '../../../../../types/dbTypes'
+
 import { fetchArcGISDatasets } from './arcGISDatasets'
 import { fetchCkanDatasets } from './ckanDatasets'
+import { fetchLocalDatasets } from './localDatasets'
 import { fetchOpenDataSoftDatasets } from './opendatasoftDatasets'
 import { fetchSocrataDatasets } from './socrataDatasets'
-import { fetchLocalDatasets } from './localDatasets'
+
+import type { Dataset } from '../../../../../types/datasetTypes'
+import type { OpenDataPortal } from '../../../../../types/dbTypes'
 
 type Options = {
   rowsPerPage?: number

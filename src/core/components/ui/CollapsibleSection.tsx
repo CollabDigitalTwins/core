@@ -3,11 +3,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as LR from 'lucide-react'
 import * as React from 'react'
+
+import { Badge } from './Badge'
 import { Button } from './Button'
 import { Switch } from './Switch'
-import * as LR from 'lucide-react'
-import { Badge } from './Badge'
 
 interface CollapsibleSectionProps {
   title: string

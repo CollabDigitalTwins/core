@@ -4,31 +4,34 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from 'react'
+import { Search } from 'lucide-react'
+import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import * as React from 'react'
 
 // Context
+import { useBuildings } from '../../../../hooks/buildings/buildings'
+import { useGeocodingRuntimeConfig } from '../../../../hooks/useGeocodingRuntimeConfig'
 import { MapContext } from '../../../../store'
 
 // Utility functions
-import { fetchSuggestions, parseLocation, handleLocationSelect, buildingToFeature } from '../utils/geocoder'
 
 // Import the shadcn components
-import { Command, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandSeparator } from '../../../ui/Command'
 import { Button } from '../../../ui/Button'
+import { Command, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandSeparator } from '../../../ui/Command'
 import { Input } from '../../../ui/Input'
+import { LoadingSpinner } from '../../../ui/LoadingSpinner'
 import { Separator } from '../../../ui/Separator'
 
 // Icons
-import { Search } from 'lucide-react'
 
 // Building data hook
-import { useBuildings } from '../../../../hooks/buildings/buildings'
 
-import { usePathname } from 'next/navigation'
+
+import { fetchSuggestions, parseLocation, handleLocationSelect, buildingToFeature } from '../utils/geocoder'
+
 import type { CurrentLocation } from '../../../../types/map'
-import { LoadingSpinner } from '../../../ui/LoadingSpinner'
-import { useGeocodingRuntimeConfig } from '../../../../hooks/useGeocodingRuntimeConfig'
+
 
 interface GeocoderProps {
   onSelect?: (addressData: any) => void

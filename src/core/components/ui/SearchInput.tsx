@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 import * as LR from 'lucide-react'
-import { Input } from './Input'
+import * as React from 'react'
+
 import { cn } from '../../utils'
+
+import { Input } from './Input'
+
 
 interface SearchInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   value?: string

@@ -3,23 +3,27 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
-import { Button } from '../Button'
-import { Badge } from '../Badge'
-import { Avatar, AvatarFallback } from '../Avatar'
-import { UserAvatar } from '../UserAvatar'
-import * as LR from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { format } from 'date-fns'
-import { cn } from '../../../utils/utils'
-import type { Sensor, SensorType } from '../../../types/dbTypes'
-import { useUser } from '../../../hooks/users/users'
-import { useCoreHooks } from '../../../hooks/provider'
+import * as LR from 'lucide-react'
 import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
+import { useCoreHooks } from '../../../hooks/provider'
+import { useUser } from '../../../hooks/users/users'
+import { cn } from '../../../utils/utils'
+import { Avatar, AvatarFallback } from '../Avatar'
+import { Badge } from '../Badge'
+import { Button } from '../Button'
+import { UserAvatar } from '../UserAvatar'
+
 import { SensorChart } from './SensorChart'
 import { SensorTagsSection } from './SensorTagsSection'
-import type { ChartConfig } from '../chart'
 import { resolveLucideIcon } from './sensorUtils'
+
+import type { Sensor, SensorType } from '../../../types/dbTypes'
+import type { ChartConfig } from '../chart'
+
 type SensorAction = 'view' | 'edit' | 'delete' | 'reply'
 
 interface CollapsibleSensorItemProps {

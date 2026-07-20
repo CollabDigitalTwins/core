@@ -7,18 +7,18 @@
 import { Download, FileIcon, FilePlus, Trash2, Upload } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 // Dependencies
+import { useTranslations } from 'next-intl'
 import * as React from "react";
 import { toast } from 'sonner'
 import { mutate } from 'swr'
-import { useTranslations } from 'next-intl'
 
 // Hooks
-import { useFilesByBuildingId, useUploadFileToBuilding } from '../../../../hooks/files/files'
-// Shadcn Components
 import { Button, Input, LoadingSpinner } from '../../../../components/ui/'
+// Shadcn Components
 import { Card, CardContent } from '../../../../components/ui/Card'
 // Utils
 import { useFileUploadHandler } from '../../../../components/ui/FilesManager/src/useFileUploadHandler'
+import { useFilesByBuildingId, useUploadFileToBuilding } from '../../../../hooks/files/files'
 
 type FileUploadProps = {
   value?: any[]

@@ -2,7 +2,9 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { describe, it, expect } from 'vitest'
+
 import { DatasetReducer, type DatasetState } from './reducer'
+
 import type { Dataset } from '../../types/datasetTypes'
 
 const ds = (id: string, extra: Partial<Dataset> = {}) => ({ id, name: id, ...extra }) as unknown as Dataset

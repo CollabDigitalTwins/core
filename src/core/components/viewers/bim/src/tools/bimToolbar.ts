@@ -1,19 +1,21 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+
+import * as LR from 'lucide-react'
+import { useTranslations } from 'next-intl'
+
+
+import AddToBim from './AddToBim'
 import { ClippingTool } from './ClippingTool/ClippingTool';
+import { ExplodeByLevelTool } from './ExplodeByLevelTool'
+import { FitCameraTool } from './FitCameraTool'
+import { InspectBimTool } from './InspectBimTool'
+import { MeasureBimTool } from './measureBimTool'
+import { SelectionBimTool } from './selectionBimTool'
+import { ShareBimTool } from './shareBimTool'
 
 import type { Tool } from '../../../../../types/tools'
-import { useTranslations } from 'next-intl'
-import * as LR from 'lucide-react'
-import { MeasureBimTool } from './measureBimTool'
-import { InspectBimTool } from './InspectBimTool'
-
-import { ShareBimTool } from './shareBimTool'
-import AddToBim from './AddToBim'
-import { SelectionBimTool } from './selectionBimTool'
-import { FitCameraTool } from './FitCameraTool'
-import { ExplodeByLevelTool } from './ExplodeByLevelTool'
 
 export type BimToolbarToolsType =
 'bim-add' |

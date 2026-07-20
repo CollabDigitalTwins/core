@@ -4,10 +4,13 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from "react";
-import type * as THREE from 'three'
+
 import Sensor from '../../../../../../ui/Sensors/Sensor'
-import type { SensorDataFormat, SensorType } from '../../../../../../../types/dbTypes';
+
 import { markerStyle, markerStyleHighlight } from './markerUtils'
+
+import type { SensorDataFormat, SensorType } from '../../../../../../../types/dbTypes';
+import type * as THREE from 'three'
 
 interface SensorProps {
   sensorName: string

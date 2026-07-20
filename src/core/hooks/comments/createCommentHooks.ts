@@ -4,8 +4,9 @@
 //needs private instance to work
 import useSWR, { mutate } from "swr";
 import useSWRMutation from "swr/mutation";
-import type { ApiAdapter } from "../ports/apiAdapter";
+
 import type { Comment } from '../../types/dbTypes'
+import type { ApiAdapter } from "../ports/apiAdapter";
 
 export function createCommentHooks(adapter: ApiAdapter) {
     //Call adapter methods inside hooks

@@ -5,12 +5,15 @@
 
 import * as React from 'react'
 import { mutate } from 'swr'
+
+import { useFilesContext, useMenusContext } from '../../../../store'
+import { ViewerNames } from '../../../../types'
+import { useSidebar } from '../../Sidebar'
+
 import { downloadFile } from './downloadUtils'
+
 import type { DbFile } from '../../../../types/dbTypes'
 import type { FileAction } from '../../../../types/global'
-import { ViewerNames } from '../../../../types'
-import { useFilesContext, useMenusContext } from '../../../../store'
-import { useSidebar } from '../../Sidebar'
 
 export interface UseFileActionsProps {
   files: (DbFile & { isVisible?: boolean })[]

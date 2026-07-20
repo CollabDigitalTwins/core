@@ -4,19 +4,24 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from "react"
-import * as THREE from "three"
-import type * as OBC from "@thatopen/components"
 import { toast } from "sonner"
-import { ModelManager } from "../../../ModelManager"
-import { Highlighter } from "../../../Highlighter"
+import * as THREE from "three"
+
+import { getFileExtension } from "../../../../../../../utils/utils"
 import { Cursor } from "../../../Cursor"
+import { Highlighter } from "../../../Highlighter"
+import { ModelManager } from "../../../ModelManager"
+
+
 import { AddDxf } from "./AddDxf"
 import { addFileToScene, type PlacedKind } from "./FileHandler"
 import { type AddedFile, removeMarker } from "./FileMarkerUtils"
+
 import type { FileMarkerAction } from "../../../../../../ui/FilesManager/src/FileMarker"
-import type { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js"
 import type { BimToolbarToolsType } from "../../bimToolbar"
-import { getFileExtension } from "../../../../../../../utils/utils"
+import type * as OBC from "@thatopen/components"
+import type { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js"
+
 
 export type GizmoMode = "translate" | "rotate" | "scale"
 

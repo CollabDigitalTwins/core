@@ -2,6 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { describe, it, expect } from 'vitest'
+
 import { ToolsReducer, type ToolsState } from './reducer'
 
 const base = { currentToolId: null } as unknown as ToolsState

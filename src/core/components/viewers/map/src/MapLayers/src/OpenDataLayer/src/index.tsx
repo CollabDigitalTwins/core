@@ -4,18 +4,21 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { Source, Layer, Popup } from "react-map-gl/maplibre";
-import type { MapMouseEvent } from "maplibre-gl";
 
-import { MapContext } from "../../../../../../../../store/Map/context";
-import type { Building } from '../../../../../../../../types/dbTypes';
+
 import { DatasetsContext } from '../../../../../../../../store';
+import { MapContext } from "../../../../../../../../store/Map/context";
+import { fetchWmsFrames, buildWmsTimeUrl, wmsLegendUrl } from "../../../../../datasets/src/wmsTime";
+import { fitGeoJsonBounds } from "../../../../../utils/fitGeojsonBounds";
 import { MapLayerClickPriority } from "../../../../../utils/MapEventManager/MapClickManager";
 import MapFeaturePopoverMenu from "../../../../MapFeaturePopoverMenu";
-import { fitGeoJsonBounds } from "../../../../../utils/fitGeojsonBounds";
-import { createPortal } from "react-dom";
+
 import { WmsTimeControl } from "./WmsTimeControl";
-import { fetchWmsFrames, buildWmsTimeUrl, wmsLegendUrl } from "../../../../../datasets/src/wmsTime";
+
+import type { Building } from '../../../../../../../../types/dbTypes';
+import type { MapMouseEvent } from "maplibre-gl";
 
 interface BuildingDataset {
     "type": "buildings";

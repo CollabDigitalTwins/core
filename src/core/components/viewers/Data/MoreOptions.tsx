@@ -4,43 +4,49 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from 'react'
-import { BuildingsContext, DatasetsContext, MapContext, MenusContext, useMapSitesContext } from '../../../store'
-import { useShowSitesOnMap } from '../map/src/MapLayers/src/SiteLayer/useShowSitesOnMap'
-
-import type { Building, Site, User } from '../../../types/dbTypes'
-import { usePermissions } from '../../../store'
-
-// Shadcn Components
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../../../components/ui/DropdownMenu'
-import { Button, LoadingSpinner } from '../../../components/ui/'
-import { useTranslations } from 'next-intl'
-import { toast } from 'sonner'
-
-// Icons
 import {
   MoreHorizontal,
   Map,
   Box,
   Trash2,
 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+import { toast } from 'sonner'
 
-// Custom Components
-import ExportData from '../../../components/ui/ExportData'
-import FileMoreOptions from './files/FileMoreOptions'
-import type { FileRow } from '../../../types/files'
-import { createBuildingsDataset } from '../map/src/MapLayers/src/BuildingLayers/src/databaseBuildings'
-import type { Dataset } from '../../../types/datasetTypes'
 import ConfirmDialog from '../../../components/ConfirmDialog'
-import type { DataTypes} from '../../../types/';
-import { ViewerNames } from '../../../types/'
+import { Button, LoadingSpinner } from '../../../components/ui/'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../../../components/ui/DropdownMenu'
+import ExportData from '../../../components/ui/ExportData'
 import { useDeleteSite } from '../../../hooks/sites/sites'
 import { useUser } from '../../../hooks/users/users'
+import { BuildingsContext, DatasetsContext, MapContext, MenusContext, useMapSitesContext } from '../../../store'
+import { usePermissions } from '../../../store'
+import { ViewerNames } from '../../../types/'
+import { createBuildingsDataset } from '../map/src/MapLayers/src/BuildingLayers/src/databaseBuildings'
+import { useShowSitesOnMap } from '../map/src/MapLayers/src/SiteLayer/useShowSitesOnMap'
+
+import FileMoreOptions from './files/FileMoreOptions'
+
+import type { DataTypes} from '../../../types/';
+import type { Dataset } from '../../../types/datasetTypes'
+import type { Building, Site, User } from '../../../types/dbTypes'
+
+// Shadcn Components
+
+
+// Icons
+
+// Custom Components
+
+
+import type { FileRow } from '../../../types/files'
+
 
 
 interface MoreOptionsProps {

@@ -4,31 +4,32 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from 'react'
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { usePermissions } from '../../../store'
+import * as React from 'react'
 
-import { useBuildings } from '../../../hooks/buildings/buildings'
-import { useSites } from '../../../hooks/sites/sites'
-import { useInfrastructures } from '../../../hooks/infrastructures/infrastructures'
-
-// Shadcn Components
+import { Button, Input, Checkbox, Badge } from '../../../components/ui/'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../../../components/ui/DropdownMenu'
-import { Button, Input, Checkbox, Badge } from '../../../components/ui/'
+import { useBuildings } from '../../../hooks/buildings/buildings'
+import { useInfrastructures } from '../../../hooks/infrastructures/infrastructures'
+import { useSites } from '../../../hooks/sites/sites'
+import { usePermissions } from '../../../store'
+
+// Shadcn Components
 
 // Icons
-import * as LR from 'lucide-react'
 
 // Custom Components
 import FiltersDialog from './advancedFilter/FiltersDialog'
 import FilterFiles from './details/FilterFiles'
-import type { filterFieldOptions } from './utils/Columns'
 import { getUniqueColumnValues } from './utils/filterHelper'
+
+import type { filterFieldOptions } from './utils/Columns'
 
 interface FilterButtonsProps {
   currentViewer: string

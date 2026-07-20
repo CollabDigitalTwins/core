@@ -4,8 +4,9 @@
 import * as OBC from '@thatopen/components'
 import * as FRAGS from '@thatopen/fragments'
 import * as THREE from 'three'
-import { GhostMode } from '../GhostMode'
+
 import { CurrentWorld } from '../CurrentWorld'
+import { GhostMode } from '../GhostMode'
 
 export class IDSManager extends OBC.Component {
 

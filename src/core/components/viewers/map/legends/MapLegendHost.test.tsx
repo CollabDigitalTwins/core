@@ -2,10 +2,13 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // @vitest-environment jsdom
-import * as React from 'react'
 import { render, screen } from '@testing-library/react'
-import type { LegendRegistration } from '../../../../plugins/sdk/types'
+import * as React from 'react'
+
 import { MapLegendHost } from './MapLegendHost'
+
+import type { LegendRegistration } from '../../../../plugins/sdk/types'
+
 
 const { mockRegistry } = vi.hoisted(() => ({ mockRegistry: { getAll: vi.fn() } }))
 vi.mock('../../../../plugins/host/provider', () => ({

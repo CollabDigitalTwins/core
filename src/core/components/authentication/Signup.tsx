@@ -3,18 +3,23 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
-import Link from 'next/link'
+import { Eye, EyeClosed } from 'lucide-react'
 import Image from 'next/image'
-import { AuthPage } from './AuthPage'
-// Direct file imports (not the ui barrel) — see Signin.tsx for rationale.
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
+import { signIn } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
-import { Eye, EyeClosed } from 'lucide-react'
+
+import { AuthPage } from './AuthPage'
+// Direct file imports (not the ui barrel) — see Signin.tsx for rationale.
+
+
 import { PasswordError } from './PasswordError'
-import { signIn } from 'next-auth/react'
-import { useParams } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+
 
 export function SignUp() {
   const t = useTranslations('Signup')

@@ -2,8 +2,8 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { useTranslations } from 'next-intl'
-
 import React from 'react'
+
 import type { Building, Site } from '../../../../types/dbTypes'
 
 type BuildingWithRelations = Building & {

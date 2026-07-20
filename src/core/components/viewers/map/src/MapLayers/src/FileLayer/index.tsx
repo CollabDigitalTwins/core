@@ -5,17 +5,21 @@
 
 import * as React from 'react'
 import { Marker } from 'react-map-gl/maplibre'
-import { FilesContext, MapContext } from '../../../../../../../store'
-import MapFileMarker from './components/MapFileMarker'
-import MapFileManager from './components/MapFileManager'
-import { openPopupWindow } from './utils/openFileInPopUpWindow'
-import { FileModelLayer } from './FileModelLayer/FileModelLayer'
+
 import { useFile, useFiles, useDeleteFile } from '../../../../../../../hooks/files/files'
-import type { DbFile } from '../../../../../../../types/dbTypes'
+import { FilesContext, MapContext } from '../../../../../../../store'
+import { downloadDbFile, ViewerContextMenu } from '../../../../../../ui/FilesManager'
 import { EditPosition } from '../EditPosition'
 import { PlaceOnMap } from '../PlaceOnMap'
+
+import MapFileManager from './components/MapFileManager'
+import MapFileMarker from './components/MapFileMarker'
+import { FileModelLayer } from './FileModelLayer/FileModelLayer'
+import { openPopupWindow } from './utils/openFileInPopUpWindow'
+
+import type { DbFile } from '../../../../../../../types/dbTypes'
 import type { FileAction } from '../../../../../../../types/global'
-import { downloadDbFile, ViewerContextMenu } from '../../../../../../ui/FilesManager'
+
 
 const is3DModelFile = (extension?: string | null): boolean => {
   if (!extension) return false

@@ -5,12 +5,14 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { Moon, Sun, Menu, X } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { useState, useEffect } from 'react'
+
+import { Language } from '../../types/dbTypes'
+
 import { Button } from './Button'
 import { CdtIcon } from './Icons/CdtIcon'
-import { Language } from '../../types/dbTypes'
 
 interface NavbarProps {
   activeSection: string

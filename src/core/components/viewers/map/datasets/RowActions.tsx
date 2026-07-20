@@ -4,19 +4,24 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
+import * as LR from 'lucide-react'
 import React from 'react'
+
 import { usePermissions } from '../../../../store'
+
 // Utility functions
+import { DatasetsContext } from '../../../../store'
+import { Checkbox, Button } from '../../../ui/'
+
+import { buildPublishedTileDatasets } from './src/publishedTiles'
 import { handleFavouriteDataset } from './utils'
 
 // Shadcn Components
-import { Checkbox, Button } from '../../../ui/'
 
 // Icons
-import * as LR from 'lucide-react'
-import { DatasetsContext } from '../../../../store'
+
 import type { Dataset } from '../../../../types/datasetTypes'
-import { buildPublishedTileDatasets } from './src/publishedTiles'
+
 
 interface RowActionsProps {
   dataset: Dataset

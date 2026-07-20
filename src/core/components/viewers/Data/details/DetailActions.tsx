@@ -5,15 +5,18 @@
 
 import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
+
+import { Button } from '../../../../components/ui/Button'
 import { usePermissions } from '../../../../store'
+import { DataTypesNames, ViewerNames } from '../../../../types'
+import MoreOptions from '../MoreOptions'
+
+import FileUpload from './FileUpload'
 
 import type { Building, Infrastructure, Site, User } from '../../../../types/dbTypes'
 import type { FileRow } from '../../../../types/files'
-import { DataTypesNames, ViewerNames } from '../../../../types'
 
-import { Button } from '../../../../components/ui/Button'
-import FileUpload from './FileUpload'
-import MoreOptions from '../MoreOptions'
+
 
 // Types
 

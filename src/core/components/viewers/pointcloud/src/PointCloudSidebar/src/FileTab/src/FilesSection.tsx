@@ -3,15 +3,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 import * as LR from 'lucide-react'
-import { BuildingsContext, MenusContext } from '../../../../../../../../store'
-import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
-import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
 import { useUploadFileToBuilding, useDeleteFile } from '../../../../../../../../hooks/files/files'
+import { BuildingsContext, MenusContext } from '../../../../../../../../store'
+import ConfirmDialog from '../../../../../../../ConfirmDialog'
+import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { useFileUploadHandler, useFileDeleteHandler, FileItemComponent, useFileActions, useCommonFileUpload } from '../../../../../../../ui/FilesManager'
-import { DbFile as IFile } from '../../../../../../../../types/dbTypes'
+
+import type { DbFile as IFile } from '../../../../../../../../types/dbTypes'
 
 const PC_FILE_OPTIONS: import('../../../../../../../../types/global').FileAction[] = ['download', 'view', 'move', 'info', 'delete']
 

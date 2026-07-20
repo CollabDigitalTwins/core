@@ -1,22 +1,24 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 // Utilities
-import type { Tool } from '../../../../../types/tools'
-import type { Organization } from '../../../../../types/dbTypes'
-
-// Icons
-import * as LR from 'lucide-react'
-
-// Custom toolbar buttons
-import { MeasureMapTool } from './measureMapTool'
+import Compare from '../compare'
 
 import AddToMap from './AddTools/AddToMap'
-import { ShareMapTool } from './shareMapTool'
 import DatasetMapTool from './DatasetMapTool'
-import Compare from '../compare'
+import { MeasureMapTool } from './measureMapTool'
+import { ShareMapTool } from './shareMapTool'
+
+import type { Organization } from '../../../../../types/dbTypes'
+import type { Tool } from '../../../../../types/tools'
+
+// Icons
+
+// Custom toolbar buttons
+
 
 export type MapToolbarToolType =
 'map-dimensions' |

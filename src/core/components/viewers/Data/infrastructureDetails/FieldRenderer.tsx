@@ -2,8 +2,9 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
+import * as LR from 'lucide-react'
 import React from 'react'
-import { usePermissions } from '../../../../store'
+
 
 // Shadcn Components
 import { Checkbox, Input, Textarea, Button, Badge, DatePicker } from '../../../../components/ui/'
@@ -14,12 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../../components/ui/Select'
+import { usePermissions } from '../../../../store'
 
 // Custom components
 import FileUpload from '../details/FileUpload'
 
 // Icons
-import * as LR from 'lucide-react'
 
 interface FieldRendererProps {
   property: string

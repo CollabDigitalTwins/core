@@ -1,6 +1,7 @@
 import reactHooks from 'eslint-plugin-react-hooks';
 import sonarjs from 'eslint-plugin-sonarjs';
 import unicorn from 'eslint-plugin-unicorn';
+import importPlugin from 'eslint-plugin-import';
 import tsParser from '@typescript-eslint/parser';
 import tseslint from 'typescript-eslint';
 
@@ -45,7 +46,17 @@ export default [
       'react-hooks': reactHooks,
       sonarjs,
       unicorn,
+      import: importPlugin,
       '@typescript-eslint': tseslint.plugin,
+    },
+    settings: {
+      // Tier 3 (2026-07-20): let eslint-plugin-import resolve TS files and the
+      // `@/*` path alias from tsconfig, so no-cycle / order don't false-report
+      // on unresolved local imports.
+      'import/resolver': {
+        typescript: { project: './tsconfig.json' },
+        node: { extensions: ['.js', '.mjs', '.ts', '.tsx', '.json'] },
+      },
     },
     rules: {
       // --- Correctness / real bug catchers ---
@@ -105,6 +116,31 @@ export default [
       // legitimate inline `import()` types (e.g. `typeof import('memjs')` for lazy
       // loads, `as import('geojson').X` casts) which aren't auto-fixable.
       '@typescript-eslint/consistent-type-imports': ['warn', { disallowTypeAnnotations: false }],
+
+      // --- Tier 3 hardening (2026-07-20): import hygiene / cycle detection ---
+      // Requires eslint-plugin-import devDep + the import/resolver settings above.
+      // no-cycle is the real prize here: circular deps silently break ESM
+      // tree-shaking (core's deep-import win) and have caused runtime ordering
+      // bugs. ignoreExternal skips cycles that only pass through node_modules
+      // (not ours to fix); maxDepth caps the traversal so lint stays tractable.
+      // no-unresolved is the guard that keeps no-cycle honest: it fails loudly
+      // if the resolver stops resolving local/`@/*` imports, so no-cycle can't
+      // silently degrade to a false "0 cycles". Clean today (0 warnings).
+      'import/no-unresolved': 'warn',
+      'import/no-cycle': ['warn', { ignoreExternal: true, maxDepth: 6 }],
+      // Ordering is autofixable, so it stays a formatter concern, not a review
+      // burden. Alphabetized within groups, a blank line between groups; the
+      // `@/*` alias is grouped as internal so it sorts after third-party deps.
+      'import/order': [
+        'warn',
+        {
+          groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index', 'object', 'type'],
+          pathGroups: [{ pattern: '@/**', group: 'internal', position: 'after' }],
+          pathGroupsExcludedImportTypes: ['builtin'],
+          'newlines-between': 'always',
+          alphabetize: { order: 'asc', caseInsensitive: true },
+        },
+      ],
     },
   },
 ];

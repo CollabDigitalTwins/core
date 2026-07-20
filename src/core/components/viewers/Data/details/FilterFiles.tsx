@@ -2,16 +2,17 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Shadcn Components
+import * as LR from 'lucide-react'
+
+import { Button, Checkbox } from '../../../../components/ui/'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../../../../components/ui/DropdownMenu'
-import { Button, Checkbox } from '../../../../components/ui/'
 
 // Icons
-import * as LR from 'lucide-react'
 
 interface FilterFilesProps {
   availableTypes: string[]

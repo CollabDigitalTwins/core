@@ -3,13 +3,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from "react";
-import { PointCloudContext } from '../../../../../../store'
-import { useTranslations } from 'next-intl'
 import { Pin, TrendingDown, Zap } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import * as React from "react";
 
-import { SliderWithInput, Slider } from '../../../../../ui/Slider'
+import { PointCloudContext } from '../../../../../../store'
 import { Label } from '../../../../../ui/Label'
+import { SliderWithInput, Slider } from '../../../../../ui/Slider'
 import { PointSizeType } from '../../../define'
 
 export interface CustomButtonProps {

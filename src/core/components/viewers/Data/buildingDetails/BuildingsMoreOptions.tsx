@@ -3,37 +3,33 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
-import { useTranslations } from 'next-intl'
-import { useSession } from 'next-auth/react'
-import { usePermissions } from '../../../../store'
-
-// Shadcn Components
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../../../ui/DropdownMenu'
-import { Button } from '../../../ui/Button'
-import { LoadingSpinner } from '../../../ui/LoadingSpinner'
-import { toast } from 'sonner'
-
-// Icons
 import {
   MoreHorizontal,
   FileOutput,
   FileText,
   FileInput,
 } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+import { toast } from 'sonner'
+
+import { useBuilding, useCreateBuilding } from '../../../../hooks/buildings/buildings'
+import { usePermissions } from '../../../../store'
+
+// Shadcn Components
+import { Button } from '../../../ui/Button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../../../ui/DropdownMenu'
+import { LoadingSpinner } from '../../../ui/LoadingSpinner'
+
+// Icons
 
 // Types
-import type { Building } from '../../../../types/dbTypes'
-
-// Hooks
-import { useBuilding, useCreateBuilding } from '../../../../hooks/buildings/buildings'
-
-// Utils
 import {
   generateBuildingSchemaCSV,
   exportBuildingsToCSV,
@@ -43,8 +39,15 @@ import {
   generateTimestampedFilename,
 } from '../utils/csvUtils'
 
-// Template
 import { buildingSchemaTemplate, getBuildingFieldNames } from './buildingSchemaTemplate'
+
+import type { Building } from '../../../../types/dbTypes'
+
+// Hooks
+
+// Utils
+
+// Template
 
 interface BuildingMoreOptionsProps {
   buildings?: Building[]

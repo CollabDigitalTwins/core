@@ -10,6 +10,7 @@ import { BuildingsContext } from '../../../store'
 
 // New structured components
 import { Header } from './Header'
+
 import type { Organization } from '../../../types/dbTypes'
 
 interface InfoSidebarProps {

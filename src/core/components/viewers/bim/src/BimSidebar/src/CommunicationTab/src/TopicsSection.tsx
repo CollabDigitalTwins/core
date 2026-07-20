@@ -3,19 +3,22 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
-import type * as OBC from '@thatopen/components'
-import { Button } from '../../../../../../../ui/Button'
 import * as LR from 'lucide-react'
-import { BimContext, BuildingsContext, usePermissions } from '../../../../../../../../store'
-import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
-import { useTranslations } from 'next-intl'
 import { useSession } from 'next-auth/react'
-import { BCFTopicsManager } from '../../../../BCFTopicsManager'
-import type { BCFTopicFormData } from './CreateTopicDialog';
-import { CreateTopicDialog } from './CreateTopicDialog'
-import { CollapsibleTopicItem } from './CollapsibleTopicItem'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
+import { BimContext, BuildingsContext, usePermissions } from '../../../../../../../../store'
+import { Button } from '../../../../../../../ui/Button'
+import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { BcfIcon } from '../../../../../../../ui/Icons'
+import { BCFTopicsManager } from '../../../../BCFTopicsManager'
+
+import { CollapsibleTopicItem } from './CollapsibleTopicItem'
+import { CreateTopicDialog } from './CreateTopicDialog'
+
+import type { BCFTopicFormData } from './CreateTopicDialog';
+import type * as OBC from '@thatopen/components'
 
 type TopicAction = 'view' | 'edit' | 'delete'
 

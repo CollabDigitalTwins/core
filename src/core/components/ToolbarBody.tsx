@@ -4,10 +4,12 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
-import { Menubar } from './ui/Menubar'
-import type { Tool } from '../types/tools'
-import ToolbarButton from './ui/ToolbarButton'
+
 import { SubmenuProvider } from './ToolbarSubmenu'
+import { Menubar } from './ui/Menubar'
+import ToolbarButton from './ui/ToolbarButton'
+
+import type { Tool } from '../types/tools'
 
 // Shared menubar wrapper used by the per-viewer toolbars (MapToolbar inline
 // in Toolbar.tsx, BimToolbar + PointCloudToolbar in their respective viewer

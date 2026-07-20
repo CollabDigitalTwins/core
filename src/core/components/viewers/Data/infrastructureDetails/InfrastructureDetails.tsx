@@ -4,30 +4,34 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
+import { useTranslations } from 'next-intl'
 import * as React from 'react'
-import type { Building, Infrastructure } from '../../../../types/dbTypes'
-import { handleApiError } from '../../../../utils/errorHandler'
+import { toast } from 'sonner'
+
+import { createInfrastructureHooks } from '../../../../hooks/infrastructures/createInfrastructureHooks'
 
 // Custom hooks
-import { createInfrastructureHooks } from '../../../../hooks/infrastructures/createInfrastructureHooks'
 import { useCreateInfrastructure, useInfrastructure } from '../../../../hooks/infrastructures/infrastructures'
 
 // Utilities
-import { useInfrastructureHeaders } from '../utils/Headers'
 import { useIsMobile } from '../../../../hooks/ui/use-mobile'
+import { handleApiError } from '../../../../utils/errorHandler'
+import { DescriptionListItem } from '../../../ui/DescriptionList'
 
 // Shadcn Components
-import { DescriptionListItem } from '../../../ui/DescriptionList'
 import { Separator } from '../../../ui/Separator'
-import { toast } from 'sonner'
+
 
 // Custom Components
 import AttachedFiles from '../details/AttachedFiles'
-import TabSidebar from '../details/TabSidebar'
-import FieldValue from '../details/FieldValue'
-import FieldRenderer from './FieldRenderer'
 import CheckboxGroup from '../details/CheckboxGroup'
-import { useTranslations } from 'next-intl'
+import FieldValue from '../details/FieldValue'
+import TabSidebar from '../details/TabSidebar'
+import { useInfrastructureHeaders } from '../utils/Headers'
+
+import FieldRenderer from './FieldRenderer'
+
+import type { Building, Infrastructure } from '../../../../types/dbTypes'
 
 type InfrastructureWithAssociatedBuildings = Infrastructure & {
   infrastructureBuildings?: Building[]

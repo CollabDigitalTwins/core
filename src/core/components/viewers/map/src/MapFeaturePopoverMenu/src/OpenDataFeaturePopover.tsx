@@ -4,11 +4,14 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from 'react'
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import * as React from 'react'
 
 // Shadcn Components
+import { DatasetsContext } from '../../../../../../store/Datasets/context'
 import { Button } from '../../../../../ui/Button'
+import ColorCircle from '../../../../../ui/ColorCircle'
 import { PopoverContent } from '../../../../../ui/Popover'
 import {
   Table,
@@ -20,13 +23,11 @@ import {
 } from '../../../../../ui/Table'
 
 // Icons
-import * as LR from 'lucide-react'
 
 // Types / Utilities
-import type { MapGeoJSONFeature } from 'maplibre-gl'
-import ColorCircle from '../../../../../ui/ColorCircle'
-import { DatasetsContext } from '../../../../../../store/Datasets/context'
 import { stringToColour } from '../../../utils/stringToColour'
+
+import type { MapGeoJSONFeature } from 'maplibre-gl'
 
 interface OpenDataFeaturePopoverProps {
   feature: MapGeoJSONFeature

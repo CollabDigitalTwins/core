@@ -4,8 +4,9 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import AccountSettingsPanel from './AccountSettingsPanel'
-import UsersSettingsPanel from './UsersSettingsPanel'
 import OrganizationSettingsPanel from './OrganizationSettingsPanel'
+import UsersSettingsPanel from './UsersSettingsPanel'
+
 import type { SettingsTabKey } from './types'
 
 type SettingsContentProps = {

@@ -2,8 +2,8 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // @vitest-environment jsdom
-import * as React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
+import * as React from 'react'
 
 // Mutable permission mock — flip canRead before render() to test the disabled branch.
 const state = vi.hoisted(() => ({ canRead: true }))

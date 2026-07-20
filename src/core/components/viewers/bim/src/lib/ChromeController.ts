@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type * as OBC from '@thatopen/components'
 import * as THREE from 'three'
+
 import { CurrentWorld } from '../CurrentWorld'
 import { Highlighter } from '../Highlighter'
 import { ViewportGizmo } from '../ViewportGizmo'
+
+import type * as OBC from '@thatopen/components'
 
 /**
  * Manages the viewer chrome muted while a drawing-based view tool is

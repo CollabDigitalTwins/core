@@ -3,21 +3,24 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { Input, Label } from '../../../../../../ui/'
-import * as React from "react";
-import { MapContext, useMapSitesContext } from '../../../../../../../store'
-import type { CursorType } from '../../../../../../../types/global'
-import { Button } from '../../../../../../ui/Button'
-import { AddItemDialog } from '../../../../../../ui/AddItemDialog'
 import { BoxSelect } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import * as React from "react";
 import { toast } from 'sonner'
-import { useCreateSite } from '../../../../../../../hooks/sites/sites'
+
 import { useBuildings } from '../../../../../../../hooks/buildings/buildings'
-import type { Building } from '../../../../../../../types/dbTypes'
-import { persistDrawnSite } from './persistSite'
+import { useCreateSite } from '../../../../../../../hooks/sites/sites'
+import { MapContext, useMapSitesContext } from '../../../../../../../store'
+import { Input, Label } from '../../../../../../ui/'
+import { AddItemDialog } from '../../../../../../ui/AddItemDialog'
+import { Button } from '../../../../../../ui/Button'
 import { polygonCentroid, filterPointsInRing } from '../../../MapLayers/src/SiteLayer/siteGeometry'
+
 import { AssociateBuildingsDialog } from './AssociateBuildingsDialog'
+import { persistDrawnSite } from './persistSite'
+
+import type { Building } from '../../../../../../../types/dbTypes'
+import type { CursorType } from '../../../../../../../types/global'
 
 interface SiteAdderProps {
   isOpen?: boolean

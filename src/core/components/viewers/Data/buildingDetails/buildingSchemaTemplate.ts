@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { Building } from '../../../../types/dbTypes'
 import {
   BuildingAssessmentConditions,
   BuildingGeometryStyle,
@@ -15,6 +14,8 @@ import {
   BuildingElectricityServiceSize,
   BuildingElectricityServiceLocation,
 } from '../../../../types/dbTypes'
+
+import type { Building } from '../../../../types/dbTypes'
 
 /**
  * Building schema template with example values for CSV export

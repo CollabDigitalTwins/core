@@ -4,13 +4,14 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
-import { FilesSection } from './src/FilesSection'
 
-
-import { ModelsSection } from './src/ModelsSection'
-import type { DbFile } from '../../../../../../../types/dbTypes'
 import { useFiles } from '../../../../../../../hooks/files/files'
 import { SearchInput } from '../../../../../../ui'
+
+import { FilesSection } from './src/FilesSection'
+import { ModelsSection } from './src/ModelsSection'
+
+import type { DbFile } from '../../../../../../../types/dbTypes'
 
 export function FileTab() {
   const [searchQuery, setSearchQuery] = React.useState('')

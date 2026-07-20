@@ -3,12 +3,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from "react";
 import { useTranslations } from 'next-intl'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../../../ui/Select'
+import * as React from "react";
+import { useState } from 'react';
+
 import { MapContext } from '../../../../../../../../store';
 import { Input, CollapsibleSection } from '../../../../../../../ui/';
-import { useState } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../../../ui/Select'
+
 
 export function LocationSettings({ countryCode }: { countryCode?: string }) {
     // Municipality autocomplete state

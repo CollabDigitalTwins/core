@@ -2,8 +2,10 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as OBC from '@thatopen/components'
-import type * as THREE from 'three'
+
 import { CurrentWorld } from '../CurrentWorld'
+
+import type * as THREE from 'three'
 
 /**
  * Slot-keyed wrapper around `OBC.Clipper`. Each slot name maps to a single

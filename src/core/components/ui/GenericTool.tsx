@@ -4,18 +4,21 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from "react";
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import * as React from "react";
 
 // Utilities
+import { ToolsContext } from '../../store'
+
+import { Button } from './Button'
+
 import type { Tool, ToolbarToolType } from '../../types/tools'
 
 // Shadcn components
-import { Button } from './Button'
 
 // Icons
-import * as LR from 'lucide-react'
-import { ToolsContext } from '../../store'
+
 
 interface GenericTool {
   tool: Tool

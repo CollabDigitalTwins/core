@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { Dataset } from '../../../../../types/datasetTypes'
 import { DatasetGroup } from '../../../../../types/dbTypes'
 import { layerColorByName } from '../../utils/stringToColour'
+
+import type { Dataset } from '../../../../../types/datasetTypes'
 import type { AllGeoJSON } from '@turf/turf'
 
 /**

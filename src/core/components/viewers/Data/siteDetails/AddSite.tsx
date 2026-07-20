@@ -3,14 +3,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
-import { useMenusContext } from '../../../../store'
-import { toast } from 'sonner'
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { usePermissions } from '../../../../store'
+import * as React from 'react'
+import { toast } from 'sonner'
 
-
-// Shadcn components
+import { Button, Input } from '../../../../components/ui/'
 import {
   Dialog,
   DialogContent,
@@ -19,10 +17,13 @@ import {
   DialogDescription,
   DialogTrigger,
 } from '../../../../components/ui/Dialog'
-import { Button, Input } from '../../../../components/ui/'
+import { useMenusContext } from '../../../../store'
+import { usePermissions } from '../../../../store'
+
+
+// Shadcn components
 
 // Icons
-import * as LR from 'lucide-react'
 
 interface AddSiteProps {
   newItemName: string

@@ -3,17 +3,19 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 import {
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
 } from 'lucide-react'
-import type { DayButton} from 'react-day-picker';
+import * as React from 'react'
 import { DayPicker, getDefaultClassNames } from 'react-day-picker'
 
 import { cn } from '../../utils/utils'
+
 import { Button, buttonVariants } from './Button'
+
+import type { DayButton} from 'react-day-picker';
 
 function Calendar({
   className,

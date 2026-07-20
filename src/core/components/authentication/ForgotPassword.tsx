@@ -3,15 +3,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
+import { Eye, EyeClosed } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
 // Direct file imports (not the ui barrel) — see Signin.tsx for rationale.
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
-import { Eye, EyeClosed } from 'lucide-react'
-import { PasswordError } from './PasswordError'
+
+
 import { AuthPage } from './AuthPage'
+import { PasswordError } from './PasswordError'
 
 export function ForgotPassword() {
   console.log('Executing ForgotPassword()')

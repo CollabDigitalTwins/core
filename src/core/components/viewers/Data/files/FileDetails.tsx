@@ -4,33 +4,39 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from 'react'
-import { useMenusContext } from '../../../../store'
-import type { Building } from '../../../../types/dbTypes'
+import  * as LR from 'lucide-react'
+import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
+import * as React from 'react'
+import { mutate } from 'swr'
+
+import { Separator, Badge, Button, Input, Checkbox, Dialog } from '../../../../components/ui/'
+import { DescriptionListItem } from '../../../../components/ui/DescriptionList'
+import { useFile } from '../../../../hooks/files/files'
+import { useMenusContext } from '../../../../store'
 import { usePermissions } from '../../../../store'
+import { ViewerNames } from '../../../../types/'
+import { convertISOStringtoDate } from '../utils/convertDate'
+
+import FilePreview from './FilePreview'
+import { fuzzySearchBuildings } from './utils/fuzzySearch'
+
+import type { Building } from '../../../../types/dbTypes'
 
 
 // Utilities
-import { fuzzySearchBuildings } from './utils/fuzzySearch'
-// Shadcn Components
-import { DescriptionListItem } from '../../../../components/ui/DescriptionList'
-import { Separator, Badge, Button, Input, Checkbox, Dialog } from '../../../../components/ui/'
 
-import { convertISOStringtoDate } from '../utils/convertDate'
+// Shadcn Components
+
 // Custom Components
-import FilePreview from './FilePreview'
 
 // Icons
-import  * as LR from 'lucide-react'
 
 // Custom Type
 import type { FileRow } from '../../../../types/files'
 
-import { mutate } from 'swr'
-import { useFile } from '../../../../hooks/files/files'
-import { ViewerNames } from '../../../../types/'
-import { useSession } from 'next-auth/react'
+
+
 
 interface FileDetailsProps {
   selectedFile?: FileRow

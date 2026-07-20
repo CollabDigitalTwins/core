@@ -3,16 +3,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
-import * as LR from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import * as OBC from '@thatopen/components'
 import * as OBF from '@thatopen/components-front'
-import { Button } from '../../../../../../../ui/Button'
-import { Switch } from '../../../../../../../ui/Switch'
-import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
-import { cn } from '../../../../../../../../utils/utils'
+import * as LR from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
 import { BimContext } from '../../../../../../../../store'
+import { cn } from '../../../../../../../../utils/utils'
+import { Button } from '../../../../../../../ui/Button'
+import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
+import { Switch } from '../../../../../../../ui/Switch'
 import {
   SpatialStructure,
   type SpatialTreeItem,

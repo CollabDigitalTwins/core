@@ -8,18 +8,19 @@ import { useTranslations } from 'next-intl'
 import * as LR from 'lucide-react'
 import { BimContext } from '../../../../../../../../store'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
-import {
-  ElevationsTool,
+import type {
   ElevationEntry,
   ElevationLoadingStage,
-  ElevationLoadingState,
+  ElevationLoadingState} from '../../../../ElevationsTool';
+import {
+  ElevationsTool,
   getElevationStagePercent,
 } from '../../../../ElevationsTool'
 import { exportDrawingToDxf } from '../../../../lib/exportDrawingToDxf'
 import { useBuildingName } from '../../../../lib/useBuildingName'
 import { useFriendlyIfcClassName } from '../../../../lib/useFriendlyIfcClassName'
 import { ViewSectionList } from '../../../../lib/ViewSectionList'
-import { ViewListEntry } from '../../../../lib/viewSection'
+import type { ViewListEntry } from '../../../../lib/viewSection'
 
 interface ElevationSectionProps {
   query?: string

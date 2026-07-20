@@ -4,7 +4,7 @@
 import * as OBC from '@thatopen/components'
 import * as OBF from '@thatopen/components-front'
 import { CurrentWorld } from '../../../CurrentWorld'
-import * as THREE from 'three'
+import type * as THREE from 'three'
 
 interface Sensor {
   id: string

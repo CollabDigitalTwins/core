@@ -12,7 +12,7 @@ import { FileItemComponent } from '../../../../../../../ui/FilesManager/src/File
 import { useFileActions } from '../../../../../../../ui/FilesManager/src/useFileActions'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { Button } from '../../../../../../../ui/Button'
-import { DbFile } from '../../../../../../../../types/dbTypes'
+import type { DbFile } from '../../../../../../../../types/dbTypes'
 import { PointCloudContext } from '../../../../../../../../store'
 // import { useAppConfigContext } from '../../../../../../../../store/AppConfig/context'
 

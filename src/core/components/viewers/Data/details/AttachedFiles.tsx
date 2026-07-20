@@ -19,7 +19,7 @@ import FiltersDialog from '../advancedFilter/FiltersDialog'
 import FilePreview from '../files/FilePreview'
 import FileMoreOptions from '../files/FileMoreOptions'
 import FilterFiles from './FilterFiles'
-import { DbFile } from '../../../../types/dbTypes';
+import type { DbFile } from '../../../../types/dbTypes';
 
 interface AttachedFilesProps {
   buildingId?: number

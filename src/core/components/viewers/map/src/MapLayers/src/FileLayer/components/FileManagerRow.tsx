@@ -10,7 +10,7 @@ import * as React from 'react'
 import { useTranslations } from 'next-intl'
 import { MapContext } from '../../../../../../../../store'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
-import { DbFile } from '../../../../../../../../types/dbTypes'
+import type { DbFile } from '../../../../../../../../types/dbTypes'
 
 interface FileManagerRowProps {
   file: DbFile

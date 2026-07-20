@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { Organization, User } from '../../types/dbTypes'
-import { ActionMap } from '../ActionMap'
+import type { Organization, User } from '../../types/dbTypes'
+import type { ActionMap } from '../ActionMap'
 
 interface AppConfigTypes {
   organization: Organization | null

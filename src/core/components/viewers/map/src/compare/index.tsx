@@ -33,7 +33,7 @@ import CompareDialog from './CompareDialog'
 import { MarkerManager } from '../../utils/MarkerManager'
 import { stringToColour } from '../../utils/stringToColour'
 import ColorCircle from '../../../../../components/ui/ColorCircle'
-import { Building } from '../../../../../types/dbTypes'
+import type { Building } from '../../../../../types/dbTypes'
 
 type CompareProps = {
   tool: Tool

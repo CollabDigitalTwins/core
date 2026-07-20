@@ -11,7 +11,7 @@ import { FilesContext } from '../../../../../../../../store'
 
 import { mutate } from 'swr'
 import { FileManagerRow } from './FileManagerRow'
-import { DbFile } from '../../../../../../../../types/dbTypes'
+import type { DbFile } from '../../../../../../../../types/dbTypes'
 
 const is3DModelFile = (extension?: string | null): boolean => {
   if (!extension) return false

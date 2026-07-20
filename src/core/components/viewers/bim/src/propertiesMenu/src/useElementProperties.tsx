@@ -5,7 +5,8 @@
 
 import * as React from 'react'
 import * as OBC from '@thatopen/components'
-import { ElementProperty, PropertyGroup, analyzeProperty } from './utils'
+import type { ElementProperty, PropertyGroup} from './utils';
+import { analyzeProperty } from './utils'
 import { useTranslations } from 'next-intl'
 
 export function useElementProperties(bimComponents: any) {

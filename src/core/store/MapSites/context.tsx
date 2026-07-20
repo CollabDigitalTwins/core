@@ -4,10 +4,11 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from "react";
+import type {
+  MapSitesActions,
+  MapSitesState} from './reducer';
 import {
   MapSitesReducer,
-  MapSitesActions,
-  MapSitesState,
   initialMapSitesState,
 } from './reducer'
 

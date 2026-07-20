@@ -201,6 +201,7 @@
     "three": "0.184.0",
     "tsup": "^8.5.0",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.65.0",
     "vitest": "^4.1.8",
     "web-ifc": "0.0.77"
   }

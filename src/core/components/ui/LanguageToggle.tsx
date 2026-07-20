@@ -5,7 +5,7 @@
 
 import { Button } from '../../components/ui/Button'
 import { Globe } from 'lucide-react'
-import { Language } from '../../types/dbTypes'
+import type { Language } from '../../types/dbTypes'
 
 interface LanguageToggleProps {
   language: Language

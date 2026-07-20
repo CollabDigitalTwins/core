@@ -6,7 +6,7 @@
 import * as React from 'react'
 import { Separator } from '../../../../../ui/Separator'
 import { useTranslations } from 'next-intl'
-import { SidebarTabType } from '../../../../../../store/Menus/reducer'
+import type { SidebarTabType } from '../../../../../../store/Menus/reducer'
 
 interface TabSelectorProps {
   activeTab: SidebarTabType

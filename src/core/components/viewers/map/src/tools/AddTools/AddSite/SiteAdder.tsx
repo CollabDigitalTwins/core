@@ -6,7 +6,7 @@
 import { Input, Label } from '../../../../../../ui/'
 import * as React from "react";
 import { MapContext, useMapSitesContext } from '../../../../../../../store'
-import { CursorType } from '../../../../../../../types/global'
+import type { CursorType } from '../../../../../../../types/global'
 import { Button } from '../../../../../../ui/Button'
 import { AddItemDialog } from '../../../../../../ui/AddItemDialog'
 import { BoxSelect } from 'lucide-react'

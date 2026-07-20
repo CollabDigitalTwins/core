@@ -15,7 +15,7 @@ import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { format } from 'date-fns'
 import { cn } from '../../../utils/utils'
-import { Comment } from '../../../types/dbTypes'
+import type { Comment } from '../../../types/dbTypes'
 import { useUser } from '../../../hooks/users/users'
 import { useSession } from 'next-auth/react'
 

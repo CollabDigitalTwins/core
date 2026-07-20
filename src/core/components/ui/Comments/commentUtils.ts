@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { Comment } from '../../../types/dbTypes'
+import type { Comment } from '../../../types/dbTypes'
 
 type BuildCommentParams = Omit<Comment, 'id' | 'createdAt' | 'updatedAt'>
   & Partial<Pick<Comment, 'id' | 'createdAt' | 'updatedAt'>>

@@ -4,7 +4,7 @@
 import { useTranslations } from 'next-intl'
 
 import React from 'react'
-import { Building, Site } from '../../../../types/dbTypes'
+import type { Building, Site } from '../../../../types/dbTypes'
 
 type BuildingWithRelations = Building & {
   buildingOccupancyCertificate: File[]

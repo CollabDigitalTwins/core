@@ -5,7 +5,7 @@
 
 import * as React from "react"
 import * as THREE from "three"
-import * as OBC from "@thatopen/components"
+import type * as OBC from "@thatopen/components"
 import { toast } from "sonner"
 import { ModelManager } from "../../../ModelManager"
 import { Highlighter } from "../../../Highlighter"

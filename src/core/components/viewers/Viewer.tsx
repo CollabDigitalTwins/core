@@ -17,7 +17,7 @@ import { SidebarTrigger } from '../ui/Sidebar'
 import { UserSettings } from '../settings'
 import { Toolbar } from '../Toolbar'
 import { switchLanguage } from '../../utils/utils'
-import { Organization } from '../../types/dbTypes'
+import type { Organization } from '../../types/dbTypes'
 
 // Code-split the heavy viewers: BimViewer pulls in ~456 KB gzipped of
 // @thatopen/*, PointCloudViewer the Potree loader stack — loaded only when

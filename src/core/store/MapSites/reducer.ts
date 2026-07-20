@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { ActionMap } from '../ActionMap'
+import type { ActionMap } from '../ActionMap'
 
 /**
  * A site polygon currently shown on the map. The polygon geometry itself is

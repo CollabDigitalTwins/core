@@ -12,7 +12,7 @@ import {
   getItemIdsByClass,
   patchModelGeometryRepresentationIds,
 } from '../../lib/drawingProjection'
-import {
+import type {
   ElevationDirection,
   ElevationEntry,
 } from './types'

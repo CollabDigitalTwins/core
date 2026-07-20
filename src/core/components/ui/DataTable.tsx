@@ -5,18 +5,19 @@
 
 // Dependencies
 import * as React from 'react'
-import {
+import type {
   ColumnDef,
+  SortingState} from '@tanstack/react-table';
+import {
   flexRender,
   getCoreRowModel,
   getPaginationRowModel,
-  SortingState,
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
 import { useTranslations } from 'next-intl'
 
-import { ColumnMeta } from '../viewers/Data/utils/Columns'
+import type { ColumnMeta } from '../viewers/Data/utils/Columns'
 
 // Shadcn components
 import {
@@ -45,7 +46,7 @@ import {
 } from 'lucide-react'
 
 import { MapContext, MenusContext } from '../../store'
-import { ViewerNames } from '../../types/'
+import type { ViewerNames } from '../../types/'
 import { DataTableSkeleton } from '../DataTableSkeleton'
 
 interface DataTableProps<TData, TValue> {

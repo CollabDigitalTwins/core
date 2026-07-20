@@ -2,7 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import type { SensorType, ViewerNames } from '../../types/dbTypes'
-import { ActionMap } from '../ActionMap'
+import type { ActionMap } from '../ActionMap'
 
 export type SidebarTabType = 'file' | 'layers' | 'communication' |  'sensors' | 'settings'
 

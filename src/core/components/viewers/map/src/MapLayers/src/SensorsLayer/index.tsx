@@ -8,9 +8,11 @@ import * as React from 'react'
 import { Source, Layer, Popup, Marker } from 'react-map-gl/maplibre'
 import type { MapGeoJSONFeature, MapLayerMouseEvent } from 'maplibre-gl'
 import Sensor from '../../../../../../ui/Sensors/Sensor'
-import { SensorType, ViewerNames, type Sensor as ISensor} from '../../../../../../../types/dbTypes'
+import type { SensorType} from '../../../../../../../types/dbTypes';
+import { ViewerNames, type Sensor as ISensor} from '../../../../../../../types/dbTypes'
 
-import { MapLayerClickPriority, ClickCallback } from '../../../../utils/MapEventManager/MapClickManager'
+import type { ClickCallback } from '../../../../utils/MapEventManager/MapClickManager';
+import { MapLayerClickPriority } from '../../../../utils/MapEventManager/MapClickManager'
 import { extractCoordinatesFromFeature } from '../../../../utils/extractCoordinates'
 import { useSensor, useSensors } from '../../../../../../../hooks/sensors/sensors'
 import { useUsers } from '../../../../../../../hooks/users/users'

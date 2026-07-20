@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { Tool } from '../../../../../types/tools'
+import type { Tool } from '../../../../../types/tools'
 import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 

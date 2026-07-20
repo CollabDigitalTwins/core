@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation'
 import Navbar from '../ui/Navbar'
 import AnimatedBackground from '../ui/AnimatedBackground'
 import OrganizationNotFoundSection from './src/OrganizationNotFoundSection'
-import { Language } from '../../types/dbTypes'
+import type { Language } from '../../types/dbTypes'
 
 interface InstanceNotFoundProps {
   organizationName: string

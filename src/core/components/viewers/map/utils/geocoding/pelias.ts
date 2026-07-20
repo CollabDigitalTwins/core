@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { Feature } from 'geojson'
+import type { Feature } from 'geojson'
 import { getGeocodingConfig } from './config'
 
 // Geocode Earth and self-hosted Pelias share this dialect; only the base URL and

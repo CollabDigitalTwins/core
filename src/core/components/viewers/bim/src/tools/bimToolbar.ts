@@ -3,7 +3,7 @@
 
 import { ClippingTool } from './ClippingTool/ClippingTool';
 
-import { Tool } from '../../../../../types/tools'
+import type { Tool } from '../../../../../types/tools'
 import { useTranslations } from 'next-intl'
 import * as LR from 'lucide-react'
 import { MeasureBimTool } from './measureBimTool'

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { Feature, Point } from 'geojson'
+import type { Feature, Point } from 'geojson'
 import { MarkerManager } from './MarkerManager'
 import { autocompleteGeocode, reverseGeocode } from './geocoding'
 

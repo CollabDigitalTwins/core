@@ -7,8 +7,8 @@ import * as React from 'react'
 import * as LR from 'lucide-react'
 import { Button } from '../../../../ui/Button'
 import { Switch } from '../../../../ui/Switch'
-import { DrawingLayerInfo } from './drawingLayers'
-import { ViewListEntry, ViewLoadingState } from './viewSection'
+import type { DrawingLayerInfo } from './drawingLayers'
+import type { ViewListEntry, ViewLoadingState } from './viewSection'
 
 interface Props {
   entries: ViewListEntry[]

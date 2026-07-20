@@ -6,7 +6,7 @@ import { formatName, stripHtml } from '../utils'
 import type { AllGeoJSON } from '@turf/turf'
 import { buildValidationKey, getCache, setCache, withCache } from './cache'
 import { layerColorByName } from '../../utils/stringToColour'
-import { OpenDataPortal } from '../../../../../types/dbTypes'
+import type { OpenDataPortal } from '../../../../../types/dbTypes'
 
 // Fetch CKAN GeoJSON datasets and transform to Dataset array
 export async function fetchCkanDatasets(

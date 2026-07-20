@@ -9,7 +9,7 @@ import dynamic from 'next/dynamic'
 // Icons
 import { MenusContext } from '../../../store'
 import { MapSidebar } from '../../viewers/map/src/MapSidebar'
-import { Organization } from '../../../types/dbTypes'
+import type { Organization } from '../../../types/dbTypes'
 
 const BimSidebar = dynamic(
   () => import('../../viewers/bim/src/BimSidebar/src').then(m => ({ default: m.BimSidebar })),

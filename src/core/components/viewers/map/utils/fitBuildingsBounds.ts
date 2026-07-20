@@ -3,7 +3,7 @@
 
 import type { Map } from 'maplibre-gl'
 import * as turf from '@turf/turf'
-import { Building, Site } from '../../../../types/dbTypes'
+import type { Building, Site } from '../../../../types/dbTypes'
 
 export const fitBuildingsBounds = (buildings: Building[], map: Map) => {
   // Collect valid building coordinates

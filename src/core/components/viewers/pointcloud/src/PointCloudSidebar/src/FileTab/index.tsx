@@ -9,7 +9,7 @@ import { PointCloudsSection } from './src/PointCloudSection'
 import { BuildingsContext } from '../../../../../../../store'
 import { useSearchParams } from 'next/navigation'
 import { useFilesByBuildingId } from '../../../../../../../hooks/files/files'
-import { DbFile } from '../../../../../../../types/dbTypes'
+import type { DbFile } from '../../../../../../../types/dbTypes'
 
 export function FileTab({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
   const { state: buildingState } = React.useContext(BuildingsContext)

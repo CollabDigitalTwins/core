@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { IMedia } from './files'
-import { Identified } from './global'
+import type { IMedia } from './files'
+import type { Identified } from './global'
 
 export type Visibility = 'private' | 'public' | 'group' | 'admin' | undefined
 

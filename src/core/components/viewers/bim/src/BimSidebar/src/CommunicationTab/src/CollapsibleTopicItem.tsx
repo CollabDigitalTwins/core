@@ -11,7 +11,7 @@ import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { format } from 'date-fns'
 import { cn } from '../../../../../../../../utils/utils'
-import * as OBC from '@thatopen/components'
+import type * as OBC from '@thatopen/components'
 
 type TopicAction = 'view' | 'edit' | 'delete'
 

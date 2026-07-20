@@ -4,8 +4,8 @@
 import { useTranslations } from 'next-intl'
 
 // Utilities
-import { Tool } from '../../../../../types/tools'
-import { Organization } from '../../../../../types/dbTypes'
+import type { Tool } from '../../../../../types/tools'
+import type { Organization } from '../../../../../types/dbTypes'
 
 // Icons
 import * as LR from 'lucide-react'

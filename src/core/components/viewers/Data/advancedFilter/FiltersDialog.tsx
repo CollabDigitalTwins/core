@@ -25,7 +25,7 @@ import { Input } from '../../../ui/Input'
 
 // Utils
 import { useBuildingHeaders, useSiteHeaders } from '../utils/Headers'
-import { filterFieldOptions } from '../utils/Columns'
+import type { filterFieldOptions } from '../utils/Columns'
 
 // Icons
 import {

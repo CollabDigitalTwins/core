@@ -13,7 +13,7 @@ import {
   getItemIdsByClass,
   patchModelGeometryRepresentationIds,
 } from '../../lib/drawingProjection'
-import { FloorplanEntry } from './types'
+import type { FloorplanEntry } from './types'
 import { getStoreyItemIds } from './utils'
 
 /**

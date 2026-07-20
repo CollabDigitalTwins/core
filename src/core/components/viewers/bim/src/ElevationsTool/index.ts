@@ -6,7 +6,8 @@ import * as OBF from '@thatopen/components-front'
 import * as THREE from 'three'
 import { CurrentWorld } from '../CurrentWorld'
 import { CameraController } from '../lib/CameraController'
-import { CategoryHighlighter, StageEmitter } from '../lib/CategoryHighlighter'
+import type { StageEmitter } from '../lib/CategoryHighlighter';
+import { CategoryHighlighter } from '../lib/CategoryHighlighter'
 import { ChromeController } from '../lib/ChromeController'
 import { ClipController } from '../lib/ClipController'
 import { disposeDrawing } from '../lib/drawingProjection'
@@ -15,12 +16,13 @@ import { safeRun, safeRunAsync } from '../lib/safeRun'
 import { stagePercent } from '../lib/viewSection'
 import { ViewModeCoordinator } from '../lib/ViewModeCoordinator'
 import { ElevationProjector } from './src/ElevationProjector'
-import {
-  ELEVATION_STAGE_PERCENT,
-  ELEVATIONS_TOOL_UUID,
+import type {
   ElevationEntry,
   ElevationLoadingStage,
-  ElevationLoadingState,
+  ElevationLoadingState} from './src/types';
+import {
+  ELEVATION_STAGE_PERCENT,
+  ELEVATIONS_TOOL_UUID
 } from './src/types'
 
 export type {

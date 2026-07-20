@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { DbFile } from '../../../../types/dbTypes'
+import type { DbFile } from '../../../../types/dbTypes'
 
 export async function downloadFile(url: string, file: DbFile) {
   try {

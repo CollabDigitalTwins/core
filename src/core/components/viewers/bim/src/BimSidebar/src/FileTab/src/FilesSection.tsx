@@ -20,7 +20,7 @@ import { IDSManager } from '../../../../IDSManager'
 import { BCFTopicsManager } from '../../../../BCFTopicsManager'
 import { createFileMarker, removeMarker, type AddedFile } from '../../../../tools/AddToBim/src/FileMarkerUtils'
 import type { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
-import { DbFile as IFile } from '../../../../../../../../types/dbTypes'
+import type { DbFile as IFile } from '../../../../../../../../types/dbTypes'
 
 // Hoist options arrays so the array identity is stable across renders.
 // Inline `options={[...]}` defeats React.memo on FileItemComponent.

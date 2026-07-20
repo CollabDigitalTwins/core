@@ -58,7 +58,8 @@ import UserDetails from './userDetails/UserDetails'
 // Data
 import { useColumns, useUserColumns } from './utils/Columns'
 import { useBuildingHeaders, useInfrastructureHeaders, useSiteHeaders } from './utils/Headers'
-import { DataTypes, DataTypesNames, ViewerNames } from '../../../types'
+import type { DataTypes} from '../../../types';
+import { DataTypesNames, ViewerNames } from '../../../types'
 import { useSession } from 'next-auth/react'
 import InfrastructureDetails from './infrastructureDetails/InfrastructureDetails'
 import { useCreateInfrastructure, useInfrastructures } from '../../../hooks/infrastructures/infrastructures'

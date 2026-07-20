@@ -13,7 +13,7 @@ import Navbar from '../ui/Navbar'
 import AnimatedBackground from '../ui/AnimatedBackground'
 import OrganizationConfigContent  from './src/organizationConfigContent'
 
-import { Language } from '../../types/dbTypes'
+import type { Language } from '../../types/dbTypes'
 
 export default function OrganizationConfigPage() {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark')

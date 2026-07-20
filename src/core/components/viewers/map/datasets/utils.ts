@@ -2,7 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import type { Dataset } from '../../../../types/datasetTypes'
-import * as React from "react";
+import type * as React from "react";
 
 export const handleFavouriteDataset = (
   dataset: Dataset,

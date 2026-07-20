@@ -4,11 +4,11 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from "react";
-import { Map } from 'maplibre-gl'
+import type { Map } from 'maplibre-gl'
 
 // Utilities
 import { MapContext } from '../../../../../store'
-import { Tool } from '../../../../../types/tools'
+import type { Tool } from '../../../../../types/tools'
 
 // Custom components
 import { ShareToolSubmenu } from '../../../../ui/ShareFeature'

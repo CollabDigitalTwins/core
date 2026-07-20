@@ -52,7 +52,8 @@ import { fetchOrganizationalMinioDatasets } from './src/minioDatasets'
 import { buildPublishedCatalogMap, stampPublished, type PublishedCatalogEntry } from './src/publishedTiles'
 import { builtinLiveDatasets } from './src/builtinLiveDatasets'
 import { useFastDatasetCache } from './src/useFastDatasetCache'
-import { DatasetGroup, Organization } from '../../../../types/dbTypes'
+import type { Organization } from '../../../../types/dbTypes';
+import { DatasetGroup } from '../../../../types/dbTypes'
 
 type OrgVisibility = {
   isAdmin: boolean

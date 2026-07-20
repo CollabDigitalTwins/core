@@ -37,7 +37,8 @@ import type { FileRow } from '../../../types/files'
 import { createBuildingsDataset } from '../map/src/MapLayers/src/BuildingLayers/src/databaseBuildings'
 import type { Dataset } from '../../../types/datasetTypes'
 import ConfirmDialog from '../../../components/ConfirmDialog'
-import { DataTypes, ViewerNames } from '../../../types/'
+import type { DataTypes} from '../../../types/';
+import { ViewerNames } from '../../../types/'
 import { useDeleteSite } from '../../../hooks/sites/sites'
 import { useUser } from '../../../hooks/users/users'
 

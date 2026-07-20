@@ -8,7 +8,7 @@ import { useTranslations } from 'next-intl'
 import * as LR from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger } from '../../../../../../../ui/Tabs'
 import { AppConfigContext, MapContext } from '../../../../../../../../store'
-import { TerrainLevel as TerrainLevelType } from '../../../../../../../../types/map'
+import type { TerrainLevel as TerrainLevelType } from '../../../../../../../../types/map'
 
 export function TerrainLevel() {
   const tMap = useTranslations('MapCustomization')

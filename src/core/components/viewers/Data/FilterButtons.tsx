@@ -27,7 +27,7 @@ import * as LR from 'lucide-react'
 // Custom Components
 import FiltersDialog from './advancedFilter/FiltersDialog'
 import FilterFiles from './details/FilterFiles'
-import { filterFieldOptions } from './utils/Columns'
+import type { filterFieldOptions } from './utils/Columns'
 import { getUniqueColumnValues } from './utils/filterHelper'
 
 interface FilterButtonsProps {

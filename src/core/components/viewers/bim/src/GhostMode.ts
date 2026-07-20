@@ -2,7 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as OBC from '@thatopen/components'
-import * as FRAGS from '@thatopen/fragments'
+import type * as FRAGS from '@thatopen/fragments'
 import * as THREE from 'three'
 
 export class GhostMode extends OBC.Component {

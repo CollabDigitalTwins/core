@@ -9,7 +9,7 @@ import dynamic from 'next/dynamic'
 import { ViewerNames } from '../types'
 import { mapToolbarTools } from '../components/viewers/map/src/tools/mapTools'
 import { ToolbarBody } from './ToolbarBody'
-import { Organization } from '../types/dbTypes'
+import type { Organization } from '../types/dbTypes'
 
 // The BIM and PointCloud toolbar tool registries transitively import
 // @thatopen and Potree-adjacent code. Statically importing them here (eagerly

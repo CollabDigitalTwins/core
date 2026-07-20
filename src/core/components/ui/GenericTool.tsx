@@ -8,7 +8,7 @@ import * as React from "react";
 import { useTranslations } from 'next-intl'
 
 // Utilities
-import { Tool, ToolbarToolType } from '../../types/tools'
+import type { Tool, ToolbarToolType } from '../../types/tools'
 
 // Shadcn components
 import { Button } from './Button'

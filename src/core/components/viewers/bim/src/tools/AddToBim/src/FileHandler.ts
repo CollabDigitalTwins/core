@@ -2,12 +2,13 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as THREE from 'three'
-import * as OBC from '@thatopen/components'
-import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
-import { ModelManager } from '../../../ModelManager'
-import { AddDxf } from './AddDxf'
+import type * as OBC from '@thatopen/components'
+import type { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
+import type { ModelManager } from '../../../ModelManager'
+import type { AddDxf } from './AddDxf'
+import type {
+  AddedFile} from './FileMarkerUtils';
 import {
-  AddedFile,
   createFileMarker,
   createGenericFileMarker,
 } from './FileMarkerUtils'

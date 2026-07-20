@@ -23,8 +23,8 @@ import {
   ChevronDown,
 
 } from 'lucide-react'
-import { FileRow } from '../../types/files'
-import { DataTypes } from '../../types'
+import type { FileRow } from '../../types/files'
+import type { DataTypes } from '../../types'
 
 interface ExportDataProps {
   data: Building[] | Site[] | FileRow[] | DbFile[]

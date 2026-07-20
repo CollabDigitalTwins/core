@@ -15,7 +15,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '../../../ui/Popover'
 import { Checkbox, Button, Input } from '../../../ui/'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectLabel, SelectGroup } from '../../../ui/Select'
 
-import { filterFieldOptions } from '../utils/Columns'
+import type { filterFieldOptions } from '../utils/Columns'
 
 type FiltersProps = {
   filterFields: filterFieldOptions[]

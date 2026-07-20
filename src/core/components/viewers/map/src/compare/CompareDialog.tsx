@@ -11,7 +11,8 @@ import { useTranslations } from 'next-intl'
 // Dependencies
 
 
-import { MapContext, useBuildingsContext, CompareItem } from '../../../../../store'
+import type { CompareItem } from '../../../../../store';
+import { MapContext, useBuildingsContext } from '../../../../../store'
 import { useBuildingHeaders, useSiteHeaders } from '../../../Data/utils/Headers'
 import { Button, ExportData, ColorCircle } from '../../../../../components/ui/'
 // Shadcn components
@@ -32,7 +33,7 @@ import {
 } from './description-list'
 import { fitBuildingsBounds } from '../../utils/fitBuildingsBounds'
 import { stringToColour } from '../../utils/stringToColour'
-import { Building, Site } from '../../../../../types/dbTypes'
+import type { Building, Site } from '../../../../../types/dbTypes'
 
 type CompareDialogProps = {
   toggleOpen: () => void

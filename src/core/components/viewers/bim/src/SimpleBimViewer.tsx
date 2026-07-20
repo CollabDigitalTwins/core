@@ -17,7 +17,7 @@ import { CameraProjection } from './CameraProjection';
 import { SpatialStructure } from './SpatialStructure';
 import { LoadModels } from './LoadModels';
 import { IfcToFragments } from './IfcToFragments';
-import { DbFile } from '../../../../types/dbTypes';
+import type { DbFile } from '../../../../types/dbTypes';
 import { ModelManager } from './ModelManager';
 import { FloorplanTool } from './FloorplanTool';
 import { ElevationsTool } from './ElevationsTool';

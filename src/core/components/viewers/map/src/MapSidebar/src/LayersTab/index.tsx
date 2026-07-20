@@ -13,7 +13,8 @@ import {
   useOpenDataPortalsByGroup,
   useOpenDataPortalsByMunicipality,
 } from '../../../../../../../hooks/openDataPortals/openDataPortals'
-import { DatasetGroup, Organization } from '../../../../../../../types/dbTypes'
+import type { Organization } from '../../../../../../../types/dbTypes';
+import { DatasetGroup } from '../../../../../../../types/dbTypes'
 import type { Dataset } from '../../../../../../../types/datasetTypes'
 import { useDatasetsForPortals } from '../../../../datasets/src/useDatasetsForPortals'
 import { fetchLocalDatasets } from '../../../../datasets/src/localDatasets'

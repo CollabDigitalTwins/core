@@ -7,8 +7,8 @@
 import * as React from 'react'
 import { Button } from './Button'
 import { MapContext, MenusContext, ToolsContext } from '../../store'
-import { CursorType } from '../../types/global'
-import { ToolbarToolType, Tool } from '../../types/tools'
+import type { CursorType } from '../../types/global'
+import type { ToolbarToolType, Tool } from '../../types/tools'
 
 interface Props {
   tool: Tool

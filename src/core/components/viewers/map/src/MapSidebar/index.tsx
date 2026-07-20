@@ -6,7 +6,7 @@
 import * as React from 'react'
 import { TabSelector } from './TabSelector'
 import { MenusContext, usePermissions } from '../../../../../store'
-import { SidebarTabType } from '../../../../../store/Menus/reducer'
+import type { SidebarTabType } from '../../../../../store/Menus/reducer'
 import { FileTab } from './src/FileTab'
 import { LayersTab } from './src/LayersTab'
 
@@ -14,7 +14,7 @@ import { SettingsTab } from './src/SettingsTab'
 import { InfoSidebarContainer } from '../../../../../components/ui/InfoSidebar/Container'
 import { CommunicationTab } from './src/CommunicationTab'
 import { SensorsTab } from './src/SensorsTab'
-import { Organization } from '../../../../../types/dbTypes'
+import type { Organization } from '../../../../../types/dbTypes'
 
 export function MapSidebar({ minioBaseUrl, martinBaseUrl, organization }: { minioBaseUrl?: string; martinBaseUrl?: string; organization?: Organization }) {
   // Permissions

@@ -12,7 +12,8 @@ import { Avatar } from '../../../../../../ui/Avatar'
 import { UserAvatar } from '../../../../../../ui/UserAvatar'
 import { ViewerNames, type Comment as IComment } from '../../../../../../../types/dbTypes'
 
-import { MapLayerClickPriority, ClickCallback } from '../../../../utils/MapEventManager/MapClickManager'
+import type { ClickCallback } from '../../../../utils/MapEventManager/MapClickManager';
+import { MapLayerClickPriority } from '../../../../utils/MapEventManager/MapClickManager'
 import { extractCoordinatesFromFeature } from '../../../../utils/extractCoordinates'
 import { useComment, useComments } from '../../../../../../../hooks/comments/comments'
 import { useUser, useUsers } from '../../../../../../../hooks/users/users'

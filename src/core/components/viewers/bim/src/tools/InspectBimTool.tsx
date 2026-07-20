@@ -9,8 +9,8 @@ import { useTranslations } from 'next-intl'
 
 // Utilities
 import { ToolsContext } from '../../../../../store'
-import { CursorType } from '../../../../../types/global'
-import { Tool } from '../../../../../types/tools'
+import type { CursorType } from '../../../../../types/global'
+import type { Tool } from '../../../../../types/tools'
 
 // Shadcn components
 import {

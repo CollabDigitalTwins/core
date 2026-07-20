@@ -5,7 +5,7 @@
 
 import * as React from 'react'
 import { TopicsSection } from './src/TopicsSection'
-import { DbFile } from '../../../../../../../types/dbTypes'
+import type { DbFile } from '../../../../../../../types/dbTypes'
 import { CommentsSection } from '../../../../../../ui/Comments/CommentsSection'
 export interface FileItem {
   task: DbFile

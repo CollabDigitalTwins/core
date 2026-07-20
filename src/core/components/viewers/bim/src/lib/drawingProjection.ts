@@ -5,9 +5,10 @@ import * as OBC from '@thatopen/components'
 import * as OBF from '@thatopen/components-front'
 import * as THREE from 'three'
 import { CurrentWorld } from '../CurrentWorld'
+import type {
+  DrawingLayerInfo} from './drawingLayers';
 import {
   defaultLayerColor,
-  DrawingLayerInfo,
   sortClassesByPriority,
 } from './drawingLayers'
 

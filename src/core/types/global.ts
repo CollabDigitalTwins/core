@@ -2,9 +2,10 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { Coordinates } from 'maplibre-gl'
-import { CurrentLocation, LngLat, Location } from './map'
-import * as THREE from 'three'
-import { ViewerNames } from './dbTypes'
+import type { CurrentLocation, LngLat} from './map';
+import { Location } from './map'
+import type * as THREE from 'three'
+import type { ViewerNames } from './dbTypes'
 
 export interface Identified {
   // _id?: string; // Mongo db id

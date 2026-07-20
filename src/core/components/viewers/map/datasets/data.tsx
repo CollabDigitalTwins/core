@@ -4,7 +4,7 @@
 // Dependencies
 import * as React from 'react'
 import type { Dataset } from '../../../../types/datasetTypes'
-import { ColumnDef } from '@tanstack/react-table'
+import type { ColumnDef } from '@tanstack/react-table'
 import { useTranslations } from 'next-intl'
 
 // Shadcn Components

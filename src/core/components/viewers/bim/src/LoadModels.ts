@@ -2,8 +2,8 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as OBC from "@thatopen/components";
-import * as FRAGS from "@thatopen/fragments";
-import * as THREE from "three";
+import type * as FRAGS from "@thatopen/fragments";
+import type * as THREE from "three";
 import { CurrentWorld } from "./CurrentWorld";
 import { FitCamera } from "./FitCamera";
 import { CameraProjection } from "./CameraProjection";

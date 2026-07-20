@@ -8,7 +8,7 @@ import { FilesSection } from './src/FilesSection'
 
 
 import { ModelsSection } from './src/ModelsSection'
-import { DbFile } from '../../../../../../../types/dbTypes'
+import type { DbFile } from '../../../../../../../types/dbTypes'
 import { useFiles } from '../../../../../../../hooks/files/files'
 import { SearchInput } from '../../../../../../ui'
 

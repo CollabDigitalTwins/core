@@ -13,7 +13,7 @@ import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
 import { MapContext, FilesContext } from '../../../../../../../store'
-import { CursorType } from '../../../../../../../types/global'
+import type { CursorType } from '../../../../../../../types/global'
 import { uploadFileWithProgress } from './utils/uploadToPresignedURLS'
 import { acceptedFiles, isAcceptedFileType } from '../../../../../../../utils/acceptedFiles'
 import { AddItemDialog } from '../../../../../../ui/AddItemDialog'

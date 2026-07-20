@@ -8,7 +8,7 @@ import * as THREE from 'three'
 
 // Utilities
 import { BimContext, BuildingsContext } from '../../../../../store'
-import { Tool } from '../../../../../types/tools'
+import type { Tool } from '../../../../../types/tools'
 
 // Custom components
 import { ShareToolSubmenu } from '../../../../ui/ShareFeature'

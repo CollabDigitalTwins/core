@@ -101,7 +101,10 @@ export default [
       // package's tsconfig has off (strict:false). Without it the rule can't tell
       // nullable from non-nullable, so every defensive `?.`/null-guard fires:
       // 3066 pure false positives. Re-enable if/when strict null checks land.
-      '@typescript-eslint/consistent-type-imports': 'warn', // `import type` for type-only imports
+      // `import type` for type-only imports. disallowTypeAnnotations:false keeps
+      // legitimate inline `import()` types (e.g. `typeof import('memjs')` for lazy
+      // loads, `as import('geojson').X` casts) which aren't auto-fixable.
+      '@typescript-eslint/consistent-type-imports': ['warn', { disallowTypeAnnotations: false }],
     },
   },
 ];

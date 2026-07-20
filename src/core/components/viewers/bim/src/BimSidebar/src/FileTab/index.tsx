@@ -9,7 +9,7 @@ import { FilesSection } from './src/FilesSection'
 import { BuildingsContext } from '../../../../../../../store'
 import { useSearchParams } from 'next/navigation'
 import { useFilesByBuildingId } from '../../../../../../../hooks/files/files'
-import { DbFile } from '../../../../../../../types/dbTypes'
+import type { DbFile } from '../../../../../../../types/dbTypes'
 import { SearchInput } from '../../../../../../ui'
 
   export function FileTab() {

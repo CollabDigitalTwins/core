@@ -4,7 +4,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
-import * as OBC from '@thatopen/components'
+import type * as OBC from '@thatopen/components'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../../../../../ui/Dialog'
 import { Button } from '../../../../../../../ui/Button'
 import { Input } from '../../../../../../../ui/Input'

@@ -7,7 +7,7 @@
 import * as React from "react";
 
 // Utilities
-import { Tool } from '../../../../../types/tools'
+import type { Tool } from '../../../../../types/tools'
 
 // Shadcn components
 import { Button } from '../../../../ui/Button'

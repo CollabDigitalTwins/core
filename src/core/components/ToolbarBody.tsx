@@ -5,7 +5,7 @@
 
 import * as React from 'react'
 import { Menubar } from './ui/Menubar'
-import { Tool } from '../types/tools'
+import type { Tool } from '../types/tools'
 import ToolbarButton from './ui/ToolbarButton'
 import { SubmenuProvider } from './ToolbarSubmenu'
 

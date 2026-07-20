@@ -23,7 +23,8 @@ import {
 import { Separator } from '../Separator'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../Tooltip'
 import { AppConfigContext, MapContext, BuildingsContext, MenusContext, ToolsContext } from '../../../store'
-import { Sensor, ViewerNames, SensorDataFormat } from '../../../types/dbTypes'
+import type { Sensor} from '../../../types/dbTypes';
+import { ViewerNames, SensorDataFormat } from '../../../types/dbTypes'
 import { useCreateSensor } from '../../../hooks/sensors/sensors'
 import { frequencyUnits } from '../../../utils/timeUtils'
 import { useSensorTypes } from '../../../hooks/sensorTypes/sensorTypes'

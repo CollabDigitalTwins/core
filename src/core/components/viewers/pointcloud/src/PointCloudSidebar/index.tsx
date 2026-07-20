@@ -7,7 +7,7 @@ import * as React from 'react'
 import { InfoSidebar } from '../../../../../components/ui/InfoSidebar'
 import { TabSelector } from './TabSelector'
 import { PointCloudContext, MenusContext } from '../../../../../store'
-import { SidebarTabType } from '../../../../../store/Menus/reducer'
+import type { SidebarTabType } from '../../../../../store/Menus/reducer'
 import { FileTab } from './src/FileTab'
 
 import { SettingsTab } from './src/SettingsTab'

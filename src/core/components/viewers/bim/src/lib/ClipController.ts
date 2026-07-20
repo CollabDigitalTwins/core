@@ -2,7 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as OBC from '@thatopen/components'
-import * as THREE from 'three'
+import type * as THREE from 'three'
 import { CurrentWorld } from '../CurrentWorld'
 
 /**

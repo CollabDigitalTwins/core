@@ -9,8 +9,8 @@ import { usePermissions } from '../../../../../store'
 import * as LR from 'lucide-react'
 import { Button } from '../../../../ui/Button'
 import Datasets from '../../datasets'
-import { Tool } from '../../../../../types/tools'
-import { Organization } from '../../../../../types/dbTypes'
+import type { Tool } from '../../../../../types/tools'
+import type { Organization } from '../../../../../types/dbTypes'
 
 interface DatasetMapToolProps {
   tool: Tool

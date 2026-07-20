@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-            import * as OBC from "@thatopen/components";
+            import type * as OBC from "@thatopen/components";
 
             export function setCameraLookAt(world: OBC.World, searchParams: URLSearchParams) {
                 const camX = Number(searchParams.get("camX"));

@@ -279,7 +279,7 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
   return (
     <>
       <SidebarContent className='overflow-hidden'>
-        <SidebarHeader className={`w-full pt-7  flex items-center justify-center ${isCollapsed ? 'items-center' : 'pl-4 items-start'}`}>
+        <SidebarHeader className={`w-full pt-7  flex items-center justify-center ${isCollapsed ? 'items-center' : 'px-2 items-start'}`}>
           <div className='flex flex-row items-center gap-3'>
             <Logo image={logoUrl} />
             {sidebarState === 'expanded'

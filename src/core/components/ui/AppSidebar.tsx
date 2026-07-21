@@ -75,7 +75,7 @@ export function AppSidebar({ children, signOut }: AppSidebarProps) {
       {isMobile && isCollapsed && (
         <div
           id="sidebar-toggle-button-mobile"
-          className="fixed left-0 top-[93dvh] z-[100] flex items-center justify-center pointer-events-auto"
+          className="fixed left-0 bottom-[10px] z-[100] flex items-center justify-center pointer-events-auto"
         >
           <button
             onClick={toggleMenuSidebar}

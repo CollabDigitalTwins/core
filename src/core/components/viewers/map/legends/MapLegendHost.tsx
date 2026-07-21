@@ -3,15 +3,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 import * as LR from 'lucide-react'
-import { Menubar } from '../../../../components/ui/Menubar'
-import { Command } from '../../../../components/ui/Command'
+import * as React from 'react'
+
 import { Badge } from '../../../../components/ui/Badge'
 import { Button } from '../../../../components/ui/Button'
+import { Command } from '../../../../components/ui/Command'
+import { Menubar } from '../../../../components/ui/Menubar'
 import { usePluginRegistry, usePluginsReady } from '../../../../plugins/host/provider'
-import type { LegendRegistration } from '../../../../plugins/sdk/types'
+
 import type { RegistryEntry } from '../../../../plugins/host/registry'
+import type { LegendRegistration } from '../../../../plugins/sdk/types'
 
 /**
  * Single shared legend card. Reads all `map.legends` registrations and renders

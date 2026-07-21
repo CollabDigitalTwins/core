@@ -6,14 +6,11 @@
 // Icons
 import * as LR from 'lucide-react'
 // Dependencies
-import * as  React from 'react'
-import { useTranslations } from 'next-intl'
-import { usePermissions } from '../../../../store'
 import { usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import * as  React from 'react'
 
-import type { Dataset } from '../../../../types/datasetTypes'
-import { useOpenDataPortalsByCountrySubdivision, useOpenDataPortalsByGroup, useOpenDataPortalsByMunicipality } from '../../../../hooks/openDataPortals/openDataPortals'
-import { DatasetsContext, MenusContext, useMapContext } from '../../../../store'
+
 // import { useAppConfigContext } from '../../../../store/AppConfig/context'
 import { Badge } from '../../../../components/ui/Badge'
 import {
@@ -35,25 +32,32 @@ import {
   DialogTitle,
 } from '../../../../components/ui/Dialog'
 import { Input } from '../../../../components/ui/Input'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../components/ui/Tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/Select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../components/ui/Tabs'
+import { useOpenDataPortalsByCountrySubdivision, useOpenDataPortalsByGroup, useOpenDataPortalsByMunicipality } from '../../../../hooks/openDataPortals/openDataPortals'
+import { DatasetsContext, MenusContext, useMapContext } from '../../../../store'
+import { usePermissions } from '../../../../store'
+
 // Data
+import { DatasetGroup } from '../../../../types/dbTypes'
+
+import { AddPortalDialog } from './AddPortalDialog'
 import { useColumns } from './data'
 import DatasetDetails from './DatasetDetails'
 // Custom components
-import { AddPortalDialog } from './AddPortalDialog'
 import DatasetSkeleton from './DatasetSkeleton'
 import Filters from './Filters'
 import RowActions from './RowActions'
-import { useDatasetsForPortals } from './src/useDatasetsForPortals'
-import { handleFavouriteDataset } from './utils'
+import { builtinLiveDatasets } from './src/builtinLiveDatasets'
 import { fetchLocalDatasets } from './src/localDatasets'
 import { fetchOrganizationalMinioDatasets } from './src/minioDatasets'
 import { buildPublishedCatalogMap, stampPublished, type PublishedCatalogEntry } from './src/publishedTiles'
-import { builtinLiveDatasets } from './src/builtinLiveDatasets'
+import { useDatasetsForPortals } from './src/useDatasetsForPortals'
 import { useFastDatasetCache } from './src/useFastDatasetCache'
+import { handleFavouriteDataset } from './utils'
+
+import type { Dataset } from '../../../../types/datasetTypes'
 import type { Organization } from '../../../../types/dbTypes';
-import { DatasetGroup } from '../../../../types/dbTypes'
 
 type OrgVisibility = {
   isAdmin: boolean

@@ -4,23 +4,25 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from "react";
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import * as React from "react";
 
 // Utilities
 import { ToolsContext } from '../../../../../store'
-import type { CursorType } from '../../../../../types/global'
-import type { Tool } from '../../../../../types/tools'
-
-// Shadcn components
+import { BimContext } from '../../../../../store/BIM/context'
+import { ToolbarSubmenu } from '../../../../ToolbarSubmenu'
 import {
   DropdownMenuItem,
 } from '../../../../ui/DropdownMenu'
 
+import type { CursorType } from '../../../../../types/global'
+import type { Tool } from '../../../../../types/tools'
+
+// Shadcn components
+
 // Icons
-import * as LR from 'lucide-react'
-import { BimContext } from '../../../../../store/BIM/context'
-import { ToolbarSubmenu } from '../../../../ToolbarSubmenu'
+
 
 interface InspectToolProps {
   tool: Tool

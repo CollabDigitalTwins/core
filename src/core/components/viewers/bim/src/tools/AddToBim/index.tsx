@@ -3,32 +3,34 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from "react"
 import * as LR from "lucide-react"
 import Image from "next/image"
 import { useTranslations } from 'next-intl'
+import * as React from "react"
 
+
+import { useFilesByBuildingId, useUploadFileToBuilding, useDeleteFile } from "../../../../../../hooks/files/files"
 import { BuildingsContext, MenusContext, ToolsContext } from "../../../../../../store"
 import { BimContext } from "../../../../../../store/BIM/context"
 import { ViewerNames } from "../../../../../../types/dbTypes"
-import type { Tool, ToolbarToolType } from "../../../../../../types/tools"
-import type { BimToolbarToolsType } from "../bimToolbar"
 import { Button, useSidebar } from "../../../../../ui"
-
-import { initializeCSS2DRenderer } from "./src/FileMarkerUtils"
-import { useCommentMarkers } from "./src/useCommentMarkers"
-import { useSensorMarkers } from "./src/useSensorMarkers"
-import { useFilePlacement } from "./src/useFilePlacement"
-import { AddToBimToolbar } from "./src/AddToBimToolbar"
-import Position3DCard from "./src/Position3DCard"
-import { FileAdderDialog } from "../../../../map/src/tools/AddTools/AddFile/FileAdder"
 import { CommentInput } from "../../../../../ui/Comments/CommentInput"
-import { SensorInput } from "../../../../../ui/Sensors/SensorInput"
-import { useFilesByBuildingId, useUploadFileToBuilding, useDeleteFile } from "../../../../../../hooks/files/files"
 import { ViewerContextMenu } from "../../../../../ui/FilesManager"
-import type { FileMarkerAction } from "../../../../../ui/FilesManager/src/FileMarker"
+import { SensorInput } from "../../../../../ui/Sensors/SensorInput"
+import { FileAdderDialog } from "../../../../map/src/tools/AddTools/AddFile/FileAdder"
+
+import { AddToBimToolbar } from "./src/AddToBimToolbar"
+import { initializeCSS2DRenderer } from "./src/FileMarkerUtils"
+import Position3DCard from "./src/Position3DCard"
+import { useCommentMarkers } from "./src/useCommentMarkers"
+import { useFilePlacement } from "./src/useFilePlacement"
+import { useSensorMarkers } from "./src/useSensorMarkers"
+
 import type { DbFile } from "../../../../../../types/dbTypes"
 import type { FileAction } from "../../../../../../types/global"
+import type { Tool, ToolbarToolType } from "../../../../../../types/tools"
+import type { FileMarkerAction } from "../../../../../ui/FilesManager/src/FileMarker"
+import type { BimToolbarToolsType } from "../bimToolbar"
 
 interface AddToBimProps {
   tool: Tool

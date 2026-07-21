@@ -3,23 +3,26 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from "react";
-import { PointCloudContext } from '../../../../../../store'
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import * as React from "react";
+
+import { PointCloudContext } from '../../../../../../store'
 import { ToolbarSubmenu } from '../../../../../ToolbarSubmenu'
-import { SliderWithInput, Slider } from '../../../../../ui/Slider'
 import { Label, Switch } from '../../../../../ui/'
 import { DropdownMenuSeparator } from '../../../../../ui/DropdownMenu'
-import * as LR from 'lucide-react'
+import { SliderWithInput, Slider } from '../../../../../ui/Slider'
+
 
 // Custom tools
+import { PointSizeType } from '../../../define'
+
+import { NodeSizeSelectionTool } from './NodeSizeSelectionTool'
 import PointBudgetTool from './PointBudgetTool'
+import ShowOctreeBoxTool from './ShowOctreeBoxTool'
 import SplatQualityTool from './SplatQualitySelection'
 import { SplatQuality } from './SplatQualitySelection'
-import ShowOctreeBoxTool from './ShowOctreeBoxTool'
-import { NodeSizeSelectionTool } from './NodeSizeSelectionTool'
 
-import { PointSizeType } from '../../../define'
 
 interface PerformanceSettingToolsProps {
   tool: any

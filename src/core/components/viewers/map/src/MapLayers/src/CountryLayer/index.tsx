@@ -3,13 +3,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { useSearchParams, useRouter } from 'next/navigation'
 import * as React from 'react'
 import { Source, Layer } from 'react-map-gl/maplibre'
-import type { MapMouseEvent } from 'maplibre-gl'
+
 import { MapContext } from '../../../../../../../store/Map/context'
-import { useSearchParams, useRouter } from 'next/navigation'
+
 import { hexToRgba, buildSubdivisionUrl } from './countryLayerUtils'
+
 import type { Organization } from '../../../../../../../types/dbTypes'
+import type { MapMouseEvent } from 'maplibre-gl'
 
 const DEFAULT_BORDER_COLOR = '#73cee2'
 const BOUNDARIES_SOURCE_ID = 'openmaptiles-boundaries'

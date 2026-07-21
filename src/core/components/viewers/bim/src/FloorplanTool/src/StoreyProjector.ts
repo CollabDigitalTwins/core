@@ -4,6 +4,7 @@
 import * as OBC from '@thatopen/components'
 import * as OBF from '@thatopen/components-front'
 import * as THREE from 'three'
+
 import {
   addDoorSwingsToDrawing,
   addItemsProjectionByClass,
@@ -13,8 +14,10 @@ import {
   getItemIdsByClass,
   patchModelGeometryRepresentationIds,
 } from '../../lib/drawingProjection'
-import type { FloorplanEntry } from './types'
+
 import { getStoreyItemIds } from './utils'
+
+import type { FloorplanEntry } from './types'
 
 /**
  * Floorplan-flavor wrapper around the generic drawing primitives.

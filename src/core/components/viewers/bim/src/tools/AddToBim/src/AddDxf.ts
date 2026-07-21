@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as THREE from 'three'
 import * as OBC from '@thatopen/components'
-import { DXFManager } from '../../../DXFLoader'
+import * as THREE from 'three'
+
 import { GizmoController } from '../../../../utils/GizmoController'
+import { DXFManager } from '../../../DXFLoader'
 
 export interface DxfInfo {
   id: string

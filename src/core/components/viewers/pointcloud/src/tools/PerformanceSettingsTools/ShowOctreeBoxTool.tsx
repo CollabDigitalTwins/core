@@ -3,11 +3,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as LR from 'lucide-react'
 import React from 'react'
+
 import { PointCloudContext } from '../../../../../../store'
 import { Label } from '../../../../../ui/Label'
 import { Switch } from '../../../../../ui/Switch'
-import * as LR from 'lucide-react'
 
 export enum SplatQuality {
     HIGH,

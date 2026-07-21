@@ -3,14 +3,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
-import { Button } from '../../../../../../../ui/Button'
-import { Badge } from '../../../../../../../ui/Badge'
-import { Separator } from '../../../../../../../ui/Separator'
+import { format } from 'date-fns'
 import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { format } from 'date-fns'
+import * as React from 'react'
+
 import { cn } from '../../../../../../../../utils/utils'
+import { Badge } from '../../../../../../../ui/Badge'
+import { Button } from '../../../../../../../ui/Button'
+import { Separator } from '../../../../../../../ui/Separator'
+
 import type * as OBC from '@thatopen/components'
 
 type TopicAction = 'view' | 'edit' | 'delete'

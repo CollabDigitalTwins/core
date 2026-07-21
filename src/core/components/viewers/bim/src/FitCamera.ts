@@ -2,8 +2,9 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as OBC from '@thatopen/components'
-import { CurrentWorld } from './CurrentWorld'
 import * as THREE from 'three'
+
+import { CurrentWorld } from './CurrentWorld'
 
 export class FitCamera extends OBC.Component {
   static readonly uuid = 'abcf3535-1841-456d-a500-91809848d8ef' as const

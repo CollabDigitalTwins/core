@@ -4,26 +4,29 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from "react";
-import { useTranslations } from 'next-intl'
 import * as OBF from "@thatopen/components-front"
+
 // Utilities
-import { ToolsContext } from '../../../../../store'
-import type { CursorType } from '../../../../../types/global'
-import type { Tool} from '../../../../../types/tools';
-import { type ToolbarToolType } from '../../../../../types/tools'
 
 // Shadcn components
-import {
-  DropdownMenuItem,
-} from '../../../../ui/DropdownMenu'
 
 // Icons
 import * as LR from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import * as React from "react";
+
+import { ToolsContext } from '../../../../../store'
 import { BimContext } from '../../../../../store/BIM/context'
+import { type ToolbarToolType } from '../../../../../types/tools'
 import { ToolbarSubmenu } from '../../../../ToolbarSubmenu'
+import {
+  DropdownMenuItem,
+} from '../../../../ui/DropdownMenu'
 import { LengthMeasurement } from '../BimMeasurements/LenghtMeasurement'
 import { Cursor } from '../Cursor'
+
+import type { CursorType } from '../../../../../types/global'
+import type { Tool} from '../../../../../types/tools';
 interface MeasureToolProps {
   tool: Tool
 }

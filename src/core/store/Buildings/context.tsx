@@ -5,11 +5,12 @@
 
 import * as React from 'react'
 
-import type { Building, Site } from '../../types/dbTypes'
+import { BuildingsReducer } from './reducer'
 
 import type { BuildingsActions, BuildingsState } from './reducer'
+import type { Building, Site } from '../../types/dbTypes'
 
-import { BuildingsReducer } from './reducer'
+
 
 export type CompareItem = {
   id: string

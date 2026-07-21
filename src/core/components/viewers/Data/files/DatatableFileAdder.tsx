@@ -3,15 +3,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { usePermissions } from '../../../../store'
+import * as React from 'react'
+import { toast } from 'sonner'
 
 import { Button, LoadingSpinner } from '../../../../components/ui/'
-import * as LR from 'lucide-react'
 import { useFileUploadWithProgress } from '../../../../components/ui/FilesManager'
+import { usePermissions } from '../../../../store'
 
-import { toast } from 'sonner'
+
+
 
 export default function DatatableFileAdder() {
 

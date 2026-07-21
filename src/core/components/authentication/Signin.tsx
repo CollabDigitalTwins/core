@@ -3,16 +3,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
+import * as LR from 'lucide-react'
+import { useParams, useSearchParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
-import * as LR from 'lucide-react'
-import { toast, Toaster } from 'sonner'
-import { Button, GoogleIcon, Input, LoadingSpinner } from '../ui'
-import { AuthPage, useAuthTheme } from './AuthPage'
-import { useParams, useSearchParams } from 'next/navigation'
+import * as React from 'react'
 import ReCAPTCHA from 'react-google-recaptcha'
+import { toast, Toaster } from 'sonner'
+
 import { PasswordError } from '../authentication/PasswordError'
+import { Button, GoogleIcon, Input, LoadingSpinner } from '../ui'
+
+import { AuthPage, useAuthTheme } from './AuthPage'
 import { AuthHeader } from './SignInAuthHeader'
 //import { useAppConfigContext } from '../../store/AppConfig/context'
 

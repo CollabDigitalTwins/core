@@ -2,17 +2,21 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as THREE from 'three'
-import type * as OBC from '@thatopen/components'
-import type { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
-import type { ModelManager } from '../../../ModelManager'
-import type { AddDxf } from './AddDxf'
-import type {
-  AddedFile} from './FileMarkerUtils';
+
 import {
   createFileMarker,
   createGenericFileMarker,
 } from './FileMarkerUtils'
+
+import type { AddDxf } from './AddDxf'
+import type {
+  AddedFile} from './FileMarkerUtils';
 import type { FileMarkerAction } from '../../../../../../ui/FilesManager/src/FileMarker'
+import type { ModelManager } from '../../../ModelManager'
+import type * as OBC from '@thatopen/components'
+import type { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
+
+
 
 export type PlacedKind = 'dxf' | 'model' | 'generic'
 

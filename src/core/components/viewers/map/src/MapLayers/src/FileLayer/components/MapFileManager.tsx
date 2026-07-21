@@ -3,14 +3,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as LR from 'lucide-react'
 import * as React from 'react'
+import { mutate } from 'swr'
+
 import { Button } from '../../../../../../../../components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../../../../../components/ui/Card'
-import * as LR from 'lucide-react'
 import { FilesContext } from '../../../../../../../../store'
 
-import { mutate } from 'swr'
+
 import { FileManagerRow } from './FileManagerRow'
+
 import type { DbFile } from '../../../../../../../../types/dbTypes'
 
 const is3DModelFile = (extension?: string | null): boolean => {

@@ -3,12 +3,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from "react";
-import { useTranslations } from 'next-intl'
-import * as LR from 'lucide-react'
-import { Tabs, TabsList, TabsTrigger } from '../../../../../../../ui/Tabs'
-import { BimContext } from '../../../../../../../../store/BIM/context'
 import * as OBC from '@thatopen/components'
+import * as LR from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import * as React from "react";
+
+import { BimContext } from '../../../../../../../../store/BIM/context'
+import { Tabs, TabsList, TabsTrigger } from '../../../../../../../ui/Tabs'
 import { GhostMode } from '../../../../GhostMode'
 
 export function RenderMode() {

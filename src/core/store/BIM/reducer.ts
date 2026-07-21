@@ -7,10 +7,10 @@
 // time and webpack stops bundling @thatopen on behalf of the global
 // BimProvider. Critical: this reducer is loaded on every route via
 // CombineProviders, so without this @thatopen leaks into the initial bundle.
-import type * as OBC from "@thatopen/components";
-import type { ActionMap } from "../ActionMap";
 import type { Plan } from "../../types/bim";
 import type { Building, DbFile } from '../../types/dbTypes';
+import type { ActionMap } from "../ActionMap";
+import type * as OBC from "@thatopen/components";
 
 interface BimTypes {
     bimComponents: OBC.Components | null;

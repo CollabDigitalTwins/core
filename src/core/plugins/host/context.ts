@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import type { PluginRegistry } from './registry'
 import type {
   PluginContext,
   PluginCapability,
   CapabilityRegistry,
 } from '../sdk/types'
-import type { PluginRegistry } from './registry'
 
 interface CreateContextOptions {
   pluginId: string

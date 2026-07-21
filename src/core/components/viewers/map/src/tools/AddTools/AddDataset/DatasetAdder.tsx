@@ -3,14 +3,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 import { Upload } from 'lucide-react'
+import * as React from 'react'
 
 import { DatasetsContext, MapContext } from '../../../../../../../store'
-import { Button, Input } from '../../../../../../ui/'
-import { layerColorByName } from '../../../../utils/stringToColour'
 import { DatasetGroup } from '../../../../../../../types/dbTypes'
-import type { Dataset } from '../../../../../../../types/datasetTypes'
+import { Button, Input } from '../../../../../../ui/'
 import { parseGeoJSON, type GeoJSONSummary } from '../../../../datasets/src/geojsonFile'
 import {
   addWmsToMap,
@@ -20,7 +18,10 @@ import {
   nameFromUrl,
   type UrlSourceType,
 } from '../../../../datasets/src/urlSources'
+import { layerColorByName } from '../../../../utils/stringToColour'
 import { uploadToPresignedUrl } from '../AddFile/utils/uploadToPresignedURLS'
+
+import type { Dataset } from '../../../../../../../types/datasetTypes'
 
 /** Bucket uploaded org datasets land in (orgId prefix added server-side). */
 const DATASETS_BUCKET = 'pointclouds-demo'

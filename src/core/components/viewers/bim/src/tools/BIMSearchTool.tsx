@@ -5,12 +5,13 @@
 
 // Dependencies
 
+import { Search } from 'lucide-react'
 import * as React from 'react'
-import { Command } from '../../../../ui/Command'
+
 import { Button } from '../../../../ui/Button'
+import { Command } from '../../../../ui/Command'
 import { Input } from '../../../../ui/Input'
 import { Separator } from '../../../../ui/Separator'
-import { Search } from 'lucide-react'
 
 interface SearchToolProps {
   alwaysExpanded?: boolean;

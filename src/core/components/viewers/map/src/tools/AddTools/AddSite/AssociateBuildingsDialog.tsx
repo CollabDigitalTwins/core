@@ -3,15 +3,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { Building2 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { toast } from 'sonner'
-import { useTranslations } from 'next-intl'
-import { Building2 } from 'lucide-react'
+
+import { useSite } from '../../../../../../../hooks/sites/sites'
 import { AddItemDialog } from '../../../../../../ui/AddItemDialog'
 import { Button } from '../../../../../../ui/Button'
 import { Checkbox } from '../../../../../../ui/Checkbox'
 import { LoadingSpinner } from '../../../../../../ui/LoadingSpinner'
-import { useSite } from '../../../../../../../hooks/sites/sites'
+
 import type { Building } from '../../../../../../../types/dbTypes'
 
 interface AssociateBuildingsDialogProps {

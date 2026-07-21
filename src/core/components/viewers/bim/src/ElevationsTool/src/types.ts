@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type * as OBC from '@thatopen/components'
-import type * as THREE from 'three'
 import type { DrawingLayerInfo } from '../../lib/drawingLayers'
 import type { ViewLoadingState } from '../../lib/viewSection'
+import type * as OBC from '@thatopen/components'
+import type * as THREE from 'three'
 
 export type ElevationDirection = 'north' | 'south' | 'east' | 'west'
 

@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { Role } from '../types/dbTypes'
 import { RoleNames } from '../types/global'
+
+import type { Role } from '../types/dbTypes'
 
 const normalizeRoleName = (role?: string) => (role || '').trim().toLowerCase()
 

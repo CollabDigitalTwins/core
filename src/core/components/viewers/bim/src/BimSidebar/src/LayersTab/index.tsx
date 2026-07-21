@@ -4,9 +4,11 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
+
 import { SearchInput } from '../../../../../../ui/'
-import { FloorplanSection } from './src/FloorplanSection'
+
 import { ElevationSection } from './src/ElevationsSection'
+import { FloorplanSection } from './src/FloorplanSection'
 import { SpatialStructureSection } from './src/SpatialStructureSection'
 
 interface LayersTabProps {

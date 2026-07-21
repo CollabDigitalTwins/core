@@ -3,9 +3,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
-import * as LR from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import {
   DndContext,
   closestCenter,
@@ -23,13 +20,17 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import * as LR from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
 
 import { DatasetsContext } from '../../../../../../../../store'
-import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { Badge } from '../../../../../../../ui/Badge'
 import { Button } from '../../../../../../../ui/Button'
+import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { Switch } from '../../../../../../../ui/Switch'
 import { FieldsTable } from '../../../../../datasets/DatasetManager/src/FieldsTable'
+
 import type { Dataset } from '../../../../../../../../types/datasetTypes'
 
 interface SortableRowProps {

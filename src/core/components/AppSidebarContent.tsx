@@ -3,13 +3,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as LR from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
 // Dependencies
-import { AppConfigContext, MapContext, useMenusContext } from '../store'
-import { ViewerNames } from '../types/'
-
-// Shadcn Components
+import { SupportMenu } from "../components/support/SupportMenu"
 import {
   SidebarContent,
   SidebarGroup,
@@ -22,24 +22,27 @@ import {
   SidebarFooter,
   useSidebar,
 } from '../components/ui/Sidebar'
+import { useUserRole } from '../hooks/users/users'
+import { AppConfigContext, MapContext, useMenusContext } from '../store'
+import { ViewerNames } from '../types/'
 
+// Shadcn Components
+
+import LanguageSwitch from './LanguageSwitch'
+import { Logo } from './Logo'
 import { Button } from './ui/Button'
 
 // Custom Components
-import LanguageSwitch from './LanguageSwitch'
 
 // Icons
-import * as LR from 'lucide-react'
 
-import { Logo } from './Logo'
 import { Separator } from './ui/Separator'
-import { useTranslations } from 'next-intl'
+
+
 import type { Organization, Language } from '../types/dbTypes'
 import type { RoleNames } from '../types/global'
-import { useSession } from 'next-auth/react'
-import { useUserRole } from '../hooks/users/users'
 
-import { SupportMenu } from "../components/support/SupportMenu"
+
 
 
 

@@ -4,7 +4,10 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from "react";
-import { DatasetReducer, DatasetActions, DatasetState } from './reducer'
+
+import { DatasetReducer } from './reducer'
+
+import type { DatasetActions, DatasetState } from './reducer';
 
 type InitialStateType = {
   datasets: DatasetState

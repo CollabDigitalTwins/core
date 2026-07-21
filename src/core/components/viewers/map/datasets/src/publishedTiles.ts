@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { Dataset, LayerGeometryType } from '../../../../../types/datasetTypes'
 import { DatasetGroup, type OpenDataPortal } from '../../../../../types/dbTypes'
-import type { AllGeoJSON } from '@turf/turf'
 import { layerColorByName } from '../../utils/stringToColour'
+
+import type { Dataset, LayerGeometryType } from '../../../../../types/datasetTypes'
+import type { AllGeoJSON } from '@turf/turf'
+
 
 /** Tables our publish pipeline creates; served via the cdt_tiles function source. */
 export function isPublishedOrgTable(name: string): boolean {

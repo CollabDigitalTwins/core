@@ -3,15 +3,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 import * as LR from 'lucide-react'
+import * as React from 'react'
+
+import { SensorDataFormat } from '../../../types/dbTypes'
+import { formatTimestamp } from '../../../utils/timeUtils'
 import { Button } from '../Button'
 import { Card } from '../Card'
-import { formatTimestamp } from '../../../utils/timeUtils'
-import type { SensorType } from '../../../types/dbTypes';
-import { SensorDataFormat } from '../../../types/dbTypes'
+
 import { SensorChart } from './SensorChart'
 import { SensorTagsSection, type SensorTagsTranslations } from './SensorTagsSection'
+
+import type { SensorType } from '../../../types/dbTypes';
 import type { ChartConfig } from '../chart'
 
 export type SensorProps = {

@@ -6,17 +6,10 @@
 // Icons
 import * as LR from 'lucide-react'
 // Dependencies
-import * as React from 'react'
 import { useTranslations } from 'next-intl'
-import { usePermissions } from '../../../../../store'
+import * as React from 'react'
 
-import type { Tool } from '../../../../../types/tools'
-// Data
-
-
-import { MapContext, useBuildingsContext } from '../../../../../store'
 import { Button } from '../../../../../components/ui/Button'
-// Shadcn Components
 import {
   Card,
   CardContent,
@@ -25,15 +18,25 @@ import {
   CardHeader,
   CardTitle,
 } from '../../../../../components/ui/Card'
+import ColorCircle from '../../../../../components/ui/ColorCircle'
+import { usePermissions } from '../../../../../store'
+
+// Data
+
+
+import { MapContext, useBuildingsContext } from '../../../../../store'
+// Shadcn Components
 
 
 // Custom Components
-import AddBuildings from './AddItem'
-import CompareDialog from './CompareDialog'
 import { MarkerManager } from '../../utils/MarkerManager'
 import { stringToColour } from '../../utils/stringToColour'
-import ColorCircle from '../../../../../components/ui/ColorCircle'
+
+import AddBuildings from './AddItem'
+import CompareDialog from './CompareDialog'
+
 import type { Building } from '../../../../../types/dbTypes'
+import type { Tool } from '../../../../../types/tools'
 
 type CompareProps = {
   tool: Tool

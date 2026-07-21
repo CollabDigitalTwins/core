@@ -4,34 +4,39 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from 'react'
-import { useTranslations } from 'next-intl'
-import { usePermissions } from '../../../../store'
-import { toast } from 'sonner'
-
-// Shadcn Components
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../../../../components/ui/DropdownMenu'
-import { Button } from '../../../../components/ui/Button'
-
-// Icons
 import {
   MoreHorizontal,
   FileOutput,
   FileInput,
   FileText,
 } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+import { toast } from 'sonner'
+
+// Shadcn Components
+
+// Icons
 
 // Types
-import type { User } from '../../../../types/dbTypes'
-import { useCreateUser } from '../../../../hooks/users/users'
+
+
 import { mutate } from 'swr'
+
+import { Button } from '../../../../components/ui/Button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../../../../components/ui/DropdownMenu'
 import { useOrganizationRoles } from '../../../../hooks/organizations/organizations'
-import { useSession } from 'next-auth/react'
+import { useCreateUser } from '../../../../hooks/users/users'
+import { usePermissions } from '../../../../store'
+
+import type { User } from '../../../../types/dbTypes'
+
 
 interface UserMoreOptionsProps {
   users?: User[]

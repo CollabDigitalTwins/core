@@ -4,15 +4,17 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from "react"
+
+import { useCoreHooks } from "../../../../../../../hooks/provider"
+import { useSensors, useSensor } from "../../../../../../../hooks/sensors/sensors"
+import { useSensorTypes } from "../../../../../../../hooks/sensorTypes/sensorTypes"
+import { useUsers } from "../../../../../../../hooks/users/users"
 import { MenusContext } from "../../../../../../../store"
 import { ViewerNames } from "../../../../../../../types/dbTypes"
-import { useSensors, useSensor } from "../../../../../../../hooks/sensors/sensors"
-import { useUsers } from "../../../../../../../hooks/users/users"
-import { useSensorTypes } from "../../../../../../../hooks/sensorTypes/sensorTypes"
-import { useCoreHooks } from "../../../../../../../hooks/provider"
-import { renderCSS2DMarkers, type MarkerRef } from "./renderCSS2DMarkers"
-import BimSensor from "./BimSensor"
 import { UNTAGGED_TAG } from "../../../../../../ui/Sensors/SensorsSection"
+
+import BimSensor from "./BimSensor"
+import { renderCSS2DMarkers, type MarkerRef } from "./renderCSS2DMarkers"
 //import { useAppConfigContext } from "../../../../../../../store/AppConfig/context"
 
 export function useSensorMarkers(world: any, buildingId: number, minioBaseUrl?: string) {

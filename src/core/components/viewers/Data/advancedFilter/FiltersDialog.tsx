@@ -4,11 +4,16 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from "react";
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
+import {
+  Plus,
+  Filter,
+} from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import * as React from "react";
 
 // Shadcn Components
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
+
 import { Badge } from '../../../ui/Badge'
 import { Button } from '../../../ui/Button'
 import {
@@ -20,21 +25,19 @@ import {
   DialogFooter,
   DialogDescription,
 } from '../../../ui/Dialog'
-import { Separator } from '../../../ui/Separator'
 import { Input } from '../../../ui/Input'
+import { Separator } from '../../../ui/Separator'
 
 // Utils
 import { useBuildingHeaders, useSiteHeaders } from '../utils/Headers'
+
+import Filters from './Filters'
+
 import type { filterFieldOptions } from '../utils/Columns'
 
 // Icons
-import {
-  Plus,
-  Filter,
-} from 'lucide-react'
 
 // Custom Components
-import Filters from './Filters'
 
 type FiltersDialogProps = {
   // Make filterFields optional

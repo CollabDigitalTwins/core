@@ -2,9 +2,10 @@
 
 import * as React from 'react'
 import * as THREE from 'three'
+
+import { getCameraPosition } from '../components/viewers/pointcloud/src/tools/SharePointCloudTool/src/getCameraPosition'
 import { MenusContext, MapContext, BimContext, PointCloudContext, BuildingsContext } from '../store'
 import { ViewerNames } from '../types'
-import { getCameraPosition } from '../components/viewers/pointcloud/src/tools/SharePointCloudTool/src/getCameraPosition'
 
 export function useShareUrl(): () => Promise<string> {
   const { state: menusState } = React.useContext(MenusContext)

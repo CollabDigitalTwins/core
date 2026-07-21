@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as THREE from 'three'
 import * as OBC from '@thatopen/components'
 import { DxfViewer } from 'dxf-viewer'
+import * as THREE from 'three'
 
 /**
  * Parses DXF files into THREE.Groups for the BIM world. This is a pure parser:

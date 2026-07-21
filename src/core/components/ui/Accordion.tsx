@@ -3,9 +3,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from "react"
 import * as AccordionPrimitive from "@radix-ui/react-accordion"
 import * as LR from "lucide-react"
+import * as React from "react"
+
 import { cn } from '../../utils/utils'
 
 

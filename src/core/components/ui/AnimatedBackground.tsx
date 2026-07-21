@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { useEffect, useRef, useState } from 'react'
 import { useMotionValue, useSpring } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
 
 interface Props {
   theme?: 'light' | 'dark'

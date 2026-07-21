@@ -4,22 +4,6 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from 'react'
-import { useTranslations } from 'next-intl'
-import { MapContext, DatasetsContext } from '../../../../../store'
-import { Command, Menubar, Badge, Button, Switch } from '../../../../../components/ui/'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from '../../../../../components/ui/Table'
-import { FieldsTable } from './src/FieldsTable'
-import * as LR from 'lucide-react'
-import type { Dataset, BuildingDataset as RawBuildingDataset } from '../../../../../types/datasetTypes'
-import { ClusterManager } from '../../utils/ClusterManager'
-import type {
-  DragEndEvent} from '@dnd-kit/core';
 import {
   DndContext,
   closestCenter,
@@ -38,7 +22,28 @@ import {
   useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import * as LR from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
+import { Command, Menubar, Badge, Button, Switch } from '../../../../../components/ui/'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+} from '../../../../../components/ui/Table'
+import { MapContext, DatasetsContext } from '../../../../../store'
 import { useSidebar } from '../../../../ui/Sidebar'
+import { ClusterManager } from '../../utils/ClusterManager'
+
+import { FieldsTable } from './src/FieldsTable'
+
+import type { Dataset, BuildingDataset as RawBuildingDataset } from '../../../../../types/datasetTypes'
+import type {
+  DragEndEvent} from '@dnd-kit/core';
+
+
 
 type BuildingDataset = RawBuildingDataset & Dataset
 

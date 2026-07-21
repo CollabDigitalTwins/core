@@ -4,29 +4,32 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from 'react'
-import { FilesContext, MapContext, MenusContext } from '../../../../store'
-import { useDeleteFile, useDownloadFile } from '../../../../hooks/files/files'
-import { useFileDeleteHandler } from '../../../../components/ui/FilesManager/src/useFileDeleteHandler'
-import type { FileRow } from '../../../../types/files'
-import { toast } from 'sonner'
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { usePermissions } from '../../../../store'
+import * as React from 'react'
+import { toast } from 'sonner'
+
 
 // Shadcn Components
+import ConfirmDialog from '../../../../components/ConfirmDialog'
+  import { Button, LoadingSpinner } from '../../../../components/ui/'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../../../../components/ui/DropdownMenu'
-  import { Button, LoadingSpinner } from '../../../../components/ui/'
-import ConfirmDialog from '../../../../components/ConfirmDialog'
+import { useFileDeleteHandler } from '../../../../components/ui/FilesManager/src/useFileDeleteHandler'
+import { useDeleteFile, useDownloadFile } from '../../../../hooks/files/files'
+import { usePermissions } from '../../../../store'
+import { FilesContext, MapContext, MenusContext } from '../../../../store'
 
 
 // Icons
-import * as LR from 'lucide-react'
+
 import { ViewerNames } from '../../../../types/'
+
+import type { FileRow } from '../../../../types/files'
 
 interface FileMoreOptionsProps {
   file: FileRow

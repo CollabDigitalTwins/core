@@ -3,12 +3,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
-import { useTranslations } from 'next-intl'
 import * as LR from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
+import { MenusContext, usePermissions } from '../../../../store'
 import { getFileIcon } from '../../../../utils/getFileIcon'
-import type { DbFile as DbFile } from '../../../../types/dbTypes'
-import type { FileAction } from '../../../../types/global'
 import ConfirmDialog from '../../../ConfirmDialog'
 import {
   DropdownMenu,
@@ -17,7 +17,9 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '../../DropdownMenu'
-import { MenusContext, usePermissions } from '../../../../store'
+
+import type { DbFile as DbFile } from '../../../../types/dbTypes'
+import type { FileAction } from '../../../../types/global'
 
 export interface FileMenuContentProps {
   file: DbFile & { isVisible?: boolean }

@@ -4,17 +4,19 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import React, { createContext, useContext, useMemo } from "react";
-import type { ApiAdapter } from "./ports/apiAdapter";
+
 import { createBuildingHooks } from "./buildings/createBuildingHooks";
+import { createCommentHooks } from "./comments/createCommentHooks";
 import { createFileHooks } from "./files/createFileHooks";
+import { createInfrastructureHooks } from './infrastructures/createInfrastructureHooks';
 import { createOpenDataPortalHooks } from "./openDataPortals/createOpenDataPortalHooks";
+import { createOrganizationHooks } from "./organizations/createOrganizationHooks";
+import { createSensorHooks } from "./sensors/createSensorHooks";
+import { createSensorTypeHooks } from "./sensorTypes/createSensorTypeHooks";
 import { createSiteHooks } from "./sites/createSiteHooks";
 import { createUserHooks } from "./users/createUserHooks";
-import { createOrganizationHooks } from "./organizations/createOrganizationHooks";
-import { createCommentHooks } from "./comments/createCommentHooks";
-import { createSensorHooks } from "./sensors/createSensorHooks";
-import { createInfrastructureHooks } from './infrastructures/createInfrastructureHooks';
-import { createSensorTypeHooks } from "./sensorTypes/createSensorTypeHooks";
+
+import type { ApiAdapter } from "./ports/apiAdapter";
 
 // CoreHooksProvider takes an ApiAdapter (the object that knows how to fetch data) and
 // creates all the app's data-fetching hooks from it. Mount it once at the root so every

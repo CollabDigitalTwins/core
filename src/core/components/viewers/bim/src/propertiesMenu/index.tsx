@@ -4,16 +4,19 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
+
 import { BimContext, ToolsContext } from '../../../../../store'
 import { Highlighter } from '../Highlighter'
-import { PropertiesMenuHeader } from './src/PropertiesMenuHeader'
-import { ElementList } from './src/ElementList'
-import { PropertyGroup } from './src/PropertyGroup'
-import { formatPropertyValue } from './src/utils'
-import type { PropertyGroup as PropertyGroupType } from './src/utils'
-import { useElementProperties } from './src/useElementProperties'
 import { IDSManager } from '../IDSManager'
 import { IDSLegend } from '../IDSManager/src/IDSLegend'
+
+import { ElementList } from './src/ElementList'
+import { PropertiesMenuHeader } from './src/PropertiesMenuHeader'
+import { PropertyGroup } from './src/PropertyGroup'
+import { useElementProperties } from './src/useElementProperties'
+import { formatPropertyValue } from './src/utils'
+
+import type { PropertyGroup as PropertyGroupType } from './src/utils'
 
 interface PropertiesSideBarProps {
   open?: boolean

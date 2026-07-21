@@ -3,20 +3,23 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from "react";
-import { type CustomLayerInterface, type LngLatLike } from "maplibre-gl";
 import * as OBC from "@thatopen/components";
-import * as FRAGS from "@thatopen/fragments";
-import * as THREE from "three";
-import { BimContext, MapContext } from "../../../../../../../store";
-import type { Building, DbFile } from "../../../../../../../types/dbTypes";
-import { Map } from "maplibre-gl";
-import { Marker } from "react-map-gl/maplibre";
 import * as LR from "lucide-react";
-import { EditPosition, extractPositionAndRotation } from "../EditPosition";
-import { disposeThreeScene } from "../disposeThreeScene";
-import type { FileAction } from "../../../../../../../types/global";
+import { type CustomLayerInterface, type LngLatLike } from "maplibre-gl";
+import * as React from "react";
+import { Marker } from "react-map-gl/maplibre";
+import * as THREE from "three";
+
+import { BimContext, MapContext } from "../../../../../../../store";
 import { ViewerContextMenu } from '../../../../../../ui/FilesManager';
+import { disposeThreeScene } from "../disposeThreeScene";
+import { EditPosition, extractPositionAndRotation } from "../EditPosition";
+
+import type { Building, DbFile } from "../../../../../../../types/dbTypes";
+import type { FileAction } from "../../../../../../../types/global";
+import type * as FRAGS from "@thatopen/fragments";
+import type { Map } from "maplibre-gl";
+
 
 export const BimLayer = () => {
 

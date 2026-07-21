@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { BoundingBox, GeoJsonLayerProperty } from './map'
-import { Layer } from 'react-map-gl/maplibre'
-import type { AllGeoJSON } from '@turf/turf'
+
 import type { Building, DataManagementSystem, DatasetGroup, OpenDataPortal,  } from './dbTypes'
+import type { BoundingBox, GeoJsonLayerProperty } from './map'
+import type { AllGeoJSON } from '@turf/turf'
+import type { Layer } from 'react-map-gl/maplibre'
 export interface OpenData {
   datasets: OpenDataPortal[]
   countrySubdivisions: CountrySubdivision[]

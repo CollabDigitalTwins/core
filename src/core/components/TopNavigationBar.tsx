@@ -4,22 +4,23 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Shadcn Components
-import * as React from 'react'
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
+import * as LR from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
-import { MenusContext } from '../store'
+import * as React from 'react'
+
 import { Button } from '../components/ui/Button'
-import { useSidebar } from '../components/ui/Sidebar'
-import * as LR from 'lucide-react'
 import {
   Menubar,
   MenubarContent,
   MenubarMenu,
   MenubarTrigger,
 } from '../components/ui/Menubar'
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
-
+import { useSidebar } from '../components/ui/Sidebar'
+import { MenusContext } from '../store'
 import { ViewerNames } from '../types'
+
 import Geocoder from './viewers/map/src/Geocoder'
 
 // The BIM and PointCloud search tools used to be statically imported at the

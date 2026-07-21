@@ -3,17 +3,20 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 import * as LR from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
+import { PointCloudContext } from '../../../../../../../../store'
+import ConfirmDialog from '../../../../../../../ConfirmDialog'
+import { Button } from '../../../../../../../ui/Button'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { FileItemComponent } from '../../../../../../../ui/FilesManager/src/FileItemComponent'
 import { useFileActions } from '../../../../../../../ui/FilesManager/src/useFileActions'
-import ConfirmDialog from '../../../../../../../ConfirmDialog'
-import { Button } from '../../../../../../../ui/Button'
+
 import type { DbFile } from '../../../../../../../../types/dbTypes'
-import { PointCloudContext } from '../../../../../../../../store'
+
 // import { useAppConfigContext } from '../../../../../../../../store/AppConfig/context'
 
 type CreatePointCloudResponse = {

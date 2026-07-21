@@ -2,6 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import React from 'react'
+
 import Geocoder from '../../map/src/Geocoder'
 
 interface GeocoderInputProps {

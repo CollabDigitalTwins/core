@@ -3,8 +3,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { Button } from '../../components/ui/Button'
 import { Globe } from 'lucide-react'
+
+import { Button } from '../../components/ui/Button'
+
 import type { Language } from '../../types/dbTypes'
 
 interface LanguageToggleProps {

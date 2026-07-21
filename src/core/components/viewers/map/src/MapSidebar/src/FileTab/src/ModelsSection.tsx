@@ -3,18 +3,21 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
-import { useTranslations } from 'next-intl'
-import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import * as LR from 'lucide-react'
-import { BimContext, BuildingsContext } from '../../../../../../../../store'
-import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
-import { useDeleteFile } from '../../../../../../../../hooks/files/files'
-import { useFileDeleteHandler, FileItemComponent, useFileActions, useFileUploadWithProgress } from '../../../../../../../ui/FilesManager'
-import type { DbFile as DbFile } from '../../../../../../../../types/dbTypes'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
 import { mutate } from 'swr'
+
+import { useDeleteFile } from '../../../../../../../../hooks/files/files'
+import { BimContext, BuildingsContext } from '../../../../../../../../store'
+import ConfirmDialog from '../../../../../../../ConfirmDialog'
+import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
+import { useFileDeleteHandler, FileItemComponent, useFileActions, useFileUploadWithProgress } from '../../../../../../../ui/FilesManager'
 import { LoadingSpinner } from '../../../../../../../ui/LoadingSpinner'
 import { toggleBimToMap as dispatchToggleBimToMap } from '../../../../../utils/toggleBimToMap'
+
+import type { DbFile as DbFile } from '../../../../../../../../types/dbTypes'
+
 
 type FileAction = import('../../../../../../../../types/global').FileAction
 const OPTIONS_ON_MAP: FileAction[] = ['download', 'view', 'move', 'info', 'delete']

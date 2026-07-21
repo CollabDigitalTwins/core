@@ -4,6 +4,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from "react";
+
 import type { CurrentLocation } from '../../types/map'
 
 type ContentType = 'dashboard' | 'map' | 'sites' | 'buildings' | 'files' | string

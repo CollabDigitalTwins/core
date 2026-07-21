@@ -3,15 +3,20 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 import * as LR from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+import { toast } from 'sonner'
+
+import { useComment, useComments } from '../../../hooks/comments/comments';
 import { BuildingsContext, MenusContext, ToolsContext, usePermissions } from '../../../store'
 import { CollapsibleSection } from '../CollapsibleSection'
 import { SearchInput } from '../SearchInput'
-import { useTranslations } from 'next-intl'
+
+
 import { CollapsibleCommentItem } from './CollapsibleCommentItem'
-import { useComment, useComments } from '../../../hooks/comments/comments';
-import { toast } from 'sonner'
+
+
 
 type CommentAction = 'view' | 'edit' | 'delete' | 'reply'
 

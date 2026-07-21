@@ -9,8 +9,8 @@ import {
   Search,
 } from 'lucide-react'
 // Dependencies
-import * as React from "react";
 import { useTranslations } from 'next-intl'
+import * as React from "react";
 
 import { Button, Checkbox, Input } from '../../../../components/ui/'
 // Shadcn Components

@@ -1,26 +1,28 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 import * as LR from 'lucide-react'
-import { BimContext, BuildingsContext, MenusContext } from '../../../../../../../../store'
-import { ModelManager } from '../../../../ModelManager'
-import { DXFManager } from '../../../../DXFLoader'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
 import * as THREE from 'three'
+
+import { useUploadFileToBuilding, useDeleteFile, useFile } from '../../../../../../../../hooks/files/files'
+import { BimContext, BuildingsContext, MenusContext } from '../../../../../../../../store'
+import ConfirmDialog from '../../../../../../../ConfirmDialog'
+import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
+import { useFileUploadHandler, useFileDeleteHandler, FileItemComponent, useFileActions, useCommonFileUpload } from '../../../../../../../ui/FilesManager'
 import { GizmoController } from '../../../../../utils/GizmoController'
+import { BCFTopicsManager } from '../../../../BCFTopicsManager'
 import { CurrentWorld } from '../../../../CurrentWorld'
 import { Cursor } from '../../../../Cursor'
+import { DXFManager } from '../../../../DXFLoader'
 import { Highlighter } from '../../../../Highlighter'
-import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
-import { useTranslations } from 'next-intl'
-import ConfirmDialog from '../../../../../../../ConfirmDialog'
-import { useUploadFileToBuilding, useDeleteFile, useFile } from '../../../../../../../../hooks/files/files'
-import { useFileUploadHandler, useFileDeleteHandler, FileItemComponent, useFileActions, useCommonFileUpload } from '../../../../../../../ui/FilesManager'
 import { IDSManager } from '../../../../IDSManager'
-import { BCFTopicsManager } from '../../../../BCFTopicsManager'
+import { ModelManager } from '../../../../ModelManager'
 import { createFileMarker, removeMarker, type AddedFile } from '../../../../tools/AddToBim/src/FileMarkerUtils'
-import type { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
+
 import type { DbFile as IFile } from '../../../../../../../../types/dbTypes'
+import type { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
 
 // Hoist options arrays so the array identity is stable across renders.
 // Inline `options={[...]}` defeats React.memo on FileItemComponent.

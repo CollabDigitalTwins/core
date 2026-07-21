@@ -3,17 +3,21 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 import * as LR from 'lucide-react'
-import { BuildingsContext, FilesContext, MenusContext } from '../../../../../../../../store'
-import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
-import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { useTranslations } from 'next-intl'
-import { useFileDeleteHandler, FileItemComponent, useFileActions, useFileUploadWithProgress } from '../../../../../../../ui/FilesManager'
-import type { DbFile as IFile } from '../../../../../../../../types/dbTypes'
-import { useDeleteFile } from '../../../../../../../../hooks/files/files'
+import * as React from 'react'
 import { mutate } from 'swr'
+
+import { useDeleteFile } from '../../../../../../../../hooks/files/files'
+import { BuildingsContext, FilesContext, MenusContext } from '../../../../../../../../store'
+import ConfirmDialog from '../../../../../../../ConfirmDialog'
+import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
+import { useFileDeleteHandler, FileItemComponent, useFileActions, useFileUploadWithProgress } from '../../../../../../../ui/FilesManager'
 import { LoadingSpinner } from '../../../../../../../ui/LoadingSpinner'
+
+import type { DbFile as IFile } from '../../../../../../../../types/dbTypes'
+
+
 
 // Hoisted out of the JSX so the array reference is stable across renders.
 // Inline `options={['view','move','info','delete']}` gets a new array identity

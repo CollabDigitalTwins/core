@@ -3,16 +3,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { useIsMobile } from '../../../hooks/ui/use-mobile'
+import { usePermissions } from '../../../store'
 import { Button } from '../../ui/'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/Select'
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from '../../ui/Sidebar'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/Select'
+
 import type { SettingsTabKey } from './types'
-import { usePermissions } from '../../../store'
-import { useIsMobile } from '../../../hooks/ui/use-mobile'
 
 type SettingsTab = {
   key: SettingsTabKey

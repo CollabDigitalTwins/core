@@ -3,15 +3,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import React, { useState, useEffect, createContext, useContext } from 'react'
-import dynamic from 'next/dynamic'
-import { useTranslations } from 'next-intl'
-import LanguageSwitch from '../LanguageSwitch'
-import { useParams } from 'next/navigation'
-import Link from 'next/link'
 import { Sun, Moon } from 'lucide-react'
-import AuthSimpleMap from '../viewers/map/src/SimpleMap'
+import dynamic from 'next/dynamic'
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import React, { useState, useEffect, createContext, useContext } from 'react'
+
+import LanguageSwitch from '../LanguageSwitch'
 import { CdtIcon } from '../ui/Icons/CdtIcon'
+import AuthSimpleMap from '../viewers/map/src/SimpleMap'
 import './auth.css'
 
 //import { useAppConfigContext } from '../../store/AppConfig/context'

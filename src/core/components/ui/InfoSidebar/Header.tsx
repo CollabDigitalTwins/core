@@ -3,14 +3,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
-import type { Building, Organization } from '../../../types/dbTypes'
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { LoadingSpinner } from '../LoadingSpinner'
-import { useSidebar } from '../Sidebar'
+import * as React from 'react'
+
 import { MapContext } from '../../../store'
 import { Button } from '../Button'
-import * as LR from 'lucide-react'
+import { LoadingSpinner } from '../LoadingSpinner'
+import { useSidebar } from '../Sidebar'
+
+import type { Building, Organization } from '../../../types/dbTypes'
+
 
 interface HeaderProps {
   currentBuilding: Building | null

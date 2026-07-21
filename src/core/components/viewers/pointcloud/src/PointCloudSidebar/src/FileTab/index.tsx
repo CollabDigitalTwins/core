@@ -3,12 +3,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { useSearchParams } from 'next/navigation'
 import * as React from 'react'
+
+import { useFilesByBuildingId } from '../../../../../../../hooks/files/files'
+import { BuildingsContext } from '../../../../../../../store'
+
 import { FilesSection } from './src/FilesSection'
 import { PointCloudsSection } from './src/PointCloudSection'
-import { BuildingsContext } from '../../../../../../../store'
-import { useSearchParams } from 'next/navigation'
-import { useFilesByBuildingId } from '../../../../../../../hooks/files/files'
+
 import type { DbFile } from '../../../../../../../types/dbTypes'
 
 export function FileTab({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {

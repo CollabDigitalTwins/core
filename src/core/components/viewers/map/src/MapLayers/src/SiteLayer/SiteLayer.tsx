@@ -5,22 +5,24 @@
 
 import * as React from 'react'
 import { Source, Layer, Marker } from 'react-map-gl/maplibre'
-import type { LayerProps } from 'react-map-gl/maplibre'
-import type { MapGeoJSONFeature } from 'maplibre-gl'
 import { toast } from 'sonner'
 
+import { useDeleteFile } from '../../../../../../../hooks/files/files'
+import { useSite, useDeleteSite } from '../../../../../../../hooks/sites/sites'
 import {
   MapContext,
   usePermissions,
   useMenusContext,
   useMapSitesContext,
 } from '../../../../../../../store'
-import { MapLayerClickPriority, type ClickCallback } from '../../../../utils/MapEventManager/MapClickManager'
 import { ViewerNames, type Site } from '../../../../../../../types/dbTypes'
-import { useSite, useDeleteSite } from '../../../../../../../hooks/sites/sites'
-import { useDeleteFile } from '../../../../../../../hooks/files/files'
-import { polygonCentroid, uploadGeoJsonToAsset, pointToSegmentDistance } from './siteGeometry'
+import { MapLayerClickPriority, type ClickCallback } from '../../../../utils/MapEventManager/MapClickManager'
+
 import { SiteContextMenu } from './SiteContextMenu'
+import { polygonCentroid, uploadGeoJsonToAsset, pointToSegmentDistance } from './siteGeometry'
+
+import type { MapGeoJSONFeature } from 'maplibre-gl'
+import type { LayerProps } from 'react-map-gl/maplibre'
 
 const SITE_FILL_ID = 'site-fill'
 const SITE_OUTLINE_ID = 'site-outline'

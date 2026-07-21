@@ -12,9 +12,10 @@
  * The vector types (geojson/arcgis) produce a ParsedGeoJSON the caller turns
  * into a Dataset. WMS goes straight onto the map as a raster source/layer.
  */
-import type { Map as MapLibreMap } from 'maplibre-gl'
-import { parseGeoJSON, summarizeFeatures, type ParsedGeoJSON } from './geojsonFile'
 import { fetchArcGISLayerFeatures } from './arcgisFetch'
+import { parseGeoJSON, summarizeFeatures, type ParsedGeoJSON } from './geojsonFile'
+
+import type { Map as MapLibreMap } from 'maplibre-gl'
 
 export type UrlSourceType = 'geojson' | 'arcgis' | 'wms'
 

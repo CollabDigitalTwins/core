@@ -3,11 +3,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 import * as OBC from '@thatopen/components'
-import type { ElementProperty, PropertyGroup} from './utils';
-import { analyzeProperty } from './utils'
 import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
+import { analyzeProperty } from './utils'
+
+import type { ElementProperty, PropertyGroup} from './utils';
+
+
 
 export function useElementProperties(bimComponents: any) {
   // Function to get element attributes using ThatOpen API

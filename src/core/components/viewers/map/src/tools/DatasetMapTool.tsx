@@ -3,14 +3,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from "react";
-import { usePermissions } from '../../../../../store'
-
 import * as LR from 'lucide-react'
+import * as React from "react";
+
+import { usePermissions } from '../../../../../store'
 import { Button } from '../../../../ui/Button'
 import Datasets from '../../datasets'
-import type { Tool } from '../../../../../types/tools'
+
 import type { Organization } from '../../../../../types/dbTypes'
+import type { Tool } from '../../../../../types/tools'
 
 interface DatasetMapToolProps {
   tool: Tool

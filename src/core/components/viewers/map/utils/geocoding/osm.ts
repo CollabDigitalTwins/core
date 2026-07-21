@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { Feature } from 'geojson'
-import { getGeocodingConfig } from './config'
 import { normalizePhotonFeature, normalizeNominatimResult } from './adapters'
+import { getGeocodingConfig } from './config'
+
+import type { Feature } from 'geojson'
 
 // Free, no-key public OSM fallbacks. Photon serves autocomplete (it is built for
 // per-keystroke search); Nominatim serves reverse lookups (occasional, single point).

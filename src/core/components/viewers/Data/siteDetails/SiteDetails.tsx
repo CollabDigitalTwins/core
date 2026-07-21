@@ -4,32 +4,35 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from 'react'
-import type { Site, Building } from '../../../../types/dbTypes'
-import { ViewerNames } from '../../../../types/dbTypes'
-import { handleApiError } from '../../../../utils/errorHandler'
 import { useTranslations } from 'next-intl'
+import * as React from 'react'
 
 // Custom hooks
-import { useSite, useCreateSite } from '../../../../hooks/sites/sites'
-import { useMenusContext } from '../../../../store'
 
 // Utilities
-import { useSiteHeaders } from '../utils/Headers'
-import { useIsMobile } from '../../../../hooks/ui/use-mobile'
 
 // Shadcn Components
+import { toast } from 'sonner'
+
 import { DescriptionListItem } from '../../../../components/ui/DescriptionList'
 import { Separator } from '../../../../components/ui/Separator'
-import { toast } from 'sonner'
+import { useSite, useCreateSite } from '../../../../hooks/sites/sites'
+import { useIsMobile } from '../../../../hooks/ui/use-mobile'
+import { useMenusContext } from '../../../../store'
+import { ViewerNames } from '../../../../types/dbTypes'
+import { handleApiError } from '../../../../utils/errorHandler'
 
 // Custom Components
 import AttachedFiles from '../details/AttachedFiles'
-import TabSidebar from '../details/TabSidebar'
-import FieldValue from '../details/FieldValue'
-import FieldRenderer from './FieldRenderer'
 import CheckboxGroup from '../details/CheckboxGroup'
+import FieldValue from '../details/FieldValue'
+import TabSidebar from '../details/TabSidebar'
+import { useSiteHeaders } from '../utils/Headers'
+
 import AssociatedBuildingsTable from './AssociatedBuildings'
+import FieldRenderer from './FieldRenderer'
+
+import type { Site, Building } from '../../../../types/dbTypes'
 
 
 type SiteWithAssociatedBuildings = Site & {

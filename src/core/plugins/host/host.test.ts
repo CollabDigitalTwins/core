@@ -3,6 +3,7 @@
 
 import { PluginHost } from './host'
 import { PluginRegistry } from './registry'
+
 import type { PluginManifest, PluginContext } from '../sdk/types'
 
 describe('PluginHost', () => {

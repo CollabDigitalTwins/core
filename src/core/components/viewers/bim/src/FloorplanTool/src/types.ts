@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type * as OBC from '@thatopen/components'
 import type { DrawingLayerInfo } from '../../lib/drawingLayers'
+import type * as OBC from '@thatopen/components'
 
 export interface FloorplanEntry {
   id: string

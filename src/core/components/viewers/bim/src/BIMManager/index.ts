@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type * as THREE from 'three'
 import * as OBC from '@thatopen/components'
-import type * as FRAGS from '@thatopen/fragments'
+
 import { CurrentWorld } from '../CurrentWorld'
+
+import type * as FRAGS from '@thatopen/fragments'
+import type * as THREE from 'three'
 
 export interface BimModelInfo {
   id: string

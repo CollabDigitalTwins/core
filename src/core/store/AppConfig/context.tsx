@@ -4,8 +4,10 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from "react";
-import type { AppConfigActions, AppConfigState } from './reducer';
+
 import { AppConfigReducer } from './reducer'
+
+import type { AppConfigActions, AppConfigState } from './reducer';
 
 export type RuntimeConfig = {
   minioUrl?: string

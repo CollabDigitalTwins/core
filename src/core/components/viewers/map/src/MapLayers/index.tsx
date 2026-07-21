@@ -3,17 +3,20 @@
 
 'use client'
 
-import * as React from 'react'
 import dynamic from 'next/dynamic'
+import * as React from 'react'
 
-import { CountryLayer } from './src/CountryLayer'
-import { SiteLayer } from './src/SiteLayer/SiteLayer'
+import { useBimContext } from '../../../../../store'
+
+import { BuildingLayer } from './src/BuildingLayers'
 import { CommentLayer } from './src/CommentLayer'
-import { SensorLayers } from './src/SensorsLayer'
+import { CountryLayer } from './src/CountryLayer'
 import { FileLayers } from './src/FileLayer'
 import { OpenDataLayers } from './src/OpenDataLayer/src'
-import { BuildingLayer } from './src/BuildingLayers'
-import { useBimContext } from '../../../../../store'
+import { SensorLayers } from './src/SensorsLayer'
+import { SiteLayer } from './src/SiteLayer/SiteLayer'
+
+
 import type { Organization } from '../../../../../types/dbTypes'
 
 const LazyBimLayer = dynamic(

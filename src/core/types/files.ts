@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { Modified, Position } from './global'
-import { Group, Privacy, Visibility } from './users'
+import type { Modified, Position } from './global'
+import type { Group, Privacy, Visibility } from './users'
 import type { DbFile } from '../../core/types/dbTypes'
 
 export interface IMedia extends Modified {

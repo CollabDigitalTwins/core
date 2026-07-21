@@ -3,14 +3,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
-import { ModelsSection } from './src/ModelsSection'
-import { FilesSection } from './src/FilesSection'
-import { BuildingsContext } from '../../../../../../../store'
 import { useSearchParams } from 'next/navigation'
+import * as React from 'react'
+
 import { useFilesByBuildingId } from '../../../../../../../hooks/files/files'
-import type { DbFile } from '../../../../../../../types/dbTypes'
+import { BuildingsContext } from '../../../../../../../store'
 import { SearchInput } from '../../../../../../ui'
+
+import { FilesSection } from './src/FilesSection'
+import { ModelsSection } from './src/ModelsSection'
+
+import type { DbFile } from '../../../../../../../types/dbTypes'
+
 
   export function FileTab() {
     const { state: buildingState } = React.useContext(BuildingsContext)

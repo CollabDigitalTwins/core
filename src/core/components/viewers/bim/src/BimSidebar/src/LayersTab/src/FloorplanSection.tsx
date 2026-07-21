@@ -3,15 +3,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
 import { BimContext } from '../../../../../../../../store'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { FloorplanIcon } from '../../../../../../../ui/Icons/FloorPlanIcon'
-import type {
-  FloorplanEntry,
-  FloorplanLoadingStage,
-  FloorplanLoadingState} from '../../../../FloorplanTool';
 import {
   FloorplanTool,
   getFloorplanStagePercent,
@@ -21,6 +18,11 @@ import { TrueNorthPopover } from '../../../../lib/TrueNorthPopover'
 import { useBuildingName } from '../../../../lib/useBuildingName'
 import { useFriendlyIfcClassName } from '../../../../lib/useFriendlyIfcClassName'
 import { ViewSectionList } from '../../../../lib/ViewSectionList'
+
+import type {
+  FloorplanEntry,
+  FloorplanLoadingStage,
+  FloorplanLoadingState} from '../../../../FloorplanTool';
 import type { ViewListEntry } from '../../../../lib/viewSection'
 
 interface FloorplanSectionProps {

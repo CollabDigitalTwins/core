@@ -3,13 +3,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import * as React from 'react'
 
 import { DatasetsContext } from '../../../../../../../../store'
-import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { Button } from '../../../../../../../ui/Button'
+import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
+
 import type { Dataset } from '../../../../../../../../types/datasetTypes'
 
 interface DatasetRowProps {

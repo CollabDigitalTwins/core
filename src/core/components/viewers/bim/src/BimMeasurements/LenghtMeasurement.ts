@@ -3,8 +3,9 @@
 
 import * as OBC from '@thatopen/components'
 import * as OBF from '@thatopen/components-front'
-import { CurrentWorld } from '../CurrentWorld'
 import * as THREE from 'three'
+
+import { CurrentWorld } from '../CurrentWorld'
 
 export class LengthMeasurement extends OBC.Component {
 

@@ -3,25 +3,26 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { useSession, signIn } from 'next-auth/react'
-import * as React from 'react'
-import { useTranslations } from 'next-intl'
 import * as LR from 'lucide-react'
+import { useParams,useSearchParams  } from 'next/navigation'
+import { useSession, signIn } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
 import { toast } from 'sonner'
 
-import { Badge, Button, Input, LoadingSpinner, Separator } from '../../ui/'
-import { UserAvatar } from '../../ui/UserAvatar'
 import { useUploadFileToUser } from '../../../hooks/files/files'
+import { useUser, useUserRole, useUsers } from '../../../hooks/users/users'
+import { useChangePassword, useVerifyPassword } from '../../../hooks/users/users';
+import { usePermissions } from '../../../store'
 import { getFileExtension } from '../../../utils/utils'
+import { Badge, Button, Input, LoadingSpinner, Separator } from '../../ui/'
 import { DescriptionListItem } from '../../ui/DescriptionList'
-import { useParams,useSearchParams  } from 'next/navigation'
+import { UserAvatar } from '../../ui/UserAvatar'
+
 
 import ChangePassword from './ChangePassword'
 import SettingsSkeleton from './SettingsSkeleton'
 
-import { useUser, useUserRole, useUsers } from '../../../hooks/users/users'
-import { useChangePassword, useVerifyPassword } from '../../../hooks/users/users';
-import { usePermissions } from '../../../store'
 
 
 type EditValues = Record<string, string | number | boolean | undefined>

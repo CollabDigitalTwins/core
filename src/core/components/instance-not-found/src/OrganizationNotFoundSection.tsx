@@ -4,13 +4,14 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { motion } from 'framer-motion'
+import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { useState } from 'react'
+
 import { Button } from '../../ui/Button'
 import { Card } from '../../ui/Card'
 import { Input } from '../../ui/Input'
 import { Textarea } from '../../ui/Textarea'
-import { useTranslations } from 'next-intl'
-import Link from 'next/link'
-import { useState } from 'react'
 
 interface OrganizationNotFoundSectionProps {
   organizationName: string

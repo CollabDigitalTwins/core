@@ -3,14 +3,19 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 import { Slot } from '@radix-ui/react-slot'
-import type { VariantProps} from 'class-variance-authority';
 import { cva } from 'class-variance-authority'
 import * as LR from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
 
+import { useIsMobile } from '../../hooks/ui/use-mobile'
+import { MenusContext } from '../../store/Menus/context'
 import { cn } from '../../utils/utils'
+import NavigationBar from '../TopNavigationBar'
+
 import { Button } from './Button'
+import { InfoSidebar } from './InfoSidebar'
 import { Input } from './Input'
 import { Separator } from './Separator'
 import {
@@ -27,15 +32,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from './Tooltip'
-import { useTranslations } from 'next-intl'
 
 // Menus context
-import { MenusContext } from '../../store/Menus/context'
 
 // Custom components
-import NavigationBar from '../TopNavigationBar'
-import { InfoSidebar } from './InfoSidebar'
-import { useIsMobile } from '../../hooks/ui/use-mobile'
+
+
+
+import type { VariantProps} from 'class-variance-authority';
 
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state'

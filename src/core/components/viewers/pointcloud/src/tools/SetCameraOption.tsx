@@ -3,24 +3,26 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as LR from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import * as React from "react";
+
 import { PointCloudContext } from '../../../../../store'
 import { PointCloudTools, CameraControl } from '../../../../../store/PointCloud/reducer'
 
 // Dependencies
-import { useTranslations } from 'next-intl'
 
 // Shadcn components
 import { ToolbarSubmenu } from '../../../../ToolbarSubmenu'
-import { DropdownMenuSeparator } from '../../../../ui/DropdownMenu'
 import { Label, DropdownMenu } from '../../../../ui/'
+import { DropdownMenuSeparator } from '../../../../ui/DropdownMenu'
 
 // Custom components
-import { CustomButton } from './PerformanceSettingsTools/NodeSizeSelectionTool'
 import { CameraMode } from '../../define'
 
+import { CustomButton } from './PerformanceSettingsTools/NodeSizeSelectionTool'
+
 // Icons
-import * as LR from 'lucide-react'
 
 export const SetCameraOption = ({ tool }) => {
     const t = useTranslations('CameraSettings')

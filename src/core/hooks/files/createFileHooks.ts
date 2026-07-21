@@ -3,8 +3,9 @@
 
 import useSWR, { mutate } from "swr";
 import useSWRMutation from "swr/mutation";
-import type { ApiAdapter } from "../ports/apiAdapter";
+
 import type { DbFile } from "../../types/dbTypes";
+import type { ApiAdapter } from "../ports/apiAdapter";
 
 export function createFileHooks(adapter: ApiAdapter) {
   // Call adapter methods inside hooks

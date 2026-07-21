@@ -2,6 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { describe, it, expect } from 'vitest'
+
 import { isAcceptedFileType, acceptedFiles } from './acceptedFiles'
 
 // isAcceptedFileType only reads `.name` and `.type`, so a minimal stub stands in for File.

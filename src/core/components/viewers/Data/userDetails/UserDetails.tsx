@@ -4,22 +4,29 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from 'react'
-import { useSession } from 'next-auth/react'
-import { usePermissions } from '../../../../store'
-import type { User } from '../../../../types/dbTypes'
 import * as LR from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+import { toast } from 'sonner'
+import { mutate } from 'swr'
+
+import { useUploadFileToUser } from '../../../../hooks/files/files'
+import { useOrganizationRoles } from '../../../../hooks/organizations/organizations'
+import { useCreateUser, useUserRole } from '../../../../hooks/users/users'
+import { usePermissions } from '../../../../store'
+import { RoleNames } from '../../../../types/global'
+import { getFileExtension } from '../../../../utils/utils'
+import { Badge } from '../../../ui/Badge'
+import { DescriptionListItem } from '../../../ui/DescriptionList'
+
 
 // Custom hooks
-import { useCreateUser, useUserRole } from '../../../../hooks/users/users'
-import { mutate } from 'swr'
-import { useOrganizationRoles } from '../../../../hooks/organizations/organizations'
+
+
 
 // Shadcn Components
-import { DescriptionListItem } from '../../../ui/DescriptionList'
-import { Separator } from '../../../ui/Separator'
 import { Input } from '../../../ui/Input'
-import { Badge } from '../../../ui/Badge'
 import {
   Select,
   SelectContent,
@@ -27,15 +34,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../ui/Select'
-import { toast } from 'sonner'
+import { Separator } from '../../../ui/Separator'
+
 
 // Custom Components
-import FieldValue from '../details/FieldValue'
 import { UserAvatar } from '../../../ui/UserAvatar'
-import { useUploadFileToUser } from '../../../../hooks/files/files'
-import { useTranslations } from 'next-intl'
-import { getFileExtension } from '../../../../utils/utils'
-import { RoleNames } from '../../../../types/global'
+import FieldValue from '../details/FieldValue'
+
+import type { User } from '../../../../types/dbTypes'
 
 type UserEditingValues = Partial<User> & {
   password?: string

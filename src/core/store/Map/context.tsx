@@ -4,8 +4,12 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from "react";
-import { MapReducer, MapActions, MapState } from './reducer'
+
 import { DEFAULT_MAP_STYLE } from '../../components/viewers/map/utils/mapStyleCatalog';
+
+import { MapReducer } from './reducer'
+
+import type { MapActions, MapState } from './reducer';
 
 type InitialStateType = {
   map: MapState

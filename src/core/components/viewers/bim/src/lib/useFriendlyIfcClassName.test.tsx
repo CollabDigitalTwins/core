@@ -2,8 +2,8 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // @vitest-environment jsdom
-import * as React from 'react'
 import { renderHook } from '@testing-library/react'
+import * as React from 'react'
 
 const { mockHas, mockTranslate } = vi.hoisted(() => ({
   mockHas: vi.fn<(key: string) => boolean>(),

@@ -4,12 +4,15 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
-import { FileMenuContent } from './FileItemComponent'
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '../../DropdownMenu'
+
+import { FileMenuContent } from './FileItemComponent'
+
 import type { DbFile } from '../../../../types/dbTypes'
 import type { FileAction } from '../../../../types/global'
 

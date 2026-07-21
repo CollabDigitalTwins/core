@@ -4,35 +4,39 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from "react";
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import * as React from "react";
+
+import { useComments } from '../../../../../../hooks/comments/comments';
+import { useSensors } from '../../../../../../hooks/sensors/sensors';
 import { usePermissions } from '../../../../../../store'
 
 // Utilities
 import { ToolsContext, FilesContext, MenusContext } from '../../../../../../store'
-import { Tool, ToolbarToolType } from '../../../../../../types/tools'
 import { ViewerNames } from '../../../../../../types/'
 import { ToolbarSubmenu } from '../../../../../ToolbarSubmenu'
 
 // Shadcn components
 import { useSidebar, ItemsBadgeButton } from '../../../../../ui/'
-import { DropdownMenuItem } from '../../../../../ui/DropdownMenu'
 import { AddItemDialog } from '../../../../../ui/AddItemDialog'
+import { CommentInput } from '../../../../../ui/Comments/CommentInput'
+import { DropdownMenuItem } from '../../../../../ui/DropdownMenu'
 
 // Icons
-import * as LR from 'lucide-react'
 
 // Adder Components
-import { FileAdder } from './AddFile/FileAdder'
-import { CommentInput } from '../../../../../ui/Comments/CommentInput'
 import { SensorInput } from '../../../../../ui/Sensors/SensorInput'
-import { DatasetAdder } from './AddDataset/DatasetAdder'
-import { SiteAdder } from './AddSite/SiteAdder'
-import Datasets from '../../../datasets'
 import AddBuilding from '../../../../Data/buildingDetails/AddBuilding'
-import { DbFile, Organization } from '../../../../../../types/dbTypes';
-import { useComments } from '../../../../../../hooks/comments/comments';
-import { useSensors } from '../../../../../../hooks/sensors/sensors';
+import Datasets from '../../../datasets'
+
+import { DatasetAdder } from './AddDataset/DatasetAdder'
+import { FileAdder } from './AddFile/FileAdder'
+import { SiteAdder } from './AddSite/SiteAdder'
+
+import type { DbFile, Organization } from '../../../../../../types/dbTypes';
+import type { Tool, ToolbarToolType } from '../../../../../../types/tools'
+
 
 interface AddToMapToolProps {
   tool: Tool

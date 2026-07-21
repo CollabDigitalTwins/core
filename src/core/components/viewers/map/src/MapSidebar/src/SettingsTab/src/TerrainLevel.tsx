@@ -3,11 +3,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
-import { useTranslations } from 'next-intl'
 import * as LR from 'lucide-react'
-import { Tabs, TabsList, TabsTrigger } from '../../../../../../../ui/Tabs'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
 import { AppConfigContext, MapContext } from '../../../../../../../../store'
+import { Tabs, TabsList, TabsTrigger } from '../../../../../../../ui/Tabs'
+
 import type { TerrainLevel as TerrainLevelType } from '../../../../../../../../types/map'
 
 export function TerrainLevel() {

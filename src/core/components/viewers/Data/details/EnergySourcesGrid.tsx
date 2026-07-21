@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { X } from 'lucide-react'
 import React from 'react'
-import { Input } from '../../../ui/Input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../ui/Select'
+
+import { BuildingHeatingEnergySource, BuildingCoolingEnergySource, BuildingHotWaterEnergySource } from '../../../../types/dbTypes'
 import { Badge } from '../../../ui/Badge'
 import { Button } from '../../../ui/Button'
-import { X } from 'lucide-react'
-import { BuildingHeatingEnergySource, BuildingCoolingEnergySource, BuildingHotWaterEnergySource } from '../../../../types/dbTypes'
+import { Input } from '../../../ui/Input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../ui/Select'
 
 interface EnergySourcesGridProps {
   subsection: any

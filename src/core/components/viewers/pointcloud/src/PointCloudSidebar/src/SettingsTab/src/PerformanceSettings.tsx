@@ -3,15 +3,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
-import { useTranslations } from 'next-intl'
-import { PointCloudContext } from '../../../../../../../../store'
-import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
-import { SliderWithInput, Slider } from '../../../../../../../ui/Slider'
-import { Label } from '../../../../../../../ui/Label'
-import { Switch } from '../../../../../../../ui/Switch'
 import { Pin, TrendingDown, Zap, Box, Sparkles } from 'lucide-react'
 import * as LR from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
+import { PointCloudContext } from '../../../../../../../../store'
+import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
+import { Label } from '../../../../../../../ui/Label'
+import { SliderWithInput, Slider } from '../../../../../../../ui/Slider'
+import { Switch } from '../../../../../../../ui/Switch'
 import { PointSizeType } from '../../../../../define'
 
 

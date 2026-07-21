@@ -4,19 +4,21 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
+
+import { PluginHostProvider } from '../plugins/host/provider'
+
 import { AppConfigProvider, type RuntimeConfig } from './AppConfig/context'
 import { BimProvider } from './BIM/context'
-import { ContentProvider } from './Content/context'
-import { MapProvider } from './Map/context'
-import { MenusProvider } from './Menus/context'
-import { ToolsProvider } from './Tools/context'
-import { FilesProvider } from './Files/context'
 import { BuildingsProvider } from './Buildings/context'
+import { ContentProvider } from './Content/context'
 import { DatasetsProvider } from './Datasets/context'
+import { FilesProvider } from './Files/context'
+import { MapProvider } from './Map/context'
 import { MapSitesProvider } from './MapSites/context'
-import { PointCloudProvider } from './PointCloud/context'
+import { MenusProvider } from './Menus/context'
 import { PermissionsProvider } from './Permissions/context'
-import { PluginHostProvider } from '../plugins/host/provider'
+import { PointCloudProvider } from './PointCloud/context'
+import { ToolsProvider } from './Tools/context'
 
 const compose = providers =>
   providers.reduce(

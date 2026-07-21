@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { describe, it, expect, vi } from 'vitest'
 import * as THREE from 'three'
+import { describe, it, expect, vi } from 'vitest'
+
 import { disposeThreeScene } from './disposeThreeScene'
 
 describe('disposeThreeScene', () => {

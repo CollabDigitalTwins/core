@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as THREE from 'three'
 import * as OBC from '@thatopen/components'
+import * as THREE from 'three'
+import { ColladaLoader } from 'three/addons/loaders/ColladaLoader.js'
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js'
-import { FBXLoader } from 'three/addons/loaders/FBXLoader.js'
-import { ColladaLoader } from 'three/addons/loaders/ColladaLoader.js'
-import { CurrentWorld } from '../CurrentWorld'
+
 import { GizmoController } from '../../utils/GizmoController'
+import { CurrentWorld } from '../CurrentWorld'
 import { ViewportGizmo } from '../ViewportGizmo'
 
 export interface ModelInfo {

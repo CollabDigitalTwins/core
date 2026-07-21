@@ -2,8 +2,9 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // @vitest-environment jsdom
-import * as React from 'react'
 import { render, screen, fireEvent, act } from '@testing-library/react'
+import * as React from 'react'
+
 import { WmsTimeControl } from './WmsTimeControl'
 
 const frames = [

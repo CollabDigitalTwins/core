@@ -3,18 +3,26 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from "react";
+import {
+  Link,
+  ScanQrCode,
+  Camera,
+  ChevronDown,
+} from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import * as React from "react";
 
 // Utilities
-import type { Tool } from '../../../types/tools'
+import { toast } from 'sonner'
+
+import { MenusContext, MapContext, BimContext } from '../../../store'
 import { ViewerNames } from '../../../types/'
 
+
 // Shadcn components
-import {
-  DropdownMenuItem,
-} from '../DropdownMenu'
+import { ToolbarSubmenu } from '../../ToolbarSubmenu'
+import { Button } from '../Button'
 import {
   Dialog,
   DialogContent,
@@ -22,24 +30,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../Dialog'
+import {
+  DropdownMenuItem,
+} from '../DropdownMenu'
 import { Input } from '../Input'
-import { Button } from '../Button'
-import { toast } from 'sonner'
+
 
 // Icons
-import {
-  Link,
-  ScanQrCode,
-  Camera,
-  ChevronDown,
-} from 'lucide-react'
 
 // Custom components
-import QRCodeWithLink from './QRCodeWithLink'
-import { ToolbarSubmenu } from '../../ToolbarSubmenu'
 import { LoadingSpinner } from '../LoadingSpinner'
 
-import { MenusContext, MapContext, BimContext } from '../../../store'
+import QRCodeWithLink from './QRCodeWithLink'
+
+
+import type { Tool } from '../../../types/tools'
 
 interface ShareToolSubmenuProps {
   tool: Tool

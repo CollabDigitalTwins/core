@@ -3,6 +3,7 @@
 
 import * as OBC from '@thatopen/components'
 import * as FRAGS from '@thatopen/fragments'
+
 import { CurrentWorld } from './CurrentWorld'
 import { LoadModels } from './LoadModels'
 

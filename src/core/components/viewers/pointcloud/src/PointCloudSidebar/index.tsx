@@ -4,14 +4,16 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
-import { InfoSidebar } from '../../../../../components/ui/InfoSidebar'
-import { TabSelector } from './TabSelector'
-import { PointCloudContext, MenusContext } from '../../../../../store'
-import type { SidebarTabType } from '../../../../../store/Menus/reducer'
-import { FileTab } from './src/FileTab'
 
-import { SettingsTab } from './src/SettingsTab'
+import { InfoSidebar } from '../../../../../components/ui/InfoSidebar'
 import { InfoSidebarContainer } from '../../../../../components/ui/InfoSidebar/Container'
+import { PointCloudContext, MenusContext } from '../../../../../store'
+
+import { FileTab } from './src/FileTab'
+import { SettingsTab } from './src/SettingsTab'
+import { TabSelector } from './TabSelector'
+
+import type { SidebarTabType } from '../../../../../store/Menus/reducer'
 import type { Organization } from '../../../../../types/dbTypes'
 
 export function PointCloudSidebar({ pointcloudApiUrl, organization }: { pointcloudApiUrl?: string; organization?: Organization }) {

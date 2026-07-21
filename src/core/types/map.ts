@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { JSX } from 'react'
-import type { LngLatBounds, LngLatBoundsLike } from 'maplibre-gl'
 import type { Feature } from 'geojson'
+import type { LngLatBounds, LngLatBoundsLike } from 'maplibre-gl'
+import type { JSX } from 'react'
 
 export interface MapStyle {
   name: string

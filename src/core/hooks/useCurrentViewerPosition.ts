@@ -2,9 +2,10 @@
 
 import * as React from 'react'
 import * as THREE from 'three'
+
+import { getCameraPosition } from '../components/viewers/pointcloud/src/tools/SharePointCloudTool/src/getCameraPosition'
 import { MenusContext, MapContext, BimContext, PointCloudContext } from '../store'
 import { ViewerNames } from '../types'
-import { getCameraPosition } from '../components/viewers/pointcloud/src/tools/SharePointCloudTool/src/getCameraPosition'
 
 export type ViewerPosition =
   | { type: 'map'; lat: number; lng: number; zoom: number; bearing: number; pitch: number }

@@ -4,14 +4,20 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from 'react'
+import * as LR from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
-import { usePermissions } from '../../../../../../store'
+import * as React from 'react'
 import { toast } from 'sonner'
 
+import { useCreateBuilding, useBuildings, useBuilding } from '../../../../../../hooks/buildings/buildings'
+import { usePermissions } from '../../../../../../store'
+
 // Shadcn Components
+import { MapContext } from '../../../../../../store'
+import { useMenusContext } from '../../../../../../store'
 import { Button, Label } from '../../../../../ui/'
+import { LoadingSpinner } from '../../../../../ui/LoadingSpinner'
 import { PopoverContent } from '../../../../../ui/Popover'
 import {
   Select,
@@ -22,19 +28,17 @@ import {
 } from '../../../../../ui/Select'
 
 // Icons
-import * as LR from 'lucide-react'
 
 // Types / Utilities
-import type { MapGeoJSONFeature } from 'maplibre-gl'
-import { MapContext } from '../../../../../../store'
-import { useMenusContext } from '../../../../../../store'
-import type { Building } from '../../../../../../types/dbTypes'
-import { MarkerManager } from '../../../utils/MarkerManager'
 import { getDetailedAddress } from '../../../utils/geocoder'
+import { MarkerManager } from '../../../utils/MarkerManager'
+
+import type { Building } from '../../../../../../types/dbTypes'
+import type { MapGeoJSONFeature } from 'maplibre-gl'
+
+
 
 // Hooks
-import { useCreateBuilding, useBuildings, useBuilding } from '../../../../../../hooks/buildings/buildings'
-import { LoadingSpinner } from '../../../../../ui/LoadingSpinner'
 
 interface NonDatabaseBuildingPopoverProps {
   feature: MapGeoJSONFeature

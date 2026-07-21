@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { uploadToPresignedUrl } from '../AddFile/utils/uploadToPresignedURLS'
 import { ringToFeatureCollection, type Ring } from '../../../MapLayers/src/SiteLayer/siteGeometry'
+import { uploadToPresignedUrl } from '../AddFile/utils/uploadToPresignedURLS'
 
 /** Tag stored on the File row so the site's boundary geojson can be found later. */
 export const SITE_GEOMETRY_TAG = 'site-geometry'

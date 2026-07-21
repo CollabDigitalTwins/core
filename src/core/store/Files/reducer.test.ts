@@ -2,7 +2,9 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { describe, it, expect } from 'vitest'
+
 import { FilesReducer, type FilesState } from './reducer'
+
 import type { DbFile } from '../../types/dbTypes'
 
 const file = (id: number, extra: Partial<DbFile> = {}) => ({ id, ...extra }) as unknown as DbFile

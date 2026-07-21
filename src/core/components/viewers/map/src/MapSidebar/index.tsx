@@ -4,16 +4,19 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
-import { TabSelector } from './TabSelector'
+
+
+import { InfoSidebarContainer } from '../../../../../components/ui/InfoSidebar/Container'
 import { MenusContext, usePermissions } from '../../../../../store'
-import type { SidebarTabType } from '../../../../../store/Menus/reducer'
+
+import { CommunicationTab } from './src/CommunicationTab'
 import { FileTab } from './src/FileTab'
 import { LayersTab } from './src/LayersTab'
-
-import { SettingsTab } from './src/SettingsTab'
-import { InfoSidebarContainer } from '../../../../../components/ui/InfoSidebar/Container'
-import { CommunicationTab } from './src/CommunicationTab'
 import { SensorsTab } from './src/SensorsTab'
+import { SettingsTab } from './src/SettingsTab'
+import { TabSelector } from './TabSelector'
+
+import type { SidebarTabType } from '../../../../../store/Menus/reducer'
 import type { Organization } from '../../../../../types/dbTypes'
 
 export function MapSidebar({ minioBaseUrl, martinBaseUrl, organization }: { minioBaseUrl?: string; martinBaseUrl?: string; organization?: Organization }) {

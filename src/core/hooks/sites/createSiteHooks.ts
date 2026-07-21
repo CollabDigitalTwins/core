@@ -3,8 +3,9 @@
 
 import useSWR, { mutate } from "swr";
 import useSWRMutation from "swr/mutation";
-import type { ApiAdapter } from "../ports/apiAdapter";
+
 import type { Site } from "../../types/dbTypes";
+import type { ApiAdapter } from "../ports/apiAdapter";
 
 type SiteUpdateInput = Partial<Site> & {
   siteBuildings?: {

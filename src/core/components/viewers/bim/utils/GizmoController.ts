@@ -2,8 +2,9 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as THREE from 'three'
-import type * as OBC from '@thatopen/components'
 import { TransformControls } from 'three/examples/jsm/Addons.js'
+
+import type * as OBC from '@thatopen/components'
 
 export class GizmoController {
   private _controls: TransformControls | null = null

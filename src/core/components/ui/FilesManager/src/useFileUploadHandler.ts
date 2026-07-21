@@ -2,12 +2,12 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { useSession } from 'next-auth/react'
-import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
-import { uploadFile as performUploadFile } from '../../uploadFile'
+import { toast } from 'sonner'
 
-import { getFileExtension } from '../../../../utils/utils'
 import { useBuilding } from '../../../../hooks/buildings/buildings'
+import { getFileExtension } from '../../../../utils/utils'
+import { uploadFile as performUploadFile } from '../../uploadFile'
 
 // @thatopen/IfcToFragments are imported dynamically in the IFC branch below
 // (not statically) to keep ~456 KB out of the eager bundle.

@@ -2,8 +2,8 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import en from './messages/en.json'
-import fr from './messages/fr.json'
 import es from './messages/es.json'
+import fr from './messages/fr.json'
 
 /**
  * Core message catalogs keyed by lowercase locale code.

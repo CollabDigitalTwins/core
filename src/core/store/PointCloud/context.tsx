@@ -4,12 +4,15 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from "react";
+
 import {
-  PointCloudState,
-  PointCloudActions,
   PointCloudReducer,
   initialPointCloudState,
 } from "./reducer";
+
+import type {
+  PointCloudState,
+  PointCloudActions} from "./reducer";
 
 type InitialStateType = {
   pointcloud: PointCloudState;

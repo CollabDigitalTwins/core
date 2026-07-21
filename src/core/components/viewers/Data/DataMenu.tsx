@@ -4,31 +4,32 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
+import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { toast } from 'sonner'
-import { useTranslations } from 'next-intl'
-import { handleApiError } from '../../../utils/errorHandler'
 
-// Utils
-import { useViewerData } from './utils/useViewerData'
-import { VIEWER_CONFIG } from './utils/viewerConfig'
-
-import type { Building, Site, User, Infrastructure, Organization } from '../../../types/dbTypes'
-import type { FilterState } from '../../../types/global'
-
-// Custom hooks
 import { useBuildings, useCreateBuilding } from '../../../hooks/buildings/buildings'
-import { useCreateSite, useSites } from '../../../hooks/sites/sites'
 import { useFiles } from '../../../hooks/files/files'
+import { useCreateInfrastructure, useInfrastructures } from '../../../hooks/infrastructures/infrastructures'
+import { useCreateSite, useSites } from '../../../hooks/sites/sites'
 import { useUsers } from '../../../hooks/users/users'
-
-// Context
 import { useMenusContext } from '../../../store'
 import { useBuildingsContext } from '../../../store'
 import { useFilesContext } from '../../../store'
+import { DataTypesNames, ViewerNames } from '../../../types'
+import { handleApiError } from '../../../utils/errorHandler'
+
+// Utils
+
+
+// Custom hooks
+
+// Context
 
 // Types
-import type { FileRow } from '../../../types/files'
+
+import { Button, Checkbox, DataTable, Input, Separator } from '../../ui/'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -37,32 +38,39 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '../../ui/Breadcrumb'
-import { Button, Checkbox, DataTable, Input, Separator } from '../../ui/'
 
-import type { BuildingDetailsRef } from './buildingDetails/BuildingDetails'
-import type { SiteDetailsRef } from './siteDetails/SiteDetails'
-import type { InfrastructureDetailsRef } from './infrastructureDetails/InfrastructureDetails'
 
 import BuildingDetails from './buildingDetails/BuildingDetails'
-import { FileDetails } from './files/FileDetails'
 
 // Custom Components
 import DetailActions from './details/DetailActions'
 import DetailHeader from './details/DetailHeader'
+import { FileDetails } from './files/FileDetails'
 import FilterButtons from './FilterButtons'
 import HeaderButtons from './HeaderButtons'
+
+// Data
+
+
+
+
+import InfrastructureDetails from './infrastructureDetails/InfrastructureDetails'
 import MoreOptions from './MoreOptions'
 import SiteDetails from './siteDetails/SiteDetails'
 import UserDetails from './userDetails/UserDetails'
-
-// Data
 import { useColumns, useUserColumns } from './utils/Columns'
 import { useBuildingHeaders, useInfrastructureHeaders, useSiteHeaders } from './utils/Headers'
+import { useViewerData } from './utils/useViewerData'
+import { VIEWER_CONFIG } from './utils/viewerConfig'
+
+import type { BuildingDetailsRef } from './buildingDetails/BuildingDetails'
+import type { InfrastructureDetailsRef } from './infrastructureDetails/InfrastructureDetails'
+import type { SiteDetailsRef } from './siteDetails/SiteDetails'
 import type { DataTypes} from '../../../types';
-import { DataTypesNames, ViewerNames } from '../../../types'
-import { useSession } from 'next-auth/react'
-import InfrastructureDetails from './infrastructureDetails/InfrastructureDetails'
-import { useCreateInfrastructure, useInfrastructures } from '../../../hooks/infrastructures/infrastructures'
+import type { Building, Site, User, Infrastructure, Organization } from '../../../types/dbTypes'
+import type { FileRow } from '../../../types/files'
+import type { FilterState } from '../../../types/global'
+
 
 type DataMenuProps = {
   currentViewer: ViewerNames

@@ -3,26 +3,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from "react";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "../../../../ui/Table";
-
-import { Badge, Button, Checkbox, Input, ScrollArea } from '../../../../ui';
-
-import { Tabs, TabsList, TabsTrigger } from "../../../../ui/Tabs";
-
-import { useRouter, usePathname } from 'next/navigation'
-import { useTranslations } from 'next-intl'
-import { toast } from 'sonner'
-import ConfirmDialog from '../../../../ConfirmDialog'
-// import { useAppConfigContext } from '../../../../../store/AppConfig/context'
-
 import {
     Star,
     StarOff,
@@ -33,6 +13,26 @@ import {
     ChevronLeft,
     ChevronRight,
 } from "lucide-react";
+import { useRouter, usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import * as React from "react";
+import { toast } from 'sonner'
+
+import ConfirmDialog from '../../../../ConfirmDialog'
+import { Badge, Button, Checkbox, Input, ScrollArea } from '../../../../ui';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "../../../../ui/Table";
+import { Tabs, TabsList, TabsTrigger } from "../../../../ui/Tabs";
+
+
+// import { useAppConfigContext } from '../../../../../store/AppConfig/context'
+
 
 type PointCloud = {
     id: string;

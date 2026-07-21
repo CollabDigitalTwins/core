@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { Dataset, FieldType, LayerGeometryType } from '../../../../../types/datasetTypes'
-import { formatName } from '../utils'
-import { DatasetGroup, type OpenDataPortal } from '../../../../../types/dbTypes'
-import type { AllGeoJSON } from '@turf/turf'
-import { layerColorByName } from '../../utils/stringToColour'
-import Pbf from 'pbf'
 import { VectorTile } from '@mapbox/vector-tile'
+import Pbf from 'pbf'
+
+import { DatasetGroup, type OpenDataPortal } from '../../../../../types/dbTypes'
+import { layerColorByName } from '../../utils/stringToColour'
+import { formatName } from '../utils'
+
 import { getCache, setCache } from './cache'
 import { isPublishedOrgTable, buildPublishedTileDatasets, type PublishedFileRow } from './publishedTiles'
+
+import type { Dataset, FieldType, LayerGeometryType } from '../../../../../types/datasetTypes'
+import type { AllGeoJSON } from '@turf/turf'
 
 
 // Define the structure of local dataset items

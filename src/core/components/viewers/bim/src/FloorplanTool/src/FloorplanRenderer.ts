@@ -1,20 +1,25 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as OBC from '@thatopen/components'
+
 import {
-  CategoryHighlighter,
-  ResolveContext,
-  StageEmitter,
+  CategoryHighlighter
 } from '../../lib/CategoryHighlighter'
+
 import {
   CUT_COLOR,
   FILL_COLOR,
-  FloorplanEntry,
   FLOORPLAN_CUT_CATEGORIES,
   FLOORPLAN_FILL_CATEGORIES,
 } from './types'
-import { StoreyProjector } from './StoreyProjector'
+
+import type { StoreyProjector } from './StoreyProjector'
+import type {
+  FloorplanEntry} from './types';
+import type {
+  ResolveContext,
+  StageEmitter} from '../../lib/CategoryHighlighter';
+import type * as OBC from '@thatopen/components'
 
 export type RenderStage = 'resolve' | 'cull' | 'switching' | 'cut' | 'fill'
 

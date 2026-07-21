@@ -3,21 +3,27 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as LR from 'lucide-react'
+import { SquareArrowOutUpRight } from 'lucide-react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import React from 'react'
+
+import { useBuilding, useBuildings } from '../../../../../hooks/buildings/buildings'
+import { useFilesByBuildingId } from '../../../../../hooks/files/files'
+import { BuildingsContext, usePermissions } from '../../../../../store'
+import { cn } from '../../../../../utils/utils'
 import { Button } from '../../../../ui/Button'
 import { Card, CardContent, CardHeader } from '../../../../ui/Card'
 import { Input } from '../../../../ui/Input'
 import { LoadingSpinner } from '../../../../ui/LoadingSpinner'
-import * as LR from 'lucide-react'
-import { BuildingsContext, usePermissions } from '../../../../../store'
+
 // import { useAppConfigContext } from '../../../../../store/AppConfig/context'
-import { useTranslations } from 'next-intl'
-import { useFilesByBuildingId } from '../../../../../hooks/files/files'
+
+
 import type { DbFile } from '../../../../../types/dbTypes'
-import { cn } from '../../../../../utils/utils'
-import { useSearchParams, useRouter } from 'next/navigation'
-import { useBuilding, useBuildings } from '../../../../../hooks/buildings/buildings'
-import { SquareArrowOutUpRight } from 'lucide-react'
+
+
 
 type CreatePointCloudResponse = {
   pointCloud: {

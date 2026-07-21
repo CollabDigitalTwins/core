@@ -6,33 +6,38 @@
 // Icons
 import * as LR from 'lucide-react'
 // Dependencies
-import * as React from 'react'
 import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
+import { Button } from '../../../components/ui/Button'
 import { usePermissions } from '../../../store'
 
 // Utils
+import { DatasetsContext, MapContext, MenusContext } from '../../../store'
+import { ViewerNames } from '../../../types/'
+import CompareDialog from '../map/src/compare/CompareDialog'
+import { createBuildingsDataset } from '../map/src/MapLayers/src/BuildingLayers/src/databaseBuildings'
+import { useShowSitesOnMap } from '../map/src/MapLayers/src/SiteLayer/useShowSitesOnMap'
+import { fitBuildingsBounds } from '../map/utils/fitBuildingsBounds'
+
+import AddBuilding from './buildingDetails/AddBuilding'
+import BuildingMoreOptions from './buildingDetails/BuildingsMoreOptions'
+import DatatableFileAdder from './files/DatatableFileAdder'
+import AddInfrastructure from './infrastructureDetails/AddInfrastructure'
+import AddSite from './siteDetails/AddSite'
+import AddUser from './userDetails/AddUser'
+import UserMoreOptions from './userDetails/UserMoreOptions'
+
+import type { CompareItem } from '../../../store'
 import type { Dataset } from '../../../types/datasetTypes'
 import type { Building, Site, User } from '../../../types/dbTypes'
 
-import { DatasetsContext, MapContext, MenusContext } from '../../../store'
-import type { CompareItem } from '../../../store'
 
 // Shadcn Components
-import { Button } from '../../../components/ui/Button'
-import { fitBuildingsBounds } from '../map/utils/fitBuildingsBounds'
-import { useShowSitesOnMap } from '../map/src/MapLayers/src/SiteLayer/useShowSitesOnMap'
-import AddBuilding from './buildingDetails/AddBuilding'
+
 // File Adder
-import DatatableFileAdder from './files/DatatableFileAdder'
 // Custom Components
-import AddSite from './siteDetails/AddSite'
-import CompareDialog from '../map/src/compare/CompareDialog'
-import UserMoreOptions from './userDetails/UserMoreOptions'
-import AddUser from './userDetails/AddUser'
-import BuildingMoreOptions from './buildingDetails/BuildingsMoreOptions'
-import { ViewerNames } from '../../../types/'
-import AddInfrastructure from './infrastructureDetails/AddInfrastructure'
-import { createBuildingsDataset } from '../map/src/MapLayers/src/BuildingLayers/src/databaseBuildings'
+
 
 type HeaderButtonsProps = {
   headerTitle: string

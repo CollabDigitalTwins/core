@@ -4,15 +4,18 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from "react";
-import type { Map } from 'maplibre-gl'
+
 
 // Utilities
 import { MapContext } from '../../../../../store'
-import type { Tool } from '../../../../../types/tools'
+
 
 // Custom components
 import { ShareToolSubmenu } from '../../../../ui/ShareFeature'
 import { getMunicipalityAndProvince } from '../../utils/geocoder'
+
+import type { Tool } from '../../../../../types/tools'
+import type { Map } from 'maplibre-gl'
 
 interface ShareToolProps {
   tool: Tool

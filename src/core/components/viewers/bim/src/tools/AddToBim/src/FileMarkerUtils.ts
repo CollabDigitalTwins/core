@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as THREE from 'three'
 import * as React from 'react'
+import { createRoot } from 'react-dom/client'
+import * as THREE from 'three'
 import {
   CSS2DRenderer,
   CSS2DObject,
 } from 'three/addons/renderers/CSS2DRenderer.js'
-import { createRoot } from 'react-dom/client'
+
 import FileMarker, { type FileMarkerAction } from '../../../../../../ui/FilesManager/src/FileMarker'
+
 import type { DbFile } from '../../../../../../../types/dbTypes'
 
 export interface AddedFile {

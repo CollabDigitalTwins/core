@@ -2,8 +2,8 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // @vitest-environment jsdom
-import * as React from 'react'
 import { render, screen } from '@testing-library/react'
+import * as React from 'react'
 
 vi.mock('next/image', () => ({
   __esModule: true,

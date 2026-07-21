@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { DataMenu } from '../../viewers/Data/DataMenu'
 import { ViewerNames } from '../../../types'
+import { DataMenu } from '../../viewers/Data/DataMenu'
 
 export default function UsersSettingsPanel() {
   return (

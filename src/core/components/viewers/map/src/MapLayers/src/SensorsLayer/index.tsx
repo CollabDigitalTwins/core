@@ -3,26 +3,27 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { MapContext, MenusContext } from '../../../../../../../store'
+import * as LR from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { Source, Layer, Popup, Marker } from 'react-map-gl/maplibre'
-import type { MapGeoJSONFeature, MapLayerMouseEvent } from 'maplibre-gl'
-import Sensor from '../../../../../../ui/Sensors/Sensor'
-import type { SensorType} from '../../../../../../../types/dbTypes';
-import { ViewerNames, type Sensor as ISensor} from '../../../../../../../types/dbTypes'
-
-import type { ClickCallback } from '../../../../utils/MapEventManager/MapClickManager';
-import { MapLayerClickPriority } from '../../../../utils/MapEventManager/MapClickManager'
-import { extractCoordinatesFromFeature } from '../../../../utils/extractCoordinates'
-import { useSensor, useSensors } from '../../../../../../../hooks/sensors/sensors'
-import { useUsers } from '../../../../../../../hooks/users/users'
 import { toast } from 'sonner'
-import { useTranslations } from 'next-intl'
-import { useSession } from 'next-auth/react'
-import { createClusterLayer, createClusterCountLayer, createUnclusteredPointLayer } from '../mapLayersUtils'
+
+import { useSensor, useSensors } from '../../../../../../../hooks/sensors/sensors'
 import { useSensorTypes } from '../../../../../../../hooks/sensorTypes/sensorTypes'
-import * as LR from 'lucide-react'
+import { useUsers } from '../../../../../../../hooks/users/users'
+import { MapContext, MenusContext } from '../../../../../../../store'
+import { ViewerNames, type Sensor as ISensor} from '../../../../../../../types/dbTypes'
+import Sensor from '../../../../../../ui/Sensors/Sensor'
 import { UNTAGGED_TAG } from '../../../../../../ui/Sensors/SensorsSection'
+import { extractCoordinatesFromFeature } from '../../../../utils/extractCoordinates'
+import { MapLayerClickPriority } from '../../../../utils/MapEventManager/MapClickManager'
+import { createClusterLayer, createClusterCountLayer, createUnclusteredPointLayer } from '../mapLayersUtils'
+
+import type { SensorType} from '../../../../../../../types/dbTypes';
+import type { ClickCallback } from '../../../../utils/MapEventManager/MapClickManager';
+import type { MapGeoJSONFeature, MapLayerMouseEvent } from 'maplibre-gl'
 
 const SensorIconMarker = ({ feature, isHighlighted, onMouseEnter, onMouseLeave, sensorTypes }: { feature: MapGeoJSONFeature; isHighlighted?: boolean; onMouseEnter?: () => void; onMouseLeave?: () => void; sensorTypes: SensorType[] }) => {
 

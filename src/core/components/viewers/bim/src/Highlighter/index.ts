@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as THREE from 'three'
 import * as OBC from '@thatopen/components'
 import * as OBF from '@thatopen/components-front'
 import { DataSet } from '@thatopen/fragments'
+import * as THREE from 'three'
+
 import { CurrentWorld } from '../CurrentWorld'
 
 export class Highlighter extends OBC.Component {

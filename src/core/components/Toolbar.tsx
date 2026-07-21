@@ -4,11 +4,14 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Components
-import * as React from 'react'
 import dynamic from 'next/dynamic'
-import { ViewerNames } from '../types'
+import * as React from 'react'
+
 import { mapToolbarTools } from '../components/viewers/map/src/tools/mapTools'
+import { ViewerNames } from '../types'
+
 import { ToolbarBody } from './ToolbarBody'
+
 import type { Organization } from '../types/dbTypes'
 
 // The BIM and PointCloud toolbar tool registries transitively import

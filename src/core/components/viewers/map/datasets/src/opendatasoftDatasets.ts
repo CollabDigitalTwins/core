@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { Dataset } from '../../../../../types/datasetTypes'
+import { layerColorByName } from '../../utils/stringToColour'
 import { formatDate, formatName, stripHtml } from '../utils'
 
-import type { AllGeoJSON } from '@turf/turf'
 import { buildValidationKey, getCache, setCache, withCache } from './cache'
-import { layerColorByName } from '../../utils/stringToColour'
+
+import type { Dataset } from '../../../../../types/datasetTypes'
 import type { OpenDataPortal } from '../../../../../types/dbTypes'
+import type { AllGeoJSON } from '@turf/turf'
 
 // Fetch OpenDataSoft datasets and transform to Dataset array
 export async function fetchOpenDataSoftDatasets(

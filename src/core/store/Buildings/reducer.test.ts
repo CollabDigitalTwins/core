@@ -2,7 +2,9 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { describe, it, expect } from 'vitest'
+
 import { BuildingsReducer, type BuildingsState } from './reducer'
+
 import type { Building } from '../../types/dbTypes'
 
 const bld = (id: number) => ({ id }) as unknown as Building

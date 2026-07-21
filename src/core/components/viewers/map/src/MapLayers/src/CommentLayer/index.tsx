@@ -3,24 +3,25 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { MapContext, MenusContext } from '../../../../../../../store'
+import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { Source, Layer, Popup, Marker } from 'react-map-gl/maplibre'
-import type { MapGeoJSONFeature, MapLayerMouseEvent } from 'maplibre-gl'
-import Comment from '../../../../../../ui/Comments/Comment'
-import { Avatar } from '../../../../../../ui/Avatar'
-import { UserAvatar } from '../../../../../../ui/UserAvatar'
-import { ViewerNames, type Comment as IComment } from '../../../../../../../types/dbTypes'
+import { toast } from 'sonner'
 
-import type { ClickCallback } from '../../../../utils/MapEventManager/MapClickManager';
-import { MapLayerClickPriority } from '../../../../utils/MapEventManager/MapClickManager'
-import { extractCoordinatesFromFeature } from '../../../../utils/extractCoordinates'
 import { useComment, useComments } from '../../../../../../../hooks/comments/comments'
 import { useUser, useUsers } from '../../../../../../../hooks/users/users'
-import { toast } from 'sonner'
-import { useTranslations } from 'next-intl'
-import { useSession } from 'next-auth/react'
+import { MapContext, MenusContext } from '../../../../../../../store'
+import { ViewerNames, type Comment as IComment } from '../../../../../../../types/dbTypes'
+import { Avatar } from '../../../../../../ui/Avatar'
+import Comment from '../../../../../../ui/Comments/Comment'
+import { UserAvatar } from '../../../../../../ui/UserAvatar'
+import { extractCoordinatesFromFeature } from '../../../../utils/extractCoordinates'
+import { MapLayerClickPriority } from '../../../../utils/MapEventManager/MapClickManager'
 import { createClusterLayer, createClusterCountLayer, createUnclusteredPointLayer } from '../mapLayersUtils'
+
+import type { ClickCallback } from '../../../../utils/MapEventManager/MapClickManager';
+import type { MapGeoJSONFeature, MapLayerMouseEvent } from 'maplibre-gl'
 
 type MapComment = IComment & {
   authorName?: string

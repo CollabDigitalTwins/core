@@ -3,13 +3,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import FileIcon from './FileIcon'
-import { Button } from '../../../../../../../../components/ui/Button'
 import * as LR from 'lucide-react'
-import * as React from 'react'
 import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
+import { Button } from '../../../../../../../../components/ui/Button'
 import { MapContext } from '../../../../../../../../store'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
+
+import FileIcon from './FileIcon'
+
 import type { DbFile } from '../../../../../../../../types/dbTypes'
 
 interface FileManagerRowProps {

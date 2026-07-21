@@ -2,6 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { describe, it, expect, vi } from 'vitest'
+
 // maplibre-gl is imported in the reducer only as a TYPE (`map: Map | null`); mock it
 // so importing the reducer doesn't pull the browser library into the node test env.
 vi.mock('maplibre-gl', () => ({ Map: class {} }))

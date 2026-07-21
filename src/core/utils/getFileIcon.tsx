@@ -2,8 +2,10 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as LR from 'lucide-react'
-import type { DbFile } from '../types/dbTypes'
+
 import { IfcIcon, IdsIcon, BcfIcon } from '../components/ui/Icons/'
+
+import type { DbFile } from '../types/dbTypes'
 
 
 export function getFileIcon(file: DbFile) {

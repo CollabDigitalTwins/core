@@ -2,6 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import React from 'react'
 
@@ -10,13 +11,14 @@ import { Card, CardContent } from '../../../../components/ui/Card'
 import {DialogContent, DialogTitle, DialogTrigger } from '../../../../components/ui/Dialog'
 
 // Icons
-import * as LR from 'lucide-react'
-import type { DbFile } from '../../../../types/dbTypes'
-import { ViewerNames } from '../../../../types/'
+
 import { MenusContext, BimContext } from '../../../../store'
+import { ViewerNames } from '../../../../types/'
 import { IfcIcon } from '../../../ui/Icons'
 import { BimViewer } from '../../bim/BimViewer'
 import { SimpleBimViewer } from '../../bim/src/SimpleBimViewer'
+
+import type { DbFile } from '../../../../types/dbTypes'
 
 interface FilePreviewProps {
   file: {

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { ViewportGizmo as ThreeViewportGizmo } from 'three-viewport-gizmo'
 import * as THREE from 'three'
+import { ViewportGizmo as ThreeViewportGizmo } from 'three-viewport-gizmo'
 
 // ⚠️⚠️⚠️ The gizmo will now only serve as a visual orientation indicator and won't respond to clicks.
 export class ViewportGizmo {

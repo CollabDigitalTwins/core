@@ -2,7 +2,8 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { CountrySubdivision } from './datasetTypes';
-import { Position } from './global'
+
+import type { Position } from './global'
 
 export enum BuildingOccupantType  {Adults = 'Adults', Families = 'Families', Seniors = 'Seniors', Seniors_50_Plus = 'Seniors_50_Plus', Seniors_55_Plus = 'Seniors_55_Plus', Seniors_65_Plus = 'Seniors_65_Plus', Seniors_60_Plus = 'Seniors_60_Plus', Indigenous_Families = 'Indigenous_Families', Youth = 'Youth', Adults_16_Plus = 'Adults_16_Plus', Adults_16_To_24 = 'Adults_16_To_24', Singles = 'Singles', Families_Single_Parents = 'Families_Single_Parents', Indigenous = 'Indigenous'}
 export enum BuildingGeometryStyle  {Complex = 'Complex', Simple = 'Simple', Apartment = 'Apartment'}

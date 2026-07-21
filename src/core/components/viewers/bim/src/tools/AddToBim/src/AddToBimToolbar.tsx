@@ -3,13 +3,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from "react"
-import { useTranslations } from "next-intl"
 import * as LR from "lucide-react"
+import { useTranslations } from "next-intl"
+import * as React from "react"
+
 import { usePermissions } from "../../../../../../../store"
-import { DropdownMenuItem } from "../../../../../../ui/DropdownMenu"
-import { ItemsBadgeButton } from "../../../../../../ui"
 import { ToolbarSubmenu } from "../../../../../../ToolbarSubmenu"
+import { ItemsBadgeButton } from "../../../../../../ui"
+import { DropdownMenuItem } from "../../../../../../ui/DropdownMenu"
+
 import type { Tool } from "../../../../../../../types/tools"
 
 interface AddToBimToolbarProps {

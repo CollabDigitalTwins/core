@@ -2,15 +2,19 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Shadcn Components
-import * as React from 'react'
 import { Settings2 } from 'lucide-react'
-import type { Tool } from '../../types/tools'
-import ToolbarButton from './ToolbarButton'
-import { Menubar } from './Menubar'
 import { useTranslations } from 'next-intl'
-import { useSidebar } from './Sidebar'
+import * as React from 'react'
+
+
 import { useIsMobile } from '../../hooks/ui/use-mobile'
 import { MenusContext } from '../../store'
+
+import { Menubar } from './Menubar'
+import { useSidebar } from './Sidebar'
+import ToolbarButton from './ToolbarButton'
+
+import type { Tool } from '../../types/tools'
 
 
 // Components

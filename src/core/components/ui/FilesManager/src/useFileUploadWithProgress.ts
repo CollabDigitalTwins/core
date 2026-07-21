@@ -5,6 +5,7 @@
 
 import * as React from 'react'
 import { mutate } from 'swr'
+
 import { uploadFileWithProgress } from '../../../viewers/map/src/tools/AddTools/AddFile/utils/uploadToPresignedURLS'
 
 function getFileExtension(file: File): string {

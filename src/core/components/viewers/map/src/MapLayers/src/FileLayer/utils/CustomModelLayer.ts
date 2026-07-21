@@ -4,8 +4,10 @@
 import { type CustomLayerInterface, type LngLatLike, type Map } from 'maplibre-gl'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import type { DbFile } from '../../../../../../../../types/dbTypes'
+
 import { disposeThreeScene } from '../../disposeThreeScene'
+
+import type { DbFile } from '../../../../../../../../types/dbTypes'
 
 type TempPositionsRef = React.MutableRefObject<Record<string, { lat: number; lng: number }>>
 type TempRotationsRef = React.MutableRefObject<Record<string, number>>

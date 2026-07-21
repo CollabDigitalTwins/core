@@ -3,16 +3,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type {MapGeoJSONFeature} from "maplibre-gl";
 import * as LR from "lucide-react";
-import * as React from "react";
 import {useTranslations} from "next-intl";
+import * as React from "react";
 
-import {useBuilding} from "../../../../../../../hooks/buildings/buildings";
-import {MapContext} from "../../../../../../../store";
 import {Button, Separator, Skeleton, Badge} from "../../../../../../../components/ui/";
 import {PopoverContent} from "../../../../../../../components/ui/Popover";
+import {useBuilding} from "../../../../../../../hooks/buildings/buildings";
+import {MapContext} from "../../../../../../../store";
+
 import BuildingTools from "./src/BuildingsTools";
+
+import type {MapGeoJSONFeature} from "maplibre-gl";
 
 type DatabaseBuildingPopoverProps = {
     "feature": MapGeoJSONFeature;

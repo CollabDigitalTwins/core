@@ -3,15 +3,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
-import { useTranslations } from 'next-intl'
 import * as LR from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
 import { BimContext } from '../../../../../../../../store'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
-import type {
-  ElevationEntry,
-  ElevationLoadingStage,
-  ElevationLoadingState} from '../../../../ElevationsTool';
 import {
   ElevationsTool,
   getElevationStagePercent,
@@ -20,6 +17,11 @@ import { exportDrawingToDxf } from '../../../../lib/exportDrawingToDxf'
 import { useBuildingName } from '../../../../lib/useBuildingName'
 import { useFriendlyIfcClassName } from '../../../../lib/useFriendlyIfcClassName'
 import { ViewSectionList } from '../../../../lib/ViewSectionList'
+
+import type {
+  ElevationEntry,
+  ElevationLoadingStage,
+  ElevationLoadingState} from '../../../../ElevationsTool';
 import type { ViewListEntry } from '../../../../lib/viewSection'
 
 interface ElevationSectionProps {

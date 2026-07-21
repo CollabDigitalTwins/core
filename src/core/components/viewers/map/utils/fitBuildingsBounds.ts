@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { Map } from 'maplibre-gl'
 import * as turf from '@turf/turf'
+
 import type { Building, Site } from '../../../../types/dbTypes'
+import type { Map } from 'maplibre-gl'
 
 export const fitBuildingsBounds = (buildings: Building[], map: Map) => {
   // Collect valid building coordinates

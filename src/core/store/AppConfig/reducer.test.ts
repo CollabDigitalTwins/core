@@ -2,6 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { describe, it, expect } from 'vitest'
+
 import { AppConfigReducer, type AppConfigState } from './reducer'
 
 const base: AppConfigState = { organization: null, user: null }

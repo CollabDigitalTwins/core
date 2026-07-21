@@ -3,14 +3,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { useState, useEffect } from 'react'
 import { useScroll, useTransform, useSpring } from 'framer-motion'
-import { toast, Toaster } from 'sonner'
-import { useLocale } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import Navbar from '../ui/Navbar'
+import { useLocale } from 'next-intl'
+import { useState, useEffect } from 'react'
+import { toast, Toaster } from 'sonner'
+
 import AnimatedBackground from '../ui/AnimatedBackground'
+import Navbar from '../ui/Navbar'
+
 import OrganizationNotFoundSection from './src/OrganizationNotFoundSection'
+
 import type { Language } from '../../types/dbTypes'
 
 interface InstanceNotFoundProps {

@@ -6,9 +6,8 @@
 // Icons
 import * as LR from 'lucide-react'
 // Dependencies
-import * as React from 'react'
 import { useTranslations } from 'next-intl'
-import { usePermissions } from '../../../../store'
+import * as React from 'react'
 
 import { Badge, Button } from '../../../../components/ui/'
 // Shadcn Components
@@ -20,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../../../../components/ui/DropdownMenu'
+import { usePermissions } from '../../../../store'
 
 // Custom Components
 import NestedFilter from './NestedFilter'

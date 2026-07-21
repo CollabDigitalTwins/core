@@ -3,15 +3,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
 import { PointCloudContext } from '../../../../../../../../store'
 import { CameraControl } from '../../../../../../../../store/PointCloud/reducer'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
-import { Slider } from '../../../../../../../ui/Slider'
 import { Label } from '../../../../../../../ui/Label'
+import { Slider } from '../../../../../../../ui/Slider'
 import { Switch } from '../../../../../../../ui/Switch'
-import * as LR from 'lucide-react'
 import { CameraMode } from '../../../../../define'
 
 // Custom Button Component

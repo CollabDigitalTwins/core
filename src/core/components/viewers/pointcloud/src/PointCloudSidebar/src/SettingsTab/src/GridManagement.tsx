@@ -3,13 +3,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
-import { useTranslations } from 'next-intl'
-import { SliderWithInput } from '../../../../../../../ui/Slider'
-import { ColorInput } from '../../../../../../../ui/Input'
-import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import * as LR from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
 import * as THREE from 'three'
+
+import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
+import { ColorInput } from '../../../../../../../ui/Input'
+import { SliderWithInput } from '../../../../../../../ui/Slider'
+
 
 export function GridManagement() {
   // Translation

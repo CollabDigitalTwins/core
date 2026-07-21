@@ -4,10 +4,6 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from 'react'
-import type {
-  ColumnDef,
-  SortingState} from '@tanstack/react-table';
 import {
   flexRender,
   getCoreRowModel,
@@ -15,27 +11,9 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import { useTranslations } from 'next-intl'
 
-import type { ColumnMeta } from '../viewers/Data/utils/Columns'
 
 // Shadcn components
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from './Table'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './Select'
-import { Button } from './Button'
 
 // Icons
 import {
@@ -44,10 +22,34 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
 
 import { MapContext, MenusContext } from '../../store'
-import type { ViewerNames } from '../../types/'
 import { DataTableSkeleton } from '../DataTableSkeleton'
+
+import { Button } from './Button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './Select'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from './Table'
+
+import type { ViewerNames } from '../../types/'
+import type { ColumnMeta } from '../viewers/Data/utils/Columns'
+import type {
+  ColumnDef,
+  SortingState} from '@tanstack/react-table';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]

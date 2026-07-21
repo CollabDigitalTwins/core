@@ -3,6 +3,7 @@
 
 import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
+
 import { Skeleton } from '../../../ui/'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../ui/Table'
 

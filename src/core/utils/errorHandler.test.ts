@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { toast } from 'sonner'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// Mock sonner so the toast call is observable and no real UI dep loads in node env.
-vi.mock('sonner', () => ({ toast: { error: vi.fn() } }))
-
-import { toast } from 'sonner'
-
 import { handleApiError } from './errorHandler'
+
+// Mock sonner so the toast call is observable and no real UI dep loads in node env.
+// vitest hoists vi.mock above the imports, so `toast` above is the mocked instance.
+vi.mock('sonner', () => ({ toast: { error: vi.fn() } }))
 
 const toastError = vi.mocked(toast.error)
 

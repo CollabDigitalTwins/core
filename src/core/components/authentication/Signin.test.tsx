@@ -24,7 +24,13 @@ vi.mock('next/navigation', () => ({
 }))
 vi.mock('react-google-recaptcha', () => ({
   __esModule: true,
-  default: () => <div data-testid="recaptcha" />,
+  // Inert in jsdom, but clicking it fires onChange so tests can complete the
+  // captcha (which SignIn requires before the invalid_credentials branch runs).
+  default: ({ onChange }: { onChange?: (token: string) => void }) => (
+    <button type="button" data-testid="recaptcha" onClick={() => onChange?.('test-captcha-token')}>
+      recaptcha
+    </button>
+  ),
 }))
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
@@ -73,6 +79,10 @@ describe('SignIn', () => {
     const [emailInput, passwordInput] = screen.getAllByPlaceholderText(/placeholder/i)
     fireEvent.change(emailInput, { target: { value: 'a@b.com' } })
     fireEvent.change(passwordInput, { target: { value: 'wrongpw1234567' } })
+
+    // Complete the captcha so handleSubmit reaches the invalid_credentials
+    // branch instead of short-circuiting on the !captchaStatus check.
+    fireEvent.click(screen.getByTestId('recaptcha'))
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /login/i }))

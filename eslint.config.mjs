@@ -131,13 +131,19 @@ export default [
       // Ordering is autofixable, so it stays a formatter concern, not a review
       // burden. Alphabetized within groups, a blank line between groups; the
       // `@/*` alias is grouped as internal so it sorts after third-party deps.
+      // `always-and-inside-groups` (not plain `always`): many files subdivide
+      // their relative-import group with blank-separated section comments
+      // (`// Custom hooks`, `// Utilities`). That intra-group spacing is
+      // intentional and the fixer can't collapse it (comments block the fix),
+      // so we allow blanks inside a group while still requiring them between
+      // groups. Group order + alphabetization stay enforced.
       'import/order': [
         'warn',
         {
           groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index', 'object', 'type'],
           pathGroups: [{ pattern: '@/**', group: 'internal', position: 'after' }],
           pathGroupsExcludedImportTypes: ['builtin'],
-          'newlines-between': 'always',
+          'newlines-between': 'always-and-inside-groups',
           alphabetize: { order: 'asc', caseInsensitive: true },
         },
       ],

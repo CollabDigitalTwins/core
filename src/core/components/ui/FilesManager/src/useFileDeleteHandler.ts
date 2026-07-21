@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
+import { toast } from 'sonner'
 
 interface UseFileDeleteHandlerProps {
   deleteFile: (fileId: number) => Promise<any>

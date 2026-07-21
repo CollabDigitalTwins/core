@@ -4,13 +4,16 @@
 import * as OBC from '@thatopen/components'
 import * as OBF from '@thatopen/components-front'
 import * as THREE from 'three'
+
 import { CurrentWorld } from '../CurrentWorld'
-import type {
-  DrawingLayerInfo} from './drawingLayers';
+
 import {
   defaultLayerColor,
   sortClassesByPriority,
 } from './drawingLayers'
+
+import type {
+  DrawingLayerInfo} from './drawingLayers';
 
 export const FONT_URL =
   'https://thatopen.github.io/engine_components/resources/fonts/PlusJakartaSans-Medium.ttf'

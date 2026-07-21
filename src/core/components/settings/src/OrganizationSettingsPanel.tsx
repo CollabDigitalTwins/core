@@ -3,19 +3,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
+import * as LR from 'lucide-react'
 import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
 import { toast } from 'sonner'
 import { mutate } from 'swr'
-import { useTranslations } from 'next-intl'
-import { MapContext, usePermissions } from '../../../store'
-import * as LR from 'lucide-react'
 
-import type { Organization } from '../../../types/dbTypes'
+import { useOrganization } from '../../../hooks/organizations/organizations'
+import { MapContext, usePermissions } from '../../../store'
+import { uploadOrganizationLogoToPublicBucket } from '../../../utils/imageUtils'
 import { Button } from '../../ui/Button'
 import { Input } from '../../ui/Input'
-import { Textarea } from '../../ui/Textarea'
-import { Separator } from '../../ui/Separator'
 import {
   Select,
   SelectContent,
@@ -23,9 +22,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../ui/Select'
-import { uploadOrganizationLogoToPublicBucket } from '../../../utils/imageUtils'
-import { useOrganization } from '../../../hooks/organizations/organizations'
+import { Separator } from '../../ui/Separator'
+import { Textarea } from '../../ui/Textarea'
+
 import OrganizationSkeleton from './OrganizationSkeleton'
+
+import type { Organization } from '../../../types/dbTypes'
 
 //import { useAppConfigContext } from '../../../store/AppConfig/context'
 

@@ -4,19 +4,23 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from 'react'
-import dynamic from 'next/dynamic'
 import { Loader2 } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
-import { ViewerNames } from '../../types'
+import * as React from 'react'
+
 import { BuildingsContext, MenusContext } from '../../store'
-import { MapViewer } from './map/MapViewer'
+import { ViewerNames } from '../../types'
+
 // Deep file import (not the ui barrel): the barrel re-exports heavy modules
 // (InfoSidebar, useFileUploadHandler, …) that would land in the eager map-route bundle.
-import { SidebarTrigger } from '../ui/Sidebar'
+import { switchLanguage } from '../../utils/utils'
 import { UserSettings } from '../settings'
 import { Toolbar } from '../Toolbar'
-import { switchLanguage } from '../../utils/utils'
+import { SidebarTrigger } from '../ui/Sidebar'
+
+import { MapViewer } from './map/MapViewer'
+
 import type { Organization } from '../../types/dbTypes'
 
 // Code-split the heavy viewers: BimViewer pulls in ~456 KB gzipped of

@@ -3,18 +3,19 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { MapMouseEvent } from "maplibre-gl";
 
 import * as React from "react";
 import { Popup } from "react-map-gl/maplibre";
 
-import { MapContext } from "../../../../../../../store/Map/context";
-import { useBuildingsContext } from "../../../../../../../store";
 import { useBuildings } from "../../../../../../../hooks/buildings/buildings";
+import { useBuildingsContext } from "../../../../../../../store";
+import { useBimContext } from "../../../../../../../store/BIM/context";
+import { MapContext } from "../../../../../../../store/Map/context";
+import { highlightColor } from "../../../../../../../types/martinTypes";
 import { MapLayerClickPriority } from "../../../../utils/MapEventManager/MapClickManager";
 import MapFeaturePopoverMenu from "../../../MapFeaturePopoverMenu";
-import { highlightColor } from "../../../../../../../types/martinTypes";
-import { useBimContext } from "../../../../../../../store/BIM/context";
+
+import type { MapMouseEvent } from "maplibre-gl";
 
 const LAYER_ID = "maptiler-3d-buildings";
 

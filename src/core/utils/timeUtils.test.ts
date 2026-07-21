@@ -2,6 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { describe, it, expect, vi, afterEach } from 'vitest'
+
 import { isSameDay, timeAgo, formatTimestamp, formatDuration } from './timeUtils'
 
 describe('formatDuration', () => {

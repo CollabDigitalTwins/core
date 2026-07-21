@@ -4,8 +4,10 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
-import { bimToolbarTools } from './src/tools/bimToolbar'
+
 import { ToolbarBody } from '../../ToolbarBody'
+
+import { bimToolbarTools } from './src/tools/bimToolbar'
 
 export function BimToolbar({ minioBaseUrl }: { minioBaseUrl?: string }) {
   return <ToolbarBody viewer="bim" tools={bimToolbarTools({ minioBaseUrl })} />

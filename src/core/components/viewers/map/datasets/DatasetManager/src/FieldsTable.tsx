@@ -4,15 +4,16 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from 'react'
 import { useTranslations, useLocale } from 'next-intl'
+import * as React from 'react'
 
 // Shadcn components
 import { Checkbox, Input, LoadingSpinner } from '../../../../../../components/ui/'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../../../components/ui/Table'
-import { formatName } from '../../utils'
-import type { ColorType, Dataset, DatasetField } from '../../../../../../types/datasetTypes'
 import { DatasetsContext } from '../../../../../../store'
+import { formatName } from '../../utils'
+
+import type { ColorType, Dataset, DatasetField } from '../../../../../../types/datasetTypes'
 
 interface FieldsTableProps {
   dataset: Dataset

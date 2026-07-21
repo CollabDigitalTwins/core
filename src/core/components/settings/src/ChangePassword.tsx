@@ -4,20 +4,22 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from "react";
+import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
+import * as React from "react";
+import { toast } from 'sonner'
+
+import { useChangePassword, useVerifyPassword } from '../../../hooks/users/users';
 import { usePermissions } from '../../../store'
 
 // Utils
-import { useSession } from 'next-auth/react'
 
 // Shadcn Components
+import { PasswordError } from '../../authentication/PasswordError'
 import { Button, Input} from '../../ui/'
-import { toast } from 'sonner'
+
 
 // Custom components
-import { PasswordError } from '../../authentication/PasswordError'
-import { useChangePassword, useVerifyPassword } from '../../../hooks/users/users';
 import { LoadingSpinner } from '../../ui/LoadingSpinner'
 
 interface ChangePasswordProps {

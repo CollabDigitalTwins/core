@@ -3,11 +3,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as LR from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import * as React from 'react'
+import { toast } from 'sonner'
+
+import { useSensor, useSensors } from '../../../hooks/sensors/sensors'
+import { useSensorTypes } from '../../../hooks/sensorTypes/sensorTypes'
 import { BuildingsContext, MenusContext, ToolsContext } from '../../../store'
+import { stringToColour } from '../../viewers/map/utils/stringToColour'
 import { Button } from '../Button'
 import { CollapsibleSection } from '../CollapsibleSection'
-import { SearchInput } from '../SearchInput'
 import { DropdownMenu } from '../DropdownMenu'
 import {
   DropdownMenuTrigger,
@@ -17,16 +23,14 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from '../DropdownMenu'
-import { useTranslations } from 'next-intl'
+import { SearchInput } from '../SearchInput'
+
 import { CollapsibleSensorItem } from './CollapsibleSensorItem'
 import { SensorsSectionSkeleton } from './SensorsSectionSkeleton'
-import { useSensor, useSensors } from '../../../hooks/sensors/sensors'
-import { toast } from 'sonner'
-import type { Sensor } from '../../../types/dbTypes';
-import { useSensorTypes } from '../../../hooks/sensorTypes/sensorTypes'
-import * as LR from 'lucide-react'
-import { stringToColour } from '../../viewers/map/utils/stringToColour'
 import { resolveLucideIcon } from './sensorUtils'
+
+import type { Sensor } from '../../../types/dbTypes';
+
 
 type SensorAction = 'view' | 'edit' | 'delete'
 

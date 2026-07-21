@@ -4,30 +4,32 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from "react";
-import { useTranslations } from 'next-intl'
 import * as OBC from '@thatopen/components'
 import * as OBF from "@thatopen/components-front"
+import * as LR from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import * as React from "react";
 import * as THREE from "three";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 
 // Utilities
-import { Tool, ToolbarToolType } from '../../../../../../types/tools'
-
-// Shadcn components
-import { Button } from '../../../../../ui/Button'
-import { DropdownMenuItem } from '../../../../../ui/DropdownMenu'
-import { Card, CardContent, CardHeader, CardTitle } from '../../../../../ui/Card'
-
-// Icons
-import * as LR from 'lucide-react'
 import { MenusContext, ToolsContext } from '../../../../../../store'
 import { BimContext } from '../../../../../../store'
-import { CursorType } from '../../../../../../types/global'
+
+
+// Shadcn components
+import { ToolbarSubmenu, SubmenuContext } from '../../../../../ToolbarSubmenu'
+import { Button } from '../../../../../ui/Button'
+import { Card, CardContent, CardHeader, CardTitle } from '../../../../../ui/Card'
+import { DropdownMenuItem } from '../../../../../ui/DropdownMenu'
+
+// Icons
 import { Cursor } from '../../Cursor'
 
+import type { CursorType } from '../../../../../../types/global'
+import type { Tool, ToolbarToolType } from '../../../../../../types/tools'
+
 // Submenu wrapper
-import { ToolbarSubmenu, SubmenuContext } from '../../../../../ToolbarSubmenu'
 
 interface ClippingToolProps {
   tool: Tool

@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { type MapGeoJSONFeature } from 'maplibre-gl'
+
+import type { MapClickManager } from '../../components/viewers/map/utils/MapEventManager/MapClickManager'
+import type { MapHoverManager } from '../../components/viewers/map/utils/MapEventManager/MapHoverManager'
+import type { CursorType } from '../../types/global'
 import type {
   Coordinates,
   MapCameraPosition,
@@ -8,15 +13,11 @@ import type {
   CurrentLocation,
   TerrainLevel,
 } from '../../types/map'
-
-import type { Feature, Geometry } from 'geojson'
 import type { ActionMap } from '../ActionMap'
-import type { CursorType } from '../../types/global'
+import type { Feature, Geometry } from 'geojson'
 import type { Map} from 'maplibre-gl';
-import { type MapGeoJSONFeature } from 'maplibre-gl'
 
-import type { MapClickManager } from '../../components/viewers/map/utils/MapEventManager/MapClickManager'
-import type { MapHoverManager } from '../../components/viewers/map/utils/MapEventManager/MapHoverManager'
+
 
 export interface MapTypes {
   mapStyle: MapStyle | null

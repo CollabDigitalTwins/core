@@ -3,23 +3,25 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from "react"
 import * as LR from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
 import maplibregl from 'maplibre-gl'
-import ReactDOM from 'react-dom/client'
-import { mutate } from 'swr'
 import { useTranslations } from 'next-intl'
+import * as React from "react"
+import ReactDOM from 'react-dom/client'
 import { toast } from 'sonner'
+import { mutate } from 'swr'
 
 import { MapContext, FilesContext } from '../../../../../../../store'
-import type { CursorType } from '../../../../../../../types/global'
-import { uploadFileWithProgress } from './utils/uploadToPresignedURLS'
 import { acceptedFiles, isAcceptedFileType } from '../../../../../../../utils/acceptedFiles'
+import { cn } from '../../../../../../../utils/utils'
 import { AddItemDialog } from '../../../../../../ui/AddItemDialog'
 import { Input } from '../../../../../../ui/Input'
-import { cn } from '../../../../../../../utils/utils'
 import MapFileMarker from '../../../MapLayers/src/FileLayer/components/MapFileMarker'
+
+import { uploadFileWithProgress } from './utils/uploadToPresignedURLS'
+
+import type { CursorType } from '../../../../../../../types/global'
+import type { LucideIcon } from 'lucide-react'
 
 function getFileExtension(file: File): string {
   if (!file?.name) return ''

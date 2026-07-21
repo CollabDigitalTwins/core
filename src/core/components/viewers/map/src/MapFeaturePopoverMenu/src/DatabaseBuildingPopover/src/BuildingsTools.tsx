@@ -3,28 +3,28 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import React from "react";
-import type { MapGeoJSONFeature } from "maplibre-gl";
 import * as LR from "lucide-react";
 import { useTranslations } from "next-intl";
-import { usePermissions } from '../../../../../../../../store'
+import React from "react";
 
-import { ViewerNames } from "../../../../../../../../types/";
-import type { Tool } from "../../../../../../../../types/tools";
-import type { Building, DbFile } from "../../../../../../../../types/dbTypes";
-
-import { useFilesByBuildingId, useUploadFileToBuilding } from "../../../../../../../../hooks/files/files";
-import { BuildingsContext, BimContext, MapContext, MenusContext, useMenusContext } from "../../../../../../../../store";
 import { Button, Label, Skeleton, Switch, Checkbox } from "../../../../../../../../components/ui/";
-import { useFileUploadHandler } from "../../../../../../../../components/ui/FilesManager/src/useFileUploadHandler";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../../../../../../../../components/ui/DropdownMenu";
-import Compare from '../../../../compare';
+import { useFileUploadHandler } from "../../../../../../../../components/ui/FilesManager/src/useFileUploadHandler";
+import { useFilesByBuildingId, useUploadFileToBuilding } from "../../../../../../../../hooks/files/files";
+import { usePermissions } from '../../../../../../../../store'
+import { BuildingsContext, BimContext, MapContext, MenusContext, useMenusContext } from "../../../../../../../../store";
+import { ViewerNames } from "../../../../../../../../types/";
 import { toggleBimToMap as dispatchToggleBimToMap } from '../../../../../utils/toggleBimToMap';
+import Compare from '../../../../compare';
+
+import type { Building, DbFile } from "../../../../../../../../types/dbTypes";
+import type { Tool } from "../../../../../../../../types/tools";
+import type { MapGeoJSONFeature } from "maplibre-gl";
 
 interface BuildingToolsProps {
   isLoading: boolean;
@@ -161,8 +161,7 @@ export default function BuildingTools({
   );
 
   const bimFiles = React.useMemo(
-    () => buildingFiles.filter((file: DbFile) => file.type === "bim-file" || file.extension === "frag"
-    ),
+    () => buildingFiles.filter((file: DbFile) => file.extension?.toLowerCase() === "frag"),
     [buildingFiles],
   )
 

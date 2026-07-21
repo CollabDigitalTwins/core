@@ -3,24 +3,25 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from "react";
 import * as OBC from "@thatopen/components";
 import * as OBF from "@thatopen/components-front"
-import * as THREE from "three";
 import { useTranslations, useLocale } from 'next-intl';
+import * as React from "react";
+import * as THREE from "three";
+
 import { ToolsContext, BimContext, MenusContext } from "../../../store";
-
-import { CurrentWorld } from "./src/CurrentWorld";
-import { CurrentCamera } from './src/CurrentCamera';
-import { Highlighter } from "./src/Highlighter";
-import { FloorplanTool } from "./src/FloorplanTool";
-import { ElevationsTool } from "./src/ElevationsTool";
-import { ViewModeCoordinator } from "./src/lib/ViewModeCoordinator";
-
-import { PropertiesMenu } from "./src/propertiesMenu";
-import { BimLoadingState } from "./src/BimLoadingState";
-import { ViewportGizmo } from "./src/ViewportGizmo";
 import { useBimCoordinateSystem } from "../useCoordinateSystem";
+
+import { BimLoadingState } from "./src/BimLoadingState";
+import { CurrentCamera } from './src/CurrentCamera';
+import { CurrentWorld } from "./src/CurrentWorld";
+import { ElevationsTool } from "./src/ElevationsTool";
+import { FloorplanTool } from "./src/FloorplanTool";
+import { Highlighter } from "./src/Highlighter";
+import { ViewModeCoordinator } from "./src/lib/ViewModeCoordinator";
+import { PropertiesMenu } from "./src/propertiesMenu";
+import { ViewportGizmo } from "./src/ViewportGizmo";
+
 
 export function BimViewer() {
 

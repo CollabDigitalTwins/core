@@ -2,9 +2,10 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import useSWR, { mutate } from "swr";
-import type { ApiAdapter } from "../ports/apiAdapter";
-import type { OpenDataPortal, DatasetGroup } from "../../types/dbTypes";
 import useSWRMutation from "swr/mutation";
+
+import type { OpenDataPortal, DatasetGroup } from "../../types/dbTypes";
+import type { ApiAdapter } from "../ports/apiAdapter";
 
 export function createOpenDataPortalHooks(adapter: ApiAdapter) {
   // Call adapter methods inside hooks

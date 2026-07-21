@@ -4,8 +4,11 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './Dialog'
+
 import { cn } from '../../utils/utils'
+
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './Dialog'
+
 import type { LucideIcon } from 'lucide-react'
 
 interface AddItemDialogProps {

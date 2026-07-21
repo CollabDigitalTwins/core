@@ -3,11 +3,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as LR from 'lucide-react'
 import * as React from 'react'
+import { createRoot } from 'react-dom/client'
 import * as THREE from 'three'
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
-import * as LR from 'lucide-react'
-import { createRoot } from 'react-dom/client'
+
 import { BimContext } from '../../../../../../../store'
 
 interface FileAttachmentProps {

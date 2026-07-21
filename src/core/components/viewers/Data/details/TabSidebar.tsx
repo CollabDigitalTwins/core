@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { useTranslations } from 'next-intl'
+
 import { Badge, Button } from '../../../../components/ui/'
 // Shadcn Components
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/Select'
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from '../../../../components/ui/Sidebar'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/Select'
-import { useTranslations } from 'next-intl'
-import { usePermissions } from '../../../../store'
 import { useIsMobile } from '../../../../hooks/ui/use-mobile'
+import { usePermissions } from '../../../../store'
 
 // Define TabOption interface
 export type TabOption = {

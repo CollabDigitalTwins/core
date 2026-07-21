@@ -4,15 +4,15 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
 // Icons
-import * as LR from 'lucide-react'
 
 // Shadcn components
-import { Popover, PopoverTrigger, PopoverContent } from '../../../ui/Popover'
 import { Checkbox, Button, Input } from '../../../ui/'
+import { Popover, PopoverTrigger, PopoverContent } from '../../../ui/Popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectLabel, SelectGroup } from '../../../ui/Select'
 
 import type { filterFieldOptions } from '../utils/Columns'

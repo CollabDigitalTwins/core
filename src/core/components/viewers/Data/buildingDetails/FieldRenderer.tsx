@@ -3,7 +3,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { Plus, X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import React from 'react'
+
+import { useSites } from '../../../../hooks/sites/sites'
+import { usePermissions, useMapContext } from '../../../../store'
 import {
   BuildingAssessmentConditions,
   BuildingGeometryStyle,
@@ -18,17 +23,13 @@ import {
   BuildingElectricityServiceSize,
   BuildingElectricityServiceLocation,
 } from '../../../../types/dbTypes'
-
-import { useSites } from '../../../../hooks/sites/sites'
-import { useTranslations } from 'next-intl'
-import { usePermissions, useMapContext } from '../../../../store'
-
-import { Checkbox } from '../../../ui/Checkbox'
-import { Input } from '../../../ui/Input'
-import { Textarea } from '../../../ui/Textarea'
-import { Button } from '../../../ui/Button'
 import { Badge } from '../../../ui/Badge'
+import { Button } from '../../../ui/Button'
+import { Checkbox } from '../../../ui/Checkbox'
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '../../../ui/Command'
 import { DatePicker } from '../../../ui/DatePicker'
+import { Input } from '../../../ui/Input'
+import { LoadingSpinner } from '../../../ui/LoadingSpinner'
 import {
   Select,
   SelectContent,
@@ -36,12 +37,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../ui/Select'
-import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '../../../ui/Command'
-
+import { Textarea } from '../../../ui/Textarea'
 import FileUpload from '../details/FileUpload'
-
-import { Plus, X } from 'lucide-react'
-import { LoadingSpinner } from '../../../ui/LoadingSpinner'
 
 export const BuildingTypeEnum = [
   'Townhouses',

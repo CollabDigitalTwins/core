@@ -3,14 +3,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 import { useTranslations } from 'next-intl'
+import * as React from 'react'
 
 import { Separator } from '../ui/'
 
+import SettingsContent from './src/SettingsContent'
 import SettingsHeader from './src/SettingsHeader'
 import SettingsSidebar from './src/SettingsSidebar'
-import SettingsContent from './src/SettingsContent'
+
 import type { SettingsTabKey } from './src/types'
 
 export function UserSettings({ minioBaseUrl }: { minioBaseUrl?: string }) {

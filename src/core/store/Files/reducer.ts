@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { DbFile } from '../../types/dbTypes'
 import { FileType } from '../../types/files'
-import { FileAction } from '../../types/global'
-import { ActionMap } from '../ActionMap'
+
+import type { DbFile } from '../../types/dbTypes'
+import type { FileAction } from '../../types/global'
+import type { ActionMap } from '../ActionMap'
 
 interface FilesTypes {
   files: DbFile[]

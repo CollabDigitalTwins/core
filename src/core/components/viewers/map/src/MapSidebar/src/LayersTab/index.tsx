@@ -3,24 +3,26 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 import { usePathname } from 'next/navigation'
+import * as React from 'react'
 
-import { DatasetsContext, MenusContext, useMapContext } from '../../../../../../../store'
 // import { useAppConfigContext } from '../../../../../../../store/AppConfig/context'
 import {
   useOpenDataPortalsByCountrySubdivision,
   useOpenDataPortalsByGroup,
   useOpenDataPortalsByMunicipality,
 } from '../../../../../../../hooks/openDataPortals/openDataPortals'
-import type { Organization } from '../../../../../../../types/dbTypes';
+import { DatasetsContext, MenusContext, useMapContext } from '../../../../../../../store'
 import { DatasetGroup } from '../../../../../../../types/dbTypes'
-import type { Dataset } from '../../../../../../../types/datasetTypes'
-import { useDatasetsForPortals } from '../../../../datasets/src/useDatasetsForPortals'
-import { fetchLocalDatasets } from '../../../../datasets/src/localDatasets'
 import { SearchInput } from '../../../../../../ui'
+import { fetchLocalDatasets } from '../../../../datasets/src/localDatasets'
+import { useDatasetsForPortals } from '../../../../datasets/src/useDatasetsForPortals'
+
 import { AppliedDatasetsSection } from './src/AppliedDatasetsSection'
 import { AvailableDatasetsSection } from './src/AvailableDatasetsSection'
+
+import type { Dataset } from '../../../../../../../types/datasetTypes'
+import type { Organization } from '../../../../../../../types/dbTypes';
 
 type OrgVisibility = {
   isAdmin: boolean

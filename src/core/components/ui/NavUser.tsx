@@ -4,14 +4,19 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
+import * as LR from 'lucide-react'
 import { useParams, useSearchParams } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
 
 // Utils
+import { useUser } from '../../hooks/users/users'
+import { useMenusContext } from '../../store'
+import { ViewerNames } from '../../types'
+
 import { handleChangeViewer } from './AppSidebar'
 
 // Icons
-import * as LR from 'lucide-react'
 
 // Shadcn Components
 import {
@@ -26,12 +31,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './DropdownMenu'
-
 import { SidebarMenuItem, SidebarMenuButton, useSidebar } from './Sidebar'
-import { useMenusContext } from '../../store'
-import { ViewerNames } from '../../types'
-import { useSession } from 'next-auth/react'
-import { useUser } from '../../hooks/users/users'
 import { UserAvatar } from './UserAvatar'
 
 export function NavUser({

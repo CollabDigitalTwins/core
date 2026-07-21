@@ -4,8 +4,9 @@
 import * as React from "react";
 import useSWR, { mutate } from "swr";
 import useSWRMutation from "swr/mutation";
-import type { ApiAdapter } from "../ports/apiAdapter";
+
 import type { User, Role } from "../../types/dbTypes";
+import type { ApiAdapter } from "../ports/apiAdapter";
 
 export function createUserHooks(adapter: ApiAdapter) {
   // Call adapter methods inside hooks

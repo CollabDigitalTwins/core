@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { CurrentCamera } from './CurrentCamera'
 import * as OBC from '@thatopen/components'
-import { CurrentWorld } from './CurrentWorld'
 import { ViewportGizmo as ThreeViewportGizmo } from 'three-viewport-gizmo'
+
+import { CurrentCamera } from './CurrentCamera'
+import { CurrentWorld } from './CurrentWorld'
+
 
 export class ViewportGizmo extends OBC.Component implements OBC.Disposable {
   static readonly uuid = 'c51594f0-68af-4318-ac86-c2e0e7ee62df' as const

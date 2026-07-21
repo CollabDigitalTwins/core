@@ -3,25 +3,27 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from "react";
 import * as OBC from "@thatopen/components";
 import * as OBF from "@thatopen/components-front"
+import * as React from "react";
 import * as THREE from "three";
+
 import { BimContext } from "../../../../store";
 import { LoadingSpinner } from '../../../ui/LoadingSpinner';
-
-import { CurrentWorld } from "../src/CurrentWorld";
 import { CurrentCamera } from '../src/CurrentCamera';
-import { FitCamera } from './FitCamera';
+import { CurrentWorld } from "../src/CurrentWorld";
+
 import { CameraProjection } from './CameraProjection';
-import { SpatialStructure } from './SpatialStructure';
-import { LoadModels } from './LoadModels';
-import { IfcToFragments } from './IfcToFragments';
-import type { DbFile } from '../../../../types/dbTypes';
-import { ModelManager } from './ModelManager';
-import { FloorplanTool } from './FloorplanTool';
 import { ElevationsTool } from './ElevationsTool';
+import { FitCamera } from './FitCamera';
+import { FloorplanTool } from './FloorplanTool';
+import { IfcToFragments } from './IfcToFragments';
 import { ViewModeCoordinator } from './lib/ViewModeCoordinator';
+import { LoadModels } from './LoadModels';
+import { ModelManager } from './ModelManager';
+import { SpatialStructure } from './SpatialStructure';
+
+import type { DbFile } from '../../../../types/dbTypes';
 
 interface Props {
     file: DbFile

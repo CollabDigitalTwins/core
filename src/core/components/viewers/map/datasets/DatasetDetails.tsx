@@ -4,15 +4,18 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Shadcn Components
-import { DescriptionListItem } from '../../../../components/ui/DescriptionList'
+import * as LR from 'lucide-react'
+import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
 import { Button, Badge, Separator } from '../../../../components/ui/'
 import { Card, CardContent } from '../../../../components/ui/Card'
-import * as LR from 'lucide-react'
-import type { Dataset } from '../../../../types/datasetTypes'
-import Link from 'next/link'
-import * as React from 'react'
-import { useTranslations } from 'next-intl'
+import { DescriptionListItem } from '../../../../components/ui/DescriptionList'
+
 import { useFastDatasetCache } from './src/useFastDatasetCache'
+
+import type { Dataset } from '../../../../types/datasetTypes'
 
 interface DatasetDetailsProps {
   selectedDataset?: Dataset

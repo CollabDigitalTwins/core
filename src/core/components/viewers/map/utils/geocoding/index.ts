@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { Feature } from 'geojson'
 import { getGeocodingConfig } from './config'
-import { peliasAutocomplete, peliasReverse } from './pelias'
 import { photonAutocomplete, nominatimReverse } from './osm'
+import { peliasAutocomplete, peliasReverse } from './pelias'
+
+import type { Feature } from 'geojson'
 
 // Provider-agnostic entry points. The preferred provider (Geocode Earth or a
 // self-hosted Pelias) is resolved in ./config from runtime-injected values;

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { getAttachmentFieldName } from '../viewers/Data/details/getAttachmentFileName'
 import { getFileExtension } from '../../utils/utils'
+import { getAttachmentFieldName } from '../viewers/Data/details/getAttachmentFileName'
 
 interface UploadFileArgs {
   // Support both single and multiple files; prefer `files` when passing many

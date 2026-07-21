@@ -3,17 +3,24 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { useSearchParams } from "next/navigation";
 import * as React from "react";
 import * as THREE from "three";
-import { useSearchParams } from "next/navigation";
-import { loadAllAssets } from "./utils/potreeLoader";
+
+import { useFilesByBuildingId } from '../../../hooks/files/files'
 import { BuildingsContext, PointCloudContext } from '../../../store'
+import { usePointCloudCoordinateSystem } from '../useCoordinateSystem';
+
+import { PointCloudLoadingState } from "./src/PointCloudLoadingState";
+import { ViewportGizmo } from './src/ViewportGizmo';
+import { loadAllAssets } from "./utils/potreeLoader";
+
+
 // import { useAppConfigContext } from '../../../store/AppConfig/context'
 import { restoreCameraFromUrl } from "./utils/restoreCameraFromUrl";
-import { PointCloudLoadingState } from "./src/PointCloudLoadingState";
-import { useFilesByBuildingId } from '../../../hooks/files/files'
-import { ViewportGizmo } from './src/ViewportGizmo';
-import { usePointCloudCoordinateSystem } from '../useCoordinateSystem';
+
+
+
 
 
 export function PointCloudViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {

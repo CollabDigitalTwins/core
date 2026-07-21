@@ -3,8 +3,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { useCoreHooks } from "../provider";
 import * as React from "react";
+
+import { useCoreHooks } from "../provider";
 
 /**
  * Convenience wrapper so components can import hooks directly from src/core/hooks/files

@@ -4,10 +4,10 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { Check } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Check } from 'lucide-react'
+import { useState } from 'react'
 
 import { Button } from '../../ui/Button'
 import { Card } from '../../ui/Card'

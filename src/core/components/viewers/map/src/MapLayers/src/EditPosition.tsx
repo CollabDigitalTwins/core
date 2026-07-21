@@ -3,14 +3,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as LR from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { Marker, Popup } from "react-map-gl/maplibre";
-import * as LR from "lucide-react";
 import { toast } from "sonner";
-import { Input, Label, Button } from "../../../../../ui";
-import { useTranslations } from "next-intl";
-import type { Building, DbFile } from "../../../../../../types/dbTypes";
+
 import { useFile } from "../../../../../../hooks/files/files";
+import { Input, Label, Button } from "../../../../../ui";
+
+import type { Building, DbFile } from "../../../../../../types/dbTypes";
 
 /** Extracts position/rotation/elevation from a BIM file, falling back to its building's values. */
 export const extractPositionAndRotation = (bimFile: DbFile, building?: Building) => {

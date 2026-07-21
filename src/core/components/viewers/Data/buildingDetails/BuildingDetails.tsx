@@ -4,35 +4,39 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from "react";
-import type { Building } from '../../../../types/dbTypes'
-import { mutate } from 'swr'
 import { useSession } from 'next-auth/react'
-import { handleApiError } from '../../../../utils/errorHandler'
-import { usePermissions } from '../../../../store'
+import * as React from "react";
+
 
 // Custom hooks
-import { useBuilding, useCreateBuilding } from '../../../../hooks/buildings/buildings'
-import { useFilesByBuildingId } from '../../../../hooks/files/files'
 
 // Utilities
-import { useBuildingHeaders } from '../utils/Headers'
-import { useIsMobile } from '../../../../hooks/ui/use-mobile'
 
 // Shadcn Components
-import { DescriptionListItem } from '../../../ui/DescriptionList'
-import { Separator } from '../../../ui/Separator'
 import { toast } from 'sonner'
+import { mutate } from 'swr'
+
+import { useBuilding, useCreateBuilding } from '../../../../hooks/buildings/buildings'
+import { useFilesByBuildingId } from '../../../../hooks/files/files'
+import { useIsMobile } from '../../../../hooks/ui/use-mobile'
 
 // Custom Components
-import AttachedFiles from '../details/AttachedFiles'
-import TabSidebar from '../details/TabSidebar'
-import FieldValue from '../details/FieldValue'
-import FieldRenderer from './FieldRenderer'
-import CheckboxGroup from '../details/CheckboxGroup'
-import UnitsGrid from '../details/UnitsGrid'
-import EnergySourcesGrid from '../details/EnergySourcesGrid'
 import { useUser } from '../../../../hooks/users/users';
+import { usePermissions } from '../../../../store'
+import { handleApiError } from '../../../../utils/errorHandler'
+import { DescriptionListItem } from '../../../ui/DescriptionList'
+import { Separator } from '../../../ui/Separator'
+import AttachedFiles from '../details/AttachedFiles'
+import CheckboxGroup from '../details/CheckboxGroup'
+import EnergySourcesGrid from '../details/EnergySourcesGrid'
+import FieldValue from '../details/FieldValue'
+import TabSidebar from '../details/TabSidebar'
+import UnitsGrid from '../details/UnitsGrid'
+import { useBuildingHeaders } from '../utils/Headers'
+
+import FieldRenderer from './FieldRenderer'
+
+import type { Building } from '../../../../types/dbTypes'
 
 interface BuildingDetailsProps {
   selectedItem?: Building

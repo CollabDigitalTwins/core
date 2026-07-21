@@ -3,25 +3,29 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { MapRef} from 'react-map-gl/maplibre';
-import Map, { NavigationControl } from 'react-map-gl/maplibre'
-import React from 'react'
-
 import maplibregl from 'maplibre-gl'
 import { useSearchParams } from 'next/navigation'
+import React from 'react'
+import Map, { NavigationControl } from 'react-map-gl/maplibre'
+
 
 import { MapContext } from '../../../store'
-import { resolveBounds } from './utils/validateBounds'
+import SettingsButton from '../../ui/SettingsButton'
+import { StatsOverlay } from '../../ui/stats'
 
-import { MapClickManager } from './utils/MapEventManager/MapClickManager'
 import DatasetManagerMenu from './datasets/DatasetManager'
 import { MapLegendHost } from './legends/MapLegendHost'
-import { StatsOverlay } from '../../ui/stats'
+import { MapLayers } from './src/MapLayers'
+import { MapClickManager } from './utils/MapEventManager/MapClickManager'
 import { MapHoverManager } from './utils/MapEventManager/MapHoverManager'
+import { resolveBounds } from './utils/validateBounds'
+
+
+
+
 import type { Organization } from '../../../types/dbTypes'
 import type { CurrentLocation } from '../../../types/map'
-import { MapLayers } from './src/MapLayers'
-import SettingsButton from '../../ui/SettingsButton'
+import type { MapRef} from 'react-map-gl/maplibre';
 
 const CANADA_DEFAULTS = {
   zoom: 3,

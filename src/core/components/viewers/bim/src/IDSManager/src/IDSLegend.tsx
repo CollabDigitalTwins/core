@@ -3,10 +3,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
-import { Badge } from '../../../../../ui/Badge'
 import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
+import { Badge } from '../../../../../ui/Badge'
 import { IdsIcon } from '../../../../../ui/Icons/IdsIcon'
 
 interface IDSLegendProps {

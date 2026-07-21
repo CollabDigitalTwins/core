@@ -3,21 +3,23 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from "react";
-import { useMenusContext } from '../../../../store'
-import { toast } from 'sonner'
+import { DropdownMenuItem } from '@radix-ui/react-dropdown-menu'
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import * as React from "react";
+import { toast } from 'sonner'
+
+import { useMenusContext } from '../../../../store'
 
 // Shadcn components
 import { AddItemDialog } from '../../../ui/AddItemDialog'
 import { Button } from '../../../ui/Button'
 
 // Icons
-import * as LR from 'lucide-react'
 
 // Custom components
 import GeocoderInput from './GeocoderInput'
-import { DropdownMenuItem } from '@radix-ui/react-dropdown-menu'
+
 
 interface AddBuildingProps {
   newBuildingFields: any

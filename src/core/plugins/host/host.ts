@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { PluginManifest, PluginEntry, PluginContext } from '../sdk/types'
-import type { PluginRegistry } from './registry'
 import { createPluginContext } from './context'
 import { PluginActivationError } from './errors'
+
+import type { PluginRegistry } from './registry'
+import type { PluginManifest, PluginEntry, PluginContext } from '../sdk/types'
 
 type PluginStatus = 'active' | 'inactive' | 'errored'
 

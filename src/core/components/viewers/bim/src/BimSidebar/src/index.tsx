@@ -4,15 +4,18 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
-import { TabSelector } from './TabSelector'
+
+import { BimContext, MenusContext } from '../../../../../../store'
+import { InfoSidebarContainer } from '../../../../../ui/InfoSidebar/Container'
+
+import { CommunicationTab } from './CommunicationTab'
 import { FileTab } from './FileTab'
 import { LayersTab } from './LayersTab'
-import { CommunicationTab } from './CommunicationTab'
-import { SettingsTab } from './SettingsTab'
-import { BimContext, MenusContext } from '../../../../../../store'
-import type { SidebarTabType } from '../../../../../../store/Menus/reducer'
-import { InfoSidebarContainer } from '../../../../../ui/InfoSidebar/Container'
 import { SensorsTab } from './SensorsTab'
+import { SettingsTab } from './SettingsTab'
+import { TabSelector } from './TabSelector'
+
+import type { SidebarTabType } from '../../../../../../store/Menus/reducer'
 import type { Organization } from '../../../../../../types/dbTypes'
 
 export function BimSidebar({ minioBaseUrl, organization }: { minioBaseUrl?: string; organization?: Organization }) {

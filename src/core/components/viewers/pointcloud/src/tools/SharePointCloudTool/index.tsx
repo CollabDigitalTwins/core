@@ -7,11 +7,13 @@ import * as React from "react";
 
 // Utilities
 import { PointCloudContext, BuildingsContext } from '../../../../../../store'
-import type { Tool } from '../../../../../../types/tools'
+import { ShareToolSubmenu } from '../../../../../ui/ShareFeature'
+
 import { getCameraPosition } from './src/getCameraPosition'
 
+import type { Tool } from '../../../../../../types/tools'
+
 // Custom components
-import { ShareToolSubmenu } from '../../../../../ui/ShareFeature'
 
 interface ShareToolProps {
   tool: Tool

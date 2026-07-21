@@ -2,8 +2,9 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import React from 'react'
-import type { MapRef } from 'react-map-gl/maplibre'
 import Stats from 'three/examples/jsm/libs/stats.module.js'
+
+import type { MapRef } from 'react-map-gl/maplibre'
 
 interface StatsOverlayProps {
   mapRef: React.RefObject<MapRef>

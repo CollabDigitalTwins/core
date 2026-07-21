@@ -3,20 +3,22 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
-import { useTranslations } from 'next-intl'
-import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import * as LR from 'lucide-react'
-import { BimContext, BuildingsContext } from '../../../../../../../../store'
-import { ModelManager } from '../../../../ModelManager'
-import { BIMManager } from '../../../../BIMManager'
-import { GhostMode } from '../../../../GhostMode'
-import { GizmoController } from '../../../../../utils/GizmoController'
-import { CurrentWorld } from '../../../../CurrentWorld'
-import { Highlighter } from '../../../../Highlighter'
-import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
 import { useUploadFileToBuilding, useDeleteFile, useFile } from '../../../../../../../../hooks/files/files'
+import { BimContext, BuildingsContext } from '../../../../../../../../store'
+import ConfirmDialog from '../../../../../../../ConfirmDialog'
+import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { useFileUploadHandler, useFileDeleteHandler, FileItemComponent, useFileActions, useCommonFileUpload } from '../../../../../../../ui/FilesManager'
+import { GizmoController } from '../../../../../utils/GizmoController'
+import { BIMManager } from '../../../../BIMManager'
+import { CurrentWorld } from '../../../../CurrentWorld'
+import { GhostMode } from '../../../../GhostMode'
+import { Highlighter } from '../../../../Highlighter'
+import { ModelManager } from '../../../../ModelManager'
+
 import type { DbFile as DbFile } from '../../../../../../../../types/dbTypes'
 
 const BIM_MODEL_OPTIONS: import('../../../../../../../../types/global').FileAction[] = ['view', 'ghost', 'move', 'info', 'delete']

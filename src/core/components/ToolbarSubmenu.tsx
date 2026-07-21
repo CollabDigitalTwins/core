@@ -3,23 +3,24 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as LR from 'lucide-react'
 import * as React from 'react'
 
 // Utilities
-import { ToolsContext } from '../store'
-import type { Tool} from '../types/tools';
-import { type ToolbarToolType } from '../types/tools'
-
-// Shadcn components
 import { Button } from '../components/ui/Button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '../components/ui/DropdownMenu'
+import { ToolsContext } from '../store'
+import { type ToolbarToolType } from '../types/tools'
+
+import type { Tool} from '../types/tools';
+
+// Shadcn components
 
 // Icons
-import * as LR from 'lucide-react'
 
 // Context for managing which submenu is open
 export const SubmenuContext = React.createContext<{

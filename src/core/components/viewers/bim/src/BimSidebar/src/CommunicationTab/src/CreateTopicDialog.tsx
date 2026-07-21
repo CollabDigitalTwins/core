@@ -3,22 +3,24 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
-import type * as OBC from '@thatopen/components'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../../../../../ui/Dialog'
-import { Button } from '../../../../../../../ui/Button'
-import { Input } from '../../../../../../../ui/Input'
-import { Label } from '../../../../../../../ui/Label'
-import { Textarea } from '../../../../../../../ui/Textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../../../ui/Select'
-import { Calendar } from '../../../../../../../ui/Calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '../../../../../../../ui/Popover'
-import { Checkbox } from '../../../../../../../ui/Checkbox'
-import { Badge } from '../../../../../../../ui/Badge'
+import { format } from 'date-fns'
 import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { format } from 'date-fns'
+import * as React from 'react'
+
 import { cn } from '../../../../../../../../utils/utils'
+import { Badge } from '../../../../../../../ui/Badge'
+import { Button } from '../../../../../../../ui/Button'
+import { Calendar } from '../../../../../../../ui/Calendar'
+import { Checkbox } from '../../../../../../../ui/Checkbox'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../../../../../ui/Dialog'
+import { Input } from '../../../../../../../ui/Input'
+import { Label } from '../../../../../../../ui/Label'
+import { Popover, PopoverContent, PopoverTrigger } from '../../../../../../../ui/Popover'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../../../ui/Select'
+import { Textarea } from '../../../../../../../ui/Textarea'
+
+import type * as OBC from '@thatopen/components'
 
 export interface BCFTopicFormData {
   title: string

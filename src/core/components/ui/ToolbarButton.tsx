@@ -5,8 +5,11 @@
 
 // Components
 import * as React from 'react'
-import { Button } from './Button'
+
 import { MapContext, MenusContext, ToolsContext } from '../../store'
+
+import { Button } from './Button'
+
 import type { CursorType } from '../../types/global'
 import type { ToolbarToolType, Tool } from '../../types/tools'
 

@@ -4,27 +4,29 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from "react";
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { usePermissions } from '../../../../../store'
-import { useBuildings } from '../../../../../hooks/buildings/buildings'
-import { useSites } from '../../../../../hooks/sites/sites'
+import * as React from "react";
 
-// Data
-
-
-// Shadcn Components
+import { Button, Input } from '../../../../../components/ui/'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../../../../../components/ui/DropdownMenu'
-import { Button, Input } from '../../../../../components/ui/'
+import { useBuildings } from '../../../../../hooks/buildings/buildings'
+import { useSites } from '../../../../../hooks/sites/sites'
+import { usePermissions } from '../../../../../store'
+
+// Data
+
+
+// Shadcn Components
 
 // Icons
-import * as LR from 'lucide-react'
-import { Building, Site } from '../../../../../types/dbTypes';
+
+import type { Building, Site } from '../../../../../types/dbTypes';
 
 interface AddItemProps {
   handleAddBuilding: (building: Building) => void

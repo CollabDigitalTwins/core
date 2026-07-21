@@ -4,6 +4,7 @@
 import * as OBC from '@thatopen/components'
 import * as OBF from '@thatopen/components-front'
 import * as THREE from 'three'
+
 import {
   addItemsProjectionByClassOccluded,
   createDrawing,
@@ -12,6 +13,7 @@ import {
   getItemIdsByClass,
   patchModelGeometryRepresentationIds,
 } from '../../lib/drawingProjection'
+
 import type {
   ElevationDirection,
   ElevationEntry,

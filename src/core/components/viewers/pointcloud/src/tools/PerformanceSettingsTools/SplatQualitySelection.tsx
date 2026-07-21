@@ -3,15 +3,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from "react";
-import { PointCloudContext } from '../../../../../../store'
-import { useTranslations } from 'next-intl'
-import { ToolbarSubmenu } from '../../../../../ToolbarSubmenu'
-import { SliderWithInput, Slider } from '../../../../../ui/Slider'
-import { Label } from '../../../../../ui/Label'
-import { Switch } from '../../../../../ui/Switch'
-import { DropdownMenuSeparator } from '../../../../../ui/DropdownMenu'
 import * as LR from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import * as React from "react";
+
+import { PointCloudContext } from '../../../../../../store'
+import { ToolbarSubmenu } from '../../../../../ToolbarSubmenu'
+import { DropdownMenuSeparator } from '../../../../../ui/DropdownMenu'
+import { Label } from '../../../../../ui/Label'
+import { SliderWithInput, Slider } from '../../../../../ui/Slider'
+import { Switch } from '../../../../../ui/Switch'
+
 
 export enum SplatQuality {
     HIGH,

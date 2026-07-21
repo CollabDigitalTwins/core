@@ -4,13 +4,15 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from "react"
+
+import { useComments, useComment } from "../../../../../../../hooks/comments/comments"
+import { useCoreHooks } from "../../../../../../../hooks/provider"
+import { useUsers } from "../../../../../../../hooks/users/users"
 import { MenusContext } from "../../../../../../../store"
 import { ViewerNames } from "../../../../../../../types/dbTypes"
-import { useComments, useComment } from "../../../../../../../hooks/comments/comments"
-import { useUsers } from "../../../../../../../hooks/users/users"
-import { useCoreHooks } from "../../../../../../../hooks/provider"
-import { renderCSS2DMarkers, type MarkerRef } from "./renderCSS2DMarkers"
+
 import BimComment from "./BimComment"
+import { renderCSS2DMarkers, type MarkerRef } from "./renderCSS2DMarkers"
 
 export function useCommentMarkers(world: any, buildingId: number) {
   const { state: menusState } = React.useContext(MenusContext)

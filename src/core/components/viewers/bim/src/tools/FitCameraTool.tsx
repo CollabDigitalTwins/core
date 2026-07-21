@@ -4,18 +4,20 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from "react";
 
 // Utilities
-import type { Tool } from '../../../../../types/tools'
 
 // Shadcn components
-import { Button } from '../../../../ui/Button'
 
 // Icons
 import * as LR from 'lucide-react'
+import * as React from "react";
+
 import { BimContext } from '../../../../../store/BIM/context'
+import { Button } from '../../../../ui/Button'
 import { FitCamera } from '../FitCamera'
+
+import type { Tool } from '../../../../../types/tools'
 
 interface FitCameraProps {
   tool: Tool

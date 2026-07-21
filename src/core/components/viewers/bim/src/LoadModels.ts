@@ -2,12 +2,14 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as OBC from "@thatopen/components";
-import type * as FRAGS from "@thatopen/fragments";
-import type * as THREE from "three";
+
+import { CameraProjection } from "./CameraProjection";
 import { CurrentWorld } from "./CurrentWorld";
 import { FitCamera } from "./FitCamera";
-import { CameraProjection } from "./CameraProjection";
 import { SpatialStructure } from "./SpatialStructure";
+
+import type * as FRAGS from "@thatopen/fragments";
+import type * as THREE from "three";
 
 export class LoadModels extends OBC.Component {
 

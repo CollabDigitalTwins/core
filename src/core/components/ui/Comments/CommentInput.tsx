@@ -3,20 +3,22 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 import * as LR from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
 
+import { useCreateComment } from '../../../hooks/comments/comments'
+import { AppConfigContext, MapContext, BuildingsContext, MenusContext, ToolsContext } from '../../../store'
+import { ViewerNames } from '../../../types/dbTypes'
 import { cn } from '../../../utils/utils'
+import { AddItemDialog } from '../AddItemDialog'
 import { Button } from '../Button'
 import { Card, CardContent, CardHeader, CardTitle } from '../Card'
-import { AddItemDialog } from '../AddItemDialog'
 import { Input } from '../Input'
 import { Label } from '../Label'
-import { AppConfigContext, MapContext, BuildingsContext, MenusContext, ToolsContext } from '../../../store'
-import { Comment, ViewerNames } from '../../../types/dbTypes'
-import { useCreateComment } from '../../../hooks/comments/comments'
+
+import type { Comment} from '../../../types/dbTypes';
 
 export type CommentInputLayout = 'inline' | 'card' | 'dialog'
 

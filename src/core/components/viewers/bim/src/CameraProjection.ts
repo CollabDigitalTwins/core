@@ -2,6 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as OBC from '@thatopen/components'
+
 import { CurrentCamera } from './CurrentCamera'
 import { FitCamera } from './FitCamera'
 

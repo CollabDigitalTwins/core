@@ -3,23 +3,26 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 
 // Dependencies
-import { Button } from './Button'
 
 // Icons
 import * as LR from 'lucide-react'
-
-import { useTranslations } from 'next-intl'
-import { useSession } from 'next-auth/react'
-import { CdtIcon } from './Icons/CdtIcon'
 import Link from 'next/link'
-import { Sidebar, useSidebar, NavUser } from './'
-import { ViewerNames } from '../../types'
+import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
+
 import { useMenusContext } from '../../store'
+import { ViewerNames } from '../../types'
 import { BugReportDialog } from '../support/BugReportDialog'
 import { FeatureRequestDialog } from '../support/FeatureRequestDialog'
+
+import { Button } from './Button'
+import { CdtIcon } from './Icons/CdtIcon'
+
+import { Sidebar, useSidebar, NavUser } from './'
 
 export const handleChangeViewer = (
   viewer: ViewerNames,

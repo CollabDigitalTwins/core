@@ -5,17 +5,13 @@
 
 // Icons
 import * as LR from 'lucide-react'
-import React from 'react'
 import { useTranslations } from 'next-intl'
+import React from 'react'
 
 // Dependencies
 
 
-import type { CompareItem } from '../../../../../store';
-import { MapContext, useBuildingsContext } from '../../../../../store'
-import { useBuildingHeaders, useSiteHeaders } from '../../../Data/utils/Headers'
 import { Button, ExportData, ColorCircle } from '../../../../../components/ui/'
-// Shadcn components
 import {
   Dialog,
   DialogClose,
@@ -25,14 +21,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../../../../../components/ui/Dialog'
+import { MapContext, useBuildingsContext } from '../../../../../store'
+import { useBuildingHeaders, useSiteHeaders } from '../../../Data/utils/Headers'
+// Shadcn components
 
 // Custom Components
+import { fitBuildingsBounds } from '../../utils/fitBuildingsBounds'
+import { stringToColour } from '../../utils/stringToColour'
+
 import AddItem from './AddItem'
 import {
   DescriptionListItem,
 } from './description-list'
-import { fitBuildingsBounds } from '../../utils/fitBuildingsBounds'
-import { stringToColour } from '../../utils/stringToColour'
+
+import type { CompareItem } from '../../../../../store';
 import type { Building, Site } from '../../../../../types/dbTypes'
 
 type CompareDialogProps = {

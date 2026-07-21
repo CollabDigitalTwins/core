@@ -3,11 +3,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from "react";
-import { MenusReducer, MenusActions, MenusState } from './reducer'
 import { usePathname } from 'next/navigation'
-import type { Building, Site, User, Infrastructure } from '../../types/dbTypes'
+import * as React from "react";
+
 import { ViewerNames } from '../../types/dbTypes'
+
+import { MenusReducer } from './reducer'
+
+import type { MenusActions, MenusState } from './reducer';
+import type { Building, Site, User, Infrastructure } from '../../types/dbTypes'
 import type { FileRow } from '../../types/files'
 
 type InitialStateType = {

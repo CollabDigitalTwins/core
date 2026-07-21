@@ -8,9 +8,10 @@ import React from 'react'
 import { Badge } from '../../../../components/ui/Badge'
 
 // Custom components
-import FileUpload from './FileUpload'
-import { useMapContext } from '../../../../store'
 import { useSites } from '../../../../hooks/sites/sites'
+import { useMapContext } from '../../../../store'
+
+import FileUpload from './FileUpload'
 
 interface FieldValueProps {
   value: any

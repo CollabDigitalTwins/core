@@ -4,13 +4,15 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from "react";
-import type {
-  MapSitesActions,
-  MapSitesState} from './reducer';
+
 import {
   MapSitesReducer,
   initialMapSitesState,
 } from './reducer'
+
+import type {
+  MapSitesActions,
+  MapSitesState} from './reducer';
 
 type InitialStateType = {
   mapSites: MapSitesState

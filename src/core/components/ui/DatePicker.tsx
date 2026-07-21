@@ -3,17 +3,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from 'react'
 import { ChevronDownIcon } from 'lucide-react'
+import * as React from 'react'
 
 import { Button } from './Button'
 import { Calendar } from './Calendar'
+import { Label } from './Label'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from './Popover'
-import { Label } from './Label'
 interface DatePickerProps {
   date?: Date | undefined
   onSelect?: (date: Date | undefined) => void

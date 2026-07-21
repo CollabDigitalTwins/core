@@ -2,9 +2,10 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
+import { createRoot } from 'react-dom/client'
 import * as THREE from 'three'
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
-import { createRoot } from 'react-dom/client'
+
 import { HooksCtx, type HooksBag } from '../../../../../../../hooks/provider'
 
 export interface MarkerRef {

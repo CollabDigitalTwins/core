@@ -4,28 +4,30 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as React from "react";
-import { useTranslations } from 'next-intl'
 
 // Open BIM Components
 import * as OBC from '@thatopen/components'
 import * as OBF from '@thatopen/components-front'
 
 // Utilities
-import { ToolsContext } from '../../../../../store'
-import type { Tool} from '../../../../../types/tools';
-import { type ToolbarToolType } from '../../../../../types/tools'
 
 // Shadcn components
-import {
-  DropdownMenuItem,
-} from '../../../../ui/DropdownMenu'
 
 // Icons
 import * as LR from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import * as React from "react";
+
+import { ToolsContext } from '../../../../../store'
 import { BimContext } from '../../../../../store/BIM/context'
+import { type ToolbarToolType } from '../../../../../types/tools'
 import { ToolbarSubmenu } from '../../../../ToolbarSubmenu'
+import {
+  DropdownMenuItem,
+} from '../../../../ui/DropdownMenu'
 import { CurrentWorld } from '../CurrentWorld'
+
+import type { Tool} from '../../../../../types/tools';
 
 interface SelectionToolProps {
   tool: Tool

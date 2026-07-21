@@ -1,4 +1,6 @@
 import reactHooks from 'eslint-plugin-react-hooks';
+import react from 'eslint-plugin-react';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
 import sonarjs from 'eslint-plugin-sonarjs';
 import unicorn from 'eslint-plugin-unicorn';
 import importPlugin from 'eslint-plugin-import';
@@ -44,12 +46,16 @@ export default [
     },
     plugins: {
       'react-hooks': reactHooks,
+      react,
+      'jsx-a11y': jsxA11y,
       sonarjs,
       unicorn,
       import: importPlugin,
       '@typescript-eslint': tseslint.plugin,
     },
     settings: {
+      // eslint-plugin-react needs the React version; detect from installed deps.
+      react: { version: 'detect' },
       // Tier 3 (2026-07-20): let eslint-plugin-import resolve TS files and the
       // `@/*` path alias from tsconfig, so no-cycle / order don't false-report
       // on unresolved local imports.
@@ -147,6 +153,42 @@ export default [
           alphabetize: { order: 'asc', caseInsensitive: true },
         },
       ],
+
+      // --- Tier 4 hardening (2026-07-21): typed correctness + React component-library safety ---
+      // Zero runtime deps; the react-family plugins are now declared explicitly in
+      // package.json (previously resolved transitively via eslint-config-next).
+      // Candidates were measured against src/; FP-floods dropped (see end of block).
+      //
+      // Type-aware bug-catchers (extend the Tier 2 projectService spine):
+      '@typescript-eslint/no-base-to-string': 'warn', // silent `[object Object]` in string context
+      '@typescript-eslint/no-misused-spread': 'warn', // spreading a string/promise/etc where it's a bug
+      '@typescript-eslint/unbound-method': 'warn', // unbound `this` method ref (classic React method-passing bug)
+      '@typescript-eslint/prefer-promise-reject-errors': 'warn', // reject(non-Error) loses stack/type
+      '@typescript-eslint/return-await': 'warn', // missing `return await` inside try/catch drops the catch
+      '@typescript-eslint/no-for-in-array': 'warn', // `for..in` over an array yields string indices
+      '@typescript-eslint/no-implied-eval': 'warn', // string-argument setTimeout/Function
+      '@typescript-eslint/no-array-delete': 'warn', // `delete arr[i]` leaves a hole
+      '@typescript-eslint/no-duplicate-type-constituents': 'warn', // duplicate union/intersection members
+      '@typescript-eslint/only-throw-error': 'warn', // throwing a non-Error value
+      '@typescript-eslint/restrict-plus-operands': 'warn', // `+` across mismatched/any operand types
+      // React component-library safety (core ships components to ~16 consumer orgs):
+      'react/jsx-key': 'warn', // missing `key` in a list render
+      'react/no-unstable-nested-components': 'warn', // component defined during render (remount/perf bug)
+      'react/jsx-no-constructed-context-values': 'warn', // fresh object/array as context value (perf bug)
+      'react/no-direct-mutation-state': 'warn', // direct this.state mutation
+      'react/jsx-no-target-blank': 'warn', // target="_blank" without rel=noopener (tabnabbing)
+      // Accessibility regression guards (clean today, cheap insurance for a UI library):
+      'jsx-a11y/alt-text': 'warn',
+      'jsx-a11y/anchor-is-valid': 'warn',
+      'jsx-a11y/role-has-required-aria-props': 'warn',
+      // Evaluated and DROPPED (counts measured 2026-07-21 against src/):
+      // - no-confusing-void-expression (525): stylistic flood (arrow bodies returning void), not bug-catching.
+      // - no-unnecessary-type-assertion (210): under this pkg's strict:false tsconfig "unnecessary" is
+      //   unreliable (null untracked); autofix would strip assertions that matter once strict null checks
+      //   land. Revisit with a future strictNullChecks tier.
+      // - react/no-array-index-key (62): benign for the many stable/static lists here.
+      // - require-await (57): benign; async used for interface/API-shape consistency (cf. Tier 1 require-atomic-updates).
+      // - restrict-template-expressions (11): mostly benign number/boolean interpolation.
     },
   },
 ];

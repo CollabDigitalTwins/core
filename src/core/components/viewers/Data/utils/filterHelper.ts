@@ -135,8 +135,6 @@ export const getNarrowedFilterOptions = (
     },
     )
   }
-  console.log('new')
-  console.log(newBaseOptions)
 
   return newBaseOptions
 }

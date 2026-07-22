@@ -297,7 +297,6 @@ export default function UserMoreOptions({ users, variant }: UserMoreOptionsProps
                 }
               } else {
                 // No changes needed
-                console.log('User unchanged:', newUser.email)
               }
             } else {
               // Create new user using the hook

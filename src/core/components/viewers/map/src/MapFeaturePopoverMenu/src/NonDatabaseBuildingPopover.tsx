@@ -330,7 +330,6 @@ export default function NonDatabaseBuildingPopover({
   const handleLocationEdit = () => {
     // Create marker at current coordinates with editing enabled
     if (markerManagerRef.current && coordinates && map) {
-      console.log('Creating editable marker at coordinates:', coordinates)
       markerManagerRef.current.create(coordinates as [number, number], map, {
         editing: true
       })

@@ -17,8 +17,6 @@ export async function getOsmId(
     'User-Agent': 'CDT-NA/1.0 (narellano@cims.carleton.ca)',
   }
 
-  console.log(url.toString())
-
   // Wait at least 1000ms between requests
   await new Promise(resolve => setTimeout(resolve, 2000))
 
@@ -31,7 +29,6 @@ export async function getOsmId(
     }
 
     const data = await response.json()
-    console.log('Nominatim response:', data) // Debug: see full response
 
     if (data && (typeof data.osm_id === 'string' || typeof data.osm_id === 'number')) {
       const osmIdNum = Number(data.osm_id)

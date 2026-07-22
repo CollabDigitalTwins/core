@@ -64,9 +64,6 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
 
   const { handleDeleteFile } = useFileDeleteHandler({
     deleteFile,
-    onDeleteSuccess: () => {
-      console.log('File deleted successfully')
-    },
   })
 
   // Local state for file management with isVisible property
@@ -466,9 +463,6 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
     acceptedFileTypes: '*',
     handleFileUpload: async (domFile: globalThis.File) => {
       await handleFileUpload(domFile)
-    },
-    onUploadSuccess: () => {
-      console.log('File uploaded successfully')
     },
     onUploadError: (error) => {
       console.error('Error uploading file:', error)

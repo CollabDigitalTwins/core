@@ -16,7 +16,6 @@ export const flyToEach = async (map: Map, buildings: Building[]) => {
       if (osmId) {
         building.buildingOsmId = String(osmId)
       }
-      console.log('OSM ID for', building.buildingName, ':', osmId)
       if (typeof osmId === 'number') {
         await updateBuildingOsmId(building.id, osmId)
       }

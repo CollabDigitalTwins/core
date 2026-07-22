@@ -35,9 +35,7 @@ export const uploadFileWithProgress = async (presignedUrl, file, onProgress) => 
       xhr.upload.addEventListener('progress', (event) => {
         if (event.lengthComputable) {
           const percentComplete = Math.round((event.loaded / event.total) * 100)
-          onProgress(percentComplete, event.loaded, (percent) => {
-            console.log(`Upload progress: ${percent}%`)
-          })
+          onProgress(percentComplete, event.loaded)
         }
       })
     }

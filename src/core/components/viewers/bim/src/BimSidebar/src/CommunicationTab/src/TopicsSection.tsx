@@ -108,8 +108,6 @@ export function TopicsSection() {
 
     const topicToAdd = createdTopic || newTopic
 
-    console.log('New topic to add:', topicToAdd)
-
     // Check if topic already exists in global state before adding
     const existingTopic = bcfTopics.find(existingTopic => existingTopic.guid === topicToAdd.guid)
     if (!existingTopic) {
@@ -118,8 +116,6 @@ export function TopicsSection() {
         type: 'ADD_BCF_TOPIC',
         payload: { bcfTopic: topicToAdd }
       })
-    } else {
-      console.log(`BCF topic with ID ${topicToAdd.guid} already exists, skipping...`)
     }
 
   }, [bcfTopicsManager, bimDispatch, user?.email, bcfTopics])

@@ -82,8 +82,6 @@ export class ClippingPlane extends OBC.Component {
     }
 
     private handleKeyDown = (event: KeyboardEvent) => {
-        console.log('Key pressed:', event.code, 'Enabled:', this.enabled); // Debug log
-
         if (event.code === "Delete" || event.code === "Backspace" || event.code === "Escape") {
             if (this.enabled && this.world) {
                 event.preventDefault();

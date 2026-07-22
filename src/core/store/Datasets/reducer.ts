@@ -187,7 +187,6 @@ export const DatasetReducer = (state: DatasetState, action: DatasetActions) => {
       }
     case 'SET_FIELD_COLOR':
       const { datasetName: dName, fieldName: fName, layerColor: lColor } = action.payload
-      console.log('SETTING FIELD COLOR IN REDUCER FOR DATASET:', dName, 'FIELD:', fName, 'TO COLOR:', lColor)
       return {
         ...state,
         addedDatasets: state.addedDatasets.map(dataset => {
@@ -217,7 +216,7 @@ export const DatasetReducer = (state: DatasetState, action: DatasetActions) => {
       }
 
     default:
-      console.log('THIS FILE ACTION HASN\'T BEEN IMPLEMENTED YET.')
+      // ⚠️ Unhandled dataset action type is silently ignored (was logged as "not implemented yet")
       return state
   }
 }

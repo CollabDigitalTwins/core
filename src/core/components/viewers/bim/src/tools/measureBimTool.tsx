@@ -78,8 +78,7 @@ export const MeasureBimTool: React.FC<MeasureToolProps> = ({ tool }) => {
   React.useEffect(() => {
     if (!lengthMeasurement) return
 
-    const handleMeasurementCreated = (data: { length: number }) => {
-      console.log('Measurement created:', data.length)
+    const handleMeasurementCreated = () => {
       // You can add custom logic here when a measurement is created
     }
 

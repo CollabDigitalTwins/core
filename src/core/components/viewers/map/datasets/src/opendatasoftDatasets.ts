@@ -109,12 +109,6 @@ export async function fetchOpenDataSoftDatasets(
               // Even if there's an error, allow the dataset through - getFeatures will handle it
               return true
             }
-            // If response is OK, check if it has geometry
-            const recs = sample.records || sample.results || [];
-            const hasGeom = Array.isArray(recs)
-              ? recs.some((r: any) => !!r?.geometry || !!r?.geom || !!r?.geo_shape || !!r?.geo_point_2d)
-              : false
-            console.log(`ℹ️ OpenDataSoft validation: Dataset "${datasetId}" has geometry: ${hasGeom}, records: ${recs.length}`)
             // Allow through even if no geometry - user might want to see the dataset
             return true
           }
@@ -136,7 +130,6 @@ export async function fetchOpenDataSoftDatasets(
       })
 
       if (!isValid) {
-        console.log(`🗑️ OpenDataSoft: Filtering out dataset "${datasetId}" - validation failed`)
         return null
       }
 
@@ -164,8 +157,6 @@ export async function fetchOpenDataSoftDatasets(
         const featuresKey = `features:opendatasoft:${datasetId}:${datasetModified ?? ''}`
         const cached = getCache<AllGeoJSON>(featuresKey)
         if (cached) {
-          const cachedCount = 'features' in cached ? cached.features?.length ?? 0 : 0
-          console.log(`✅ OpenDataSoft getFeatures: Returning ${cachedCount} cached features for dataset "${datasetId}"`)
           return cached
         }
 
@@ -175,11 +166,8 @@ export async function fetchOpenDataSoftDatasets(
           let totalCount = 0
           const maxFeatures = 5_000
 
-          console.log(`🔍 OpenDataSoft getFeatures: Starting fetch for dataset "${datasetId}"`)
-
           do {
             const recordsUrl = `${recordsBaseUrl}?limit=100&offset=${offset}`
-            console.log(`📡 OpenDataSoft: Fetching ${recordsUrl}`)
             const response = await fetch(buildUrl(recordsUrl))
             if (!response.ok) {
               console.error(`❌ OpenDataSoft: Failed to fetch records - status ${response.status}`, {
@@ -195,8 +183,6 @@ export async function fetchOpenDataSoftDatasets(
               console.error(`❌ OpenDataSoft: Failed to parse JSON response:`, parseError)
               break
             }
-            console.log(`📦 OpenDataSoft: Received data, records count: ${data.records?.length || 0}, data keys:`, Object.keys(data || {}))
-
             if (offset === 0) {
               totalCount = Math.min(data.total_count || data.nhits || 0, maxFeatures)
             }
@@ -238,8 +224,6 @@ export async function fetchOpenDataSoftDatasets(
             const fetchedCount = recArray.length;
             if (fetchedCount === 0 || features.length >= maxFeatures) break
           } while (offset < totalCount)
-
-          console.log(`✅ OpenDataSoft getFeatures: Returning ${features.length} features for dataset "${datasetId}"`)
 
           const result = {
             type: 'FeatureCollection',

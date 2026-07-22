@@ -171,7 +171,7 @@ export const FilesReducer = (state: FilesState, action: FilesActions) => {
       }
 
     default:
-      console.log('THIS FILE ACTION HASN\'T BEEN IMPLEMENTED YET.')
+      // ⚠️ Unhandled file action type is silently ignored (was logged as "not implemented yet")
       return state
   }
 }

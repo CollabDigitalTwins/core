@@ -36,8 +36,7 @@ export const ExplodeByLevelTool: React.FC<ExplodeByLevelProps> = ({ tool }) => {
     if (!bimComponents) return
 
     try {
-      // TODO: Implement explode by level functionality
-      console.log('Explode by level functionality not implemented yet')
+      // ⚠️ Explode-by-level functionality not implemented
     }
     catch (error) {
       console.error('Error exploding by level:', error)

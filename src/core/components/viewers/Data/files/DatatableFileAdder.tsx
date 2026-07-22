@@ -27,7 +27,6 @@ export default function DatatableFileAdder() {
   const { handleAddFile, uploadState } = useFileUploadWithProgress({
     acceptedFileTypes: '*',
     onUploadSuccess: () => {
-      console.log('File successfully uploaded to API')
       toast.success(t('uploadSuccess'))
     },
     onUploadError: (error) => {

@@ -172,12 +172,7 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
     // Remove from ModelManager if it exists (gltf/obj/fbx models)
     if (modelManager) {
       const modelIdStr = file.id.toString()
-      const model = modelManager.getModel(modelIdStr)
-      console.log('Attempting to remove model', model, modelIdStr)
-      const success = modelManager.remove(modelIdStr)
-      if (success) {
-        console.log(`Model ${modelIdStr} removed from BIM scene`)
-      }
+      modelManager.remove(modelIdStr)
     }
 
     // Remove fragment model from scene if it exists (ifc/frag models)
@@ -278,9 +273,6 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
     buildingId,
     acceptedFileTypes: '.ifc,.frag',
     handleFileUpload,
-    onUploadSuccess: () => {
-      console.log('Model uploaded successfully')
-    },
     onUploadError: (error) => {
       console.error('Error uploading model:', error)
     }

@@ -50,8 +50,6 @@ export default function ToolbarButton({ tool, onClick }: Props) {
   const isActive = currentToolId === tool.id
 
   const handleToolClick = (tool: Tool) => { // Rename the internal function
-    console.log('Tool clicked', tool)
-
     if (isActive) {
       // Deactivate the tool
       setTools(null)

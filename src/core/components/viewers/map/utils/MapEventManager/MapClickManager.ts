@@ -64,7 +64,6 @@ export class MapClickManager {
     for (const handler of this.clickHandlers) {
       if (handler.priority === MapLayerClickPriority.ActiveTool) {
         handler.callback(e, [])
-        console.log('call back return ')
         return
       }
     }

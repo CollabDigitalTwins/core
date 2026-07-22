@@ -37,8 +37,6 @@ async function getMemcacheClient() {
 
     const memcacheServer = process.env.MEMCACHE_SERVER
 
-    console.log(`Connecting to Memcache server: ${memcacheServer}`)
-
     client = memjsLib.Client.create(memcacheServer, {
       username: process.env.MEMCACHE_USERNAME,
       password: process.env.MEMCACHE_PASSWORD,
@@ -46,7 +44,6 @@ async function getMemcacheClient() {
       retries: 2,
     })
 
-    console.log('Memcache client initialized successfully')
     return client
   } catch (error) {
     console.error('Failed to initialize Memcache client:', error)
@@ -67,7 +64,6 @@ export async function setMemcache<T>(
   try {
     const serialized = JSON.stringify(value)
     await client.set(key, serialized, { expires: ttlSeconds })
-    console.log(`Memcache SET: ${key} (TTL: ${ttlSeconds}s)`)
     return true
   } catch (error) {
     console.error(`Failed to set Memcache key ${key}:`, error)
@@ -85,12 +81,10 @@ export async function getMemcache<T>(key: string): Promise<T | null> {
     const result = await client.get(key)
 
     if (!result.value) {
-      console.log(`Memcache MISS: ${key}`)
       return null
     }
 
     const deserialized = JSON.parse(result.value.toString()) as T
-    console.log(`Memcache HIT: ${key}`)
     return deserialized
   } catch (error) {
     console.error(`Failed to get Memcache key ${key}:`, error)
@@ -106,7 +100,6 @@ export async function deleteMemcache(key: string): Promise<boolean> {
 
   try {
     await client.delete(key)
-    console.log(`Memcache DELETE: ${key}`)
     return true
   } catch (error) {
     console.error(`Failed to delete Memcache key ${key}:`, error)
@@ -141,7 +134,6 @@ export async function flushMemcache(): Promise<boolean> {
 
   try {
     await client.flush()
-    console.log('Memcache FLUSHED')
     return true
   } catch (error) {
     console.error('Failed to flush Memcache:', error)

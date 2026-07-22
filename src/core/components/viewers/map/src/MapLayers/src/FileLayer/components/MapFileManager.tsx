@@ -118,7 +118,9 @@ export default function MapFileManager({ closeFileManager }: FileManagerProp) {
                       })
                     }}
                     onRemoveFile={() => handleDeleteFile(file)}
-                    onEditFile={() => console.log('Editing file with id', file.id)}
+                    onEditFile={() => {
+                      // ⚠️ Edit-file action not implemented
+                    }}
                   />
                 ))}
               </div>

@@ -361,7 +361,6 @@ export function SensorInput({
   }
 
   const onPlaceSensor = (index: number) => {
-    console.log('[SensorInput] onPlaceSensor called, index:', index)
     const sensor = sensors[index]
     if (!sensor.name.trim() || !sensor.data.trim()) {
       return

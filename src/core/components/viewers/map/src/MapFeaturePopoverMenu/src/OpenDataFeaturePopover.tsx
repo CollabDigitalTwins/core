@@ -128,8 +128,6 @@ export default function OpenDataFeaturePopover({
     return value.startsWith('http://') || value.startsWith('https://')
   }
 
-  console.log('Feature Properties:', featureProps)
-
   const datasetName = (featureProps.datasetName ? featureProps.datasetName.replaceAll('_', ' ') : t('unknownDataset'))
   const dataset = addedDatasets.find(d => d.name === featureProps.datasetName)
   const datasetColor = dataset ? dataset.layerColor.color : stringToColour(datasetName)

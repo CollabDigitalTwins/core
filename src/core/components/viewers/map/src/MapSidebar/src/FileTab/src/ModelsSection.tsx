@@ -44,16 +44,12 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
   // Use the reusable delete handler
   const { handleDeleteFile } = useFileDeleteHandler({
     deleteFile,
-    onDeleteSuccess: () => {
-      console.log('Model file deleted successfully')
-    },
   })
 
   // Use the new upload hook with progress
   const { handleAddFile, uploadState } = useFileUploadWithProgress({
     acceptedFileTypes: '.ifc,.frag',
     onUploadSuccess: () => {
-      console.log('Model uploaded successfully')
       mutate(`/api/files`)
     },
     onUploadError: (error) => {

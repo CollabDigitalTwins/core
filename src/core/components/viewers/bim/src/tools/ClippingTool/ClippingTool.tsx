@@ -68,7 +68,6 @@ export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
 
   const removeAllClippingPlanes = React.useCallback(() => {
     if (!world || !bimComponents) return
-    console.log("Remove all clipping planes")
     bimComponents.get(OBC.Clipper).deleteAll()
   }, [world, bimComponents])
 
@@ -128,11 +127,7 @@ export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
       });
     });
 
-    const result = await clipper.create(world)
-
-    if (result) {
-      console.log(result)
-    }
+    await clipper.create(world)
   }, [world, bimComponents])
 
   React.useEffect(() => {

@@ -17,7 +17,6 @@ import { AuthPage } from './AuthPage'
 import { PasswordError } from './PasswordError'
 
 export function ForgotPassword() {
-  console.log('Executing ForgotPassword()')
   const [password, setPassword] = React.useState('')
   const [confirmPassword, setConfirmPassword] = React.useState('')
   const [error, setError] = React.useState('')

@@ -60,17 +60,6 @@ const EnergySourcesGrid = ({ subsection, getFieldValue, handleInputChange, editi
           const metricValue = getFieldValue(row.metricProp)
           const yearValue = getFieldValue(row.yearProp)
 
-          // DEBUG:
-          console.log('EnergySourcesGrid Debug:', {
-            label: row.label,
-            sourceProp: row.sourceProp,
-            metricProp: row.metricProp,
-            yearProp: row.yearProp,
-            rawValue,
-            selectedValues,
-            metricValue,
-            yearValue
-          })
 
           return (
             <div

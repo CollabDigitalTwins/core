@@ -53,7 +53,6 @@ export const fuzzySearchBuildings = (buildings: any[], searchTerm: string) => {
 
       // Use the highest score
       const maxScore = Math.max(addressScore, propertyScore)
-      if (building.id == 837) console.log('match')
       return {
         ...building,
         searchScore: maxScore,

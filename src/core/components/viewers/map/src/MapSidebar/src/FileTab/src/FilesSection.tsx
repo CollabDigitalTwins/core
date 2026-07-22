@@ -65,7 +65,6 @@ export function FilesSection({ files: _filesProp, query = '' }: FilesSectionProp
   const { handleAddFile, uploadState } = useFileUploadWithProgress({
     acceptedFileTypes: '*',
     onUploadSuccess: () => {
-      console.log('File uploaded successfully')
       mutate(`/api/files`)
     },
     onUploadError: (error) => console.error('Error uploading file:', error),

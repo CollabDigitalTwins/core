@@ -56,17 +56,17 @@ export function CommentsSection() {
   const handleCommentAction = React.useCallback((action: CommentAction, id: number) => {
     switch (action) {
       case 'view':
-        console.log(`View comment ${id}`)
+        // ⚠️ View comment action not implemented
         break
       case 'edit':
-        console.log(`Edit comment ${id}`)
+        // ⚠️ Edit comment action not implemented
         break
       case 'delete':
             toast.success(t('commentDeleted'))
             setCommentToDelete(id)
         break
       case 'reply':
-        console.log(`Reply to comment ${id}`)
+        // ⚠️ Reply-to-comment action not implemented
         break
       default:
         break
@@ -82,13 +82,11 @@ export function CommentsSection() {
   }, [commentToDelete, deleteComment])
 
   const handleReply = React.useCallback((id: number, replyText: string) => {
-    console.log(`Reply to ${id}: ${replyText}`)
-    // TODO: Implement reply functionality
+    // ⚠️ Reply submission not implemented (replyText is discarded)
   }, [])
 
   const handleFileUpload = React.useCallback((commentId: number, files: FileList) => {
-    console.log(`Upload files for comment ${commentId}:`, Array.from(files).map(f => f.name))
-    // TODO: Implement file upload functionality
+    // ⚠️ Comment file upload not implemented (files are discarded)
   }, [])
 
   const currentComments = comments.filter((comment) => currentViewer === comment.viewer && (!comment.buildingId || comment.buildingId === buildingId))

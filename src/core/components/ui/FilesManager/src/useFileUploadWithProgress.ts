@@ -85,8 +85,6 @@ export function useFileUploadWithProgress({
         throw new Error(`Failed to upload file: ${metadataResponse.statusText}`)
       }
 
-      console.log('File successfully uploaded to API')
-
       // Revalidate files list
       mutate(['files'])
 

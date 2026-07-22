@@ -292,9 +292,7 @@ const FiltersDialog = ({
 
   // Handle apply filters
   const handleApplyFilters = () => {
-    console.log('Applying filters', filters)
     const validFilters = filters.filter(f => f.field && f.operator && f.value !== null)
-    console.log('Valid filters:', validFilters)
     setActiveFilters(validFilters)
     setFilterDialogOpen(false)
 

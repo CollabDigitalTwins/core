@@ -225,11 +225,8 @@ export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
       const [lng, lat] = feature.geometry.coordinates as [number, number]
 
       const source = map.getSource('sensors') as any
-      console.log(source)
-      console.log(clusterId)
       source.getClusterExpansionZoom(clusterId).then(
         (zoom: number) => {
-          console.log('easing to')
           map.easeTo({ center: [lng, lat], zoom })
         },
       )

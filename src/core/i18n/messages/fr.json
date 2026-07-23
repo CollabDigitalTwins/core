@@ -239,6 +239,7 @@
     "label": "Écrire un commentaire",
     "placeholder": "Saisissez votre commentaire ici...",
     "close": "Fermer",
+    "clickPlusHint": "Cliquez sur + pour placer votre commentaire",
     "placeHelpTextMap": "Double-cliquez n’importe où sur la carte pour ajouter un commentaire",
     "placeHelpTextBim": "Double-cliquez sur le modèle pour ajouter un commentaire"
   },

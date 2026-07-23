@@ -45,4 +45,14 @@ describe('buildComment', () => {
     expect(c.createdAt).toBeUndefined()
     expect(c.updatedAt).toBeUndefined()
   })
+
+  it('carries replyToId through for threaded replies', () => {
+    const c = buildComment({ ...base, replyToId: 99 })
+    expect(c.replyToId).toBe(99)
+  })
+
+  it('leaves replyToId undefined for a top-level comment', () => {
+    const c = buildComment({ ...base })
+    expect(c.replyToId).toBeUndefined()
+  })
 })

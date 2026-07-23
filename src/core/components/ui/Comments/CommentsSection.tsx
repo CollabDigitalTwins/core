@@ -4,17 +4,20 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as LR from 'lucide-react'
+import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { toast } from 'sonner'
 
-import { useComment, useComments } from '../../../hooks/comments/comments';
+import { useComment, useComments, useCreateComment } from '../../../hooks/comments/comments';
 import { BuildingsContext, MenusContext, ToolsContext, usePermissions } from '../../../store'
 import { CollapsibleSection } from '../CollapsibleSection'
 import { SearchInput } from '../SearchInput'
 
 
 import { CollapsibleCommentItem } from './CollapsibleCommentItem'
+
+import type { Comment } from '../../../types/dbTypes'
 
 
 
@@ -34,9 +37,14 @@ export function CommentsSection() {
   const {state: buildingsState} = React.useContext(BuildingsContext)
   const buildingId = buildingsState?.buildings?.building?.id || -1
 
+  const user = useSession().data?.user
+  const { createComment } = useCreateComment()
+
   const [commentToDelete, setCommentToDelete] = React.useState<number | null>(null)
+  const [commentToEdit, setCommentToEdit] = React.useState<{ id: number; text: string } | null>(null)
   const [searchQuery, setSearchQuery] = React.useState('')
   const { deleteComment } = useComment(commentToDelete)
+  const { updateComment } = useComment(commentToEdit?.id ?? null)
 
   const handleAddComment = React.useCallback(() => {
     if (!currentViewer) return
@@ -55,19 +63,12 @@ export function CommentsSection() {
 
   const handleCommentAction = React.useCallback((action: CommentAction, id: number) => {
     switch (action) {
-      case 'view':
-        // ⚠️ View comment action not implemented
-        break
-      case 'edit':
-        // ⚠️ Edit comment action not implemented
-        break
       case 'delete':
             toast.success(t('commentDeleted'))
             setCommentToDelete(id)
         break
-      case 'reply':
-        // ⚠️ Reply-to-comment action not implemented
-        break
+      // 'view', 'edit' and 'reply' are handled inline by CollapsibleCommentItem
+      // (edit -> onEdit, reply -> onReply)
       default:
         break
     }
@@ -81,9 +82,33 @@ export function CommentsSection() {
     }
   }, [commentToDelete, deleteComment])
 
-  const handleReply = React.useCallback((id: number, replyText: string) => {
-    // ⚠️ Reply submission not implemented (replyText is discarded)
+  // Trigger edit when commentToEdit changes
+  React.useEffect(() => {
+    if (commentToEdit !== null) {
+      void updateComment({ text: commentToEdit.text })
+      setCommentToEdit(null)
+    }
+  }, [commentToEdit, updateComment])
+
+  const handleEdit = React.useCallback((id: number, text: string) => {
+    setCommentToEdit({ id, text })
   }, [])
+
+  const handleReply = React.useCallback((parent: Comment, replyText: string) => {
+    if (!replyText.trim() || !user) return
+    void createComment({
+      commentData: {
+        text: replyText,
+        authorId: Number(user.id),
+        organizationId: user.organizationId,
+        viewer: parent.viewer,
+        buildingId: parent.buildingId,
+        // Flat threading: a reply to a reply attaches to the top-level parent
+        replyToId: parent.replyToId ?? parent.id,
+        visible: true,
+      },
+    })
+  }, [createComment, user])
 
   const handleFileUpload = React.useCallback((commentId: number, files: FileList) => {
     // ⚠️ Comment file upload not implemented (files are discarded)
@@ -91,15 +116,34 @@ export function CommentsSection() {
 
   const currentComments = comments.filter((comment) => currentViewer === comment.viewer && (!comment.buildingId || comment.buildingId === buildingId))
 
+  // Group replies under their parent (flat, single level)
+  const repliesByParent = React.useMemo(() => {
+    const map = new Map<number, Comment[]>()
+    for (const comment of currentComments) {
+      if (comment.replyToId != null) {
+        const list = map.get(comment.replyToId) ?? []
+        list.push(comment)
+        map.set(comment.replyToId, list)
+      }
+    }
+    return map
+  }, [currentComments])
+
+  // Top-level comments only (replies are nested under their parent)
+  const topLevelComments = React.useMemo(
+    () => currentComments.filter((comment) => comment.replyToId == null),
+    [currentComments]
+  )
+
   // Filter comments based on search query
   const filteredComments = React.useMemo(() => {
-    if (!searchQuery.trim()) return currentComments
+    if (!searchQuery.trim()) return topLevelComments
 
     const query = searchQuery.toLowerCase()
-    return currentComments.filter((comment) =>
+    return topLevelComments.filter((comment) =>
       comment.text?.toLowerCase().includes(query)
     )
-  }, [currentComments, searchQuery])
+  }, [topLevelComments, searchQuery])
 
   const commentsVisible = commentsVisibleInViewer.includes(currentViewer)
 
@@ -140,8 +184,9 @@ export function CommentsSection() {
               comment={comment}
               onAction={handleCommentAction}
               onReply={handleReply}
+              onEdit={handleEdit}
               onFileUpload={handleFileUpload}
-              replies={[]}
+              replies={repliesByParent.get(comment.id) ?? []}
               attachments={[]}
               isVisible={commentsVisible}
               onMouseEnter={() => menusDispatch({ type: 'SET_CURRENT_COMMENT_ID', payload: { commentId: comment.id } })}

@@ -28,32 +28,36 @@ type MapComment = IComment & {
   imageFileId?: number | null
 }
 
-const CommentAvatarMarker = ({ feature, isHighlighted, onMouseEnter, onMouseLeave }: { feature: MapGeoJSONFeature; isHighlighted?: boolean; onMouseEnter?: () => void; onMouseLeave?: () => void }) => {
+const CommentAvatarMarker = ({ feature, isHighlighted, onMouseEnter, onMouseLeave, onClick, center, offset }: { feature: MapGeoJSONFeature; isHighlighted?: boolean; onMouseEnter?: () => void; onMouseLeave?: () => void; onClick?: () => void; center?: [number, number]; offset?: [number, number] }) => {
   const authorId = feature.properties?.authorId
   const { user: author } = useUser(authorId != null ? String(authorId) : '')
   const userName = feature.properties?.authorName
   const userImageFileId = feature.properties?.imageFileId
   const resolvedImageFileId = author?.imageFileId ?? userImageFileId ?? null
 
-  const coords = extractCoordinatesFromFeature(feature)
+  // When part of an expanded (spiderfied) cluster, position at the cluster
+  // center and fan out with a pixel offset instead of the feature's own coords.
+  const coords = center ? { lng: center[0], lat: center[1] } : extractCoordinatesFromFeature(feature)
   if (!coords) return null
 
   return (
-    <Marker key={String(feature.properties?.id ?? `${coords.lng},${coords.lat}`)} longitude={coords.lng} latitude={coords.lat} anchor="center">
+    <Marker key={String(feature.properties?.id ?? `${coords.lng},${coords.lat}`)} longitude={coords.lng} latitude={coords.lat} anchor="center" offset={offset}>
       <div
         style={{
           width: '36px',
           height: '36px',
           borderRadius: '50%',
           boxShadow: isHighlighted
-            ? '0 0 0 3px #73cee2, 0 0 8px rgba(115, 206, 226, 0.5)'
-            : '0 0 0 2px white ',
+            ? '0 0 0 2px #73cee2, 0 0 8px rgba(115, 206, 226, 0.5)'
+            : '0 0 0 1px white',
           transition: 'all 0.2s ease-in-out',
           transform: isHighlighted ? 'scale(1.2)' : 'scale(1)',
           overflow: 'hidden',
+          cursor: onClick ? 'pointer' : undefined,
         }}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
+        onClick={onClick}
       >
         <Avatar className="h-full w-full">
           <UserAvatar
@@ -88,6 +92,42 @@ export const CommentLayer = () => {
   const { deleteComment } = useComment(popupInfo?.id ?? null)
   const { state: menusState } = React.useContext(MenusContext)
   const { commentsVisibleInViewer, currentCommentId } = menusState.menus
+
+  // Hover-to-expand (spiderfy) state for clusters
+  const [spider, setSpider] = React.useState<{ center: [number, number]; features: MapGeoJSONFeature[] } | null>(null)
+  const spiderCloseTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const cancelSpiderClose = React.useCallback(() => {
+    if (spiderCloseTimer.current) {
+      clearTimeout(spiderCloseTimer.current)
+      spiderCloseTimer.current = null
+    }
+  }, [])
+
+  const scheduleSpiderClose = React.useCallback(() => {
+    cancelSpiderClose()
+    spiderCloseTimer.current = setTimeout(() => setSpider(null), 150)
+  }, [cancelSpiderClose])
+
+  const openPopupFromFeature = React.useCallback((feature?: MapGeoJSONFeature) => {
+    if (!feature || feature.properties.point_count) return
+    if (feature.geometry.type !== 'Point') return
+    const [longitude, latitude] = feature.geometry.coordinates
+    const p = feature.properties as MapComment
+    setPopUpInfo({
+      id: Number(p.id),
+      authorId: Number(p.authorId),
+      organizationId: feature.properties?.organizationId,
+      visible: feature.properties?.visible,
+      longitude,
+      latitude,
+      text: p.text,
+      createdAt: p.createdAt,
+      authorName: p.authorName,
+      imageFileId: p.imageFileId,
+      viewer: ViewerNames.map,
+    })
+  }, [])
 
   const eligibleComments = comments
     .filter((comment) => comment.viewer === ViewerNames.map)
@@ -148,27 +188,7 @@ export const CommentLayer = () => {
   React.useEffect(() => {
     if (!map) return
     const showCommentPopUp: ClickCallback = (e: MapLayerMouseEvent, features: MapGeoJSONFeature[]) => {
-      const feature = features?.[0]
-
-      if (!feature || feature.properties.point_count) return
-
-      if (feature.geometry.type != 'Point') return
-      const [longitude, latitude] = feature.geometry.coordinates
-      const featureProperties = feature.properties as MapComment
-      const { id, authorId, text, createdAt, authorName, imageFileId } = featureProperties
-      setPopUpInfo({
-        id: Number(id),
-        authorId: Number(authorId),
-        organizationId: feature.properties?.organizationId,
-        visible: feature.properties?.visible,
-        longitude,
-        latitude,
-        text,
-        createdAt,
-        authorName,
-        imageFileId,
-        viewer: ViewerNames.map,
-      })
+      openPopupFromFeature(features?.[0])
     }
 
     const mouseEnterChangeCursor = () => {
@@ -188,13 +208,25 @@ export const CommentLayer = () => {
       map.off('mouseenter', 'comments-unclustered-points', mouseEnterChangeCursor)
       map.off('mouseleave', 'comments-unclustered-points', mouseLeaveChangeCursor)
     }
-  }, [map, mapClickManager])
+  }, [map, mapClickManager, openPopupFromFeature])
 
   const handleRemoveComment = () => {
     toast.success(t('commentDeleted'))
     deleteComment()
     setPopUpInfo(null)
   }
+
+  // Close the spiderfied cluster when the map moves (positions would be stale)
+  React.useEffect(() => {
+    if (!map) return
+    const close = () => setSpider(null)
+    map.on('movestart', close)
+    map.on('zoomstart', close)
+    return () => {
+      map.off('movestart', close)
+      map.off('zoomstart', close)
+    }
+  }, [map])
 
   // event listeners for clustered points
   React.useEffect(() => {
@@ -221,19 +253,41 @@ export const CommentLayer = () => {
         })
     }
 
-    const mouseEnterChangeCursor = () => { map.getCanvas().style.cursor = 'pointer' }
-    const mouseLeaveChangeCursor = () => { map.getCanvas().style.cursor = '' }
+    // Hover a cluster to expand (spiderfy) its members
+    const expandClusterOnHover = (e: MapLayerMouseEvent) => {
+      map.getCanvas().style.cursor = 'pointer'
+      const feature = e.features?.[0]
+      if (!feature || !feature.properties.cluster_id) return
+      if (!('coordinates' in feature.geometry)) return
+      const center = feature.geometry.coordinates as [number, number]
+      const clusterId = feature.properties.cluster_id as number
 
-    // event listener for clicking on single point to zoom in and decluster, hover to change cursor
+      const source = map.getSource('comments') as any
+      source.getClusterLeaves(clusterId, Infinity, 0)
+        .then((leaves: MapGeoJSONFeature[]) => {
+          cancelSpiderClose()
+          setSpider({ center, features: leaves })
+        })
+        .catch((error: unknown) => {
+          console.error(error)
+        })
+    }
+
+    const mouseLeaveCluster = () => {
+      map.getCanvas().style.cursor = ''
+      scheduleSpiderClose()
+    }
+
+    // Hover expands the cluster; click still zooms in to decluster as a fallback
     map.on('click', 'comments-clusters', zoomInToDecluster)
-    map.on('mouseenter', 'comments-clusters', mouseEnterChangeCursor)
-    map.on('mouseleave', 'comments-clusters', mouseLeaveChangeCursor)
+    map.on('mouseenter', 'comments-clusters', expandClusterOnHover)
+    map.on('mouseleave', 'comments-clusters', mouseLeaveCluster)
     return () => {
       map.off('click', 'comments-clusters', zoomInToDecluster)
-      map.off('mouseenter', 'comments-clusters', mouseEnterChangeCursor)
-      map.off('mouseleave', 'comments-clusters', mouseLeaveChangeCursor)
+      map.off('mouseenter', 'comments-clusters', expandClusterOnHover)
+      map.off('mouseleave', 'comments-clusters', mouseLeaveCluster)
     }
-  }, [map])
+  }, [map, cancelSpiderClose, scheduleSpiderClose])
 
   const renderPopup = () => {
     if (!popupInfo) return null
@@ -336,6 +390,27 @@ export const CommentLayer = () => {
             onMouseLeave={() => setHoveredCommentId(null)}
           />
         ))}
+
+      {/* Spiderfied cluster members shown on hover */}
+      {spider && spider.features.map((feature, i) => {
+        const n = spider.features.length
+        const angle = (2 * Math.PI * i) / n - Math.PI / 2
+        const radius = Math.min(60, 24 + n * 4)
+        const offset: [number, number] = [Math.cos(angle) * radius, Math.sin(angle) * radius]
+        const id = feature.properties?.id
+        return (
+          <CommentAvatarMarker
+            key={`spider-${String(id)}`}
+            feature={feature}
+            center={spider.center}
+            offset={offset}
+            isHighlighted={currentCommentId === id || hoveredCommentId === id}
+            onMouseEnter={() => { cancelSpiderClose(); setHoveredCommentId(id) }}
+            onMouseLeave={() => { scheduleSpiderClose(); setHoveredCommentId(null) }}
+            onClick={() => { openPopupFromFeature(feature); setSpider(null) }}
+          />
+        )
+      })}
     </Source>}
     </>
   )

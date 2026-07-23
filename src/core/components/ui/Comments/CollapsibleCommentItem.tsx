@@ -28,7 +28,8 @@ interface CollapsibleCommentItemProps {
   comment: Comment
   onAction?: (action: CommentAction, id: number) => void
   replies?: Comment[]
-  onReply?: (id: number, replyText: string | number) => void
+  onReply?: (comment: Comment, replyText: string) => void
+  onEdit?: (id: number, text: string) => void
   onFileUpload?: (id: number, files: FileList) => void
   attachments?: Array<{ name: string; url: string; size: number }>
   depth?: number
@@ -42,6 +43,7 @@ export function CollapsibleCommentItem({
   onAction,
   replies = [],
   onReply,
+  onEdit,
   onFileUpload,
   attachments = [],
   depth = 0,
@@ -56,6 +58,8 @@ export function CollapsibleCommentItem({
   const [isExpanded, setIsExpanded] = React.useState(false)
   const [showReplyInput, setShowReplyInput] = React.useState(false)
   const [replyText, setReplyText] = React.useState('')
+  const [isEditing, setIsEditing] = React.useState(false)
+  const [editText, setEditText] = React.useState(comment.text)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const prevVisibleRef = React.useRef(isVisible)
 
@@ -75,10 +79,23 @@ export function CollapsibleCommentItem({
 
   const handleReplySubmit = () => {
     if (replyText.trim() && onReply) {
-      onReply(comment.id, replyText)
+      onReply(comment, replyText)
       setReplyText('')
       setShowReplyInput(false)
     }
+  }
+
+  const handleEditStart = () => {
+    setEditText(comment.text)
+    setIsEditing(true)
+  }
+
+  const handleEditSubmit = () => {
+    const next = editText.trim()
+    if (next && next !== comment.text && onEdit) {
+      onEdit(comment.id, next)
+    }
+    setIsEditing(false)
   }
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,9 +152,44 @@ export function CollapsibleCommentItem({
                 </Badge>
               )}
             </div>
+              {isEditing ? (
+              <div className="flex gap-2 mt-1" onClick={(e) => e.stopPropagation()}>
+                <Input
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  className="flex-1 h-7"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleEditSubmit()
+                    }
+                    if (e.key === 'Escape') setIsEditing(false)
+                  }}
+                  disabled={!ability.can('update', 'Comment')}
+                />
+                <Button
+                  size="icon"
+                  className="h-7 w-7 p-0"
+                  onClick={handleEditSubmit}
+                  disabled={!editText.trim() || !ability.can('update', 'Comment')}
+                >
+                  <LR.Check className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 p-0"
+                  onClick={() => setIsEditing(false)}
+                >
+                  <LR.X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
               <p className={cn("text-sm mt-1 line-clamp-1 text-foreground")}>
-              {comment.text}
-            </p>
+                {comment.text}
+              </p>
+            )}
             {replies.length > 0 && !isExpanded && (
               <span className="text-xs text-muted-foreground mt-1">
                 {replies.length} {replies.length === 1 ? t('reply') : t('replies')}
@@ -165,7 +217,7 @@ export function CollapsibleCommentItem({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 p-0"
-                onClick={() => onAction('edit', comment.id)}
+                onClick={handleEditStart}
                 title={t('editComment')}
                 disabled={!ability.can('update', 'Comment')}
               >
@@ -259,6 +311,7 @@ export function CollapsibleCommentItem({
             comment={reply}
             onAction={onAction}
             onReply={onReply}
+            onEdit={onEdit}
             onFileUpload={onFileUpload}
             depth={depth + 1}
           />

@@ -239,6 +239,7 @@
     "label": "Write a comment",
     "placeholder": "Enter your comment here...",
     "close": "Close",
+    "clickPlusHint": "Click the + to place your comment",
     "placeHelpTextMap": "Double click anywhere on the map to add comment",
     "placeHelpTextBim": "Double click anywhere on the model to add comment"
   },

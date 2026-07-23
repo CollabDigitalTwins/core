@@ -14,6 +14,14 @@ export type CommentActionRequest = {
   requestId: number
 }
 
+/** Request from a viewer marker to open a sensor's editor in the sidebar. */
+export type SensorActionRequest = {
+  sensorId: number
+  action: 'edit'
+  /** Monotonic id so the same request fires again even if the target is unchanged. */
+  requestId: number
+}
+
 interface MenusTypes {
   currentViewer: ViewerNames
   rowsPerPage: number
@@ -30,6 +38,11 @@ interface MenusTypes {
   visibleSensorTags: Partial<Record<ViewerNames, string[]>>
   currentSensorId: number | null
   currentSensorTypeId: number | null
+  /** Sensor double-clicked to zoom/focus. Drives the thick focus ring + camera move. */
+  focusedSensorId: number | null
+  /** Monotonic counter bumped on every sensor focus dispatch so re-focusing re-zooms. */
+  sensorFocusRequestId: number
+  pendingSensorAction: SensorActionRequest | null
 }
 
 export type MenusState = MenusTypes
@@ -51,6 +64,9 @@ export type MenusPayload = {
   ['HIDE_ALL_SENSOR_TAGS_IN_VIEWER']: {viewer: ViewerNames}
   ['SET_CURRENT_SENSOR_ID']: Pick<MenusTypes, 'currentSensorId'>
   ['SET_CURRENT_SENSOR_TYPE_ID']: Pick<MenusTypes, 'currentSensorTypeId'>
+  ['SET_FOCUSED_SENSOR_ID']: {sensorId: number | null}
+  ['REQUEST_SENSOR_ACTION']: {sensorId: number}
+  ['CLEAR_PENDING_SENSOR_ACTION']: undefined
 }
 
 export type MenusActions
@@ -127,6 +143,27 @@ export const MenusReducer = (state: MenusState, action: MenusActions) => {
       return {
         ...state,
         currentSensorTypeId: action.payload.currentSensorTypeId,
+      }
+    case 'SET_FOCUSED_SENSOR_ID':
+      return {
+        ...state,
+        focusedSensorId: action.payload.sensorId,
+        sensorFocusRequestId: state.sensorFocusRequestId + 1,
+      }
+    case 'REQUEST_SENSOR_ACTION':
+      return {
+        ...state,
+        pendingSensorAction: {
+          sensorId: action.payload.sensorId,
+          action: 'edit',
+          requestId: (state.pendingSensorAction?.requestId ?? 0) + 1,
+        },
+      }
+    case 'CLEAR_PENDING_SENSOR_ACTION':
+      if (state.pendingSensorAction === null) return state
+      return {
+        ...state,
+        pendingSensorAction: null,
       }
     case 'HIDE_ALL_SENSORS_IN_VIEWER':
       const sensorViewerToHide = action.payload.viewer

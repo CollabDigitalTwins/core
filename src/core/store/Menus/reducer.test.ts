@@ -20,6 +20,9 @@ function baseState(overrides: Partial<MenusState> = {}): MenusState {
     visibleSensorTags: {},
     currentSensorId: null,
     currentSensorTypeId: null,
+    focusedSensorId: null,
+    sensorFocusRequestId: 0,
+    pendingSensorAction: null,
     ...overrides,
   }
 }
@@ -197,5 +200,56 @@ describe('MenusReducer', () => {
       type: 'SHOW_ALL_SENSOR_IN_VIEWER',
       payload: { viewer: ViewerNames.map },
     } as any)).toBe(state)
+  })
+
+  describe('sensor focus + actions', () => {
+    it('SET_FOCUSED_SENSOR_ID sets the id and bumps sensorFocusRequestId each time', () => {
+      const first = MenusReducer(baseState(), {
+        type: 'SET_FOCUSED_SENSOR_ID',
+        payload: { sensorId: 7 },
+      } as any)
+      expect(first.focusedSensorId).toBe(7)
+      expect(first.sensorFocusRequestId).toBe(1)
+
+      // Re-focusing the same sensor still advances the counter so viewers re-zoom.
+      const second = MenusReducer(first, {
+        type: 'SET_FOCUSED_SENSOR_ID',
+        payload: { sensorId: 7 },
+      } as any)
+      expect(second.focusedSensorId).toBe(7)
+      expect(second.sensorFocusRequestId).toBe(2)
+    })
+
+    it('REQUEST_SENSOR_ACTION stores a monotonic edit request', () => {
+      const first = MenusReducer(baseState(), {
+        type: 'REQUEST_SENSOR_ACTION',
+        payload: { sensorId: 3 },
+      } as any)
+      expect(first.pendingSensorAction).toEqual({ sensorId: 3, action: 'edit', requestId: 1 })
+
+      const second = MenusReducer(first, {
+        type: 'REQUEST_SENSOR_ACTION',
+        payload: { sensorId: 5 },
+      } as any)
+      expect(second.pendingSensorAction).toEqual({ sensorId: 5, action: 'edit', requestId: 2 })
+    })
+
+    it('CLEAR_PENDING_SENSOR_ACTION resets to null and no-ops when already null', () => {
+      const first = MenusReducer(baseState(), {
+        type: 'REQUEST_SENSOR_ACTION',
+        payload: { sensorId: 3 },
+      } as any)
+      const second = MenusReducer(first, {
+        type: 'CLEAR_PENDING_SENSOR_ACTION',
+        payload: undefined,
+      } as any)
+      expect(second.pendingSensorAction).toBeNull()
+
+      const third = MenusReducer(second, {
+        type: 'CLEAR_PENDING_SENSOR_ACTION',
+        payload: undefined,
+      } as any)
+      expect(third).toBe(second)
+    })
   })
 })

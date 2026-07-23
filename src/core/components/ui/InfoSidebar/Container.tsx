@@ -31,7 +31,9 @@ export function InfoSidebarContainer({
   const [loadingBuildingInfo] = React.useState(false)
 
   return (
-    <div className="w-full sm:w-[410px] flex flex-col h-full min-h-0 bg-background border-r border-border ">
+    // Fills the InfoSidebar overlay wrapper (Sidebar.tsx), which owns the resizable width.
+    // pr-2 keeps a consistent right gutter so content never sits flush against the edge/handle.
+    <div className="w-full flex flex-col h-full min-h-0 bg-background border-r border-border pr-2">
       <Header
         currentBuilding={currentBuilding}
         loadingBuildingInfo={loadingBuildingInfo}

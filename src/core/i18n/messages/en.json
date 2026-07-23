@@ -239,6 +239,7 @@
     "label": "Write a comment",
     "placeholder": "Enter your comment here...",
     "close": "Close",
+    "clickPlusHint": "Click the + to place your comment",
     "placeHelpTextMap": "Double click anywhere on the map to add comment",
     "placeHelpTextBim": "Double click anywhere on the model to add comment"
   },
@@ -261,6 +262,7 @@
     "attachments": "Attachments",
     "addAttachment": "Add attachment",
     "writeReply": "Write a reply...",
+    "doubleClickZoom": "Double click to zoom to comment",
     "position": "Position",
     "lastUpdated": "Last updated"
   },
@@ -1174,6 +1176,9 @@
     "toastSuccessCreate": "Site created successfully",
     "toastSuccessUpdate": "Site updated successfully",
     "toastErrorUpdate": "Failed to update Site"
+  },
+  "InfoSidebar": {
+    "resizeHandleLabel": "Resize sidebar"
   },
   "TabSelector": {
     "fileLabel": "File",

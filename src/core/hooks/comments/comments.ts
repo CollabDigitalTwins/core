@@ -24,3 +24,6 @@ export const useCommentsByBuilding = (buildingId: number | null) =>
 
 export const useCreateComment = () =>
   useCoreHooks().comment.useCreateComment();
+
+export const useDeleteComments = () =>
+  useCoreHooks().comment.useDeleteComments();

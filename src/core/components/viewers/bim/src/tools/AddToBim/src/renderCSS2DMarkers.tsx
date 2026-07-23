@@ -74,11 +74,13 @@ export function renderCSS2DMarkers<T extends { id: number; x?: number | null; y?
     const existing = reg.get(itemId)
 
     const resolvedProps = {
-      ...propsMapper(item),
       worldCamera: world.camera.three,
       targetPoint: new THREE.Vector3(item.x, item.y, item.z),
       onClose: () => {},
       onRemove: () => onRemove(item.id),
+      // propsMapper wins: it can supply richer, per-item handlers (e.g. author-gated
+      // delete, select/focus/edit/reply) that override these generic defaults.
+      ...propsMapper(item),
     }
 
     if (existing) {

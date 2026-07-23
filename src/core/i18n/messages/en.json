@@ -262,6 +262,7 @@
     "attachments": "Attachments",
     "addAttachment": "Add attachment",
     "writeReply": "Write a reply...",
+    "doubleClickZoom": "Double click to zoom to comment",
     "position": "Position",
     "lastUpdated": "Last updated"
   },

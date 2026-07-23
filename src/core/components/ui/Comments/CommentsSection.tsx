@@ -9,7 +9,7 @@ import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { toast } from 'sonner'
 
-import { useComment, useComments, useCreateComment } from '../../../hooks/comments/comments';
+import { useComment, useComments, useCreateComment, useDeleteComments } from '../../../hooks/comments/comments';
 import { BuildingsContext, MenusContext, ToolsContext, usePermissions } from '../../../store'
 import { CollapsibleSection } from '../CollapsibleSection'
 import { SearchInput } from '../SearchInput'
@@ -31,7 +31,18 @@ export function CommentsSection() {
 
   const { dispatch: toolsDispatch } = React.useContext(ToolsContext)
   const { state: menusState, dispatch: menusDispatch } = React.useContext(MenusContext)
-  const { currentViewer, commentsVisibleInViewer } = menusState.menus
+  const { currentViewer, commentsVisibleInViewer, focusedCommentId, pendingCommentAction } = menusState.menus
+
+  const focusComment = React.useCallback((commentId: number) => {
+    menusDispatch({ type: 'SET_FOCUSED_COMMENT_ID', payload: { commentId } })
+  }, [menusDispatch])
+
+  // A pending action (open editor/reply from a marker) is one-shot: child items consume it
+  // on their mount/update effect (children run before this parent effect), then we clear it so
+  // it does not re-fire when the sidebar remounts.
+  React.useEffect(() => {
+    if (pendingCommentAction) menusDispatch({ type: 'CLEAR_PENDING_COMMENT_ACTION' })
+  }, [pendingCommentAction?.requestId, menusDispatch])
 
   const {comments} = useComments()
   const {state: buildingsState} = React.useContext(BuildingsContext)
@@ -40,11 +51,10 @@ export function CommentsSection() {
   const user = useSession().data?.user
   const { createComment } = useCreateComment()
 
-  const [commentToDelete, setCommentToDelete] = React.useState<number | null>(null)
   const [commentToEdit, setCommentToEdit] = React.useState<{ id: number; text: string } | null>(null)
   const [searchQuery, setSearchQuery] = React.useState('')
-  const { deleteComment } = useComment(commentToDelete)
   const { updateComment } = useComment(commentToEdit?.id ?? null)
+  const { deleteComments } = useDeleteComments()
 
   const handleAddComment = React.useCallback(() => {
     if (!currentViewer) return
@@ -63,24 +73,19 @@ export function CommentsSection() {
 
   const handleCommentAction = React.useCallback((action: CommentAction, id: number) => {
     switch (action) {
-      case 'delete':
-            toast.success(t('commentDeleted'))
-            setCommentToDelete(id)
+      case 'delete': {
+        toast.success(t('commentDeleted'))
+        // Cascade: delete the comment together with its replies (DB does not cascade).
+        const replyIds = comments.filter((c) => c.replyToId === id).map((c) => c.id)
+        void deleteComments({ ids: [id, ...replyIds] })
         break
+      }
       // 'view', 'edit' and 'reply' are handled inline by CollapsibleCommentItem
       // (edit -> onEdit, reply -> onReply)
       default:
         break
     }
-  }, [t])
-
-  // Trigger deletion when commentToDelete changes
-  React.useEffect(() => {
-    if (commentToDelete !== null) {
-      deleteComment()
-      setCommentToDelete(null)
-    }
-  }, [commentToDelete, deleteComment])
+  }, [t, comments, deleteComments])
 
   // Trigger edit when commentToEdit changes
   React.useEffect(() => {
@@ -189,6 +194,9 @@ export function CommentsSection() {
               replies={repliesByParent.get(comment.id) ?? []}
               attachments={[]}
               isVisible={commentsVisible}
+              focused={focusedCommentId === comment.id}
+              onFocus={() => focusComment(comment.id)}
+              pendingAction={pendingCommentAction ?? undefined}
               onMouseEnter={() => menusDispatch({ type: 'SET_CURRENT_COMMENT_ID', payload: { commentId: comment.id } })}
               onMouseLeave={() => menusDispatch({ type: 'SET_CURRENT_COMMENT_ID', payload: { commentId: null } })}
             />

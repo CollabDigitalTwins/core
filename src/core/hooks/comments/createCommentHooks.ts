@@ -95,6 +95,40 @@ export function createCommentHooks(adapter: ApiAdapter) {
         };
     };
 
+    // Delete one or more comments in a single call. Used to cascade-delete a comment together
+    // with its replies (the DB self-relation is onDelete: SetNull, so replies must be removed
+    // explicitly rather than relying on the database to cascade).
+    const useDeleteComments = () => {
+        const { trigger: deleteComments, isMutating: isDeleting, error: deleteError } = useSWRMutation(
+            ["deleteComments"],
+            async (_key, { arg }: { arg: { ids: number[] } }) => {
+                const buildingIds = new Set<number>();
+                const authorIds = new Set<number>();
+                for (const cid of arg.ids) {
+                    try {
+                        const comment = await adapter.getComment(cid);
+                        if (comment?.buildingId) buildingIds.add(comment.buildingId);
+                        if (comment?.authorId) authorIds.add(comment.authorId);
+                    }
+                    catch {
+                        // Comment may already be gone; deletion below is still safe to attempt.
+                    }
+                    await adapter.deleteComment(cid);
+                }
+                return { ids: arg.ids, buildingIds: [...buildingIds], authorIds: [...authorIds] };
+            },
+            {
+                onSuccess: ({ ids, buildingIds, authorIds }) => {
+                    ids.forEach((cid) => mutate(["comment", cid], undefined, { revalidate: false }));
+                    mutate(["comments"]);
+                    buildingIds.forEach((bId) => mutate(["comments", "building", bId]));
+                    authorIds.forEach((aId) => mutate(["commentsByAuthor", aId]));
+                },
+            }
+        );
+        return { deleteComments, isDeleting, deleteError };
+    };
+
     const useCreateComment = () => {
         const { trigger: createComment, isMutating, data: createdData, error } = useSWRMutation(
             ["createComment"],
@@ -136,6 +170,7 @@ export function createCommentHooks(adapter: ApiAdapter) {
         useComment,
         useCommentsByAuthor,
         useCreateComment,
-        useCommentsByBuilding
+        useCommentsByBuilding,
+        useDeleteComments
     };
 }

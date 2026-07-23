@@ -12,6 +12,9 @@ function baseState(overrides: Partial<MenusState> = {}): MenusState {
     selectedTab: 'file',
     commentsVisibleInViewer: [],
     currentCommentId: null,
+    focusedCommentId: null,
+    focusRequestId: 0,
+    pendingCommentAction: null,
     sensorsVisibleInViewer: [],
     visibleSensorTypes: {},
     visibleSensorTags: {},
@@ -155,6 +158,37 @@ describe('MenusReducer', () => {
       payload: { viewer: ViewerNames.map },
     } as any)
     expect(next.visibleSensorTags[ViewerNames.map]).toEqual([])
+  })
+
+  it('SET_FOCUSED_COMMENT_ID sets the id and bumps focusRequestId each time', () => {
+    const first = MenusReducer(baseState(), {
+      type: 'SET_FOCUSED_COMMENT_ID',
+      payload: { commentId: 5 },
+    } as any)
+    expect(first.focusedCommentId).toBe(5)
+    expect(first.focusRequestId).toBe(1)
+
+    // Re-focusing the same comment still advances the counter so viewers re-zoom.
+    const second = MenusReducer(first, {
+      type: 'SET_FOCUSED_COMMENT_ID',
+      payload: { commentId: 5 },
+    } as any)
+    expect(second.focusedCommentId).toBe(5)
+    expect(second.focusRequestId).toBe(2)
+  })
+
+  it('REQUEST_COMMENT_ACTION records the action and increments its requestId', () => {
+    const first = MenusReducer(baseState(), {
+      type: 'REQUEST_COMMENT_ACTION',
+      payload: { commentId: 3, action: 'edit' },
+    } as any)
+    expect(first.pendingCommentAction).toEqual({ commentId: 3, action: 'edit', requestId: 1 })
+
+    const second = MenusReducer(first, {
+      type: 'REQUEST_COMMENT_ACTION',
+      payload: { commentId: 3, action: 'reply' },
+    } as any)
+    expect(second.pendingCommentAction).toEqual({ commentId: 3, action: 'reply', requestId: 2 })
   })
 
   it('SHOW_ALL_SENSOR_IN_VIEWER is intentionally a no-op (returns same state)', () => {

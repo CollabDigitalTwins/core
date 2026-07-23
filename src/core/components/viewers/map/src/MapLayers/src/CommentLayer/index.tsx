@@ -9,10 +9,11 @@ import * as React from 'react'
 import { Source, Layer, Popup, Marker } from 'react-map-gl/maplibre'
 import { toast } from 'sonner'
 
-import { useComment, useComments } from '../../../../../../../hooks/comments/comments'
+import { useComments, useDeleteComments } from '../../../../../../../hooks/comments/comments'
 import { useUser, useUsers } from '../../../../../../../hooks/users/users'
 import { MapContext, MenusContext } from '../../../../../../../store'
 import { ViewerNames, type Comment as IComment } from '../../../../../../../types/dbTypes'
+import { commentRingShadow } from '../../../../../../../utils/markerUtils'
 import { Avatar } from '../../../../../../ui/Avatar'
 import Comment from '../../../../../../ui/Comments/Comment'
 import { UserAvatar } from '../../../../../../ui/UserAvatar'
@@ -28,7 +29,7 @@ type MapComment = IComment & {
   imageFileId?: number | null
 }
 
-const CommentAvatarMarker = ({ feature, isHighlighted, onMouseEnter, onMouseLeave, onClick, center, offset }: { feature: MapGeoJSONFeature; isHighlighted?: boolean; onMouseEnter?: () => void; onMouseLeave?: () => void; onClick?: () => void; center?: [number, number]; offset?: [number, number] }) => {
+const CommentAvatarMarker = ({ feature, isHighlighted, isFocused, onMouseEnter, onMouseLeave, onClick, onDoubleClick, center, offset }: { feature: MapGeoJSONFeature; isHighlighted?: boolean; isFocused?: boolean; onMouseEnter?: () => void; onMouseLeave?: () => void; onClick?: () => void; onDoubleClick?: () => void; center?: [number, number]; offset?: [number, number] }) => {
   const authorId = feature.properties?.authorId
   const { user: author } = useUser(authorId != null ? String(authorId) : '')
   const userName = feature.properties?.authorName
@@ -40,24 +41,26 @@ const CommentAvatarMarker = ({ feature, isHighlighted, onMouseEnter, onMouseLeav
   const coords = center ? { lng: center[0], lat: center[1] } : extractCoordinatesFromFeature(feature)
   if (!coords) return null
 
+  const scale = isFocused ? 1.25 : isHighlighted ? 1.2 : 1
+
   return (
     <Marker key={String(feature.properties?.id ?? `${coords.lng},${coords.lat}`)} longitude={coords.lng} latitude={coords.lat} anchor="center" offset={offset}>
       <div
+        title={onDoubleClick ? 'Double click to zoom' : undefined}
         style={{
           width: '36px',
           height: '36px',
           borderRadius: '50%',
-          boxShadow: isHighlighted
-            ? '0 0 0 2px #73cee2, 0 0 8px rgba(115, 206, 226, 0.5)'
-            : '0 0 0 1px white',
+          boxShadow: commentRingShadow({ highlight: isHighlighted, focused: isFocused }),
           transition: 'all 0.2s ease-in-out',
-          transform: isHighlighted ? 'scale(1.2)' : 'scale(1)',
+          transform: `scale(${scale})`,
           overflow: 'hidden',
-          cursor: onClick ? 'pointer' : undefined,
+          cursor: onClick || onDoubleClick ? 'pointer' : undefined,
         }}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         onClick={onClick}
+        onDoubleClick={onDoubleClick}
       >
         <Avatar className="h-full w-full">
           <UserAvatar
@@ -89,9 +92,15 @@ export const CommentLayer = () => {
 
   const [popupInfo, setPopUpInfo] = React.useState<(Partial<IComment> & { authorName?: string; imageFileId?: number | null }) | null>(null)
   const { user: popupAuthor } = useUser(popupInfo?.authorId != null ? String(popupInfo.authorId) : '')
-  const { deleteComment } = useComment(popupInfo?.id ?? null)
-  const { state: menusState } = React.useContext(MenusContext)
-  const { commentsVisibleInViewer, currentCommentId } = menusState.menus
+  const { deleteComments } = useDeleteComments()
+  const { state: menusState, dispatch: menusDispatch } = React.useContext(MenusContext)
+  const { commentsVisibleInViewer, currentCommentId, focusedCommentId, focusRequestId } = menusState.menus
+
+  const focusComment = React.useCallback((commentId?: number) => {
+    if (commentId == null) return
+    menusDispatch({ type: 'SET_CURRENT_COMMENT_ID', payload: { commentId } })
+    menusDispatch({ type: 'SET_FOCUSED_COMMENT_ID', payload: { commentId } })
+  }, [menusDispatch])
 
   // Hover-to-expand (spiderfy) state for clusters
   const [spider, setSpider] = React.useState<{ center: [number, number]; features: MapGeoJSONFeature[] } | null>(null)
@@ -140,12 +149,24 @@ export const CommentLayer = () => {
       }
     })
 
+  // Keep the latest comments available to the focus effect without re-running it every render.
+  const eligibleCommentsRef = React.useRef(eligibleComments)
+  eligibleCommentsRef.current = eligibleComments
+
   // Close popup if the comment was deleted
   React.useEffect(() => {
     if (popupInfo && !comments.find((c) => c.id === popupInfo.id)) {
       setPopUpInfo(null)
     }
   }, [comments, popupInfo])
+
+  // Fly to a comment when it is focused (double-clicked here or in the sidebar).
+  React.useEffect(() => {
+    if (focusedCommentId == null || !map) return
+    const target = eligibleCommentsRef.current.find((c) => c.id === focusedCommentId)
+    if (!target || target.longitude == null || target.latitude == null) return
+    map.flyTo({ center: [target.longitude, target.latitude], zoom: Math.max(map.getZoom(), 17), duration: 800 })
+  }, [focusRequestId, map])
 
   const geojsonCommentData = React.useMemo(() => {
     const convertDataToGeojson = (commentData: MapComment[]): GeoJSON.FeatureCollection<GeoJSON.Point, { [key: string]: any }> => {
@@ -211,8 +232,12 @@ export const CommentLayer = () => {
   }, [map, mapClickManager, openPopupFromFeature])
 
   const handleRemoveComment = () => {
+    if (popupInfo?.id == null) return
     toast.success(t('commentDeleted'))
-    deleteComment()
+    // Cascade: delete the comment together with its replies (the DB does not cascade).
+    const id = popupInfo.id
+    const replyIds = comments.filter((c) => c.replyToId === id).map((c) => c.id)
+    void deleteComments({ ids: [id, ...replyIds] })
     setPopUpInfo(null)
   }
 
@@ -386,8 +411,10 @@ export const CommentLayer = () => {
             key={String(feature.properties?.id)}
             feature={feature}
             isHighlighted={currentCommentId === feature.properties?.id || hoveredCommentId === feature.properties?.id}
+            isFocused={focusedCommentId === feature.properties?.id}
             onMouseEnter={() => setHoveredCommentId(feature.properties?.id)}
             onMouseLeave={() => setHoveredCommentId(null)}
+            onDoubleClick={() => focusComment(feature.properties?.id)}
           />
         ))}
 
@@ -405,9 +432,11 @@ export const CommentLayer = () => {
             center={spider.center}
             offset={offset}
             isHighlighted={currentCommentId === id || hoveredCommentId === id}
+            isFocused={focusedCommentId === id}
             onMouseEnter={() => { cancelSpiderClose(); setHoveredCommentId(id) }}
             onMouseLeave={() => { scheduleSpiderClose(); setHoveredCommentId(null) }}
             onClick={() => { openPopupFromFeature(feature); setSpider(null) }}
+            onDoubleClick={() => { focusComment(id); setSpider(null) }}
           />
         )
       })}

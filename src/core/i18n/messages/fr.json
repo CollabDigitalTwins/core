@@ -1176,6 +1176,9 @@
     "toastSuccessUpdate": "Site mis à jour avec succès",
     "toastErrorUpdate": "Échec de la mise à jour du site"
   },
+  "InfoSidebar": {
+    "resizeHandleLabel": "Redimensionner la barre latérale"
+  },
   "TabSelector": {
     "fileLabel": "Fichier",
     "layersTitle": "Couches",

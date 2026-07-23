@@ -1176,6 +1176,9 @@
     "toastSuccessUpdate": "Sitio actualizado con éxito",
     "toastErrorUpdate": "Error al actualizar el sitio"
   },
+  "InfoSidebar": {
+    "resizeHandleLabel": "Redimensionar la barra lateral"
+  },
   "TabSelector": {
     "fileLabel": "Archivo",
     "layersTitle": "Capas",

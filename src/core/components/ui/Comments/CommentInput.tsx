@@ -7,6 +7,7 @@ import * as LR from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
+import { toast } from 'sonner'
 
 import { useCreateComment } from '../../../hooks/comments/comments'
 import { AppConfigContext, MapContext, BuildingsContext, MenusContext, ToolsContext } from '../../../store'
@@ -245,6 +246,7 @@ export function CommentInput({
     if (text.trim() === '') return
     setIsPlacing(true)
     setCursor('crosshair')
+    toast(viewer === ViewerNames.map ? t('placeHelpTextMap') : t('placeHelpTextBim'))
   }
 
   const inputEl = (
@@ -273,7 +275,7 @@ export function CommentInput({
   const helpText =
     isPlacing
       ? (viewer === ViewerNames.map ? t('placeHelpTextMap') : t('placeHelpTextBim'))
-      : null
+      : (text.trim() !== '' ? t('clickPlusHint') : null)
 
   if (layout === 'dialog') {
     // When placing, return null so the map is fully interactive (component stays mounted for useEffect)
@@ -292,6 +294,9 @@ export function CommentInput({
             {inputEl}
             {submitButtonEl}
           </div>
+          {helpText && (
+            <p className="text-sm text-foreground">{helpText}</p>
+          )}
         </div>
       </AddItemDialog>
     )

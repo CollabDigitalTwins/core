@@ -33,23 +33,21 @@ export function TabSelector({ activeTab, onTabChangeAction }: TabSelectorProps) 
       <Separator />
 
       <div className="px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            {tabs.map(tab => (
-              <div
-                key={tab.id}
-                className={`px-3 py-2 rounded-md cursor-pointer transition-colors text-xs font-medium ${
-                  activeTab === tab.id
-                    ? 'bg-accent text-accent-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
-                }`}
-                onClick={() => onTabChangeAction(tab.id as SidebarTabType)}
-              >
-                {tab.label}
-              </div>
-            ))}
-          </div>
-          {/* <LR.Search className="h-4 w-4 text-muted-foreground" /> */}
+        <div className="flex items-center gap-1 w-full">
+          {tabs.map(tab => (
+            <div
+              key={tab.id}
+              title={tab.label}
+              className={`flex-1 min-w-0 truncate text-center px-2 py-2 rounded-md cursor-pointer transition-colors text-xs font-medium ${
+                activeTab === tab.id
+                  ? 'bg-accent text-accent-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+              }`}
+              onClick={() => onTabChangeAction(tab.id as SidebarTabType)}
+            >
+              {tab.label}
+            </div>
+          ))}
         </div>
       </div>
 

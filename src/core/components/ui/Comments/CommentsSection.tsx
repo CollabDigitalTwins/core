@@ -34,8 +34,10 @@ export function CommentsSection() {
   const { currentViewer, commentsVisibleInViewer, focusedCommentId, pendingCommentAction } = menusState.menus
 
   const focusComment = React.useCallback((commentId: number) => {
+    // Ensure comments are visible in the active viewer so the zoom target is actually rendered.
+    menusDispatch({ type: 'SHOW_COMMENTS_IN_VIEWER', payload: { viewer: currentViewer } })
     menusDispatch({ type: 'SET_FOCUSED_COMMENT_ID', payload: { commentId } })
-  }, [menusDispatch])
+  }, [menusDispatch, currentViewer])
 
   // A pending action (open editor/reply from a marker) is one-shot: child items consume it
   // on their mount/update effect (children run before this parent effect), then we clear it so
@@ -182,7 +184,7 @@ export function CommentsSection() {
           onCheckedChange: toggleCommentsVisibility,
         }}
       >
-        <div className="space-y-2 mx-2 pr-2">
+        <div className="space-y-2 mx-2 pr-2 pb-2">
           {filteredComments.map((comment) => (
             <CollapsibleCommentItem
               key={comment.id}

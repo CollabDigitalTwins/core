@@ -93,7 +93,7 @@ export const CommentLayer = () => {
   const [popupInfo, setPopUpInfo] = React.useState<(Partial<IComment> & { authorName?: string; imageFileId?: number | null }) | null>(null)
   const { user: popupAuthor } = useUser(popupInfo?.authorId != null ? String(popupInfo.authorId) : '')
   const { deleteComments } = useDeleteComments()
-  const { state: menusState, dispatch: menusDispatch } = React.useContext(MenusContext)
+  const { state: menusState, dispatch: menusDispatch, setIsSidebarOpen } = React.useContext(MenusContext)
   const { commentsVisibleInViewer, currentCommentId, focusedCommentId, focusRequestId } = menusState.menus
 
   const focusComment = React.useCallback((commentId?: number) => {
@@ -101,6 +101,16 @@ export const CommentLayer = () => {
     menusDispatch({ type: 'SET_CURRENT_COMMENT_ID', payload: { commentId } })
     menusDispatch({ type: 'SET_FOCUSED_COMMENT_ID', payload: { commentId } })
   }, [menusDispatch])
+
+  // Edit/reply from the popup card open the comment's editor/reply box in the sidebar,
+  // matching the BIM comment card behaviour.
+  const requestSidebarAction = React.useCallback((commentId: number | undefined, action: 'edit' | 'reply') => {
+    if (commentId == null) return
+    setIsSidebarOpen(true)
+    menusDispatch({ type: 'SET_SIDEBAR_SELECTED_TAB', payload: { selectedTab: 'communication' } })
+    menusDispatch({ type: 'SET_CURRENT_COMMENT_ID', payload: { commentId } })
+    menusDispatch({ type: 'REQUEST_COMMENT_ACTION', payload: { commentId, action } })
+  }, [menusDispatch, setIsSidebarOpen])
 
   // Hover-to-expand (spiderfy) state for clusters
   const [spider, setSpider] = React.useState<{ center: [number, number]; features: MapGeoJSONFeature[] } | null>(null)
@@ -160,12 +170,25 @@ export const CommentLayer = () => {
     }
   }, [comments, popupInfo])
 
-  // Fly to a comment when it is focused (double-clicked here or in the sidebar).
+  // Fly to a comment when it is focused (double-clicked here or in the sidebar) and open its card.
   React.useEffect(() => {
     if (focusedCommentId == null || !map) return
     const target = eligibleCommentsRef.current.find((c) => c.id === focusedCommentId)
     if (!target || target.longitude == null || target.latitude == null) return
     map.flyTo({ center: [target.longitude, target.latitude], zoom: Math.max(map.getZoom(), 17), duration: 800 })
+    setPopUpInfo({
+      id: target.id,
+      authorId: target.authorId,
+      organizationId: target.organizationId,
+      visible: target.visible,
+      longitude: target.longitude,
+      latitude: target.latitude,
+      text: target.text,
+      createdAt: target.createdAt,
+      authorName: target.authorName,
+      imageFileId: target.imageFileId,
+      viewer: ViewerNames.map,
+    })
   }, [focusRequestId, map])
 
   const geojsonCommentData = React.useMemo(() => {
@@ -333,7 +356,12 @@ export const CommentLayer = () => {
           userImageFileId={popupAuthor?.imageFileId ?? popupInfo.imageFileId ?? null}
           text={popupInfo.text}
           createdAt={popupInfo.createdAt}
-          onRemove={user.id === String(popupInfo.authorId) ? handleRemoveComment : null}
+          showActions
+          canEdit={user.id === String(popupInfo.authorId)}
+          canDelete={user.id === String(popupInfo.authorId)}
+          onEdit={user.id === String(popupInfo.authorId) ? () => requestSidebarAction(popupInfo.id, 'edit') : undefined}
+          onReply={() => requestSidebarAction(popupInfo.id, 'reply')}
+          onRemove={user.id === String(popupInfo.authorId) ? handleRemoveComment : undefined}
           onClose={() => setPopUpInfo(null)}
         />
         {/* inline styles to override MapLibre’s Pop up CSS */}

@@ -33,8 +33,8 @@ function clusterColor(count: number): string {
  * overlapping BIM comment markers; hovering fans the members out (animated) so each can be
  * seen and clicked, and collapses back on mouse-out. A short close delay keeps the fan open
  * while the pointer crosses the gap between the bubble and a member (same trick the map
- * spiderfy uses), so members stay clickable. Members mount only while expanded, so a collapsed
- * cluster is just the bubble — no leftover container behind it.
+ * cluster expansion uses), so members stay clickable. Members mount only while expanded, so a
+ * collapsed cluster is just the bubble — no leftover container behind it.
  */
 export default function BimCommentCluster({ members, highlight = false, onSelect, onFocus }: BimCommentClusterProps): React.ReactElement {
   const [expanded, setExpanded] = React.useState(false)
@@ -109,7 +109,10 @@ export default function BimCommentCluster({ members, highlight = false, onSelect
                   transitionDelay: `${i * 20}ms`,
                 }}
                 onMouseEnter={open}
-                onClick={() => {
+                // pointerdown (not click): the CSS2D renderer re-transforms this element every
+                // frame and it is still animating out, so a browser click frequently never fires.
+                onPointerDown={(e) => {
+                  e.stopPropagation()
                   onSelect?.(member.id)
                   onFocus?.(member.id)
                 }}

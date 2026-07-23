@@ -78,6 +78,11 @@ export default function Comment({
   const { file } = useFile(resolvedImageFileId)
   const previewSrc = file?.url
 
+  // Zooming to a comment (focus) should also open its card in the 3D scene.
+  React.useEffect(() => {
+    if (focused && enableCollapse) setIsCollapsed(false)
+  }, [focused, enableCollapse])
+
   const handleClose = () => {
     if (enableCollapse) setIsCollapsed(true)
     else onClose?.()
@@ -171,11 +176,11 @@ export default function Comment({
               title={actionLabels?.close ?? 'Close'}
               aria-label={actionLabels?.close ?? 'Close'}
               className="h-7 w-7 shrink-0 -mr-1 -mt-1"
-              // pointerdown (not click): reliable inside the CSS2D-rendered 3D card.
-              onPointerDown={(e) => {
-                e.stopPropagation()
-                handleClose()
-              }}
+              // In the CSS2D 3D card (enableCollapse) activate on pointerdown for reliability;
+              // the map popup is normal DOM, so keep click for keyboard accessibility.
+              {...(enableCollapse
+                ? { onPointerDown: (e: React.PointerEvent) => { e.stopPropagation(); handleClose() } }
+                : { onClick: (e: React.MouseEvent) => { e.stopPropagation(); handleClose() } })}
             >
               <LR.X className="h-4 w-4" />
             </Button>
@@ -217,7 +222,7 @@ export default function Comment({
               canDelete={canDelete}
               labels={actionLabels}
               buttonClassName="h-7 w-7"
-              activateOnPointerDown
+              activateOnPointerDown={enableCollapse}
             />
           </div>
         )}

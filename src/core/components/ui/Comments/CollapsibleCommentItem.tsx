@@ -146,7 +146,7 @@ export function CollapsibleCommentItem({
       }}
       title={onFocus ? t('doubleClickZoom') : undefined}
     >
-      <div className={cn('flex flex-col gap-1.5 p-3', !isReply && 'hover:bg-accent/50 transition-colors rounded-md')}>
+      <div className={cn('flex flex-col gap-1.5 p-3', !isReply && 'hover:bg-accent/50 transition-colors rounded-md', onFocus && 'cursor-pointer')}>
         {/* Header: avatar, author, timestamp, actions */}
         <div className="flex items-start gap-2">
           <Avatar className={cn('mt-0.5 rounded-full overflow-hidden shrink-0', isReply ? 'h-6 w-6' : 'h-8 w-8')}>

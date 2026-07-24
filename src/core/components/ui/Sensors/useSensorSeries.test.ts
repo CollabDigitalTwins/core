@@ -27,6 +27,7 @@ afterEach(() => {
 
 describe('useSensorSeries', () => {
   it('fetches once when enabled and returns parsed points', async () => {
+    // cast: minimal Response stub for fetch, not a full Response
     global.fetch = vi.fn().mockResolvedValue(mockCsv(7)) as any
     const { result } = renderHook(() =>
       useSensorSeries('http://x/api/sensor/temperature', SensorDataFormat.Csv, 60000, { enabled: true }),
@@ -36,6 +37,7 @@ describe('useSensorSeries', () => {
   })
 
   it('does not fetch when disabled', () => {
+    // cast: minimal Response stub for fetch, not a full Response
     global.fetch = vi.fn() as any
     renderHook(() =>
       useSensorSeries('http://x', SensorDataFormat.Csv, 60000, { enabled: false }),
@@ -46,6 +48,7 @@ describe('useSensorSeries', () => {
   it('re-fetches on the poll interval and replaces the series', async () => {
     vi.useFakeTimers()
     const fetchMock = vi.fn().mockResolvedValueOnce(mockCsv(1)).mockResolvedValueOnce(mockCsv(2))
+    // cast: minimal Response stub for fetch, not a full Response
     global.fetch = fetchMock as any
     const { result } = renderHook(() =>
       useSensorSeries('http://x', SensorDataFormat.Csv, 1000, { enabled: true }),
@@ -60,6 +63,7 @@ describe('useSensorSeries', () => {
   it('clears the interval on unmount (no fetch after unmount)', async () => {
     vi.useFakeTimers()
     const fetchMock = vi.fn().mockResolvedValue(mockCsv(1))
+    // cast: minimal Response stub for fetch, not a full Response
     global.fetch = fetchMock as any
     const { unmount } = renderHook(() =>
       useSensorSeries('http://x', SensorDataFormat.Csv, 1000, { enabled: true }),

@@ -113,6 +113,10 @@ export function SensorInput({
     }
     try {
       const res = await fetch(url)
+      if (!res.ok) {
+        setPreview(prev => ({ ...prev, [index]: { ok: false, text: t('previewError') } }))
+        return
+      }
       const raw = await res.text()
       const { points, unit } = parseSensorSeries(raw, dataFormat as SensorDataFormat)
       if (points.length === 0) {
@@ -141,6 +145,7 @@ export function SensorInput({
       },
     ])
     setCurrentSensorIndex(0)
+    setPreview({})
   }, [isOpen])
 
   const { createSensor } = useCreateSensor()
@@ -176,6 +181,7 @@ export function SensorInput({
       },
     ])
     setCurrentSensorIndex(0)
+    setPreview({})
     setCursor('')
     menusDispatch({type: 'SET_CURRENT_SENSOR_TYPE_ID', payload: { currentSensorTypeId: null }})
   }, [setCursor, currentSensorTypeId])

@@ -130,14 +130,18 @@ export function SensorChart({
               <ChartTooltip
                 cursor={false}
                 content={
-                  <ChartTooltipContent
-                    indicator="line"
-                    formatter={(value: unknown) => {
-                      const label = valueLabels?.[value as number]
-                      if (label) return label
-                      return unit ? `${value} ${unit}` : String(value)
-                    }}
-                  />
+                  unit || valueLabels ? (
+                    <ChartTooltipContent
+                      indicator="line"
+                      formatter={(value: unknown) => {
+                        const label = valueLabels?.[value as number]
+                        if (label) return label
+                        return unit ? `${value} ${unit}` : String(value)
+                      }}
+                    />
+                  ) : (
+                    <ChartTooltipContent indicator="line" />
+                  )
                 }
               />
               <Area

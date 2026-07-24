@@ -266,6 +266,7 @@ export const SensorLayers = () => {
         longitude={popupInfo.longitude}
         latitude={popupInfo.latitude}
         closeOnClick={false}
+        closeButton={false}
         onClose={() => setPopUpInfo(null)}
         anchor="bottom"
         style={{ height: '50px', border: 'none', boxShadow: 'none' }}

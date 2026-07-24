@@ -173,6 +173,10 @@ export function parseSensorSeries(
   raw: string,
   dataFormat: SensorDataFormat | `${SensorDataFormat}`,
 ): SensorSeries {
-  if (dataFormat === SensorDataFormat.Csv) return parseCsv(raw)
-  return parseJson(raw)
+  const series = dataFormat === SensorDataFormat.Csv ? parseCsv(raw) : parseJson(raw)
+  // Range filtering, the chart <Brush>, and the numeric time axis all assume points are
+  // ascending by time. Source feeds are not guaranteed sorted (some OGC servers return
+  // newest-first), so normalize here rather than depend on producer order.
+  series.points.sort((a, b) => a.t - b.t)
+  return series
 }

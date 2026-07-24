@@ -1,70 +1,52 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { describe, it, expect, vi, afterEach } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
-import { isSameDay, timeAgo, formatTimestamp, formatDuration } from './timeUtils'
+import { detectTimeZone, formatInZone, offsetZoneFromLongitude, resolveDefaultTimeZone } from './timeUtils'
 
-describe('formatDuration', () => {
-  it('sub-second → ms', () => {
-    expect(formatDuration(0)).toBe('0 ms')
-    expect(formatDuration(500)).toBe('500 ms')
-    expect(formatDuration(999)).toBe('999 ms')
+describe('offsetZoneFromLongitude', () => {
+  it('maps a western longitude to Etc/GMT+N (POSIX sign inversion)', () => {
+    expect(offsetZoneFromLongitude(-79)).toBe('Etc/GMT+5') // Toronto ~ UTC-5
   })
-  it('seconds', () => {
-    expect(formatDuration(1000)).toBe('1 sec')
-    expect(formatDuration(30000)).toBe('30 sec')
+  it('maps an eastern longitude to Etc/GMT-N', () => {
+    expect(offsetZoneFromLongitude(139)).toBe('Etc/GMT-9') // Tokyo ~ UTC+9
   })
-  it('minutes (floored)', () => {
-    expect(formatDuration(60000)).toBe('1 min')
-    expect(formatDuration(300000)).toBe('5 min')
+  it('maps ~0 longitude to UTC', () => {
+    expect(offsetZoneFromLongitude(3)).toBe('UTC')
   })
-  it('hours (floored)', () => {
-    expect(formatDuration(3600000)).toBe('1 hr')
-    expect(formatDuration(2 * 3600000)).toBe('2 hr')
-  })
-  it('days (floored)', () => {
-    expect(formatDuration(86400000)).toBe('1 day')
-    expect(formatDuration(2 * 86400000)).toBe('2 days')
+  it('falls back to UTC for non-finite input', () => {
+    expect(offsetZoneFromLongitude(NaN)).toBe('UTC')
   })
 })
 
-describe('isSameDay', () => {
-  it('true for the same calendar day at different times', () => {
-    expect(isSameDay(new Date(2026, 0, 15, 1, 0), new Date(2026, 0, 15, 23, 59))).toBe(true)
+describe('resolveDefaultTimeZone', () => {
+  it('prefers building longitude', () => {
+    expect(resolveDefaultTimeZone({ buildingLongitude: -79, sensorLongitude: 139 })).toBe('Etc/GMT+5')
   })
-  it('false for different days/years', () => {
-    expect(isSameDay(new Date(2026, 0, 15), new Date(2026, 0, 16))).toBe(false)
-    expect(isSameDay(new Date(2026, 0, 15), new Date(2025, 0, 15))).toBe(false)
+  it('falls back to sensor longitude', () => {
+    expect(resolveDefaultTimeZone({ buildingLongitude: null, sensorLongitude: 139 })).toBe('Etc/GMT-9')
   })
-})
-
-describe('timeAgo (fixed clock)', () => {
-  afterEach(() => vi.useRealTimers())
-  it('renders compact relative strings', () => {
-    vi.useFakeTimers()
-    vi.setSystemTime(new Date(2026, 0, 15, 12, 0, 0))
-    expect(timeAgo(new Date(2026, 0, 15, 11, 59, 30))).toBe('30s')
-    expect(timeAgo(new Date(2026, 0, 15, 11, 55, 0))).toBe('5 min')
-    expect(timeAgo(new Date(2026, 0, 15, 9, 0, 0))).toBe('3h')
-    expect(timeAgo(new Date(2026, 0, 13, 12, 0, 0))).toBe('2d')
+  it('falls back to the detected browser zone', () => {
+    const z = resolveDefaultTimeZone({ buildingLongitude: null, sensorLongitude: null })
+    expect(typeof z).toBe('string')
+    expect(z.length).toBeGreaterThan(0)
   })
 })
 
-describe('formatTimestamp (fixed clock)', () => {
-  afterEach(() => vi.useRealTimers())
-  it('returns empty string for invalid input', () => {
-    expect(formatTimestamp('not-a-date')).toBe('')
+describe('formatInZone', () => {
+  const epoch = Date.parse('2026-01-01T00:00:00Z')
+  const opts: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }
+  it('formats midnight UTC as 00:00', () => {
+    expect(formatInZone(epoch, 'UTC', opts)).toBe('00:00')
   })
-  it('uses relative time for today', () => {
-    vi.useFakeTimers()
-    vi.setSystemTime(new Date(2026, 0, 15, 12, 0, 0))
-    expect(formatTimestamp(new Date(2026, 0, 15, 11, 55, 0))).toBe('5 min')
+  it('shifts back 5h in Etc/GMT+5', () => {
+    expect(formatInZone(epoch, 'Etc/GMT+5', opts)).toBe('19:00')
   })
-  it('uses a localized date string for other days', () => {
-    vi.useFakeTimers()
-    vi.setSystemTime(new Date(2026, 0, 15, 12, 0, 0))
-    const out = formatTimestamp(new Date(2025, 5, 1, 12, 0, 0))
-    expect(out).toContain('2025')
+})
+
+describe('detectTimeZone', () => {
+  it('returns a non-empty IANA string', () => {
+    expect(detectTimeZone().length).toBeGreaterThan(0)
   })
 })

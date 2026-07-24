@@ -46,7 +46,7 @@ export function timeAgo(then: Date): string {
  * - If today: shows relative time (e.g., "5 min")
  * - If not today: shows formatted date (e.g., "Jan 15, 2026")
  */
-export function formatTimestamp(input: string | Date): string {
+export function formatTimestamp(input: string | Date, timeZone?: string): string {
   const then = typeof input === 'string' ? new Date(input) : input
   const now = new Date()
 
@@ -57,6 +57,7 @@ export function formatTimestamp(input: string | Date): string {
     year: 'numeric',
     month: 'short',
     day: '2-digit',
+    ...(timeZone ? { timeZone } : {}),
   })
 }
 
@@ -90,3 +91,53 @@ export const frequencyUnits = [
   { value: 60000, label: 'Minutes' },
   { value: 3600000, label: 'Hours' },
 ] as const
+
+/** Browser IANA zone, e.g. "America/Toronto". Falls back to "UTC" if unavailable. */
+export function detectTimeZone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+  } catch {
+    return 'UTC'
+  }
+}
+
+/**
+ * Longitude -> nearest whole-hour offset -> an Etc/GMT±N id. Note POSIX sign inversion:
+ * a positive (east) offset is Etc/GMT-N. This is a rough approximation: no DST, no
+ * political borders. 0 -> "UTC".
+ */
+export function offsetZoneFromLongitude(longitude: number): string {
+  if (!Number.isFinite(longitude)) return 'UTC'
+  let h = Math.round(longitude / 15)
+  h = Math.max(-12, Math.min(12, h))
+  if (h === 0) return 'UTC'
+  return `Etc/GMT${h > 0 ? '-' : '+'}${Math.abs(h)}`
+}
+
+/** Default display zone: building longitude, else sensor longitude, else the browser zone. */
+export function resolveDefaultTimeZone(input: {
+  buildingLongitude?: number | null
+  sensorLongitude?: number | null
+}): string {
+  const { buildingLongitude, sensorLongitude } = input
+  if (typeof buildingLongitude === 'number' && Number.isFinite(buildingLongitude)) {
+    return offsetZoneFromLongitude(buildingLongitude)
+  }
+  if (typeof sensorLongitude === 'number' && Number.isFinite(sensorLongitude)) {
+    return offsetZoneFromLongitude(sensorLongitude)
+  }
+  return detectTimeZone()
+}
+
+/** Format an epoch in a specific zone. Handles Etc/GMT±N and true IANA zones alike. */
+export function formatInZone(
+  epochMs: number,
+  timeZone: string,
+  opts?: Intl.DateTimeFormatOptions,
+): string {
+  try {
+    return new Intl.DateTimeFormat(undefined, { timeZone, ...opts }).format(epochMs)
+  } catch {
+    return new Intl.DateTimeFormat(undefined, opts).format(epochMs)
+  }
+}

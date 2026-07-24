@@ -143,7 +143,10 @@ export function SensorChart({
                 cursor={false}
                 content={
                   <ChartTooltipContent
-                    indicator="line"
+                    // "dot" (not "line") so the time label renders at the top of the tooltip:
+                    // with a single series + "line", ChartTooltipContent nests the label inside the
+                    // per-item row, which the unit/category formatter branch then skips.
+                    indicator="dot"
                     labelFormatter={(_label, payload) => {
                       const t = (payload?.[0]?.payload as { t?: number } | undefined)?.t
                       return t != null ? formatFull(t) : ''

@@ -16,6 +16,7 @@ import { cn } from '../../../utils/utils'
 import { Avatar, AvatarFallback } from '../Avatar'
 import { Badge } from '../Badge'
 import { Button } from '../Button'
+import { CommentActionButtons } from '../Comments/CommentActionButtons'
 import { UserAvatar } from '../UserAvatar'
 
 import { SensorChart } from './SensorChart'
@@ -53,6 +54,7 @@ export function CollapsibleSensorItem({
   const { state: appConfigState } = React.useContext(AppConfigContext)
   const timeZone = appConfigState.appConfig.displayTimeZone
   const [detailOpen, setDetailOpen] = React.useState(false)
+  const [tagAddNonce, setTagAddNonce] = React.useState(0)
   const { points: sensorData, unit, valueLabels, isLoading: isLoadingData } =
     useSensorSeries(sensor.url ?? '', sensor.dataFormat, sensor.updateFrequency, { enabled: isExpanded })
   const prevVisibleRef = React.useRef(isVisible)
@@ -147,43 +149,6 @@ export function CollapsibleSensorItem({
             </div>
           </div>
         </div>
-
-      {/* Action Buttons */}
-      {onAction && (
-        <div className={cn("flex items-center gap-0 flex-shrink-0", !isVisible && "opacity-70")}>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 p-0"
-            onClick={() => setDetailOpen(true)}
-            title={t('expandSensor')}
-          >
-            <LR.Maximize2 className="h-4 w-4" />
-          </Button>
-          {user?.id === String(sensor.authorId) && (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 p-0"
-                onClick={() => onAction('edit', sensor.id)}
-                title={t('editSensor')}
-              >
-                <LR.Pencil className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 p-0"
-                onClick={() => onAction('delete', sensor.id)}
-                title={t('deleteSensor')}
-              >
-                <LR.Trash2 className="h-4 w-4" />
-              </Button>
-            </>
-          )}
-        </div>
-      )}
     </div>
 
       {/* Expanded Content */ }
@@ -241,6 +206,7 @@ export function CollapsibleSensorItem({
               tags={sensor.tags ?? []}
               onAdd={handleAddTag}
               onDelete={handleDeleteTag}
+              openAddSignal={tagAddNonce}
               translations={{
                 addTag: t('addTag'),
                 removeTag: t('removeTag'),
@@ -253,6 +219,17 @@ export function CollapsibleSensorItem({
       </div>
     )
   }
+      {/* Card tools row (bottom), mirroring the comment card */}
+      <div className={cn("flex items-center justify-end gap-0 border-t px-2 py-1", !isVisible && "opacity-70")}>
+        <CommentActionButtons
+          onExpand={() => setDetailOpen(true)}
+          onTag={() => { setIsExpanded(true); setTagAddNonce(n => n + 1) }}
+          onEdit={onAction && user?.id === String(sensor.authorId) ? () => onAction('edit', sensor.id) : undefined}
+          onDelete={onAction && user?.id === String(sensor.authorId) ? () => onAction('delete', sensor.id) : undefined}
+          buttonClassName="h-8 w-8"
+          labels={{ expand: t('expandSensor'), tag: t('addTag'), edit: t('editSensor'), delete: t('deleteSensor') }}
+        />
+      </div>
       <SensorDetailDialog open={detailOpen} onOpenChange={setDetailOpen} sensor={sensor} sensorType={sensorType} />
     </div >
   )

@@ -13,9 +13,10 @@ import { toast } from 'sonner'
 import { useSensor, useSensors } from '../../../../../../../hooks/sensors/sensors'
 import { useSensorTypes } from '../../../../../../../hooks/sensorTypes/sensorTypes'
 import { useUsers } from '../../../../../../../hooks/users/users'
-import { MapContext, MenusContext } from '../../../../../../../store'
+import { AppConfigContext, MapContext, MenusContext } from '../../../../../../../store'
 import { ViewerNames, type Sensor as ISensor} from '../../../../../../../types/dbTypes'
 import Sensor from '../../../../../../ui/Sensors/Sensor'
+import { SensorDetailDialog } from '../../../../../../ui/Sensors/SensorDetailDialog'
 import { UNTAGGED_TAG } from '../../../../../../ui/Sensors/SensorsSection'
 import { extractCoordinatesFromFeature } from '../../../../utils/extractCoordinates'
 import { MapLayerClickPriority } from '../../../../utils/MapEventManager/MapClickManager'
@@ -84,6 +85,10 @@ export const SensorLayers = () => {
   const tagsVisible = visibleSensorTags?.[ViewerNames.map] || []
 
   const {sensorTypes} = useSensorTypes()
+
+  const { state: appConfigState } = React.useContext(AppConfigContext)
+  const timeZone = appConfigState.appConfig.displayTimeZone
+  const [detailSensor, setDetailSensor] = React.useState<ISensor | null>(null)
 
   const eligibleSensors: Array<ISensor & { authorName: string } & { sensorType: SensorType }> = sensors
     .filter((sensor) => sensor.viewer === ViewerNames.map)
@@ -286,6 +291,9 @@ export const SensorLayers = () => {
           createdAt={popupInfo.createdAt}
           onRemove={user.id === String(popupInfo.authorId) ? handleRemoveSensor : null}
           onClose={() => setPopUpInfo(null)}
+          onExpand={() => { if (liveSensor) setDetailSensor(liveSensor) }}
+          showActions
+          timeZone={timeZone}
           size="sm"
         />
         {/* inline styles to override MapLibre's Pop up CSS */}
@@ -341,6 +349,14 @@ export const SensorLayers = () => {
 
   return (
     <>
+      {detailSensor && (
+        <SensorDetailDialog
+          open={!!detailSensor}
+          onOpenChange={(o) => !o && setDetailSensor(null)}
+          sensor={detailSensor}
+          sensorType={sensorTypes.find(t => t.id === detailSensor.typeId)}
+        />
+      )}
   {(typesVisible.length > 0 || tagsVisible.length > 0) &&
     <Source
       id="sensors"

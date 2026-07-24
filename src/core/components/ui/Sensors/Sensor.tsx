@@ -6,7 +6,7 @@
 import * as LR from 'lucide-react'
 import * as React from 'react'
 
-import { formatTimestamp } from '../../../utils/timeUtils'
+import { formatTimestamp, detectTimeZone } from '../../../utils/timeUtils'
 import { Button } from '../Button'
 import { Card } from '../Card'
 
@@ -37,6 +37,10 @@ export type SensorProps = {
   onClose?: () => void
   /** Edit the sensor (used by the in-viewer BIM card action row). */
   onEdit?: () => void
+  /** Open the expandable detail view (wired into the shared action row). */
+  onExpand?: () => void
+  /** Display timezone for the chart + created line. Defaults to the browser zone. */
+  timeZone?: string
   enableCollapse?: boolean
   defaultCollapsed?: boolean
   size?: 'sm' | 'md' | 'lg'
@@ -60,6 +64,7 @@ export default function Sensor({
   onRemove,
   onClose,
   onEdit,
+  onExpand,
   enableCollapse = false,
   defaultCollapsed = false,
   size = 'md',
@@ -75,6 +80,7 @@ export default function Sensor({
   tagsTranslations,
   onAddTag,
   onDeleteTag,
+  timeZone = detectTimeZone(),
 }: SensorProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed)
   const { points: sensorData, unit, valueLabels, isLoading: isLoadingData } =
@@ -232,7 +238,7 @@ export default function Sensor({
 
         <div className="mb-2">
           <span className={`${currentSize.metaSize} text-muted-foreground`}>
-            Created {formatTimestamp(createdAt)}
+            Created {formatTimestamp(createdAt, timeZone)}
           </span>
         </div>
 
@@ -246,6 +252,7 @@ export default function Sensor({
           size={size}
           unit={unit}
           valueLabels={valueLabels}
+          timeZone={timeZone}
         />
         <SensorTagsSection
           tags={tags}
@@ -255,16 +262,17 @@ export default function Sensor({
           translations={tagsTranslations}
         />
 
-        {showActions && (onEdit || onRemove) && (
+        {showActions && (onEdit || onRemove || onExpand) && (
           <div className="mt-2 flex justify-end border-t pt-1">
             <CommentActionButtons
+              onExpand={onExpand}
               onEdit={canEdit ? onEdit : undefined}
               onDelete={canDelete ? onRemove : undefined}
               canEdit={canEdit}
               canDelete={canDelete}
               activateOnPointerDown={enableCollapse}
               buttonClassName="h-7 w-7"
-              labels={{ edit: actionLabels?.edit, delete: actionLabels?.delete, close: actionLabels?.close }}
+              labels={{ edit: actionLabels?.edit, delete: actionLabels?.delete, close: actionLabels?.close, expand: actionLabels?.expand }}
             />
           </div>
         )}

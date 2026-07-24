@@ -34,7 +34,6 @@ import type { BimToolbarToolsType } from "../bimToolbar"
 
 interface AddToBimProps {
   tool: Tool
-  minioBaseUrl?: string
   [key: string]: unknown
 }
 
@@ -70,7 +69,7 @@ const FilePreview: React.FC<{
   )
 }
 
-export default function AddToBim({ tool, minioBaseUrl }: AddToBimProps) {
+export default function AddToBim({ tool }: AddToBimProps) {
   const t = useTranslations('AddToBim')
   const { dispatch: toolsDispatch, state: toolsState } = React.useContext(ToolsContext)
   const { state: bimState } = React.useContext(BimContext)
@@ -87,7 +86,7 @@ export default function AddToBim({ tool, minioBaseUrl }: AddToBimProps) {
 
   // Extracted hooks
   const { addPendingComment, removePendingComment, commentCount } = useCommentMarkers(world, buildingId)
-  const { addPendingSensor, removePendingSensor, sensorCount } = useSensorMarkers(world, buildingId, minioBaseUrl)
+  const { addPendingSensor, removePendingSensor, sensorCount } = useSensorMarkers(world, buildingId)
   const { uploadFile } = useUploadFileToBuilding(buildingId)
   const { deleteFile } = useDeleteFile(buildingId)
 

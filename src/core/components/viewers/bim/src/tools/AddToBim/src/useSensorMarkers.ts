@@ -17,7 +17,7 @@ import BimSensor from "./BimSensor"
 import { renderCSS2DMarkers, type MarkerRef } from "./renderCSS2DMarkers"
 //import { useAppConfigContext } from "../../../../../../../store/AppConfig/context"
 
-export function useSensorMarkers(world: any, buildingId: number, minioBaseUrl?: string) {
+export function useSensorMarkers(world: any, buildingId: number) {
   const { state: menusState } = React.useContext(MenusContext)
   const { currentSensorId, visibleSensorTypes, visibleSensorTags } = menusState.menus
   //const { state: appConfigState } = useAppConfigContext()
@@ -123,11 +123,7 @@ export function useSensorMarkers(world: any, buildingId: number, minioBaseUrl?: 
         sensorName: sensor.name,
         sensorType: sensorTypes.find(t => t.id === sensor.typeId),
         tags: sensor.tags,
-        dataUrl: sensor.url?.startsWith("http")
-          ? sensor.url
-          : minioBaseUrl
-            ? `${minioBaseUrl}/sensors/${sensor.url}`
-            : "",
+        dataUrl: sensor.url ?? "",
         dataFormat: sensor.dataFormat,
         updateFrequency: sensor.updateFrequency,
         buildingId: sensor.buildingId,

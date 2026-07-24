@@ -59,7 +59,7 @@ const SensorIconMarker = ({ feature, isHighlighted, onMouseEnter, onMouseLeave, 
   )
 }
 
-export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
+export const SensorLayers = () => {
     const [hoveredSensorId, setHoveredSensorId] = React.useState<number | null>(null)
   const clusterLayer = createClusterLayer('sensors')
   const clusterCountLayer = createClusterCountLayer('sensors')
@@ -253,9 +253,7 @@ export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
     if (!popupInfo) return null
     const sensorType = sensorTypes.find(t => t.id === popupInfo.typeId)
     const liveSensor = sensors.find(s => s.id === popupInfo.id)
-    const dataUrl = popupInfo.url
-      ? `${minioBaseUrl ?? ''}/sensors/${popupInfo.url}`
-      : popupInfo.data || ''
+    const dataUrl = popupInfo.url || popupInfo.data || ''
 
     return (
       <Popup

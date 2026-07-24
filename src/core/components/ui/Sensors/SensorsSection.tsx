@@ -37,7 +37,7 @@ type SensorAction = 'view' | 'edit' | 'delete'
 /** Stable key used in state for sensors with no tags — locale-independent */
 export const UNTAGGED_TAG = '__untagged__'
 
-export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
+export function SensorsSection() {
   // Translation
   const t = useTranslations('SensorsSection')
 
@@ -262,7 +262,6 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
                     sensorType={type}
                     onAction={handleSensorAction}
                     isVisible={isTypeVisible}
-                    minioBaseUrl={minioBaseUrl}
                     onMouseEnter={() => menusDispatch({ type: 'SET_CURRENT_SENSOR_ID', payload: { currentSensorId: sensor.id } })}
                     onMouseLeave={() => menusDispatch({ type: 'SET_CURRENT_SENSOR_ID', payload: { currentSensorId: null } })}
                   />
@@ -298,7 +297,6 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
                     sensorType={type}
                     onAction={handleSensorAction}
                     isVisible={isTagVisible}
-                    minioBaseUrl={minioBaseUrl}
                     onMouseEnter={() => menusDispatch({ type: 'SET_CURRENT_SENSOR_ID', payload: { currentSensorId: sensor.id } })}
                     onMouseLeave={() => menusDispatch({ type: 'SET_CURRENT_SENSOR_ID', payload: { currentSensorId: null } })}
                   />

@@ -20,6 +20,7 @@ import { UserAvatar } from '../UserAvatar'
 import { SensorChart } from './SensorChart'
 import { SensorTagsSection } from './SensorTagsSection'
 import { resolveLucideIcon } from './sensorUtils'
+import { useSensorSeries } from './useSensorSeries'
 
 import type { Sensor, SensorType } from '../../../types/dbTypes'
 import type { ChartConfig } from '../chart'
@@ -34,7 +35,6 @@ interface CollapsibleSensorItemProps {
   isVisible?: boolean
   onMouseEnter?: () => void
   onMouseLeave?: () => void
-  minioBaseUrl?: string
 }
 
 export function CollapsibleSensorItem({
@@ -45,20 +45,13 @@ export function CollapsibleSensorItem({
   isVisible = true,
   onMouseEnter,
   onMouseLeave,
-  minioBaseUrl
 }: CollapsibleSensorItemProps) {
   const t = useTranslations('SensorsSection')
   const [isExpanded, setIsExpanded] = React.useState(false)
-  const [sensorData, setSensorData] = React.useState<{ time: string; value: number }[]>([])
-  const [isLoadingData, setIsLoadingData] = React.useState(false)
+  const { points: sensorData, unit, valueLabels, isLoading: isLoadingData } =
+    useSensorSeries(sensor.url ?? '', sensor.dataFormat, sensor.updateFrequency, { enabled: isExpanded })
   const prevVisibleRef = React.useRef(isVisible)
 
-  //const { state: { runtimeConfig: { minioUrl } } } = useAppConfigContext()
-
-  //const dataPath = `${minioUrl ?? ''}/sensors/${sensor.url}`
-  const dataPath = minioBaseUrl
-  ? `${minioBaseUrl}/sensors/${sensor.url}`
-  : ''
   const typeName = sensorType?.name.replace(/_/g, ' ') ?? 'Unknown'
 
   const SensorIcon = resolveLucideIcon(sensorType?.icon)
@@ -74,39 +67,6 @@ export function CollapsibleSensorItem({
 
     prevVisibleRef.current = isVisible
   }, [isVisible])
-
-  // Fetch and parse CSV data
-  React.useEffect(() => {
-    const fetchCSVData = async () => {
-      setIsLoadingData(true)
-      try {
-        const response = await fetch(dataPath)
-        const csvText = await response.text()
-
-        // Parse CSV: format is "time,value" (e.g., "0:00:00,7.4")
-        const lines = csvText.trim().split('\n')
-        const parsed = lines.map(line => {
-          const [time, valueStr] = line.split(',')
-          return {
-            time: time.trim(),
-            value: parseFloat(valueStr.trim())
-          }
-        }).filter(item => !isNaN(item.value)) // Filter out any invalid entries
-
-        setSensorData(parsed)
-      } catch (error) {
-        console.error('Error fetching sensor data:', error)
-        // Fallback to empty array on error
-        setSensorData([])
-      } finally {
-        setIsLoadingData(false)
-      }
-    }
-
-    if (isExpanded) {
-      fetchCSVData()
-    }
-  }, [dataPath, isExpanded])
 
   const chartConfig = {
     value: {
@@ -257,6 +217,8 @@ export function CollapsibleSensorItem({
             sensorType={sensorType}
             updateFrequency={sensor.updateFrequency}
             chartConfig={chartConfig}
+            unit={unit}
+            valueLabels={valueLabels}
           />
         </div>
         <div>

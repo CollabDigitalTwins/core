@@ -42,6 +42,8 @@ interface SensorChartProps {
   minColor?: string
   midColor?: string
   maxColor?: string
+  unit?: string
+  valueLabels?: Record<number, string>
 }
 
 export function SensorChart({
@@ -60,6 +62,8 @@ export function SensorChart({
   minColor,
   midColor,
   maxColor,
+  unit,
+  valueLabels,
 }: SensorChartProps) {
 
     const { maxColour, midColour, minColour } = sensorType || { name: 'Unknown', icon: 'Radio' }
@@ -125,7 +129,16 @@ export function SensorChart({
               />
               <ChartTooltip
                 cursor={false}
-                content={<ChartTooltipContent indicator="line" />}
+                content={
+                  <ChartTooltipContent
+                    indicator="line"
+                    formatter={(value: unknown) => {
+                      const label = valueLabels?.[value as number]
+                      if (label) return label
+                      return unit ? `${value} ${unit}` : String(value)
+                    }}
+                  />
+                }
               />
               <Area
                 dataKey="value"
@@ -149,7 +162,7 @@ export function SensorChart({
             {sensorData.length > 0 && (
               <div className="flex items-center gap-2 leading-none text-muted-foreground">
                 <LR.Database className="h-4 w-4" />
-                {sensorData.length} {dataPointsText}
+                {sensorData.length} {dataPointsText}{unit ? ` · ${unit}` : ''}
               </div>
             )}
           </div>

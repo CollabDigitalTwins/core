@@ -3,28 +3,48 @@
 
 import { SensorDataFormat } from '../../../types/dbTypes'
 
+export interface SensorSeriesMeta {
+  name?: string
+  description?: string
+  /** Short OGC observation type label, e.g. "OM_Measurement". */
+  observationType?: string
+  unit?: { name?: string; symbol?: string; definition?: string }
+  observedProperty?: { name?: string; definition?: string; description?: string }
+  phenomenonTime?: string
+  resultTime?: string
+  observationCount?: number
+  sensor?: { name?: string; description?: string; metadata?: string }
+  properties?: Record<string, unknown>
+  selfLink?: string
+}
+
 export interface SensorSeries {
-  points: { time: string; value: number }[]
+  points: { t: number; value: number }[]
   /** Unit symbol from an STA Datastream's unitOfMeasurement, when present. */
   unit?: string
   /** For category sensors: ordinal index -> original label, for the chart tooltip. */
   valueLabels?: Record<number, string>
-}
-
-/** ISO 8601 -> "H:MM:SS" UTC, matching the synthetic API's CSV time column. */
-function isoToClock(iso: string): string {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
-  const mm = String(d.getUTCMinutes()).padStart(2, '0')
-  const ss = String(d.getUTCSeconds()).padStart(2, '0')
-  return `${d.getUTCHours()}:${mm}:${ss}`
+  /** Full STA Datastream metadata, populated only for STA JSON (for the detail dialog). */
+  meta?: SensorSeriesMeta
 }
 
 /**
- * Coerce an OGC result to a chart number. number -> as-is; boolean -> 0/1;
- * numeric string -> its number; category string -> stable first-seen ordinal
- * (recorded in `labels`). Anything else -> NaN (dropped by callers).
+ * ISO 8601 (or any Date-parseable) string -> epoch ms. Falls back for a bare
+ * "H:MM:SS" clock (the synthetic CSV shape, no date) by assuming today's UTC date.
+ * That fallback is a known limitation; STA/ISO inputs are exact.
  */
+function toEpoch(value: string): number {
+  const ms = Date.parse(value)
+  if (!Number.isNaN(ms)) return ms
+  const m = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(value.trim())
+  if (!m) return NaN
+  const now = new Date()
+  return Date.UTC(
+    now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
+    Number(m[1]), Number(m[2]), Number(m[3] ?? 0),
+  )
+}
+
 function coerceResult(
   result: unknown,
   labels: Record<number, string>,
@@ -52,10 +72,36 @@ function parseCsv(raw: string): SensorSeries {
     .split('\n')
     .map(line => {
       const [time, valueStr] = line.split(',')
-      return { time: (time ?? '').trim(), value: parseFloat((valueStr ?? '').trim()) }
+      return { t: toEpoch((time ?? '').trim()), value: parseFloat((valueStr ?? '').trim()) }
     })
-    .filter(p => !Number.isNaN(p.value))
+    .filter(p => !Number.isNaN(p.value) && !Number.isNaN(p.t))
   return { points }
+}
+
+/** Short label from an OGC observationType IRI (".../OM_Measurement" -> "OM_Measurement"). */
+function shortObservationType(iri: unknown): string | undefined {
+  if (typeof iri !== 'string' || !iri) return undefined
+  const tail = iri.split('/').pop()
+  return tail || iri
+}
+
+function extractStaMeta(doc: any): SensorSeriesMeta {
+  const uom = doc.unitOfMeasurement
+  const op = doc.ObservedProperty
+  const sensor = doc.Sensor
+  return {
+    name: doc.name,
+    description: doc.description,
+    observationType: shortObservationType(doc.observationType),
+    unit: uom ? { name: uom.name, symbol: uom.symbol, definition: uom.definition } : undefined,
+    observedProperty: op ? { name: op.name, definition: op.definition, description: op.description } : undefined,
+    phenomenonTime: typeof doc.phenomenonTime === 'string' ? doc.phenomenonTime : undefined,
+    resultTime: typeof doc.resultTime === 'string' ? doc.resultTime : undefined,
+    observationCount: typeof doc['Observations@iot.count'] === 'number' ? doc['Observations@iot.count'] : undefined,
+    sensor: sensor ? { name: sensor.name, description: sensor.description, metadata: sensor.metadata } : undefined,
+    properties: doc.properties && typeof doc.properties === 'object' ? doc.properties : undefined,
+    selfLink: typeof doc['@iot.selfLink'] === 'string' ? doc['@iot.selfLink'] : undefined,
+  }
 }
 
 // JSON shapes are external (OGC SensorThings); typed as `any` since we sniff by shape.
@@ -69,10 +115,15 @@ function parseJson(raw: string): SensorSeries {
 
   const labels: Record<number, string> = {}
   const labelToIndex = new Map<string, number>()
-  const withLabels = (points: SensorSeries['points'], unit?: string): SensorSeries => ({
+  const withLabels = (
+    points: SensorSeries['points'],
+    unit?: string,
+    meta?: SensorSeriesMeta,
+  ): SensorSeries => ({
     points,
     unit,
     valueLabels: Object.keys(labels).length ? labels : undefined,
+    meta,
   })
 
   // dataArray form: { components, dataArray: [[phenomenonTime, result], ...] }
@@ -82,10 +133,10 @@ function parseJson(raw: string): SensorSeries {
     const rIdx = comps.indexOf('result') === -1 ? 1 : comps.indexOf('result')
     const points = doc.dataArray
       .map((row: unknown[]) => ({
-        time: isoToClock(String(row[tIdx])),
+        t: toEpoch(String(row[tIdx])),
         value: coerceResult(row[rIdx], labels, labelToIndex),
       }))
-      .filter((p: { value: number }) => !Number.isNaN(p.value))
+      .filter((p: { t: number; value: number }) => !Number.isNaN(p.value) && !Number.isNaN(p.t))
     return withLabels(points)
   }
 
@@ -94,11 +145,11 @@ function parseJson(raw: string): SensorSeries {
     const unit: string | undefined = doc.unitOfMeasurement?.symbol ?? undefined
     const points = doc.Observations
       .map((obs: any) => ({
-        time: isoToClock(String(obs.phenomenonTime)),
+        t: toEpoch(String(obs.phenomenonTime)),
         value: coerceResult(obs.result, labels, labelToIndex),
       }))
-      .filter((p: { value: number }) => !Number.isNaN(p.value))
-    return withLabels(points, unit)
+      .filter((p: { t: number; value: number }) => !Number.isNaN(p.value) && !Number.isNaN(p.t))
+    return withLabels(points, unit, extractStaMeta(doc))
   }
 
   // Single reading. ?format=reading emits { type, unit, timestamp, value, ... };
@@ -108,9 +159,10 @@ function parseJson(raw: string): SensorSeries {
     const value = coerceResult(single, labels, labelToIndex)
     if (Number.isNaN(value)) return { points: [] }
     const iso = doc.phenomenonTime ?? doc.timestamp
-    const time = iso ? isoToClock(String(iso)) : ''
+    const t = iso ? toEpoch(String(iso)) : NaN
     const unit: string | undefined = doc.unit ?? doc.unitOfMeasurement?.symbol ?? undefined
-    return withLabels([{ time, value }], unit)
+    if (Number.isNaN(t)) return { points: [] }
+    return withLabels([{ t, value }], unit)
   }
 
   return { points: [] }

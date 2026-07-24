@@ -8,7 +8,7 @@ import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
-import { useCreateSensor } from '../../../hooks/sensors/sensors'
+import { useCreateSensor, useSensor } from '../../../hooks/sensors/sensors'
 import { useSensorTypes } from '../../../hooks/sensorTypes/sensorTypes'
 import { AppConfigContext, MapContext, BuildingsContext, MenusContext, ToolsContext } from '../../../store'
 import { ViewerNames, SensorDataFormat } from '../../../types/dbTypes'
@@ -52,6 +52,10 @@ export type SensorInputProps = {
   onCancel?: () => void
   bim?: BimSensorPlacementContext
   isOpen?: boolean
+  /** When provided, the dialog becomes a single-sensor EDIT form (no multi-add, no placement). */
+  editSensor?: Sensor
+  /** Called after a successful edit save (in addition to onCancel). */
+  onSaved?: () => void
 }
 
 type SensorFormData = {
@@ -64,14 +68,46 @@ type SensorFormData = {
   tags: string[]
 }
 
+/**
+ * Split a stored updateFrequency (ms) back into a {value, unit} pair for the form,
+ * picking the largest frequencyUnits entry that divides evenly. Falls back to
+ * expressing the value in milliseconds.
+ */
+function splitUpdateFrequencyMs(updateFrequencyMs: number): { updateFrequency: number; updateFrequencyUnit: number } {
+  const sortedDesc = [...frequencyUnits].sort((a, b) => b.value - a.value)
+  for (const unit of sortedDesc) {
+    if (unit.value > 0 && updateFrequencyMs % unit.value === 0) {
+      return { updateFrequency: updateFrequencyMs / unit.value, updateFrequencyUnit: unit.value }
+    }
+  }
+  return { updateFrequency: updateFrequencyMs, updateFrequencyUnit: 1 }
+}
+
+function sensorFormFromEditSensor(editSensor: Sensor): SensorFormData {
+  const { updateFrequency, updateFrequencyUnit } = splitUpdateFrequencyMs(editSensor.updateFrequency)
+  return {
+    typeId: editSensor.typeId ?? -1,
+    name: editSensor.name,
+    data: editSensor.url ?? editSensor.data ?? '',
+    dataFormat: editSensor.dataFormat,
+    updateFrequency,
+    updateFrequencyUnit,
+    tags: editSensor.tags ?? [],
+  }
+}
+
 export function SensorInput({
   viewer,
   layout = 'dialog',
   onCancel,
   bim,
   isOpen = false,
+  editSensor,
+  onSaved,
 }: SensorInputProps) {
   const t = useTranslations('SensorInput')
+  // Fallback for i18n keys that may not exist yet in every catalog (edit-mode additions).
+  const tf = React.useCallback((key: string, fallback: string) => (t.has(key) ? t(key) : fallback), [t])
   const session = useSession()
 
   const user = session.data?.user
@@ -90,15 +126,17 @@ export function SensorInput({
   const { currentSensorTypeId } = menusState.menus
 
   const [sensors, setSensors] = React.useState<SensorFormData[]>([
-    {
-      typeId: currentSensorTypeId ?? -1,
-      name: '',
-      data: '',
-      dataFormat: SensorDataFormat.Json,
-      updateFrequency: 1,
-      updateFrequencyUnit: 1000,
-      tags: [],
-    },
+    editSensor
+      ? sensorFormFromEditSensor(editSensor)
+      : {
+        typeId: currentSensorTypeId ?? -1,
+        name: '',
+        data: '',
+        dataFormat: SensorDataFormat.Json,
+        updateFrequency: 1,
+        updateFrequencyUnit: 1000,
+        tags: [],
+      },
   ])
   const [currentSensorIndex, setCurrentSensorIndex] = React.useState(0)
   const [isPlacing, setIsPlacing] = React.useState(false)
@@ -130,25 +168,29 @@ export function SensorInput({
     }
   }, [t])
 
-  // Re-initialize form with pre-selected type each time the dialog opens
+  // Re-initialize form with pre-selected type (or the sensor being edited) each time the dialog opens
   React.useEffect(() => {
     if (!isOpen) return
     setSensors([
-      {
-        typeId: currentSensorTypeId ?? -1,
-        name: '',
-        data: '',
-        dataFormat: SensorDataFormat.Json,
-        updateFrequency: 1,
-        updateFrequencyUnit: 1000,
-        tags: [],
-      },
+      editSensor
+        ? sensorFormFromEditSensor(editSensor)
+        : {
+          typeId: currentSensorTypeId ?? -1,
+          name: '',
+          data: '',
+          dataFormat: SensorDataFormat.Json,
+          updateFrequency: 1,
+          updateFrequencyUnit: 1000,
+          tags: [],
+        },
     ])
     setCurrentSensorIndex(0)
     setPreview({})
-  }, [isOpen])
+  }, [isOpen, editSensor])
 
   const { createSensor } = useCreateSensor()
+  // Hook order must stay stable regardless of whether editSensor is provided.
+  const { updateSensor: updateSensorMutation } = useSensor(editSensor?.id ?? null)
 
   const setCursor = React.useCallback(
     (cursor: string) => {
@@ -205,7 +247,25 @@ export function SensorInput({
     onCancel?.()
   }
 
+  const onSaveEdit = async () => {
+    if (!editSensor) return
+    const form = sensors[0]
+    const partial: Partial<Sensor> = {
+      typeId: form.typeId,
+      name: form.name,
+      data: form.data,
+      dataFormat: form.dataFormat as SensorDataFormat,
+      url: form.data,
+      updateFrequency: form.updateFrequency * form.updateFrequencyUnit,
+      tags: form.tags,
+    }
+    await updateSensorMutation(partial)
+    onSaved?.()
+    onCancel?.()
+  }
+
   React.useEffect(() => {
+    if (editSensor) return
     if (!isPlacing) return
 
     if (viewer === ViewerNames.map) {
@@ -339,6 +399,7 @@ export function SensorInput({
   }, [
     appConfigState,
     bim,
+    editSensor,
     isPlacing,
     mapContext,
     viewer,

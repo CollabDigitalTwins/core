@@ -8,11 +8,7 @@ import * as React from 'react'
 import { Avatar } from '../../../ui/Avatar'
 import { UserAvatar } from '../../../ui/UserAvatar'
 
-export interface ClusterMember {
-  id: number
-  userName?: string
-  imageFileId?: number | null
-}
+import type { ClusterMember } from './types'
 
 interface BimMarkerClusterProps {
   members: ClusterMember[]

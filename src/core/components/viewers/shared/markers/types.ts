@@ -17,8 +17,8 @@ export interface MarkerStoreAdapter {
 /** One member inside a BIM cluster bubble. */
 export interface ClusterMember {
   id: number
-  userName: string
-  imageFileId: string | null
+  userName?: string
+  imageFileId?: number | null
 }
 
 /** An item positioned in the BIM scene. Must carry world coords + id. */

@@ -6,15 +6,15 @@
 import * as LR from 'lucide-react'
 import * as React from 'react'
 
-import { SensorDataFormat } from '../../../types/dbTypes'
 import { formatTimestamp } from '../../../utils/timeUtils'
 import { Button } from '../Button'
 import { Card } from '../Card'
 
 import { SensorChart } from './SensorChart'
 import { SensorTagsSection, type SensorTagsTranslations } from './SensorTagsSection'
+import { useSensorSeries } from './useSensorSeries'
 
-import type { SensorType } from '../../../types/dbTypes';
+import type { SensorDataFormat, SensorType } from '../../../types/dbTypes';
 import type { ChartConfig } from '../chart'
 
 export type SensorProps = {
@@ -60,45 +60,12 @@ export default function Sensor({
   onDeleteTag,
 }: SensorProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed)
-  const [sensorData, setSensorData] = React.useState<{ time: string; value: number }[]>([])
-  const [isLoadingData, setIsLoadingData] = React.useState(false)
+  const { points: sensorData, unit, valueLabels, isLoading: isLoadingData } =
+    useSensorSeries(dataUrl, dataFormat, updateFrequency, { enabled: !(enableCollapse && isCollapsed) })
   const lastTap = React.useRef(0)
 
   const sensorTypeNameFormatted = sensorType?.name?.replace(/_/g, ' ') || 'Other'
   const SensorIcon = LR[sensorType?.icon] || LR.Radio
-
-  // Fetch sensor data
-  React.useEffect(() => {
-    const fetchData = async () => {
-      if (!dataUrl || dataFormat !== SensorDataFormat.Csv) {
-        return
-      }
-
-      setIsLoadingData(true)
-      try {
-        const response = await fetch(dataUrl)
-        const text = await response.text()
-
-        const lines = text.trim().split('\n')
-        const data = lines.map((line) => {
-          const [time, value] = line.split(',')
-          return {
-            time: time.trim(),
-            value: parseFloat(value),
-          }
-        })
-
-        setSensorData(data)
-      } catch (error) {
-        console.error('Failed to fetch sensor data:', error)
-        setSensorData([])
-      } finally {
-        setIsLoadingData(false)
-      }
-    }
-
-    fetchData()
-  }, [dataUrl, dataFormat])
 
   const chartConfig: ChartConfig = {
     value: {
@@ -236,6 +203,8 @@ export default function Sensor({
           updateFrequency={updateFrequency}
           chartConfig={chartConfig}
           size={size}
+          unit={unit}
+          valueLabels={valueLabels}
         />
         <SensorTagsSection
           tags={tags}

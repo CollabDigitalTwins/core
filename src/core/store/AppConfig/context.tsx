@@ -5,6 +5,8 @@
 
 import * as React from "react";
 
+import { detectTimeZone } from '../../utils/timeUtils'
+
 import { AppConfigReducer } from './reducer'
 
 import type { AppConfigActions, AppConfigState } from './reducer';
@@ -30,6 +32,8 @@ const initialState: InitialStateType = {
   appConfig: {
     organization: null,
     user: null,
+    displayTimeZone: detectTimeZone(),
+    displayTimeZoneUserSet: false,
   },
   runtimeConfig: {},
 }

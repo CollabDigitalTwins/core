@@ -32,7 +32,8 @@ describe('useSensorSeries', () => {
     const { result } = renderHook(() =>
       useSensorSeries('http://x/api/sensor/temperature', SensorDataFormat.Csv, 60000, { enabled: true }),
     )
-    await waitFor(() => expect(result.current.points).toEqual([{ time: '0:00:00', value: 7 }]))
+    await waitFor(() => expect(result.current.points[0]?.value).toBe(7))
+    expect(typeof result.current.points[0].t).toBe('number')
     expect(global.fetch).toHaveBeenCalledTimes(1)
   })
 
@@ -72,5 +73,21 @@ describe('useSensorSeries', () => {
     unmount()
     await act(async () => { vi.advanceTimersByTime(5000); await Promise.resolve() })
     expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('passes STA metadata through', async () => {
+    const staBody = JSON.stringify({
+      name: 'Air Temperature',
+      unitOfMeasurement: { name: 'degree Celsius', symbol: '°C' },
+      observationType: 'http://x/OM_Measurement',
+      Observations: [{ phenomenonTime: '2026-07-23T00:00:00Z', result: 1 }],
+    })
+    // cast: minimal Response stub for fetch, not a full Response
+    global.fetch = vi.fn().mockResolvedValue({ text: async () => staBody } as unknown as Response) as any
+    const { result } = renderHook(() =>
+      useSensorSeries('http://x', SensorDataFormat.Json, 60000, { enabled: true }),
+    )
+    await waitFor(() => expect(result.current.meta?.name).toBe('Air Temperature'))
+    expect(result.current.unit).toBe('°C')
   })
 })

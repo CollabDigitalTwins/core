@@ -5,9 +5,9 @@
 
 import * as LR from 'lucide-react'
 import * as React from 'react'
-import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts'
+import { Area, AreaChart, Brush, CartesianGrid, XAxis } from 'recharts'
 
-import { formatDuration } from '../../../utils/timeUtils'
+import { detectTimeZone, formatInZone, formatDuration } from '../../../utils/timeUtils'
 import {
   Card,
   CardContent,
@@ -27,7 +27,7 @@ import { defaultPalette } from './sensorUtils'
 import type { SensorType } from '../../../types/dbTypes'
 
 interface SensorChartProps {
-  sensorData: { time: string; value: number }[]
+  sensorData: { t: number; value: number }[]
   isLoadingData: boolean
   sensorName: string
   sensorType: SensorType
@@ -44,6 +44,11 @@ interface SensorChartProps {
   maxColor?: string
   unit?: string
   valueLabels?: Record<number, string>
+  timeZone?: string
+  showBrush?: boolean
+  brushStartIndex?: number
+  brushEndIndex?: number
+  onBrushChange?: (range: { startIndex?: number; endIndex?: number }) => void
 }
 
 export function SensorChart({
@@ -64,6 +69,11 @@ export function SensorChart({
   maxColor,
   unit,
   valueLabels,
+  timeZone = detectTimeZone(),
+  showBrush = false,
+  brushStartIndex,
+  brushEndIndex,
+  onBrushChange,
 }: SensorChartProps) {
 
     const { maxColour, midColour, minColour } = sensorType || { name: 'Unknown', icon: 'Radio' }
@@ -71,8 +81,6 @@ export function SensorChart({
   const finalMin = minColor || minColour || defaultPalette.min
   const finalMid = midColor || midColour || defaultPalette.mid
   const finalMax = maxColor || maxColour  || defaultPalette.max
-
-
 
   const sizeClasses = {
     sm: { height: 'h-[150px]', titleSize: 'text-sm', descSize: 'text-xs', footerSize: 'text-xs' },
@@ -82,6 +90,12 @@ export function SensorChart({
 
   const currentSize = sizeClasses[size]
   const gradientId = `gradient-${sensorName.replace(/\s+/g, '-').toLowerCase()}`
+
+  // All axis/tooltip time strings are formatted in the caller's chosen zone.
+  const axisOpts: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }
+  const fullOpts: Intl.DateTimeFormatOptions = { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }
+  const formatAxis = (value: number) => formatInZone(Number(value), timeZone, axisOpts)
+  const formatFull = (value: number) => formatInZone(Number(value), timeZone, fullOpts)
 
   return (
     <Card>
@@ -115,33 +129,35 @@ export function SensorChart({
 
               <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.4} />
               <XAxis
-                dataKey="time"
+                dataKey="t"
+                type="number"
+                scale="time"
+                domain={['dataMin', 'dataMax']}
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
                 interval="preserveStartEnd"
-                tickFormatter={(value) => {
-                  if (value.endsWith(':00:00') || value.endsWith(':00')) {
-                    return value.substring(0, value.lastIndexOf(':'))
-                  }
-                  return ''
-                }}
+                tickFormatter={formatAxis}
               />
               <ChartTooltip
                 cursor={false}
                 content={
-                  unit || valueLabels ? (
-                    <ChartTooltipContent
-                      indicator="line"
-                      formatter={(value: unknown) => {
-                        const label = valueLabels?.[value as number]
-                        if (label) return label
-                        return unit ? `${value} ${unit}` : String(value)
-                      }}
-                    />
-                  ) : (
-                    <ChartTooltipContent indicator="line" />
-                  )
+                  <ChartTooltipContent
+                    indicator="line"
+                    labelFormatter={(_label, payload) => {
+                      const t = (payload?.[0]?.payload as { t?: number } | undefined)?.t
+                      return t != null ? formatFull(t) : ''
+                    }}
+                    formatter={
+                      unit || valueLabels
+                        ? (value: unknown) => {
+                            const label = valueLabels?.[value as number]
+                            if (label) return label
+                            return unit ? `${value} ${unit}` : String(value)
+                          }
+                        : undefined
+                    }
+                  />
                 }
               />
               <Area
@@ -152,6 +168,17 @@ export function SensorChart({
                 strokeWidth={1}
                 fillOpacity={1}
               />
+              {showBrush && sensorData.length > 1 && (
+                <Brush
+                  dataKey="t"
+                  height={26}
+                  travellerWidth={8}
+                  startIndex={brushStartIndex}
+                  endIndex={brushEndIndex}
+                  tickFormatter={(value) => formatAxis(Number(value))}
+                  onChange={(range) => onBrushChange?.(range as { startIndex?: number; endIndex?: number })}
+                />
+              )}
             </AreaChart>
           </ChartContainer>
         )}

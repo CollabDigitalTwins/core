@@ -28,6 +28,7 @@ import {
 import { Separator } from '../Separator'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../Tooltip'
 
+import { parseSensorSeries } from './sensorData'
 import { SensorTagsSection } from './SensorTagsSection'
 
 import type { Sensor} from '../../../types/dbTypes';
@@ -101,6 +102,29 @@ export function SensorInput({
   ])
   const [currentSensorIndex, setCurrentSensorIndex] = React.useState(0)
   const [isPlacing, setIsPlacing] = React.useState(false)
+
+  // Lightweight "does this URL work" preview, keyed by sensor-form index.
+  const [preview, setPreview] = React.useState<Record<number, { ok: boolean; text: string }>>({})
+
+  const checkDataUrl = React.useCallback(async (index: number, url: string, dataFormat: string) => {
+    if (!url.trim()) {
+      setPreview(prev => { const next = { ...prev }; delete next[index]; return next })
+      return
+    }
+    try {
+      const res = await fetch(url)
+      const raw = await res.text()
+      const { points, unit } = parseSensorSeries(raw, dataFormat as SensorDataFormat)
+      if (points.length === 0) {
+        setPreview(prev => ({ ...prev, [index]: { ok: false, text: t('previewNoData') } }))
+        return
+      }
+      const unitText = unit ? ` · ${unit}` : ''
+      setPreview(prev => ({ ...prev, [index]: { ok: true, text: `${points.length} ${t('previewPoints')}${unitText}` } }))
+    } catch {
+      setPreview(prev => ({ ...prev, [index]: { ok: false, text: t('previewError') } }))
+    }
+  }, [t])
 
   // Re-initialize form with pre-selected type each time the dialog opens
   React.useEffect(() => {
@@ -421,8 +445,14 @@ export function SensorInput({
               type="text"
               value={sensor.data}
               onChange={e => updateSensor(index, 'data', e.target.value)}
+              onBlur={e => checkDataUrl(index, e.target.value, sensor.dataFormat)}
               placeholder={t('dataUrlPlaceholder')}
             />
+            {preview[index] && (
+              <p className={cn('text-xs', preview[index].ok ? 'text-muted-foreground' : 'text-destructive')}>
+                {preview[index].text}
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

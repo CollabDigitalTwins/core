@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as React from 'react'
 import { useTranslations } from 'next-intl'
 
 import {
@@ -28,6 +29,19 @@ interface ConfirmDialogProps {
 
 export default function ConfirmDialog({ isOpen, isDeleting, onOpenChange, handleConfirm, itemName, dataType }: ConfirmDialogProps) {
     const t = useTranslations('ConfirmDialog')
+
+    // Safety net: this dialog is often opened via onAction() from a DropdownMenuItem
+    // rather than a direct Trigger. Radix's DropdownMenu and AlertDialog each lock
+    // document.body.style.pointerEvents while open and unlock it on close; nesting/
+    // overlapping the two can race that lock so it never gets cleared, leaving the
+    // whole page unclickable after this dialog closes. Force-clear it once closed.
+    React.useEffect(() => {
+      if (isOpen) return
+      const id = window.setTimeout(() => {
+        document.body.style.pointerEvents = ''
+      }, 0)
+      return () => window.clearTimeout(id)
+    }, [isOpen])
 
     return (
         <AlertDialog open={isOpen} onOpenChange={onOpenChange}>

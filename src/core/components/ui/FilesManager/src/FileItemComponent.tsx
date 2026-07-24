@@ -148,7 +148,11 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
           {options.some(o => o !== 'delete') && <DropdownMenuSeparator />}
           <DropdownMenuItem
             onSelect={(e) => {
-              if (confirmDelete) e.preventDefault()
+              // Always keep the dropdown open past selection — a confirm dialog is about to
+              // open (local when confirmDelete, else the caller's own via onAction), and letting
+              // Radix auto-close the dropdown in the same tick races its body pointer-events
+              // lock against the dialog's, leaving clicks dead across the page afterward.
+              e.preventDefault()
             }}
             onClick={handleDeleteClick}
             disabled={!canDeleteFile}

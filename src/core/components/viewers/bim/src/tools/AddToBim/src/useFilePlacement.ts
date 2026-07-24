@@ -179,13 +179,14 @@ export function useFilePlacement(
     try {
       const assetId = crypto.randomUUID()
       const presignedResponse = await fetch(`/api/presigned-url-upload?asset=${assetId}`)
-      if (!presignedResponse.ok) return
+      if (!presignedResponse.ok) throw new Error(`Failed to get an upload URL: ${presignedResponse.status}`)
       const { presignedUrl } = await presignedResponse.json()
-      await fetch(presignedUrl, {
+      const putResponse = await fetch(presignedUrl, {
         method: "PUT",
         body: file,
         headers: { "Content-Type": file.type },
       })
+      if (!putResponse.ok) throw new Error(`Upload failed: ${putResponse.status}`)
       await uploadFileToDB({
         fileData: {
           name: file.name,
@@ -209,6 +210,7 @@ export function useFilePlacement(
       })
     } catch (err) {
       console.error("Error uploading placed file:", err)
+      toast.error(`Failed to save "${file.name}"`)
     }
   }, [uploadFileToDB, buildingId])
 

@@ -9,18 +9,18 @@ import { useCoreHooks } from "../../../../../../../hooks/provider"
 import { useSensors, useSensor } from "../../../../../../../hooks/sensors/sensors"
 import { useSensorTypes } from "../../../../../../../hooks/sensorTypes/sensorTypes"
 import { useUsers } from "../../../../../../../hooks/users/users"
-import { MenusContext } from "../../../../../../../store"
+import { AppConfigContext, MenusContext } from "../../../../../../../store"
 import { ViewerNames } from "../../../../../../../types/dbTypes"
 import { UNTAGGED_TAG } from "../../../../../../ui/Sensors/SensorsSection"
 
 import BimSensor from "./BimSensor"
 import { renderCSS2DMarkers, type MarkerRef } from "./renderCSS2DMarkers"
-//import { useAppConfigContext } from "../../../../../../../store/AppConfig/context"
 
 export function useSensorMarkers(world: any, buildingId: number) {
   const { state: menusState } = React.useContext(MenusContext)
   const { currentSensorId, visibleSensorTypes, visibleSensorTags } = menusState.menus
-  //const { state: appConfigState } = useAppConfigContext()
+  const { state: appConfigState } = React.useContext(AppConfigContext)
+  const timeZone = appConfigState.appConfig.displayTimeZone
 
   const registry = React.useRef<Map<string, MarkerRef>>(new Map())
 
@@ -129,12 +129,13 @@ export function useSensorMarkers(world: any, buildingId: number) {
         buildingId: sensor.buildingId,
         timestamp: new Date(sensor.createdAt),
         highlight: currentSensorId === sensor.id,
+        timeZone,
       }),
       sphereColor: "#10b981",
       isVisible: true,
       onRemove: handleRemoveSensor,
     })
-  }, [world, sensors, pendingSensors, handleRemoveSensor, visibleSensorTypes, visibleSensorTags, buildingId, currentSensorId, sensorTypes, coreHooks])
+  }, [world, sensors, pendingSensors, handleRemoveSensor, visibleSensorTypes, visibleSensorTags, buildingId, currentSensorId, sensorTypes, coreHooks, timeZone])
 
   const sensorCount = sensors.filter(
     s => s.viewer === ViewerNames.bim && (!buildingId || buildingId === -1 || s.buildingId === buildingId)

@@ -118,19 +118,21 @@ export function offsetZoneFromLongitude(longitude: number): string {
   return `Etc/GMT${h > 0 ? '-' : '+'}${Math.abs(h)}`
 }
 
-/** Default display zone: building longitude, else sensor longitude, else the browser zone. */
-export function resolveDefaultTimeZone(input: {
-  buildingLongitude?: number | null
-  sensorLongitude?: number | null
-}): string {
-  const { buildingLongitude, sensorLongitude } = input
-  if (typeof buildingLongitude === 'number' && Number.isFinite(buildingLongitude)) {
-    return offsetZoneFromLongitude(buildingLongitude)
+/**
+ * Default display zone. Prefers the browser's IANA zone: it is DST-correct and, for a user
+ * in the sensor's region, already the right local zone. Only when detection is unavailable
+ * (returns "UTC") does it fall back to a longitude-derived fixed offset, trying each
+ * candidate longitude in order. Callers pass candidates in priority order: BIM sensors sit
+ * in a building (building longitude first), map sensors carry their own coordinates (sensor
+ * longitude first).
+ */
+export function resolveDefaultTimeZone(longitudeCandidates: Array<number | null | undefined>): string {
+  const detected = detectTimeZone()
+  if (detected && detected !== 'UTC') return detected
+  for (const lng of longitudeCandidates) {
+    if (typeof lng === 'number' && Number.isFinite(lng)) return offsetZoneFromLongitude(lng)
   }
-  if (typeof sensorLongitude === 'number' && Number.isFinite(sensorLongitude)) {
-    return offsetZoneFromLongitude(sensorLongitude)
-  }
-  return detectTimeZone()
+  return detected || 'UTC'
 }
 
 /** Format an epoch in a specific zone. Handles Etc/GMT±N and true IANA zones alike. */

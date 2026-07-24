@@ -28,6 +28,7 @@ interface SensorProps {
   timestamp: Date
   sphere: THREE.Object3D
   highlight?: boolean
+  timeZone?: string
 }
 
 export default function BimSensor({
@@ -44,6 +45,7 @@ export default function BimSensor({
   timestamp,
   sphere,
   highlight = false,
+  timeZone,
 }: SensorProps): React.ReactElement {
   return (
     <div
@@ -65,6 +67,7 @@ export default function BimSensor({
         defaultCollapsed
         size="sm"
         highlight={highlight}
+        timeZone={timeZone}
       />
     </div>
   )

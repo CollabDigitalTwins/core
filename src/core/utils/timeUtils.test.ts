@@ -111,14 +111,27 @@ describe('offsetZoneFromLongitude', () => {
 })
 
 describe('resolveDefaultTimeZone', () => {
-  it('prefers building longitude', () => {
-    expect(resolveDefaultTimeZone({ buildingLongitude: -79, sensorLongitude: 139 })).toBe('Etc/GMT+5')
+  afterEach(() => vi.restoreAllMocks())
+
+  it('prefers the browser-detected zone over any longitude (DST-correct)', () => {
+    // Browser detection is available in the test env, so it wins over the candidate list.
+    expect(resolveDefaultTimeZone([-79, 139])).toBe(detectTimeZone())
   })
-  it('falls back to sensor longitude', () => {
-    expect(resolveDefaultTimeZone({ buildingLongitude: null, sensorLongitude: 139 })).toBe('Etc/GMT-9')
+  it('falls back to the first finite candidate when detection is unavailable (UTC)', () => {
+    // Force detection to report UTC (the "unavailable" sentinel) so the longitude path is taken.
+    vi.spyOn(Intl, 'DateTimeFormat').mockReturnValue(
+      { resolvedOptions: () => ({ timeZone: 'UTC' }) } as unknown as Intl.DateTimeFormat,
+    )
+    expect(resolveDefaultTimeZone([-79, 139])).toBe('Etc/GMT+5')
   })
-  it('falls back to the detected browser zone', () => {
-    const z = resolveDefaultTimeZone({ buildingLongitude: null, sensorLongitude: null })
+  it('skips null candidates and uses the next finite one', () => {
+    vi.spyOn(Intl, 'DateTimeFormat').mockReturnValue(
+      { resolvedOptions: () => ({ timeZone: 'UTC' }) } as unknown as Intl.DateTimeFormat,
+    )
+    expect(resolveDefaultTimeZone([null, 139])).toBe('Etc/GMT-9')
+  })
+  it('returns a non-empty string when no candidates are available', () => {
+    const z = resolveDefaultTimeZone([null, undefined])
     expect(typeof z).toBe('string')
     expect(z.length).toBeGreaterThan(0)
   })

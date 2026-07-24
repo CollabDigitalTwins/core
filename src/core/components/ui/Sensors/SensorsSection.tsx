@@ -114,11 +114,15 @@ export function SensorsSection() {
   const { displayTimeZone, displayTimeZoneUserSet } = appConfigState.appConfig
   React.useEffect(() => {
     if (displayTimeZoneUserSet) return
-    const zone = resolveDefaultTimeZone({ buildingLongitude, sensorLongitude: firstSensorLongitude })
+    // BIM sensors live in a building (use its longitude); map sensors carry their own.
+    const candidates = currentViewer === 'bim'
+      ? [buildingLongitude, firstSensorLongitude]
+      : [firstSensorLongitude, buildingLongitude]
+    const zone = resolveDefaultTimeZone(candidates)
     if (zone !== displayTimeZone) {
       appConfigDispatch({ type: 'SET_DEFAULT_TIME_ZONE', payload: { displayTimeZone: zone } })
     }
-  }, [buildingLongitude, firstSensorLongitude, displayTimeZone, displayTimeZoneUserSet, appConfigDispatch])
+  }, [currentViewer, buildingLongitude, firstSensorLongitude, displayTimeZone, displayTimeZoneUserSet, appConfigDispatch])
 
   // Filter sensors based on search query
   const filteredSensors = React.useMemo(() => {

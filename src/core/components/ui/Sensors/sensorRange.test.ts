@@ -27,6 +27,9 @@ describe('rangeBounds', () => {
   it('returns null when there are no points', () => {
     expect(rangeBounds('hour', [])).toBeNull()
   })
+  it('returns null for "custom" when custom arg is omitted', () => {
+    expect(rangeBounds('custom', points)).toBeNull()
+  })
 })
 
 describe('filterByRange', () => {
@@ -45,5 +48,9 @@ describe('indicesForBounds', () => {
   })
   it('finds start/end indices for a window', () => {
     expect(indicesForBounds(points, { from: t4 - HOUR, to: t4 })).toEqual({ startIndex: 2, endIndex: 4 })
+  })
+  it('returns a minimal range at the start when window is entirely before data', () => {
+    const beforeAllPoints = [100, 200, 300].map(t => ({ t, value: t }))
+    expect(indicesForBounds(beforeAllPoints, { from: -100, to: -50 })).toEqual({ startIndex: 0, endIndex: 0 })
   })
 })

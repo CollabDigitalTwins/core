@@ -42,7 +42,7 @@ export function indicesForBounds(
   if (!bounds) return { startIndex: 0, endIndex: points.length - 1 }
   let startIndex = points.findIndex(p => p.t >= bounds.from)
   if (startIndex < 0) startIndex = points.length - 1
-  let endIndex = points.length - 1
+  let endIndex = -1
   for (let i = points.length - 1; i >= 0; i--) {
     if (points[i].t <= bounds.to) { endIndex = i; break }
   }

@@ -10,6 +10,8 @@ import { formatTimestamp } from '../../../utils/timeUtils'
 import { Button } from '../Button'
 import { Card } from '../Card'
 
+import { CommentActionButtons, type CommentActionLabels } from '../Comments/CommentActionButtons'
+
 import { SensorChart } from './SensorChart'
 import { SensorTagsSection, type SensorTagsTranslations } from './SensorTagsSection'
 import { useSensorSeries } from './useSensorSeries'
@@ -33,10 +35,19 @@ export type SensorProps = {
   createdAt: string | Date
   onRemove?: () => void
   onClose?: () => void
+  /** Edit the sensor (used by the in-viewer BIM card action row). */
+  onEdit?: () => void
   enableCollapse?: boolean
   defaultCollapsed?: boolean
   size?: 'sm' | 'md' | 'lg'
   highlight?: boolean
+  /** Double-clicked/zoomed sensor: reserved for the focus ring, mirrors Comment's `focused`. */
+  focused?: boolean
+  /** Render the close/edit/delete action row (used by the in-viewer BIM card). */
+  showActions?: boolean
+  canEdit?: boolean
+  canDelete?: boolean
+  actionLabels?: CommentActionLabels
 }
 
 export default function Sensor({
@@ -48,10 +59,16 @@ export default function Sensor({
   createdAt,
   onRemove,
   onClose,
+  onEdit,
   enableCollapse = false,
   defaultCollapsed = false,
   size = 'md',
   highlight = false,
+  focused = false,
+  showActions = false,
+  canEdit = true,
+  canDelete = true,
+  actionLabels,
   sensorId,
   tags = [],
   tagsVariant = 'edit',
@@ -130,6 +147,11 @@ export default function Sensor({
     lastTap.current = now
   }
 
+  const handleClose = () => {
+    if (enableCollapse) setIsCollapsed(true)
+    else onClose?.()
+  }
+
   if (enableCollapse && isCollapsed) {
     return (
       <div
@@ -171,7 +193,26 @@ export default function Sensor({
             </span>
           </div>
 
-          {onRemove && (
+          {showActions && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              title={actionLabels?.close ?? 'Close'}
+              aria-label={actionLabels?.close ?? 'Close'}
+              className={`z-50 ${currentSize.buttonSize} shrink-0 -mr-1 -mt-1`}
+              // In the CSS2D 3D card (enableCollapse) activate on pointerdown for reliability;
+              // the map popup is normal DOM, so keep click for keyboard accessibility.
+              {...(enableCollapse
+                ? { onPointerDown: (e: React.PointerEvent) => { e.stopPropagation(); handleClose() } }
+                : { onClick: (e: React.MouseEvent) => { e.stopPropagation(); handleClose() } })}
+            >
+              <LR.X className={currentSize.buttonIconSize} />
+            </Button>
+          )}
+
+          {/* Map popup keeps the inline delete; the BIM card uses the action row below instead. */}
+          {!showActions && onRemove && (
             <Button
               type="button"
               variant="ghost"
@@ -213,6 +254,20 @@ export default function Sensor({
           onDelete={onDeleteTag}
           translations={tagsTranslations}
         />
+
+        {showActions && (onEdit || onRemove) && (
+          <div className="mt-2 flex justify-end border-t pt-1">
+            <CommentActionButtons
+              onEdit={canEdit ? onEdit : undefined}
+              onDelete={canDelete ? onRemove : undefined}
+              canEdit={canEdit}
+              canDelete={canDelete}
+              activateOnPointerDown={enableCollapse}
+              buttonClassName="h-7 w-7"
+              labels={{ edit: actionLabels?.edit, delete: actionLabels?.delete, close: actionLabels?.close }}
+            />
+          </div>
+        )}
       </Card>
     </div>
   )

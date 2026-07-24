@@ -45,6 +45,10 @@ export function timeAgo(then: Date): string {
  * Format a timestamp for display
  * - If today: shows relative time (e.g., "5 min")
  * - If not today: shows formatted date (e.g., "Jan 15, 2026")
+ *
+ * The `timeZone` arg only affects the absolute-date rendering; the today/relative
+ * boundary is computed in the host local day (a known cosmetic limitation near
+ * midnight across zones).
  */
 export function formatTimestamp(input: string | Date, timeZone?: string): string {
   const then = typeof input === 'string' ? new Date(input) : input

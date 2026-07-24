@@ -5,8 +5,9 @@
 import { act, render, screen, fireEvent } from '@testing-library/react'
 import * as React from 'react'
 
-const { deleteCommentMock, toolsDispatchMock, menusDispatchMock, toastSuccess } = vi.hoisted(() => ({
-  deleteCommentMock: vi.fn(),
+const { deleteCommentsMock, createCommentMock, toolsDispatchMock, menusDispatchMock, toastSuccess } = vi.hoisted(() => ({
+  deleteCommentsMock: vi.fn(),
+  createCommentMock: vi.fn(),
   toolsDispatchMock: vi.fn(),
   menusDispatchMock: vi.fn(),
   toastSuccess: vi.fn(),
@@ -20,6 +21,9 @@ const sampleComments: any[] = [
 
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
+}))
+vi.mock('next-auth/react', () => ({
+  useSession: () => ({ data: { user: { id: '7' } } }),
 }))
 vi.mock('../../../store', async () => {
   const React = await vi.importActual<typeof import('react')>('react')
@@ -60,7 +64,9 @@ vi.mock('./CollapsibleCommentItem', () => ({
 }))
 vi.mock('../../../hooks/comments/comments', () => ({
   useComments: () => ({ comments: sampleComments }),
-  useComment: () => ({ deleteComment: deleteCommentMock }),
+  useComment: () => ({ updateComment: vi.fn() }),
+  useCreateComment: () => ({ createComment: createCommentMock }),
+  useDeleteComments: () => ({ deleteComments: deleteCommentsMock }),
 }))
 vi.mock('sonner', () => ({
   toast: { success: (...a: unknown[]) => toastSuccess(...a), error: vi.fn() },
@@ -69,7 +75,8 @@ vi.mock('sonner', () => ({
 import { CommentsSection } from './CommentsSection'
 
 beforeEach(() => {
-  deleteCommentMock.mockReset()
+  deleteCommentsMock.mockReset()
+  createCommentMock.mockReset()
   toolsDispatchMock.mockReset()
   menusDispatchMock.mockReset()
   toastSuccess.mockReset()
@@ -94,13 +101,14 @@ describe('CommentsSection', () => {
     expect(screen.getByTestId('item-count')).toHaveTextContent('1')
   })
 
-  it('clicking delete sets the comment-id-to-delete and invokes deleteComment via useEffect', async () => {
+  it('clicking delete cascades deletion of the comment (and its replies) via deleteComments', async () => {
     render(<CommentsSection />)
     await act(async () => {
       fireEvent.click(screen.getAllByRole('button', { name: 'delete' })[0])
     })
+    // First visible top-level comment is id 1, which has no replies in the sample data.
     expect(toastSuccess).toHaveBeenCalledWith('commentDeleted')
-    expect(deleteCommentMock).toHaveBeenCalled()
+    expect(deleteCommentsMock).toHaveBeenCalledWith({ ids: [1] })
   })
 
   it('Add Comment dispatches the right tool id based on the current viewer', () => {

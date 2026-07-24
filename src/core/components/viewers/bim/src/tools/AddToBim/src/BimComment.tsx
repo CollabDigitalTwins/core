@@ -3,58 +3,81 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as React from "react";
+import * as React from 'react'
 
 import Comment from '../../../../../../ui/Comments/Comment'
 
-import { markerStyle, markerStyleHighlight } from './markerUtils'
+import type { CommentActionLabels } from '../../../../../../ui/Comments/CommentActionButtons'
 
-import type * as THREE from 'three'
-
-interface CommentProps {
+interface BimCommentProps {
   userName: string
   userImage: number | null
   userImageFileId?: number | null
-  worldCamera: THREE.Camera
-  targetPoint: THREE.Vector3
-  onRemove?: () => void
-  onEdit?: () => void
-  onClose: () => void
   buildingId?: number
   timestamp: Date
   text: string
-  sphere: THREE.Object3D
   isPending?: boolean
   highlight?: boolean
+  focused?: boolean
+  showActions?: boolean
+  canReply?: boolean
+  canEdit?: boolean
+  canDelete?: boolean
+  actionLabels?: CommentActionLabels
+  onRemove?: () => void
+  onClose?: () => void
+  onSelect?: () => void
+  onFocus?: () => void
+  onReply?: () => void
+  onEdit?: () => void
 }
 
 export default function BimComment({
   userName,
   userImage,
   userImageFileId,
-  onRemove,
-  onEdit,
-  onClose,
   buildingId,
   timestamp,
   text,
   isPending = false,
   highlight = false,
-}: CommentProps): React.ReactElement {
+  focused = false,
+  showActions = false,
+  canReply = true,
+  canEdit = true,
+  canDelete = true,
+  actionLabels,
+  onRemove,
+  onClose,
+  onSelect,
+  onFocus,
+  onReply,
+  onEdit,
+}: BimCommentProps): React.ReactElement {
   return (
-      <Comment
-        userName={userName}
-        userImage={userImage}
-        userImageFileId={userImageFileId}
-        buildingId={buildingId}
-        text={text}
-        createdAt={timestamp}
-        isPending={isPending}
-        // onRemove={onRemove} // Remove is disabled because the card is not clickable for now
-        onClose={onClose}
-        enableCollapse
-        defaultCollapsed
-        highlight={highlight}
-      />
+    <Comment
+      userName={userName}
+      userImage={userImage}
+      userImageFileId={userImageFileId}
+      buildingId={buildingId}
+      text={text}
+      createdAt={timestamp}
+      isPending={isPending}
+      highlight={highlight}
+      focused={focused}
+      showActions={showActions}
+      canReply={canReply}
+      canEdit={canEdit}
+      canDelete={canDelete}
+      actionLabels={actionLabels}
+      onRemove={onRemove}
+      onClose={onClose}
+      onSelect={onSelect}
+      onFocus={onFocus}
+      onReply={onReply}
+      onEdit={onEdit}
+      enableCollapse
+      defaultCollapsed
+    />
   )
 }

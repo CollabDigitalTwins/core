@@ -10,6 +10,7 @@ import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
 import { useIsMobile } from '../../hooks/ui/use-mobile'
+import { useResizableSidebarWidth } from '../../hooks/ui/useResizableSidebarWidth'
 import { MenusContext } from '../../store/Menus/context'
 import { cn } from '../../utils/utils'
 import NavigationBar from '../TopNavigationBar'
@@ -39,7 +40,7 @@ import {
 
 
 
-import type { VariantProps} from 'class-variance-authority';
+import type { VariantProps } from 'class-variance-authority';
 
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state'
@@ -95,179 +96,201 @@ const SidebarProvider = React.forwardRef<
     geocodeEarthApiKey?: string
     geocoderUrl?: string
   }
-      >(
-      (
-        {
-          defaultOpen = false,
-          open: openProp,
-          onOpenChange: setOpenProp,
-          className,
-          style,
-          children,
-          minioBaseUrl,
-          martinBaseUrl,
-          organization,
-          pointcloudApiUrl,
-          geocodeEarthApiKey,
-          geocoderUrl,
-          ...props
-        },
-        ref,
-      ) => {
-        const isMobile = useIsMobile()
-        const [openMobile, setOpenMobile] = React.useState(false)
-        const [openInfo, setOpenInfo] = React.useState(false)
-        const [bugReportOpen, setBugReportOpen] = React.useState(false)
-        const [featureRequestOpen, setFeatureRequestOpen] = React.useState(false)
+>(
+  (
+    {
+      defaultOpen = false,
+      open: openProp,
+      onOpenChange: setOpenProp,
+      className,
+      style,
+      children,
+      minioBaseUrl,
+      martinBaseUrl,
+      organization,
+      pointcloudApiUrl,
+      geocodeEarthApiKey,
+      geocoderUrl,
+      ...props
+    },
+    ref,
+  ) => {
+    const isMobile = useIsMobile()
+    const tInfo = useTranslations('InfoSidebar')
+    // User-resizable width for the InfoSidebar overlay (desktop only; persisted).
+    const {
+      width: infoWidth,
+      isResizing: infoResizing,
+      canResize: canResizeInfo,
+      startResize: startInfoResize,
+    } = useResizableSidebarWidth()
+    const [openMobile, setOpenMobile] = React.useState(false)
+    const [openInfo, setOpenInfo] = React.useState(false)
+    const [bugReportOpen, setBugReportOpen] = React.useState(false)
+    const [featureRequestOpen, setFeatureRequestOpen] = React.useState(false)
 
-        // This is the internal state of the sidebar.
-        // We use openProp and setOpenProp for control from outside the component.
-        const [_open, _setOpen] = React.useState(defaultOpen)
-        const open = openProp ?? _open
-        const setOpenMenu = React.useCallback(
-          (value: boolean | ((value: boolean) => boolean)) => {
-            const openState = typeof value === 'function' ? value(open) : value
-            if (setOpenProp) {
-              setOpenProp(openState)
-            }
-            else {
-              _setOpen(openState)
-            }
+    // This is the internal state of the sidebar.
+    // We use openProp and setOpenProp for control from outside the component.
+    const [_open, _setOpen] = React.useState(defaultOpen)
+    const open = openProp ?? _open
+    const setOpenMenu = React.useCallback(
+      (value: boolean | ((value: boolean) => boolean)) => {
+        const openState = typeof value === 'function' ? value(open) : value
+        if (setOpenProp) {
+          setOpenProp(openState)
+        }
+        else {
+          _setOpen(openState)
+        }
 
-            // This sets the cookie to keep the sidebar state.
-            document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
-          },
-          [setOpenProp, open],
-        )
+        // This sets the cookie to keep the sidebar state.
+        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+      },
+      [setOpenProp, open],
+    )
 
-        // Helper to toggle the menu sidebar.
-        const toggleMenuSidebar = React.useCallback(() => {
+    // Helper to toggle the menu sidebar.
+    const toggleMenuSidebar = React.useCallback(() => {
+      if (isMobile) {
+        setOpenMobile(open => !open)
+      }
+      else {
+        setOpenMenu((open) => {
+          const newOpenState = !open
+          // If opening menu sidebar, close info sidebar
+          // if (newOpenState && openInfo) {
+          //   setOpenInfo(false)
+          // }
+          return newOpenState
+        })
+      }
+    }, [isMobile, setOpenMenu, setOpenMobile, openInfo, setOpenInfo])
+
+    // Helper to toggle the info sidebar.
+    const toggleInfoSidebar = React.useCallback(() => {
+      setOpenInfo((openInfoState) => {
+        const newOpenInfoState = !openInfoState
+        // If opening info sidebar, close menu sidebar
+        if (newOpenInfoState && (isMobile ? openMobile : open)) {
           if (isMobile) {
-            setOpenMobile(open => !open)
+            setOpenMobile(false)
           }
           else {
-            setOpenMenu((open) => {
-              const newOpenState = !open
-              // If opening menu sidebar, close info sidebar
-              // if (newOpenState && openInfo) {
-              //   setOpenInfo(false)
-              // }
-              return newOpenState
-            })
+            setOpenMenu(false)
           }
-        }, [isMobile, setOpenMenu, setOpenMobile, openInfo, setOpenInfo])
+        }
+        return newOpenInfoState
+      })
+    }, [setOpenInfo, open, openMobile, isMobile, setOpenMenu, setOpenMobile])
 
-        // Helper to toggle the info sidebar.
-        const toggleInfoSidebar = React.useCallback(() => {
-          setOpenInfo((openInfoState) => {
-            const newOpenInfoState = !openInfoState
-            // If opening info sidebar, close menu sidebar
-            if (newOpenInfoState && (isMobile ? openMobile : open)) {
-              if (isMobile) {
-                setOpenMobile(false)
-              }
-              else {
-                setOpenMenu(false)
-              }
+    // Adds a keyboard shortcut to toggle the sidebar.
+    React.useEffect(() => {
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (
+          event.key === SIDEBAR_KEYBOARD_SHORTCUT
+          && (event.metaKey || event.ctrlKey)
+        ) {
+          event.preventDefault()
+          toggleMenuSidebar()
+        }
+
+        // Close InfoSidebar on Escape key
+        if (event.key === 'Escape' && openInfo) {
+          event.preventDefault()
+          setOpenInfo(false)
+        }
+      }
+
+      window.addEventListener('keydown', handleKeyDown)
+      return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [toggleMenuSidebar, openInfo, setOpenInfo])
+
+    // We add a state so that we can do data-state="expanded" or "collapsed".
+    // On mobile, reflect the Sheet open state; on desktop, reflect the sidebar open state.
+    const sidebarState = (isMobile ? openMobile : open) ? 'expanded' : 'collapsed'
+
+    const contextValue = React.useMemo<SidebarContextProps>(
+      () => ({
+        sidebarState,
+        open,
+        setOpenMenu,
+        isMobile,
+        openMobile,
+        setOpenMobile,
+        openInfo,
+        setOpenInfo,
+        toggleMenuSidebar,
+        toggleInfoSidebar,
+        geocodeEarthApiKey,
+        geocoderUrl,
+        bugReportOpen,
+        setBugReportOpen,
+        featureRequestOpen,
+        setFeatureRequestOpen,
+      }),
+      [sidebarState, open, setOpenMenu, isMobile, openMobile, setOpenMobile, openInfo, setOpenInfo, toggleMenuSidebar, toggleInfoSidebar, geocodeEarthApiKey, geocoderUrl, bugReportOpen, featureRequestOpen],
+    )
+
+    return (
+      <SidebarContext.Provider value={contextValue}>
+        <TooltipProvider delayDuration={0}>
+          <div
+            style={
+              {
+                '--sidebar-width': SIDEBAR_WIDTH,
+                '--sidebar-width-icon': SIDEBAR_WIDTH_ICON,
+                ...style,
+              } as React.CSSProperties
             }
-            return newOpenInfoState
-          })
-        }, [setOpenInfo, open, openMobile, isMobile, setOpenMenu, setOpenMobile])
+            className={cn(
+              'group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar',
+              className,
+            )}
+            ref={ref}
+            {...props}
+          >
+            {children}
 
-        // Adds a keyboard shortcut to toggle the sidebar.
-        React.useEffect(() => {
-          const handleKeyDown = (event: KeyboardEvent) => {
-            if (
-              event.key === SIDEBAR_KEYBOARD_SHORTCUT
-              && (event.metaKey || event.ctrlKey)
-            ) {
-              event.preventDefault()
-              toggleMenuSidebar()
-            }
+            {/* InfoSidebar overlay */}
 
-            // Close InfoSidebar on Escape key
-            if (event.key === 'Escape' && openInfo) {
-              event.preventDefault()
-              setOpenInfo(false)
-            }
-          }
+            <div
+              data-state={openInfo ? 'open' : 'closed'}
+              aria-hidden={!openInfo}
+              className={cn(
+                'fixed inset-y-0 z-40 w-full overflow-hidden transition-[transform,opacity] duration-300 ease-in-out will-change-transform',
+                infoResizing && 'select-none',
+                openInfo
+                  ? 'translate-x-0 opacity-100'
+                  : '-translate-x-full opacity-0 pointer-events-none'
+              )}
+              style={{
+                left: isMobile
+                  ? '0'
+                  : (open ? 'var(--sidebar-width)' : 'var(--sidebar-width-icon)'),
+                // Desktop: user-resizable width (persisted). Mobile: full-width.
+                width: isMobile ? '100%' : infoWidth,
+              }}
+            >
+              <InfoSidebar minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} pointcloudApiUrl={pointcloudApiUrl} />
 
-          window.addEventListener('keydown', handleKeyDown)
-          return () => window.removeEventListener('keydown', handleKeyDown)
-        }, [toggleMenuSidebar, openInfo, setOpenInfo])
-
-  // We add a state so that we can do data-state="expanded" or "collapsed".
-  // On mobile, reflect the Sheet open state; on desktop, reflect the sidebar open state.
-  const sidebarState = (isMobile ? openMobile : open) ? 'expanded' : 'collapsed'
-
-        const contextValue = React.useMemo<SidebarContextProps>(
-          () => ({
-            sidebarState,
-            open,
-            setOpenMenu,
-            isMobile,
-            openMobile,
-            setOpenMobile,
-            openInfo,
-            setOpenInfo,
-            toggleMenuSidebar,
-            toggleInfoSidebar,
-            geocodeEarthApiKey,
-            geocoderUrl,
-            bugReportOpen,
-            setBugReportOpen,
-            featureRequestOpen,
-            setFeatureRequestOpen,
-          }),
-          [sidebarState, open, setOpenMenu, isMobile, openMobile, setOpenMobile, openInfo, setOpenInfo, toggleMenuSidebar, toggleInfoSidebar, geocodeEarthApiKey, geocoderUrl, bugReportOpen, featureRequestOpen],
-        )
-
-        return (
-          <SidebarContext.Provider value={contextValue}>
-            <TooltipProvider delayDuration={0}>
-              <div
-                style={
-                  {
-                    '--sidebar-width': SIDEBAR_WIDTH,
-                    '--sidebar-width-icon': SIDEBAR_WIDTH_ICON,
-                    ...style,
-                  } as React.CSSProperties
-                }
-                className={cn(
-                  'group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar',
-                  className,
-                )}
-                ref={ref}
-                {...props}
-              >
-                {children}
-
-                {/* InfoSidebar overlay */}
-
+              {/* Right-edge drag handle (desktop only). Drag to resize the sidebar width. */}
+              {canResizeInfo && (
                 <div
-                  data-state={openInfo ? 'open' : 'closed'}
-                  aria-hidden={!openInfo}
-                  className={cn(
-                    'fixed inset-y-0 z-40 w-full sm:w-[410px] overflow-hidden transition-[transform,opacity] duration-300 ease-in-out will-change-transform',
-                    openInfo
-                      ? 'translate-x-0 opacity-100'
-                      : '-translate-x-full opacity-0 pointer-events-none'
-                  )}
-                  style={{
-                    left: isMobile
-                      ? '0'
-                      : (open ? 'var(--sidebar-width)' : 'var(--sidebar-width-icon)'),
-                    width: isMobile ? '100%' : '400px',
-                  }}
-                >
-                  <InfoSidebar minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} pointcloudApiUrl={pointcloudApiUrl} />
-                </div>
-              </div>
-            </TooltipProvider>
-          </SidebarContext.Provider>
-        )
-      },
-      )
+                  role="separator"
+                  aria-orientation="vertical"
+                  aria-label={tInfo('resizeHandleLabel')}
+                  onPointerDown={startInfoResize}
+                  style={{ touchAction: 'none' }}
+                  className="absolute inset-y-0 right-0 z-10 w-0.5 cursor-ew-resize bg-border/80 hover:bg-accent"
+                />
+              )}
+            </div>
+          </div>
+        </TooltipProvider>
+      </SidebarContext.Provider>
+    )
+  },
+)
 SidebarProvider.displayName = 'SidebarProvider'
 const Sidebar = React.forwardRef<
   HTMLDivElement,

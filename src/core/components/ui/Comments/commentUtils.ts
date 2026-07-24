@@ -24,6 +24,7 @@ export function buildComment(params: BuildCommentParams): Partial<Comment> {
     y: params.y,
     z: params.z,
     viewer: params.viewer,
-    buildingId: params.buildingId
+    buildingId: params.buildingId,
+    replyToId: params.replyToId
   }
 }

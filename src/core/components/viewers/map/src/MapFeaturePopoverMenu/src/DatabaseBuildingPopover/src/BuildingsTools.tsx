@@ -343,7 +343,6 @@ export default function BuildingTools({
                 )}
                 {bimFiles.length === 1 && bimModelsAddedToMap.some(model => model.building.id === buildingId) && (() => {
                   const selectedModel = bimModelsAddedToMap.find(model => model.building.id === buildingId);
-                  console.log('selectedModel', selectedModel);
                   return true ? (
                     <Button
                       onClick={() => handleEditClick(selectedModel.bimFile.name)}

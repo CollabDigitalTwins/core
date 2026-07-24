@@ -34,6 +34,9 @@ const getInitialState = (pathname?: string): InitialStateType => {
             selectedTab: 'file',
             commentsVisibleInViewer: [],
             currentCommentId: null,
+            focusedCommentId: null,
+            focusRequestId: 0,
+            pendingCommentAction: null,
             sensorsVisibleInViewer: [],
             visibleSensorTypes: {},
             visibleSensorTags: {},
@@ -68,7 +71,7 @@ export const MenusContext = React.createContext<{
     setIsDatasetMenuOpen: React.Dispatch<React.SetStateAction<boolean>>
     isAuthPage?: boolean
 }>({
-    state: { menus: { currentViewer: ViewerNames.map, rowsPerPage: 10, selectedTab: 'file', commentsVisibleInViewer: [], currentCommentId: null, sensorsVisibleInViewer: [], visibleSensorTypes: {}, visibleSensorTags: {}, currentSensorId: null, currentSensorTypeId: null } },
+    state: { menus: { currentViewer: ViewerNames.map, rowsPerPage: 10, selectedTab: 'file', commentsVisibleInViewer: [], currentCommentId: null, focusedCommentId: null, focusRequestId: 0, pendingCommentAction: null, sensorsVisibleInViewer: [], visibleSensorTypes: {}, visibleSensorTags: {}, currentSensorId: null, currentSensorTypeId: null } },
     dispatch: () => null,
     isSidebarOpen: false,
     setIsSidebarOpen: () => null,

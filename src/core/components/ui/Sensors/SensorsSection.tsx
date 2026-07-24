@@ -80,10 +80,10 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
   const handleSensorAction = React.useCallback((action: SensorAction, id: number) => {
     switch (action) {
       case 'view':
-        console.log(`View sensor ${id}`)
+        // ⚠️ View sensor action not implemented
         break
       case 'edit':
-        console.log(`Edit sensor ${id}`)
+        // ⚠️ Edit sensor action not implemented
         break
       case 'delete':
             toast.success(t('sensorDeleted'))

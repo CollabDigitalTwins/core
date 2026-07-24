@@ -239,6 +239,7 @@
     "label": "Écrire un commentaire",
     "placeholder": "Saisissez votre commentaire ici...",
     "close": "Fermer",
+    "clickPlusHint": "Cliquez sur + pour placer votre commentaire",
     "placeHelpTextMap": "Double-cliquez n’importe où sur la carte pour ajouter un commentaire",
     "placeHelpTextBim": "Double-cliquez sur le modèle pour ajouter un commentaire"
   },
@@ -261,6 +262,7 @@
     "attachments": "Pièces jointes",
     "addAttachment": "Ajouter une pièce jointe",
     "writeReply": "Écrire une réponse...",
+    "doubleClickZoom": "Double-cliquez pour zoomer sur le commentaire",
     "position": "Position",
     "lastUpdated": "Dernière mise à jour"
   },
@@ -1173,6 +1175,9 @@
     "toastSuccessCreate": "Site créé avec succès",
     "toastSuccessUpdate": "Site mis à jour avec succès",
     "toastErrorUpdate": "Échec de la mise à jour du site"
+  },
+  "InfoSidebar": {
+    "resizeHandleLabel": "Redimensionner la barre latérale"
   },
   "TabSelector": {
     "fileLabel": "Fichier",

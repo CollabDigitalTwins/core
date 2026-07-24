@@ -1,10 +1,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { SensorType, ViewerNames } from '../../types/dbTypes'
+import type { ViewerNames } from '../../types/dbTypes'
 import type { ActionMap } from '../ActionMap'
 
 export type SidebarTabType = 'file' | 'layers' | 'communication' |  'sensors' | 'settings'
+
+/** Request from a viewer marker to open a comment's editor/reply box in the sidebar. */
+export type CommentActionRequest = {
+  commentId: number
+  action: 'edit' | 'reply'
+  /** Monotonic id so the same request fires again even if the target is unchanged. */
+  requestId: number
+}
 
 interface MenusTypes {
   currentViewer: ViewerNames
@@ -12,6 +20,11 @@ interface MenusTypes {
   selectedTab: SidebarTabType
   commentsVisibleInViewer: ViewerNames[]
   currentCommentId: number | null
+  /** Comment double-clicked to zoom/focus. Drives the thick focus ring + camera move. */
+  focusedCommentId: number | null
+  /** Monotonic counter bumped on every focus dispatch so re-focusing the same comment re-zooms. */
+  focusRequestId: number
+  pendingCommentAction: CommentActionRequest | null
   sensorsVisibleInViewer: ViewerNames[]
   visibleSensorTypes: Partial<Record<ViewerNames, number[]>>
   visibleSensorTags: Partial<Record<ViewerNames, string[]>>
@@ -28,6 +41,9 @@ export type MenusPayload = {
   ['SHOW_COMMENTS_IN_VIEWER']: {viewer: ViewerNames}
   ['HIDE_COMMENTS_IN_VIEWER']: {viewer: ViewerNames}
   ['SET_CURRENT_COMMENT_ID']: {commentId: number | null}
+  ['SET_FOCUSED_COMMENT_ID']: {commentId: number | null}
+  ['REQUEST_COMMENT_ACTION']: {commentId: number; action: 'edit' | 'reply'}
+  ['CLEAR_PENDING_COMMENT_ACTION']: undefined
   ['TOGGLE_SENSOR_TYPE_VISIBILITY']: { viewer: ViewerNames; sensorTypeId: number; force?: boolean }
   ['TOGGLE_SENSOR_TAG_VISIBILITY']: { viewer: ViewerNames; sensorTag: string; force?: boolean }
   ['SHOW_ALL_SENSOR_IN_VIEWER']: {viewer: ViewerNames}
@@ -80,6 +96,27 @@ export const MenusReducer = (state: MenusState, action: MenusActions) => {
       return {
         ...state,
         currentCommentId: action.payload.commentId,
+      }
+    case 'SET_FOCUSED_COMMENT_ID':
+      return {
+        ...state,
+        focusedCommentId: action.payload.commentId,
+        focusRequestId: state.focusRequestId + 1,
+      }
+    case 'REQUEST_COMMENT_ACTION':
+      return {
+        ...state,
+        pendingCommentAction: {
+          commentId: action.payload.commentId,
+          action: action.payload.action,
+          requestId: (state.pendingCommentAction?.requestId ?? 0) + 1,
+        },
+      }
+    case 'CLEAR_PENDING_COMMENT_ACTION':
+      if (state.pendingCommentAction === null) return state
+      return {
+        ...state,
+        pendingCommentAction: null,
       }
     case 'SET_CURRENT_SENSOR_ID':
       return {

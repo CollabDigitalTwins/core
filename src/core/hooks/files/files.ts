@@ -59,8 +59,6 @@ export function useDownloadFile() {
         throw new Error('No download URL available for this file')
       }
 
-      console.log('Attempting to download from:', downloadUrl)
-
       // Determine filename
       const finalFileName = fileName
         || file.name

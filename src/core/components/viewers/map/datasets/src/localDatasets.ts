@@ -304,8 +304,6 @@ async function fetchMartinServerDatasets(
   }
 
   try {
-    console.log('Fetching Martin server catalog from:', martinServerUrl)
-
     const { indexUrl, tileBaseUrl, fallbackCatalogUrl } = resolveMartinUrls(martinServerUrl)
 
     const publishedLabels = await fetchPublishedTileLabels()
@@ -325,8 +323,6 @@ async function fetchMartinServerDatasets(
       // Drop our published org tables (served via the cdt_tiles function + discovered
       // from File metadata) and the cdt_tiles function source itself (no ?source= → empty).
       .filter(t => !isPublishedOrgTable(t.tileName) && t.tileName !== 'cdt_tiles')
-
-    console.log('Martin catalog received:', tiles.length, 'tiles')
 
     const datasets: Dataset[] = await Promise.all(tiles.map(async (tileInfo) => {
       const publishedLabel = publishedLabels.get(tileInfo.tileName)
@@ -400,8 +396,6 @@ async function fetchMartinServerDatasets(
 
       return dataset
     }))
-
-    console.log(`Transformed ${datasets.length} Martin datasets`)
 
     let publishedDatasets: Dataset[] = []
     try {

@@ -175,12 +175,13 @@ export function MapViewer({ width = '100%', height = '100%', organization, minio
 
   // useCallback so the onDblClick prop identity is stable across renders of
   // MapViewer; a new function each render caused react-map-gl to detach/re-attach
-  // the listener. The console.log is gated behind a dev-mode check.
+  // the listener. The console.log is intentional dev-only coordinate debugging.
   const onDblClick = React.useCallback((e) => {
     if (process.env.NODE_ENV === 'production') return
     const { lng, lat } = e.lngLat
     const elevation = mapRef.current?.queryTerrainElevation([lng, lat]) || 0
     const coordinates = { lng, lat, elevation, zoom: mapRef.current?.getZoom() }
+    // eslint-disable-next-line no-console -- intentional dev-mode coordinate logging
     console.log('📍 Map coordinates:', coordinates)
   }, [])
 

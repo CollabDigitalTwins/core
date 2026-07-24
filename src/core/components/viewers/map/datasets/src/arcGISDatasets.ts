@@ -71,7 +71,6 @@ export async function fetchArcGISDatasets(
   try {
     const baseUrl = (apiUrl || '').replace(/\/+$/, '')
     const servicesUrl = `${baseUrl}/services?f=pjson`
-    console.log(`[ArcGIS] Fetching services for portal "${portal.name}": ${servicesUrl}`)
 
     const response = await fetchWithTimeout(servicesUrl)
     if (!response.ok) {
@@ -80,7 +79,6 @@ export async function fetchArcGISDatasets(
     }
 
     const data = await response.json()
-    console.log(`[ArcGIS] "${portal.name}" — ${data.services?.length ?? 0} services found`)
 
     const transformedDatasets: Dataset[] = []
 

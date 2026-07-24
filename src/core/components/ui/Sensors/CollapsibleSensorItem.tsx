@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { format } from 'date-fns'
 import * as LR from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
@@ -11,6 +10,8 @@ import * as React from 'react'
 
 import { useCoreHooks } from '../../../hooks/provider'
 import { useUser } from '../../../hooks/users/users'
+import { AppConfigContext } from '../../../store'
+import { formatInZone } from '../../../utils/timeUtils'
 import { cn } from '../../../utils/utils'
 import { Avatar, AvatarFallback } from '../Avatar'
 import { Badge } from '../Badge'
@@ -18,6 +19,7 @@ import { Button } from '../Button'
 import { UserAvatar } from '../UserAvatar'
 
 import { SensorChart } from './SensorChart'
+import { SensorDetailDialog } from './SensorDetailDialog'
 import { SensorTagsSection } from './SensorTagsSection'
 import { resolveLucideIcon } from './sensorUtils'
 import { useSensorSeries } from './useSensorSeries'
@@ -48,6 +50,9 @@ export function CollapsibleSensorItem({
 }: CollapsibleSensorItemProps) {
   const t = useTranslations('SensorsSection')
   const [isExpanded, setIsExpanded] = React.useState(false)
+  const { state: appConfigState } = React.useContext(AppConfigContext)
+  const timeZone = appConfigState.appConfig.displayTimeZone
+  const [detailOpen, setDetailOpen] = React.useState(false)
   const { points: sensorData, unit, valueLabels, isLoading: isLoadingData } =
     useSensorSeries(sensor.url ?? '', sensor.dataFormat, sensor.updateFrequency, { enabled: isExpanded })
   const prevVisibleRef = React.useRef(isVisible)
@@ -146,6 +151,15 @@ export function CollapsibleSensorItem({
       {/* Action Buttons */}
       {onAction && (
         <div className={cn("flex items-center gap-0 flex-shrink-0", !isVisible && "opacity-70")}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 p-0"
+            onClick={() => setDetailOpen(true)}
+            title={t('expandSensor')}
+          >
+            <LR.Maximize2 className="h-4 w-4" />
+          </Button>
           {user?.id === String(sensor.authorId) && (
             <>
               <Button
@@ -181,7 +195,7 @@ export function CollapsibleSensorItem({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">
-                {format(new Date(sensor.createdAt), 'PPp')}
+                {formatInZone(new Date(sensor.createdAt).getTime(), timeZone, { dateStyle: 'medium', timeStyle: 'short' })}
               </span>
               <Badge variant="secondary" className="text-xs">
                 {typeName}
@@ -219,6 +233,7 @@ export function CollapsibleSensorItem({
             chartConfig={chartConfig}
             unit={unit}
             valueLabels={valueLabels}
+            timeZone={timeZone}
           />
         </div>
         <div>
@@ -238,6 +253,7 @@ export function CollapsibleSensorItem({
       </div>
     )
   }
+      <SensorDetailDialog open={detailOpen} onOpenChange={setDetailOpen} sensor={sensor} sensorType={sensorType} />
     </div >
   )
 }

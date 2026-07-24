@@ -1057,6 +1057,7 @@
     "addSensorTitle": "Add Sensor",
     "searchSensors": "Search sensors...",
     "editSensor": "Edit sensor",
+    "expandSensor": "Expand",
     "sensorEdited": "Sensor edited",
     "deleteSensor": "Delete sensor",
     "sensorDeleted": "Sensor deleted",

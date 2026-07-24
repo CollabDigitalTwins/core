@@ -10,7 +10,8 @@ import { toast } from 'sonner'
 
 import { useSensor, useSensors } from '../../../hooks/sensors/sensors'
 import { useSensorTypes } from '../../../hooks/sensorTypes/sensorTypes'
-import { BuildingsContext, MenusContext, ToolsContext } from '../../../store'
+import { AppConfigContext, BuildingsContext, MenusContext, ToolsContext } from '../../../store'
+import { resolveDefaultTimeZone } from '../../../utils/timeUtils'
 import { stringToColour } from '../../viewers/map/utils/stringToColour'
 import { Button } from '../Button'
 import { CollapsibleSection } from '../CollapsibleSection'
@@ -50,6 +51,8 @@ export function SensorsSection() {
 
   const {state: buildingsState} = React.useContext(BuildingsContext)
   const buildingId = buildingsState?.buildings?.building?.id || -1
+
+  const { state: appConfigState, dispatch: appConfigDispatch } = React.useContext(AppConfigContext)
 
   const [sensorToDelete, setSensorToDelete] = React.useState<number | null>(null)
   const [searchQuery, setSearchQuery] = React.useState('')
@@ -103,6 +106,19 @@ export function SensorsSection() {
   }, [sensorToDelete, deleteSensor])
 
   const currentSensors: Sensor[] = allSensors.filter((sensor) => currentViewer === sensor.viewer && (!sensor.buildingId || sensor.buildingId === buildingId))
+
+  // Default the display zone from the building's (else a sensor's) longitude, until the user overrides.
+  // Depends on primitive longitudes (not the re-created currentSensors array) so it only runs on real change.
+  const buildingLongitude = buildingsState?.buildings?.building?.buildingLongitude ?? null
+  const firstSensorLongitude = currentSensors.find(s => typeof s.longitude === 'number')?.longitude ?? null
+  const { displayTimeZone, displayTimeZoneUserSet } = appConfigState.appConfig
+  React.useEffect(() => {
+    if (displayTimeZoneUserSet) return
+    const zone = resolveDefaultTimeZone({ buildingLongitude, sensorLongitude: firstSensorLongitude })
+    if (zone !== displayTimeZone) {
+      appConfigDispatch({ type: 'SET_DEFAULT_TIME_ZONE', payload: { displayTimeZone: zone } })
+    }
+  }, [buildingLongitude, firstSensorLongitude, displayTimeZone, displayTimeZoneUserSet, appConfigDispatch])
 
   // Filter sensors based on search query
   const filteredSensors = React.useMemo(() => {

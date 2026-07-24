@@ -1057,6 +1057,7 @@
     "addSensorTitle": "Ajouter un capteur",
     "searchSensors": "Rechercher des capteurs...",
     "editSensor": "Modifier le capteur",
+    "expandSensor": "Agrandir",
     "sensorEdited": "Capteur modifié",
     "deleteSensor": "Supprimer le capteur",
     "sensorDeleted": "Capteur supprimé",

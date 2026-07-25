@@ -114,8 +114,12 @@ describe('resolveDefaultTimeZone', () => {
   afterEach(() => vi.restoreAllMocks())
 
   it('prefers the browser-detected zone over any longitude (DST-correct)', () => {
-    // Browser detection is available in the test env, so it wins over the candidate list.
-    expect(resolveDefaultTimeZone([-79, 139])).toBe(detectTimeZone())
+    // Pin detection to a known non-UTC zone so the assertion holds on any runner
+    // (a UTC runner would otherwise fall through to the longitude candidate).
+    vi.spyOn(Intl, 'DateTimeFormat').mockReturnValue(
+      { resolvedOptions: () => ({ timeZone: 'America/Toronto' }) } as unknown as Intl.DateTimeFormat,
+    )
+    expect(resolveDefaultTimeZone([-79, 139])).toBe('America/Toronto')
   })
   it('falls back to the first finite candidate when detection is unavailable (UTC)', () => {
     // Force detection to report UTC (the "unavailable" sentinel) so the longitude path is taken.

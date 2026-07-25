@@ -13,7 +13,7 @@ import { Button } from '../Button'
 
 import { indicesForBounds, rangeBounds, type RangePreset } from './sensorRange'
 import { SensorChart } from './SensorChart'
-import { TimeZoneSelect } from './TimeZoneSelect'
+// TimeZoneSelect is intentionally not rendered for now (kept as a standalone component).
 import { useSensorSeries } from './useSensorSeries'
 
 import type { SensorSeriesMeta } from './sensorData'
@@ -85,7 +85,7 @@ export function SensorDetailDialog({
   sensor: Sensor
   sensorType?: SensorType
 }): React.ReactElement {
-  const { state, dispatch } = React.useContext(AppConfigContext)
+  const { state } = React.useContext(AppConfigContext)
   const timeZone = state.appConfig.displayTimeZone
 
   const { points, unit, valueLabels, meta, isLoading } = useSensorSeries(
@@ -116,24 +116,18 @@ export function SensorDetailDialog({
       contentClassName="max-w-3xl max-h-[90vh] overflow-y-auto"
     >
       <div className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex gap-1">
-            {PRESETS.map(p => (
-              <Button
-                key={p.key}
-                type="button"
-                size="sm"
-                variant={preset === p.key ? 'default' : 'outline'}
-                onClick={() => setPreset(p.key)}
-              >
-                {p.label}
-              </Button>
-            ))}
-          </div>
-          <TimeZoneSelect
-            value={timeZone}
-            onChange={zone => dispatch({ type: 'SET_DISPLAY_TIME_ZONE', payload: { displayTimeZone: zone } })}
-          />
+        <div className="flex flex-wrap items-center gap-1">
+          {PRESETS.map(p => (
+            <Button
+              key={p.key}
+              type="button"
+              size="sm"
+              variant={preset === p.key ? 'default' : 'outline'}
+              onClick={() => setPreset(p.key)}
+            >
+              {p.label}
+            </Button>
+          ))}
         </div>
 
         <SensorChart

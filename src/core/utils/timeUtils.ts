@@ -45,8 +45,12 @@ export function timeAgo(then: Date): string {
  * Format a timestamp for display
  * - If today: shows relative time (e.g., "5 min")
  * - If not today: shows formatted date (e.g., "Jan 15, 2026")
+ *
+ * The `timeZone` arg only affects the absolute-date rendering; the today/relative
+ * boundary is computed in the host local day (a known cosmetic limitation near
+ * midnight across zones).
  */
-export function formatTimestamp(input: string | Date): string {
+export function formatTimestamp(input: string | Date, timeZone?: string): string {
   const then = typeof input === 'string' ? new Date(input) : input
   const now = new Date()
 
@@ -57,6 +61,7 @@ export function formatTimestamp(input: string | Date): string {
     year: 'numeric',
     month: 'short',
     day: '2-digit',
+    ...(timeZone ? { timeZone } : {}),
   })
 }
 
@@ -90,3 +95,55 @@ export const frequencyUnits = [
   { value: 60000, label: 'Minutes' },
   { value: 3600000, label: 'Hours' },
 ] as const
+
+/** Browser IANA zone, e.g. "America/Toronto". Falls back to "UTC" if unavailable. */
+export function detectTimeZone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+  } catch {
+    return 'UTC'
+  }
+}
+
+/**
+ * Longitude -> nearest whole-hour offset -> an Etc/GMT±N id. Note POSIX sign inversion:
+ * a positive (east) offset is Etc/GMT-N. This is a rough approximation: no DST, no
+ * political borders. 0 -> "UTC".
+ */
+export function offsetZoneFromLongitude(longitude: number): string {
+  if (!Number.isFinite(longitude)) return 'UTC'
+  let h = Math.round(longitude / 15)
+  h = Math.max(-12, Math.min(12, h))
+  if (h === 0) return 'UTC'
+  return `Etc/GMT${h > 0 ? '-' : '+'}${Math.abs(h)}`
+}
+
+/**
+ * Default display zone. Prefers the browser's IANA zone: it is DST-correct and, for a user
+ * in the sensor's region, already the right local zone. Only when detection is unavailable
+ * (returns "UTC") does it fall back to a longitude-derived fixed offset, trying each
+ * candidate longitude in order. Callers pass candidates in priority order: BIM sensors sit
+ * in a building (building longitude first), map sensors carry their own coordinates (sensor
+ * longitude first).
+ */
+export function resolveDefaultTimeZone(longitudeCandidates: Array<number | null | undefined>): string {
+  const detected = detectTimeZone()
+  if (detected && detected !== 'UTC') return detected
+  for (const lng of longitudeCandidates) {
+    if (typeof lng === 'number' && Number.isFinite(lng)) return offsetZoneFromLongitude(lng)
+  }
+  return detected || 'UTC'
+}
+
+/** Format an epoch in a specific zone. Handles Etc/GMT±N and true IANA zones alike. */
+export function formatInZone(
+  epochMs: number,
+  timeZone: string,
+  opts?: Intl.DateTimeFormatOptions,
+): string {
+  try {
+    return new Intl.DateTimeFormat(undefined, { timeZone, ...opts }).format(epochMs)
+  } catch {
+    return new Intl.DateTimeFormat(undefined, opts).format(epochMs)
+  }
+}

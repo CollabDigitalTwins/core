@@ -1043,7 +1043,10 @@
     "placeSensorTooltipBim": "Haga doble clic en el modelo para colocar el sensor",
     "selectType": "Seleccionar tipo",
     "selectFormat": "Seleccionar formato",
-    "tags": "Etiquetas"
+    "tags": "Etiquetas",
+    "previewPoints": "puntos de datos",
+    "previewNoData": "No hay datos en esta URL",
+    "previewError": "No se pudo acceder a esta URL"
   },
   "SensorLayers": {
     "sensorEdited": "Sensor editado",
@@ -1054,6 +1057,7 @@
     "addSensorTitle": "Añadir sensor",
     "searchSensors": "Buscar sensores...",
     "editSensor": "Editar sensor",
+    "expandSensor": "Ampliar",
     "sensorEdited": "Sensor editado",
     "deleteSensor": "Eliminar sensor",
     "sensorDeleted": "Sensor eliminado",

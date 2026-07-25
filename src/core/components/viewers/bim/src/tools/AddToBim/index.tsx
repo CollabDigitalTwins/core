@@ -16,6 +16,7 @@ import { ViewerNames } from "../../../../../../types/dbTypes"
 import { Button, useSidebar } from "../../../../../ui"
 import { CommentInput } from "../../../../../ui/Comments/CommentInput"
 import { ViewerContextMenu } from "../../../../../ui/FilesManager"
+import { SensorDetailDialog } from "../../../../../ui/Sensors/SensorDetailDialog"
 import { SensorInput } from "../../../../../ui/Sensors/SensorInput"
 import { FileAdderDialog } from "../../../../map/src/tools/AddTools/AddFile/FileAdder"
 
@@ -34,7 +35,6 @@ import type { BimToolbarToolsType } from "../bimToolbar"
 
 interface AddToBimProps {
   tool: Tool
-  minioBaseUrl?: string
   [key: string]: unknown
 }
 
@@ -70,7 +70,7 @@ const FilePreview: React.FC<{
   )
 }
 
-export default function AddToBim({ tool, minioBaseUrl }: AddToBimProps) {
+export default function AddToBim({ tool }: AddToBimProps) {
   const t = useTranslations('AddToBim')
   const { dispatch: toolsDispatch, state: toolsState } = React.useContext(ToolsContext)
   const { state: bimState } = React.useContext(BimContext)
@@ -87,7 +87,7 @@ export default function AddToBim({ tool, minioBaseUrl }: AddToBimProps) {
 
   // Extracted hooks
   const { addPendingComment, removePendingComment, commentCount } = useCommentMarkers(world, buildingId)
-  const { addPendingSensor, removePendingSensor, sensorCount } = useSensorMarkers(world, buildingId, minioBaseUrl)
+  const { addPendingSensor, removePendingSensor, sensorCount, detailSensor, detailSensorType, closeSensorDetail, editSensor, closeSensorEdit } = useSensorMarkers(world, buildingId)
   const { uploadFile } = useUploadFileToBuilding(buildingId)
   const { deleteFile } = useDeleteFile(buildingId)
 
@@ -307,6 +307,26 @@ export default function AddToBim({ tool, minioBaseUrl }: AddToBimProps) {
           removePendingMarker: removePendingSensor,
         }}
       />
+
+      {/* Sensor edit dialog (opened from a 3D sensor card's edit tool) */}
+      <SensorInput
+        viewer={ViewerNames.bim}
+        layout="dialog"
+        isOpen={!!editSensor}
+        editSensor={editSensor ?? undefined}
+        onCancel={closeSensorEdit}
+        onSaved={closeSensorEdit}
+      />
+
+      {/* Sensor detail dialog (hosted here, in the provider tree, since the 3D card root has none) */}
+      {detailSensor && (
+        <SensorDetailDialog
+          open={!!detailSensor}
+          onOpenChange={(o) => { if (!o) closeSensorDetail() }}
+          sensor={detailSensor}
+          sensorType={detailSensorType}
+        />
+      )}
 
       {/* Right-click context menu on BIM scene objects */}
       {contextMenu && (

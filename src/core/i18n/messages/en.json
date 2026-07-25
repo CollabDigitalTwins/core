@@ -1043,7 +1043,10 @@
     "placeSensorTooltipBim": "Double-click on the model to place the sensor",
     "selectType": "Select type",
     "selectFormat": "Select format",
-    "tags": "Tags"
+    "tags": "Tags",
+    "previewPoints": "data points",
+    "previewNoData": "No data at this URL",
+    "previewError": "Could not reach this URL"
   },
   "SensorLayers": {
     "sensorEdited": "Sensor edited",
@@ -1054,6 +1057,7 @@
     "addSensorTitle": "Add Sensor",
     "searchSensors": "Search sensors...",
     "editSensor": "Edit sensor",
+    "expandSensor": "Expand",
     "sensorEdited": "Sensor edited",
     "deleteSensor": "Delete sensor",
     "sensorDeleted": "Sensor deleted",

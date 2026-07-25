@@ -10,7 +10,8 @@ import { toast } from 'sonner'
 
 import { useSensor, useSensors } from '../../../hooks/sensors/sensors'
 import { useSensorTypes } from '../../../hooks/sensorTypes/sensorTypes'
-import { BuildingsContext, MenusContext, ToolsContext } from '../../../store'
+import { AppConfigContext, BuildingsContext, MenusContext, ToolsContext } from '../../../store'
+import { resolveDefaultTimeZone } from '../../../utils/timeUtils'
 import { stringToColour } from '../../viewers/map/utils/stringToColour'
 import { Button } from '../Button'
 import { CollapsibleSection } from '../CollapsibleSection'
@@ -26,6 +27,7 @@ import {
 import { SearchInput } from '../SearchInput'
 
 import { CollapsibleSensorItem } from './CollapsibleSensorItem'
+import { SensorInput } from './SensorInput'
 import { SensorsSectionSkeleton } from './SensorsSectionSkeleton'
 import { resolveLucideIcon } from './sensorUtils'
 
@@ -37,7 +39,7 @@ type SensorAction = 'view' | 'edit' | 'delete'
 /** Stable key used in state for sensors with no tags — locale-independent */
 export const UNTAGGED_TAG = '__untagged__'
 
-export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
+export function SensorsSection() {
   // Translation
   const t = useTranslations('SensorsSection')
 
@@ -51,7 +53,10 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
   const {state: buildingsState} = React.useContext(BuildingsContext)
   const buildingId = buildingsState?.buildings?.building?.id || -1
 
+  const { state: appConfigState, dispatch: appConfigDispatch } = React.useContext(AppConfigContext)
+
   const [sensorToDelete, setSensorToDelete] = React.useState<number | null>(null)
+  const [editSensorId, setEditSensorId] = React.useState<number | null>(null)
   const [searchQuery, setSearchQuery] = React.useState('')
   const [groupBy, setGroupBy] = React.useState<'type' | 'tag'>('type')
   const { deleteSensor } = useSensor(sensorToDelete)
@@ -83,7 +88,7 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
         // ⚠️ View sensor action not implemented
         break
       case 'edit':
-        // ⚠️ Edit sensor action not implemented
+        setEditSensorId(id)
         break
       case 'delete':
             toast.success(t('sensorDeleted'))
@@ -103,6 +108,23 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
   }, [sensorToDelete, deleteSensor])
 
   const currentSensors: Sensor[] = allSensors.filter((sensor) => currentViewer === sensor.viewer && (!sensor.buildingId || sensor.buildingId === buildingId))
+
+  // Default the display zone from the building's (else a sensor's) longitude, until the user overrides.
+  // Depends on primitive longitudes (not the re-created currentSensors array) so it only runs on real change.
+  const buildingLongitude = buildingsState?.buildings?.building?.buildingLongitude ?? null
+  const firstSensorLongitude = currentSensors.find(s => typeof s.longitude === 'number')?.longitude ?? null
+  const { displayTimeZone, displayTimeZoneUserSet } = appConfigState.appConfig
+  React.useEffect(() => {
+    if (displayTimeZoneUserSet) return
+    // BIM sensors live in a building (use its longitude); map sensors carry their own.
+    const candidates = currentViewer === 'bim'
+      ? [buildingLongitude, firstSensorLongitude]
+      : [firstSensorLongitude, buildingLongitude]
+    const zone = resolveDefaultTimeZone(candidates)
+    if (zone !== displayTimeZone) {
+      appConfigDispatch({ type: 'SET_DEFAULT_TIME_ZONE', payload: { displayTimeZone: zone } })
+    }
+  }, [currentViewer, buildingLongitude, firstSensorLongitude, displayTimeZone, displayTimeZoneUserSet, appConfigDispatch])
 
   // Filter sensors based on search query
   const filteredSensors = React.useMemo(() => {
@@ -262,7 +284,6 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
                     sensorType={type}
                     onAction={handleSensorAction}
                     isVisible={isTypeVisible}
-                    minioBaseUrl={minioBaseUrl}
                     onMouseEnter={() => menusDispatch({ type: 'SET_CURRENT_SENSOR_ID', payload: { currentSensorId: sensor.id } })}
                     onMouseLeave={() => menusDispatch({ type: 'SET_CURRENT_SENSOR_ID', payload: { currentSensorId: null } })}
                   />
@@ -298,7 +319,6 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
                     sensorType={type}
                     onAction={handleSensorAction}
                     isVisible={isTagVisible}
-                    minioBaseUrl={minioBaseUrl}
                     onMouseEnter={() => menusDispatch({ type: 'SET_CURRENT_SENSOR_ID', payload: { currentSensorId: sensor.id } })}
                     onMouseLeave={() => menusDispatch({ type: 'SET_CURRENT_SENSOR_ID', payload: { currentSensorId: null } })}
                   />
@@ -308,6 +328,17 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
           </CollapsibleSection>
           )
         })
+      )}
+
+      {editSensorId != null && allSensors.some(s => s.id === editSensorId) && (
+        <SensorInput
+          viewer={currentViewer}
+          layout="dialog"
+          isOpen={editSensorId != null}
+          editSensor={allSensors.find(s => s.id === editSensorId)}
+          onCancel={() => setEditSensorId(null)}
+          onSaved={() => setEditSensorId(null)}
+        />
       )}
     </div>
   )

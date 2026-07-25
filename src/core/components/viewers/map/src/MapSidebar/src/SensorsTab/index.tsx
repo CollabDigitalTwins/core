@@ -14,10 +14,10 @@ export interface FileItem {
   visible: boolean
 }
 
-export function SensorsTab({ minioBaseUrl }: { minioBaseUrl?: string }) {
+export function SensorsTab() {
   return (
     <div className="flex-1 flex flex-col space-y-6 py-4 overflow-hidden">
-      <SensorsSection minioBaseUrl={minioBaseUrl} />
+      <SensorsSection />
     </div>
   )
 }

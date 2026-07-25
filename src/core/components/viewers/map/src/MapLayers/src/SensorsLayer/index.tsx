@@ -17,6 +17,7 @@ import { AppConfigContext, MapContext, MenusContext } from '../../../../../../..
 import { ViewerNames, type Sensor as ISensor} from '../../../../../../../types/dbTypes'
 import Sensor from '../../../../../../ui/Sensors/Sensor'
 import { SensorDetailDialog } from '../../../../../../ui/Sensors/SensorDetailDialog'
+import { SensorInput } from '../../../../../../ui/Sensors/SensorInput'
 import { UNTAGGED_TAG } from '../../../../../../ui/Sensors/SensorsSection'
 import { extractCoordinatesFromFeature } from '../../../../utils/extractCoordinates'
 import { MapLayerClickPriority } from '../../../../utils/MapEventManager/MapClickManager'
@@ -89,6 +90,7 @@ export const SensorLayers = () => {
   const { state: appConfigState } = React.useContext(AppConfigContext)
   const timeZone = appConfigState.appConfig.displayTimeZone
   const [detailSensor, setDetailSensor] = React.useState<ISensor | null>(null)
+  const [editSensor, setEditSensor] = React.useState<ISensor | null>(null)
 
   const eligibleSensors: Array<ISensor & { authorName: string } & { sensorType: SensorType }> = sensors
     .filter((sensor) => sensor.viewer === ViewerNames.map)
@@ -293,6 +295,7 @@ export const SensorLayers = () => {
           onRemove={user.id === String(popupInfo.authorId) ? handleRemoveSensor : null}
           onClose={() => setPopUpInfo(null)}
           onExpand={() => { if (liveSensor) setDetailSensor(liveSensor) }}
+          onEdit={user.id === String(popupInfo.authorId) && liveSensor ? () => setEditSensor(liveSensor) : undefined}
           showActions
           timeZone={timeZone}
           size="sm"
@@ -356,6 +359,16 @@ export const SensorLayers = () => {
           onOpenChange={(o) => !o && setDetailSensor(null)}
           sensor={detailSensor}
           sensorType={sensorTypes.find(t => t.id === detailSensor.typeId)}
+        />
+      )}
+      {editSensor && (
+        <SensorInput
+          viewer={ViewerNames.map}
+          layout="dialog"
+          isOpen={!!editSensor}
+          editSensor={editSensor ?? undefined}
+          onCancel={() => setEditSensor(null)}
+          onSaved={() => setEditSensor(null)}
         />
       )}
   {(typesVisible.length > 0 || tagsVisible.length > 0) &&

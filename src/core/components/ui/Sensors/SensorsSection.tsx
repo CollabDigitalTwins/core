@@ -27,6 +27,7 @@ import {
 import { SearchInput } from '../SearchInput'
 
 import { CollapsibleSensorItem } from './CollapsibleSensorItem'
+import { SensorInput } from './SensorInput'
 import { SensorsSectionSkeleton } from './SensorsSectionSkeleton'
 import { resolveLucideIcon } from './sensorUtils'
 
@@ -55,6 +56,7 @@ export function SensorsSection() {
   const { state: appConfigState, dispatch: appConfigDispatch } = React.useContext(AppConfigContext)
 
   const [sensorToDelete, setSensorToDelete] = React.useState<number | null>(null)
+  const [editSensorId, setEditSensorId] = React.useState<number | null>(null)
   const [searchQuery, setSearchQuery] = React.useState('')
   const [groupBy, setGroupBy] = React.useState<'type' | 'tag'>('type')
   const { deleteSensor } = useSensor(sensorToDelete)
@@ -86,7 +88,7 @@ export function SensorsSection() {
         // ⚠️ View sensor action not implemented
         break
       case 'edit':
-        // ⚠️ Edit sensor action not implemented
+        setEditSensorId(id)
         break
       case 'delete':
             toast.success(t('sensorDeleted'))
@@ -326,6 +328,17 @@ export function SensorsSection() {
           </CollapsibleSection>
           )
         })
+      )}
+
+      {editSensorId != null && allSensors.some(s => s.id === editSensorId) && (
+        <SensorInput
+          viewer={currentViewer}
+          layout="dialog"
+          isOpen={editSensorId != null}
+          editSensor={allSensors.find(s => s.id === editSensorId)}
+          onCancel={() => setEditSensorId(null)}
+          onSaved={() => setEditSensorId(null)}
+        />
       )}
     </div>
   )

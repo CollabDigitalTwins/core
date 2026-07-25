@@ -585,23 +585,34 @@ export function SensorInput({
             />
           </div>
 
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  onClick={() => onPlaceSensor(index)}
-                  disabled={!sensor.name.trim() || !sensor.data.trim()}
-                  className="w-full"
-                >
-                  {t('placeSensor')}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{placeSensorTooltip}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {editSensor ? (
+            <Button
+              type="button"
+              onClick={onSaveEdit}
+              disabled={!sensor.name.trim() || !sensor.data.trim()}
+              className="w-full"
+            >
+              {tf('save', 'Save')}
+            </Button>
+          ) : (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    onClick={() => onPlaceSensor(index)}
+                    disabled={!sensor.name.trim() || !sensor.data.trim()}
+                    className="w-full"
+                  >
+                    {t('placeSensor')}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{placeSensorTooltip}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
       ))}
     </div>

@@ -31,12 +31,19 @@ interface SensorTagsSectionProps {
   onAdd?: (tag: string) => Promise<void>
   onDelete?: (tag: string) => Promise<void>
   translations?: SensorTagsTranslations
+  /** Increment to open the add-tag input from an external control (e.g. a card tools row). */
+  openAddSignal?: number
 }
 
-export function SensorTagsSection({ tags, variant = 'edit', onAdd, onDelete, translations }: SensorTagsSectionProps) {
+export function SensorTagsSection({ tags, variant = 'edit', onAdd, onDelete, translations, openAddSignal }: SensorTagsSectionProps) {
   const tr = { ...DEFAULT_TRANSLATIONS, ...translations }
   const [addingTag, setAddingTag] = React.useState(false)
   const [newTagValue, setNewTagValue] = React.useState('')
+
+  // An external tools-row "add tag" control bumps openAddSignal to reveal the input.
+  React.useEffect(() => {
+    if (openAddSignal && onAdd) setAddingTag(true)
+  }, [openAddSignal, onAdd])
 
   const handleAdd = async () => {
     const trimmed = newTagValue.trim()

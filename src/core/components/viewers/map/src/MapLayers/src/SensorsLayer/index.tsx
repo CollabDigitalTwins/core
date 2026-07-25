@@ -13,9 +13,11 @@ import { toast } from 'sonner'
 import { useSensor, useSensors } from '../../../../../../../hooks/sensors/sensors'
 import { useSensorTypes } from '../../../../../../../hooks/sensorTypes/sensorTypes'
 import { useUsers } from '../../../../../../../hooks/users/users'
-import { MapContext, MenusContext } from '../../../../../../../store'
+import { AppConfigContext, MapContext, MenusContext } from '../../../../../../../store'
 import { ViewerNames, type Sensor as ISensor} from '../../../../../../../types/dbTypes'
 import Sensor from '../../../../../../ui/Sensors/Sensor'
+import { SensorDetailDialog } from '../../../../../../ui/Sensors/SensorDetailDialog'
+import { SensorInput } from '../../../../../../ui/Sensors/SensorInput'
 import { UNTAGGED_TAG } from '../../../../../../ui/Sensors/SensorsSection'
 import { extractCoordinatesFromFeature } from '../../../../utils/extractCoordinates'
 import { MapLayerClickPriority } from '../../../../utils/MapEventManager/MapClickManager'
@@ -59,7 +61,7 @@ const SensorIconMarker = ({ feature, isHighlighted, onMouseEnter, onMouseLeave, 
   )
 }
 
-export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
+export const SensorLayers = () => {
     const [hoveredSensorId, setHoveredSensorId] = React.useState<number | null>(null)
   const clusterLayer = createClusterLayer('sensors')
   const clusterCountLayer = createClusterCountLayer('sensors')
@@ -84,6 +86,11 @@ export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
   const tagsVisible = visibleSensorTags?.[ViewerNames.map] || []
 
   const {sensorTypes} = useSensorTypes()
+
+  const { state: appConfigState } = React.useContext(AppConfigContext)
+  const timeZone = appConfigState.appConfig.displayTimeZone
+  const [detailSensor, setDetailSensor] = React.useState<ISensor | null>(null)
+  const [editSensor, setEditSensor] = React.useState<ISensor | null>(null)
 
   const eligibleSensors: Array<ISensor & { authorName: string } & { sensorType: SensorType }> = sensors
     .filter((sensor) => sensor.viewer === ViewerNames.map)
@@ -253,9 +260,7 @@ export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
     if (!popupInfo) return null
     const sensorType = sensorTypes.find(t => t.id === popupInfo.typeId)
     const liveSensor = sensors.find(s => s.id === popupInfo.id)
-    const dataUrl = popupInfo.url
-      ? `${minioBaseUrl ?? ''}/sensors/${popupInfo.url}`
-      : popupInfo.data || ''
+    const dataUrl = popupInfo.url || popupInfo.data || ''
 
     return (
       <Popup
@@ -263,6 +268,7 @@ export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
         longitude={popupInfo.longitude}
         latitude={popupInfo.latitude}
         closeOnClick={false}
+        closeButton={false}
         onClose={() => setPopUpInfo(null)}
         anchor="bottom"
         style={{ height: '50px', border: 'none', boxShadow: 'none' }}
@@ -288,6 +294,10 @@ export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
           createdAt={popupInfo.createdAt}
           onRemove={user.id === String(popupInfo.authorId) ? handleRemoveSensor : null}
           onClose={() => setPopUpInfo(null)}
+          onExpand={() => { if (liveSensor) setDetailSensor(liveSensor) }}
+          onEdit={user.id === String(popupInfo.authorId) && liveSensor ? () => setEditSensor(liveSensor) : undefined}
+          showActions
+          timeZone={timeZone}
           size="sm"
         />
         {/* inline styles to override MapLibre's Pop up CSS */}
@@ -343,6 +353,24 @@ export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
 
   return (
     <>
+      {detailSensor && (
+        <SensorDetailDialog
+          open={!!detailSensor}
+          onOpenChange={(o) => !o && setDetailSensor(null)}
+          sensor={detailSensor}
+          sensorType={sensorTypes.find(t => t.id === detailSensor.typeId)}
+        />
+      )}
+      {editSensor && (
+        <SensorInput
+          viewer={ViewerNames.map}
+          layout="dialog"
+          isOpen={!!editSensor}
+          editSensor={editSensor ?? undefined}
+          onCancel={() => setEditSensor(null)}
+          onSaved={() => setEditSensor(null)}
+        />
+      )}
   {(typesVisible.length > 0 || tagsVisible.length > 0) &&
     <Source
       id="sensors"

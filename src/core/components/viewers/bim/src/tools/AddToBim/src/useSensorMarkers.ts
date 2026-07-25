@@ -3,24 +3,31 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import * as React from "react"
 
 import { useCoreHooks } from "../../../../../../../hooks/provider"
 import { useSensors, useSensor } from "../../../../../../../hooks/sensors/sensors"
 import { useSensorTypes } from "../../../../../../../hooks/sensorTypes/sensorTypes"
 import { useUsers } from "../../../../../../../hooks/users/users"
-import { MenusContext } from "../../../../../../../store"
-import { ViewerNames } from "../../../../../../../types/dbTypes"
+import { AppConfigContext, MenusContext } from "../../../../../../../store"
+import { ViewerNames, type Sensor } from "../../../../../../../types/dbTypes"
 import { UNTAGGED_TAG } from "../../../../../../ui/Sensors/SensorsSection"
 
 import BimSensor from "./BimSensor"
 import { renderCSS2DMarkers, type MarkerRef } from "./renderCSS2DMarkers"
-//import { useAppConfigContext } from "../../../../../../../store/AppConfig/context"
 
-export function useSensorMarkers(world: any, buildingId: number, minioBaseUrl?: string) {
+export function useSensorMarkers(world: any, buildingId: number) {
   const { state: menusState } = React.useContext(MenusContext)
   const { currentSensorId, visibleSensorTypes, visibleSensorTags } = menusState.menus
-  //const { state: appConfigState } = useAppConfigContext()
+  const { state: appConfigState } = React.useContext(AppConfigContext)
+  const timeZone = appConfigState.appConfig.displayTimeZone
+  const sessionUser = useSession().data?.user
+  const tr = useTranslations('SensorsSection')
+  const actionLabels = { expand: tr('expandSensor'), edit: tr('editSensor'), delete: tr('deleteSensor') }
+  const [detailSensor, setDetailSensor] = React.useState<Sensor | null>(null)
+  const [editSensor, setEditSensor] = React.useState<Sensor | null>(null)
 
   const registry = React.useRef<Map<string, MarkerRef>>(new Map())
 
@@ -123,26 +130,40 @@ export function useSensorMarkers(world: any, buildingId: number, minioBaseUrl?: 
         sensorName: sensor.name,
         sensorType: sensorTypes.find(t => t.id === sensor.typeId),
         tags: sensor.tags,
-        dataUrl: sensor.url?.startsWith("http")
-          ? sensor.url
-          : minioBaseUrl
-            ? `${minioBaseUrl}/sensors/${sensor.url}`
-            : "",
+        dataUrl: sensor.url ?? "",
         dataFormat: sensor.dataFormat,
         updateFrequency: sensor.updateFrequency,
         buildingId: sensor.buildingId,
         timestamp: new Date(sensor.createdAt),
         highlight: currentSensorId === sensor.id,
+        timeZone,
+        showActions: true,
+        onExpand: () => setDetailSensor(sensor as unknown as Sensor),
+        onEdit: () => setEditSensor(sensor as unknown as Sensor),
+        actionLabels,
+        canEdit: sessionUser?.id === String(sensor.authorId),
+        canDelete: sessionUser?.id === String(sensor.authorId),
       }),
       sphereColor: "#10b981",
       isVisible: true,
       onRemove: handleRemoveSensor,
     })
-  }, [world, sensors, pendingSensors, handleRemoveSensor, visibleSensorTypes, visibleSensorTags, buildingId, currentSensorId, sensorTypes, coreHooks])
+  }, [world, sensors, pendingSensors, handleRemoveSensor, visibleSensorTypes, visibleSensorTags, buildingId, currentSensorId, sensorTypes, coreHooks, timeZone, sessionUser?.id])
 
   const sensorCount = sensors.filter(
     s => s.viewer === ViewerNames.bim && (!buildingId || buildingId === -1 || s.buildingId === buildingId)
   ).length
 
-  return { addPendingSensor, removePendingSensor, sensorCount }
+  const detailSensorType = detailSensor ? sensorTypes.find(t => t.id === detailSensor.typeId) : undefined
+
+  return {
+    addPendingSensor,
+    removePendingSensor,
+    sensorCount,
+    detailSensor,
+    detailSensorType,
+    closeSensorDetail: () => setDetailSensor(null),
+    editSensor,
+    closeSensorEdit: () => setEditSensor(null),
+  }
 }

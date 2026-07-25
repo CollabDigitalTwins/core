@@ -10,6 +10,7 @@ import Sensor from '../../../../../../ui/Sensors/Sensor'
 import { markerStyle, markerStyleHighlight } from './markerUtils'
 
 import type { SensorDataFormat, SensorType } from '../../../../../../../types/dbTypes';
+import type { CommentActionLabels } from '../../../../../../ui/Comments/CommentActionButtons';
 import type * as THREE from 'three'
 
 interface SensorProps {
@@ -23,11 +24,17 @@ interface SensorProps {
   targetPoint: THREE.Vector3
   onRemove?: () => void
   onEdit?: () => void
+  onExpand?: () => void
   onClose: () => void
   buildingId?: number
   timestamp: Date
   sphere: THREE.Object3D
   highlight?: boolean
+  timeZone?: string
+  showActions?: boolean
+  canEdit?: boolean
+  canDelete?: boolean
+  actionLabels?: CommentActionLabels
 }
 
 export default function BimSensor({
@@ -39,11 +46,16 @@ export default function BimSensor({
   updateFrequency,
   onRemove,
   onEdit,
+  onExpand,
   onClose,
   buildingId,
   timestamp,
-  sphere,
   highlight = false,
+  timeZone,
+  showActions = false,
+  canEdit = true,
+  canDelete = true,
+  actionLabels,
 }: SensorProps): React.ReactElement {
   return (
     <div
@@ -60,11 +72,18 @@ export default function BimSensor({
         updateFrequency={updateFrequency}
         createdAt={timestamp}
         onRemove={onRemove}
+        onEdit={onEdit}
+        onExpand={onExpand}
         onClose={onClose}
+        showActions={showActions}
+        canEdit={canEdit}
+        canDelete={canDelete}
+        actionLabels={actionLabels}
         enableCollapse
         defaultCollapsed
         size="sm"
         highlight={highlight}
+        timeZone={timeZone}
       />
     </div>
   )

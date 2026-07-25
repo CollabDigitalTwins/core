@@ -41,7 +41,7 @@ export function BimSidebar({ minioBaseUrl, organization }: { minioBaseUrl?: stri
       {selectedTab === 'file' && <FileTab />}
       {selectedTab === 'layers' && <LayersTab modelId={modelId} />}
       {selectedTab === 'communication' && <CommunicationTab />}
-      {selectedTab === 'sensors' && <SensorsTab minioBaseUrl={minioBaseUrl} />}
+      {selectedTab === 'sensors' && <SensorsTab />}
       {selectedTab === 'settings' && <SettingsTab />}
     </InfoSidebarContainer>
   )

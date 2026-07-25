@@ -116,6 +116,7 @@ export function useSensorMarkers(world: any, buildingId: number) {
         createdAt: new Date().toISOString(),
         buildingId,
         tags: [],
+        authorId: -1,
         isPending: true,
       })),
     ]

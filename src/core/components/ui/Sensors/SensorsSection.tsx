@@ -30,8 +30,13 @@ import { CollapsibleSensorItem } from './CollapsibleSensorItem'
 import { SensorInput } from './SensorInput'
 import { SensorsSectionSkeleton } from './SensorsSectionSkeleton'
 import { resolveLucideIcon } from './sensorUtils'
+import { valueColoursBySensor } from './sensorValueColours'
+import { useSensorSeriesMulti } from './useSensorSeriesMulti'
 
 import type { Sensor } from '../../../types/dbTypes';
+
+/** Sidebar readings: compact, at most one decimal, so a row stays on one line. */
+const readingNumber = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 })
 
 
 type SensorAction = 'view' | 'edit' | 'delete'
@@ -45,7 +50,7 @@ export function SensorsSection() {
 
   const { dispatch: toolsDispatch } = React.useContext(ToolsContext)
   const { state: menusState, dispatch: menusDispatch } = React.useContext(MenusContext)
-  const { currentViewer, visibleSensorTypes, visibleSensorTags } = menusState.menus
+  const { currentViewer, visibleSensorTypes, visibleSensorTags, focusedSensorId } = menusState.menus
 
   const { sensors: allSensors }: { sensors: Sensor[] } = useSensors()
   const { sensorTypes, isLoading } = useSensorTypes()
@@ -108,6 +113,22 @@ export function SensorsSection() {
   }, [sensorToDelete, deleteSensor])
 
   const currentSensors: Sensor[] = allSensors.filter((sensor) => currentViewer === sensor.viewer && (!sensor.buildingId || sensor.buildingId === buildingId))
+
+  // Readings for every listed sensor, so each row can be ringed by its current value. This is the
+  // only place that polls across types; the viewers poll the focused type alone. Bounded by
+  // useSensorSeriesMulti's concurrency cap and only active while this panel is mounted.
+  const { seriesById } = useSensorSeriesMulti(currentSensors, { enabled: currentSensors.length > 0 })
+  const readings = React.useMemo(
+    () => valueColoursBySensor(currentSensors, sensorTypes, seriesById),
+    [seriesById, sensorTypes, currentSensors.map(s => s.id).join(',')],
+  )
+  const readingText = (sensorId: number): string | undefined => {
+    const reading = readings.get(sensorId)
+    if (!reading) return undefined
+    const unit = seriesById.get(sensorId)?.unit
+    const labels = seriesById.get(sensorId)?.valueLabels
+    return labels?.[reading.value] ?? `${readingNumber.format(reading.value)}${unit ? ` ${unit}` : ''}`
+  }
 
   // Default the display zone from the building's (else a sensor's) longitude, until the user overrides.
   // Depends on primitive longitudes (not the re-created currentSensors array) so it only runs on real change.
@@ -286,6 +307,10 @@ export function SensorsSection() {
                     isVisible={isTypeVisible}
                     onMouseEnter={() => menusDispatch({ type: 'SET_CURRENT_SENSOR_ID', payload: { currentSensorId: sensor.id } })}
                     onMouseLeave={() => menusDispatch({ type: 'SET_CURRENT_SENSOR_ID', payload: { currentSensorId: null } })}
+                    onSelect={() => menusDispatch({ type: 'SET_FOCUSED_SENSOR_ID', payload: { sensorId: sensor.id } })}
+                    isFocused={focusedSensorId === sensor.id}
+                    valueColour={readings.get(sensor.id)?.colour}
+                    valueText={readingText(sensor.id)}
                   />
                 ))}
               </div>
@@ -321,6 +346,10 @@ export function SensorsSection() {
                     isVisible={isTagVisible}
                     onMouseEnter={() => menusDispatch({ type: 'SET_CURRENT_SENSOR_ID', payload: { currentSensorId: sensor.id } })}
                     onMouseLeave={() => menusDispatch({ type: 'SET_CURRENT_SENSOR_ID', payload: { currentSensorId: null } })}
+                    onSelect={() => menusDispatch({ type: 'SET_FOCUSED_SENSOR_ID', payload: { sensorId: sensor.id } })}
+                    isFocused={focusedSensorId === sensor.id}
+                    valueColour={readings.get(sensor.id)?.colour}
+                    valueText={readingText(sensor.id)}
                   />
                 )
               })}

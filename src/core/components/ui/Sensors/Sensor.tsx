@@ -6,6 +6,7 @@
 import * as LR from 'lucide-react'
 import * as React from 'react'
 
+import { sensorRingShadow } from '../../../utils/markerUtils'
 import { formatTimestamp, detectTimeZone } from '../../../utils/timeUtils'
 import { Button } from '../Button'
 import { Card } from '../Card'
@@ -45,8 +46,12 @@ export type SensorProps = {
   defaultCollapsed?: boolean
   size?: 'sm' | 'md' | 'lg'
   highlight?: boolean
-  /** Double-clicked/zoomed sensor: reserved for the focus ring, mirrors Comment's `focused`. */
+  /** Click-focused sensor. Widens the ring, since ring colour carries the current value. */
   focused?: boolean
+  /** Colour for the current value, from `colourForValue`. Absent when the type has no ramp. */
+  haloColour?: string
+  /** Pressed the marker: focuses the sensor so the legend and sibling halos follow it. */
+  onSelect?: () => void
   /** Render the close/edit/delete action row (used by the in-viewer BIM card). */
   showActions?: boolean
   canEdit?: boolean
@@ -70,6 +75,8 @@ export default function Sensor({
   size = 'md',
   highlight = false,
   focused = false,
+  haloColour,
+  onSelect,
   showActions = false,
   canEdit = true,
   canDelete = true,
@@ -145,6 +152,10 @@ export default function Sensor({
   const currentSize = sizeStyles[size]
 
   const handlePointerDown = (e: React.PointerEvent) => {
+    // Focus on every press, collapsed or not, so the legend and sibling halos follow the sensor
+    // the user just reached for. Runs before the collapse guard: a non-collapsible card
+    // (the map popup) still needs to focus.
+    onSelect?.()
     if (!enableCollapse) return
     e.stopPropagation()
 
@@ -161,7 +172,8 @@ export default function Sensor({
   if (enableCollapse && isCollapsed) {
     return (
       <div
-        className={`${currentSize.collapsedIconSize} rounded-full shadow-md flex items-center justify-center flex-shrink-0 bg-primary pointer-events-auto`}
+        className={`${currentSize.collapsedIconSize} rounded-full shadow-md flex items-center justify-center flex-shrink-0 bg-primary pointer-events-auto transition-[box-shadow] duration-200`}
+        style={{ boxShadow: sensorRingShadow({ haloColour, highlight, focused }) }}
         onPointerDown={handlePointerDown}
         onDoubleClick={(e) => {
           e.stopPropagation()
@@ -177,6 +189,11 @@ export default function Sensor({
     <div
       className="relative inline-block group pointer-events-auto"
       title={enableCollapse ? 'Double click to collapse' : undefined}
+      style={{
+        boxShadow: focused ? sensorRingShadow({ haloColour, focused }) : undefined,
+        borderRadius: focused ? 12 : undefined,
+        zIndex: focused ? 30 : highlight ? 20 : undefined,
+      }}
       onPointerDown={handlePointerDown}
       onDoubleClick={(e) => {
         e.stopPropagation()

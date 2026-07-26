@@ -438,6 +438,11 @@
   "DatasetManagerMenu": {
     "appliedLayer": "Capa aplicada"
   },
+  "MapLegend": {
+    "title": "Leyenda",
+    "titlePlural": "Leyendas",
+    "feedUnavailable": "Fuente no disponible"
+  },
   "Datasets": {
     "failedFetchError": "Error al obtener conjuntos de datos.",
     "dialogTitle": "Conjuntos de datos",
@@ -1875,5 +1880,43 @@
     "uploadSuccess": "{count, plural, one {# archivo subido con éxito} other {# archivos subidos con éxito}}",
     "uploadError": "Error al subir el archivo:",
     "unknownError": "Ocurrió un error desconocido"
+  },
+  "SensorLegend": {
+    "noReading": "Sin lectura todavía"
+  },
+  "SensorDetail": {
+    "value": "Valor",
+    "metadata": "Metadatos",
+    "noMetadata": "No hay metadatos disponibles.",
+    "overTime": "A lo largo del tiempo",
+    "currentValues": "Valores actuales",
+    "loading": "Cargando datos...",
+    "untagged": "Sin etiqueta",
+    "moreSeries": "{count} más",
+    "range": {
+      "all": "Todo",
+      "day": "Último día",
+      "hour": "Última hora",
+      "custom": "Personalizado"
+    },
+    "scope": {
+      "sensor": "Este sensor",
+      "type": "Todo el tipo",
+      "tag": "Por etiqueta"
+    },
+    "datastream": "Flujo de datos",
+    "description": "Descripción",
+    "observationType": "Tipo de observación",
+    "observedProperty": "Propiedad observada",
+    "propertyDefinition": "Definición de la propiedad",
+    "unit": "Unidad",
+    "unitDefinition": "Definición de la unidad",
+    "phenomenonTime": "Tiempo del fenómeno",
+    "observations": "Observaciones",
+    "generator": "Generador",
+    "seed": "Semilla",
+    "frequency": "Frecuencia (ms)",
+    "sensorMetadata": "Metadatos del sensor",
+    "selfLink": "Enlace propio"
   }
 }

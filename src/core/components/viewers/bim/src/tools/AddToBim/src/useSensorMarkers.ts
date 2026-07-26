@@ -14,13 +14,15 @@ import { useUsers } from "../../../../../../../hooks/users/users"
 import { AppConfigContext, MenusContext } from "../../../../../../../store"
 import { ViewerNames, type Sensor } from "../../../../../../../types/dbTypes"
 import { UNTAGGED_TAG } from "../../../../../../ui/Sensors/SensorsSection"
+import { readingsKey, valueColoursBySensor } from "../../../../../../ui/Sensors/sensorValueColours"
+import { useSensorSeriesMulti } from "../../../../../../ui/Sensors/useSensorSeriesMulti"
 
 import BimSensor from "./BimSensor"
 import { renderCSS2DMarkers, type MarkerRef } from "./renderCSS2DMarkers"
 
 export function useSensorMarkers(world: any, buildingId: number) {
-  const { state: menusState } = React.useContext(MenusContext)
-  const { currentSensorId, visibleSensorTypes, visibleSensorTags } = menusState.menus
+  const { state: menusState, dispatch: menusDispatch } = React.useContext(MenusContext)
+  const { currentSensorId, focusedSensorId, visibleSensorTypes, visibleSensorTags } = menusState.menus
   const { state: appConfigState } = React.useContext(AppConfigContext)
   const timeZone = appConfigState.appConfig.displayTimeZone
   const sessionUser = useSession().data?.user
@@ -61,6 +63,36 @@ export function useSensorMarkers(world: any, buildingId: number) {
   // Stable ref so the render effect reads current sensors without re-running on every change
   const eligibleSensorsRef = React.useRef(eligibleSensors)
   eligibleSensorsRef.current = eligibleSensors
+
+  // Every sensor sharing the focused sensor's type gets a halo coloured by its own current
+  // value, so the whole set can be read against the legend at a glance. Only that type is
+  // polled: haloing all types would fan out a request per sensor in the building.
+  const focusedSensor = focusedSensorId == null
+    ? undefined
+    : eligibleSensors.find(s => s.id === focusedSensorId)
+  const focusedTypeId = focusedSensor?.typeId ?? null
+
+  const haloSensors = focusedTypeId == null
+    ? []
+    : eligibleSensors.filter(s => s.typeId === focusedTypeId)
+  // A fresh array each render is fine: the hook keys on the sensors' id+url string.
+  const { seriesById } = useSensorSeriesMulti(haloSensors, { enabled: haloSensors.length > 0 })
+
+  const haloIdsKey = haloSensors.map(s => s.id).join(',')
+  const readings = React.useMemo(
+    () => valueColoursBySensor(haloSensors, sensorTypes, seriesById),
+    [seriesById, sensorTypes, haloIdsKey],
+  )
+
+  // Colour strings, not map identity, decide whether markers need re-rendering: a poll that
+  // returns the same reading must not re-render every marker.
+  const haloKey = readingsKey(readings)
+  const readingsRef = React.useRef(readings)
+  readingsRef.current = readings
+
+  const focusSensor = React.useCallback((sensorId: number) => {
+    menusDispatch({ type: 'SET_FOCUSED_SENSOR_ID', payload: { sensorId } })
+  }, [menusDispatch])
 
   React.useEffect(() => {
     if (sensorToDelete !== null) {
@@ -137,8 +169,11 @@ export function useSensorMarkers(world: any, buildingId: number) {
         buildingId: sensor.buildingId,
         timestamp: new Date(sensor.createdAt),
         highlight: currentSensorId === sensor.id,
+        focused: focusedSensorId === sensor.id,
+        haloColour: readingsRef.current.get(sensor.id)?.colour,
         timeZone,
         showActions: true,
+        onSelect: () => focusSensor(sensor.id),
         onExpand: () => setDetailSensor(sensor as unknown as Sensor),
         onEdit: () => setEditSensor(sensor as unknown as Sensor),
         actionLabels,
@@ -149,7 +184,7 @@ export function useSensorMarkers(world: any, buildingId: number) {
       isVisible: true,
       onRemove: handleRemoveSensor,
     })
-  }, [world, sensors, pendingSensors, handleRemoveSensor, visibleSensorTypes, visibleSensorTags, buildingId, currentSensorId, sensorTypes, coreHooks, timeZone, sessionUser?.id])
+  }, [world, sensors, pendingSensors, handleRemoveSensor, visibleSensorTypes, visibleSensorTags, buildingId, currentSensorId, focusedSensorId, haloKey, focusSensor, sensorTypes, coreHooks, timeZone, sessionUser?.id])
 
   const sensorCount = sensors.filter(
     s => s.viewer === ViewerNames.bim && (!buildingId || buildingId === -1 || s.buildingId === buildingId)

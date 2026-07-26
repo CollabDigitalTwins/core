@@ -10,6 +10,7 @@ import Map, { NavigationControl } from 'react-map-gl/maplibre'
 
 
 import { MapContext } from '../../../store'
+import { SensorLegend } from '../../ui/Sensors/SensorLegend'
 import SettingsButton from '../../ui/SettingsButton'
 import { StatsOverlay } from '../../ui/stats'
 
@@ -216,6 +217,7 @@ export function MapViewer({ width = '100%', height = '100%', organization, mapti
                     empty slot adds no flex item / gap, but a mounted control stacks
                     above the legend + dataset-manager cards. */}
                 <div id="wms-time-slot" style={{ display: 'contents' }} />
+                <SensorLegend />
                 <MapLegendHost />
                 <DatasetManagerMenu />
               </div>

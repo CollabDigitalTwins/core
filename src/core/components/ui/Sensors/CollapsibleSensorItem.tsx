@@ -11,6 +11,7 @@ import * as React from 'react'
 import { useCoreHooks } from '../../../hooks/provider'
 import { useUser } from '../../../hooks/users/users'
 import { AppConfigContext } from '../../../store'
+import { sensorRingShadow } from '../../../utils/markerUtils'
 import { formatInZone } from '../../../utils/timeUtils'
 import { cn } from '../../../utils/utils'
 import { Avatar, AvatarFallback } from '../Avatar'
@@ -38,6 +39,14 @@ interface CollapsibleSensorItemProps {
   isVisible?: boolean
   onMouseEnter?: () => void
   onMouseLeave?: () => void
+  /** Clicked the row: focuses the sensor so the viewer legend and halos follow it. */
+  onSelect?: () => void
+  /** Marks the row as the focused sensor, matching the marker's focus ring. */
+  isFocused?: boolean
+  /** Ramp colour for the current reading, from `valueColoursBySensor`. */
+  valueColour?: string
+  /** The current reading, already formatted with its unit. Read out beside the name. */
+  valueText?: string
 }
 
 export function CollapsibleSensorItem({
@@ -48,6 +57,10 @@ export function CollapsibleSensorItem({
   isVisible = true,
   onMouseEnter,
   onMouseLeave,
+  onSelect,
+  isFocused = false,
+  valueColour,
+  valueText,
 }: CollapsibleSensorItemProps) {
   const t = useTranslations('SensorsSection')
   const [isExpanded, setIsExpanded] = React.useState(false)
@@ -107,10 +120,12 @@ export function CollapsibleSensorItem({
       className={cn(
         "border rounded-md overflow-hidden transition-opacity",
         indentClass,
-        !isVisible && "opacity-70"
+        !isVisible && "opacity-70",
+        isFocused && "ring-2 ring-primary"
       )}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
+      onClick={onSelect}
     >
       {/* Sensor Header */}
       <div className="flex items-start justify-between p-3 hover:bg-accent/50 transition-colors">
@@ -129,16 +144,23 @@ export function CollapsibleSensorItem({
             />
           </Button>
 
-          <div className={cn(
-            "h-8 w-8 mt-1 rounded-full bg-primary flex items-center justify-center flex-shrink-0",
-            !isVisible && "opacity-70 grayscale"
-          )}>
+          {/* Ringed in the reading's ramp colour, the same treatment the 3D and map markers get,
+              so a row and its marker read as the same thing. */}
+          <div
+            className={cn(
+              "h-8 w-8 mt-1 rounded-full bg-primary flex items-center justify-center flex-shrink-0 transition-[box-shadow] duration-200",
+              !isVisible && "opacity-70 grayscale"
+            )}
+            style={valueColour
+              ? { boxShadow: sensorRingShadow({ haloColour: valueColour, focused: isFocused }) }
+              : undefined}
+          >
             <SensorIcon className={cn("h-4 w-4 text-primary-foreground", !isVisible && "opacity-70")} />
           </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-                <span className={cn("text-sm font-medium", isVisible ? "text-foreground" : "text-muted-foreground")}>
+                <span className={cn("text-sm font-medium truncate", isVisible ? "text-foreground" : "text-muted-foreground")}>
                 {sensor.name}
               </span>
               {sensor.updatedAt !== sensor.createdAt && (
@@ -147,6 +169,10 @@ export function CollapsibleSensorItem({
                 </Badge>
               )}
             </div>
+            {/* The number carries the reading too: the ring colour is never the only channel. */}
+            {valueText && (
+              <span className="text-xs tabular-nums text-muted-foreground">{valueText}</span>
+            )}
           </div>
         </div>
     </div>

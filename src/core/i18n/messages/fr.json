@@ -438,6 +438,11 @@
   "DatasetManagerMenu": {
     "appliedLayer": "Couche appliquée"
   },
+  "MapLegend": {
+    "title": "Légende",
+    "titlePlural": "Légendes",
+    "feedUnavailable": "Flux indisponible"
+  },
   "Datasets": {
     "failedFetchError": "Échec de la récupération des ensembles de données.",
     "dialogTitle": "Ensembles de données",
@@ -1875,5 +1880,43 @@
     "uploadSuccess": "{count, plural, one {# fichier téléversé avec succès} other {# fichiers téléversés avec succès}}",
     "uploadError": "Erreur lors du téléversement du fichier :",
     "unknownError": "Erreur inconnue s'est produite"
+  },
+  "SensorLegend": {
+    "noReading": "Aucune mesure pour le moment"
+  },
+  "SensorDetail": {
+    "value": "Valeur",
+    "metadata": "Métadonnées",
+    "noMetadata": "Aucune métadonnée disponible.",
+    "overTime": "Dans le temps",
+    "currentValues": "Valeurs actuelles",
+    "loading": "Chargement des données...",
+    "untagged": "Sans étiquette",
+    "moreSeries": "{count} de plus",
+    "range": {
+      "all": "Tout",
+      "day": "Dernier jour",
+      "hour": "Dernière heure",
+      "custom": "Personnalisé"
+    },
+    "scope": {
+      "sensor": "Ce capteur",
+      "type": "Tout le type",
+      "tag": "Par étiquette"
+    },
+    "datastream": "Flux de données",
+    "description": "Description",
+    "observationType": "Type d'observation",
+    "observedProperty": "Propriété observée",
+    "propertyDefinition": "Définition de la propriété",
+    "unit": "Unité",
+    "unitDefinition": "Définition de l'unité",
+    "phenomenonTime": "Temps du phénomène",
+    "observations": "Observations",
+    "generator": "Générateur",
+    "seed": "Graine",
+    "frequency": "Fréquence (ms)",
+    "sensorMetadata": "Métadonnées du capteur",
+    "selfLink": "Lien propre"
   }
 }

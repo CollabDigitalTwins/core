@@ -5,7 +5,7 @@
 
 import * as LR from 'lucide-react'
 import * as React from 'react'
-import { Area, AreaChart, Brush, CartesianGrid, XAxis } from 'recharts'
+import { Area, AreaChart, Brush, CartesianGrid, XAxis, YAxis } from 'recharts'
 
 import { detectTimeZone, formatInZone, formatDuration } from '../../../utils/timeUtils'
 import {
@@ -22,9 +22,18 @@ import {
   type ChartConfig,
 } from '../chart'
 
+import {
+  gradientStopsForYDomain,
+  observedDomain,
+  resolveDomain,
+  type ColourDomain,
+} from './sensorColour'
 import { defaultPalette } from './sensorUtils'
 
 import type { SensorType } from '../../../types/dbTypes'
+
+/** Axis ticks: thousands-separated, at most one decimal, so the column stays narrow. */
+const tickNumber = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 })
 
 interface SensorChartProps {
   sensorData: { t: number; value: number }[]
@@ -89,7 +98,26 @@ export function SensorChart({
   }
 
   const currentSize = sizeClasses[size]
-  const gradientId = `gradient-${sensorName.replace(/\s+/g, '-').toLowerCase()}`
+  // Derived from useId, not the sensor name: two sensors can share a name, and a duplicate
+  // gradient id makes one chart silently adopt the other's colours.
+  const gradientId = `sensor-gradient-${React.useId().replace(/[^a-zA-Z0-9]/g, '')}`
+
+  const observed = observedDomain(sensorData)
+  const colourDomain = resolveDomain(sensorType, observed)
+
+  // The plot box spans the data's own range so variation stays visible, with a guard so a flat
+  // series still gets a box with height. This is also what the gradient is projected onto.
+  const yDomain: ColourDomain | null = !observed
+    ? null
+    : observed.max > observed.min
+      ? observed
+      : { min: observed.min - 1, max: observed.max + 1 }
+
+  // Value-truthful stops when the type has a colour domain; otherwise keep the original
+  // decorative top-to-bottom wash so an unconfigured type looks exactly as it did before.
+  const valueStops = colourDomain && yDomain
+    ? gradientStopsForYDomain({ min: finalMin, mid: finalMid, max: finalMax }, colourDomain, yDomain)
+    : null
 
   // All axis/tooltip time strings are formatted in the caller's chosen zone.
   const axisOpts: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }
@@ -117,17 +145,42 @@ export function SensorChart({
             <AreaChart
               accessibilityLayer
               data={sensorData}
-              margin={{ left: 12, right: 12, top: 10 }}
+              // The YAxis now supplies the left gutter, so no extra left margin.
+              margin={{ left: 0, right: 12, top: 10 }}
             >
               <defs>
                 <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={finalMax} stopOpacity={0.8} />
-                  <stop offset="50%" stopColor={finalMid} stopOpacity={0.5} />
-                  <stop offset="95%" stopColor={finalMin} stopOpacity={0.2} />
+                  {valueStops
+                    ? valueStops.map((stop, i) => (
+                        <stop
+                          key={`${stop.offset}-${i}`}
+                          offset={`${stop.offset * 100}%`}
+                          stopColor={stop.colour}
+                          stopOpacity={0.55}
+                        />
+                      ))
+                    : (
+                      <>
+                        <stop offset="5%" stopColor={finalMax} stopOpacity={0.8} />
+                        <stop offset="50%" stopColor={finalMid} stopOpacity={0.5} />
+                        <stop offset="95%" stopColor={finalMin} stopOpacity={0.2} />
+                      </>
+                    )}
                 </linearGradient>
               </defs>
 
-              <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.4} />
+              {/* Solid hairline: a dashed grid reads as a threshold or projection when it is
+                  just a grid. */}
+              <CartesianGrid vertical={false} opacity={0.4} />
+              <YAxis
+                domain={yDomain ? [yDomain.min, yDomain.max] : undefined}
+                tickLine={false}
+                axisLine={false}
+                width={44}
+                tickMargin={4}
+                tick={{ fontSize: 11 }}
+                tickFormatter={(value: number) => valueLabels?.[value] ?? tickNumber.format(value)}
+              />
               <XAxis
                 dataKey="t"
                 type="number"

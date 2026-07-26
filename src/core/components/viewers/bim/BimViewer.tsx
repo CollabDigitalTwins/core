@@ -10,6 +10,7 @@ import * as React from "react";
 import * as THREE from "three";
 
 import { ToolsContext, BimContext, MenusContext } from "../../../store";
+import { SensorLegend } from "../../ui/Sensors/SensorLegend";
 import { useBimCoordinateSystem } from "../useCoordinateSystem";
 
 import { BimLoadingState } from "./src/BimLoadingState";
@@ -271,6 +272,11 @@ export function BimViewer() {
                     background: "radial-gradient(circle, rgba(255, 255, 255, 1) 50%, rgba(220, 220, 220, 1) 100%)",
                 }}
             />
+            {/* Bottom-left stack, mirroring MapViewer: cards stack upward with flex so a new
+                overlay never needs a hand-tuned bottom offset. */}
+            <div className="absolute bottom-3 left-3 z-10 flex flex-col gap-2 pointer-events-none">
+                <SensorLegend />
+            </div>
             <PropertiesMenu />
         </div>
     );

@@ -438,6 +438,11 @@
   "DatasetManagerMenu": {
     "appliedLayer": "Applied Layer"
   },
+  "MapLegend": {
+    "title": "Legend",
+    "titlePlural": "Legends",
+    "feedUnavailable": "Feed unavailable"
+  },
   "Datasets": {
     "failedFetchError": "Failed to fetch datasets.",
     "dialogTitle": "Datasets",
@@ -1878,5 +1883,43 @@
     "uploadSuccess": "{count, plural, one {# file uploaded successfully} other {# files uploaded successfully}}",
     "uploadError": "Error uploading file:",
     "unknownError": "Unknown error occurred"
+  },
+  "SensorLegend": {
+    "noReading": "No reading yet"
+  },
+  "SensorDetail": {
+    "value": "Value",
+    "metadata": "Metadata",
+    "noMetadata": "No metadata available.",
+    "overTime": "Over time",
+    "currentValues": "Current values",
+    "loading": "Loading data...",
+    "untagged": "Untagged",
+    "moreSeries": "{count} more",
+    "range": {
+      "all": "All",
+      "day": "Last day",
+      "hour": "Last hour",
+      "custom": "Custom"
+    },
+    "scope": {
+      "sensor": "This sensor",
+      "type": "All of type",
+      "tag": "By tag"
+    },
+    "datastream": "Datastream",
+    "description": "Description",
+    "observationType": "Observation type",
+    "observedProperty": "Observed property",
+    "propertyDefinition": "Property definition",
+    "unit": "Unit",
+    "unitDefinition": "Unit definition",
+    "phenomenonTime": "Phenomenon time",
+    "observations": "Observations",
+    "generator": "Generator",
+    "seed": "Seed",
+    "frequency": "Frequency (ms)",
+    "sensorMetadata": "Sensor metadata",
+    "selfLink": "Self link"
   }
 }

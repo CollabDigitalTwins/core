@@ -10,6 +10,10 @@ import { MapLegendHost } from './MapLegendHost'
 import type { LegendRegistration } from '../../../../plugins/sdk/types'
 
 
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string) => key,
+}))
+
 const { mockRegistry } = vi.hoisted(() => ({ mockRegistry: { getAll: vi.fn() } }))
 vi.mock('../../../../plugins/host/provider', () => ({
   usePluginRegistry: () => mockRegistry,

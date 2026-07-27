@@ -40,9 +40,9 @@ export function createBuildingHooks(adapter: ApiAdapter) {
                 onSuccess: () => {
                     if (!id) return;
                     // Revalidate the same keys used above, not endpoints
-                    mutate(["building", id]);
-                    mutate(["buildings"]);
-                    mutate(["filesByBuilding", id, ""]); // Another hook for files-by-building
+                    void mutate(["building", id]);
+                    void mutate(["buildings"]);
+                    void mutate(["filesByBuilding", id, ""]); // Another hook for files-by-building
                 },
             }
         );
@@ -66,7 +66,7 @@ export function createBuildingHooks(adapter: ApiAdapter) {
             {
                 onSuccess: () => {
                     // Same idea: revalidate keys, not endpoints
-                    mutate(["buildings"]);
+                    void mutate(["buildings"]);
                 },
             }
         );

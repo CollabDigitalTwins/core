@@ -107,7 +107,7 @@ export function SensorsSection() {
   // Trigger deletion when sensorToDelete changes
   React.useEffect(() => {
     if (sensorToDelete !== null) {
-      deleteSensor()
+      void deleteSensor()
       setSensorToDelete(null)
     }
   }, [sensorToDelete, deleteSensor])

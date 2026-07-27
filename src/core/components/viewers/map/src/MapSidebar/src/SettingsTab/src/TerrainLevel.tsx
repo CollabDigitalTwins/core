@@ -114,7 +114,7 @@ export function TerrainLevel() {
     if (map.loaded()) {
       updateTerrain()
     } else {
-      map.once('load', updateTerrain)
+      void map.once('load', updateTerrain)
     }
   }, [map, terrainLevel, isCanadaOrg, maptilerKey])
 

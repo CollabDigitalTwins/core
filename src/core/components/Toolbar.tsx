@@ -7,7 +7,7 @@
 import dynamic from 'next/dynamic'
 import * as React from 'react'
 
-import { mapToolbarTools } from '../components/viewers/map/src/tools/mapTools'
+import { useMapToolbarTools } from '../components/viewers/map/src/tools/mapTools'
 import { ViewerNames } from '../types'
 
 import { ToolbarBody } from './ToolbarBody'
@@ -39,9 +39,26 @@ interface Props {
   geocoderUrl?: string
 }
 
+// Own component so the tools hook is called unconditionally on the map branch,
+// instead of inside Toolbar's viewer check (which would break hook ordering when
+// the user switches viewers).
+function MapToolbar({ minioBaseUrl, martinBaseUrl, organization, geocodeEarthApiKey, geocoderUrl }: Omit<Props, 'viewer'>) {
+  const tools = useMapToolbarTools({ minioBaseUrl, martinBaseUrl, organization, geocodeEarthApiKey, geocoderUrl })
+
+  return <ToolbarBody viewer="map" tools={tools} />
+}
+
 export function Toolbar({ viewer, minioBaseUrl, martinBaseUrl, organization, geocodeEarthApiKey, geocoderUrl }: Props) {
   if (viewer === ViewerNames.map) {
-    return <ToolbarBody viewer="map" tools={mapToolbarTools({ minioBaseUrl, martinBaseUrl, organization, geocodeEarthApiKey, geocoderUrl })} />
+    return (
+      <MapToolbar
+        minioBaseUrl={minioBaseUrl}
+        martinBaseUrl={martinBaseUrl}
+        organization={organization}
+        geocodeEarthApiKey={geocodeEarthApiKey}
+        geocoderUrl={geocoderUrl}
+      />
+    )
   }
   if (viewer === ViewerNames.bim) {
     return <BimToolbar minioBaseUrl={minioBaseUrl} />

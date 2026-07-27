@@ -99,7 +99,7 @@ export default function Geocoder({
       clearTimeout(debounceRef.current)
     }
 
-    debounceRef.current = setTimeout(async () => {
+    const fetchDebounced = async () => {
       if (!query || query.length < 3) {
         setSuggestions([])
         setBuildingResults([])
@@ -142,7 +142,9 @@ export default function Geocoder({
       finally {
         setLoading(false)
       }
-    }, 300) // Increased debounce time for better API rate limiting
+    }
+
+    debounceRef.current = setTimeout(() => { void fetchDebounced() }, 300) // Increased debounce time for better API rate limiting
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)

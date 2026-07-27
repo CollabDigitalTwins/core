@@ -16,6 +16,7 @@ import { useFile } from '../../../../hooks/files/files'
 import { useMenusContext } from '../../../../store'
 import { usePermissions } from '../../../../store'
 import { ViewerNames } from '../../../../types/'
+import { toDisplayString } from '../../../../utils/utils'
 import { convertISOStringtoDate } from '../utils/convertDate'
 
 import FilePreview from './FilePreview'
@@ -98,7 +99,8 @@ const { data: session } = useSession()
   }
 
   React.useEffect(() => {
-    if (attachedBuilding?.id != selectedFile.metadata.attachedFilesBuildingId || editingName !== selectedFile.metadata.name) setActiveChanges(true)
+    // Normalize both sides: no attachment reads as `undefined` here and `null` in metadata.
+    if ((attachedBuilding?.id ?? null) !== (selectedFile.metadata.attachedFilesBuildingId ?? null) || editingName !== selectedFile.metadata.name) setActiveChanges(true)
     else setActiveChanges(false)
   }, [attachedBuilding, editingName])
 
@@ -156,7 +158,8 @@ const { data: session } = useSession()
     if (!buildingAttachment || buildingAttachment.type !== 'building') return
 
     // Find the full building object
-    const matchedBuildings = buildings.filter(b => b.id == buildingAttachment.buildingId)
+    // buildingAttachment.buildingId is a string on the attachment type, b.id a number.
+    const matchedBuildings = buildings.filter(b => b.id === Number(buildingAttachment.buildingId))
     if (matchedBuildings.length === 0) {
       alert('No building found')
       return
@@ -307,7 +310,7 @@ const { data: session } = useSession()
                         </div>
                       )
                     : (
-                        String(filteredEntries[i][1])
+                        toDisplayString(filteredEntries[i][1])
                       ))
             }
           </DescriptionListItem>
@@ -383,7 +386,7 @@ const { data: session } = useSession()
                           </div>
                         )
                       : (
-                          String(filteredEntries[i + 1][1])
+                          toDisplayString(filteredEntries[i + 1][1])
                         ))
               }
             </DescriptionListItem>
@@ -402,7 +405,7 @@ const { data: session } = useSession()
 
     // Render the appropriate input component based on data type
     const renderInputComponent = (key: string, value: any) => {
-      if (key == 'name') {
+      if (key === 'name') {
         return (
           <Input
             type="text"

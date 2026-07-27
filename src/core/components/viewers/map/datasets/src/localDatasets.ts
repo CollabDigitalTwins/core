@@ -5,6 +5,7 @@ import { VectorTile } from '@mapbox/vector-tile'
 import Pbf from 'pbf'
 
 import { DatasetGroup, type OpenDataPortal } from '../../../../../types/dbTypes'
+import { toDisplayString } from '../../../../../utils/utils'
 import { layerColorByName } from '../../utils/stringToColour'
 import { formatName } from '../utils'
 
@@ -181,7 +182,7 @@ function parseOrganizationValue(value: unknown): number | undefined {
   if (value == null) return undefined
   if (typeof value === 'number' && Number.isFinite(value)) return value
 
-  const parsed = Number.parseInt(String(value), 10)
+  const parsed = Number.parseInt(toDisplayString(value), 10)
   return Number.isFinite(parsed) ? parsed : undefined
 }
 
@@ -452,7 +453,7 @@ export async function fetchLocalDatasets(
         console.warn(
           `Local dataset URL returned 404 (${apiUrl}); retrying as a Martin server base URL`,
         )
-        return fetchMartinServerDatasets({
+        return await fetchMartinServerDatasets({
           ...portal,
           apiUrl: trimmedApiUrl,
         })

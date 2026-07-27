@@ -19,9 +19,11 @@ export interface UseFileActionsProps {
   files: (DbFile & { isVisible?: boolean })[]
   setFiles: React.Dispatch<React.SetStateAction<(DbFile & { isVisible?: boolean })[]>>
   buildingId: number
-  handleDeleteFile: (file: DbFile) => void
+  // Deletion is awaited, visibility toggling is fire-and-forget; both accept
+  // async callbacks, which several viewers pass.
+  handleDeleteFile: (file: DbFile) => void | Promise<void>
   onDownload?: (file: DbFile) => void
-  onView?: (file: DbFile, newVisibility: boolean) => void
+  onView?: (file: DbFile, newVisibility: boolean) => void | Promise<void>
   onDelete?: (file: DbFile) => void
   onMove?: (file: DbFile) => void
   onGhost?: (file: DbFile, ghostState: boolean) => void
@@ -90,7 +92,7 @@ export function useFileActions({
       await Promise.resolve(handleDeleteFile(deleteTarget))
       setFiles(prev => updateItems(prev, deleteTarget, 'delete'))
       onDelete?.(deleteTarget)
-      if (buildingId) mutate(`/api/files/building/${buildingId}`)
+      if (buildingId) void mutate(`/api/files/building/${buildingId}`)
     }
     finally {
       setIsDeleting(false)
@@ -108,7 +110,7 @@ export function useFileActions({
       const newVisibility = file.isVisible === false
       setFiles(prev => updateItems(prev, file, action))
       // Call custom onView handler
-      onView?.(file, newVisibility)
+      void onView?.(file, newVisibility)
     }
     else if (action === 'move') {
         // Call custom handlers for move and place actions
@@ -143,6 +145,8 @@ export function useFileActions({
     await confirmDelete()
   }, [confirmDelete])
 
+  // Both stay awaitable (callers and tests await them); the consumers that hand
+  // them to void-returning props ignore the promise at the call site.
   return {
     handleAction,
     deleteDialog: {

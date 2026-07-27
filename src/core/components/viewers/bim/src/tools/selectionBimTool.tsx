@@ -65,30 +65,12 @@ export const SelectionBimTool: React.FC<SelectionToolProps> = ({ tool }) => {
     if (!bimComponents) return
 
     const { world } = bimComponents.get(CurrentWorld)
-    const hider = bimComponents.get(OBC.Hider)
     const fragments = bimComponents.get(OBC.FragmentsManager)
 
-
-
-    const bbox = bimComponents.get(OBC.BoundingBoxer)
     if (!(world && fragments )) return
 
-    switch (type) {
-      case 'bim-selection-show-all':
-
-        break
-      case 'bim-selection-invert':
-
-        break
-      case 'bim-selection-isolate':
-
-        break
-      case 'bim-selection-focus':
-
-        break
-      default:
-        break
-    }
+    // TODO: implement show-all / invert / isolate / focus (OBC.Hider +
+    // OBC.BoundingBoxer). The menu items stay disabled until then.
 
     if (!active) {
       setActive(true)
@@ -98,19 +80,19 @@ export const SelectionBimTool: React.FC<SelectionToolProps> = ({ tool }) => {
 
   return (
     <ToolbarSubmenu tool={tool}>
-      <DropdownMenuItem onClick={() => handleSelectionTypeChange('bim-selection-show-all')} disabled={true}>
+      <DropdownMenuItem onClick={() => { void handleSelectionTypeChange('bim-selection-show-all') }} disabled={true}>
         <LR.Eye />
         <span>{t('show')}</span>
       </DropdownMenuItem>
-      <DropdownMenuItem onClick={() => handleSelectionTypeChange('bim-selection-invert')} disabled={true}>
+      <DropdownMenuItem onClick={() => { void handleSelectionTypeChange('bim-selection-invert') }} disabled={true}>
         <LR.ArrowUpDown />
         <span>{t('invert')}</span>
       </DropdownMenuItem>
-      <DropdownMenuItem onClick={() => handleSelectionTypeChange('bim-selection-isolate')} disabled={true}>
+      <DropdownMenuItem onClick={() => { void handleSelectionTypeChange('bim-selection-isolate') }} disabled={true}>
         <LR.Funnel />
         <span>{t('isolate')}</span>
       </DropdownMenuItem>
-      <DropdownMenuItem onClick={() => handleSelectionTypeChange('bim-selection-focus')} disabled={true}>
+      <DropdownMenuItem onClick={() => { void handleSelectionTypeChange('bim-selection-focus') }} disabled={true}>
         <LR.Focus />
         <span>{t('focus')}</span>
       </DropdownMenuItem>

@@ -50,7 +50,7 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
   const { handleAddFile, uploadState } = useFileUploadWithProgress({
     acceptedFileTypes: '.ifc,.frag',
     onUploadSuccess: () => {
-      mutate(`/api/files`)
+      void mutate(`/api/files`)
     },
     onUploadError: (error) => {
       console.error('Error uploading model:', error)

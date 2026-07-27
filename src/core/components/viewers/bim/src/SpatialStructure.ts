@@ -91,7 +91,7 @@ export class SpatialStructure extends OBC.Component {
     }
 
     const existingPromise = this._loadingPromises.get(modelId)
-    if (existingPromise) {
+    if (existingPromise !== undefined) {
       return existingPromise
     }
 

@@ -126,7 +126,7 @@ export const FileLayers = () => {
       fileDispatch({ type: 'EDIT_FILE', payload: { file } })
     }
     else if (action === 'download') {
-      downloadDbFile(file)
+      void downloadDbFile(file)
     }
     else if (action === 'delete') {
       // Optimistically remove from local state, then delete from DB

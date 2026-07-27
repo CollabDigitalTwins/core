@@ -43,8 +43,10 @@ export const SubmenuProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [currentToolId])
 
+  const contextValue = React.useMemo(() => ({ openSubmenu, setOpenSubmenu }), [openSubmenu])
+
   return (
-    <SubmenuContext.Provider value={{ openSubmenu, setOpenSubmenu }}>
+    <SubmenuContext.Provider value={contextValue}>
       {children}
     </SubmenuContext.Provider>
   )

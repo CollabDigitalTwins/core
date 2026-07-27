@@ -19,7 +19,9 @@ interface ConfirmDialogProps {
     isOpen: boolean
     isDeleting: boolean
     onOpenChange: (open: boolean) => void
-    handleConfirm: (e: React.MouseEvent) => void
+    // Confirm handlers are usually async (delete then revalidate); the dialog
+    // does not await them, it just closes when the caller flips `isOpen`.
+    handleConfirm: (e: React.MouseEvent) => void | Promise<void>
     itemName?: string
     dataType?: string
 }
@@ -44,7 +46,7 @@ export default function ConfirmDialog({ isOpen, isDeleting, onOpenChange, handle
             <AlertDialogFooter>
                 <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
                 <AlertDialogAction
-                onClick={handleConfirm}
+                onClick={(e) => { void handleConfirm(e) }}
                 className="bg-red-600 hover:bg-red-700"
                 disabled={isDeleting}
                 >

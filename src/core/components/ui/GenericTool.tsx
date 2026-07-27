@@ -56,7 +56,7 @@ export const GenericTool: React.FC<GenericTool> = ({ tool }) => {
       size="icon"
       variant="ghost"
       className="flex justify-center items-center h-9 w-9 pointer-events-auto"
-      onClick={handleClick}
+      onClick={() => void handleClick()}
       title={`${tool.title} (${t('comingSoon')})`}
       disabled={tool.disabled}
     >

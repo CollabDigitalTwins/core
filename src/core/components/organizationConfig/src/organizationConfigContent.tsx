@@ -80,8 +80,11 @@ export default function OrganizationConfigContent() {
     const orgLanguages = formData.getAll('orgLanguages').map(String)
     const appContent = formData.getAll('appContent').map(String)
 
+    // Text inputs only, so a non-string entry (a File) means a malformed submit.
+    const orgName = formData.get('orgName')
+
     const data = {
-      orgName: formData.get('orgName'),
+      orgName: typeof orgName === 'string' ? orgName : '',
       orgTitle: formData.get('orgTitle'),
       orgDescription: formData.get('orgDescription'),
       orgLanguages,
@@ -152,7 +155,7 @@ export default function OrganizationConfigContent() {
                 <h3 className="text-2xl font-bold mb-6">{t('setupTitle')}</h3>
                 <p className="text-muted-foreground mb-8">{t('setupDescription')}</p>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
 
                   {/* Org Name */}
                   <div className="flex flex-col gap-2">

@@ -186,7 +186,7 @@ export default function AddUser({ open, onOpenChange }: AddUserProps) {
           <Button variant="outline" onClick={() => handleOpenChange(false)}>
             {t('cancel')}
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
+          <Button onClick={() => void handleSubmit()} disabled={isSubmitting}>
             {isSubmitting ? <LR.Loader2 className="size-4 animate-spin" /> : <LR.UserPlus className="size-4" />}
             {t('submit')}
           </Button>

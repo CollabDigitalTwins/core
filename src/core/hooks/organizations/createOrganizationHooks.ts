@@ -24,8 +24,8 @@ export function createOrganizationHooks(adapter: ApiAdapter) {
             {
             onSuccess: (updatedOrg) => {
                 if (!id) return;
-                mutate(["organization", id]);
-                if (updatedOrg.name) mutate(["organizationByName", updatedOrg.name]); // only need to update from previous data if name can be changed.
+                void mutate(["organization", id]);
+                if (updatedOrg.name) void mutate(["organizationByName", updatedOrg.name]); // only need to update from previous data if name can be changed.
             },
             }
         );

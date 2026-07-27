@@ -156,7 +156,7 @@ export const SiteContextMenu: React.FC<SiteContextMenuProps> = ({
         isOpen={isDeleteOpen}
         isDeleting={isDeleting}
         onOpenChange={setIsDeleteOpen}
-        handleConfirm={handleConfirmDelete}
+        handleConfirm={(e) => void handleConfirmDelete(e)}
         itemName={site.name}
         dataType={tf('siteDataType', 'site')}
       />

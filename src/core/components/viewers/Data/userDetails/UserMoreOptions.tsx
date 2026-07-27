@@ -287,9 +287,9 @@ export default function UserMoreOptions({ users, variant }: UserMoreOptionsProps
                   await updateUserById(existingUser.id, updatePayload)
                   updatedCount++
                   // Trigger cache refresh for this user and their roles
-                  mutate(['user', String(existingUser.id)])
+                  void mutate(['user', String(existingUser.id)])
                   if (roleChanged) {
-                    mutate(['userRoles', String(existingUser.id)])
+                    void mutate(['userRoles', String(existingUser.id)])
                   }
                 } catch (error) {
                   failedCount++
@@ -379,7 +379,7 @@ export default function UserMoreOptions({ users, variant }: UserMoreOptionsProps
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={handleExportUsers} disabled={isExporting || isImporting || !ability.can('read', 'Role')}>
+        <DropdownMenuItem onClick={() => void handleExportUsers()} disabled={isExporting || isImporting || !ability.can('read', 'Role')}>
           <FileOutput />
           {isExporting ? t('actions.exporting') : t('actions.exportUsers')}
         </DropdownMenuItem>

@@ -11,6 +11,7 @@ import { useTranslations } from 'next-intl'
 
 
 import { usePermissions } from '../../store'
+import { toDisplayString } from '../../utils/utils'
 
 
 // Shadcn Components
@@ -72,11 +73,18 @@ export default function ExportData({ data, variant, type, className }: ExportDat
       const headers = Object.keys(data[0]).join(',')
 
       // Iterate through each data item, extract all values and convert to CSV-compatible format
-      // Properly escape string values by wrapping in quotes to handle commas
+      // Properly escape string values by wrapping in quotes to handle commas.
+      // Structured values are serialized as JSON (which also contains commas, so
+      // it needs the same quoting) instead of landing as '[object Object]'.
       const rows = data.map(item =>
-        Object.values(item).map(value =>
-          typeof value === 'string' ? `"${value.replaceAll('"', '""')}"` : value,
-        ).join(','),
+        Object.values(item).map((value): string => {
+          if (typeof value === 'string') return `"${value.replaceAll('"', '""')}"`
+          const text = toDisplayString(value)
+          // JSON of a structured value contains commas, so it needs quoting too
+          return typeof value === 'object' && value !== null
+            ? `"${text.replaceAll('"', '""')}"`
+            : text
+        }).join(','),
       ).join('\n')
 
       // Combine headers and data rows into complete CSV content

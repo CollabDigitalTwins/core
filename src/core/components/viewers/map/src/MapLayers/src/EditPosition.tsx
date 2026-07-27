@@ -390,7 +390,7 @@ export const EditPosition: React.FC<EditPositionProps> = ({
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-2 pt-2">
-                                        <Button className="h-8" onClick={handleSave} disabled={isSaving}>
+                                        <Button className="h-8" onClick={() => void handleSave()} disabled={isSaving}>
                                             {isSaving ? t("saving") : t("save")}
                                         </Button>
                                         <Button
@@ -415,7 +415,7 @@ export const EditPosition: React.FC<EditPositionProps> = ({
                     {/* Floating save/cancel bar below the popup */}
                     <div className="flex gap-2 pt-0">
                         <Button
-                            onClick={handleSave}
+                            onClick={() => void handleSave()}
                             disabled={isSaving}
                             className="flex-1"
                             size="sm"

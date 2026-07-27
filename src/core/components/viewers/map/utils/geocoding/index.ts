@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { toDisplayString } from '../../../../../utils/utils'
+
 import { getGeocodingConfig } from './config'
 import { photonAutocomplete, nominatimReverse } from './osm'
 import { peliasAutocomplete, peliasReverse } from './pelias'
@@ -20,7 +22,7 @@ let peliasAuthFailed = false
 const peliasActive = (): boolean => getGeocodingConfig().usePelias && !peliasAuthFailed
 
 const isAuthError = (error: unknown): boolean => {
-  const message = error instanceof Error ? error.message : String(error)
+  const message = error instanceof Error ? error.message : toDisplayString(error)
   return message.includes('401') || message.includes('403')
 }
 

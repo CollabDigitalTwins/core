@@ -64,7 +64,7 @@ export class MapHoverManager {
 
     for (let i = 0; i < this.hoverHandlers.length; i++) {
       const currentHandler = this.hoverHandlers[i]
-      const hits = features.filter(f => f.layer?.id == currentHandler.layerId)
+      const hits = features.filter(f => f.layer?.id === currentHandler.layerId)
 
       if (hits.length > 0) {
         // console.log(currentHandler)

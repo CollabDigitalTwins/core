@@ -2,6 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { SensorDataFormat } from '../../../types/dbTypes'
+import { toDisplayString } from '../../../utils/utils'
 
 export interface SensorSeriesMeta {
   name?: string
@@ -129,11 +130,11 @@ function parseJson(raw: string): SensorSeries {
   // dataArray form: { components, dataArray: [[phenomenonTime, result], ...] }
   if (doc && Array.isArray(doc.dataArray)) {
     const comps: string[] = Array.isArray(doc.components) ? doc.components : ['phenomenonTime', 'result']
-    const tIdx = comps.indexOf('phenomenonTime') === -1 ? 0 : comps.indexOf('phenomenonTime')
-    const rIdx = comps.indexOf('result') === -1 ? 1 : comps.indexOf('result')
+    const tIdx = !comps.includes('phenomenonTime') ? 0 : comps.indexOf('phenomenonTime')
+    const rIdx = !comps.includes('result') ? 1 : comps.indexOf('result')
     const points = doc.dataArray
       .map((row: unknown[]) => ({
-        t: toEpoch(String(row[tIdx])),
+        t: toEpoch(toDisplayString(row[tIdx])),
         value: coerceResult(row[rIdx], labels, labelToIndex),
       }))
       .filter((p: { t: number; value: number }) => !Number.isNaN(p.value) && !Number.isNaN(p.t))

@@ -176,7 +176,7 @@ export function LayersTab({ martinBaseUrl, organization }: { martinBaseUrl?: str
         console.error('Failed to load organizational datasets:', error)
       }
     }
-    loadOrganizationalDatasets()
+    void loadOrganizationalDatasets()
   }, [datasetDispatch, orgVisibility])
 
   const nationalDatasets = React.useMemo(

@@ -1003,6 +1003,7 @@
     "readyToView": "Lista",
     "infoTitle": "Más información",
     "convertTitle": "Convertir a Potree",
+    "retryUploadTitle": "La subida nunca se completó - haga clic para reintentar",
     "viewTitle": "Ver en el visor Potree",
     "deleteTitle": "Eliminar nube de puntos",
     "uploadedBy": "Subida por",

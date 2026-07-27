@@ -246,7 +246,7 @@ export function BugReportDialog({
           />
 
           <div className="flex gap-2 items-center">
-            <Button onClick={capture} variant="secondary" disabled={loading || capturing}>
+            <Button onClick={() => void capture()} variant="secondary" disabled={loading || capturing}>
               <LR.Camera className="h-4 w-4 mr-1" />
               {capturing ? t("capturing") : t("captureScreenshot")}
             </Button>
@@ -300,7 +300,7 @@ export function BugReportDialog({
             </Button>
 
             <Button
-              onClick={submit}
+              onClick={() => void submit()}
               disabled={!title.trim() || loading}
             >
               {loading ? "..." : t("submit")}

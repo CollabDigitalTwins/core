@@ -99,7 +99,7 @@ export class CameraController {
     const camera = sourceWorld.camera as OBC.OrthoPerspectiveCamera
     if (this._savedProjection) {
       try {
-        camera.projection.set(this._savedProjection)
+        void camera.projection.set(this._savedProjection)
       } catch {
         // ignore
       }
@@ -138,7 +138,7 @@ export class CameraController {
     const camera = sourceWorld.camera as OBC.OrthoPerspectiveCamera
 
     try {
-      camera.projection.set('Orthographic')
+      void camera.projection.set('Orthographic')
     } catch {
       // already ortho
     }

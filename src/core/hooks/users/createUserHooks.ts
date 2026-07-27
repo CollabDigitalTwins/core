@@ -33,8 +33,8 @@ export function createUserHooks(adapter: ApiAdapter) {
       async (_k, { arg }: { arg: Partial<User> }) => adapter.updateUser(userId, arg),
       {
         onSuccess: () => {
-          mutate(["users"]);
-          mutate(["user", userId]);
+          void mutate(["users"]);
+          void mutate(["user", userId]);
         },
       }
     );
@@ -44,8 +44,8 @@ export function createUserHooks(adapter: ApiAdapter) {
       async () => adapter.deleteUser(userId),
       {
         onSuccess: () => {
-          mutate(["user", userId], undefined, { revalidate: false });
-          mutate(["users"]);
+          void mutate(["user", userId], undefined, { revalidate: false });
+          void mutate(["users"]);
         },
       }
     );
@@ -60,7 +60,7 @@ export function createUserHooks(adapter: ApiAdapter) {
         adapter.createUser(arg),
         {
             onSuccess: () => {
-                mutate(["users"]);
+                void mutate(["users"]);
             },
         }
     );
@@ -82,9 +82,9 @@ export function createUserHooks(adapter: ApiAdapter) {
       async (_k, { arg }: { arg: { roleId: number } }) => adapter.updateUserRole(userId, arg.roleId),
       {
         onSuccess: () => {
-          mutate(["userRole", userId]);
-          mutate(["user", userId]);
-          mutate(["users"]);
+          void mutate(["userRole", userId]);
+          void mutate(["user", userId]);
+          void mutate(["users"]);
         },
       }
     );

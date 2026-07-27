@@ -99,7 +99,7 @@ const GeoJsonDatasetLayer = React.memo(({ dataset, index, onLayerReady, onLayerR
             }
         };
 
-        load();
+        void load();
         return () => { cancelled = true; };
     }, [map, dataset.name]);
 

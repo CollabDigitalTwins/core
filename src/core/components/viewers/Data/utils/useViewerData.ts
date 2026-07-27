@@ -5,6 +5,8 @@ import { useMemo } from 'react'
 
 import { ViewerNames } from '../../../../types/dbTypes'
 
+import { toDisplayString } from '../../../../utils/utils'
+
 import { filterHelper, getNarrowedFilterOptions, getUniqueColumnValues } from './filterHelper'
 import { formatPosition } from './positionParser'
 
@@ -60,7 +62,7 @@ interface UseViewerDataResult {
 // ---------------------------------------------------------------------------
 
 function matchesSearch(value: unknown, term: string): boolean {
-  return String(value).toLowerCase().includes(term.toLowerCase())
+  return toDisplayString(value).toLowerCase().includes(term.toLowerCase())
 }
 
 function searchFields(fields: unknown[], term: string): boolean {

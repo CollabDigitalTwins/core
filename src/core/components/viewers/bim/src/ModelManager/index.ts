@@ -75,9 +75,7 @@ export class ModelManager extends OBC.Component {
     }
 
     try {
-      let fileUrl: string
-
-      fileUrl = fileOrUrl instanceof File ? URL.createObjectURL(fileOrUrl) : fileOrUrl
+      const fileUrl: string = fileOrUrl instanceof File ? URL.createObjectURL(fileOrUrl) : fileOrUrl
 
       const extension = options.extension || this.getFileExtension(fileOrUrl)
 
@@ -298,7 +296,7 @@ export class ModelManager extends OBC.Component {
         url,
         gltf => resolve(gltf),
         undefined,
-        error => reject(error),
+        error => reject(error instanceof Error ? error : new Error(`Failed to load ${url}`)),
       )
     })
   }
@@ -312,7 +310,7 @@ export class ModelManager extends OBC.Component {
         url,
         obj => resolve(obj),
         undefined,
-        error => reject(error),
+        error => reject(error instanceof Error ? error : new Error(`Failed to load ${url}`)),
       )
     })
   }
@@ -326,7 +324,7 @@ export class ModelManager extends OBC.Component {
         url,
         fbx => resolve(fbx),
         undefined,
-        error => reject(error),
+        error => reject(error instanceof Error ? error : new Error(`Failed to load ${url}`)),
       )
     })
   }
@@ -340,7 +338,7 @@ export class ModelManager extends OBC.Component {
         url,
         collada => resolve(collada),
         undefined,
-        error => reject(error),
+        error => reject(error instanceof Error ? error : new Error(`Failed to load ${url}`)),
       )
     })
   }

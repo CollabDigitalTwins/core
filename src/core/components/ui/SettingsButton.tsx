@@ -24,6 +24,11 @@ export default function SettingsButton() {
   const t = useTranslations('SettingsButton')
 
   const isMobile = useIsMobile()
+  // All hooks run before the early return below, so the hook order stays stable
+  // when the viewport crosses the mobile breakpoint.
+  const { setOpenInfo } = useSidebar()
+  const { dispatch: menusDispatch } = React.useContext(MenusContext)
+
   if (isMobile) return null
 
   const tool: Tool = {
@@ -34,9 +39,6 @@ export default function SettingsButton() {
     height: '6',
   }
 
-  const { setOpenInfo } = useSidebar()
-
-  const { dispatch: menusDispatch } = React.useContext(MenusContext)
   const onclick = () => {
     setOpenInfo(true)
     menusDispatch({ type: 'SET_SIDEBAR_SELECTED_TAB', payload: { selectedTab: 'settings' } })

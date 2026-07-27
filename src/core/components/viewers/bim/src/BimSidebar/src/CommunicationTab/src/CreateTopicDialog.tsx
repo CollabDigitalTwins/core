@@ -141,7 +141,7 @@ export function CreateTopicDialog({ open, onOpenChange, onSubmit, existingTopic 
           if (isNaN(parsedDueDate.getTime())) {
             parsedDueDate = null
           }
-        } catch (error) {
+        } catch {
           parsedDueDate = null
         }
       }

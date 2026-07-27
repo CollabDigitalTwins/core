@@ -91,7 +91,7 @@ export function ForgotPassword() {
       </div>
 
       {/* Form */}
-      <form id="resetForm" onSubmit={handleSubmit} className="space-y-4">
+      <form id="resetForm" onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
         {/* Password */}
         <div className="space-y-2">
           <div className="flex items-center gap-1">

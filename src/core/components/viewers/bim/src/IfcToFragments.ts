@@ -17,7 +17,7 @@ export class IfcToFragments extends OBC.Component {
   constructor(components: OBC.Components) {
     super(components)
     components.add(IfcToFragments.uuid, this)
-    this.initializeSerializer()
+    void this.initializeSerializer()
   }
 
   private async initializeSerializer() {

@@ -260,7 +260,7 @@ export const CountryLayer = ({ organization, maptilerKey }: { organization?: Org
     if (map.isStyleLoaded()) {
       map.on('mousemove', onMouseMove)
     } else {
-      map.once('styledata', () => {
+      void map.once('styledata', () => {
         map.on('mousemove', onMouseMove)
       })
     }

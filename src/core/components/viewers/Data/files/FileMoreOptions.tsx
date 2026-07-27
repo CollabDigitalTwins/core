@@ -62,7 +62,7 @@ export default function FileMoreOptions({ file, buildingId }: FileMoreOptionsPro
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false)
 
-  const isMapFile = file?.metadata?.type == 'map-file'
+  const isMapFile = file?.metadata?.type === 'map-file'
 
   const handleViewOnMap = async (map: any) => {
     // set the current viewer to map
@@ -137,7 +137,7 @@ export default function FileMoreOptions({ file, buildingId }: FileMoreOptionsPro
               <DropdownMenuItem
                 onClick={(e) => {
                   e.stopPropagation()
-                  handleViewOnMap(map)
+                  void handleViewOnMap(map)
                 }}
               >
                 <LR.Map />
@@ -146,7 +146,7 @@ export default function FileMoreOptions({ file, buildingId }: FileMoreOptionsPro
             )}
 
           <DropdownMenuItem
-            onClick={handleDownloadFile}
+            onClick={(e) => void handleDownloadFile(e)}
             disabled={isDownloading}
           >
             {isDownloading
@@ -178,7 +178,7 @@ export default function FileMoreOptions({ file, buildingId }: FileMoreOptionsPro
         isOpen={isDeleteDialogOpen}
         isDeleting={isDeleting}
         onOpenChange={setIsDeleteDialogOpen}
-        handleConfirm={handleDeleteFileClick}
+        handleConfirm={() => void handleDeleteFileClick()}
         itemName={file?.name || file?.metadata?.name}
       />
 

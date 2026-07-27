@@ -336,7 +336,7 @@ export const SiteAdder = ({ isOpen = false, onCancel }: SiteAdderProps) => {
 
       // Click near the first point to close the polygon.
       if (isNearFirstPoint(clickPoint, drawingPointsRef.current)) {
-        finishDrawing()
+        void finishDrawing()
         return
       }
 
@@ -359,7 +359,7 @@ export const SiteAdder = ({ isOpen = false, onCancel }: SiteAdderProps) => {
   React.useEffect(() => {
     if (!isDrawing) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Enter') { e.preventDefault(); finishDrawing() }
+      if (e.key === 'Enter') { e.preventDefault(); void finishDrawing() }
       else if (e.key === 'Escape') { e.preventDefault(); cancelDrawing() }
       else if (e.key === 'Backspace') { e.preventDefault(); undoLastPoint() }
     }
@@ -399,7 +399,7 @@ export const SiteAdder = ({ isOpen = false, onCancel }: SiteAdderProps) => {
       description,
       duration: Infinity,
       action: canFinish
-        ? { label: tf('finish', 'Finish'), onClick: () => finishDrawing() }
+        ? { label: tf('finish', 'Finish'), onClick: () => { void finishDrawing() } }
         : undefined,
       cancel: { label: tf('cancel', 'Cancel'), onClick: () => cancelDrawing() },
     })

@@ -62,7 +62,7 @@ export default function AddToMap({ tool, organization, minioBaseUrl, martinBaseU
   const [addingMode, setAddingMode] = React.useState<ToolbarToolType | null>(null)
   const { state: fileState } = React.useContext(FilesContext)
   const { files } = fileState.files
-  const mapFiles: DbFile[] = files.filter(file => file.type == 'map-file')
+  const mapFiles: DbFile[] = files.filter(file => file.type === 'map-file')
 
   const {comments} = useComments()
   const {sensors} = useSensors()

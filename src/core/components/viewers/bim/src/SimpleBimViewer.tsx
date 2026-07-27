@@ -241,7 +241,7 @@ export function SimpleBimViewer({file, width = "100%", height = "100%"}: Props) 
                     setLoadingMessage('');
                 }
 
-                fragments.core.update(true);
+                void fragments.core.update(true);
 
                 setTimeout(() => {
                     const width = container.clientWidth || 1303;
@@ -259,7 +259,7 @@ export function SimpleBimViewer({file, width = "100%", height = "100%"}: Props) 
     );
 
     React.useEffect(() => {
-        createViewer();
+        void createViewer();
 
         // Cleanup function to properly dispose of components when unmounting
         return () => {

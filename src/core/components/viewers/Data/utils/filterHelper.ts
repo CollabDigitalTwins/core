@@ -33,26 +33,25 @@ export function filterHelper(data: any[], filters: FilterType[]) {
     if (fieldType == null || operator == null || value == null) continue
 
     filteredData = filteredData.filter((row) => {
-      // console.log(row[field])
       switch (fieldType) {
         case 'boolean':
-          if (operator == 'isTrue') return row[field] == true
-          if (operator == 'isFalse') return row[field] == false
+          if (operator === 'isTrue') return row[field] === true
+          if (operator === 'isFalse') return row[field] === false
           break
 
         case 'string':
-          if (operator == 'contains') return cleanString(String(row[field])).includes(cleanString(String(value)))
-          if (operator == 'startsWith') return cleanString(String(row[field])).startsWith(cleanString(String(value)))
-          if (operator == 'endsWith') return cleanString(String(row[field])).endsWith(cleanString(String(value)))
-          if (operator == 'equals') return cleanString(String(row[field])) === cleanString(String(value))
-          if (operator == 'inList' && Array.isArray(value) && value.length > 0) {
+          if (operator === 'contains') return cleanString(String(row[field])).includes(cleanString(String(value)))
+          if (operator === 'startsWith') return cleanString(String(row[field])).startsWith(cleanString(String(value)))
+          if (operator === 'endsWith') return cleanString(String(row[field])).endsWith(cleanString(String(value)))
+          if (operator === 'equals') return cleanString(String(row[field])) === cleanString(String(value))
+          if (operator === 'inList' && Array.isArray(value) && value.length > 0) {
             return value.map(v => cleanString(String(v))).includes(cleanString(String(row[field])))
           }
           break
 
         case 'enum':
-          if (operator == 'equals') return row[field] === value
-          if (operator == 'inList' && Array.isArray(value) && value.length > 0) {
+          if (operator === 'equals') return row[field] === value
+          if (operator === 'inList' && Array.isArray(value) && value.length > 0) {
             // Handle both single values and arrays in the data
             if (Array.isArray(row[field])) {
               // If the item's field is an array, check if any of its values are in our filter
@@ -66,10 +65,12 @@ export function filterHelper(data: any[], filters: FilterType[]) {
           break
 
         case 'number':
-          if (operator == 'equals') return row[field] == value
-          if (operator == 'lessThan') return row[field] < value
-          if (operator == 'between' && secondValue != null) return value <= row[field] && row[field] <= secondValue
-          if (operator == 'greaterThan') return row[field] > value
+          // Cell values can arrive as numeric strings from external portals, so
+          // coerce both sides (the ordering operators below coerce implicitly).
+          if (operator === 'equals') return Number(row[field]) === Number(value)
+          if (operator === 'lessThan') return row[field] < value
+          if (operator === 'between' && secondValue != null) return value <= row[field] && row[field] <= secondValue
+          if (operator === 'greaterThan') return row[field] > value
           break
 
         case 'date':
@@ -83,10 +84,10 @@ export function filterHelper(data: any[], filters: FilterType[]) {
 
           if (isNaN(dateValue.getTime()) || isNaN(filterDateValue.getTime())) return false
 
-          if (operator == 'equals') return dateValue.toDateString() === filterDateValue.toDateString()
-          if (operator == 'before') return dateValue < filterDateValue
-          if (operator == 'after') return dateValue > filterDateValue
-          if (operator == 'between' && secondValue != null) {
+          if (operator === 'equals') return dateValue.toDateString() === filterDateValue.toDateString()
+          if (operator === 'before') return dateValue < filterDateValue
+          if (operator === 'after') return dateValue > filterDateValue
+          if (operator === 'between' && secondValue != null) {
             // Type guard for secondValue as well
             if (typeof secondValue === 'boolean') {
               return false
@@ -123,7 +124,7 @@ export const getNarrowedFilterOptions = (
   for (let i = 1; i < inListFilters.length; i++) {
     const filteredData = filterHelper(data, inListFilters.slice(0, i))
     newBaseOptions = newBaseOptions.map((opt) => {
-      if (opt.id != inListFilters[i].field) {
+      if (opt.id !== inListFilters[i].field) {
         return opt
       }
       return (

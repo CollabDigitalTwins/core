@@ -43,9 +43,7 @@ export default function NestedFilter({
   const [searchTerm, setSearchTerm] = React.useState('')
 
   const handleCheckboxChange = (value: string, checked: boolean) => {
-    let newSelectedValues
-
-    newSelectedValues = checked ? [...selectedValues, value] : selectedValues.filter(v => v !== value)
+    const newSelectedValues = checked ? [...selectedValues, value] : selectedValues.filter(v => v !== value)
 
     onSelectionChange(newSelectedValues)
   }

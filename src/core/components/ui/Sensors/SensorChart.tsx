@@ -8,6 +8,7 @@ import * as React from 'react'
 import { Area, AreaChart, Brush, CartesianGrid, XAxis, YAxis } from 'recharts'
 
 import { detectTimeZone, formatInZone, formatDuration } from '../../../utils/timeUtils'
+import { toDisplayString } from '../../../utils/utils'
 import {
   Card,
   CardContent,
@@ -209,7 +210,7 @@ export function SensorChart({
                         ? (value: unknown) => {
                             const label = valueLabels?.[value as number]
                             if (label) return label
-                            return unit ? `${value} ${unit}` : String(value)
+                            return unit ? `${toDisplayString(value)} ${unit}` : toDisplayString(value)
                           }
                         : undefined
                     }

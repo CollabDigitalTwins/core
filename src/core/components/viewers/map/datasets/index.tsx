@@ -280,7 +280,7 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, minioB
       })
     }
 
-    loadOrganizationalDatasets()
+    void loadOrganizationalDatasets()
   }, [datasetDispatch, orgVisibility, org?.id, datasetState.datasets.orgRefreshNonce])
 
   // Stamp each portal list with published-tile identity so a converted open-data

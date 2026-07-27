@@ -54,7 +54,7 @@ const EnergySourcesGrid = ({ subsection, getFieldValue, handleInputChange, editi
         {rows.map((row, rowIdx) => {
           // Get the raw value and ensure it's an array
           const rawValue = getFieldValue(row.sourceProp)
-          const selectedValues = Array.isArray(rawValue) ? rawValue : (rawValue ? [] : [])
+          const selectedValues = Array.isArray(rawValue) ? rawValue : []
 
           // Get metric and year values
           const metricValue = getFieldValue(row.metricProp)

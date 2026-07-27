@@ -122,7 +122,7 @@ function FileUpload({ value, property, tag, onChange, editing, buildingId, onFil
           type="file"
           ref={fileInputRef}
           className="hidden"
-          onChange={handleInputFileChange}
+          onChange={e => void handleInputFileChange(e)}
           multiple
         />
       </>
@@ -130,7 +130,9 @@ function FileUpload({ value, property, tag, onChange, editing, buildingId, onFil
   }
 
   return (
-    <div className={`flex flex-col gap-2 ${isFullWidthField ? 'w-1/2' : 'w-1/2'}`}>
+    // TODO: isFullWidthField currently has no effect — both branches of the old
+    // ternary were 'w-1/2'. Decide whether the full-width case should be 'w-full'.
+    <div className="flex flex-col gap-2 w-1/2">
       <div className="grid grid-cols-1 gap-2">
         {relevantFiles.length > 0 && relevantFiles.map((file, index) => {
           const fileData = getFileDisplayData(file)
@@ -157,7 +159,7 @@ function FileUpload({ value, property, tag, onChange, editing, buildingId, onFil
                       variant="ghost"
                       size="icon"
                       className="text-destructive"
-                      onClick={() => handleDeleteFile(file, index)}
+                      onClick={() => { void handleDeleteFile(file, index) }}
                     >
                       <Trash2 size={16} />
                     </Button>
@@ -187,7 +189,7 @@ function FileUpload({ value, property, tag, onChange, editing, buildingId, onFil
                     type="file"
                     ref={fileInputRef}
                     className="hidden"
-                    onChange={e => handleFileUpload(e.target.files?.[0] || null)}
+                    onChange={e => { void handleFileUpload(e.target.files?.[0] || null) }}
                     multiple
                   />
                 </div>
@@ -196,7 +198,7 @@ function FileUpload({ value, property, tag, onChange, editing, buildingId, onFil
                 <div className="flex flex-col gap-2 ">
                   <Input
                     type="file"
-                    onChange={handleInputFileChange}
+                    onChange={e => void handleInputFileChange(e)}
                     multiple
                     disabled={isUploading}
                   />

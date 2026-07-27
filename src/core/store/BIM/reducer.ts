@@ -102,8 +102,7 @@ export const BimReducer = (state: BimState, action: BimActions) => {
             const { bimFile } = action.payload.buildingModel;
             const exists = state.bimModelsAddedToMap.some((model) => model.bimFile.id === bimFile.id
             );
-            let bimModelsAddedToMap;
-            bimModelsAddedToMap = exists
+            const bimModelsAddedToMap = exists
                 ? state.bimModelsAddedToMap.filter((model) => model.bimFile.id !== bimFile.id,
                 ) : [
                     ...state.bimModelsAddedToMap,

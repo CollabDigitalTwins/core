@@ -25,8 +25,8 @@ export function createInfrastructureHooks(adapter: ApiAdapter) {
       async (_k, { arg }: { arg: Partial<Infrastructure> }) => adapter.updateInfrastructure(infrastructureId, arg),
       {
         onSuccess: () => {
-          mutate(["infrastructure", infrastructureId]);
-          mutate(["infrastructures"]);
+          void mutate(["infrastructure", infrastructureId]);
+          void mutate(["infrastructures"]);
         },
       }
     );
@@ -40,7 +40,7 @@ export function createInfrastructureHooks(adapter: ApiAdapter) {
       async (_k, { arg }: { arg: Partial<Infrastructure> }) => adapter.createInfrastructure(arg),
       {
         onSuccess: () => {
-          mutate(["infrastructures"]);
+          void mutate(["infrastructures"]);
         },
       }
     );
@@ -56,7 +56,7 @@ export function createInfrastructureHooks(adapter: ApiAdapter) {
 
     const deleteInfrastructure = async (id: number) => {
       await trigger(id);
-      mutate(["infrastructures"]);
+      void mutate(["infrastructures"]);
     };
 
     return { deleteInfrastructure, isMutating, deleteError: error, deletedData: data };

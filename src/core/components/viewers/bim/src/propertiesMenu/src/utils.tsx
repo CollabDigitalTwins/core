@@ -26,7 +26,7 @@ export const formatPropertyValue = (value: string | number, groupId?: string): s
     if (groupId === 'dimensions') {
       return value.toFixed(2)
     }
-    return value % 1 === 0 ? value.toString() : value.toString()
+    return value.toString()
   }
 
   const numValue = Number.parseFloat(value as string)
@@ -34,7 +34,7 @@ export const formatPropertyValue = (value: string | number, groupId?: string): s
     if (groupId === 'dimensions') {
       return numValue.toFixed(2)
     }
-    return numValue % 1 === 0 ? numValue.toString() : numValue.toString()
+    return numValue.toString()
   }
   return value as string
 }

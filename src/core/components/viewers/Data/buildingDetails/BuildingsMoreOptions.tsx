@@ -156,7 +156,7 @@ export default function BuildingMoreOptions({ buildings, variant }: BuildingMore
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={handleExportBuildings} disabled={isExporting || !ability.can('read', 'Building')}>
+        <DropdownMenuItem onClick={() => void handleExportBuildings()} disabled={isExporting || !ability.can('read', 'Building')}>
           <FileOutput />
           {isExporting ? <LoadingSpinner /> : t('exportTitle')}
         </DropdownMenuItem>

@@ -23,7 +23,9 @@ import type { FileAction } from '../../../../types/global'
 
 export interface FileMenuContentProps {
   file: DbFile & { isVisible?: boolean }
-  onAction: (action: FileAction, file: DbFile) => void
+  // Async handlers are supported: the delete flow awaits the result to keep its
+  // spinner up (see handleDeleteConfirm), other actions are fire-and-forget.
+  onAction: (action: FileAction, file: DbFile) => void | Promise<void>
   options: FileAction[]
   confirmDelete?: boolean
 }
@@ -59,7 +61,7 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
       return
     }
 
-    onAction('delete', file)
+    void onAction('delete', file)
   }, [confirmDelete, onAction, file])
 
   const handleDeleteConfirm = React.useCallback(async (e: React.MouseEvent) => {
@@ -78,7 +80,7 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
     <>
       {options.includes('download') && (
         <DropdownMenuItem
-          onClick={() => onAction('download', file)}
+          onClick={() => { void onAction('download', file) }}
           disabled={!canReadFile}
         >
           <LR.Download className="h-4 w-4" />
@@ -87,7 +89,7 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
       )}
       {hasPlaceOption && !isPlaced && (
         <DropdownMenuItem
-          onClick={() => onAction('move', file)}
+          onClick={() => { void onAction('move', file) }}
           disabled={!canReadFile || !canUpdateFile}
         >
           <LR.Locate className="h-4 w-4" />
@@ -96,7 +98,7 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
       )}
       {options.includes('view') && isPlaced && (
         <DropdownMenuItem
-          onClick={() => onAction('view', file)}
+          onClick={() => { void onAction('view', file) }}
           disabled={!canReadFile}
         >
           {file.isVisible !== false
@@ -107,7 +109,7 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
       )}
       {options.includes('ghost') && (
         <DropdownMenuItem
-          onClick={() => onAction('ghost', file)}
+          onClick={() => { void onAction('ghost', file) }}
           disabled={!canReadFile || !canUpdateFile}
         >
           {isGhost ? <LR.Box className="h-4 w-4" /> : <LR.Ghost className="h-4 w-4" />}
@@ -116,7 +118,7 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
       )}
       {options.includes('move') && isPlaced && (
         <DropdownMenuItem
-          onClick={() => onAction('move', file)}
+          onClick={() => { void onAction('move', file) }}
           disabled={!canReadFile || !canUpdateFile}
         >
           <LR.Move className="h-4 w-4" />
@@ -125,7 +127,7 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
       )}
       {options.includes('edit') && (
         <DropdownMenuItem
-          onClick={() => onAction('edit', file)}
+          onClick={() => { void onAction('edit', file) }}
           disabled={!canReadFile || !canUpdateFile}
         >
           <LR.Pencil className="h-4 w-4" />
@@ -134,7 +136,7 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
       )}
       {options.includes('info') && (
         <DropdownMenuItem
-          onClick={() => onAction('info', file)}
+          onClick={() => { void onAction('info', file) }}
           disabled={!canReadFile}
         >
           <LR.Info className="h-4 w-4" />
@@ -162,7 +164,7 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
         isOpen={isDeleteDialogOpen}
         isDeleting={isDeleting}
         onOpenChange={setIsDeleteDialogOpen}
-        handleConfirm={handleDeleteConfirm}
+        handleConfirm={(e) => void handleDeleteConfirm(e)}
         itemName={file.name}
         dataType={tDialog('file')}
       />
@@ -172,7 +174,7 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
 
 export interface FileItemComponentProps {
   file: DbFile & { isVisible?: boolean }
-  onAction: (action: FileAction, file: DbFile) => void
+  onAction: (action: FileAction, file: DbFile) => void | Promise<void>
   options: FileAction[]
   translationKey?: string
   confirmDelete?: boolean

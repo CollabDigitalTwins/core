@@ -113,13 +113,10 @@ export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({
     setIsLoadingShareLink(true)
     try {
       const shareUrl = await constructShareUrl()
-      const writeToClipBoard = () => {
-        try {
-          navigator.clipboard.writeText(shareUrl)// this may causes error
-        }
-        catch {}
-      }
-      writeToClipBoard()
+      // clipboard writes reject when the document is unfocused or permission is
+      // denied; the sharing flow continues either way. The old sync try/catch
+      // never caught this because the rejection is asynchronous.
+      await navigator.clipboard.writeText(shareUrl).catch(() => {})
       router.push(shareUrl, { scroll: false }) // push but do not refresh
     }
     catch (error) {
@@ -169,7 +166,7 @@ export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({
         }
 
         // Listen for the next render event
-        map.once('render', captureAfterRender)
+        void map.once('render', captureAfterRender)
         // Trigger the repaint
         map.triggerRepaint()
         return
@@ -262,7 +259,7 @@ export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({
       <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
         <DropdownMenuItem onClick={(e) => { e.preventDefault() }} className="cursor-pointer">
           <DialogTrigger asChild>
-            <button onClick={handleShareQR} disabled={isLoadingQRCode} className="flex w-full gap-2 items-center">
+            <button onClick={() => void handleShareQR()} disabled={isLoadingQRCode} className="flex w-full gap-2 items-center">
               {isLoadingQRCode ? <LoadingSpinner /> : <ScanQrCode size={16} />}
               <span>{isLoadingQRCode ? t('generating') : t('generate')}</span>
             </button>
@@ -284,7 +281,7 @@ export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({
       </Dialog>
 
       {/* Copy to clipboard */}
-      <DropdownMenuItem onClick={handleClickShare} disabled={isLoadingShareLink} onSelect={(e) => { e.preventDefault() }} className="cursor-pointer">
+      <DropdownMenuItem onClick={() => void handleClickShare()} disabled={isLoadingShareLink} onSelect={(e) => { e.preventDefault() }} className="cursor-pointer">
         <div className="flex items-center w-full gap-2">
           {isLoadingShareLink ? <LoadingSpinner /> : <Link size={16} />}
           <span>{isLoadingShareLink ? t('copying') : t('copy')}</span>
@@ -296,7 +293,7 @@ export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({
         <Dialog open={screenshotDialogOpen} onOpenChange={setScreenshotDialogOpen}>
           <DropdownMenuItem onClick={(e) => { e.preventDefault() }} className="cursor-pointer">
             <DialogTrigger asChild>
-              <button onClick={handleClickScreenshot} className="flex w-full gap-2 items-center">
+              <button onClick={() => void handleClickScreenshot()} className="flex w-full gap-2 items-center">
                 <Camera size={16}/>
                 <span>{t('ss')}</span>
               </button>
@@ -343,7 +340,7 @@ export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({
                 </select>
               </div>
 
-              <Button onClick={handleDownloadScreenshot}>
+              <Button onClick={() => void handleDownloadScreenshot()}>
                 {t('download')}
               </Button>
             </div>

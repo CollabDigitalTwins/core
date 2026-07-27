@@ -173,7 +173,12 @@ export default [
       '@typescript-eslint/restrict-plus-operands': 'warn', // `+` across mismatched/any operand types
       // React component-library safety (core ships components to ~16 consumer orgs):
       'react/jsx-key': 'warn', // missing `key` in a list render
-      'react/no-unstable-nested-components': 'warn', // component defined during render (remount/perf bug)
+      // Component defined during render (remount/perf bug). allowAsProps because the
+      // data tables and the react-day-picker Calendar legitimately pass render
+      // functions as props (trailingCell/leadingCell, components={{ Root, Chevron }});
+      // all 9 hits here were that pattern, none was a component declared in a render
+      // body and used as JSX, which is what the rule is really guarding against.
+      'react/no-unstable-nested-components': ['warn', { allowAsProps: true }],
       'react/jsx-no-constructed-context-values': 'warn', // fresh object/array as context value (perf bug)
       'react/no-direct-mutation-state': 'warn', // direct this.state mutation
       'react/jsx-no-target-blank': 'warn', // target="_blank" without rel=noopener (tabnabbing)

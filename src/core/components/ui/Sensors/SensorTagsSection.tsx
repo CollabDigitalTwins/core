@@ -85,7 +85,7 @@ export function SensorTagsSection({ tags, variant = 'edit', onAdd, onDelete, tra
                   <span title={tr.removeTag}>
                     <LR.X
                       className="h-3 w-3 cursor-pointer ml-2 -mr-1"
-                      onClick={() => onDelete(tag)}
+                      onClick={() => { void onDelete(tag) }}
                     />
                   </span>
                 )}
@@ -102,13 +102,13 @@ export function SensorTagsSection({ tags, variant = 'edit', onAdd, onDelete, tra
               value={newTagValue}
               onChange={e => setNewTagValue(e.target.value)}
               onKeyDown={e => {
-                if (e.key === 'Enter') handleAdd()
+                if (e.key === 'Enter') void handleAdd()
                 if (e.key === 'Escape') { setAddingTag(false); setNewTagValue('') }
               }}
               placeholder={tr.newTagPlaceholder}
               className="h-6 text-xs w-28 px-2"
             />
-            <Button title={tr.addTag} variant="ghost" size="icon" className="h-6 w-6 p-0" onClick={handleAdd}>
+            <Button title={tr.addTag} variant="ghost" size="icon" className="h-6 w-6 p-0" onClick={() => void handleAdd()}>
               <LR.Plus className="h-3 w-3" />
             </Button>
             <Button title={tr.cancel} variant="ghost" size="icon" className="h-6 w-6 p-0" onClick={() => { setAddingTag(false); setNewTagValue('') }}>

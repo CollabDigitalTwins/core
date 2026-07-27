@@ -261,7 +261,7 @@ export default function RowActions({
           size="icon"
           title={published ? 'Tiled' : 'Publish as vector tiles'}
           className="h-8 w-8 sm:h-9 sm:w-9 opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent"
-          onClick={onPublish}
+          onClick={() => void onPublish()}
           disabled={publishing || published || !ability.can('update', 'File')}
         >
           <LR.UploadCloud color={published ? 'hsl(var(--chart-2))' : 'black'} />
@@ -274,7 +274,7 @@ export default function RowActions({
           size="icon"
           title={publishedCatalog ? 'Tiled' : 'Publish open-data dataset as vector tiles'}
           className="h-8 w-8 sm:h-9 sm:w-9 opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent"
-          onClick={onPublishCatalog}
+          onClick={() => void onPublishCatalog()}
           disabled={publishingCatalog || publishedCatalog || !ability.can('update', 'File')}
         >
           <LR.CloudDownload color={publishedCatalog ? 'hsl(var(--chart-2))' : 'black'} />
@@ -287,7 +287,7 @@ export default function RowActions({
           size="icon"
           title={unpublished ? 'Un-published' : 'Un-publish vector tiles'}
           className="h-8 w-8 sm:h-9 sm:w-9 opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent"
-          onClick={onUnpublish}
+          onClick={() => void onUnpublish()}
           disabled={unpublishing || unpublished || !ability.can('update', 'File')}
         >
           <LR.CloudOff color={unpublished ? 'hsl(var(--chart-5))' : 'black'} />

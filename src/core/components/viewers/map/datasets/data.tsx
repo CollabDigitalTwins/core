@@ -49,7 +49,7 @@ export function useColumns<TData = Dataset>(): ColumnDef<TData>[] {
             className="hover:bg-transparent p-0"
           >
             {t('name')}
-            {isSorted == false && <ArrowUpDown />}
+            {isSorted === false && <ArrowUpDown />}
             {isSorted === 'desc' && <ArrowDown className="text-black" />}
             {isSorted === 'asc' && <ArrowUp className="text-black" />}
           </Button>

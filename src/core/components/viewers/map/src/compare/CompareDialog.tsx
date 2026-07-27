@@ -59,8 +59,11 @@ export default function CompareDialog({ toggleOpen, compareItems, setCompareItem
     item.siteName !== undefined || item.siteAddress !== undefined,
   )
 
-  // Choose the appropriate headers
-  const headers = isComparingSites ? useSiteHeaders() : useBuildingHeaders()
+  // Both hooks have to run on every render to keep the hook order stable; the
+  // relevant set is picked afterwards.
+  const siteHeaders = useSiteHeaders()
+  const buildingHeaders = useBuildingHeaders()
+  const headers = isComparingSites ? siteHeaders : buildingHeaders
   const excludedKeys = new Set([
     'id',
     'buildingId',

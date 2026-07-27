@@ -199,7 +199,7 @@ export function BimViewer() {
 
     React.useEffect(() => {
         let cancelled = false;
-        createViewer(() => cancelled);
+        void createViewer(() => cancelled);
 
         // Cleanup: mark this init cancelled (so an in-flight createViewer disposes
         // itself instead of publishing), and dispose the instance we actually

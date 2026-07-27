@@ -62,7 +62,7 @@ export function TopicsSection() {
     }
 
     if (action === 'view') {
-      bcfTopicsManager?.view(topic.guid)
+      void bcfTopicsManager?.view(topic.guid)
     }
     else if (action === 'edit') {
       setEditingTopic(topic)
@@ -184,7 +184,7 @@ export function TopicsSection() {
     try {
       const result = await bcfTopicsManager?.uploadBCF()
       const {topics, viewpoints} = result || {topics: [], viewpoints: []}
-      topics.map((topic: OBC.Topic, index) => {
+      topics.forEach((topic: OBC.Topic) => {
         // topic.viewpoints.add(viewpoints[index].guid) // I AM NOT GETTING THE VIEWPOINTS
         // console.log('Imported topic:', topic)
             bimDispatch({
@@ -212,7 +212,7 @@ export function TopicsSection() {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleExportBCF}
+            onClick={() => void handleExportBCF()}
             className="text-xs"
             title={t('exportBCFTitle')}
             disabled={!ability.can('read', 'File')}
@@ -223,7 +223,7 @@ export function TopicsSection() {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleImportBCF}
+            onClick={() => void handleImportBCF()}
             className="text-xs"
             title={t('importBCFTitle')}
             disabled={!ability.can('create', 'File')}

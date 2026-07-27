@@ -155,7 +155,7 @@ export const MapReducer = (state: MapState, action: MapActions) => {
       return {
         ...state,
         bimModelLoadingLocation: state.bimModelLoadingLocation.filter(
-          bim => bim.modelId != action.payload.modelId,
+          bim => bim.modelId !== action.payload.modelId,
         ),
       }
     case 'REMOVE_BIM_FROM_MAP':
@@ -164,7 +164,7 @@ export const MapReducer = (state: MapState, action: MapActions) => {
         modelId => modelId !== modelIdToRemove,
       )
       const updatedBimLoading = state.bimModelLoadingLocation.filter(
-        bim => bim.modelId != action.payload.modelId,
+        bim => bim.modelId !== action.payload.modelId,
       )
       return {
         ...state,

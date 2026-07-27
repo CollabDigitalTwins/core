@@ -13,8 +13,8 @@ import { useSensorTypes } from "../../../../../../../hooks/sensorTypes/sensorTyp
 import { useUsers } from "../../../../../../../hooks/users/users"
 import { AppConfigContext, MenusContext } from "../../../../../../../store"
 import { ViewerNames, type Sensor } from "../../../../../../../types/dbTypes"
-import { UNTAGGED_TAG } from "../../../../../../ui/Sensors/SensorsSection"
 import { readingsKey, valueColoursBySensor } from "../../../../../../ui/Sensors/sensorValueColours"
+import { activeSensorTypeId, visibleSensors } from "../../../../../../ui/Sensors/sensorVisibility"
 import { useSensorSeriesMulti } from "../../../../../../ui/Sensors/useSensorSeriesMulti"
 
 import BimSensor from "./BimSensor"
@@ -22,7 +22,7 @@ import { renderCSS2DMarkers, type MarkerRef } from "./renderCSS2DMarkers"
 
 export function useSensorMarkers(world: any, buildingId: number) {
   const { state: menusState, dispatch: menusDispatch } = React.useContext(MenusContext)
-  const { currentSensorId, focusedSensorId, visibleSensorTypes, visibleSensorTags } = menusState.menus
+  const { currentSensorId, focusedSensorId, visibleSensorTypes, visibleSensorTags, sensorLegendTypeId } = menusState.menus
   const { state: appConfigState } = React.useContext(AppConfigContext)
   const timeZone = appConfigState.appConfig.displayTimeZone
   const sessionUser = useSession().data?.user
@@ -64,17 +64,18 @@ export function useSensorMarkers(world: any, buildingId: number) {
   const eligibleSensorsRef = React.useRef(eligibleSensors)
   eligibleSensorsRef.current = eligibleSensors
 
-  // Every sensor sharing the focused sensor's type gets a halo coloured by its own current
-  // value, so the whole set can be read against the legend at a glance. Only that type is
-  // polled: haloing all types would fan out a request per sensor in the building.
-  const focusedSensor = focusedSensorId == null
-    ? undefined
-    : eligibleSensors.find(s => s.id === focusedSensorId)
-  const focusedTypeId = focusedSensor?.typeId ?? null
+  // Every sensor sharing the active type gets a halo coloured by its own current value, so the
+  // whole set can be read against the legend at a glance. Only that type is polled: haloing all
+  // types would fan out a request per sensor in the building. The type comes from the same
+  // helper the legend uses, so a type pinned in the legend dropdown moves the halos with it.
+  const haloTypeId = activeSensorTypeId(eligibleSensors, {
+    legendTypeId: sensorLegendTypeId?.[ViewerNames.bim],
+    activeSensorId: focusedSensorId,
+  })
 
-  const haloSensors = focusedTypeId == null
+  const haloSensors = haloTypeId == null
     ? []
-    : eligibleSensors.filter(s => s.typeId === focusedTypeId)
+    : eligibleSensors.filter(s => s.typeId === haloTypeId)
   // A fresh array each render is fine: the hook keys on the sensors' id+url string.
   const { seriesById } = useSensorSeriesMulti(haloSensors, { enabled: haloSensors.length > 0 })
 
@@ -123,17 +124,14 @@ export function useSensorMarkers(world: any, buildingId: number) {
     const typesVisible = visibleSensorTypes?.[ViewerNames.bim] || []
     const tagsVisible = visibleSensorTags?.[ViewerNames.bim] || []
 
-    const visibleSensors = eligibleSensorsRef.current.filter(sensor => {
-      const matchesType = typesVisible.includes(sensor.typeId)
-      const hasNoTags = !sensor.tags?.length
-      const matchesTag = hasNoTags
-        ? tagsVisible.includes(UNTAGGED_TAG)
-        : sensor.tags?.some((tag: string) => tagsVisible.includes(tag)) ?? false
-      return matchesType || matchesTag
+    const markerSensors = visibleSensors(eligibleSensorsRef.current, {
+      viewer: ViewerNames.bim,
+      visibleTypeIds: typesVisible,
+      visibleTags: tagsVisible,
     })
 
     const allSensors = [
-      ...visibleSensors.map(s => ({ ...s, isPending: false })),
+      ...markerSensors.map(s => ({ ...s, isPending: false })),
       ...pendingSensors.map(p => ({
         id: p.id,
         name: "Creating...",

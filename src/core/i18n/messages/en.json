@@ -1076,6 +1076,7 @@
     "newTagPlaceholder": "Tag name...",
     "cancel": "Cancel",
     "filters": "Filters",
+    "toggleLegend": "Show or hide the colour legend",
     "groupBy": "Group by",
     "groupByType": "Type",
     "groupByTag": "Tag",
@@ -1884,8 +1885,17 @@
     "uploadError": "Error uploading file:",
     "unknownError": "Unknown error occurred"
   },
+  "BuildingSensors": {
+    "average": "average",
+    "reporting": "{reporting} of {total} reporting",
+    "updated": "Updated {time}",
+    "noReading": "No reading"
+  },
   "SensorLegend": {
-    "noReading": "No reading yet"
+    "noReading": "No reading yet",
+    "selectType": "Change sensor type",
+    "close": "Hide legend",
+    "noRange": "No colour range configured for this type"
   },
   "SensorDetail": {
     "value": "Value",

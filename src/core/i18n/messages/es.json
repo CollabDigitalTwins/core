@@ -1076,6 +1076,7 @@
     "newTagPlaceholder": "Nombre de la etiqueta...",
     "cancel": "Cancelar",
     "filters": "Filtros",
+    "toggleLegend": "Mostrar u ocultar la leyenda de colores",
     "groupBy": "Agrupar por",
     "groupByType": "Tipo",
     "groupByTag": "Etiqueta",
@@ -1881,8 +1882,17 @@
     "uploadError": "Error al subir el archivo:",
     "unknownError": "Ocurrió un error desconocido"
   },
+  "BuildingSensors": {
+    "average": "promedio",
+    "reporting": "{reporting} de {total} activos",
+    "updated": "Actualizado a las {time}",
+    "noReading": "Sin lectura"
+  },
   "SensorLegend": {
-    "noReading": "Sin lectura todavía"
+    "noReading": "Sin lectura todavía",
+    "selectType": "Cambiar el tipo de sensor",
+    "close": "Ocultar la leyenda",
+    "noRange": "No hay rango de colores configurado para este tipo"
   },
   "SensorDetail": {
     "value": "Valor",

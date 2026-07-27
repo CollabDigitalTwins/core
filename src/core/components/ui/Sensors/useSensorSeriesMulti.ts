@@ -128,7 +128,7 @@ export function useSensorSeriesMulti(
 }
 
 /** Latest observed value per sensor id, for halos and current-value comparisons. */
-export function latestValues(seriesById: Map<number, SensorSeries>): Map<number, number> {
+export function latestValues(seriesById: ReadonlyMap<number, SensorSeries>): Map<number, number> {
   const latest = new Map<number, number>()
   for (const [id, series] of seriesById) {
     const last = series.points[series.points.length - 1]

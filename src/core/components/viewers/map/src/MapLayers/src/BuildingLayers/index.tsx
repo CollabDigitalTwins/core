@@ -11,9 +11,18 @@ import { useBuildings } from "../../../../../../../hooks/buildings/buildings";
 import { useBuildingsContext } from "../../../../../../../store";
 import { useBimContext } from "../../../../../../../store/BIM/context";
 import { MapContext } from "../../../../../../../store/Map/context";
-import { highlightColor } from "../../../../../../../types/martinTypes";
+import { ViewerNames } from "../../../../../../../types/dbTypes";
+import { useBuildingSensorColours } from "../../../../../../ui/Sensors/useBuildingSensorColours";
 import { MapLayerClickPriority } from "../../../../utils/MapEventManager/MapClickManager";
 import MapFeaturePopoverMenu from "../../../MapFeaturePopoverMenu";
+
+import {
+  buildingColourExpression,
+  DEFAULT_COLOUR_EXPRESSION,
+  osmColourEntries,
+  type PaintExpression,
+} from "./buildingColourExpression";
+import { BuildingSensorMarkers } from "./src/BuildingSensorMarkers";
 
 import type { MapMouseEvent } from "maplibre-gl";
 
@@ -40,7 +49,7 @@ function buildHeightExpression(hiddenBimOsmIds: string[]) {
   ];
 }
 
-function addBuildingLayer(map: any, hiddenBimOsmIds: string[]) {
+function addBuildingLayer(map: any, hiddenBimOsmIds: string[], colourExpr: PaintExpression) {
   try {
     if (!map.getSource("openmaptiles")) return;
     if (map.getLayer(LAYER_ID)) return;
@@ -56,7 +65,9 @@ function addBuildingLayer(map: any, hiddenBimOsmIds: string[]) {
       minzoom: 14,
       filter: buildLayerFilter(),
       paint: {
-        "fill-extrusion-color": ["coalesce", ["get", "colour"], "#cccccc"],
+        // Seeded rather than hardcoded: `styledata` re-adds this layer after any setStyle, and
+        // the paint effect below will not re-run for it, so the colours would be lost.
+        "fill-extrusion-color": colourExpr,
         "fill-extrusion-height": buildHeightExpression(hiddenBimOsmIds),
         "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
         "fill-extrusion-opacity": [
@@ -82,6 +93,29 @@ export function BuildingLayer() {
   const [hoveredFeature, setHoveredFeature] = React.useState<string | number | null>(null);
   const [clickedFeature, setClickedFeature] = React.useState<any>(null);
   const [buildingByOsmId, setBuildingByOsmId] = React.useState<Record<string, { id: number }>>({});
+
+  // Footprints are tinted by the average reading of the legend's sensor type. Nothing is polled
+  // and nothing changes colour until a type is pinned in the legend and switched on.
+  const sensorColours = useBuildingSensorColours(ViewerNames.map);
+  const { averages, colourKey } = sensorColours;
+
+  const osmColours = React.useMemo(
+    () => osmColourEntries(averages, buildings ?? []),
+    [averages, buildings],
+  );
+
+  const colourExpr = React.useMemo(
+    () => buildingColourExpression({
+      osmColours,
+      clickedKey: clickedFeature?.id ?? null,
+      hoveredKey: hoveredFeature,
+    }),
+    [osmColours, clickedFeature, hoveredFeature],
+  );
+
+  // Read by the add-layer effect, which must not re-run when only the colours change.
+  const colourExprRef = React.useRef<PaintExpression>(DEFAULT_COLOUR_EXPRESSION);
+  colourExprRef.current = colourExpr;
 
   const hiddenBimOsmIds = React.useMemo(
     () => Array.from(new Set(
@@ -124,10 +158,10 @@ export function BuildingLayer() {
     if (!map) return;
 
     if (map.isStyleLoaded()) {
-      addBuildingLayer(map, hiddenBimOsmIds);
+      addBuildingLayer(map, hiddenBimOsmIds, colourExprRef.current);
     }
 
-    const onStyleLoad = () => addBuildingLayer(map, hiddenBimOsmIds);
+    const onStyleLoad = () => addBuildingLayer(map, hiddenBimOsmIds, colourExprRef.current);
     map.on("styledata", onStyleLoad);
 
     return () => {
@@ -227,29 +261,17 @@ export function BuildingLayer() {
     };
   }, [map, mapClickManager, buildingByOsmId, hiddenBimOsmIds]);
 
-  // Update paint property for hover/click highlighting
+  // Single writer for fill-extrusion-color: hover, click and sensor colours are merged into one
+  // expression upstream, so there is no second effect to race with. `colourExpr` only changes
+  // when a highlight moves or a sensor colour actually differs, not on every 15s poll.
   React.useEffect(() => {
     if (!map || !map.getLayer(LAYER_ID)) return;
-
-    const defaultColorExpr = ["coalesce", ["get", "colour"], "#cccccc"] as const;
-    const conditionalColorArgs: any[] = [];
-
-    if (clickedFeature?.id != null) {
-      conditionalColorArgs.push(["==", ["id"], clickedFeature.id], highlightColor);
-    }
-    if (hoveredFeature != null) {
-      conditionalColorArgs.push(["==", ["id"], hoveredFeature], "#e0e0e0");
-    }
-
-    const colorExpr = conditionalColorArgs.length > 0
-      ? ["case", ...conditionalColorArgs, defaultColorExpr]
-      : defaultColorExpr;
-
-    map.setPaintProperty(LAYER_ID, "fill-extrusion-color", colorExpr);
-  }, [map, hoveredFeature, clickedFeature]);
+    map.setPaintProperty(LAYER_ID, "fill-extrusion-color", colourExpr);
+  }, [map, colourExpr]);
 
   return (
     <>
+      <BuildingSensorMarkers buildings={buildings ?? []} sensorColours={sensorColours} />
       {clickedFeature && clickedFeature.properties?.coordinates && (
         <Popup
           anchor="bottom"

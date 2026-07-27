@@ -96,7 +96,7 @@ export function useSensorMarkers(world: any, buildingId: number) {
 
   React.useEffect(() => {
     if (sensorToDelete !== null) {
-      deleteSensor()
+      void deleteSensor()
       setSensorToDelete(null)
     }
   }, [sensorToDelete, deleteSensor])

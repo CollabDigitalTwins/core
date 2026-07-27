@@ -95,7 +95,7 @@ export function FileManagerRow({
         isOpen={isDeleteDialogOpen}
         isDeleting={isDeleting}
         onOpenChange={setIsDeleteDialogOpen}
-        handleConfirm={async (e) => {
+        handleConfirm={(e) => { void (async () => {
           e.preventDefault()
           setIsDeleting(true)
           try {
@@ -105,7 +105,7 @@ export function FileManagerRow({
             setIsDeleting(false)
             setIsDeleteDialogOpen(false)
           }
-        }}
+        })() }}
         itemName={file.name}
         dataType={t('file')}
       />

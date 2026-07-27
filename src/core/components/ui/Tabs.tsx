@@ -19,11 +19,15 @@ const Tabs = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root> & {
     variant?: TabsVariant
   }
->(({ variant = 'default', ...props }, ref) => (
-  <TabsContext.Provider value={{ variant }}>
-    <TabsPrimitive.Root ref={ref} {...props} />
-  </TabsContext.Provider>
-))
+>(({ variant = 'default', ...props }, ref) => {
+  const contextValue = React.useMemo(() => ({ variant }), [variant])
+
+  return (
+    <TabsContext.Provider value={contextValue}>
+      <TabsPrimitive.Root ref={ref} {...props} />
+    </TabsContext.Provider>
+  )
+})
 Tabs.displayName = 'Tabs'
 
 const TabsList = React.forwardRef<

@@ -270,7 +270,7 @@ export const MeasureMapTool: React.FC<MeasureToolProps> = ({ tool }) => {
     }
     else {
       // Wait for the style to load
-      map.once('styledata', initializeMeasureTool)
+      void map.once('styledata', initializeMeasureTool)
     }
 
     // Click handler for measurement

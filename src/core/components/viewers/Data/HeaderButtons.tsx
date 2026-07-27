@@ -289,7 +289,7 @@ export default function HeaderButtons({
       {(currentViewer === 'buildings' || currentViewer === 'sites') && filteredData && (
         <Button
           variant="outline"
-          onClick={handleViewAllOnMap}
+          onClick={() => void handleViewAllOnMap()}
           disabled={filteredData.length === 0 || currentViewer === 'buildings' &&!ability.can('read', 'Building') || currentViewer === 'sites' && !ability.can('read', 'Site')}
         >
           <LR.Map className="" />

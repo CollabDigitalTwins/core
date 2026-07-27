@@ -135,7 +135,7 @@ export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
       if (event.key === 'Backspace') {
         // Remove the clipping plane under the cursor
         if (!world || !bimComponents) return
-        bimComponents.get(OBC.Clipper).delete(world, undefined)
+        void bimComponents.get(OBC.Clipper).delete(world, undefined)
       }
     }
   }, [world, bimComponents])
@@ -173,7 +173,7 @@ export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
   return (
     <div>
       <ToolbarSubmenu tool={tool}>
-        <DropdownMenuItem onClick={flipAddingPlaneState}>
+        <DropdownMenuItem onClick={() => void flipAddingPlaneState()}>
           <LR.PlusSquare />
           <span>{active? 'Cancel add' : 'Add'} clipping Plane</span>
         </DropdownMenuItem>

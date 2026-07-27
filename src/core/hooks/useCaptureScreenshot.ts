@@ -41,7 +41,7 @@ export function useCaptureScreenshot(): () => Promise<string | null> {
       if (currentViewer === ViewerNames.map && map) {
         await Promise.race([
           new Promise<void>((res) => {
-            map.once('render', () => {
+            void map.once('render', () => {
               viewerCanvas = map.getCanvas()
               viewerBounds = viewerCanvas.getBoundingClientRect()
               try { viewerDataUrl = viewerCanvas.toDataURL('image/png') } catch { /* cross-origin */ }
@@ -140,10 +140,11 @@ export function useCaptureScreenshot(): () => Promise<string | null> {
         }
       }
 
-      return new Promise<string | null>((resolve) => {
+      return await new Promise<string | null>((resolve) => {
         uiCanvas.toBlob((blob) => {
           if (!blob) { resolve(null); return }
-          blobToBase64(blob).then(resolve)
+          // Resolve null rather than leaving the promise pending if encoding fails.
+          blobToBase64(blob).then(resolve).catch(() => resolve(null))
         }, 'image/png', 1.0)
       })
     } catch (err) {

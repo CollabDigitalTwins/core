@@ -90,12 +90,6 @@ export default function DatabaseBuildingPopover ({
 ]
     );
 
-    if (!buildingId) {
-
-        return null;
-
-    }
-
     const [expanded, setExpanded] = React.useState(false);
 
     // Show only the short subdivision code (e.g. "ON" from "CA-ON")
@@ -105,6 +99,13 @@ export default function DatabaseBuildingPopover ({
         const dash = code.lastIndexOf('-');
         return dash >= 0 ? code.slice(dash + 1) : code;
     }, [locationData.countrySubdivision]);
+
+    // After every hook, so the hook order holds for features without a building.
+    if (!buildingId) {
+
+        return null;
+
+    }
 
     return (
         <PopoverContent

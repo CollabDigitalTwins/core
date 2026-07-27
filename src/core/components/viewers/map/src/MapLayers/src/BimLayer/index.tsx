@@ -108,7 +108,6 @@ export const BimLayer = () => {
             if (map.getLayer(layerName)) {
                 map.removeLayer(layerName);
                 addedLayersRef.current.delete(layerName);
-                console.log(`Removed layer: ${layerName}`);
             }
         });
 
@@ -155,7 +154,7 @@ export const BimLayer = () => {
 
                 model.graphicsQuality = 1;
                 scene.add(model.object);
-                fragments.core.update(true);
+                void fragments.core.update(true);
                 map.triggerRepaint();
 
                 return model;
@@ -228,7 +227,7 @@ export const BimLayer = () => {
                     scene.rotateY(originalRotation * (Math.PI / 180));
                     this.scene = scene;
 
-                    loadModel(buildingModel, fragments, scene, map, lodCamera).then(loaded => {
+                    void loadModel(buildingModel, fragments, scene, map, lodCamera).then(loaded => {
                         model = loaded;
                         // Open the settle window so the just-loaded fragments stream
                         // in and paint over the next frames, then idle.
@@ -250,7 +249,7 @@ export const BimLayer = () => {
                     onMapMove = () => { lastMoveTime = performance.now(); };
                     onMapMoveEnd = () => {
                         lastMoveTime = performance.now();
-                        if (model) fragments.core.update(true);
+                        if (model) void fragments.core.update(true);
                         // Terrain tiles for the new view are loaded once the camera
                         // settles — refresh the cached elevation here, not per frame.
                         recomputeTerrainElev();
@@ -339,7 +338,7 @@ export const BimLayer = () => {
                         const now = performance.now();
                         if (now - lastLodUpdate > 50) {
                             lastLodUpdate = now;
-                            fragments.core.update();
+                            void fragments.core.update();
                         }
                         // Render-on-demand: only keep the frame loop alive while the
                         // camera recently moved (settle window, for fragment
@@ -370,7 +369,7 @@ export const BimLayer = () => {
             };
         };
 
-        modelsToAdd.forEach(async buildingModel => {
+        void Promise.all(modelsToAdd.map(async (buildingModel) => {
             try {
                 const { fragments } = await getOrCreateShared();
 
@@ -387,12 +386,11 @@ export const BimLayer = () => {
 
                 map.addLayer(customLayer);
                 addedLayersRef.current.add(layerName);
-                console.log(`Added layer: ${layerName}`);
 
             } catch (err) {
                 console.error("Error adding BIM layer:", err);
             }
-        });
+        }));
 
     }, [map, bimModelsAddedToMap]);
 

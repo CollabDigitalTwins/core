@@ -192,8 +192,7 @@ export async function fetchCkanDatasets(
                 const features = data.result.records
                   .map((properties: any) => {
                     try {
-                      let geometry
-                      geometry = properties.geometry?.type ? properties.geometry : JSON.parse(properties.geometry)
+                      const geometry = properties.geometry?.type ? properties.geometry : JSON.parse(properties.geometry)
 
                       return {
                         type: 'Feature',

@@ -13,6 +13,7 @@ import { mutate } from 'swr'
 import { useOrganization } from '../../../hooks/organizations/organizations'
 import { MapContext, usePermissions } from '../../../store'
 import { uploadOrganizationLogoToPublicBucket } from '../../../utils/imageUtils'
+import { toDisplayString } from '../../../utils/utils'
 import { Button } from '../../ui/Button'
 import { Input } from '../../ui/Input'
 import {
@@ -113,7 +114,7 @@ export default function OrganizationSettingsPanel({
       const responseData = await res.json()
       const updatedOrg = responseData?.organization ?? responseData
       setOrganization(updatedOrg)
-      mutate(['organization', String(userOrganizationId)], updatedOrg, { revalidate: false })
+      void mutate(['organization', String(userOrganizationId)], updatedOrg, { revalidate: false })
       setEditingValues({})
       setIsEditing(false)
       setHasChanges(false)
@@ -121,6 +122,7 @@ export default function OrganizationSettingsPanel({
       setSelectedFaviconFile(null)
       toast.success('Organization updated successfully')
     } catch (error) {
+      console.error('Organization update failed:', error)
       toast.error('Failed to update organization')
     }
   }
@@ -138,13 +140,13 @@ export default function OrganizationSettingsPanel({
   const logoUrl = selectedLogoFile
     ? URL.createObjectURL(selectedLogoFile)
     : (getFieldValue('logoKey') as string | null | undefined) && minioBaseUrl
-      ? `${minioBaseUrl}/org-logos/${getFieldValue('logoKey')}`
+      ? `${minioBaseUrl}/org-logos/${toDisplayString(getFieldValue('logoKey'))}`
       : null
 
   const faviconUrl = selectedFaviconFile
     ? URL.createObjectURL(selectedFaviconFile)
     : (getFieldValue('faviconKey') as string | null | undefined) && minioBaseUrl
-      ? `${minioBaseUrl}/org-logos/${getFieldValue('faviconKey')}`
+      ? `${minioBaseUrl}/org-logos/${toDisplayString(getFieldValue('faviconKey'))}`
       : null
 
 // const faviconUrl = selectedFaviconFile
@@ -186,7 +188,7 @@ export default function OrganizationSettingsPanel({
               <Button variant="outline" onClick={handleCancel} disabled={!ability.can('update', "Organization")}>
                 {t('cancel')}
               </Button>
-              <Button onClick={handleSave} disabled={!hasChanges || !ability.can('update', "Organization")}>
+              <Button onClick={() => void handleSave()} disabled={!hasChanges || !ability.can('update', "Organization")}>
                 <LR.Save className="mr-2" />
                 {t('save')}
               </Button>
@@ -386,7 +388,7 @@ export default function OrganizationSettingsPanel({
               <div className="space-y-2">
                 <label className="text-sm font-medium">{t('fields.countrySubdivision')}</label>
                 <Select
-                  value={String(getFieldValue('countrySubdivision') || '')}
+                  value={toDisplayString(getFieldValue('countrySubdivision'))}
                   onValueChange={(value) => handleInputChange('countrySubdivision', value)}
                   disabled={!isEditing}
                 >

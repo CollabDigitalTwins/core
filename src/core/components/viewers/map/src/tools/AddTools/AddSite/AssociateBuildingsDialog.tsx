@@ -110,7 +110,7 @@ export const AssociateBuildingsDialog = ({
           <Button variant="outline" onClick={onClose} disabled={isSaving}>
             {tf('skip', 'Skip')}
           </Button>
-          <Button onClick={handleAssociate} disabled={isSaving || selected.size === 0}>
+          <Button onClick={() => void handleAssociate()} disabled={isSaving || selected.size === 0}>
             {isSaving && <LoadingSpinner />}
             {tf('associate', 'Associate')} ({selected.size})
           </Button>

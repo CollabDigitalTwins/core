@@ -32,8 +32,8 @@ export function createSiteHooks(adapter: ApiAdapter) {
       async (_k, { arg }: { arg: SiteUpdateInput }) => adapter.updateSite(siteId, arg),
       {
         onSuccess: () => {
-          mutate(["site", siteId]);
-          mutate(["sites"]);
+          void mutate(["site", siteId]);
+          void mutate(["sites"]);
           // NOTE: intentionally not revalidating ["buildings"] — associating a
           // building to a site doesn't change the buildings list's displayed
           // data, and revalidating it re-renders the always-mounted map's
@@ -51,7 +51,7 @@ export function createSiteHooks(adapter: ApiAdapter) {
       async (_k, { arg }: { arg: Partial<Site> }) => adapter.createSite(arg),
       {
         onSuccess: () => {
-          mutate(["sites"]);
+          void mutate(["sites"]);
         },
       }
     );
@@ -67,8 +67,8 @@ export function createSiteHooks(adapter: ApiAdapter) {
 
     const deleteSite = async (id: string | number) => {
       await trigger(id);
-      mutate(["sites"]);
-      mutate(["buildings"]) // Revalidate buildings in case any were associated with the deleted site
+      void mutate(["sites"]);
+      void mutate(["buildings"]) // Revalidate buildings in case any were associated with the deleted site
     };
 
     return { deleteSite, isMutating, deleteError: error, deletedData: data };

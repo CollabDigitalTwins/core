@@ -97,7 +97,7 @@ export function SignUp() {
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
         <div className="flex gap-x-4">
           <div className="space-y-2 flex-1">
             <label htmlFor="firstName" className="auth-label">{t('inputLabel1')}</label>
@@ -221,7 +221,7 @@ export function SignUp() {
 
       {/* Google auth */}
       <Button
-        onClick={() => signIn('google', { callbackUrl: '/' })}
+        onClick={() => { void signIn('google', { callbackUrl: '/' }) }}
         className="auth-btn-outline w-full h-10"
       >
         <Image src="/images/Google__G__logo.svg" alt="Google logo" width={16} height={16} />

@@ -14,7 +14,7 @@ import { useUploadFileToUser } from '../../../hooks/files/files'
 import { useUser, useUserRole, useUsers } from '../../../hooks/users/users'
 import { useChangePassword, useVerifyPassword } from '../../../hooks/users/users';
 import { usePermissions } from '../../../store'
-import { getFileExtension } from '../../../utils/utils'
+import { getFileExtension, toDisplayString } from '../../../utils/utils'
 import { Badge, Button, Input, LoadingSpinner, Separator } from '../../ui/'
 import { DescriptionListItem } from '../../ui/DescriptionList'
 import { UserAvatar } from '../../ui/UserAvatar'
@@ -78,7 +78,7 @@ React.useEffect(() => {
     }
   }
 
-  fetchGoogleStatus()
+  void fetchGoogleStatus()
 
 }, [])
 
@@ -223,7 +223,7 @@ const handleGoogleUnlink = async () => {
     })
 
     if (!res.ok) {
-      throw new Error()
+      throw new Error(`Failed to unlink Google account: ${res.status}`)
     }
 
 
@@ -299,7 +299,7 @@ const handleGoogleSecurityConfirm = async () => {
                         accept="image/*"
                         title="Change image"
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        onChange={handleUserImageChange}
+                        onChange={(e) => void handleUserImageChange(e)}
                       />
                     </>
                   )}
@@ -309,7 +309,7 @@ const handleGoogleSecurityConfirm = async () => {
 
             {user && entries.map(([key, value], index) => {
               if (key === 'name') {
-                const nameParts = String(value).split(' ')
+                const nameParts = toDisplayString(value).split(' ')
                 const firstName = nameParts[0]
                 const lastName = nameParts.slice(1).join(' ')
                 return (
@@ -359,7 +359,7 @@ const handleGoogleSecurityConfirm = async () => {
                 )
                 }
 
-              const displayValue = typeof value === 'object' ? JSON.stringify(value) : String(value)
+              const displayValue = toDisplayString(value)
 
               return (
                 <div key={key} className={`grid grid-cols-1 gap-3 py-3 w-full ${!isEditing ? 'border-b border-border' : ''}`}>
@@ -368,7 +368,7 @@ const handleGoogleSecurityConfirm = async () => {
                       ? (
                         <Input
                           type={key === 'email' ? 'email' : 'text'}
-                          value={String(editValues[key] ?? value ?? '')}
+                          value={toDisplayString(editValues[key] ?? value)}
                           onChange={e => handleInputChange(key, e.target.value)}
                           disabled={key === 'email'}
                         />
@@ -385,7 +385,7 @@ const handleGoogleSecurityConfirm = async () => {
               <div className="flex gap-2">
                 <Button
                   disabled={!hasChanges() || isMutating || !ability.can('update', 'User')}
-                  onClick={async () => {
+                  onClick={() => { void (async () => {
                     try {
                       const payload = getUpdatePayload()
                       if (Object.keys(payload).length > 0) {
@@ -397,7 +397,7 @@ const handleGoogleSecurityConfirm = async () => {
                     catch {
                       toast.error(t('toastError'))
                     }
-                  }}
+                  })() }}
                 >
                   {isMutating ? <LoadingSpinner /> : t('save')}
                 </Button>
@@ -498,7 +498,7 @@ const handleGoogleSecurityConfirm = async () => {
         </Button>
 
         <Button
-          onClick={handleGoogleSecurityConfirm}
+          onClick={() => void handleGoogleSecurityConfirm()}
         >
           Confirm
         </Button>

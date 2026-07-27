@@ -48,7 +48,7 @@ type MapToolsConfig = {
 }
 
 // Export toolbar configuration
-export function mapToolbarTools(config?: MapToolsConfig): Tool[] {
+export function useMapToolbarTools(config?: MapToolsConfig): Tool[] {
   // Translation
   const t = useTranslations('mapToolbarTools')
 
@@ -79,3 +79,6 @@ export function mapToolbarTools(config?: MapToolsConfig): Tool[] {
     },
   ]
 }
+
+/** @deprecated Renamed to useMapToolbarTools; it is a hook and must be called during render. */
+export const mapToolbarTools = useMapToolbarTools

@@ -91,6 +91,7 @@ export function InstanceNotFound({ organizationName }: InstanceNotFoundProps) {
       form.reset()
 
     } catch (error) {
+      console.error('Instance request failed:', error)
       toast.error('Failed to send request', {
         description: 'Please try again later or email us directly at info@collabdt.org',
       })
@@ -116,7 +117,7 @@ export function InstanceNotFound({ organizationName }: InstanceNotFoundProps) {
       />
       <OrganizationNotFoundSection
         organizationName={organizationName}
-        onSubmit={handleSubmit}
+        onSubmit={(e) => void handleSubmit(e)}
         isSubmitting={isSubmitting}
       />
     </div>

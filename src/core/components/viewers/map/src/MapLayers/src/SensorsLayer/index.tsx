@@ -200,7 +200,7 @@ export const SensorLayers = () => {
 
       if (!feature || feature.properties.point_count) return
 
-      if (feature.geometry.type != 'Point') return
+      if (feature.geometry.type !== 'Point') return
       const [longitude, latitude] = feature.geometry.coordinates
       const { id, authorId, name, typeId, data, dataFormat, updateFrequency, createdAt, url } = feature.properties
       // Focus on click so the legend and the sibling halos follow the sensor just opened.
@@ -244,7 +244,7 @@ export const SensorLayers = () => {
 
   const handleRemoveSensor = () => {
     toast.success(t('sensorDeleted'))
-    deleteSensor()
+    void deleteSensor()
     setPopUpInfo(null)
   }
 

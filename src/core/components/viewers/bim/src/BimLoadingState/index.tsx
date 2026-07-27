@@ -193,7 +193,7 @@ export function BimLoadingState() {
 
       // Force update the fragments to render geometry immediately
       if (fragments) {
-        fragments.core.update(true)
+        void fragments.core.update(true)
       }
 
       // If every file failed to load, surface an error instead of silently
@@ -261,7 +261,7 @@ export function BimLoadingState() {
     if (building && bimFiles.length > 0) {
       setCurrentState('loading')
       setCameraHasMoved(false) // Reset camera moved state for new model
-      loadBimModels()
+      void loadBimModels()
     }
   }, [bimComponents, building, buildingLoading, buildingError, buildingId, filesLoading, bimFiles.length, loadBimModels, hasLoadedModels])
 
@@ -426,7 +426,7 @@ export function BimLoadingState() {
                   ref={fileInputRef}
                   type="file"
                   accept=".ifc,.frag"
-                  onChange={handleFileChange}
+                  onChange={(event) => void handleFileChange(event)}
                   className="hidden"
                 />
                 <Button

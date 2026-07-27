@@ -166,7 +166,7 @@ export async function fetchArcGISDatasets(
             if (cached) return cached
 
             const inFlight = inFlightFeatureRequests.get(featuresKey)
-            if (inFlight) return inFlight
+            if (inFlight !== undefined) return inFlight
 
             const baseQuery = `${url}/${layerIndex}/query?outFields=*&where=1%3D1&f=geojson${spatialFilter}`
 
@@ -229,7 +229,7 @@ export async function fetchArcGISDatasets(
           const getFeaturesData = async () => {
             try {
               const res = await fetchWithTimeout(`${url}/${layerIndex}?f=pjson`)
-              return res.ok ? res.json() : undefined
+              return res.ok ? await res.json() : undefined
             }
             catch { return undefined }
           }

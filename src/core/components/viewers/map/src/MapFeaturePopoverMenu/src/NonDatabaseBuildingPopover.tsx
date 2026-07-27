@@ -174,7 +174,7 @@ export default function NonDatabaseBuildingPopover({
     if (feature.properties?.coordinates) {
       const longitude = feature.properties.coordinates[0]
       const latitude = feature.properties.coordinates[1]
-      getAddress(longitude, latitude)
+      void getAddress(longitude, latitude)
     }
   }, [feature, buildings, setSelectedItem, normalizeAddress, clearExistingBuildingMatches])
 
@@ -341,7 +341,7 @@ export default function NonDatabaseBuildingPopover({
 
   return (
     <PopoverContent className="w-64 -m-1" side="top">
-      <form onSubmit={handleCreateNewBuilding}>
+      <form onSubmit={(event) => void handleCreateNewBuilding(event)}>
         {/* Header row: close button, no overlap with content below */}
         <div className="flex items-center justify-end mb-1">
           <Button
@@ -388,7 +388,7 @@ export default function NonDatabaseBuildingPopover({
                   variant="outline"
                   size="sm"
                   className='w-full'
-                  onClick={() => selectedMatchingBuilding && handleAttachExistingBuilding(selectedMatchingBuilding)}
+                  onClick={() => { void (selectedMatchingBuilding && handleAttachExistingBuilding(selectedMatchingBuilding)) }}
                   disabled={isAttaching || isUpdating || !selectedMatchingBuilding}
                 >
                   {(isAttaching || isUpdating) ? (

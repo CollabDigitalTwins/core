@@ -251,7 +251,7 @@ export default function BuildingTools({
     <div className="space-y-4">
       {/* Hidden file input */}
       <input
-        onChange={(e) => handleFileUpload(e.target.files?.[0] || null)}
+        onChange={(e) => { void handleFileUpload(e.target.files?.[0] || null) }}
         ref={fileInputRef}
         style={{ "display": "none" }}
         type="file"

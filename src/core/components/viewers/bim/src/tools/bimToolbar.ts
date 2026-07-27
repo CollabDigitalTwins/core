@@ -23,7 +23,13 @@ export type BimToolbarToolsType =
  'bim-clipping' |
  'bim-camera-fit' | 'bim-selection' | 'bim-camera' | 'bim-dimensions' | 'bim-inspect' | 'bim-share' | 'bim-explode'
 
-export function bimToolbarTools(config?: { minioBaseUrl?: string }): Tool[] {
+/**
+ * BIM toolbar tool definitions.
+ *
+ * Named as a hook because it calls useTranslations, so it has to run during a
+ * component render like any other hook.
+ */
+export function useBimToolbarTools(config?: { minioBaseUrl?: string }): Tool[] {
   // Translation
   const t = useTranslations('bimToolbarTools')
 
@@ -76,3 +82,6 @@ export function bimToolbarTools(config?: { minioBaseUrl?: string }): Tool[] {
     // Add more tools here if needed
   ]
 }
+
+/** @deprecated Renamed to useBimToolbarTools; it is a hook and must be called during render. */
+export const bimToolbarTools = useBimToolbarTools

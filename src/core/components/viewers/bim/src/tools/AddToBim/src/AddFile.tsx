@@ -118,26 +118,10 @@ export default function AddFile({
     fileIcon.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)'
     document.body.append(fileIcon)
 
-    const handleMouseMove = async (e: MouseEvent) => {
+    const handleMouseMove = (e: MouseEvent) => {
       // Update file icon position (still use screen coordinates for UI)
       fileIcon.style.left = e.clientX + 'px'
       fileIcon.style.top = e.clientY + 'px'
-
-      // Use screen coordinates for raycasting (not normalized)
-      mouse.x = e.clientX
-      mouse.y = e.clientY
-
-      // Cast ray using custom raycast function
-      const result = await raycast({
-        camera: world.camera.three,
-        mouse,
-        dom: world.renderer!.three.domElement!,
-      })
-
-      if (result) {
-        console.log('Ray hit point:', result.point)
-        console.log('Ray hit normal:', result.normal)
-      }
     }
 
     const handleClick = async (e: MouseEvent) => {
@@ -152,9 +136,6 @@ export default function AddFile({
       })
 
       if (result) {
-        console.log('File placed at 3D position:', result.point)
-        console.log('Full raycast result:', result)
-
         // Validate the point is not zero or invalid
         if (result.point && (result.point.x !== 0 || result.point.y !== 0 || result.point.z !== 0)) {
           // Create a small sphere at the hit position
@@ -238,15 +219,12 @@ export default function AddFile({
 
           // Add click handler to the label for interaction
           labelDiv.addEventListener('click', () => {
-            console.log('Label clicked for file:', selectedFile.name)
             const textDiv = labelDiv.querySelector('div:last-child') as HTMLElement
             if (textDiv) {
               textDiv.style.display = 'block'
             }
             // You can add more interaction logic here
           })
-
-          console.log('Label placed at:', sphere.position)
 
           // Call the callback if provided
           onFileAttached?.(selectedFile, sphere.position)
@@ -258,18 +236,17 @@ export default function AddFile({
         // Clean up after placing
         onCancel()
       }
-      else {
-        console.log('No raycast result')
-      }
     }
 
+    const onClick = (e: MouseEvent) => { void handleClick(e) }
+
     document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('click', handleClick)
+    document.addEventListener('click', onClick)
 
     // Cleanup function to remove the icon and event listeners
     return () => {
       document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('click', handleClick)
+      document.removeEventListener('click', onClick)
       if (document.body.contains(fileIcon)) {
         fileIcon.remove()
       }

@@ -269,7 +269,7 @@ export class IDSManager extends OBC.Component {
                         meshDataSet.add(mesh);
                     }
                 }
-            } catch (error) {
+            } catch {
                 // Error highlighting elements for this model
             }
         }

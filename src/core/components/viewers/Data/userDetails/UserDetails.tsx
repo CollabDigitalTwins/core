@@ -236,8 +236,8 @@ const UserDetails = React.forwardRef<UserDetailsRef, UserDetailsProps>(({
           setSelectedUser({ ...selectedUser, ...updatedUser })
         }
 
-        mutate(['users'])
-        mutate(['user', String(selectedUser.id)])
+        void mutate(['users'])
+        void mutate(['user', String(selectedUser.id)])
 
         setEditingValues({})
         setEditing?.(false)
@@ -512,7 +512,7 @@ const UserDetails = React.forwardRef<UserDetailsRef, UserDetailsProps>(({
                             onChange={e => {
                               const file = e.target.files?.[0] || null
                               if (!file) return
-                              handleImageUpload(file)
+                              void handleImageUpload(file)
                             }}
                             disabled={!ability.can('update', 'Role')}
                           />

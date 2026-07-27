@@ -26,7 +26,7 @@ export class LoadIfcAsFragments extends OBC.Component {
     this.world = components.get(CurrentWorld).world
     this.fragments = components.get(OBC.FragmentsManager)
     this.loadModels = components.get(LoadModels)
-    this.initializeSerializer()
+    void this.initializeSerializer()
   }
 
   private async initializeSerializer() {

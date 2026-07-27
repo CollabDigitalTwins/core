@@ -42,7 +42,7 @@ export function ToggleProjection() {
 
       // Only toggle if the requested mode is different from current
       if (mode !== currentProjection) {
-        world.camera.projection.toggle()
+        void world.camera.projection.toggle()
       }
 
       setCameraMode(mode)

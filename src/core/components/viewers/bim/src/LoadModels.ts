@@ -267,7 +267,7 @@ export class LoadModels extends OBC.Component {
             void this.spatialStructure.getSpatialStructure(modelId);
         }
 
-        this.fragments?.core.update(true);
+        void this.fragments?.core.update(true);
     }
 
 }

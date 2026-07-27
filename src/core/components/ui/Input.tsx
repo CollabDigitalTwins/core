@@ -54,11 +54,9 @@ const ColorInput = React.forwardRef<HTMLInputElement, Omit<React.ComponentProps<
         // Validate if it's a valid hex color
         const hexPattern = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/
         if (hexPattern.test(newValue)) {
-          const syntheticEvent = {
-            ...e,
-            target: { ...e.target, value: newValue },
-          } as React.ChangeEvent<HTMLInputElement>
-          onChange?.(syntheticEvent)
+          // newValue is e.target.value, so the original event already carries it —
+          // no need to clone it (spreading e.target would drop its methods anyway).
+          onChange?.(e)
           onValueChange?.(newValue)
         }
       }

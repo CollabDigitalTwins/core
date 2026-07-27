@@ -65,15 +65,15 @@ export const InspectBimTool: React.FC<InspectToolProps> = ({ tool }) => {
     if (!container) return
 
     // Click handler for inspect
-    const clickHandler = (e): void => {
+    // TODO: pick the element under the cursor and open its properties
+    const clickHandler = (): void => {
       if (!active) return
-      console.log('clickHandler', e)
     }
 
     // Mousemove handler for cursor style
-    const mousemoveHandler = (e): void => {
+    // TODO: highlight the hovered element
+    const mousemoveHandler = (): void => {
       if (!active) return
-      console.log('mousemoveHandler', e)
     }
 
     // Add event listeners
@@ -89,15 +89,7 @@ export const InspectBimTool: React.FC<InspectToolProps> = ({ tool }) => {
     }
   }, [active, world])
 
-  // Monitor active state changes
-  React.useEffect(() => {
-    if (active) {
-      // setCursor('crosshair');
-    }
-    else {
-      // setCursor('');
-    }
-  }, [active])
+  // TODO: set the crosshair cursor while the tool is active (setCursor above).
 
   // When current tool changes
   React.useEffect(() => {

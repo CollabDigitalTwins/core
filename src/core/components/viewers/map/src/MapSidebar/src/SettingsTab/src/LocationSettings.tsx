@@ -292,7 +292,7 @@ export function LocationSettings({ countryCode }: { countryCode?: string }) {
         <label className="text-sm font-medium">{t('countrySubdivision')}</label>
         <Select
           value={countrySubdivision}
-          onValueChange={onCountrySubdivisionChange}
+          onValueChange={(value) => void onCountrySubdivisionChange(value)}
         >
           <SelectTrigger>
             <SelectValue placeholder={t('selectCountrySubdivision')} />
@@ -313,7 +313,7 @@ export function LocationSettings({ countryCode }: { countryCode?: string }) {
         <Input
           type="text"
           value={municipalityInput}
-          onChange={onMunicipalityChange}
+          onChange={(e) => void onMunicipalityChange(e)}
           placeholder={t('enter') + ' ' + t('municipality')}
           autoComplete="off"
         />

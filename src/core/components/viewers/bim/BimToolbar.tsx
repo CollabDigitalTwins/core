@@ -7,8 +7,8 @@ import * as React from 'react'
 
 import { ToolbarBody } from '../../ToolbarBody'
 
-import { bimToolbarTools } from './src/tools/bimToolbar'
+import { useBimToolbarTools } from './src/tools/bimToolbar'
 
 export function BimToolbar({ minioBaseUrl }: { minioBaseUrl?: string }) {
-  return <ToolbarBody viewer="bim" tools={bimToolbarTools({ minioBaseUrl })} />
+  return <ToolbarBody viewer="bim" tools={useBimToolbarTools({ minioBaseUrl })} />
 }

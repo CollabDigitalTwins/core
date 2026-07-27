@@ -94,6 +94,7 @@ export default function MoreOptions({ row, dataType, variant, setView, hideViewO
       setIsConfirmDialogOpen(false)
       setView('table')
     } catch (err) {
+      console.error('Site deletion failed:', err)
       toast.error("Error deleting site")
     }
   }
@@ -153,7 +154,7 @@ export default function MoreOptions({ row, dataType, variant, setView, hideViewO
 
   }
 
-  if (dataType == 'file') {
+  if (dataType === 'file') {
     const fileRow = row as FileRow
     return (<FileMoreOptions file={fileRow} />)
   }
@@ -175,8 +176,8 @@ export default function MoreOptions({ row, dataType, variant, setView, hideViewO
         <DropdownMenuContent align="end">
           {!hideViewOnMap && (
             <DropdownMenuItem
-              onClick={() => handleViewOnMap(row)}
-              disabled={dataType == 'building' && !ability.can('read', 'Building') || dataType == 'site' && !ability.can('read', 'Site')}
+              onClick={() => { void handleViewOnMap(row) }}
+              disabled={dataType === 'building' && !ability.can('read', 'Building') || dataType === 'site' && !ability.can('read', 'Site')}
             >
               <Map />
               {t('viewMap')}
@@ -185,7 +186,7 @@ export default function MoreOptions({ row, dataType, variant, setView, hideViewO
           {dataType === 'building' && (
             <DropdownMenuItem
               onClick={() => handleViewBIM(row)}
-              disabled={dataType == 'building' && !ability.can('read', 'Building')}
+              disabled={dataType === 'building' && !ability.can('read', 'Building')}
             >
               <Box />
               {t('viewBIM')}
@@ -206,7 +207,7 @@ export default function MoreOptions({ row, dataType, variant, setView, hideViewO
           {dataType === 'site' && (
             <DropdownMenuItem
               onClick={() => setIsConfirmDialogOpen(true)}
-              disabled={dataType == 'site' && !ability.can('update', 'Site') ||isDeleting}
+              disabled={dataType === 'site' && !ability.can('update', 'Site') ||isDeleting}
             >
               <Trash2 />
               {t('deleteSite')}
@@ -229,7 +230,7 @@ export default function MoreOptions({ row, dataType, variant, setView, hideViewO
         isOpen={isConfirmDialogOpen}
         isDeleting={dataType === 'site' ? isDeleting : isDeletingUser}
         onOpenChange={setIsConfirmDialogOpen}
-        handleConfirm={dataType === 'site' ? handleDeleteSite : handleDeleteUser}
+        handleConfirm={e => void (dataType === 'site' ? handleDeleteSite(e) : handleDeleteUser(e))}
         itemName={dataType === 'site' ? (row as Site).siteName : dataType === 'user' ? (row as User).name : undefined}
         dataType={dataType === 'site' ? 'site' : dataType === 'user' ? 'user' : undefined}
       />

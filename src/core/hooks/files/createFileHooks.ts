@@ -31,13 +31,13 @@ export function createFileHooks(adapter: ApiAdapter) {
               onSuccess: (updatedFile: DbFile) => {
                   if (!id) return;
                   // Revalidate the same keys used above, not endpoints
-                  mutate(["file", id]);
-                  mutate(["files"]);
+                  void mutate(["file", id]);
+                  void mutate(["files"]);
                   if (updatedFile.attachedFilesBuildingId) {
-                      mutate(["filesByBuilding", updatedFile.attachedFilesBuildingId, ""]);
+                      void mutate(["filesByBuilding", updatedFile.attachedFilesBuildingId, ""]);
                   }
                   if (updatedFile.attachedFilesSiteId) {
-                      mutate(["filesBySite", updatedFile.attachedFilesSiteId, ""]);
+                      void mutate(["filesBySite", updatedFile.attachedFilesSiteId, ""]);
                   }
               },
           }
@@ -79,9 +79,9 @@ export function createFileHooks(adapter: ApiAdapter) {
         adapter.uploadFileToBuilding(buildingId, arg.fileData),
       {
         onSuccess: () => {
-          mutate(["filesByBuilding", buildingId, ""]);
-          mutate(["files"]);
-          mutate(["building", buildingId]);
+          void mutate(["filesByBuilding", buildingId, ""]);
+          void mutate(["files"]);
+          void mutate(["building", buildingId]);
         },
       }
     );
@@ -95,9 +95,9 @@ export function createFileHooks(adapter: ApiAdapter) {
         adapter.uploadFileToSite(siteId, arg.fileData),
       {
         onSuccess: () => {
-          mutate(["filesBySite", siteId, ""]);
-          mutate(["files"]);
-          mutate(["site", siteId]);
+          void mutate(["filesBySite", siteId, ""]);
+          void mutate(["files"]);
+          void mutate(["site", siteId]);
         },
       }
     );
@@ -111,8 +111,8 @@ export function createFileHooks(adapter: ApiAdapter) {
         adapter.uploadFileToUser(userId, arg.fileData),
       {
         onSuccess: () => {
-          mutate(["files"]);
-          mutate(["user", userId]);
+          void mutate(["files"]);
+          void mutate(["user", userId]);
         },
       }
     );
@@ -127,15 +127,15 @@ export function createFileHooks(adapter: ApiAdapter) {
     const deleteFile = async (fileId: number) => {
         await trigger({ fileId });
         // revalidate after the mutation using the fileId we have in scope
-        mutate(["files"]);
-        mutate(["file", fileId]);
+        void mutate(["files"]);
+        void mutate(["file", fileId]);
         if (buildingId) {
-          mutate(["filesByBuilding", buildingId, ""]);
-          mutate(["building", buildingId]);
+          void mutate(["filesByBuilding", buildingId, ""]);
+          void mutate(["building", buildingId]);
         }
         if (siteId) {
-          mutate(["filesBySite", siteId, ""]);
-          mutate(["site", siteId]);
+          void mutate(["filesBySite", siteId, ""]);
+          void mutate(["site", siteId]);
         }
     };
     return { deleteFile, isMutating, deleteError: error, deletedData };

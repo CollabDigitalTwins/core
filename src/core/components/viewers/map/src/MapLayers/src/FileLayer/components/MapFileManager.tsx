@@ -61,7 +61,7 @@ export default function MapFileManager({ closeFileManager }: FileManagerProp) {
       if (response.ok) {
         fileDispatch({ type: 'REMOVE_FILE', payload: { id: file.id } })
       }
-      mutate(['files'])
+      void mutate(['files'])
     }
     catch (error) {
       console.error('Error when deleting a file', error)
@@ -117,7 +117,7 @@ export default function MapFileManager({ closeFileManager }: FileManagerProp) {
                         payload: { id: file.id },
                       })
                     }}
-                    onRemoveFile={() => handleDeleteFile(file)}
+                    onRemoveFile={() => { void handleDeleteFile(file) }}
                     onEditFile={() => {
                       // ⚠️ Edit-file action not implemented
                     }}

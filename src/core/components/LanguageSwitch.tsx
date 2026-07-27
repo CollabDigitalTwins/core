@@ -49,7 +49,7 @@ export default function LanguageSwitch({ showLabel, variant='ghost', languages }
 
     React.useEffect(() => {
         if (!effectiveLanguages.includes(locale as Language)) {
-            switchLanguage(effectiveLanguages[0], setCurrentLocale, router)
+            void switchLanguage(effectiveLanguages[0], setCurrentLocale, router)
         }
     }, [])
 
@@ -74,7 +74,7 @@ export default function LanguageSwitch({ showLabel, variant='ghost', languages }
             {options.map(({ lang, labelKey }) => (
                 <DropdownMenuItem
                     key={lang}
-                    onClick={() => switchLanguage(lang, setCurrentLocale, router)}
+                    onClick={() => { void switchLanguage(lang, setCurrentLocale, router) }}
                 >
                     {t(labelKey)}
                 </DropdownMenuItem>

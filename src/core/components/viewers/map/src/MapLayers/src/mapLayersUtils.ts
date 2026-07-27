@@ -3,13 +3,25 @@
 
 import type { LayerProps } from 'react-map-gl/maplibre'
 
- export const createClusterLayer = (sourceId: string): LayerProps => ({
+/** JSON form of a MapLibre paint value: a literal colour or an expression. */
+export type PaintValue = string | (string | number | boolean | null | PaintValue)[]
+
+/** Cluster bubbles keyed on how many points they hide. The default when nothing else applies. */
+export const CLUSTER_COUNT_COLOUR: PaintValue
+  = ['step', ['get', 'point_count'], '#51bbd6', 100, '#f1f075', 750, '#f28cb1']
+
+ export const createClusterLayer = (
+  sourceId: string,
+  circleColour: PaintValue = CLUSTER_COUNT_COLOUR,
+): LayerProps => ({
   id: `${sourceId}-clusters`,
   type: 'circle',
   source: sourceId,
   filter: ['has', 'point_count'],
   paint: {
-    'circle-color': ['step', ['get', 'point_count'], '#51bbd6', 100, '#f1f075', 750, '#f28cb1'],
+    // Cast at the one point where a structurally-typed expression meets the style spec's
+    // generated union, rather than at every call site.
+    'circle-color': circleColour as string,
     'circle-radius': ['step', ['get', 'point_count'], 20, 100, 30, 750, 40],
   },
 })

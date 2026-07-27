@@ -17,9 +17,9 @@ import { SensorChart } from './SensorChart'
 import { colourForValue, observedDomain, resolveDomain, resolveRamp } from './sensorColour'
 import { SensorComparisonChart, type ComparisonEntry } from './SensorComparisonChart'
 import { SensorMultiSeriesChart } from './SensorMultiSeriesChart'
-import { indicesForBounds, rangeBounds, type RangePreset } from './sensorRange'
+import { filterByRange, indicesForBounds, rangeBounds, type RangeBounds, type RangePreset } from './sensorRange'
 import { sensorsInScope, tagsForScope, type ScopeMode } from './sensorScope'
-import { UNTAGGED_TAG } from './SensorsSection'
+import { UNTAGGED_TAG } from './sensorVisibility'
 // TimeZoneSelect is intentionally not rendered for now (kept as a standalone component).
 import { useSensorSeries } from './useSensorSeries'
 import { latestValues, useSensorSeriesMulti } from './useSensorSeriesMulti'
@@ -92,7 +92,8 @@ export function SensorDetailDialog({
 }): React.ReactElement {
   const t = useTranslations('SensorDetail')
   const { state } = React.useContext(AppConfigContext)
-  const { dispatch: menusDispatch } = React.useContext(MenusContext)
+  const { state: menusState, dispatch: menusDispatch } = React.useContext(MenusContext)
+  const { focusedSensorId } = menusState.menus
   const timeZone = state.appConfig.displayTimeZone
 
   const { points, unit, valueLabels, meta, isLoading } = useSensorSeries(
@@ -103,16 +104,9 @@ export function SensorDetailDialog({
   )
 
   const [preset, setPreset] = React.useState<RangePreset>('all')
-  const [brush, setBrush] = React.useState<{ startIndex?: number; endIndex?: number }>({})
+  const [customBounds, setCustomBounds] = React.useState<RangeBounds | null>(null)
   const [scopeMode, setScopeMode] = React.useState<ScopeMode>('sensor')
   const [scopeTag, setScopeTag] = React.useState<string | null>(null)
-
-  // When a preset is picked (not custom), derive brush indices from its bounds.
-  React.useEffect(() => {
-    if (preset === 'custom') return
-    const bounds = rangeBounds(preset, points)
-    setBrush(indicesForBounds(points, bounds))
-  }, [preset, points])
 
   const { sensors } = useSensors()
   // Memoised on the resolved tag list, not the sensors array: SWR hands back a new array on every
@@ -140,10 +134,25 @@ export function SensorDetailDialog({
     : points
   const domain = resolveDomain(sensorType, observedDomain(allPoints))
 
+  // One window for every chart below the button row. Presets resolve against the latest point
+  // in whatever is on screen, so "last hour" means the same thing in both scopes.
+  const bounds = rangeBounds(preset, comparing ? allPoints : points, customBounds)
+
+  // The line chart keeps the full series and lets its brush do the windowing; only the bar
+  // chart needs pre-filtered data, since "current value" has to mean the last one in range.
+  const seriesKey = [...seriesById.keys()].join(',')
+  const windowedSeries = React.useMemo(
+    () => new Map(
+      [...seriesById].map(([id, series]) => [id, { ...series, points: filterByRange(series.points, bounds) }]),
+    ),
+    [seriesById, bounds?.from, bounds?.to, seriesKey],
+  )
+
+  const scopedIdsKey = scoped.map(s => s.id).join(',')
   const comparisonEntries: ComparisonEntry[] = React.useMemo(() => {
     if (!domain) return []
     const nameById = new Map(scoped.map(s => [s.id, s.name]))
-    return [...latestValues(seriesById)]
+    return [...latestValues(windowedSeries)]
       .filter(([id]) => nameById.has(id))
       .map(([id, value]) => ({
         id,
@@ -151,11 +160,31 @@ export function SensorDetailDialog({
         value,
         colour: colourForValue(value, ramp, domain),
       }))
-  }, [seriesById, domain, ramp, scoped.map(s => s.id).join(',')])
+  }, [windowedSeries, domain, ramp, scopedIdsKey])
+
+  // Focus is global, so a click in the sidebar or out in the scene moves the charts too. It only
+  // applies while it names a sensor these charts actually draw.
+  const focusedId = focusedSensorId != null && scoped.some(s => s.id === focusedSensorId)
+    ? focusedSensorId
+    : sensor.id
+
+  // The focused line takes its own current value's ramp colour rather than the ramp's maximum,
+  // so a cool reading does not draw itself in the hot end's colour.
+  const focusedValue = latestValues(windowedSeries).get(focusedId)
+  const focusColour = domain && focusedValue != null
+    ? colourForValue(focusedValue, ramp, domain)
+    : ramp.max
 
   const focusSensor = React.useCallback((sensorId: number) => {
     menusDispatch({ type: 'SET_FOCUSED_SENSOR_ID', payload: { sensorId } })
   }, [menusDispatch])
+
+  const applyBounds = React.useCallback((next: RangeBounds) => {
+    setPreset('custom')
+    setCustomBounds(next)
+  }, [])
+
+  const singleBrush = indicesForBounds(points, bounds)
 
   const chartConfig: ChartConfig = { value: { label: sensorType?.name ?? t('value'), color: 'hsl(var(--chart-1))' } }
   const tagLabel = (tag: string) => (tag === UNTAGGED_TAG ? t('untagged') : tag)
@@ -220,21 +249,23 @@ export function SensorDetailDialog({
               <SensorMultiSeriesChart
                 sensors={scoped.map(s => ({ id: s.id, name: s.name }))}
                 seriesById={seriesById}
-                focusedId={sensor.id}
+                focusedId={focusedId}
                 onFocus={focusSensor}
-                accentColour={ramp.max}
+                focusColour={focusColour}
                 unit={unit}
                 valueLabels={valueLabels}
                 timeZone={timeZone}
                 emptyText={t('loading')}
                 othersLabel={count => t('moreSeries', { count })}
+                bounds={bounds}
+                onBoundsChange={applyBounds}
               />
             </div>
             <div>
               <h4 className="mb-2 text-sm font-semibold">{t('currentValues')}</h4>
               <SensorComparisonChart
                 entries={comparisonEntries}
-                focusedId={sensor.id}
+                focusedId={focusedId}
                 onFocus={focusSensor}
                 unit={unit}
                 valueLabels={valueLabels}
@@ -255,9 +286,14 @@ export function SensorDetailDialog({
             valueLabels={valueLabels}
             timeZone={timeZone}
             showBrush
-            brushStartIndex={brush.startIndex}
-            brushEndIndex={brush.endIndex}
-            onBrushChange={range => { setPreset('custom'); setBrush(range) }}
+            brushStartIndex={singleBrush.startIndex}
+            brushEndIndex={singleBrush.endIndex}
+            onBrushChange={range => {
+              const from = points[range.startIndex ?? 0]?.t
+              const to = points[range.endIndex ?? points.length - 1]?.t
+              if (from == null || to == null) return
+              applyBounds({ from, to })
+            }}
           />
         )}
 

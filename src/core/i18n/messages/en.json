@@ -1003,6 +1003,7 @@
     "readyToView": "Ready",
     "infoTitle": "More information",
     "convertTitle": "Convert to Potree",
+    "retryUploadTitle": "Upload never completed - click to retry",
     "viewTitle": "View in Potree viewer",
     "deleteTitle": "Delete point cloud",
     "uploadedBy": "Uploaded by",

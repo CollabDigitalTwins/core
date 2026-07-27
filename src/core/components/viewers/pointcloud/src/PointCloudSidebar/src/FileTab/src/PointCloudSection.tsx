@@ -378,6 +378,25 @@ export function PointCloudsSection({ files, pointcloudApiUrl, buildingId }: Poin
     input.click()
   }
 
+  // Retry a row whose original upload never completed (no object in MinIO).
+  // Removes orphaned row & lets the user re-pick the file to
+  // upload instead of leaving a second duplicate row behind.
+  const handleRetryUpload = React.useCallback(async (file: DbFile) => {
+    try {
+      await handleDeleteFile(file)
+      setPointcloudsFiles(prev => prev.filter(pc => String(pc.id) !== String(file.id)))
+    } catch (error) {
+      console.error('Failed to remove incomplete upload before retry:', error)
+      alert(
+        error instanceof Error
+          ? `Failed to retry upload: ${error.message}`
+          : 'Failed to retry upload'
+      )
+      return
+    }
+    handleUpload()
+  }, [handleDeleteFile])
+
   return (
     <>
       <CollapsibleSection
@@ -412,6 +431,17 @@ export function PointCloudsSection({ files, pointcloudApiUrl, buildingId }: Poin
                     title={t('convertTitle')}
                   >
                     <LR.RefreshCw className="h-3 w-3" />
+                  </Button>
+                )}
+                {!Boolean(file.pointCloudUploaded) && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 p-0"
+                    onClick={() => void handleRetryUpload(file)}
+                    title={t('retryUploadTitle')}
+                  >
+                    <LR.UploadCloud className="h-3 w-3" />
                   </Button>
                 )}
               </div>

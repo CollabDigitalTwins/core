@@ -1003,6 +1003,7 @@
     "readyToView": "Prêt",
     "infoTitle": "Plus d'informations",
     "convertTitle": "Convertir en Potree",
+    "retryUploadTitle": "Le téléchargement n'a jamais abouti - cliquez pour réessayer",
     "viewTitle": "Voir dans le visualiseur Potree",
     "deleteTitle": "Supprimer le nuage de points",
     "uploadedBy": "Téléchargé par",

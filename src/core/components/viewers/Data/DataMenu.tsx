@@ -506,10 +506,10 @@ const handleBackToTable = () => {
                     selectedUser={selectedUser}
                     activeBuildingTab={activeBuildingTab}
                     activeSiteTab={activeSiteTab}
-                    onSave={async () => {
+                    onSave={() => { void (async () => {
                       await handleCreateNewItem()
                       setEditing(false)
-                    }}
+                    })() }}
                     onEdit={() => {
                       setEditing(true)
                       if (isNewItem) setActiveChanges(true)

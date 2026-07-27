@@ -44,7 +44,7 @@ export class FitCamera extends OBC.Component {
     }
 
     if (this.world.meshes && this.world.meshes.size > 0 && this.world.meshes.size > 0) {
-      this.camera.fit(this.world.meshes)
+      void this.camera.fit(this.world.meshes)
     }
     else {
       await this.fitToScene()

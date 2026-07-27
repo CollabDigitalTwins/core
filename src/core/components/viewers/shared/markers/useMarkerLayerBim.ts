@@ -13,6 +13,7 @@ import { clusterMarkersByScreenSpace } from "../../bim/src/tools/AddToBim/src/cl
 import { renderCSS2DMarkers, type MarkerRef } from "../../bim/src/tools/AddToBim/src/renderCSS2DMarkers"
 
 import { computeMarkerLookAt } from "./computeMarkerLookAt"
+
 import type { BimMarkerConfig, BimMarkerItem, MarkerStoreAdapter } from "./types"
 
 type ClusterMarkerRef = { root: ReturnType<typeof createRoot>; css2dObject: CSS2DObject }

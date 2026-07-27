@@ -145,7 +145,7 @@ export class ElevationsTool extends OBC.Component {
   private _requestUpdate() {
     try {
       const fragments = this.components.get(OBC.FragmentsManager)
-      fragments.core.update(true)
+      void fragments.core.update(true)
     } catch {
       // FragmentsManager not initialized yet — no-op.
     }

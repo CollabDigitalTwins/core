@@ -48,7 +48,7 @@ export const ExplodeByLevelTool: React.FC<ExplodeByLevelProps> = ({ tool }) => {
       size="icon"
       variant="ghost"
       className="flex justify-center items-center h-9 w-9 pointer-events-auto opacity-50"
-      onClick={handleExplodeByLevel}
+      onClick={() => void handleExplodeByLevel()}
       title={`${tool.title} (${t('comingSoon')})`}
       disabled={true}
     >

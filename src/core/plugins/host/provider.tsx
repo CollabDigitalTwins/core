@@ -31,7 +31,7 @@ export function PluginHostProvider({ children }: { children: React.ReactNode }) 
       setReady(true)
     }
 
-    loadPlugins()
+    void loadPlugins()
   }, [registry])
 
   const value = React.useMemo(() => ({ registry, ready }), [registry, ready])

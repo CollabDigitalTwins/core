@@ -190,7 +190,7 @@ export function FeatureRequestDialog({ open, onOpenChange, userEmail, viewer }: 
             </Button>
 
             <Button
-              onClick={submit}
+              onClick={() => void submit()}
               disabled={!title.trim() || !description.trim() || loading}
             >
               {loading ? "..." : t("submit")}

@@ -280,10 +280,8 @@ const InfrastructureDetails = React.forwardRef<InfrastructureDetailsRef, Infrast
   }
 
   // Check if field is a part of the 4-column layout for checkboxes
-  const isCheckboxGroupField = (property: string): boolean => {
-    const checkboxGroupFields = []
-    return checkboxGroupFields.includes(property)
-  }
+  // No fields use that layout yet; list them here when some do.
+  const isCheckboxGroupField = (_property: string): boolean => false
 
   // Render the content for the current tab
   const renderTabContent = () => {

@@ -104,7 +104,7 @@ const AssociatedBuildingsTable: React.FC<AssociatedBuildingsTableProps> = ({
   React.useEffect(() => {
     if (!siteId || siteId < 0) { setBoundaryRing(null); return }
     let cancelled = false
-    fetchSiteBoundaryRing(siteId).then(ring => { if (!cancelled) setBoundaryRing(ring) })
+    void fetchSiteBoundaryRing(siteId).then(ring => { if (!cancelled) setBoundaryRing(ring) })
     return () => { cancelled = true }
   }, [siteId])
 
@@ -237,8 +237,6 @@ const AssociatedBuildingsTable: React.FC<AssociatedBuildingsTableProps> = ({
 
   // Debounced fetch for geocoded addresses
   React.useEffect(() => {
-    let timeoutId: NodeJS.Timeout
-
     const fetchGeocoded = async () => {
       if (!attachSearchTerm.trim() || attachSearchTerm.length < 3) {
         setGeocodedSuggestions([])
@@ -258,7 +256,7 @@ const AssociatedBuildingsTable: React.FC<AssociatedBuildingsTableProps> = ({
       }
     }
 
-    timeoutId = setTimeout(fetchGeocoded, 300)
+    const timeoutId = setTimeout(() => { void fetchGeocoded() }, 300)
 
     return () => clearTimeout(timeoutId)
   }, [attachSearchTerm])
@@ -326,6 +324,7 @@ const AssociatedBuildingsTable: React.FC<AssociatedBuildingsTableProps> = ({
       setAttachSearchTerm('')
       setGeocodedSuggestions([])
     } catch (error) {
+      console.error('Create and attach building failed:', error)
       toast.error(t('createAttachToastError'))
     } finally {
       setIsCreatingBuilding(false)
@@ -402,7 +401,7 @@ const AssociatedBuildingsTable: React.FC<AssociatedBuildingsTableProps> = ({
                     {filteredAttachableBuildings.map(building => (
                       <DropdownMenuItem
                         key={building.id}
-                        onClick={() => handleAttachBuilding(building)}
+                        onClick={() => { void handleAttachBuilding(building) }}
                       >
                         <div className="flex flex-col">
                           <span className="flex items-center">
@@ -436,7 +435,7 @@ const AssociatedBuildingsTable: React.FC<AssociatedBuildingsTableProps> = ({
                       return (
                         <DropdownMenuItem
                           key={uniqueKey}
-                          onClick={() => handleCreateAndAttach(feature)}
+                          onClick={() => { void handleCreateAndAttach(feature) }}
                           disabled={isCreatingBuilding}
                         >
                           <div className="flex items-center gap-2 w-full">

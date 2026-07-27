@@ -59,7 +59,7 @@ export class ClippingPlane extends OBC.Component {
         // Add double-click event listener to create clipping planes
         this.container.ondblclick = () => {
             if (this.enabled && this.world) {
-                this.clipper.create(this.world)
+                void this.clipper.create(this.world)
             }
         }
 
@@ -93,7 +93,7 @@ export class ClippingPlane extends OBC.Component {
 
     createPlanes() {
         if (this.enabled && this.world) {
-            this.clipper.create(this.world)
+            void this.clipper.create(this.world)
         }
     }
 

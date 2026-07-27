@@ -53,7 +53,7 @@ export default function ChangePassword({ isEditing }: ChangePasswordProps) {
 
   const validatePassword = (password: string): string[] => {
     const errors: string[] = []
-    if (password == "cdt_user_2026"){
+    if (password === "cdt_user_2026"){
       return errors
     }
     // Regex Pattern - At least:
@@ -156,7 +156,7 @@ export default function ChangePassword({ isEditing }: ChangePasswordProps) {
                   </div>
                   <Button
                     disabled={!canSave || isLoading || !ability.can('changePassword', 'User')}
-                    onClick={async () => {
+                    onClick={() => { void (async () => {
                       setHasAttemptedSave(true)
                       setNewPasswordErrors(validatePassword(newPassword))
                       setConfirmPasswordError(newPassword === confirmPassword ? '' : t('noMatch'))
@@ -169,7 +169,7 @@ export default function ChangePassword({ isEditing }: ChangePasswordProps) {
                         // Wait for the password change to complete
                         await changePassword(currentPassword, newPassword)
                       }
-                    }}
+                    })() }}
                     className="w-fit"
                   >
                     {isLoading ? <LoadingSpinner /> : t('save')}
@@ -192,7 +192,7 @@ export default function ChangePassword({ isEditing }: ChangePasswordProps) {
                   </div>
                   <Button
                     variant="outline"
-                    onClick={async () => {
+                    onClick={() => { void (async () => {
                       if (!userId) {
                         toast.error(t('toastError'))
                         return
@@ -203,7 +203,7 @@ export default function ChangePassword({ isEditing }: ChangePasswordProps) {
                       } else {
                         toast.error(t('noMatch'))
                       }
-                    }}
+                    })() }}
                     className="w-fit"
                     disabled={!canProceed || isVerifying || !ability.can('changePassword', 'User')}
                   >

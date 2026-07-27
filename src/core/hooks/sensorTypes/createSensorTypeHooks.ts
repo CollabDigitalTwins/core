@@ -40,19 +40,19 @@ export function createSensorTypeHooks(adapter: ApiAdapter) {
                 onSuccess: () => {
                     if (!id) return;
                     // Revalidate the same keys used above
-                    mutate(["sensorType", id]);
-                    mutate(["sensorTypes"]);
+                    void mutate(["sensorType", id]);
+                    void mutate(["sensorTypes"]);
                 },
             }
         );
 
         const { trigger: deleteSensorType, isMutating: isDeleting, error: deleteError } = useSWRMutation(
             id ? ["deleteSensorType", id] as const : null,
-            async () => await adapter.deleteSensorType(id as number),
+            async () => adapter.deleteSensorType(id as number),
             {
             onSuccess: (deletedSensorType) => {
-                mutate(["sensorType", deletedSensorType.id], undefined, { revalidate: false });
-                mutate(["sensorTypes"]);
+                void mutate(["sensorType", deletedSensorType.id], undefined, { revalidate: false });
+                void mutate(["sensorTypes"]);
             },
             }
         );
@@ -78,7 +78,7 @@ export function createSensorTypeHooks(adapter: ApiAdapter) {
             adapter.createSensorType(arg),
             {
                 onSuccess: () => {
-                    mutate(["sensorTypes"]);
+                    void mutate(["sensorTypes"]);
                 },
             }
         );

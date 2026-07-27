@@ -31,7 +31,7 @@ export function useCommonFileUpload({
     input.accept = acceptedFileTypes
     input.multiple = multiple
 
-    input.addEventListener('change', async (e) => {
+    const handleChange = async (e: Event) => {
       const files = (e.target as HTMLInputElement).files
       if (!files || files.length === 0) return
 
@@ -46,14 +46,16 @@ export function useCommonFileUpload({
         }
 
         // Revalidate files list so UI updates immediately
-        if (buildingId) mutate(`/api/files/building/${buildingId}`)
+        if (buildingId) void mutate(`/api/files/building/${buildingId}`)
 
         onUploadSuccess?.()
       } catch (error) {
         console.error('Error uploading file:', error)
         onUploadError?.(error as Error)
       }
-    })
+    }
+
+    input.addEventListener('change', (e) => { void handleChange(e) })
 
     input.click()
   }, [buildingId, acceptedFileTypes, multiple, handleFileUpload, onUploadSuccess, onUploadError])

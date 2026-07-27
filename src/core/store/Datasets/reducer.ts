@@ -60,7 +60,7 @@ export const DatasetReducer = (state: DatasetState, action: DatasetActions) => {
       return {
         ...state,
         datasets: state.datasets.map((dataset) => {
-          return dataset.id == datasetIdToHide
+          return dataset.id === datasetIdToHide
             ? {
                 ...dataset,
                 visible: false,
@@ -73,7 +73,7 @@ export const DatasetReducer = (state: DatasetState, action: DatasetActions) => {
       return {
         ...state,
         datasets: state.datasets.map((dataset) => {
-          return dataset.id == datasetIdToShow
+          return dataset.id === datasetIdToShow
             ? {
                 ...dataset,
                 visible: true,

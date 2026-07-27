@@ -2,6 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { DataManagementSystem } from '../../../../../types/dbTypes'
+import { toDisplayString } from '../../../../../utils/utils'
 import { layerColorByName } from '../../utils/stringToColour'
 import { formatDate, formatName, stripHtml } from '../utils'
 
@@ -161,7 +162,7 @@ async function fetchWithRetry(target: string, isServer: boolean): Promise<Respon
 }
 
 function mapSocrataFieldType(rawType: unknown): FieldType {
-  const type = String(rawType || '').toLowerCase()
+  const type = toDisplayString(rawType).toLowerCase()
 
   if (
     [
@@ -625,7 +626,7 @@ export async function fetchSocrataDatasets(
         ...(Array.isArray(view?.tags) ? view.tags : []),
         ...(Array.isArray(view?.classification?.domain_tags) ? view.classification.domain_tags : []),
       ]
-        .map((tag: unknown) => String(tag || '').trim())
+        .map((tag: unknown) => toDisplayString(tag).trim())
         .filter(Boolean)
 
       const publisher =

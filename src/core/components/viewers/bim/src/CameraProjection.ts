@@ -34,7 +34,7 @@ export class CameraProjection extends OBC.Component {
   async setProjection(projection: 'Perspective' | 'Orthographic') {
     if (this.camera.projection.current === projection) return
 
-    this.camera.projection.set(projection)
+    void this.camera.projection.set(projection)
 
     // Force camera matrix update
     this.camera.three.updateMatrix()

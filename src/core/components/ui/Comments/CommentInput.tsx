@@ -141,7 +141,7 @@ export function CommentInput({
           elevation,
           viewer: ViewerNames.map,
         }
-        onCreateComment(newComment)
+        void onCreateComment(newComment)
       }
 
       map.on('mousemove', mouseMoveCrosshairHandler)
@@ -163,7 +163,7 @@ export function CommentInput({
       let disposed = false
       let removeListeners: (() => void) | null = null
 
-        ; (async () => {
+        ; void (async () => {
           const THREE = await import('three')
           if (disposed) return
 
@@ -214,12 +214,15 @@ export function CommentInput({
             onCancel?.()
           }
 
+          // Listeners must be sync; placement errors surface via the pending marker cleanup.
+          const onDblClick = (e: MouseEvent) => { void handleDblClick(e) }
+
           document.addEventListener('mousemove', handleMouseMove)
-          document.addEventListener('dblclick', handleDblClick)
+          document.addEventListener('dblclick', onDblClick)
 
           removeListeners = () => {
             document.removeEventListener('mousemove', handleMouseMove)
-            document.removeEventListener('dblclick', handleDblClick)
+            document.removeEventListener('dblclick', onDblClick)
           }
         })()
 

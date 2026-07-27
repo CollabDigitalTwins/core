@@ -40,11 +40,6 @@ export class MarkerManager {
   private defaultColour = '#73cee2'
   private allowMultiple: boolean = false // <-- Add this
 
-  constructor() {
-    this.handleEscKey = this.handleEscKey.bind(this)
-    this.handleMarkerDragEnd = this.handleMarkerDragEnd.bind(this)
-  }
-
   // Getter for editing state
   get editing(): boolean {
     return this._editing
@@ -140,8 +135,9 @@ export class MarkerManager {
     }
   }
 
-  // Handle marker drag end
-  private handleMarkerDragEnd(): void {
+  // Handle marker drag end. Arrow properties so the listener identity is stable
+  // and `this` stays bound when passed to on/off and addEventListener.
+  private handleMarkerDragEnd = (): void => {
     if (this.marker) {
       const newCoordinates = this.marker.getLngLat().toArray() as [number, number]
       this._coordinates = newCoordinates
@@ -150,7 +146,7 @@ export class MarkerManager {
   }
 
   // Handle escape key press
-  private handleEscKey(event: KeyboardEvent): void {
+  private handleEscKey = (event: KeyboardEvent): void => {
     if (event.key === 'Escape') {
       this.remove()
     }

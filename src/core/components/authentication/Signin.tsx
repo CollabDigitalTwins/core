@@ -150,6 +150,7 @@ function SignInContent({ recaptchaSiteKey, }) {
       window.location.href = `/${orgName}`
 
     } catch (err) {
+      console.error('Sign in failed:', err)
       setError('Unexpected error. Please try again.')
       setIsLoading(false)
     }
@@ -185,6 +186,7 @@ function SignInContent({ recaptchaSiteKey, }) {
       })
 
     } catch (err) {
+      console.error('MFA verification failed:', err)
       toast.error(tMfa('verificationFailed'))
       setIsLoading(false)
     }
@@ -382,7 +384,7 @@ const handleResetPassword = async () => {
 
       {/* LOGIN FORM */}
       {step === 'login' && (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
            {/* LOGIN Header */}
           <div className="space-y-2 text-left">
 
@@ -449,7 +451,7 @@ const handleResetPassword = async () => {
             {/* Google button */}
             {<button
               type="button"
-              onClick={() => signIn('google', { redirectTo: `/${orgName}` })}
+              onClick={() => { void signIn('google', { redirectTo: `/${orgName}` }) }}
               disabled={isLoading}
               aria-label="Sign in with Google"
               className="auth-google-btn"
@@ -503,7 +505,7 @@ const handleResetPassword = async () => {
             disabled={isLoading}
           />
 
-          <Button onClick={handleVerifyOTP} disabled={isLoading} className="w-full">
+          <Button onClick={() => void handleVerifyOTP()} disabled={isLoading} className="w-full">
             {isLoading ? <LoadingSpinner /> : tMfa('verify')}
           </Button>
 
@@ -555,7 +557,7 @@ const handleResetPassword = async () => {
     )}
 
     <Button
-      onClick={handleForgotPassword}
+      onClick={() => void handleForgotPassword()}
       disabled={isLoading || !email}
       className="w-full"
     >
@@ -607,7 +609,7 @@ const handleResetPassword = async () => {
     {error}
   </div>
 )}
-          <Button onClick={handleVerifyOTPForPasswordChange} disabled={isLoading} className="w-full">
+          <Button onClick={() => void handleVerifyOTPForPasswordChange()} disabled={isLoading} className="w-full">
             {isLoading ? <LoadingSpinner /> : tMfa('verify')}
           </Button>
 
@@ -684,7 +686,7 @@ const handleResetPassword = async () => {
   )}
 
   <Button
-    onClick={handleResetPassword}
+    onClick={() => void handleResetPassword()}
     disabled={isLoading}
     className="w-full"
   >

@@ -197,7 +197,7 @@ export function FieldsTable({ dataset }: FieldsTableProps) {
       }
       if (mounted) setLoading(false)
     }
-    fetchFields()
+    void fetchFields()
     return () => { mounted = false }
   }, [dataset.name])
 

@@ -302,7 +302,7 @@ export function SensorInput({
           viewer: ViewerNames.map,
           tags: currentSensor.tags,
         }
-        onCreateSensor(newSensor as Partial<Sensor>)
+        void onCreateSensor(newSensor as Partial<Sensor>)
       }
 
       map.on('mousemove', mouseMoveCrosshairHandler)
@@ -323,7 +323,7 @@ export function SensorInput({
       let disposed = false
       let removeListeners: (() => void) | null = null
 
-      ;(async () => {
+      ;void (async () => {
         const THREE = await import('three')
         if (disposed) return
 
@@ -381,12 +381,15 @@ export function SensorInput({
           }
         }
 
+        // Listeners must be sync; placement errors surface via the pending marker cleanup.
+        const onDblClick = (e: MouseEvent) => { void handleDblClick(e) }
+
         document.addEventListener('mousemove', handleMouseMove)
-        document.addEventListener('dblclick', handleDblClick)
+        document.addEventListener('dblclick', onDblClick)
 
         removeListeners = () => {
           document.removeEventListener('mousemove', handleMouseMove)
-          document.removeEventListener('dblclick', handleDblClick)
+          document.removeEventListener('dblclick', onDblClick)
         }
       })()
 
@@ -512,7 +515,7 @@ export function SensorInput({
               type="text"
               value={sensor.data}
               onChange={e => updateSensor(index, 'data', e.target.value)}
-              onBlur={e => checkDataUrl(index, e.target.value, sensor.dataFormat)}
+              onBlur={e => { void checkDataUrl(index, e.target.value, sensor.dataFormat) }}
               placeholder={t('dataUrlPlaceholder')}
             />
             {preview[index] && (
@@ -588,7 +591,7 @@ export function SensorInput({
           {editSensor ? (
             <Button
               type="button"
-              onClick={onSaveEdit}
+              onClick={() => void onSaveEdit()}
               disabled={!sensor.name.trim() || !sensor.data.trim()}
               className="w-full"
             >

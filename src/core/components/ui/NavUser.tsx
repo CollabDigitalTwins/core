@@ -101,7 +101,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             {/* <DropdownMenuSeparator />  Hide for now. This menu might eventually expand and separator would be necessary */}
-            <DropdownMenuItem onClick={() => signOut({ redirectTo: `/${instance}/auth/signin`, redirect: true })}>
+            <DropdownMenuItem onClick={() => { void signOut({ redirectTo: `/${instance}/auth/signin`, redirect: true }) }}>
               <LR.LogOut className="size-4" />
               {t('logout')}
             </DropdownMenuItem>

@@ -45,7 +45,7 @@ export const FitCameraTool: React.FC<FitCameraProps> = ({ tool }) => {
       size="icon"
       variant="ghost"
       className="flex justify-center items-center h-9 w-9 pointer-events-auto"
-      onClick={handleFitCamera}
+      onClick={() => void handleFitCamera()}
       title={tool.title}
     >
       <LR.Fullscreen />

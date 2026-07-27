@@ -80,7 +80,7 @@ export function useFastDatasetCache() {
     const cached = globalCache.get(key)
 
     if (cached && !isExpired(cached.timestamp)) {
-      if (cached.promise) {
+      if (cached.promise !== undefined) {
         return cached.promise
       }
       if (cached.data !== null) {

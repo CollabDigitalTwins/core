@@ -120,7 +120,7 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
   React.useEffect(() => {
     if (!organization) return
     const defaultLanguage  = organization.languages?.[0] || 'En'
-    if (defaultLanguage) switchLanguage(defaultLanguage)
+    if (defaultLanguage) void switchLanguage(defaultLanguage)
   }, [organization])
 
   // Handle context changes (from sidebar, HeaderButtons, etc.)

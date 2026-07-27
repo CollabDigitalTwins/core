@@ -253,7 +253,7 @@ export class FloorplanTool extends OBC.Component {
         renderedFaces: 1,
         preserveOriginalMaterial: false,
       })
-      fragments.core.update(true)
+      void fragments.core.update(true)
     } catch (error) {
       console.warn(
         `[FloorplanTool] 3D highlight update failed for ${className}:`,
@@ -633,7 +633,7 @@ export class FloorplanTool extends OBC.Component {
   private _requestUpdate() {
     try {
       const fragments = this.components.get(OBC.FragmentsManager)
-      fragments.core.update(true)
+      void fragments.core.update(true)
     } catch {
       // FragmentsManager not initialized yet — no-op.
     }

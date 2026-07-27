@@ -329,8 +329,8 @@ export const SiteLayer = () => {
           canDelete={canDelete}
           canRead={canRead}
           onClose={() => setMenu(null)}
-          onRename={handleRename}
-          onToggleEdit={handleToggleEdit}
+          onRename={(name) => void handleRename(name)}
+          onToggleEdit={() => void handleToggleEdit()}
           onHide={handleHide}
           onInfo={handleInfo}
           onDelete={handleDelete}

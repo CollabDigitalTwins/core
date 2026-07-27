@@ -223,12 +223,17 @@ describe('MenusReducer', () => {
     })
 
     it('SET_FOCUSED_SENSOR_ID hands the legend back to the focused sensor type', () => {
-      const pinned = baseState({ sensorLegendTypeId: { [ViewerNames.map]: 42 } })
+      const pinned = baseState({
+        currentViewer: ViewerNames.map,
+        sensorLegendTypeId: { [ViewerNames.map]: 42, [ViewerNames.bim]: 7 },
+      })
       const next = MenusReducer(pinned, {
         type: 'SET_FOCUSED_SENSOR_ID',
         payload: { sensorId: 7 },
       } as any)
-      expect(next.sensorLegendTypeId).toEqual({})
+      // Only the viewer the focus happened in; the other viewer keeps its own pin.
+      expect(next.sensorLegendTypeId[ViewerNames.map]).toBeNull()
+      expect(next.sensorLegendTypeId[ViewerNames.bim]).toBe(7)
     })
 
     it('SET_FOCUSED_SENSOR_ID keeps a pinned type when clearing focus', () => {
@@ -311,6 +316,51 @@ describe('MenusReducer', () => {
         payload: { viewer: ViewerNames.map, visible: false },
       } as any)
       expect(next.sensorLegendVisible[ViewerNames.bim]).toBeUndefined()
+    })
+
+    it('TOGGLE_SENSOR_TYPE_VISIBILITY pins the type it switches on', () => {
+      const next = MenusReducer(baseState(), {
+        type: 'TOGGLE_SENSOR_TYPE_VISIBILITY',
+        payload: { viewer: ViewerNames.map, sensorTypeId: 10 },
+      } as any)
+      expect(next.visibleSensorTypes[ViewerNames.map]).toEqual([10])
+      expect(next.sensorLegendTypeId[ViewerNames.map]).toBe(10)
+    })
+
+    it('TOGGLE_SENSOR_TYPE_VISIBILITY releases the pin when it switches that type off', () => {
+      const on = baseState({
+        visibleSensorTypes: { [ViewerNames.map]: [10] },
+        sensorLegendTypeId: { [ViewerNames.map]: 10 },
+      })
+      const next = MenusReducer(on, {
+        type: 'TOGGLE_SENSOR_TYPE_VISIBILITY',
+        payload: { viewer: ViewerNames.map, sensorTypeId: 10 },
+      } as any)
+      expect(next.sensorLegendTypeId[ViewerNames.map]).toBeNull()
+    })
+
+    it('TOGGLE_SENSOR_TYPE_VISIBILITY keeps the pin when a different type is switched off', () => {
+      const on = baseState({
+        visibleSensorTypes: { [ViewerNames.map]: [10, 20] },
+        sensorLegendTypeId: { [ViewerNames.map]: 10 },
+      })
+      const next = MenusReducer(on, {
+        type: 'TOGGLE_SENSOR_TYPE_VISIBILITY',
+        payload: { viewer: ViewerNames.map, sensorTypeId: 20 },
+      } as any)
+      expect(next.sensorLegendTypeId[ViewerNames.map]).toBe(10)
+    })
+
+    it('HIDE_ALL_SENSORS_IN_VIEWER releases the pin', () => {
+      const on = baseState({
+        visibleSensorTypes: { [ViewerNames.map]: [10] },
+        sensorLegendTypeId: { [ViewerNames.map]: 10 },
+      })
+      const next = MenusReducer(on, {
+        type: 'HIDE_ALL_SENSORS_IN_VIEWER',
+        payload: { viewer: ViewerNames.map },
+      } as any)
+      expect(next.sensorLegendTypeId[ViewerNames.map]).toBeNull()
     })
 
     it('SET_SENSOR_LEGEND_TYPE_ID pins and clears per viewer', () => {

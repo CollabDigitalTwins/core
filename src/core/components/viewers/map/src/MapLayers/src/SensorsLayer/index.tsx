@@ -18,6 +18,7 @@ import { ViewerNames, type Sensor as ISensor} from '../../../../../../../types/d
 import { withAlpha } from '../../../../../../../utils/colourUtils'
 import { HIGHLIGHT_COLOR } from '../../../../../../../utils/markerUtils'
 import Sensor from '../../../../../../ui/Sensors/Sensor'
+import { observedDomain, resolveDomain, resolveRamp } from '../../../../../../ui/Sensors/sensorColour'
 import { SensorDetailDialog } from '../../../../../../ui/Sensors/SensorDetailDialog'
 import { SensorInput } from '../../../../../../ui/Sensors/SensorInput'
 import { valueColoursBySensor } from '../../../../../../ui/Sensors/sensorValueColours'
@@ -25,7 +26,9 @@ import { activeSensorTypeId, visibleSensors } from '../../../../../../ui/Sensors
 import { useSensorSeriesMulti } from '../../../../../../ui/Sensors/useSensorSeriesMulti'
 import { extractCoordinatesFromFeature } from '../../../../utils/extractCoordinates'
 import { MapLayerClickPriority } from '../../../../utils/MapEventManager/MapClickManager'
-import { createClusterLayer, createClusterCountLayer, createUnclusteredPointLayer } from '../mapLayersUtils'
+import { CLUSTER_COUNT_COLOUR, createClusterLayer, createClusterCountLayer, createUnclusteredPointLayer } from '../mapLayersUtils'
+
+import { SENSOR_CLUSTER_PROPERTIES, sensorClusterColour } from './sensorClusterColour'
 
 import type { SensorType} from '../../../../../../../types/dbTypes';
 import type { ClickCallback } from '../../../../utils/MapEventManager/MapClickManager';
@@ -76,7 +79,6 @@ const SensorIconMarker = ({ feature, isHighlighted, isFocused, haloColour, onMou
 
 export const SensorLayers = () => {
     const [hoveredSensorId, setHoveredSensorId] = React.useState<number | null>(null)
-  const clusterLayer = createClusterLayer('sensors')
   const clusterCountLayer = createClusterCountLayer('sensors')
   const unclusteredPointLayer = createUnclusteredPointLayer('sensors')
 
@@ -145,6 +147,19 @@ export const SensorLayers = () => {
     [seriesById, sensorTypes, haloIdsKey],
   )
 
+  // Cluster bubbles average the readings they hide, on the same ramp and domain the individual
+  // halos use, so zooming out does not change what a colour means.
+  const haloType = haloTypeId == null ? undefined : sensorTypes.find(t => t.id === haloTypeId)
+  const haloRamp = haloType ? resolveRamp(haloType) : null
+  const haloDomain = resolveDomain(
+    haloType,
+    observedDomain(haloSensors.flatMap(s => seriesById.get(s.id)?.points ?? [])),
+  )
+  const clusterLayer = createClusterLayer(
+    'sensors',
+    sensorClusterColour(haloRamp, haloDomain, CLUSTER_COUNT_COLOUR),
+  )
+
   const geojsonSensorData = React.useMemo(() => {
     const convertDataToGeojson = (sensorData: typeof eligibleSensors): GeoJSON.FeatureCollection<GeoJSON.Point, { [key: string]: any }> => {
       const sensorFeatures: GeoJSON.Feature<GeoJSON.Point, { [key: string]: any }>[] = sensorData
@@ -174,6 +189,9 @@ export const SensorLayers = () => {
               url,
               createdAt,
               viewer: ViewerNames.map,
+              // Only present for sensors of the active type that are actually reporting. The
+              // cluster accumulators count exactly these, so the average is over real readings.
+              ...(readings.has(Number(id)) ? { value: readings.get(Number(id))?.value } : {}),
             },
           }
         })
@@ -187,7 +205,7 @@ export const SensorLayers = () => {
       return sensorFC
     }
     return convertDataToGeojson(eligibleSensors)
-  }, [eligibleSensors])
+  }, [eligibleSensors, readings])
 
   // event listeners for sensor unclustered points
   React.useEffect(() => {
@@ -414,6 +432,7 @@ export const SensorLayers = () => {
       cluster={true}
       clusterMaxZoom={14}
       clusterRadius={40}
+      clusterProperties={SENSOR_CLUSTER_PROPERTIES}
     >
       <Layer {...clusterLayer} />
       <Layer {...clusterCountLayer} />

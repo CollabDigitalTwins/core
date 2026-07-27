@@ -100,6 +100,17 @@ describe("buildingColourExpression", () => {
     expect(expr[2]).toBe(highlightColor);
   });
 
+  it("lifts a sensor-coloured footprint toward white on hover instead of greying it", () => {
+    const expr = buildingColourExpression({ osmColours: [["123", "#000000"]], hoveredKey: "123" });
+    // 18% of the way from black to white, so the reading survives the hover feedback.
+    expect(expr[2]).toBe("#2e2e2e");
+  });
+
+  it("keeps the plain grey hover for a footprint with no sensor colour", () => {
+    const expr = buildingColourExpression({ osmColours: [["123", "#000000"]], hoveredKey: "999" });
+    expect(expr[2]).toBe(HOVER_COLOUR);
+  });
+
   it("emits no branch for an absent or empty highlight key", () => {
     expect(buildingColourExpression({ osmColours: [], hoveredKey: null }))
       .toEqual(DEFAULT_COLOUR_EXPRESSION);

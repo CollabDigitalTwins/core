@@ -55,8 +55,17 @@ function SeriesTooltip({
   othersLabel,
 }: SeriesTooltipProps): React.ReactElement | null {
   if (!active || !payload?.length) return null
+  // Each series is drawn twice, once as an invisible wide hit target, so recharts hands us two
+  // payload entries per sensor. Keep the first of each dataKey.
+  const seen = new Set<string>()
   const entries = payload
     .filter(p => typeof p.value === 'number')
+    .filter(p => {
+      const key = String(p.dataKey)
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
     .sort((a, b) => Number(b.value) - Number(a.value))
   const shown = entries.slice(0, TOOLTIP_LIMIT)
   const hidden = entries.length - shown.length

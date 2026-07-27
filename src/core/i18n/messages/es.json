@@ -1886,11 +1886,7 @@
     "average": "promedio",
     "reporting": "{reporting} de {total} activos",
     "updated": "Actualizado a las {time}",
-    "noReading": "Sin lectura",
-    "untitledBuilding": "Edificio sin nombre",
-    "close": "Cerrar",
-    "openBimViewer": "Abrir el visor BIM",
-    "openBuildingPage": "Abrir la página del edificio"
+    "noReading": "Sin lectura"
   },
   "SensorLegend": {
     "noReading": "Sin lectura todavía",

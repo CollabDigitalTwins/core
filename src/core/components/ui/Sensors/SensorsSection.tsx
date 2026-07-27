@@ -31,7 +31,7 @@ import { SensorInput } from './SensorInput'
 import { SensorsSectionSkeleton } from './SensorsSectionSkeleton'
 import { resolveLucideIcon } from './sensorUtils'
 import { valueColoursBySensor } from './sensorValueColours'
-import { UNTAGGED_TAG } from './sensorVisibility'
+import { activeSensorTypeId, legendScopeSensors, UNTAGGED_TAG } from './sensorVisibility'
 import { useSensorSeriesMulti } from './useSensorSeriesMulti'
 
 import type { Sensor } from '../../../types/dbTypes';
@@ -52,8 +52,7 @@ export function SensorsSection() {
 
   const { dispatch: toolsDispatch } = React.useContext(ToolsContext)
   const { state: menusState, dispatch: menusDispatch } = React.useContext(MenusContext)
-  const { currentViewer, visibleSensorTypes, visibleSensorTags, focusedSensorId, sensorLegendVisible } = menusState.menus
-  const legendVisible = sensorLegendVisible?.[currentViewer] !== false
+  const { currentViewer, visibleSensorTypes, visibleSensorTags, focusedSensorId, sensorLegendVisible, sensorLegendTypeId } = menusState.menus
 
   const { sensors: allSensors }: { sensors: Sensor[] } = useSensors()
   const { sensorTypes, isLoading } = useSensorTypes()
@@ -185,6 +184,22 @@ export function SensorsSection() {
     }
   }, [currentViewer, menusDispatch])
 
+  // Mirrors what the legend itself decides, so the button never claims the card is on while the
+  // viewer is showing nothing. With no sensors of the active type there is nothing to toggle.
+  const legendHasContent = legendScopeSensors(
+    allSensors,
+    {
+      viewer: currentViewer,
+      visibleTypeIds: visibleSensorTypes?.[currentViewer] ?? [],
+      visibleTags: visibleSensorTags?.[currentViewer] ?? [],
+    },
+    activeSensorTypeId(allSensors, {
+      legendTypeId: sensorLegendTypeId?.[currentViewer],
+      activeSensorId: focusedSensorId,
+    }),
+  ).length > 0
+  const legendVisible = legendHasContent && sensorLegendVisible?.[currentViewer] !== false
+
   const toggleLegend = React.useCallback(() => {
     menusDispatch({ type: 'TOGGLE_SENSOR_LEGEND', payload: { viewer: currentViewer } })
   }, [currentViewer, menusDispatch])
@@ -248,6 +263,7 @@ export function SensorsSection() {
           size="icon"
           title={t('toggleLegend')}
           aria-pressed={legendVisible}
+          disabled={!legendHasContent}
           className="flex-shrink-0"
           onClick={toggleLegend}
         >

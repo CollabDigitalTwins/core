@@ -21,8 +21,8 @@ import {
 import { LegendCard } from '../LegendCard'
 
 import { observedDomain, rampStops, resolveDomain, resolveRamp, valueOffset } from './sensorColour'
-import { activeSensorTypeId, visibleSensors } from './sensorVisibility'
-import { useSensorSeries } from './useSensorSeries'
+import { activeSensorTypeId, legendScopeSensors } from './sensorVisibility'
+import { latestValues, useSensorSeriesMulti } from './useSensorSeriesMulti'
 
 import type { ViewerNames } from '../../../types/dbTypes'
 
@@ -73,18 +73,21 @@ export function SensorLegend(): React.ReactElement | null {
   // there is no reading to mark: the card shows the ramp alone until a sensor is picked.
   const caretSensor = activeSensor?.typeId === activeTypeId ? activeSensor : undefined
 
-  const { points, unit, valueLabels } = useSensorSeries(
-    caretSensor?.url ?? '',
-    caretSensor?.dataFormat ?? 'Json',
-    caretSensor?.updateFrequency ?? 0,
-    { enabled: !!caretSensor?.url },
+  const inScope = legendScopeSensors(
+    sensors,
+    {
+      viewer,
+      visibleTypeIds: visibleSensorTypes?.[viewer] ?? [],
+      visibleTags: visibleSensorTags?.[viewer] ?? [],
+    },
+    activeTypeId,
   )
 
-  const inScope = visibleSensors(sensors, {
-    viewer,
-    visibleTypeIds: visibleSensorTypes?.[viewer] ?? [],
-    visibleTags: visibleSensorTags?.[viewer] ?? [],
-  }).filter(s => s.typeId != null && s.typeId === activeTypeId)
+  // Polls the whole type, not just the focused sensor. Two reasons: the ramp has to be drawable
+  // with nothing focused, and a type whose configured range is unusable can only get a domain
+  // from what its sensors are actually reporting. It also makes the legend's domain identical to
+  // the one the marker halos use, which is resolved across the same set.
+  const { seriesById } = useSensorSeriesMulti(inScope, { enabled: inScope.length > 0 })
 
   // Types worth offering: every type placed in this viewer, visible or not. Picking a hidden
   // one turns it on below, so the list does not have to be pre-filtered by visibility.
@@ -112,10 +115,14 @@ export function SensorLegend(): React.ReactElement | null {
   if (inScope.length === 0) return null
 
   const ramp = resolveRamp(sensorType)
-  const domain = resolveDomain(sensorType, observedDomain(points))
+  const typePoints = [...seriesById.values()].flatMap(series => series.points)
+  const domain = resolveDomain(sensorType, observedDomain(typePoints))
 
-  const latest = points[points.length - 1]?.value
-  const hasReading = caretSensor != null && typeof latest === 'number' && Number.isFinite(latest)
+  const caretSeries = caretSensor ? seriesById.get(caretSensor.id) : undefined
+  const unit = caretSeries?.unit ?? [...seriesById.values()].find(s => s.unit)?.unit
+  const valueLabels = caretSeries?.valueLabels
+  const latest = caretSensor ? latestValues(seriesById).get(caretSensor.id) : undefined
+  const hasReading = latest !== undefined
   const gradient = `linear-gradient(to right, ${rampStops(ramp)
     .map(s => `${s.colour} ${s.offset * 100}%`)
     .join(', ')})`

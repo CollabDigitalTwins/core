@@ -2,6 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { highlightColor } from "../../../../../../../types/martinTypes";
+import { lerpHex } from "../../../../../../../utils/colourUtils";
 
 import type { Building } from "../../../../../../../types/dbTypes";
 import type { BuildingSensorAverage } from "../../../../../../ui/Sensors/buildingSensorColours";
@@ -16,6 +17,9 @@ export type PaintExpression = (string | number | boolean | null | PaintExpressio
 export const DEFAULT_COLOUR_EXPRESSION: PaintExpression = ["coalesce", ["get", "colour"], "#cccccc"];
 
 export const HOVER_COLOUR = "#e0e0e0";
+
+/** How far a sensor-coloured footprint is lifted toward white on hover. */
+const HOVER_LIFT = 0.18;
 
 // Two ways the same footprint identifies itself. The MVT feature id is usually the OSM id, but
 // some tiles carry it only as a property, so both are tried. Copied from the height expression,
@@ -85,7 +89,16 @@ export function buildingColourExpression({
   const clicked = clickedKey == null ? "" : String(clickedKey);
   const hovered = hoveredKey == null ? "" : String(hoveredKey);
   if (clicked) branches.push(matchesKey(clicked), highlightColor);
-  if (hovered) branches.push(matchesKey(hovered), HOVER_COLOUR);
+  if (hovered) {
+    // Flat grey would throw away the reading the footprint is carrying, so a sensor-coloured
+    // building is lifted toward white instead: still obvious feedback, still the same value.
+    // Buildings with no sensor colour keep the original grey.
+    const sensorColour = osmColours.find(([osmId]) => osmId === hovered)?.[1];
+    branches.push(
+      matchesKey(hovered),
+      sensorColour ? lerpHex(sensorColour, "#ffffff", HOVER_LIFT) : HOVER_COLOUR,
+    );
+  }
 
   if (branches.length === 0) return lookup;
   return ["case", ...branches, lookup];

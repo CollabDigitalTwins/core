@@ -1886,11 +1886,7 @@
     "average": "moyenne",
     "reporting": "{reporting} sur {total} en service",
     "updated": "Mis à jour à {time}",
-    "noReading": "Aucune mesure",
-    "untitledBuilding": "Bâtiment sans nom",
-    "close": "Fermer",
-    "openBimViewer": "Ouvrir la visionneuse BIM",
-    "openBuildingPage": "Ouvrir la page du bâtiment"
+    "noReading": "Aucune mesure"
   },
   "SensorLegend": {
     "noReading": "Aucune mesure pour le moment",

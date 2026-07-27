@@ -157,10 +157,12 @@ export const MenusReducer = (state: MenusState, action: MenusActions) => {
         ...state,
         focusedSensorId: action.payload.sensorId,
         sensorFocusRequestId: state.sensorFocusRequestId + 1,
-        // Focusing a sensor hands the legend back to that sensor's own type. Clearing on a null
-        // payload instead would undo the selection the legend dropdown just made, since it
-        // clears the focus right after pinning a type.
-        sensorLegendTypeId: action.payload.sensorId == null ? state.sensorLegendTypeId : {},
+        // Focusing a sensor hands the legend back to that sensor's own type, in this viewer
+        // only. Clearing on a null payload instead would undo the selection the legend dropdown
+        // just made, since it clears the focus right after pinning a type.
+        sensorLegendTypeId: action.payload.sensorId == null
+          ? state.sensorLegendTypeId
+          : { ...state.sensorLegendTypeId, [state.currentViewer]: null },
       }
     case 'REQUEST_SENSOR_ACTION':
       return {
@@ -192,6 +194,11 @@ export const MenusReducer = (state: MenusState, action: MenusActions) => {
           ...state.visibleSensorTypes,
           [sensorViewerToHide]: [],
         },
+        // Nothing left for the legend to explain in this viewer.
+        sensorLegendTypeId: {
+          ...state.sensorLegendTypeId,
+          [sensorViewerToHide]: null,
+        },
       }
     case 'HIDE_ALL_SENSOR_TAGS_IN_VIEWER':
       const tagViewerToHide = action.payload.viewer
@@ -210,13 +217,25 @@ export const MenusReducer = (state: MenusState, action: MenusActions) => {
       const isCurrentlyVisible = currentTypesForViewer.includes(sensorTypeId)
       // force=true → only show (idempotent); force=false/undefined → toggle
       if (force && isCurrentlyVisible) return state
+      const turningOn = Boolean(force) || !isCurrentlyVisible
       return {
         ...state,
         visibleSensorTypes: {
           ...state.visibleSensorTypes,
-          [toggleViewer]: (force || !isCurrentlyVisible)
+          [toggleViewer]: turningOn
             ? [...currentTypesForViewer, sensorTypeId]
             : currentTypesForViewer.filter(t => t !== sensorTypeId),
+        },
+        // Switching a type on is also how you choose what the legend explains, so the ramp, the
+        // marker halos and the building colours appear immediately rather than waiting for a
+        // sensor to be focused. Switching it off releases the legend again.
+        sensorLegendTypeId: {
+          ...state.sensorLegendTypeId,
+          [toggleViewer]: turningOn
+            ? sensorTypeId
+            : state.sensorLegendTypeId?.[toggleViewer] === sensorTypeId
+              ? null
+              : state.sensorLegendTypeId?.[toggleViewer] ?? null,
         },
       }
     case 'TOGGLE_SENSOR_TAG_VISIBILITY':

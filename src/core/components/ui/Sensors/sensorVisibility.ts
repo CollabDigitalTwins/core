@@ -62,3 +62,18 @@ export function activeSensorTypeId(
   if (opts.activeSensorId == null) return null
   return sensors.find(sensor => sensor.id === opts.activeSensorId)?.typeId ?? null
 }
+
+/**
+ * The sensors that keep the legend on screen: the active type's visible ones in this viewer.
+ *
+ * Shared so the card and the sidebar's show/hide button agree on whether there is a legend at
+ * all; an empty result means the card renders nothing and the button has nothing to toggle.
+ */
+export function legendScopeSensors<T extends VisibilityCandidate>(
+  sensors: readonly T[],
+  scope: SensorVisibilityScope,
+  activeTypeId: number | null,
+): T[] {
+  if (activeTypeId == null) return []
+  return visibleSensors(sensors, scope).filter(sensor => sensor.typeId === activeTypeId)
+}

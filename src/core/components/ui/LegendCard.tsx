@@ -59,14 +59,14 @@ export function LegendCard({
                 {count !== undefined && <Badge data-testid={countTestId}>{count}</Badge>}
                 <div className="text-sm font-medium">{title}</div>
               </div>
-              <div className="flex shrink-0 items-center">
+              <div className="flex shrink-0 items-center gap-1 pr-1">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setOpen(o => !o)}
                   aria-expanded={open}
                   aria-label={label}
-                  className="opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent"
+                  className="h-7 w-7 opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent"
                 >
                   <LR.ChevronUp
                     size={14}
@@ -80,7 +80,7 @@ export function LegendCard({
                     onClick={onClose}
                     aria-label={closeLabel}
                     title={closeLabel}
-                    className="opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent"
+                    className="h-7 w-7 opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent"
                   >
                     <LR.X size={14} />
                   </Button>

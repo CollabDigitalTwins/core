@@ -11,7 +11,10 @@ import {Button, Separator, Skeleton, Badge} from "../../../../../../../component
 import {PopoverContent} from "../../../../../../../components/ui/Popover";
 import {useBuilding} from "../../../../../../../hooks/buildings/buildings";
 import {MapContext} from "../../../../../../../store";
+import {ViewerNames} from "../../../../../../../types/dbTypes";
+import {useBuildingSensorColours} from "../../../../../../ui/Sensors/useBuildingSensorColours";
 
+import {BuildingSensorDetails} from "./src/BuildingSensorDetails";
 import BuildingTools from "./src/BuildingsTools";
 
 import type {MapGeoJSONFeature} from "maplibre-gl";
@@ -92,6 +95,15 @@ export default function DatabaseBuildingPopover ({
 
     const [expanded, setExpanded] = React.useState(false);
 
+    // While the map is tinted by a sensor type, this building's readings are what the popover is
+    // being opened to find, so they take the details slot instead of the postal address.
+    // Same poll the footprint colours already run on, so opening the card costs no requests.
+    const sensorColours = useBuildingSensorColours(ViewerNames.map);
+    const sensorsOfType = buildingId == null
+        ? []
+        : sensorColours.sensorsByBuilding.get(buildingId) ?? [];
+    const showSensors = Boolean(sensorColours.sensorType) && sensorsOfType.length > 0;
+
     // Show only the short subdivision code (e.g. "ON" from "CA-ON")
     const shortSubdivision = React.useMemo(() => {
         const code = locationData.countrySubdivision;
@@ -155,7 +167,18 @@ export default function DatabaseBuildingPopover ({
                             </Button>
                         )}
 
-                    {expanded && !isLoading && (
+                    {expanded && !isLoading && showSensors && sensorColours.sensorType && (
+                        <BuildingSensorDetails
+                            sensorType={sensorColours.sensorType}
+                            sensors={sensorsOfType}
+                            readings={sensorColours.readings}
+                            average={buildingId == null ? undefined : sensorColours.averages.get(buildingId)}
+                            latestAt={buildingId == null ? undefined : sensorColours.latestAtByBuilding.get(buildingId)}
+                            unit={sensorColours.unit}
+                        />
+                    )}
+
+                    {expanded && !isLoading && !showSensors && (
                         <div className="mt-2 flex flex-col gap-2">
                             {/* Address */}
                             <div>

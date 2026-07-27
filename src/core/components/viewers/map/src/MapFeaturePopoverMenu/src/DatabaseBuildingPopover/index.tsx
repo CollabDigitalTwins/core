@@ -14,7 +14,7 @@ import {MapContext} from "../../../../../../../store";
 import {ViewerNames} from "../../../../../../../types/dbTypes";
 import {useBuildingSensorColours} from "../../../../../../ui/Sensors/useBuildingSensorColours";
 
-import {BuildingSensorDetails} from "./src/BuildingSensorDetails";
+import {BuildingSensorList, BuildingSensorSummary} from "./src/BuildingSensorDetails";
 import BuildingTools from "./src/BuildingsTools";
 
 import type {MapGeoJSONFeature} from "maplibre-gl";
@@ -150,6 +150,18 @@ export default function DatabaseBuildingPopover ({
                     <LR.X className="w-4 h-4" />
                 </Button>
             </div>
+            {/* The footprint's own number, always visible: the colour on the map is only
+                readable once you can see the value behind it. */}
+            {!isError && !isLoading && showSensors && sensorColours.sensorType && (
+                <BuildingSensorSummary
+                    sensorType={sensorColours.sensorType}
+                    sensors={sensorsOfType}
+                    readings={sensorColours.readings}
+                    average={buildingId == null ? undefined : sensorColours.averages.get(buildingId)}
+                    latestAt={buildingId == null ? undefined : sensorColours.latestAtByBuilding.get(buildingId)}
+                    unit={sensorColours.unit}
+                />
+            )}
             {/* Expand/collapse details */}
             {!isError && (
                 <>
@@ -167,13 +179,10 @@ export default function DatabaseBuildingPopover ({
                             </Button>
                         )}
 
-                    {expanded && !isLoading && showSensors && sensorColours.sensorType && (
-                        <BuildingSensorDetails
-                            sensorType={sensorColours.sensorType}
+                    {expanded && !isLoading && showSensors && (
+                        <BuildingSensorList
                             sensors={sensorsOfType}
                             readings={sensorColours.readings}
-                            average={buildingId == null ? undefined : sensorColours.averages.get(buildingId)}
-                            latestAt={buildingId == null ? undefined : sensorColours.latestAtByBuilding.get(buildingId)}
                             unit={sensorColours.unit}
                         />
                     )}

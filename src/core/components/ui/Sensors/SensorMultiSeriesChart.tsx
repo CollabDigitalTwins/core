@@ -4,11 +4,12 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
-import { CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from 'recharts'
+import { Brush, CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from 'recharts'
 
 import { formatInZone } from '../../../utils/timeUtils'
 import { ChartContainer, type ChartConfig } from '../chart'
 
+import { indicesForBounds, type RangeBounds } from './sensorRange'
 import { mergeSeriesRows, rowsValueDomain } from './sensorSeriesRows'
 
 import type { SensorSeries } from './sensorData'
@@ -89,18 +90,23 @@ interface SensorMultiSeriesChartProps {
   focusedId: number
   /** Click a line or a legend row to focus that sensor everywhere. */
   onFocus: (sensorId: number) => void
-  /** Colour for the focused line. Siblings are deliberately not coloured. */
-  accentColour: string
+  /** Colour for the focused line, carrying its current value. Siblings are not coloured. */
+  focusColour: string
   unit?: string
   valueLabels?: Record<number, string>
   timeZone: string
   emptyText: string
   othersLabel: (count: number) => string
+  /** Window to show. `null` spans everything. Ignored unless `onBoundsChange` is supplied. */
+  bounds?: RangeBounds | null
+  /** Supplying this renders the brush. Dragging it reports the new window in milliseconds. */
+  onBoundsChange?: (bounds: RangeBounds) => void
 }
 
 /**
  * Every sensor in scope over time, using the emphasis pattern: the focused sensor is the only
- * coloured line and the rest are recessive hairlines.
+ * coloured line and the rest are recessive hairlines. That one colour is the focused sensor's
+ * own value ramp colour, so the line matches its bar, its halo and the legend caret.
  *
  * Why not a colour per sensor: a type can hold dozens of sensors, and past a handful of hues
  * adjacent series stop being distinguishable (especially under colour-vision deficiency). Here
@@ -113,12 +119,14 @@ export function SensorMultiSeriesChart({
   seriesById,
   focusedId,
   onFocus,
-  accentColour,
+  focusColour,
   unit,
   valueLabels,
   timeZone,
   emptyText,
   othersLabel,
+  bounds = null,
+  onBoundsChange,
 }: SensorMultiSeriesChartProps): React.ReactElement {
   const [hoveredId, setHoveredId] = React.useState<number | null>(null)
 
@@ -135,6 +143,9 @@ export function SensorMultiSeriesChart({
 
   const formatValue = (value: number): string =>
     valueLabels?.[value] ?? `${valueNumber.format(value)}${unit ? ` ${unit}` : ''}`
+
+  const formatAxis = (value: number): string =>
+    formatInZone(Number(value), timeZone, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
 
   // Recharts renders `content` itself, so pass an element carrying the extra props; it merges
   // its own active/payload/label in.
@@ -158,10 +169,21 @@ export function SensorMultiSeriesChart({
       : [valueDomain.min - 1, valueDomain.max + 1]
     : undefined
 
+  // The brush windows the merged rows, so a preset picked upstream and a drag down here are the
+  // same operation expressed in two units: the caller works in times, recharts in row indices.
+  const showBrush = onBoundsChange != null && rows.length > 1
+  const brushRange = showBrush ? indicesForBounds(rows, bounds) : null
+  const reportBounds = (range: { startIndex?: number; endIndex?: number }) => {
+    const from = rows[range.startIndex ?? 0]?.t
+    const to = rows[range.endIndex ?? rows.length - 1]?.t
+    if (from == null || to == null) return
+    onBoundsChange?.({ from, to })
+  }
+
   return (
     <div className="flex flex-col gap-3 sm:flex-row">
       <div className="min-w-0 flex-1">
-        <ChartContainer config={chartConfig} className="h-[260px] w-full">
+        <ChartContainer config={chartConfig} className={`w-full ${showBrush ? 'h-[300px]' : 'h-[260px]'}`}>
           <LineChart data={rows} margin={{ left: 0, right: 12, top: 10 }}>
             <CartesianGrid vertical={false} opacity={0.4} />
             <YAxis
@@ -183,12 +205,33 @@ export function SensorMultiSeriesChart({
               tickMargin={8}
               interval="preserveStartEnd"
               tick={{ fontSize: 11 }}
-              tickFormatter={(value: number) =>
-                formatInZone(Number(value), timeZone, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })}
+              tickFormatter={formatAxis}
             />
             {/* One crosshair readout listing every series, so the pointer never has to land on
                 a specific 1px line to read a value. */}
             <Tooltip content={renderTooltip} />
+            {/* Transparent fat copies of every series, drawn under the real ones: a recessive
+                line is a 1px path and all but unclickable, so this is what actually catches the
+                pointer. `pointerEvents: stroke` hit-tests the widened stroke, not the fill. */}
+            {sensors.map(sensor => (
+              <Line
+                key={`hit-${sensor.id}`}
+                dataKey={String(sensor.id)}
+                type="monotone"
+                stroke="transparent"
+                strokeWidth={12}
+                dot={false}
+                activeDot={false}
+                connectNulls
+                isAnimationActive={false}
+                legendType="none"
+                tooltipType="none"
+                onClick={() => onFocus(sensor.id)}
+                onMouseEnter={() => setHoveredId(sensor.id)}
+                onMouseLeave={() => setHoveredId(null)}
+                style={{ pointerEvents: 'stroke', cursor: 'pointer' }}
+              />
+            ))}
             {sensors.map(sensor => {
               const isFocused = sensor.id === focusedId
               const isHovered = sensor.id === hoveredId
@@ -199,7 +242,7 @@ export function SensorMultiSeriesChart({
                   name={sensor.name}
                   type="monotone"
                   // Colour marks focus, never identity: see the component doc.
-                  stroke={isFocused ? accentColour : 'hsl(var(--muted-foreground))'}
+                  stroke={isFocused ? focusColour : 'hsl(var(--muted-foreground))'}
                   strokeWidth={isFocused ? 2 : isHovered ? 2 : 1}
                   strokeOpacity={isFocused ? 1 : isHovered ? 0.9 : 0.35}
                   strokeLinecap="round"
@@ -213,6 +256,17 @@ export function SensorMultiSeriesChart({
                 />
               )
             })}
+            {showBrush && brushRange && (
+              <Brush
+                dataKey="t"
+                height={22}
+                travellerWidth={8}
+                startIndex={brushRange.startIndex}
+                endIndex={brushRange.endIndex}
+                tickFormatter={(value) => formatAxis(Number(value))}
+                onChange={(range) => reportBounds(range as { startIndex?: number; endIndex?: number })}
+              />
+            )}
           </LineChart>
         </ChartContainer>
       </div>
@@ -237,7 +291,7 @@ export function SensorMultiSeriesChart({
                   aria-hidden="true"
                   className="h-0.5 w-3 shrink-0 rounded-full"
                   style={{
-                    backgroundColor: isFocused ? accentColour : 'hsl(var(--muted-foreground))',
+                    backgroundColor: isFocused ? focusColour : 'hsl(var(--muted-foreground))',
                     opacity: isFocused ? 1 : 0.5,
                   }}
                 />

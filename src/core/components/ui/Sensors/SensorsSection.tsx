@@ -31,6 +31,7 @@ import { SensorInput } from './SensorInput'
 import { SensorsSectionSkeleton } from './SensorsSectionSkeleton'
 import { resolveLucideIcon } from './sensorUtils'
 import { valueColoursBySensor } from './sensorValueColours'
+import { UNTAGGED_TAG } from './sensorVisibility'
 import { useSensorSeriesMulti } from './useSensorSeriesMulti'
 
 import type { Sensor } from '../../../types/dbTypes';
@@ -41,8 +42,9 @@ const readingNumber = new Intl.NumberFormat(undefined, { maximumFractionDigits: 
 
 type SensorAction = 'view' | 'edit' | 'delete'
 
-/** Stable key used in state for sensors with no tags — locale-independent */
-export const UNTAGGED_TAG = '__untagged__'
+// Re-exported from its own module so the pure helpers and the viewer layers can use it without
+// pulling this component in. Kept here because every existing import points at this path.
+export { UNTAGGED_TAG } from './sensorVisibility'
 
 export function SensorsSection() {
   // Translation
@@ -50,7 +52,8 @@ export function SensorsSection() {
 
   const { dispatch: toolsDispatch } = React.useContext(ToolsContext)
   const { state: menusState, dispatch: menusDispatch } = React.useContext(MenusContext)
-  const { currentViewer, visibleSensorTypes, visibleSensorTags, focusedSensorId } = menusState.menus
+  const { currentViewer, visibleSensorTypes, visibleSensorTags, focusedSensorId, sensorLegendVisible } = menusState.menus
+  const legendVisible = sensorLegendVisible?.[currentViewer] !== false
 
   const { sensors: allSensors }: { sensors: Sensor[] } = useSensors()
   const { sensorTypes, isLoading } = useSensorTypes()
@@ -182,6 +185,10 @@ export function SensorsSection() {
     }
   }, [currentViewer, menusDispatch])
 
+  const toggleLegend = React.useCallback(() => {
+    menusDispatch({ type: 'TOGGLE_SENSOR_LEGEND', payload: { viewer: currentViewer } })
+  }, [currentViewer, menusDispatch])
+
   const toggleSensorTagVisibility = React.useCallback((tag: string) => {
     menusDispatch({
       type: 'TOGGLE_SENSOR_TAG_VISIBILITY',
@@ -236,6 +243,16 @@ export function SensorsSection() {
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
         />
+        <Button
+          variant={legendVisible ? 'default' : 'outline'}
+          size="icon"
+          title={t('toggleLegend')}
+          aria-pressed={legendVisible}
+          className="flex-shrink-0"
+          onClick={toggleLegend}
+        >
+          <LR.Palette size={16} />
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon" title={t('filters')} className="flex-shrink-0">

@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest'
 import { ViewerNames } from '../../../types/dbTypes'
 
 import { sensorsInScope, tagsForScope, tagsOf } from './sensorScope'
-import { UNTAGGED_TAG } from './SensorsSection'
+import { UNTAGGED_TAG } from './sensorVisibility'
 
 
 const s = (id: number, typeId: number | null, tags: string[], viewer = ViewerNames.bim) =>

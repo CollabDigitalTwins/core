@@ -20,8 +20,8 @@ import { HIGHLIGHT_COLOR } from '../../../../../../../utils/markerUtils'
 import Sensor from '../../../../../../ui/Sensors/Sensor'
 import { SensorDetailDialog } from '../../../../../../ui/Sensors/SensorDetailDialog'
 import { SensorInput } from '../../../../../../ui/Sensors/SensorInput'
-import { UNTAGGED_TAG } from '../../../../../../ui/Sensors/SensorsSection'
 import { valueColoursBySensor } from '../../../../../../ui/Sensors/sensorValueColours'
+import { activeSensorTypeId, visibleSensors } from '../../../../../../ui/Sensors/sensorVisibility'
 import { useSensorSeriesMulti } from '../../../../../../ui/Sensors/useSensorSeriesMulti'
 import { extractCoordinatesFromFeature } from '../../../../utils/extractCoordinates'
 import { MapLayerClickPriority } from '../../../../utils/MapEventManager/MapClickManager'
@@ -94,7 +94,7 @@ export const SensorLayers = () => {
   const [popupInfo, setPopUpInfo] = React.useState<Partial<ISensor & { sensorType: SensorType }> | null>(null)
   const { deleteSensor, updateSensor } = useSensor(popupInfo?.id ?? null)
   const { state: menusState, dispatch: menusDispatch } = React.useContext(MenusContext)
-  const { visibleSensorTypes, visibleSensorTags, currentSensorId, focusedSensorId } = menusState.menus
+  const { visibleSensorTypes, visibleSensorTags, currentSensorId, focusedSensorId, sensorLegendTypeId } = menusState.menus
   const typesVisible = visibleSensorTypes?.[ViewerNames.map] || []
   const tagsVisible = visibleSensorTags?.[ViewerNames.map] || []
 
@@ -105,16 +105,11 @@ export const SensorLayers = () => {
   const [detailSensor, setDetailSensor] = React.useState<ISensor | null>(null)
   const [editSensor, setEditSensor] = React.useState<ISensor | null>(null)
 
-  const eligibleSensors: Array<ISensor & { authorName: string } & { sensorType: SensorType }> = sensors
-    .filter((sensor) => sensor.viewer === ViewerNames.map)
-    .filter((sensor) => {
-      const matchesType = typesVisible.includes(sensor.typeId)
-      const hasNoTags = !sensor.tags?.length
-      const matchesTag = hasNoTags
-        ? tagsVisible.includes(UNTAGGED_TAG)
-        : sensor.tags?.some(tag => tagsVisible.includes(tag)) ?? false
-      return matchesType || matchesTag
-    })
+  const eligibleSensors: Array<ISensor & { authorName: string } & { sensorType: SensorType }> = visibleSensors(sensors, {
+    viewer: ViewerNames.map,
+    visibleTypeIds: typesVisible,
+    visibleTags: tagsVisible,
+  })
     .map((sensor) => {
       const user = users.find(u => u.id === sensor.authorId)
       const sensorType = sensorTypes.find(t => t.id === sensor.typeId)
@@ -132,14 +127,16 @@ export const SensorLayers = () => {
     }
   }, [sensors, popupInfo])
 
-  // Every sensor sharing the focused sensor's type gets a halo coloured by its own current
-  // value, readable against the SensorLegend card. Only that one type is polled.
-  const focusedTypeId = focusedSensorId == null
-    ? null
-    : eligibleSensors.find(s => s.id === focusedSensorId)?.typeId ?? null
-  const haloSensors = focusedTypeId == null
+  // Every sensor sharing the active type gets a halo coloured by its own current value, readable
+  // against the SensorLegend card. Only that one type is polled. Resolved through the same
+  // helper the legend uses, so pinning a type in the legend dropdown moves the halos with it.
+  const haloTypeId = activeSensorTypeId(eligibleSensors, {
+    legendTypeId: sensorLegendTypeId?.[ViewerNames.map],
+    activeSensorId: focusedSensorId,
+  })
+  const haloSensors = haloTypeId == null
     ? []
-    : eligibleSensors.filter(s => s.typeId === focusedTypeId)
+    : eligibleSensors.filter(s => s.typeId === haloTypeId)
   const { seriesById } = useSensorSeriesMulti(haloSensors, { enabled: haloSensors.length > 0 })
 
   const haloIdsKey = haloSensors.map(s => s.id).join(',')

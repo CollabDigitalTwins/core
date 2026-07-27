@@ -12,13 +12,18 @@ import { Command } from './Command'
 import { Menubar } from './Menubar'
 
 interface LegendCardProps {
-  /** Heading text, beside the optional count badge. */
-  title: string
+  /** Heading, beside the optional count badge. A node lets a card make its title interactive. */
+  title: React.ReactNode
+  /** Used for the collapse button's accessible name when `title` is not a plain string. */
+  titleLabel?: string
   /** Rendered in a badge before the title. Omit for a card that is not counting anything. */
   count?: number
   /** Collapsed body. Only mounted while the card is open. */
   children: React.ReactNode
   defaultOpen?: boolean
+  /** Renders an X beside the chevron. Omit for a card that cannot be dismissed. */
+  onClose?: () => void
+  closeLabel?: string
   testId?: string
   countTestId?: string
 }
@@ -32,13 +37,17 @@ interface LegendCardProps {
  */
 export function LegendCard({
   title,
+  titleLabel,
   count,
   children,
   defaultOpen = true,
+  onClose,
+  closeLabel,
   testId,
   countTestId,
 }: LegendCardProps): React.ReactElement {
   const [open, setOpen] = React.useState(defaultOpen)
+  const label = titleLabel ?? (typeof title === 'string' ? title : undefined)
 
   return (
     <div data-testid={testId} className="pointer-events-auto">
@@ -50,19 +59,33 @@ export function LegendCard({
                 {count !== undefined && <Badge data-testid={countTestId}>{count}</Badge>}
                 <div className="text-sm font-medium">{title}</div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setOpen(o => !o)}
-                aria-expanded={open}
-                aria-label={title}
-                className="opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent"
-              >
-                <LR.ChevronUp
-                  size={14}
-                  className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-                />
-              </Button>
+              <div className="flex shrink-0 items-center">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setOpen(o => !o)}
+                  aria-expanded={open}
+                  aria-label={label}
+                  className="opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent"
+                >
+                  <LR.ChevronUp
+                    size={14}
+                    className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+                  />
+                </Button>
+                {onClose && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onClose}
+                    aria-label={closeLabel}
+                    title={closeLabel}
+                    className="opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent"
+                  >
+                    <LR.X size={14} />
+                  </Button>
+                )}
+              </div>
             </div>
             {open && <div className="max-h-[40vh] overflow-y-auto pb-1">{children}</div>}
           </div>

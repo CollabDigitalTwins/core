@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { UNTAGGED_TAG } from './SensorsSection'
+import { UNTAGGED_TAG } from './sensorVisibility'
 
 import type { Sensor } from '../../../types/dbTypes'
 

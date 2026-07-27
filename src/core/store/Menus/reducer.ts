@@ -43,6 +43,10 @@ interface MenusTypes {
   /** Monotonic counter bumped on every sensor focus dispatch so re-focusing re-zooms. */
   sensorFocusRequestId: number
   pendingSensorAction: SensorActionRequest | null
+  /** Legend card shown for this viewer. An absent entry means shown. */
+  sensorLegendVisible: Partial<Record<ViewerNames, boolean>>
+  /** Sensor type the legend is pinned to, overriding the focused sensor's own type. */
+  sensorLegendTypeId: Partial<Record<ViewerNames, number | null>>
 }
 
 export type MenusState = MenusTypes
@@ -67,6 +71,10 @@ export type MenusPayload = {
   ['SET_FOCUSED_SENSOR_ID']: {sensorId: number | null}
   ['REQUEST_SENSOR_ACTION']: {sensorId: number}
   ['CLEAR_PENDING_SENSOR_ACTION']: undefined
+  /** `visible` sets explicitly; omit it to flip. Not the `force` ("only show") shape used by
+   *  the visibility toggles above, because the legend's close button needs an explicit hide. */
+  ['TOGGLE_SENSOR_LEGEND']: { viewer: ViewerNames; visible?: boolean }
+  ['SET_SENSOR_LEGEND_TYPE_ID']: { viewer: ViewerNames; sensorTypeId: number | null }
 }
 
 export type MenusActions
@@ -149,13 +157,19 @@ export const MenusReducer = (state: MenusState, action: MenusActions) => {
         ...state,
         focusedSensorId: action.payload.sensorId,
         sensorFocusRequestId: state.sensorFocusRequestId + 1,
+        // Focusing a sensor hands the legend back to that sensor's own type. Clearing on a null
+        // payload instead would undo the selection the legend dropdown just made, since it
+        // clears the focus right after pinning a type.
+        sensorLegendTypeId: action.payload.sensorId == null ? state.sensorLegendTypeId : {},
       }
     case 'REQUEST_SENSOR_ACTION':
       return {
         ...state,
         pendingSensorAction: {
           sensorId: action.payload.sensorId,
-          action: 'edit',
+          // `as const`, or the literal widens to `string` and the reducer's inferred return
+          // type stops being assignable to MenusState.
+          action: 'edit' as const,
           requestId: (state.pendingSensorAction?.requestId ?? 0) + 1,
         },
       }
@@ -218,6 +232,28 @@ export const MenusReducer = (state: MenusState, action: MenusActions) => {
           [toggleTagViewer]: (forceTag || !isTagCurrentlyVisible)
             ? [...currentTagsForViewer, sensorTag]
             : currentTagsForViewer.filter(t => t !== sensorTag),
+        },
+      }
+
+    case 'TOGGLE_SENSOR_LEGEND':
+      const { viewer: legendViewer, visible } = action.payload
+      if (!legendViewer) return state
+      const legendCurrentlyVisible = state.sensorLegendVisible?.[legendViewer] !== false
+      return {
+        ...state,
+        sensorLegendVisible: {
+          ...state.sensorLegendVisible,
+          [legendViewer]: visible ?? !legendCurrentlyVisible,
+        },
+      }
+    case 'SET_SENSOR_LEGEND_TYPE_ID':
+      const { viewer: legendTypeViewer, sensorTypeId: legendTypeId } = action.payload
+      if (!legendTypeViewer) return state
+      return {
+        ...state,
+        sensorLegendTypeId: {
+          ...state.sensorLegendTypeId,
+          [legendTypeViewer]: legendTypeId,
         },
       }
 

@@ -48,6 +48,30 @@ export function lerpHex(from: string, to: string, t: number): string {
   })
 }
 
+/** WCAG relative luminance, 0 (black) to 1 (white). Returns null for an unparseable colour. */
+export function relativeLuminance(colour: string): number | null {
+  const rgb = parseHex(colour)
+  if (!rgb) return null
+  const linear = (value: number): number => {
+    const c = value / 255
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+  }
+  return 0.2126 * linear(rgb.r) + 0.7152 * linear(rgb.g) + 0.0722 * linear(rgb.b)
+}
+
+/**
+ * Black or white, whichever reads better on the given background.
+ *
+ * Needed wherever a value ramp is used as a fill behind text: a ramp runs from dark to light by
+ * design, so no single fixed text colour stays legible across it.
+ */
+export function readableTextColour(background: string): string {
+  const luminance = relativeLuminance(background)
+  if (luminance == null) return '#000000'
+  // 0.179 is the luminance at which white and black text have equal WCAG contrast.
+  return luminance > 0.179 ? '#000000' : '#ffffff'
+}
+
 /** A hex colour as `rgba(...)` at the given alpha, for glows and washes. */
 export function withAlpha(colour: string, alpha: number): string {
   const rgb = parseHex(colour)

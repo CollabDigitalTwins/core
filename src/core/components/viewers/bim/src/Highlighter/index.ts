@@ -20,10 +20,20 @@ export class Highlighter extends OBC.Component {
   private _mouse: THREE.Vector2 = new THREE.Vector2()
   private _disabledModels: Set<string> = new Set()
   private _hoverGuardTimeout: number | null = null
+  /** Set by `dispose()`. Anything async started before it must check this before touching the world. */
+  private _disposed = false
+  /** The element the pointer listeners are attached to, so they can be removed after teardown. */
+  private _listenerTarget: HTMLElement | null = null
 
   // Events
   onElementsSelected = new OBC.Event<number[]>()
   onSelectionCleared = new OBC.Event<void>()
+  /**
+   * Required for `dispose()` to run at all: OBC's `isDisposeable()` is
+   * `'dispose' in this && 'onDisposed' in this`, so a component with only `dispose` is skipped
+   * during `Components.dispose()` and merely has `enabled = false` set on it.
+   */
+  readonly onDisposed = new OBC.Event<string>()
 
   // Selection material
   private _selectedMaterial: THREE.Material = new THREE.MeshBasicMaterial({
@@ -80,7 +90,10 @@ export class Highlighter extends OBC.Component {
     }
     const removeFromScene = (mesh: THREE.Mesh) => {
       mesh.removeFromParent()
-      mesh.geometry.dispose()
+      // Optional: this runs from a DataSet delete handler, which `dispose()` triggers during
+      // teardown. By then the world's scene may already have released these geometries, and a
+      // throw here would abort the rest of dispose() and leave listeners and timers alive.
+      mesh.geometry?.dispose()
     }
 
     this._selectedMeshes.onBeforeDelete.add(removeFromScene)
@@ -97,11 +110,14 @@ export class Highlighter extends OBC.Component {
    */
   private async _nearestHit(mx: number, my: number): Promise<{ modelId: string; localId: number; distance: number } | null> {
     if (!this.world || !this.fragments) return null
+    // The world object survives disposal but its camera and renderer are nulled, and OBC's
+    // `camera` getter throws rather than returning null. Checking the world alone is not enough.
+    if (this._disposed || this.world.isDisposing || !this.world.renderer) return null
     if (!(this.world.camera instanceof OBC.OrthoPerspectiveCamera)) return null
     const params = {
       camera: this.world.camera.three,
       mouse: new THREE.Vector2(mx, my),
-      dom: this.world.renderer!.three.domElement,
+      dom: this.world.renderer.three.domElement,
     }
     const hits = await Promise.all(
       [...this.fragments.list.entries()]
@@ -147,15 +163,22 @@ export class Highlighter extends OBC.Component {
   }
 
   private setupEvents(active: boolean) {
+    // Detach from whatever we attached to, rather than from whatever the world currently
+    // exposes. During teardown `world.renderer` is already null, and the old guard sat above
+    // the removals, so it skipped them and left canvas listeners firing at a disposed world.
+    if (this._listenerTarget) {
+      this._listenerTarget.removeEventListener('click', this.onMouseClick)
+      this._listenerTarget.removeEventListener('mousemove', this.onMouseMove)
+      this._listenerTarget.removeEventListener('mouseleave', this.onMouseLeave)
+      this._listenerTarget = null
+    }
+    if (!active) return
     if (!this.world?.renderer || this.world.isDisposing) return
     const container = this.world.renderer.three.domElement
-    container.removeEventListener('click', this.onMouseClick)
-    container.removeEventListener('mousemove', this.onMouseMove)
-    container.removeEventListener('mouseleave', this.onMouseLeave)
-    if (!active) return
     container.addEventListener('click', this.onMouseClick)
     container.addEventListener('mousemove', this.onMouseMove)
     container.addEventListener('mouseleave', this.onMouseLeave)
+    this._listenerTarget = container
   }
 
   set enabled(value: boolean) {
@@ -321,11 +344,20 @@ export class Highlighter extends OBC.Component {
   }
 
   dispose() {
+    // Order matters: `enabled = false` clears the hover, which can throw once the world's scene
+    // has gone. Cancel the pending raycast first, so a failure later in this method cannot leave
+    // a timer that fires against a disposed world.
+    this._disposed = true
+    if (this._hoverGuardTimeout !== null) {
+      clearTimeout(this._hoverGuardTimeout)
+      this._hoverGuardTimeout = null
+    }
     this.enabled = false
-    if (this._hoverGuardTimeout !== null) clearTimeout(this._hoverGuardTimeout)
     this.clearSelection()
     this.clearHover()
     this.onElementsSelected.reset()
     this.onSelectionCleared.reset()
+    this.onDisposed.trigger(Highlighter.uuid)
+    this.onDisposed.reset()
   }
 }

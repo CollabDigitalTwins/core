@@ -27,6 +27,46 @@ export interface MarkerConfig<T> {
   hooksContextValue?: HooksBag | null
 }
 
+/**
+ * Tears one marker down completely: out of the scene, GPU resources freed, React root unmounted.
+ *
+ * The root matters. Every marker mounts its own `createRoot`, and a root that is never unmounted
+ * keeps its subtree, its hooks and their subscriptions alive after the marker is gone.
+ */
+function destroyMarker(scene: THREE.Object3D | null, { root, sphere, css2dObject }: MarkerRef): void {
+  scene?.remove(sphere)
+  scene?.remove(css2dObject)
+  sphere.geometry?.dispose()
+  if (sphere.material instanceof THREE.Material) sphere.material.dispose()
+  // Deferred: unmounting synchronously from inside an effect cleanup makes React warn about
+  // unmounting a root while it is already rendering.
+  queueMicrotask(() => root.unmount())
+}
+
+/**
+ * The scene, or `null` once the world is disposed.
+ *
+ * `world.scene` is a getter that throws rather than returning null, so teardown paths that run
+ * after the world is gone cannot simply optional-chain it.
+ */
+function sceneOrNull(world: any): THREE.Object3D | null {
+  try {
+    return world?.scene?.three ?? null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Removes every marker in the registry. Safe to call after the world has been disposed, which is
+ * exactly when React effect cleanups run relative to the BIM viewer's own teardown.
+ */
+export function clearCSS2DMarkers(world: any, registry: React.MutableRefObject<Map<string, MarkerRef>>): void {
+  const scene = sceneOrNull(world)
+  registry.current.forEach(marker => destroyMarker(scene, marker))
+  registry.current.clear()
+}
+
 export function renderCSS2DMarkers<T extends { id: number; x?: number | null; y?: number | null; z?: number | null }>(
   world: any,
   config: MarkerConfig<T>
@@ -43,26 +83,18 @@ export function renderCSS2DMarkers<T extends { id: number; x?: number | null; y?
 
   // Hide all markers if not visible — remove all from scene and clear registry
   if (!isVisible) {
-    reg.forEach(({ sphere, css2dObject }) => {
-      world.scene.three.remove(sphere)
-      world.scene.three.remove(css2dObject)
-      sphere.geometry?.dispose()
-      if (sphere.material instanceof THREE.Material) sphere.material.dispose()
-    })
-    reg.clear()
+    clearCSS2DMarkers(world, registry)
     return
   }
 
   const eligibleIds = new Set(validItems.map(item => String(item.id)))
 
   // Remove markers for deleted/invisible items
+  const scene = sceneOrNull(world)
   const toDelete: string[] = []
-  reg.forEach(({ sphere, css2dObject }, id) => {
+  reg.forEach((marker, id) => {
     if (!eligibleIds.has(id)) {
-      world.scene.three.remove(sphere)
-      world.scene.three.remove(css2dObject)
-      sphere.geometry?.dispose()
-      if (sphere.material instanceof THREE.Material) sphere.material.dispose()
+      destroyMarker(scene, marker)
       toDelete.push(id)
     }
   })

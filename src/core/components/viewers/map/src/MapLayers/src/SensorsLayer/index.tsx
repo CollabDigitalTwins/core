@@ -16,7 +16,7 @@ import { useUsers } from '../../../../../../../hooks/users/users'
 import { AppConfigContext, MapContext, MenusContext } from '../../../../../../../store'
 import { ViewerNames, type Sensor as ISensor} from '../../../../../../../types/dbTypes'
 import { withAlpha } from '../../../../../../../utils/colourUtils'
-import { HIGHLIGHT_COLOR } from '../../../../../../../utils/markerUtils'
+import { HIGHLIGHT_COLOR, markerOcclusionProps } from '../../../../../../../utils/markerUtils'
 import Sensor from '../../../../../../ui/Sensors/Sensor'
 import { observedDomain, resolveDomain, resolveRamp } from '../../../../../../ui/Sensors/sensorColour'
 import { SensorDetailDialog } from '../../../../../../ui/Sensors/SensorDetailDialog'
@@ -51,7 +51,7 @@ const SensorIconMarker = ({ feature, isHighlighted, isFocused, haloColour, onMou
   const scale = isFocused ? 1.25 : isHighlighted ? 1.2 : 1
 
   return (
-    <Marker key={String(feature.properties?.id ?? `${coords.lng},${coords.lat}`)} longitude={coords.lng} latitude={coords.lat} anchor="center">
+    <Marker key={String(feature.properties?.id ?? `${coords.lng},${coords.lat}`)} longitude={coords.lng} latitude={coords.lat} anchor="center" {...markerOcclusionProps}>
       <div
         style={{
           width: '36px',

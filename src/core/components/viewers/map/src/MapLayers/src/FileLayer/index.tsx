@@ -8,6 +8,7 @@ import { Marker } from 'react-map-gl/maplibre'
 
 import { useFile, useFiles, useDeleteFile } from '../../../../../../../hooks/files/files'
 import { FilesContext, MapContext } from '../../../../../../../store'
+import { markerOcclusionProps } from '../../../../../../../utils/markerUtils'
 import { downloadDbFile, ViewerContextMenu } from '../../../../../../ui/FilesManager'
 import { EditPosition } from '../EditPosition'
 import { PlaceOnMap } from '../PlaceOnMap'
@@ -53,7 +54,7 @@ const FileMarkerItem = React.memo(({ id, editingFileId, onContextMenu }: FileMar
   if (!file.lat || !file.lng) return null
 
   return (
-    <Marker latitude={file.lat} longitude={file.lng}>
+    <Marker latitude={file.lat} longitude={file.lng} {...markerOcclusionProps}>
       <div onContextMenu={e => onContextMenu(e, file)}>
         <MapFileMarker
           mimeType={file.mimeType}

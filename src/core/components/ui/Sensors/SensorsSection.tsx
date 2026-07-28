@@ -330,7 +330,9 @@ export function SensorsSection() {
                 onCheckedChange: () => toggleSensorTypeVisibility(typeId),
               }}
             >
-              <div className="space-y-2 mx-2 pr-2">
+              {/* py-1 so the focused row's 2px ring, which is painted outside its border box,
+                  is not clipped by this section's scroll boundary on the first and last rows. */}
+              <div className="space-y-2 mx-2 pr-2 py-1">
                 {sensorsOfType.map((sensor) => (
                   <CollapsibleSensorItem
                     key={sensor.id}
@@ -367,7 +369,7 @@ export function SensorsSection() {
               onCheckedChange: () => toggleSensorTagVisibility(tag),
             }}
           >
-            <div className="space-y-2 mx-2 pr-2">
+            <div className="space-y-2 mx-2 pr-2 py-1">
               {sensorsOfTag.map((sensor) => {
                 const type = sensorTypes.find(tp => tp.id === sensor.typeId)
                 return (

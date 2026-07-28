@@ -28,7 +28,7 @@ export function UserSettings({ minioBaseUrl }: { minioBaseUrl?: string }) {
 
   return (
     <div className="sm:p-2 overflow-hidden bg-[#fafafa] h-full">
-      <div className="bg-background rounded-xl shadow min-h-full">
+      <div className="bg-background rounded-xl shadow h-full">
         <div className="flex flex-col h-full">
           <SettingsHeader title={t('settings')} />
 

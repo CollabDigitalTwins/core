@@ -5,6 +5,7 @@
 
 import { Upload } from 'lucide-react'
 import * as React from 'react'
+import { toast } from 'sonner'
 
 import { DatasetsContext, MapContext } from '../../../../../../../store'
 import { DatasetGroup } from '../../../../../../../types/dbTypes'
@@ -206,6 +207,9 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
       }
       catch (e) {
         console.warn('DatasetAdder: MinIO persistence failed; dataset will be session-only', e)
+        toast.error(
+          `"${loaded.sourceName}" couldn't be saved and will be lost on reload: ${e instanceof Error ? e.message : 'unknown error'}`,
+        )
       }
       finally {
         setSaving(false)

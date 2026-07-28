@@ -87,6 +87,7 @@ export default function OrganizationConfigContent() {
       orgName: typeof orgName === 'string' ? orgName : '',
       orgTitle: formData.get('orgTitle'),
       orgDescription: formData.get('orgDescription'),
+      countrySubdivision: formData.get('countrySubdivision'),
       orgLanguages,
       appContent,
       adminName: formData.get('adminName'),
@@ -188,6 +189,19 @@ export default function OrganizationConfigContent() {
                       rows={4}
                       required
                     />
+                  </div>
+
+                  {/* Country Subdivision */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium">Country Subdivision</label>
+                    <Input
+                      name="countrySubdivision"
+                      placeholder="CA-ON"
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      ISO 3166-2 code for your organization&apos;s country and subdivision (e.g. CA-ON, US-NY).
+                    </p>
                   </div>
 
                   {/* Languages — checkbox cards */}

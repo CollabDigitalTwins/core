@@ -96,24 +96,24 @@ export function PerformanceSettings() {
   React.useEffect(() => {
     if (!viewer) return
     const pointcloud = viewer.scene.pointclouds[0]
-    const material = pointcloud.material
-    material.minSize = minNodeSize[0]
+    if (!pointcloud) return // viewer can exist before any cloud is loaded
+    pointcloud.material.minSize = minNodeSize[0]
   }, [viewer, minNodeSize])
 
   // Max Node Size Effect
   React.useEffect(() => {
     if (!viewer) return
     const pointcloud = viewer.scene.pointclouds[0]
-    const material = pointcloud.material
-    material.maxSize = maxNodeSize[0]
+    if (!pointcloud) return
+    pointcloud.material.maxSize = maxNodeSize[0]
   }, [viewer, maxNodeSize])
 
   // Point Size Type Effect
   React.useEffect(() => {
     if (!viewer) return
     const pointcloud = viewer.scene.pointclouds[0]
-    const material = pointcloud.material
-    material.pointSizeType = pointSizeType
+    if (!pointcloud) return
+    pointcloud.material.pointSizeType = pointSizeType
   }, [viewer, pointSizeType])
 
   // Octree Box Effect

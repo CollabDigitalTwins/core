@@ -108,7 +108,7 @@ export class StoreyProjector {
       // The BIM viewer renders on camera events, not continuously — request
       // an explicit render after each class so the user sees lines pop in
       // as each IFC class finishes projecting.
-      () => fragments.core.update(true),
+      () => { void fragments.core.update(true) },
     )
     // Iconic floor-plan swing arcs for doors. Best-effort: a model without
     // IFCDOOR items, or whose worker can't supply bboxes, falls through
@@ -121,7 +121,7 @@ export class StoreyProjector {
       //   entry.elevation,
       // )
       // if (doorLayer) layers.push(doorLayer)
-      fragments.core.update(true)
+      void fragments.core.update(true)
     } catch (error) {
       console.warn('[StoreyProjector] door swings skipped:', error)
     }

@@ -14,10 +14,14 @@ export interface CommentActionLabels {
   edit?: string
   delete?: string
   close?: string
+  expand?: string
+  tag?: string
 }
 
 interface CommentActionButtonsProps {
   onReply?: () => void
+  onExpand?: () => void
+  onTag?: () => void
   onEdit?: () => void
   onDelete?: () => void
   onClose?: () => void
@@ -43,6 +47,8 @@ interface CommentActionButtonsProps {
  */
 export function CommentActionButtons({
   onReply,
+  onExpand,
+  onTag,
   onEdit,
   onDelete,
   onClose,
@@ -67,6 +73,32 @@ export function CommentActionButtons({
 
   return (
     <div className={cn('flex items-center gap-0 flex-shrink-0', className)}>
+      {onExpand && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className={btn}
+          {...bind(onExpand)}
+          title={labels?.expand ?? 'Expand'}
+          aria-label={labels?.expand ?? 'Expand'}
+        >
+          <LR.Maximize2 className="h-4 w-4" />
+        </Button>
+      )}
+      {onTag && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className={btn}
+          {...bind(onTag)}
+          title={labels?.tag ?? 'Add tag'}
+          aria-label={labels?.tag ?? 'Add tag'}
+        >
+          <LR.Tag className="h-4 w-4" />
+        </Button>
+      )}
       {onReply && (
         <Button
           type="button"

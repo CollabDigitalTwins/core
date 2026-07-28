@@ -203,7 +203,7 @@ const BuildingDetails = React.forwardRef<BuildingDetailsRef, BuildingDetailsProp
     // If this is a file field change, refresh the files data
     if (isFileField(key)) {
       // Refresh the files data to show newly uploaded files
-      mutate(`/api/files/building/${selectedItem?.id}`)
+      void mutate(`/api/files/building/${selectedItem?.id}`)
     }
   }
 

@@ -28,7 +28,7 @@ export function createOpenDataPortalHooks(adapter: ApiAdapter) {
       async (_k, { arg }: { arg: Partial<OpenDataPortal> }) => adapter.createOpenDataPortal(arg),
       {
         onSuccess: () => {
-          mutate(["openDataPortals"]);
+          void mutate(["openDataPortals"]);
         },
       }
     );

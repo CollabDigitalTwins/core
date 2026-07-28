@@ -80,12 +80,14 @@ export const PlaceOnMap: React.FC<PlaceOnMapProps> = ({ file, onPlaced, onCancel
             }
         }
 
-        map.on("click", handleClick)
+        const onClick = (e: maplibregl.MapMouseEvent) => { void handleClick(e) }
+
+        map.on("click", onClick)
         document.addEventListener("keydown", handleKeyDown)
 
         return () => {
             map.off("mousemove", keepCrosshair)
-            map.off("click", handleClick)
+            map.off("click", onClick)
             document.removeEventListener("keydown", handleKeyDown)
             clearCursor()
         }

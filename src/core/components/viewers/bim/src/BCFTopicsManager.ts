@@ -44,19 +44,22 @@ export class BCFTopicsManager extends OBC.Component {
 
     private setupEventHandlers() {
         // Create a viewpoint whenever a topic is created
-        this.bcfTopics.list.onItemSet.add(async ({ value: topic }) => {
-            if (this.world) {
+        this.bcfTopics.list.onItemSet.add(({ value: topic }) => {
+            const world = this.world
+            if (!world) return
+
+            void (async () => {
                 const viewpoint = this.viewpoints.create()
-                viewpoint.world = this.world
+                viewpoint.world = world
                 viewpoint.title = `Viewpoint for ${topic.title}`
 
                 // Update camera and take snapshot
                 await viewpoint.updateCamera()
-                viewpoint.takeSnapshot()
+                void viewpoint.takeSnapshot()
 
                 // Link viewpoint to topic
                 topic.viewpoints.add(viewpoint.guid)
-            }
+            })()
         })
     }
 
@@ -237,19 +240,14 @@ export class BCFTopicsManager extends OBC.Component {
             input.accept = ".bcf"
             input.type = "file"
 
-            input.addEventListener("change", async () => {
+            input.addEventListener("change", () => {
                 const file = input.files?.[0]
                 if (!file) {
                     reject(new Error('No file selected'))
                     return
                 }
 
-                try {
-                    const result = await this.loadBCF(file)
-                    resolve(result)
-                } catch (error) {
-                    reject(error)
-                }
+                this.loadBCF(file).then(resolve).catch(reject)
             })
 
             input.click()

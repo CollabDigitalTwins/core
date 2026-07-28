@@ -104,7 +104,7 @@ export function useDatasetsForPortals(portals?: OpenDataPortal[], options?: Opti
       }
     })
 
-    Promise.allSettled(promises).finally(() => {
+    void Promise.allSettled(promises).finally(() => {
       if (!cancelled) setIsLoading(false)
     })
 

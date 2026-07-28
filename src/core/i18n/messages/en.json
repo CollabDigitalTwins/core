@@ -438,6 +438,11 @@
   "DatasetManagerMenu": {
     "appliedLayer": "Applied Layer"
   },
+  "MapLegend": {
+    "title": "Legend",
+    "titlePlural": "Legends",
+    "feedUnavailable": "Feed unavailable"
+  },
   "Datasets": {
     "failedFetchError": "Failed to fetch datasets.",
     "dialogTitle": "Datasets",
@@ -998,6 +1003,7 @@
     "readyToView": "Ready",
     "infoTitle": "More information",
     "convertTitle": "Convert to Potree",
+    "retryUploadTitle": "Upload never completed - click to retry",
     "viewTitle": "View in Potree viewer",
     "deleteTitle": "Delete point cloud",
     "uploadedBy": "Uploaded by",
@@ -1043,7 +1049,10 @@
     "placeSensorTooltipBim": "Double-click on the model to place the sensor",
     "selectType": "Select type",
     "selectFormat": "Select format",
-    "tags": "Tags"
+    "tags": "Tags",
+    "previewPoints": "data points",
+    "previewNoData": "No data at this URL",
+    "previewError": "Could not reach this URL"
   },
   "SensorLayers": {
     "sensorEdited": "Sensor edited",
@@ -1054,6 +1063,7 @@
     "addSensorTitle": "Add Sensor",
     "searchSensors": "Search sensors...",
     "editSensor": "Edit sensor",
+    "expandSensor": "Expand",
     "sensorEdited": "Sensor edited",
     "deleteSensor": "Delete sensor",
     "sensorDeleted": "Sensor deleted",
@@ -1067,6 +1077,7 @@
     "newTagPlaceholder": "Tag name...",
     "cancel": "Cancel",
     "filters": "Filters",
+    "toggleLegend": "Show or hide the colour legend",
     "groupBy": "Group by",
     "groupByType": "Type",
     "groupByTag": "Tag",
@@ -1874,5 +1885,52 @@
     "uploadSuccess": "{count, plural, one {# file uploaded successfully} other {# files uploaded successfully}}",
     "uploadError": "Error uploading file:",
     "unknownError": "Unknown error occurred"
+  },
+  "BuildingSensors": {
+    "average": "average",
+    "reporting": "{reporting} of {total} reporting",
+    "updated": "Updated {time}",
+    "noReading": "No reading"
+  },
+  "SensorLegend": {
+    "noReading": "No reading yet",
+    "selectType": "Change sensor type",
+    "close": "Hide legend",
+    "noRange": "No colour range configured for this type"
+  },
+  "SensorDetail": {
+    "value": "Value",
+    "metadata": "Metadata",
+    "noMetadata": "No metadata available.",
+    "overTime": "Over time",
+    "currentValues": "Current values",
+    "loading": "Loading data...",
+    "untagged": "Untagged",
+    "moreSeries": "{count} more",
+    "range": {
+      "all": "All",
+      "day": "Last day",
+      "hour": "Last hour",
+      "custom": "Custom"
+    },
+    "scope": {
+      "sensor": "This sensor",
+      "type": "All of type",
+      "tag": "By tag"
+    },
+    "datastream": "Datastream",
+    "description": "Description",
+    "observationType": "Observation type",
+    "observedProperty": "Observed property",
+    "propertyDefinition": "Property definition",
+    "unit": "Unit",
+    "unitDefinition": "Unit definition",
+    "phenomenonTime": "Phenomenon time",
+    "observations": "Observations",
+    "generator": "Generator",
+    "seed": "Seed",
+    "frequency": "Frequency (ms)",
+    "sensorMetadata": "Sensor metadata",
+    "selfLink": "Self link"
   }
 }

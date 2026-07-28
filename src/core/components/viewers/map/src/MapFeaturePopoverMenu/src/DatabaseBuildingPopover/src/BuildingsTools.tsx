@@ -17,8 +17,9 @@ import {
 import { useFileUploadHandler } from "../../../../../../../../components/ui/FilesManager/src/useFileUploadHandler";
 import { useFilesByBuildingId, useUploadFileToBuilding } from "../../../../../../../../hooks/files/files";
 import { usePermissions } from '../../../../../../../../store'
-import { BuildingsContext, BimContext, MapContext, MenusContext, useMenusContext } from "../../../../../../../../store";
+import { AppConfigContext, BuildingsContext, BimContext, MapContext, MenusContext, useMenusContext } from "../../../../../../../../store";
 import { ViewerNames } from "../../../../../../../../types/";
+import { hasAppContent } from "../../../../../../../../utils/appContent";
 import { toggleBimToMap as dispatchToggleBimToMap } from '../../../../../utils/toggleBimToMap';
 import Compare from '../../../../compare';
 
@@ -47,6 +48,8 @@ export default function BuildingTools({
   const { ability } = usePermissions()
 
   const { dispatch: menusDispatch } = React.useContext(MenusContext);
+  const { state: appConfigState } = React.useContext(AppConfigContext);
+  const { organization } = appConfigState.appConfig;
   const { state: mapState, } = React.useContext(MapContext);
   const { dispatch: bimDispatch, state: bimState } = React.useContext(BimContext);
   const { bimModelsAddedToMap } = bimState.bim;
@@ -171,58 +174,74 @@ export default function BuildingTools({
   )
 
   const buildingButtons: Tool[] = React.useMemo(
-    () => [
-      {
-        id: "map-compare-buildings",
-        icon: LR.Columns3,
-        title: t('compareTitle'),
-        component: Compare,
-        disabled: !ability.can('read', 'Building')
-      },
-      {
-        id: "open-building-page",
-        icon: LR.Building2,
-        title: t('openBIMTitle'),
-        onClick: () => {
+    () => {
 
-          changeViewer(ViewerNames.buildings);
-          setSelectedItem(building);
-          setView("detail");
-
+      /** `opensViewer` gates the tool on the organization's app content, not on permissions. */
+      const tools: (Tool & { opensViewer?: ViewerNames })[] = [
+        {
+          id: "map-compare-buildings",
+          icon: LR.Columns3,
+          title: t('compareTitle'),
+          component: Compare,
+          disabled: !ability.can('read', 'Building')
         },
-        disabled: !ability.can('read', 'Building')
-      },
-      {
-        id: "open-bim-viewer",
-        icon: LR.Box,
-        title: t('OpenBIMViewerTitle'),
-        onClick: onOpenBimViewer,
-        disabled: !ability.can('read', 'File')
-      },
-      {
-        id: 'open-pointcloud',
-        title: t('openPointCloudTitle'),
-        icon: LR.Grip,
-        onClick: () => changeViewer(ViewerNames.pointcloud),
-        disabled: pcFiles.length === 0 || !ability.can('read', 'File')
-      },
-      {
-        id: "map-add-file",
-        icon: isUploading
-          ? LR.Loader
-          : LR.FilePlus,
-        title: t('addFileTitle'),
-        onClick: triggerFileInput,
-        disabled: !ability.can('create', 'File')
-      },
-    ],
+        {
+          id: "open-building-page",
+          icon: LR.Building2,
+          title: t('openBIMTitle'),
+          onClick: () => {
+
+            changeViewer(ViewerNames.buildings);
+            setSelectedItem(building);
+            setView("detail");
+
+          },
+          disabled: !ability.can('read', 'Building'),
+          opensViewer: ViewerNames.buildings
+        },
+        {
+          id: "open-bim-viewer",
+          icon: LR.Box,
+          title: t('OpenBIMViewerTitle'),
+          onClick: onOpenBimViewer,
+          disabled: !ability.can('read', 'File'),
+          opensViewer: ViewerNames.bim
+        },
+        {
+          id: 'open-pointcloud',
+          title: t('openPointCloudTitle'),
+          icon: LR.Grip,
+          onClick: () => changeViewer(ViewerNames.pointcloud),
+          disabled: pcFiles.length === 0 || !ability.can('read', 'File'),
+          opensViewer: ViewerNames.pointcloud
+        },
+        {
+          id: "map-add-file",
+          icon: isUploading
+            ? LR.Loader
+            : LR.FilePlus,
+          title: t('addFileTitle'),
+          onClick: triggerFileInput,
+          disabled: !ability.can('create', 'File')
+        },
+      ];
+
+      // Hidden, not disabled: a tool that navigates somewhere the sidebar does not offer is a
+      // dead end, so it should not be on screen at all. Same rule the sidebar applies.
+      return tools.filter(
+        tool => tool.opensViewer == null || hasAppContent(organization, tool.opensViewer),
+      );
+
+    },
     [
       changeViewer,
       building,
       setSelectedItem,
       setView,
       isUploading,
-      triggerFileInput
+      triggerFileInput,
+      organization,
+      pcFiles.length
     ]
   );
 
@@ -251,7 +270,7 @@ export default function BuildingTools({
     <div className="space-y-4">
       {/* Hidden file input */}
       <input
-        onChange={(e) => handleFileUpload(e.target.files?.[0] || null)}
+        onChange={(e) => { void handleFileUpload(e.target.files?.[0] || null) }}
         ref={fileInputRef}
         style={{ "display": "none" }}
         type="file"

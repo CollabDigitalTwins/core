@@ -176,7 +176,7 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
   const handleElementSelect = (elementId: string) => {
     const id = Number.parseInt(elementId)
     setCurrentElementId(id)
-    loadElementProperties(id)
+    void loadElementProperties(id)
   }
 
   // Memoize event handlers to prevent infinite loops
@@ -254,7 +254,7 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
         idsManager.onTest.remove(handleIDSTest)
         idsManager.onReset.remove(handleIDSReset)
       }
-    } catch (error) {
+    } catch {
       // IDSManager might not be initialized
       return
     }
@@ -294,7 +294,7 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
       setCurrentElementIdsStatus(null)
     }
     else {
-      loadElementProperties(currentElementId)
+      void loadElementProperties(currentElementId)
 
       // Check if current element passed or failed IDS test
       if (bimComponents && idsEnabled) {
@@ -324,7 +324,7 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
           }
 
           setCurrentElementIdsStatus(elementStatus)
-        } catch (error) {
+        } catch {
           setCurrentElementIdsStatus(null)
         }
       } else {
@@ -343,7 +343,7 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
   // Fetch element names when selectedElementIds changes
   React.useEffect(() => {
     if (selectedElementIds.length > 1) {
-      getElementNames(selectedElementIds).then(setElementNames)
+      void getElementNames(selectedElementIds).then(setElementNames)
     }
     else {
       setElementNames({})
@@ -372,7 +372,7 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
         idsTestResults={idsTestResults}
         title={idsTitle}
         description={idsDescription}
-        onClose={handleIDSClose}
+        onClose={() => void handleIDSClose()}
         onHeightChange={handleIDSHeightChange}
       />
     )

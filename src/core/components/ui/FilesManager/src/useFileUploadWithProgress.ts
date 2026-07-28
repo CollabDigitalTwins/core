@@ -86,7 +86,7 @@ export function useFileUploadWithProgress({
       }
 
       // Revalidate files list
-      mutate(['files'])
+      void mutate(['files'])
 
       onUploadSuccess?.()
     } catch (error) {
@@ -107,10 +107,10 @@ export function useFileUploadWithProgress({
       input.accept = acceptedFileTypes
       input.style.display = 'none'
 
-      input.addEventListener('change', async (e) => {
+      input.addEventListener('change', (e) => {
         const file = (e.target as HTMLInputElement).files?.[0]
         if (!file) return
-        await handleFileUpload(file)
+        void handleFileUpload(file)
       })
 
       inputRef.current = input

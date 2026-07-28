@@ -438,6 +438,11 @@
   "DatasetManagerMenu": {
     "appliedLayer": "Capa aplicada"
   },
+  "MapLegend": {
+    "title": "Leyenda",
+    "titlePlural": "Leyendas",
+    "feedUnavailable": "Fuente no disponible"
+  },
   "Datasets": {
     "failedFetchError": "Error al obtener conjuntos de datos.",
     "dialogTitle": "Conjuntos de datos",
@@ -998,6 +1003,7 @@
     "readyToView": "Lista",
     "infoTitle": "Más información",
     "convertTitle": "Convertir a Potree",
+    "retryUploadTitle": "La subida nunca se completó - haga clic para reintentar",
     "viewTitle": "Ver en el visor Potree",
     "deleteTitle": "Eliminar nube de puntos",
     "uploadedBy": "Subida por",
@@ -1043,7 +1049,10 @@
     "placeSensorTooltipBim": "Haga doble clic en el modelo para colocar el sensor",
     "selectType": "Seleccionar tipo",
     "selectFormat": "Seleccionar formato",
-    "tags": "Etiquetas"
+    "tags": "Etiquetas",
+    "previewPoints": "puntos de datos",
+    "previewNoData": "No hay datos en esta URL",
+    "previewError": "No se pudo acceder a esta URL"
   },
   "SensorLayers": {
     "sensorEdited": "Sensor editado",
@@ -1054,6 +1063,7 @@
     "addSensorTitle": "Añadir sensor",
     "searchSensors": "Buscar sensores...",
     "editSensor": "Editar sensor",
+    "expandSensor": "Ampliar",
     "sensorEdited": "Sensor editado",
     "deleteSensor": "Eliminar sensor",
     "sensorDeleted": "Sensor eliminado",
@@ -1067,6 +1077,7 @@
     "newTagPlaceholder": "Nombre de la etiqueta...",
     "cancel": "Cancelar",
     "filters": "Filtros",
+    "toggleLegend": "Mostrar u ocultar la leyenda de colores",
     "groupBy": "Agrupar por",
     "groupByType": "Tipo",
     "groupByTag": "Etiqueta",
@@ -1871,5 +1882,52 @@
     "uploadSuccess": "{count, plural, one {# archivo subido con éxito} other {# archivos subidos con éxito}}",
     "uploadError": "Error al subir el archivo:",
     "unknownError": "Ocurrió un error desconocido"
+  },
+  "BuildingSensors": {
+    "average": "promedio",
+    "reporting": "{reporting} de {total} activos",
+    "updated": "Actualizado a las {time}",
+    "noReading": "Sin lectura"
+  },
+  "SensorLegend": {
+    "noReading": "Sin lectura todavía",
+    "selectType": "Cambiar el tipo de sensor",
+    "close": "Ocultar la leyenda",
+    "noRange": "No hay rango de colores configurado para este tipo"
+  },
+  "SensorDetail": {
+    "value": "Valor",
+    "metadata": "Metadatos",
+    "noMetadata": "No hay metadatos disponibles.",
+    "overTime": "A lo largo del tiempo",
+    "currentValues": "Valores actuales",
+    "loading": "Cargando datos...",
+    "untagged": "Sin etiqueta",
+    "moreSeries": "{count} más",
+    "range": {
+      "all": "Todo",
+      "day": "Último día",
+      "hour": "Última hora",
+      "custom": "Personalizado"
+    },
+    "scope": {
+      "sensor": "Este sensor",
+      "type": "Todo el tipo",
+      "tag": "Por etiqueta"
+    },
+    "datastream": "Flujo de datos",
+    "description": "Descripción",
+    "observationType": "Tipo de observación",
+    "observedProperty": "Propiedad observada",
+    "propertyDefinition": "Definición de la propiedad",
+    "unit": "Unidad",
+    "unitDefinition": "Definición de la unidad",
+    "phenomenonTime": "Tiempo del fenómeno",
+    "observations": "Observaciones",
+    "generator": "Generador",
+    "seed": "Semilla",
+    "frequency": "Frecuencia (ms)",
+    "sensorMetadata": "Metadatos del sensor",
+    "selfLink": "Enlace propio"
   }
 }

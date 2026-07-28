@@ -8,7 +8,7 @@ import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
-import { useCreateSensor } from '../../../hooks/sensors/sensors'
+import { useCreateSensor, useSensor } from '../../../hooks/sensors/sensors'
 import { useSensorTypes } from '../../../hooks/sensorTypes/sensorTypes'
 import { AppConfigContext, MapContext, BuildingsContext, MenusContext, ToolsContext } from '../../../store'
 import { ViewerNames, SensorDataFormat } from '../../../types/dbTypes'
@@ -28,6 +28,7 @@ import {
 import { Separator } from '../Separator'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../Tooltip'
 
+import { parseSensorSeries } from './sensorData'
 import { SensorTagsSection } from './SensorTagsSection'
 
 import type { Sensor} from '../../../types/dbTypes';
@@ -51,6 +52,10 @@ export type SensorInputProps = {
   onCancel?: () => void
   bim?: BimSensorPlacementContext
   isOpen?: boolean
+  /** When provided, the dialog becomes a single-sensor EDIT form (no multi-add, no placement). */
+  editSensor?: Sensor
+  /** Called after a successful edit save (in addition to onCancel). */
+  onSaved?: () => void
 }
 
 type SensorFormData = {
@@ -63,14 +68,46 @@ type SensorFormData = {
   tags: string[]
 }
 
+/**
+ * Split a stored updateFrequency (ms) back into a {value, unit} pair for the form,
+ * picking the largest frequencyUnits entry that divides evenly. Falls back to
+ * expressing the value in milliseconds.
+ */
+function splitUpdateFrequencyMs(updateFrequencyMs: number): { updateFrequency: number; updateFrequencyUnit: number } {
+  const sortedDesc = [...frequencyUnits].sort((a, b) => b.value - a.value)
+  for (const unit of sortedDesc) {
+    if (unit.value > 0 && updateFrequencyMs % unit.value === 0) {
+      return { updateFrequency: updateFrequencyMs / unit.value, updateFrequencyUnit: unit.value }
+    }
+  }
+  return { updateFrequency: updateFrequencyMs, updateFrequencyUnit: 1 }
+}
+
+function sensorFormFromEditSensor(editSensor: Sensor): SensorFormData {
+  const { updateFrequency, updateFrequencyUnit } = splitUpdateFrequencyMs(editSensor.updateFrequency)
+  return {
+    typeId: editSensor.typeId ?? -1,
+    name: editSensor.name,
+    data: editSensor.url ?? editSensor.data ?? '',
+    dataFormat: editSensor.dataFormat,
+    updateFrequency,
+    updateFrequencyUnit,
+    tags: editSensor.tags ?? [],
+  }
+}
+
 export function SensorInput({
   viewer,
   layout = 'dialog',
   onCancel,
   bim,
   isOpen = false,
+  editSensor,
+  onSaved,
 }: SensorInputProps) {
   const t = useTranslations('SensorInput')
+  // Fallback for i18n keys that may not exist yet in every catalog (edit-mode additions).
+  const tf = React.useCallback((key: string, fallback: string) => (t.has(key) ? t(key) : fallback), [t])
   const session = useSession()
 
   const user = session.data?.user
@@ -89,24 +126,9 @@ export function SensorInput({
   const { currentSensorTypeId } = menusState.menus
 
   const [sensors, setSensors] = React.useState<SensorFormData[]>([
-    {
-      typeId: currentSensorTypeId ?? -1,
-      name: '',
-      data: '',
-      dataFormat: SensorDataFormat.Json,
-      updateFrequency: 1,
-      updateFrequencyUnit: 1000,
-      tags: [],
-    },
-  ])
-  const [currentSensorIndex, setCurrentSensorIndex] = React.useState(0)
-  const [isPlacing, setIsPlacing] = React.useState(false)
-
-  // Re-initialize form with pre-selected type each time the dialog opens
-  React.useEffect(() => {
-    if (!isOpen) return
-    setSensors([
-      {
+    editSensor
+      ? sensorFormFromEditSensor(editSensor)
+      : {
         typeId: currentSensorTypeId ?? -1,
         name: '',
         data: '',
@@ -115,11 +137,60 @@ export function SensorInput({
         updateFrequencyUnit: 1000,
         tags: [],
       },
+  ])
+  const [currentSensorIndex, setCurrentSensorIndex] = React.useState(0)
+  const [isPlacing, setIsPlacing] = React.useState(false)
+
+  // Lightweight "does this URL work" preview, keyed by sensor-form index.
+  const [preview, setPreview] = React.useState<Record<number, { ok: boolean; text: string }>>({})
+
+  const checkDataUrl = React.useCallback(async (index: number, url: string, dataFormat: string) => {
+    if (!url.trim()) {
+      setPreview(prev => { const next = { ...prev }; delete next[index]; return next })
+      return
+    }
+    try {
+      const res = await fetch(url)
+      if (!res.ok) {
+        setPreview(prev => ({ ...prev, [index]: { ok: false, text: t('previewError') } }))
+        return
+      }
+      const raw = await res.text()
+      const { points, unit } = parseSensorSeries(raw, dataFormat as SensorDataFormat)
+      if (points.length === 0) {
+        setPreview(prev => ({ ...prev, [index]: { ok: false, text: t('previewNoData') } }))
+        return
+      }
+      const unitText = unit ? ` · ${unit}` : ''
+      setPreview(prev => ({ ...prev, [index]: { ok: true, text: `${points.length} ${t('previewPoints')}${unitText}` } }))
+    } catch {
+      setPreview(prev => ({ ...prev, [index]: { ok: false, text: t('previewError') } }))
+    }
+  }, [t])
+
+  // Re-initialize form with pre-selected type (or the sensor being edited) each time the dialog opens
+  React.useEffect(() => {
+    if (!isOpen) return
+    setSensors([
+      editSensor
+        ? sensorFormFromEditSensor(editSensor)
+        : {
+          typeId: currentSensorTypeId ?? -1,
+          name: '',
+          data: '',
+          dataFormat: SensorDataFormat.Json,
+          updateFrequency: 1,
+          updateFrequencyUnit: 1000,
+          tags: [],
+        },
     ])
     setCurrentSensorIndex(0)
-  }, [isOpen])
+    setPreview({})
+  }, [isOpen, editSensor])
 
   const { createSensor } = useCreateSensor()
+  // Hook order must stay stable regardless of whether editSensor is provided.
+  const { updateSensor: updateSensorMutation } = useSensor(editSensor?.id ?? null)
 
   const setCursor = React.useCallback(
     (cursor: string) => {
@@ -152,6 +223,7 @@ export function SensorInput({
       },
     ])
     setCurrentSensorIndex(0)
+    setPreview({})
     setCursor('')
     menusDispatch({type: 'SET_CURRENT_SENSOR_TYPE_ID', payload: { currentSensorTypeId: null }})
   }, [setCursor, currentSensorTypeId])
@@ -175,7 +247,25 @@ export function SensorInput({
     onCancel?.()
   }
 
+  const onSaveEdit = async () => {
+    if (!editSensor) return
+    const form = sensors[0]
+    const partial: Partial<Sensor> = {
+      typeId: form.typeId,
+      name: form.name,
+      data: form.data,
+      dataFormat: form.dataFormat as SensorDataFormat,
+      url: form.data,
+      updateFrequency: form.updateFrequency * form.updateFrequencyUnit,
+      tags: form.tags,
+    }
+    await updateSensorMutation(partial)
+    onSaved?.()
+    onCancel?.()
+  }
+
   React.useEffect(() => {
+    if (editSensor) return
     if (!isPlacing) return
 
     if (viewer === ViewerNames.map) {
@@ -212,7 +302,7 @@ export function SensorInput({
           viewer: ViewerNames.map,
           tags: currentSensor.tags,
         }
-        onCreateSensor(newSensor as Partial<Sensor>)
+        void onCreateSensor(newSensor as Partial<Sensor>)
       }
 
       map.on('mousemove', mouseMoveCrosshairHandler)
@@ -233,7 +323,7 @@ export function SensorInput({
       let disposed = false
       let removeListeners: (() => void) | null = null
 
-      ;(async () => {
+      ;void (async () => {
         const THREE = await import('three')
         if (disposed) return
 
@@ -291,12 +381,15 @@ export function SensorInput({
           }
         }
 
+        // Listeners must be sync; placement errors surface via the pending marker cleanup.
+        const onDblClick = (e: MouseEvent) => { void handleDblClick(e) }
+
         document.addEventListener('mousemove', handleMouseMove)
-        document.addEventListener('dblclick', handleDblClick)
+        document.addEventListener('dblclick', onDblClick)
 
         removeListeners = () => {
           document.removeEventListener('mousemove', handleMouseMove)
-          document.removeEventListener('dblclick', handleDblClick)
+          document.removeEventListener('dblclick', onDblClick)
         }
       })()
 
@@ -309,6 +402,7 @@ export function SensorInput({
   }, [
     appConfigState,
     bim,
+    editSensor,
     isPlacing,
     mapContext,
     viewer,
@@ -421,8 +515,14 @@ export function SensorInput({
               type="text"
               value={sensor.data}
               onChange={e => updateSensor(index, 'data', e.target.value)}
+              onBlur={e => { void checkDataUrl(index, e.target.value, sensor.dataFormat) }}
               placeholder={t('dataUrlPlaceholder')}
             />
+            {preview[index] && (
+              <p className={cn('text-xs', preview[index].ok ? 'text-muted-foreground' : 'text-destructive')}>
+                {preview[index].text}
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -488,23 +588,34 @@ export function SensorInput({
             />
           </div>
 
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  onClick={() => onPlaceSensor(index)}
-                  disabled={!sensor.name.trim() || !sensor.data.trim()}
-                  className="w-full"
-                >
-                  {t('placeSensor')}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{placeSensorTooltip}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {editSensor ? (
+            <Button
+              type="button"
+              onClick={() => void onSaveEdit()}
+              disabled={!sensor.name.trim() || !sensor.data.trim()}
+              className="w-full"
+            >
+              {tf('save', 'Save')}
+            </Button>
+          ) : (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    onClick={() => onPlaceSensor(index)}
+                    disabled={!sensor.name.trim() || !sensor.data.trim()}
+                    className="w-full"
+                  >
+                    {t('placeSensor')}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{placeSensorTooltip}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
       ))}
     </div>

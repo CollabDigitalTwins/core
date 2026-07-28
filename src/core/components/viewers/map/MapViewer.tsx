@@ -10,6 +10,7 @@ import Map, { NavigationControl } from 'react-map-gl/maplibre'
 
 
 import { MapContext } from '../../../store'
+import { SensorLegend } from '../../ui/Sensors/SensorLegend'
 import SettingsButton from '../../ui/SettingsButton'
 import { StatsOverlay } from '../../ui/stats'
 
@@ -40,11 +41,10 @@ interface Props {
   width?: string
   height?: string
   organization: Organization
-  minioBaseUrl?: string
   maptilerKey?: string
 }
 
-export function MapViewer({ width = '100%', height = '100%', organization, minioBaseUrl, maptilerKey }: Props) {
+export function MapViewer({ width = '100%', height = '100%', organization, maptilerKey }: Props) {
 
   const searchParams = useSearchParams()
 
@@ -210,13 +210,14 @@ export function MapViewer({ width = '100%', height = '100%', organization, minio
         {isMapLoaded
           && (
             <>
-              <MapLayers minioBaseUrl={minioBaseUrl} organization={organization} maptilerKey={maptilerKey} />
+              <MapLayers organization={organization} maptilerKey={maptilerKey} />
               {/* Bottom-left stack: legend above the layers/styling card, gap auto-managed by flex. */}
               <div className="absolute bottom-[10px] left-3 z-10 flex flex-col gap-2 pointer-events-none">
                 {/* Portal slot for on-map WMS time controls; display:contents so an
                     empty slot adds no flex item / gap, but a mounted control stacks
                     above the legend + dataset-manager cards. */}
                 <div id="wms-time-slot" style={{ display: 'contents' }} />
+                <SensorLegend />
                 <MapLegendHost />
                 <DatasetManagerMenu />
               </div>

@@ -121,7 +121,7 @@ export function SpatialStructureSection({ searchQuery, modelId }: Props) {
       !spatialStructure.tree &&
       !spatialStructure.isLoading
     ) {
-      spatialStructure.getSpatialStructure(currentModelIdRef.current)
+      void spatialStructure.getSpatialStructure(currentModelIdRef.current)
     }
 
     return () => {
@@ -176,7 +176,7 @@ export function SpatialStructureSection({ searchQuery, modelId }: Props) {
         if (showIds.length > 0) {
           await model.setVisible(showIds, true)
         }
-        fragments.core.update(true)
+        void fragments.core.update(true)
       } catch (error) {
         console.warn('Failed to sync spatial visibility:', error)
       }
@@ -219,11 +219,11 @@ export function SpatialStructureSection({ searchQuery, modelId }: Props) {
       return
     }
     try {
-      highlighterRef.current.clear('select')
+      void highlighterRef.current.clear('select')
       const selection = {
         [currentModelIdRef.current]: new Set([item.localId]),
       }
-      highlighterRef.current.highlightByID('select', selection)
+      void highlighterRef.current.highlightByID('select', selection)
     } catch (error) {
       console.warn('Highlighting failed:', error)
     }
@@ -243,9 +243,9 @@ export function SpatialStructureSection({ searchQuery, modelId }: Props) {
           const selection = {
             [currentModelIdRef.current]: new Set([item.localId]),
           }
-          highlighterRef.current.highlightByID('hover', selection)
+          void highlighterRef.current.highlightByID('hover', selection)
         } else {
-          highlighterRef.current.clear('hover')
+          void highlighterRef.current.clear('hover')
         }
       } catch (error) {
         console.warn('Hover highlighting failed:', error)
@@ -302,7 +302,7 @@ export function SpatialStructureSection({ searchQuery, modelId }: Props) {
       if (showIds.length > 0) {
         await model.setVisible(showIds, true)
       }
-      fragments.core.update(true)
+      void fragments.core.update(true)
     } catch (error) {
       console.warn('Failed to sync spatial visibility:', error)
     }

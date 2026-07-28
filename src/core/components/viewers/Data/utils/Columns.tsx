@@ -109,7 +109,7 @@ export function useColumns(buildings?: Building[]): ColumnDef<Building | Site | 
             className="hover:bg-transparent p-0"
           >
             {t('buildingNameAdd')}
-            {isSorted == false && <LR.ArrowUpDown />}
+            {isSorted === false && <LR.ArrowUpDown />}
             {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
             {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
           </Button>
@@ -150,7 +150,7 @@ export function useColumns(buildings?: Building[]): ColumnDef<Building | Site | 
             className="hover:bg-transparent p-0"
           >
             {t('buildingCountrySubdivision')}
-            {isSorted == false && <LR.ArrowUpDown />}
+            {isSorted === false && <LR.ArrowUpDown />}
             {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
             {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
           </Button>
@@ -171,7 +171,7 @@ export function useColumns(buildings?: Building[]): ColumnDef<Building | Site | 
             className="hover:bg-transparent p-0"
           >
             {t('buildingMunic')}
-            {isSorted == false && <LR.ArrowUpDown />}
+            {isSorted === false && <LR.ArrowUpDown />}
             {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
             {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
           </Button>
@@ -191,7 +191,7 @@ export function useColumns(buildings?: Building[]): ColumnDef<Building | Site | 
             className="hover:bg-transparent p-0"
           >
             {t('buildingType')}
-            {isSorted == false && <LR.ArrowUpDown />}
+            {isSorted === false && <LR.ArrowUpDown />}
             {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
             {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
           </Button>
@@ -214,7 +214,7 @@ export function useColumns(buildings?: Building[]): ColumnDef<Building | Site | 
             className="hover:bg-transparent p-0"
           >
             {t('siteName')}
-            {isSorted == false && <LR.ArrowUpDown />}
+            {isSorted === false && <LR.ArrowUpDown />}
             {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
             {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
           </Button>
@@ -234,7 +234,7 @@ export function useColumns(buildings?: Building[]): ColumnDef<Building | Site | 
             className="hover:bg-transparent p-0"
           >
             {t('siteCountrySubdivision')}
-            {isSorted == false && <LR.ArrowUpDown />}
+            {isSorted === false && <LR.ArrowUpDown />}
             {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
             {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
           </Button>
@@ -256,7 +256,7 @@ export function useColumns(buildings?: Building[]): ColumnDef<Building | Site | 
           >
             {t('siteMunic')}
 
-            {isSorted == false && <LR.ArrowUpDown />}
+            {isSorted === false && <LR.ArrowUpDown />}
             {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
             {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
           </Button>
@@ -290,7 +290,7 @@ export function useColumns(buildings?: Building[]): ColumnDef<Building | Site | 
         >
           {/* Note: Ensure 'infrastructureName' or similar is in your translation file */}
           {t('infrastructureName')}
-          {isSorted == false && <LR.ArrowUpDown />}
+          {isSorted === false && <LR.ArrowUpDown />}
           {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
           {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
         </Button>
@@ -331,7 +331,7 @@ export function useColumns(buildings?: Building[]): ColumnDef<Building | Site | 
           className="hover:bg-transparent p-0"
         >
           {t('infrastructureCountrySubdivision')}
-          {isSorted == false && <LR.ArrowUpDown />}
+          {isSorted === false && <LR.ArrowUpDown />}
           {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
           {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
         </Button>
@@ -352,7 +352,7 @@ export function useColumns(buildings?: Building[]): ColumnDef<Building | Site | 
           className="hover:bg-transparent p-0"
         >
           {t('infrastructureMunic')}
-          {isSorted == false && <LR.ArrowUpDown />}
+          {isSorted === false && <LR.ArrowUpDown />}
           {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
           {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
         </Button>
@@ -372,7 +372,7 @@ export function useColumns(buildings?: Building[]): ColumnDef<Building | Site | 
           className="hover:bg-transparent p-0"
         >
           {t('infrastructureType')}
-          {isSorted == false && <LR.ArrowUpDown />}
+          {isSorted === false && <LR.ArrowUpDown />}
           {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
           {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
         </Button>
@@ -395,7 +395,7 @@ export function useColumns(buildings?: Building[]): ColumnDef<Building | Site | 
             className="hover:bg-transparent p-0"
           >
             {t('fileName')}
-            {isSorted == false && <LR.ArrowUpDown />}
+            {isSorted === false && <LR.ArrowUpDown />}
             {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
             {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
           </Button>
@@ -425,7 +425,7 @@ export function useColumns(buildings?: Building[]): ColumnDef<Building | Site | 
           >
             {t('fileSite')}
 
-            {isSorted == false && <LR.ArrowUpDown />}
+            {isSorted === false && <LR.ArrowUpDown />}
             {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
             {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
           </Button>
@@ -459,7 +459,7 @@ export function useColumns(buildings?: Building[]): ColumnDef<Building | Site | 
             className="hover:bg-transparent p-0"
           >
             {t('fileBuilding')}
-            {isSorted == false && <LR.ArrowUpDown />}
+            {isSorted === false && <LR.ArrowUpDown />}
             {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
             {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
           </Button>
@@ -479,7 +479,7 @@ export function useColumns(buildings?: Building[]): ColumnDef<Building | Site | 
             className="hover:bg-transparent p-0"
           >
             {t('fileDate')}
-            {isSorted == false && <LR.ArrowUpDown />}
+            {isSorted === false && <LR.ArrowUpDown />}
             {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
             {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
           </Button>
@@ -516,7 +516,7 @@ export function useColumns(buildings?: Building[]): ColumnDef<Building | Site | 
             className="hover:bg-transparent p-0"
           >
             {t('fileType')}
-            {isSorted == false && <LR.ArrowUpDown />}
+            {isSorted === false && <LR.ArrowUpDown />}
             {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
             {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
           </Button>
@@ -571,7 +571,7 @@ export function useUserColumns(): ColumnDef<User>[] {
             className="hover:bg-transparent p-0"
           >
             {t('userName')}
-            {isSorted == false && <LR.ArrowUpDown />}
+            {isSorted === false && <LR.ArrowUpDown />}
             {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
             {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
           </Button>
@@ -590,7 +590,7 @@ export function useUserColumns(): ColumnDef<User>[] {
             className="hover:bg-transparent p-0"
           >
             {t('userEmail')}
-            {isSorted == false && <LR.ArrowUpDown />}
+            {isSorted === false && <LR.ArrowUpDown />}
             {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
             {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
           </Button>
@@ -690,7 +690,7 @@ export function useAssociatedBuildingsColumns(): ColumnDef<Building>[] {
             className="hover:bg-transparent p-0"
           >
             {t('associatedBuildingsName')}
-            {isSorted == false && <LR.ArrowUpDown />}
+            {isSorted === false && <LR.ArrowUpDown />}
             {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
             {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
           </Button>
@@ -764,7 +764,7 @@ export function usePropertyFilesColumns(): ColumnDef<DbFile>[] {
             className="hover:bg-transparent p-0"
           >
             {t('propertyFileName')}
-            {isSorted == false && <LR.ArrowUpDown />}
+            {isSorted === false && <LR.ArrowUpDown />}
             {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
             {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
           </Button>
@@ -784,7 +784,7 @@ export function usePropertyFilesColumns(): ColumnDef<DbFile>[] {
             className="hover:bg-transparent p-0"
           >
             {t('propertyFileType')}
-            {isSorted == false && <LR.ArrowUpDown />}
+            {isSorted === false && <LR.ArrowUpDown />}
             {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
             {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
           </Button>
@@ -804,7 +804,7 @@ export function usePropertyFilesColumns(): ColumnDef<DbFile>[] {
             className="hover:bg-transparent p-0"
           >
             {t('propertyFilesDateUp')}
-            {isSorted == false && <LR.ArrowUpDown />}
+            {isSorted === false && <LR.ArrowUpDown />}
             {isSorted === 'desc' && <LR.ArrowDown className="text-black" />}
             {isSorted === 'asc' && <LR.ArrowUp className="text-black" />}
           </Button>

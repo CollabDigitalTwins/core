@@ -13,19 +13,28 @@ import { toast } from 'sonner'
 import { useSensor, useSensors } from '../../../../../../../hooks/sensors/sensors'
 import { useSensorTypes } from '../../../../../../../hooks/sensorTypes/sensorTypes'
 import { useUsers } from '../../../../../../../hooks/users/users'
-import { MapContext, MenusContext } from '../../../../../../../store'
+import { AppConfigContext, MapContext, MenusContext } from '../../../../../../../store'
 import { ViewerNames, type Sensor as ISensor} from '../../../../../../../types/dbTypes'
+import { withAlpha } from '../../../../../../../utils/colourUtils'
+import { HIGHLIGHT_COLOR } from '../../../../../../../utils/markerUtils'
 import Sensor from '../../../../../../ui/Sensors/Sensor'
-import { UNTAGGED_TAG } from '../../../../../../ui/Sensors/SensorsSection'
+import { observedDomain, resolveDomain, resolveRamp } from '../../../../../../ui/Sensors/sensorColour'
+import { SensorDetailDialog } from '../../../../../../ui/Sensors/SensorDetailDialog'
+import { SensorInput } from '../../../../../../ui/Sensors/SensorInput'
+import { valueColoursBySensor } from '../../../../../../ui/Sensors/sensorValueColours'
+import { activeSensorTypeId, visibleSensors } from '../../../../../../ui/Sensors/sensorVisibility'
+import { useSensorSeriesMulti } from '../../../../../../ui/Sensors/useSensorSeriesMulti'
 import { extractCoordinatesFromFeature } from '../../../../utils/extractCoordinates'
 import { MapLayerClickPriority } from '../../../../utils/MapEventManager/MapClickManager'
-import { createClusterLayer, createClusterCountLayer, createUnclusteredPointLayer } from '../mapLayersUtils'
+import { CLUSTER_COUNT_COLOUR, createClusterLayer, createClusterCountLayer, createUnclusteredPointLayer } from '../mapLayersUtils'
+
+import { SENSOR_CLUSTER_PROPERTIES, sensorClusterColour } from './sensorClusterColour'
 
 import type { SensorType} from '../../../../../../../types/dbTypes';
 import type { ClickCallback } from '../../../../utils/MapEventManager/MapClickManager';
 import type { MapGeoJSONFeature, MapLayerMouseEvent } from 'maplibre-gl'
 
-const SensorIconMarker = ({ feature, isHighlighted, onMouseEnter, onMouseLeave, sensorTypes }: { feature: MapGeoJSONFeature; isHighlighted?: boolean; onMouseEnter?: () => void; onMouseLeave?: () => void; sensorTypes: SensorType[] }) => {
+const SensorIconMarker = ({ feature, isHighlighted, isFocused, haloColour, onMouseEnter, onMouseLeave, sensorTypes }: { feature: MapGeoJSONFeature; isHighlighted?: boolean; isFocused?: boolean; haloColour?: string; onMouseEnter?: () => void; onMouseLeave?: () => void; sensorTypes: SensorType[] }) => {
 
   const coords = extractCoordinatesFromFeature(feature)
   if (!coords) return null
@@ -34,6 +43,13 @@ const SensorIconMarker = ({ feature, isHighlighted, onMouseEnter, onMouseLeave, 
   const icon = sensorType?.icon || 'Radio'
   const SensorIcon = LR[icon] || LR.Radio
 
+  // The border carries the sensor's current value when there is one, so selection moves to
+  // border width and scale. Ring widths mirror the BIM marker's 2/3/4px tiers.
+  const borderWidth = isFocused ? 4 : isHighlighted ? 3 : 2
+  const borderColour = haloColour ?? (isHighlighted || isFocused ? HIGHLIGHT_COLOR : 'white')
+  const glowColour = haloColour ? withAlpha(haloColour, 0.55) : 'rgba(115, 206, 226, 0.5)'
+  const scale = isFocused ? 1.25 : isHighlighted ? 1.2 : 1
+
   return (
     <Marker key={String(feature.properties?.id ?? `${coords.lng},${coords.lat}`)} longitude={coords.lng} latitude={coords.lat} anchor="center">
       <div
@@ -41,14 +57,16 @@ const SensorIconMarker = ({ feature, isHighlighted, onMouseEnter, onMouseLeave, 
           width: '36px',
           height: '36px',
           borderRadius: '50%',
-          border: isHighlighted ? '3px solid #73cee2' : '2px solid white',
+          border: `${borderWidth}px solid ${borderColour}`,
           backgroundColor: 'black',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: isHighlighted ? '0 0 12px rgba(115, 206, 226, 0.5)' : 'none',
+          boxShadow: haloColour || isHighlighted || isFocused
+            ? `0 0 ${isFocused ? 16 : 12}px ${glowColour}`
+            : 'none',
           transition: 'all 0.2s ease-in-out',
-          transform: isHighlighted ? 'scale(1.2)' : 'scale(1)',
+          transform: `scale(${scale})`,
         }}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
@@ -59,9 +77,8 @@ const SensorIconMarker = ({ feature, isHighlighted, onMouseEnter, onMouseLeave, 
   )
 }
 
-export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
+export const SensorLayers = () => {
     const [hoveredSensorId, setHoveredSensorId] = React.useState<number | null>(null)
-  const clusterLayer = createClusterLayer('sensors')
   const clusterCountLayer = createClusterCountLayer('sensors')
   const unclusteredPointLayer = createUnclusteredPointLayer('sensors')
 
@@ -78,23 +95,23 @@ export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
 
   const [popupInfo, setPopUpInfo] = React.useState<Partial<ISensor & { sensorType: SensorType }> | null>(null)
   const { deleteSensor, updateSensor } = useSensor(popupInfo?.id ?? null)
-  const { state: menusState } = React.useContext(MenusContext)
-  const { visibleSensorTypes, visibleSensorTags, currentSensorId } = menusState.menus
+  const { state: menusState, dispatch: menusDispatch } = React.useContext(MenusContext)
+  const { visibleSensorTypes, visibleSensorTags, currentSensorId, focusedSensorId, sensorLegendTypeId } = menusState.menus
   const typesVisible = visibleSensorTypes?.[ViewerNames.map] || []
   const tagsVisible = visibleSensorTags?.[ViewerNames.map] || []
 
   const {sensorTypes} = useSensorTypes()
 
-  const eligibleSensors: Array<ISensor & { authorName: string } & { sensorType: SensorType }> = sensors
-    .filter((sensor) => sensor.viewer === ViewerNames.map)
-    .filter((sensor) => {
-      const matchesType = typesVisible.includes(sensor.typeId)
-      const hasNoTags = !sensor.tags?.length
-      const matchesTag = hasNoTags
-        ? tagsVisible.includes(UNTAGGED_TAG)
-        : sensor.tags?.some(tag => tagsVisible.includes(tag)) ?? false
-      return matchesType || matchesTag
-    })
+  const { state: appConfigState } = React.useContext(AppConfigContext)
+  const timeZone = appConfigState.appConfig.displayTimeZone
+  const [detailSensor, setDetailSensor] = React.useState<ISensor | null>(null)
+  const [editSensor, setEditSensor] = React.useState<ISensor | null>(null)
+
+  const eligibleSensors: Array<ISensor & { authorName: string } & { sensorType: SensorType }> = visibleSensors(sensors, {
+    viewer: ViewerNames.map,
+    visibleTypeIds: typesVisible,
+    visibleTags: tagsVisible,
+  })
     .map((sensor) => {
       const user = users.find(u => u.id === sensor.authorId)
       const sensorType = sensorTypes.find(t => t.id === sensor.typeId)
@@ -111,6 +128,37 @@ export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
       setPopUpInfo(null)
     }
   }, [sensors, popupInfo])
+
+  // Every sensor sharing the active type gets a halo coloured by its own current value, readable
+  // against the SensorLegend card. Only that one type is polled. Resolved through the same
+  // helper the legend uses, so pinning a type in the legend dropdown moves the halos with it.
+  const haloTypeId = activeSensorTypeId(eligibleSensors, {
+    legendTypeId: sensorLegendTypeId?.[ViewerNames.map],
+    activeSensorId: focusedSensorId,
+  })
+  const haloSensors = haloTypeId == null
+    ? []
+    : eligibleSensors.filter(s => s.typeId === haloTypeId)
+  const { seriesById } = useSensorSeriesMulti(haloSensors, { enabled: haloSensors.length > 0 })
+
+  const haloIdsKey = haloSensors.map(s => s.id).join(',')
+  const readings = React.useMemo(
+    () => valueColoursBySensor(haloSensors, sensorTypes, seriesById),
+    [seriesById, sensorTypes, haloIdsKey],
+  )
+
+  // Cluster bubbles average the readings they hide, on the same ramp and domain the individual
+  // halos use, so zooming out does not change what a colour means.
+  const haloType = haloTypeId == null ? undefined : sensorTypes.find(t => t.id === haloTypeId)
+  const haloRamp = haloType ? resolveRamp(haloType) : null
+  const haloDomain = resolveDomain(
+    haloType,
+    observedDomain(haloSensors.flatMap(s => seriesById.get(s.id)?.points ?? [])),
+  )
+  const clusterLayer = createClusterLayer(
+    'sensors',
+    sensorClusterColour(haloRamp, haloDomain, CLUSTER_COUNT_COLOUR),
+  )
 
   const geojsonSensorData = React.useMemo(() => {
     const convertDataToGeojson = (sensorData: typeof eligibleSensors): GeoJSON.FeatureCollection<GeoJSON.Point, { [key: string]: any }> => {
@@ -141,6 +189,9 @@ export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
               url,
               createdAt,
               viewer: ViewerNames.map,
+              // Only present for sensors of the active type that are actually reporting. The
+              // cluster accumulators count exactly these, so the average is over real readings.
+              ...(readings.has(Number(id)) ? { value: readings.get(Number(id))?.value } : {}),
             },
           }
         })
@@ -154,7 +205,7 @@ export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
       return sensorFC
     }
     return convertDataToGeojson(eligibleSensors)
-  }, [eligibleSensors])
+  }, [eligibleSensors, readings])
 
   // event listeners for sensor unclustered points
   React.useEffect(() => {
@@ -164,9 +215,11 @@ export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
 
       if (!feature || feature.properties.point_count) return
 
-      if (feature.geometry.type != 'Point') return
+      if (feature.geometry.type !== 'Point') return
       const [longitude, latitude] = feature.geometry.coordinates
       const { id, authorId, name, typeId, data, dataFormat, updateFrequency, createdAt, url } = feature.properties
+      // Focus on click so the legend and the sibling halos follow the sensor just opened.
+      menusDispatch({ type: 'SET_FOCUSED_SENSOR_ID', payload: { sensorId: Number(id) } })
       setPopUpInfo({
         id: Number(id),
         authorId: Number(authorId),
@@ -202,11 +255,11 @@ export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
       map.off('mouseenter', 'sensors-unclustered-points', mouseEnterChangeCursor)
       map.off('mouseleave', 'sensors-unclustered-points', mouseLeaveChangeCursor)
     }
-  }, [map, mapClickManager])
+  }, [map, mapClickManager, menusDispatch])
 
   const handleRemoveSensor = () => {
     toast.success(t('sensorDeleted'))
-    deleteSensor()
+    void deleteSensor()
     setPopUpInfo(null)
   }
 
@@ -253,9 +306,7 @@ export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
     if (!popupInfo) return null
     const sensorType = sensorTypes.find(t => t.id === popupInfo.typeId)
     const liveSensor = sensors.find(s => s.id === popupInfo.id)
-    const dataUrl = popupInfo.url
-      ? `${minioBaseUrl ?? ''}/sensors/${popupInfo.url}`
-      : popupInfo.data || ''
+    const dataUrl = popupInfo.url || popupInfo.data || ''
 
     return (
       <Popup
@@ -263,6 +314,7 @@ export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
         longitude={popupInfo.longitude}
         latitude={popupInfo.latitude}
         closeOnClick={false}
+        closeButton={false}
         onClose={() => setPopUpInfo(null)}
         anchor="bottom"
         style={{ height: '50px', border: 'none', boxShadow: 'none' }}
@@ -288,6 +340,17 @@ export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
           createdAt={popupInfo.createdAt}
           onRemove={user.id === String(popupInfo.authorId) ? handleRemoveSensor : null}
           onClose={() => setPopUpInfo(null)}
+          onExpand={() => { if (liveSensor) setDetailSensor(liveSensor) }}
+          onEdit={user.id === String(popupInfo.authorId) && liveSensor ? () => setEditSensor(liveSensor) : undefined}
+          showActions
+          focused={focusedSensorId === popupInfo.id}
+          haloColour={popupInfo.id == null ? undefined : readings.get(popupInfo.id)?.colour}
+          onSelect={() => {
+            if (popupInfo.id != null) {
+              menusDispatch({ type: 'SET_FOCUSED_SENSOR_ID', payload: { sensorId: popupInfo.id } })
+            }
+          }}
+          timeZone={timeZone}
           size="sm"
         />
         {/* inline styles to override MapLibre's Pop up CSS */}
@@ -343,6 +406,24 @@ export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
 
   return (
     <>
+      {detailSensor && (
+        <SensorDetailDialog
+          open={!!detailSensor}
+          onOpenChange={(o) => !o && setDetailSensor(null)}
+          sensor={detailSensor}
+          sensorType={sensorTypes.find(t => t.id === detailSensor.typeId)}
+        />
+      )}
+      {editSensor && (
+        <SensorInput
+          viewer={ViewerNames.map}
+          layout="dialog"
+          isOpen={!!editSensor}
+          editSensor={editSensor ?? undefined}
+          onCancel={() => setEditSensor(null)}
+          onSaved={() => setEditSensor(null)}
+        />
+      )}
   {(typesVisible.length > 0 || tagsVisible.length > 0) &&
     <Source
       id="sensors"
@@ -351,6 +432,7 @@ export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
       cluster={true}
       clusterMaxZoom={14}
       clusterRadius={40}
+      clusterProperties={SENSOR_CLUSTER_PROPERTIES}
     >
       <Layer {...clusterLayer} />
       <Layer {...clusterCountLayer} />
@@ -364,6 +446,8 @@ export const SensorLayers = ({ minioBaseUrl }: { minioBaseUrl?: string }) => {
             key={String(feature.properties?.id)}
             feature={feature}
             isHighlighted={currentSensorId === feature.properties?.id || hoveredSensorId === feature.properties?.id}
+            isFocused={focusedSensorId === feature.properties?.id}
+            haloColour={readings.get(Number(feature.properties?.id))?.colour}
             onMouseEnter={() => setHoveredSensorId(feature.properties?.id)}
             onMouseLeave={() => setHoveredSensorId(null)}
             sensorTypes={sensorTypes}

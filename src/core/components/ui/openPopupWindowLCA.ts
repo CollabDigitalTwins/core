@@ -22,8 +22,6 @@ export const openPopupWindow = () => {
 
   const newWindow = window.open('', '_blank', windowFeatures)
 
-  console.log('LCA!!!')
-
   if (newWindow) {
     newWindow.document.write(`
       <!DOCTYPE html>

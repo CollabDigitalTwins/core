@@ -64,6 +64,92 @@ interface FieldRendererProps {
   setActiveChanges?: (editing: boolean) => void
 }
 
+interface ParentSiteFieldProps {
+  property: string
+  value: any
+  handleInputChange: (property: string, value: any) => void
+}
+
+/**
+ * Single-select parent site picker.
+ *
+ * Its own component because it needs hooks (useSites, useState, useMemo) and
+ * FieldRenderer only reaches this branch for one property — calling hooks inside
+ * that conditional would break hook ordering for every other field.
+ */
+const ParentSiteField = ({ property, value, handleInputChange }: ParentSiteFieldProps) => {
+  const t = useTranslations('BuildingFieldRenderer')
+  const { ability } = usePermissions()
+  const { sites, isLoading } = useSites()
+  const [search, setSearch] = React.useState('')
+  // A building has a single parent site (buildingParentSiteId is a scalar FK),
+  // so this is single-select: pick one, show it once, X clears it.
+  const selectedId = Array.isArray(value) ? (value[0] ?? null) : (value ?? null)
+  const filteredSites = React.useMemo(() => {
+    if (!sites) return []
+    const lower = search.toLowerCase()
+    return sites.filter(site =>
+      (site.siteName && site.siteName.toLowerCase().includes(lower))
+      || (site.siteAddress && site.siteAddress.toLowerCase().includes(lower)),
+    )
+  }, [sites, search])
+  const selectedSite = sites?.find(site => site.id === selectedId) || null
+
+  return (
+    <div className="space-y-2">
+      <Command shouldFilter={false}>
+        <CommandInput
+          placeholder="Search for a site..."
+          value={search}
+          onValueChange={setSearch}
+          disabled={isLoading}
+        />
+        {search.trim() !== '' && (
+          <CommandList>
+            {isLoading && <CommandEmpty><LoadingSpinner /></CommandEmpty>}
+            {!isLoading && filteredSites.length === 0 && (
+              <CommandEmpty>{t('empty')}</CommandEmpty>
+            )}
+            <CommandGroup>
+              {filteredSites.map(site => (
+                <CommandItem
+                  key={site.id}
+                  value={site.id.toString()}
+                  onSelect={() => {
+                    handleInputChange(property, site.id)
+                    setSearch('')
+                  }}
+                >
+                  <div>
+                    <div className="font-medium">{site.siteName}</div>
+                    <div className="text-xs text-muted-foreground">{site.siteAddress}</div>
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        )}
+      </Command>
+      {selectedSite && (
+        <div className="flex flex-wrap gap-1">
+          <Badge className="gap-1" variant="secondary">
+            {selectedSite.siteName}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="p-0 hover:bg-transparent w-auto h-auto"
+              onClick={() => handleInputChange(property, null)}
+              disabled={!ability.can('update', 'Building')}
+            >
+              <X className="!w-3 !h-3" size={8} />
+            </Button>
+          </Badge>
+        </div>
+      )}
+    </div>
+  )
+}
+
 const FieldRenderer = ({
   property,
   value,
@@ -566,73 +652,12 @@ const FieldRenderer = ({
 
 
   if (property === 'buildingParentSiteId' && setActiveChanges) {
-    const { sites, isLoading } = useSites()
-    const [search, setSearch] = React.useState('')
-    // A building has a single parent site (buildingParentSiteId is a scalar FK),
-    // so this is single-select: pick one, show it once, X clears it.
-    const selectedId = Array.isArray(value) ? (value[0] ?? null) : (value ?? null)
-    const filteredSites = React.useMemo(() => {
-      if (!sites) return []
-      const lower = search.toLowerCase()
-      return sites.filter(site =>
-        (site.siteName && site.siteName.toLowerCase().includes(lower))
-        || (site.siteAddress && site.siteAddress.toLowerCase().includes(lower)),
-      )
-    }, [sites, search])
-    const selectedSite = sites?.find(site => site.id === selectedId) || null
-
     return (
-      <div className="space-y-2">
-        <Command shouldFilter={false}>
-          <CommandInput
-            placeholder="Search for a site..."
-            value={search}
-            onValueChange={setSearch}
-            disabled={isLoading}
-          />
-          {search.trim() !== '' && (
-            <CommandList>
-              {isLoading && <CommandEmpty><LoadingSpinner /></CommandEmpty>}
-              {!isLoading && filteredSites.length === 0 && (
-                <CommandEmpty>{t('empty')}</CommandEmpty>
-              )}
-              <CommandGroup>
-                {filteredSites.map(site => (
-                  <CommandItem
-                    key={site.id}
-                    value={site.id.toString()}
-                    onSelect={() => {
-                      handleInputChange(property, site.id)
-                      setSearch('')
-                    }}
-                  >
-                    <div>
-                      <div className="font-medium">{site.siteName}</div>
-                      <div className="text-xs text-muted-foreground">{site.siteAddress}</div>
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          )}
-        </Command>
-        {selectedSite && (
-          <div className="flex flex-wrap gap-1">
-            <Badge className="gap-1" variant="secondary">
-              {selectedSite.siteName}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="p-0 hover:bg-transparent w-auto h-auto"
-                onClick={() => handleInputChange(property, null)}
-                disabled={!ability.can('update', 'Building')}
-              >
-                <X className="!w-3 !h-3" size={8} />
-              </Button>
-            </Badge>
-          </div>
-        )}
-      </div>
+      <ParentSiteField
+        property={property}
+        value={value}
+        handleInputChange={handleInputChange}
+      />
     )
   }
 

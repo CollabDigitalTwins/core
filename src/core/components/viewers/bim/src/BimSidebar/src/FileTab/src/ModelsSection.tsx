@@ -152,7 +152,7 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
       const modelInfo = modelManager.getModel(file.id.toString())
       if (modelInfo) {
         modelInfo.model.visible = newVisibility
-        if (fragments) fragments.core.update(true)
+        if (fragments) void fragments.core.update(true)
         return
       }
     }
@@ -162,7 +162,7 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
       const fragModel = fragments.core.models.list.get(file.name)
       if (fragModel) {
         fragModel.object.visible = newVisibility
-        fragments.core.update(true)
+        void fragments.core.update(true)
       } else {
       }
     }

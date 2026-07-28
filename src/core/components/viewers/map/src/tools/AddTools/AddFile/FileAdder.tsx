@@ -260,7 +260,7 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
         fileDispatch({ type: 'ADD_TO_MAP', payload: { id: createdFile.id } })
 
         toast.success(t('uploadSuccess'), { id: toastId })
-        mutate(['files'])
+        void mutate(['files'])
         onClose()
       }
       catch (error) {
@@ -274,24 +274,25 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
     }
 
     const mouseMoveCrosshairHandler = () => setCursor('crosshair')
+    const onDblClick = (e: maplibregl.MapMouseEvent) => { void dblclickHandler(e) }
 
     if (!map) return
 
     if (selectedFile && !isUploading) {
       setCursor('crosshair')
       map.on('mousemove', mouseMoveCrosshairHandler)
-      map.on('dblclick', dblclickHandler)
+      map.on('dblclick', onDblClick)
     }
     else {
       map.off('mousemove', mouseMoveCrosshairHandler)
-      map.off('dblclick', dblclickHandler)
+      map.off('dblclick', onDblClick)
     }
 
     if (selectedFile) {
       return () => {
         setCursor('')
         map.off('mousemove', mouseMoveCrosshairHandler)
-        map.off('dblclick', dblclickHandler)
+        map.off('dblclick', onDblClick)
       }
     }
   }, [selectedFile, isUploading, map])

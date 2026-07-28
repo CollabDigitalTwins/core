@@ -32,8 +32,8 @@ import type { DbFile } from '../../../../../../../types/dbTypes'
   const bimFiles: DbFile[] = []
   const nonBimFiles: DbFile[] = []
 
-  // single .map pass to populate both arrays
-  filesData.map((file) => {
+  // single pass to populate both arrays
+  filesData.forEach((file) => {
     const {extension} = file
     if (!extension) return
     const isBim = extension.toLowerCase() === 'ifc' || extension.toLowerCase() === 'frag'

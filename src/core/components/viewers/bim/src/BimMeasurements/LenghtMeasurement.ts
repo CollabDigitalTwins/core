@@ -53,7 +53,7 @@ export class LengthMeasurement extends OBC.Component {
 
         container.ondblclick = () => {
             if (this.measurer?.enabled) {
-                this.measurer.create()
+                void this.measurer.create()
             }
         }
     }
@@ -81,7 +81,7 @@ export class LengthMeasurement extends OBC.Component {
 
         // Create a measurement programmatically
         // This will start the measurement creation process
-        this.measurer.create()
+        void this.measurer.create()
     }
 
     delete() {

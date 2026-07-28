@@ -278,13 +278,13 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
           existingModel.model.visible = false
         }
       }
-      if (fragments) fragments.core.update(true)
+      if (fragments) void fragments.core.update(true)
     }
 
     // DXF files managed via DXFManager
     if (file.extension === 'dxf') {
       await toggleDxfVisibility(file, newVisibility)
-      if (fragments) fragments.core.update(true)
+      if (fragments) void fragments.core.update(true)
     }
     setLoadedTick(t => t + 1)
   }, [bimComponents, menusDispatch, bimState, bimDispatch, modelManager, fragments, toggleDxfVisibility])
@@ -354,7 +354,7 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
           const existing = modelManagerRef.current.getModelByName(placingFile.name)
           if (!existing) {
             fetch(`/api/presignedUrlDownload/${placingFile.id}`)
-              .then(res => res.ok ? res.json() : Promise.reject(res.status))
+              .then(res => res.ok ? res.json() : Promise.reject(new Error(`Presigned URL request failed with status ${res.status}`)))
               .then(({ presignedUrl }) =>
                 modelManagerRef.current!.load(
                   presignedUrl,
@@ -386,11 +386,13 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
       }
     }
 
-    document.addEventListener('dblclick', handleDblClick)
+    const onDblClick = (e: MouseEvent) => { void handleDblClick(e) }
+
+    document.addEventListener('dblclick', onDblClick)
     document.addEventListener('keydown', handleKeyDown)
 
     return () => {
-      document.removeEventListener('dblclick', handleDblClick)
+      document.removeEventListener('dblclick', onDblClick)
       document.removeEventListener('keydown', handleKeyDown)
       if (cursor) cursor.cursor = ''
     }
@@ -512,7 +514,7 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
           await toggleDxfVisibility(f, checked)
         }
       }
-      if (fragments) fragments.core.update(true)
+      if (fragments) void fragments.core.update(true)
       setLoadedTick(t => t + 1)
     },
   })
@@ -548,7 +550,7 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
       const obj = getSceneObject(file)
       if (!obj) continue // not loaded yet — picked up once loadedTick bumps
       const marker = createFileMarker(makeMarkerInput(file, obj.position.clone()), obj, world, (action) => {
-        if (action === 'delete') { handleAction('delete', file); return }
+        if (action === 'delete') { void handleAction('delete', file); return }
         editObject(file, action === 'move' ? 'translate' : action)
       })
       if (marker) markersRef.current.set(key, { marker, file })

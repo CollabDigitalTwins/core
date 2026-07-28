@@ -56,26 +56,26 @@ export function createSensorHooks(adapter: ApiAdapter) {
                     const prev = data; // Previous sensor data before update
 
                     // Revalidate the same keys used above
-                    mutate(["sensor", id]);
-                    mutate(["sensors"]);
+                    void mutate(["sensor", id]);
+                    void mutate(["sensors"]);
                     // If buildingId or authorId changed --> Need to invalidate previous + current building and author lists
-                    if (prev?.buildingId) mutate(["sensors", "building", prev.buildingId]);
-                    if (prev?.authorId) mutate(["sensors", "author", prev.authorId]);
-                    if (updatedSensor.buildingId) mutate(["sensors", "building", updatedSensor.buildingId]);
-                    if (updatedSensor.authorId) mutate(["sensors", "author", updatedSensor.authorId]);
+                    if (prev?.buildingId) void mutate(["sensors", "building", prev.buildingId]);
+                    if (prev?.authorId) void mutate(["sensors", "author", prev.authorId]);
+                    if (updatedSensor.buildingId) void mutate(["sensors", "building", updatedSensor.buildingId]);
+                    if (updatedSensor.authorId) void mutate(["sensors", "author", updatedSensor.authorId]);
                 },
             }
         );
 
         const { trigger: deleteSensor, isMutating: isDeleting, error: deleteError } = useSWRMutation(
             id ? ["deleteSensor", id] as const : null,
-            async () => await adapter.deleteSensor(id as number),
+            async () => adapter.deleteSensor(id as number),
             {
             onSuccess: (deletedSensor) => {
-                mutate(["sensor", deletedSensor.id], undefined, { revalidate: false });
-                mutate(["sensors"]);
-                if (deletedSensor.buildingId) mutate(["sensors", "building", deletedSensor.buildingId]);
-                if (deletedSensor.authorId) mutate(["sensors", "author", deletedSensor.authorId]);
+                void mutate(["sensor", deletedSensor.id], undefined, { revalidate: false });
+                void mutate(["sensors"]);
+                if (deletedSensor.buildingId) void mutate(["sensors", "building", deletedSensor.buildingId]);
+                if (deletedSensor.authorId) void mutate(["sensors", "author", deletedSensor.authorId]);
             },
             }
         );
@@ -102,9 +102,9 @@ export function createSensorHooks(adapter: ApiAdapter) {
             {
                 onSuccess: (created) => {
                     // Revalidate cache lists that would include the new sensor
-                    mutate(["sensors"]);
-                    if (created.buildingId) mutate(["sensors", "building", created.buildingId]);
-                    if (created.authorId) mutate(["sensors", "author", created.authorId]);
+                    void mutate(["sensors"]);
+                    if (created.buildingId) void mutate(["sensors", "building", created.buildingId]);
+                    if (created.authorId) void mutate(["sensors", "author", created.authorId]);
 
                 },
             }

@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { format } from 'date-fns'
 import * as LR from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
@@ -11,15 +10,21 @@ import * as React from 'react'
 
 import { useCoreHooks } from '../../../hooks/provider'
 import { useUser } from '../../../hooks/users/users'
+import { AppConfigContext } from '../../../store'
+import { sensorRingShadow } from '../../../utils/markerUtils'
+import { formatInZone } from '../../../utils/timeUtils'
 import { cn } from '../../../utils/utils'
 import { Avatar, AvatarFallback } from '../Avatar'
 import { Badge } from '../Badge'
 import { Button } from '../Button'
+import { CommentActionButtons } from '../Comments/CommentActionButtons'
 import { UserAvatar } from '../UserAvatar'
 
 import { SensorChart } from './SensorChart'
+import { SensorDetailDialog } from './SensorDetailDialog'
 import { SensorTagsSection } from './SensorTagsSection'
 import { resolveLucideIcon } from './sensorUtils'
+import { useSensorSeries } from './useSensorSeries'
 
 import type { Sensor, SensorType } from '../../../types/dbTypes'
 import type { ChartConfig } from '../chart'
@@ -34,7 +39,14 @@ interface CollapsibleSensorItemProps {
   isVisible?: boolean
   onMouseEnter?: () => void
   onMouseLeave?: () => void
-  minioBaseUrl?: string
+  /** Clicked the row: focuses the sensor so the viewer legend and halos follow it. */
+  onSelect?: () => void
+  /** Marks the row as the focused sensor, matching the marker's focus ring. */
+  isFocused?: boolean
+  /** Ramp colour for the current reading, from `valueColoursBySensor`. */
+  valueColour?: string
+  /** The current reading, already formatted with its unit. Read out beside the name. */
+  valueText?: string
 }
 
 export function CollapsibleSensorItem({
@@ -45,20 +57,21 @@ export function CollapsibleSensorItem({
   isVisible = true,
   onMouseEnter,
   onMouseLeave,
-  minioBaseUrl
+  onSelect,
+  isFocused = false,
+  valueColour,
+  valueText,
 }: CollapsibleSensorItemProps) {
   const t = useTranslations('SensorsSection')
   const [isExpanded, setIsExpanded] = React.useState(false)
-  const [sensorData, setSensorData] = React.useState<{ time: string; value: number }[]>([])
-  const [isLoadingData, setIsLoadingData] = React.useState(false)
+  const { state: appConfigState } = React.useContext(AppConfigContext)
+  const timeZone = appConfigState.appConfig.displayTimeZone
+  const [detailOpen, setDetailOpen] = React.useState(false)
+  const [tagAddNonce, setTagAddNonce] = React.useState(0)
+  const { points: sensorData, unit, valueLabels, isLoading: isLoadingData } =
+    useSensorSeries(sensor.url ?? '', sensor.dataFormat, sensor.updateFrequency, { enabled: isExpanded })
   const prevVisibleRef = React.useRef(isVisible)
 
-  //const { state: { runtimeConfig: { minioUrl } } } = useAppConfigContext()
-
-  //const dataPath = `${minioUrl ?? ''}/sensors/${sensor.url}`
-  const dataPath = minioBaseUrl
-  ? `${minioBaseUrl}/sensors/${sensor.url}`
-  : ''
   const typeName = sensorType?.name.replace(/_/g, ' ') ?? 'Unknown'
 
   const SensorIcon = resolveLucideIcon(sensorType?.icon)
@@ -74,39 +87,6 @@ export function CollapsibleSensorItem({
 
     prevVisibleRef.current = isVisible
   }, [isVisible])
-
-  // Fetch and parse CSV data
-  React.useEffect(() => {
-    const fetchCSVData = async () => {
-      setIsLoadingData(true)
-      try {
-        const response = await fetch(dataPath)
-        const csvText = await response.text()
-
-        // Parse CSV: format is "time,value" (e.g., "0:00:00,7.4")
-        const lines = csvText.trim().split('\n')
-        const parsed = lines.map(line => {
-          const [time, valueStr] = line.split(',')
-          return {
-            time: time.trim(),
-            value: parseFloat(valueStr.trim())
-          }
-        }).filter(item => !isNaN(item.value)) // Filter out any invalid entries
-
-        setSensorData(parsed)
-      } catch (error) {
-        console.error('Error fetching sensor data:', error)
-        // Fallback to empty array on error
-        setSensorData([])
-      } finally {
-        setIsLoadingData(false)
-      }
-    }
-
-    if (isExpanded) {
-      fetchCSVData()
-    }
-  }, [dataPath, isExpanded])
 
   const chartConfig = {
     value: {
@@ -140,10 +120,12 @@ export function CollapsibleSensorItem({
       className={cn(
         "border rounded-md overflow-hidden transition-opacity",
         indentClass,
-        !isVisible && "opacity-70"
+        !isVisible && "opacity-70",
+        isFocused && "ring-2 ring-primary"
       )}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
+      onClick={onSelect}
     >
       {/* Sensor Header */}
       <div className="flex items-start justify-between p-3 hover:bg-accent/50 transition-colors">
@@ -162,16 +144,23 @@ export function CollapsibleSensorItem({
             />
           </Button>
 
-          <div className={cn(
-            "h-8 w-8 mt-1 rounded-full bg-primary flex items-center justify-center flex-shrink-0",
-            !isVisible && "opacity-70 grayscale"
-          )}>
+          {/* Ringed in the reading's ramp colour, the same treatment the 3D and map markers get,
+              so a row and its marker read as the same thing. */}
+          <div
+            className={cn(
+              "h-8 w-8 mt-1 rounded-full bg-primary flex items-center justify-center flex-shrink-0 transition-[box-shadow] duration-200",
+              !isVisible && "opacity-70 grayscale"
+            )}
+            style={valueColour
+              ? { boxShadow: sensorRingShadow({ haloColour: valueColour, focused: isFocused }) }
+              : undefined}
+          >
             <SensorIcon className={cn("h-4 w-4 text-primary-foreground", !isVisible && "opacity-70")} />
           </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-                <span className={cn("text-sm font-medium", isVisible ? "text-foreground" : "text-muted-foreground")}>
+                <span className={cn("text-sm font-medium truncate", isVisible ? "text-foreground" : "text-muted-foreground")}>
                 {sensor.name}
               </span>
               {sensor.updatedAt !== sensor.createdAt && (
@@ -180,36 +169,12 @@ export function CollapsibleSensorItem({
                 </Badge>
               )}
             </div>
+            {/* The number carries the reading too: the ring colour is never the only channel. */}
+            {valueText && (
+              <span className="text-xs tabular-nums text-muted-foreground">{valueText}</span>
+            )}
           </div>
         </div>
-
-      {/* Action Buttons */}
-      {onAction && (
-        <div className={cn("flex items-center gap-0 flex-shrink-0", !isVisible && "opacity-70")}>
-          {user?.id === String(sensor.authorId) && (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 p-0"
-                onClick={() => onAction('edit', sensor.id)}
-                title={t('editSensor')}
-              >
-                <LR.Pencil className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 p-0"
-                onClick={() => onAction('delete', sensor.id)}
-                title={t('deleteSensor')}
-              >
-                <LR.Trash2 className="h-4 w-4" />
-              </Button>
-            </>
-          )}
-        </div>
-      )}
     </div>
 
       {/* Expanded Content */ }
@@ -221,7 +186,7 @@ export function CollapsibleSensorItem({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">
-                {format(new Date(sensor.createdAt), 'PPp')}
+                {formatInZone(new Date(sensor.createdAt).getTime(), timeZone, { dateStyle: 'medium', timeStyle: 'short' })}
               </span>
               <Badge variant="secondary" className="text-xs">
                 {typeName}
@@ -257,6 +222,9 @@ export function CollapsibleSensorItem({
             sensorType={sensorType}
             updateFrequency={sensor.updateFrequency}
             chartConfig={chartConfig}
+            unit={unit}
+            valueLabels={valueLabels}
+            timeZone={timeZone}
           />
         </div>
         <div>
@@ -264,6 +232,7 @@ export function CollapsibleSensorItem({
               tags={sensor.tags ?? []}
               onAdd={handleAddTag}
               onDelete={handleDeleteTag}
+              openAddSignal={tagAddNonce}
               translations={{
                 addTag: t('addTag'),
                 removeTag: t('removeTag'),
@@ -276,6 +245,18 @@ export function CollapsibleSensorItem({
       </div>
     )
   }
+      {/* Card tools row (bottom), mirroring the comment card */}
+      <div className={cn("flex items-center justify-end gap-0 border-t px-2 py-1", !isVisible && "opacity-70")}>
+        <CommentActionButtons
+          onExpand={() => setDetailOpen(true)}
+          onTag={() => { setIsExpanded(true); setTagAddNonce(n => n + 1) }}
+          onEdit={onAction && user?.id === String(sensor.authorId) ? () => onAction('edit', sensor.id) : undefined}
+          onDelete={onAction && user?.id === String(sensor.authorId) ? () => onAction('delete', sensor.id) : undefined}
+          buttonClassName="h-8 w-8"
+          labels={{ expand: t('expandSensor'), tag: t('addTag'), edit: t('editSensor'), delete: t('deleteSensor') }}
+        />
+      </div>
+      <SensorDetailDialog open={detailOpen} onOpenChange={setDetailOpen} sensor={sensor} sensorType={sensorType} />
     </div >
   )
 }

@@ -10,7 +10,8 @@ import { toast } from 'sonner'
 
 import { useSensor, useSensors } from '../../../hooks/sensors/sensors'
 import { useSensorTypes } from '../../../hooks/sensorTypes/sensorTypes'
-import { BuildingsContext, MenusContext, ToolsContext } from '../../../store'
+import { AppConfigContext, BuildingsContext, MenusContext, ToolsContext } from '../../../store'
+import { resolveDefaultTimeZone } from '../../../utils/timeUtils'
 import { stringToColour } from '../../viewers/map/utils/stringToColour'
 import { Button } from '../Button'
 import { CollapsibleSection } from '../CollapsibleSection'
@@ -26,24 +27,32 @@ import {
 import { SearchInput } from '../SearchInput'
 
 import { CollapsibleSensorItem } from './CollapsibleSensorItem'
+import { SensorInput } from './SensorInput'
 import { SensorsSectionSkeleton } from './SensorsSectionSkeleton'
 import { resolveLucideIcon } from './sensorUtils'
+import { valueColoursBySensor } from './sensorValueColours'
+import { activeSensorTypeId, legendScopeSensors, UNTAGGED_TAG } from './sensorVisibility'
+import { useSensorSeriesMulti } from './useSensorSeriesMulti'
 
 import type { Sensor } from '../../../types/dbTypes';
+
+/** Sidebar readings: compact, at most one decimal, so a row stays on one line. */
+const readingNumber = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 })
 
 
 type SensorAction = 'view' | 'edit' | 'delete'
 
-/** Stable key used in state for sensors with no tags — locale-independent */
-export const UNTAGGED_TAG = '__untagged__'
+// Re-exported from its own module so the pure helpers and the viewer layers can use it without
+// pulling this component in. Kept here because every existing import points at this path.
+export { UNTAGGED_TAG } from './sensorVisibility'
 
-export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
+export function SensorsSection() {
   // Translation
   const t = useTranslations('SensorsSection')
 
   const { dispatch: toolsDispatch } = React.useContext(ToolsContext)
   const { state: menusState, dispatch: menusDispatch } = React.useContext(MenusContext)
-  const { currentViewer, visibleSensorTypes, visibleSensorTags } = menusState.menus
+  const { currentViewer, visibleSensorTypes, visibleSensorTags, focusedSensorId, sensorLegendVisible, sensorLegendTypeId } = menusState.menus
 
   const { sensors: allSensors }: { sensors: Sensor[] } = useSensors()
   const { sensorTypes, isLoading } = useSensorTypes()
@@ -51,7 +60,10 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
   const {state: buildingsState} = React.useContext(BuildingsContext)
   const buildingId = buildingsState?.buildings?.building?.id || -1
 
+  const { state: appConfigState, dispatch: appConfigDispatch } = React.useContext(AppConfigContext)
+
   const [sensorToDelete, setSensorToDelete] = React.useState<number | null>(null)
+  const [editSensorId, setEditSensorId] = React.useState<number | null>(null)
   const [searchQuery, setSearchQuery] = React.useState('')
   const [groupBy, setGroupBy] = React.useState<'type' | 'tag'>('type')
   const { deleteSensor } = useSensor(sensorToDelete)
@@ -83,7 +95,7 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
         // ⚠️ View sensor action not implemented
         break
       case 'edit':
-        // ⚠️ Edit sensor action not implemented
+        setEditSensorId(id)
         break
       case 'delete':
             toast.success(t('sensorDeleted'))
@@ -97,12 +109,45 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
   // Trigger deletion when sensorToDelete changes
   React.useEffect(() => {
     if (sensorToDelete !== null) {
-      deleteSensor()
+      void deleteSensor()
       setSensorToDelete(null)
     }
   }, [sensorToDelete, deleteSensor])
 
   const currentSensors: Sensor[] = allSensors.filter((sensor) => currentViewer === sensor.viewer && (!sensor.buildingId || sensor.buildingId === buildingId))
+
+  // Readings for every listed sensor, so each row can be ringed by its current value. This is the
+  // only place that polls across types; the viewers poll the focused type alone. Bounded by
+  // useSensorSeriesMulti's concurrency cap and only active while this panel is mounted.
+  const { seriesById } = useSensorSeriesMulti(currentSensors, { enabled: currentSensors.length > 0 })
+  const readings = React.useMemo(
+    () => valueColoursBySensor(currentSensors, sensorTypes, seriesById),
+    [seriesById, sensorTypes, currentSensors.map(s => s.id).join(',')],
+  )
+  const readingText = (sensorId: number): string | undefined => {
+    const reading = readings.get(sensorId)
+    if (!reading) return undefined
+    const unit = seriesById.get(sensorId)?.unit
+    const labels = seriesById.get(sensorId)?.valueLabels
+    return labels?.[reading.value] ?? `${readingNumber.format(reading.value)}${unit ? ` ${unit}` : ''}`
+  }
+
+  // Default the display zone from the building's (else a sensor's) longitude, until the user overrides.
+  // Depends on primitive longitudes (not the re-created currentSensors array) so it only runs on real change.
+  const buildingLongitude = buildingsState?.buildings?.building?.buildingLongitude ?? null
+  const firstSensorLongitude = currentSensors.find(s => typeof s.longitude === 'number')?.longitude ?? null
+  const { displayTimeZone, displayTimeZoneUserSet } = appConfigState.appConfig
+  React.useEffect(() => {
+    if (displayTimeZoneUserSet) return
+    // BIM sensors live in a building (use its longitude); map sensors carry their own.
+    const candidates = currentViewer === 'bim'
+      ? [buildingLongitude, firstSensorLongitude]
+      : [firstSensorLongitude, buildingLongitude]
+    const zone = resolveDefaultTimeZone(candidates)
+    if (zone !== displayTimeZone) {
+      appConfigDispatch({ type: 'SET_DEFAULT_TIME_ZONE', payload: { displayTimeZone: zone } })
+    }
+  }, [currentViewer, buildingLongitude, firstSensorLongitude, displayTimeZone, displayTimeZoneUserSet, appConfigDispatch])
 
   // Filter sensors based on search query
   const filteredSensors = React.useMemo(() => {
@@ -137,6 +182,26 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
     } else {
       menusDispatch({ type: 'HIDE_ALL_SENSOR_TAGS_IN_VIEWER', payload: { viewer: currentViewer } })
     }
+  }, [currentViewer, menusDispatch])
+
+  // Mirrors what the legend itself decides, so the button never claims the card is on while the
+  // viewer is showing nothing. With no sensors of the active type there is nothing to toggle.
+  const legendHasContent = legendScopeSensors(
+    allSensors,
+    {
+      viewer: currentViewer,
+      visibleTypeIds: visibleSensorTypes?.[currentViewer] ?? [],
+      visibleTags: visibleSensorTags?.[currentViewer] ?? [],
+    },
+    activeSensorTypeId(allSensors, {
+      legendTypeId: sensorLegendTypeId?.[currentViewer],
+      activeSensorId: focusedSensorId,
+    }),
+  ).length > 0
+  const legendVisible = legendHasContent && sensorLegendVisible?.[currentViewer] !== false
+
+  const toggleLegend = React.useCallback(() => {
+    menusDispatch({ type: 'TOGGLE_SENSOR_LEGEND', payload: { viewer: currentViewer } })
   }, [currentViewer, menusDispatch])
 
   const toggleSensorTagVisibility = React.useCallback((tag: string) => {
@@ -193,6 +258,17 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
         />
+        <Button
+          variant={legendVisible ? 'default' : 'outline'}
+          size="icon"
+          title={t('toggleLegend')}
+          aria-pressed={legendVisible}
+          disabled={!legendHasContent}
+          className="flex-shrink-0"
+          onClick={toggleLegend}
+        >
+          <LR.Palette size={16} />
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon" title={t('filters')} className="flex-shrink-0">
@@ -262,9 +338,12 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
                     sensorType={type}
                     onAction={handleSensorAction}
                     isVisible={isTypeVisible}
-                    minioBaseUrl={minioBaseUrl}
                     onMouseEnter={() => menusDispatch({ type: 'SET_CURRENT_SENSOR_ID', payload: { currentSensorId: sensor.id } })}
                     onMouseLeave={() => menusDispatch({ type: 'SET_CURRENT_SENSOR_ID', payload: { currentSensorId: null } })}
+                    onSelect={() => menusDispatch({ type: 'SET_FOCUSED_SENSOR_ID', payload: { sensorId: sensor.id } })}
+                    isFocused={focusedSensorId === sensor.id}
+                    valueColour={readings.get(sensor.id)?.colour}
+                    valueText={readingText(sensor.id)}
                   />
                 ))}
               </div>
@@ -298,9 +377,12 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
                     sensorType={type}
                     onAction={handleSensorAction}
                     isVisible={isTagVisible}
-                    minioBaseUrl={minioBaseUrl}
                     onMouseEnter={() => menusDispatch({ type: 'SET_CURRENT_SENSOR_ID', payload: { currentSensorId: sensor.id } })}
                     onMouseLeave={() => menusDispatch({ type: 'SET_CURRENT_SENSOR_ID', payload: { currentSensorId: null } })}
+                    onSelect={() => menusDispatch({ type: 'SET_FOCUSED_SENSOR_ID', payload: { sensorId: sensor.id } })}
+                    isFocused={focusedSensorId === sensor.id}
+                    valueColour={readings.get(sensor.id)?.colour}
+                    valueText={readingText(sensor.id)}
                   />
                 )
               })}
@@ -308,6 +390,17 @@ export function SensorsSection({ minioBaseUrl }: { minioBaseUrl?: string }) {
           </CollapsibleSection>
           )
         })
+      )}
+
+      {editSensorId != null && allSensors.some(s => s.id === editSensorId) && (
+        <SensorInput
+          viewer={currentViewer}
+          layout="dialog"
+          isOpen={editSensorId != null}
+          editSensor={allSensors.find(s => s.id === editSensorId)}
+          onCancel={() => setEditSensorId(null)}
+          onSaved={() => setEditSensorId(null)}
+        />
       )}
     </div>
   )

@@ -3,13 +3,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as LR from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
-import { Badge } from '../../../../components/ui/Badge'
-import { Button } from '../../../../components/ui/Button'
-import { Command } from '../../../../components/ui/Command'
-import { Menubar } from '../../../../components/ui/Menubar'
+import { LegendCard } from '../../../../components/ui/LegendCard'
 import { usePluginRegistry, usePluginsReady } from '../../../../plugins/host/provider'
 
 import type { RegistryEntry } from '../../../../plugins/host/registry'
@@ -25,7 +22,7 @@ import type { LegendRegistration } from '../../../../plugins/sdk/types'
 export function MapLegendHost() {
   const registry = usePluginRegistry()
   const ready = usePluginsReady()
-  const [open, setOpen] = React.useState(true)
+  const t = useTranslations('MapLegend')
   const [activeMap, setActiveMap] = React.useState<Record<string, boolean>>({})
 
   const registrations = ready
@@ -48,35 +45,16 @@ export function MapLegendHost() {
       </div>
 
       {activeCount > 0 && (
-        <div data-testid="map-legend-card" className="pointer-events-auto">
-          <Menubar className="w-72 h-auto">
-            <Command>
-              <div>
-                <div className={`flex items-center justify-between gap-3 ${open ? 'p-3' : 'pl-1 py-0'}`}>
-                  <div className="flex items-center gap-2">
-                    <Badge data-testid="map-legend-count">{activeCount}</Badge>
-                    <div className="text-sm font-medium">Legend{activeCount === 1 ? '' : 's'}</div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setOpen(o => !o)}
-                    className="opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent"
-                  >
-                    <LR.ChevronUp size={14} className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
-                  </Button>
-                </div>
-                {open && (
-                  <div className="max-h-[40vh] overflow-y-auto pb-1">
-                    {registrations.map(r => (
-                      <LegendSection key={r.id} registration={r} onActiveChange={reportActive} renderBody />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </Command>
-          </Menubar>
-        </div>
+        <LegendCard
+          title={activeCount === 1 ? t('title') : t('titlePlural')}
+          count={activeCount}
+          testId="map-legend-card"
+          countTestId="map-legend-count"
+        >
+          {registrations.map(r => (
+            <LegendSection key={r.id} registration={r} onActiveChange={reportActive} renderBody />
+          ))}
+        </LegendCard>
       )}
     </>
   )
@@ -89,6 +67,7 @@ interface LegendSectionProps {
 }
 
 function LegendSection({ registration, onActiveChange, renderBody }: LegendSectionProps) {
+  const t = useTranslations('MapLegend')
   const { active, title, unavailable, rows } = registration.useLegend()
 
   React.useEffect(() => {
@@ -102,7 +81,7 @@ function LegendSection({ registration, onActiveChange, renderBody }: LegendSecti
       <div className="font-semibold text-xs mb-1">{title ?? registration.title}</div>
       {unavailable ? (
         <div className="rounded bg-red-100 text-red-800 px-2 py-1 text-[11px] font-medium">
-          Feed unavailable
+          {t('feedUnavailable')}
         </div>
       ) : (
         <ul className="space-y-1">

@@ -43,7 +43,7 @@ export function MapSidebar({ minioBaseUrl, martinBaseUrl, organization }: { mini
       {selectedTab === 'file' && ability.can('read', 'File') && <FileTab />}
       {selectedTab === 'layers' && ability.can('read', 'File') && <LayersTab martinBaseUrl={martinBaseUrl} organization={organization} />}
       {selectedTab === 'communication' && ability.can('read', 'Comment') && <CommunicationTab />}
-      {selectedTab === 'sensors' && ability.can('read', 'Sensor') && <SensorsTab minioBaseUrl={minioBaseUrl} />}
+      {selectedTab === 'sensors' && ability.can('read', 'Sensor') && <SensorsTab />}
       {selectedTab === 'settings' && <SettingsTab countryCode={organization?.country} />}
     </InfoSidebarContainer>
   )

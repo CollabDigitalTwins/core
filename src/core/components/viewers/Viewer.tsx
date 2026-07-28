@@ -120,7 +120,7 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
   React.useEffect(() => {
     if (!organization) return
     const defaultLanguage  = organization.languages?.[0] || 'En'
-    if (defaultLanguage) switchLanguage(defaultLanguage)
+    if (defaultLanguage) void switchLanguage(defaultLanguage)
   }, [organization])
 
   // Handle context changes (from sidebar, HeaderButtons, etc.)
@@ -170,7 +170,7 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
       {[ViewerNames.map, ViewerNames.bim, ViewerNames.pointcloud].includes(validViewer) && <SidebarTrigger />}
       <div style={{ height: '100%', width: '100%', position: 'relative' }}>
         <div style={{ display: validViewer === ViewerNames.map ? 'block' : 'none', width: '100%', height: '100%' }}>
-          <MapViewer organization={organization} minioBaseUrl={minioBaseUrl} maptilerKey={maptilerKey} />
+          <MapViewer organization={organization} maptilerKey={maptilerKey} />
         </div>
         {validViewer === ViewerNames.bim && <BimViewer />}
         {validViewer === ViewerNames.pointcloud && <PointCloudViewer pointcloudApiUrl={pointcloudApiUrl} />}

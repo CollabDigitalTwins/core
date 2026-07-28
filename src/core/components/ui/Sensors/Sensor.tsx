@@ -6,15 +6,18 @@
 import * as LR from 'lucide-react'
 import * as React from 'react'
 
-import { SensorDataFormat } from '../../../types/dbTypes'
-import { formatTimestamp } from '../../../utils/timeUtils'
+import { sensorRingShadow } from '../../../utils/markerUtils'
+import { formatTimestamp, detectTimeZone } from '../../../utils/timeUtils'
 import { Button } from '../Button'
 import { Card } from '../Card'
 
+import { CommentActionButtons, type CommentActionLabels } from '../Comments/CommentActionButtons'
+
 import { SensorChart } from './SensorChart'
 import { SensorTagsSection, type SensorTagsTranslations } from './SensorTagsSection'
+import { useSensorSeries } from './useSensorSeries'
 
-import type { SensorType } from '../../../types/dbTypes';
+import type { SensorDataFormat, SensorType } from '../../../types/dbTypes';
 import type { ChartConfig } from '../chart'
 
 export type SensorProps = {
@@ -33,10 +36,27 @@ export type SensorProps = {
   createdAt: string | Date
   onRemove?: () => void
   onClose?: () => void
+  /** Edit the sensor (used by the in-viewer BIM card action row). */
+  onEdit?: () => void
+  /** Open the expandable detail view (wired into the shared action row). */
+  onExpand?: () => void
+  /** Display timezone for the chart + created line. Defaults to the browser zone. */
+  timeZone?: string
   enableCollapse?: boolean
   defaultCollapsed?: boolean
   size?: 'sm' | 'md' | 'lg'
   highlight?: boolean
+  /** Click-focused sensor. Widens the ring, since ring colour carries the current value. */
+  focused?: boolean
+  /** Colour for the current value, from `colourForValue`. Absent when the type has no ramp. */
+  haloColour?: string
+  /** Pressed the marker: focuses the sensor so the legend and sibling halos follow it. */
+  onSelect?: () => void
+  /** Render the close/edit/delete action row (used by the in-viewer BIM card). */
+  showActions?: boolean
+  canEdit?: boolean
+  canDelete?: boolean
+  actionLabels?: CommentActionLabels
 }
 
 export default function Sensor({
@@ -48,57 +68,34 @@ export default function Sensor({
   createdAt,
   onRemove,
   onClose,
+  onEdit,
+  onExpand,
   enableCollapse = false,
   defaultCollapsed = false,
   size = 'md',
   highlight = false,
+  focused = false,
+  haloColour,
+  onSelect,
+  showActions = false,
+  canEdit = true,
+  canDelete = true,
+  actionLabels,
   sensorId,
   tags = [],
   tagsVariant = 'edit',
   tagsTranslations,
   onAddTag,
   onDeleteTag,
+  timeZone = detectTimeZone(),
 }: SensorProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed)
-  const [sensorData, setSensorData] = React.useState<{ time: string; value: number }[]>([])
-  const [isLoadingData, setIsLoadingData] = React.useState(false)
+  const { points: sensorData, unit, valueLabels, isLoading: isLoadingData } =
+    useSensorSeries(dataUrl, dataFormat, updateFrequency, { enabled: !(enableCollapse && isCollapsed) })
   const lastTap = React.useRef(0)
 
   const sensorTypeNameFormatted = sensorType?.name?.replace(/_/g, ' ') || 'Other'
   const SensorIcon = LR[sensorType?.icon] || LR.Radio
-
-  // Fetch sensor data
-  React.useEffect(() => {
-    const fetchData = async () => {
-      if (!dataUrl || dataFormat !== SensorDataFormat.Csv) {
-        return
-      }
-
-      setIsLoadingData(true)
-      try {
-        const response = await fetch(dataUrl)
-        const text = await response.text()
-
-        const lines = text.trim().split('\n')
-        const data = lines.map((line) => {
-          const [time, value] = line.split(',')
-          return {
-            time: time.trim(),
-            value: parseFloat(value),
-          }
-        })
-
-        setSensorData(data)
-      } catch (error) {
-        console.error('Failed to fetch sensor data:', error)
-        setSensorData([])
-      } finally {
-        setIsLoadingData(false)
-      }
-    }
-
-    fetchData()
-  }, [dataUrl, dataFormat])
 
   const chartConfig: ChartConfig = {
     value: {
@@ -155,6 +152,10 @@ export default function Sensor({
   const currentSize = sizeStyles[size]
 
   const handlePointerDown = (e: React.PointerEvent) => {
+    // Focus on every press, collapsed or not, so the legend and sibling halos follow the sensor
+    // the user just reached for. Runs before the collapse guard: a non-collapsible card
+    // (the map popup) still needs to focus.
+    onSelect?.()
     if (!enableCollapse) return
     e.stopPropagation()
 
@@ -163,10 +164,16 @@ export default function Sensor({
     lastTap.current = now
   }
 
+  const handleClose = () => {
+    if (enableCollapse) setIsCollapsed(true)
+    else onClose?.()
+  }
+
   if (enableCollapse && isCollapsed) {
     return (
       <div
-        className={`${currentSize.collapsedIconSize} rounded-full shadow-md flex items-center justify-center flex-shrink-0 bg-primary pointer-events-auto`}
+        className={`${currentSize.collapsedIconSize} rounded-full shadow-md flex items-center justify-center flex-shrink-0 bg-primary pointer-events-auto transition-[box-shadow] duration-200`}
+        style={{ boxShadow: sensorRingShadow({ haloColour, highlight, focused }) }}
         onPointerDown={handlePointerDown}
         onDoubleClick={(e) => {
           e.stopPropagation()
@@ -182,6 +189,11 @@ export default function Sensor({
     <div
       className="relative inline-block group pointer-events-auto"
       title={enableCollapse ? 'Double click to collapse' : undefined}
+      style={{
+        boxShadow: focused ? sensorRingShadow({ haloColour, focused }) : undefined,
+        borderRadius: focused ? 12 : undefined,
+        zIndex: focused ? 30 : highlight ? 20 : undefined,
+      }}
       onPointerDown={handlePointerDown}
       onDoubleClick={(e) => {
         e.stopPropagation()
@@ -204,7 +216,26 @@ export default function Sensor({
             </span>
           </div>
 
-          {onRemove && (
+          {showActions && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              title={actionLabels?.close ?? 'Close'}
+              aria-label={actionLabels?.close ?? 'Close'}
+              className={`z-50 ${currentSize.buttonSize} shrink-0 -mr-1 -mt-1`}
+              // In the CSS2D 3D card (enableCollapse) activate on pointerdown for reliability;
+              // the map popup is normal DOM, so keep click for keyboard accessibility.
+              {...(enableCollapse
+                ? { onPointerDown: (e: React.PointerEvent) => { e.stopPropagation(); handleClose() } }
+                : { onClick: (e: React.MouseEvent) => { e.stopPropagation(); handleClose() } })}
+            >
+              <LR.X className={currentSize.buttonIconSize} />
+            </Button>
+          )}
+
+          {/* Map popup keeps the inline delete; the BIM card uses the action row below instead. */}
+          {!showActions && onRemove && (
             <Button
               type="button"
               variant="ghost"
@@ -224,7 +255,7 @@ export default function Sensor({
 
         <div className="mb-2">
           <span className={`${currentSize.metaSize} text-muted-foreground`}>
-            Created {formatTimestamp(createdAt)}
+            Created {formatTimestamp(createdAt, timeZone)}
           </span>
         </div>
 
@@ -236,6 +267,9 @@ export default function Sensor({
           updateFrequency={updateFrequency}
           chartConfig={chartConfig}
           size={size}
+          unit={unit}
+          valueLabels={valueLabels}
+          timeZone={timeZone}
         />
         <SensorTagsSection
           tags={tags}
@@ -244,6 +278,21 @@ export default function Sensor({
           onDelete={onDeleteTag}
           translations={tagsTranslations}
         />
+
+        {showActions && (onEdit || onRemove || onExpand) && (
+          <div className="mt-2 flex justify-end border-t pt-1">
+            <CommentActionButtons
+              onExpand={onExpand}
+              onEdit={canEdit ? onEdit : undefined}
+              onDelete={canDelete ? onRemove : undefined}
+              canEdit={canEdit}
+              canDelete={canDelete}
+              activateOnPointerDown={enableCollapse}
+              buttonClassName="h-7 w-7"
+              labels={{ edit: actionLabels?.edit, delete: actionLabels?.delete, close: actionLabels?.close, expand: actionLabels?.expand }}
+            />
+          </div>
+        )}
       </Card>
     </div>
   )

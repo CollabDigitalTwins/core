@@ -122,7 +122,7 @@ export class Highlighter extends OBC.Component {
   private onMouseClick = (event: MouseEvent) => {
     this._mouse.x = event.clientX
     this._mouse.y = event.clientY
-    this.click(event)
+    void this.click(event)
   }
 
   private onMouseMove = (event: MouseEvent) => {
@@ -130,13 +130,15 @@ export class Highlighter extends OBC.Component {
     const mx = event.clientX
     const my = event.clientY
     if (this._hoverGuardTimeout !== null) clearTimeout(this._hoverGuardTimeout)
-    this._hoverGuardTimeout = window.setTimeout(async () => {
-      const hit = await this._nearestHit(mx, my)
-      if (!hit) {
-        this.clearHover()
-        return
-      }
-      await this._renderHover(hit.localId, hit.modelId)
+    this._hoverGuardTimeout = window.setTimeout(() => {
+      void (async () => {
+        const hit = await this._nearestHit(mx, my)
+        if (!hit) {
+          this.clearHover()
+          return
+        }
+        await this._renderHover(hit.localId, hit.modelId)
+      })()
     }, 50)
   }
 

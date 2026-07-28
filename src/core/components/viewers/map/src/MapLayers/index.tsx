@@ -30,7 +30,7 @@ function BimLayerGate() {
   return <LazyBimLayer />
 }
 
-export const MapLayers = ({ minioBaseUrl, organization, maptilerKey }: { minioBaseUrl?: string; organization?: Organization; maptilerKey?: string }) => {
+export const MapLayers = ({ organization, maptilerKey }: { organization?: Organization; maptilerKey?: string }) => {
   return (
     <>
       <SiteLayer />
@@ -38,7 +38,7 @@ export const MapLayers = ({ minioBaseUrl, organization, maptilerKey }: { minioBa
       <OpenDataLayers />
       <BuildingLayer />
       <CommentLayer />
-      <SensorLayers minioBaseUrl={minioBaseUrl} />
+      <SensorLayers />
       <FileLayers />
       <BimLayerGate />
     </>

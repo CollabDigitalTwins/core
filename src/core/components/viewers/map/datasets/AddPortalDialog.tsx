@@ -88,7 +88,7 @@ export const AddPortalDialog = ({ open, onOpenChange }: AddPortalDialogProps) =>
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <form onSubmit={(e) => void handleSubmit(e)} className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
             <Label htmlFor="portal-name">
               Name

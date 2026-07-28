@@ -54,12 +54,12 @@ export function createCommentHooks(adapter: ApiAdapter) {
                 onSuccess: (updated) => {
                     if (!id) return;
                     // Revalidate the same keys used above
-                    mutate(["comment", id]);
-                    mutate(["comments"]);
-                    if (updated.buildingId) mutate(["comments", "building", updated.buildingId]);
-                    if (updated.authorId) mutate(["commentsByAuthor", updated.authorId]);
-                    if (data?.buildingId && data.buildingId !== updated.buildingId) mutate(["comments", "building", data.buildingId]);
-                    if (data?.authorId && data.authorId !== updated.authorId) mutate(["commentsByAuthor", data.authorId]);
+                    void mutate(["comment", id]);
+                    void mutate(["comments"]);
+                    if (updated.buildingId) void mutate(["comments", "building", updated.buildingId]);
+                    if (updated.authorId) void mutate(["commentsByAuthor", updated.authorId]);
+                    if (data?.buildingId && data.buildingId !== updated.buildingId) void mutate(["comments", "building", data.buildingId]);
+                    if (data?.authorId && data.authorId !== updated.authorId) void mutate(["commentsByAuthor", data.authorId]);
                 },
             }
         );
@@ -73,10 +73,10 @@ export function createCommentHooks(adapter: ApiAdapter) {
             },
             {
             onSuccess: (comment) => {
-                mutate(["comment", comment.id], undefined, { revalidate: false });
-                mutate(["comments"]);
-                if (comment.buildingId) mutate(["comments", "building", comment.buildingId]);
-                if (comment.authorId) mutate(["commentsByAuthor", comment.authorId]);
+                void mutate(["comment", comment.id], undefined, { revalidate: false });
+                void mutate(["comments"]);
+                if (comment.buildingId) void mutate(["comments", "building", comment.buildingId]);
+                if (comment.authorId) void mutate(["commentsByAuthor", comment.authorId]);
             },
             }
         );
@@ -119,10 +119,10 @@ export function createCommentHooks(adapter: ApiAdapter) {
             },
             {
                 onSuccess: ({ ids, buildingIds, authorIds }) => {
-                    ids.forEach((cid) => mutate(["comment", cid], undefined, { revalidate: false }));
-                    mutate(["comments"]);
-                    buildingIds.forEach((bId) => mutate(["comments", "building", bId]));
-                    authorIds.forEach((aId) => mutate(["commentsByAuthor", aId]));
+                    ids.forEach((cid) => { void mutate(["comment", cid], undefined, { revalidate: false }); });
+                    void mutate(["comments"]);
+                    buildingIds.forEach((bId) => { void mutate(["comments", "building", bId]); });
+                    authorIds.forEach((aId) => { void mutate(["commentsByAuthor", aId]); });
                 },
             }
         );
@@ -136,9 +136,9 @@ export function createCommentHooks(adapter: ApiAdapter) {
             adapter.createComment(arg),
             {
                 onSuccess: (created) => {
-                    mutate(["comments"]);
-                    if (created.buildingId) mutate(["comments", "building", created.buildingId]);
-                    if (created.authorId) mutate(["commentsByAuthor", created.authorId]);
+                    void mutate(["comments"]);
+                    if (created.buildingId) void mutate(["comments", "building", created.buildingId]);
+                    if (created.authorId) void mutate(["commentsByAuthor", created.authorId]);
                 },
             }
         );

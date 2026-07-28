@@ -272,11 +272,13 @@ export function useFilePlacement(
       }
     }
 
+    const onDblClick = (e: MouseEvent) => { void handleDblClick(e) }
+
     document.addEventListener("mousemove", handleMouseMove)
-    document.addEventListener("dblclick", handleDblClick)
+    document.addEventListener("dblclick", onDblClick)
     return () => {
       document.removeEventListener("mousemove", handleMouseMove)
-      document.removeEventListener("dblclick", handleDblClick)
+      document.removeEventListener("dblclick", onDblClick)
     }
   }, [selectedFile, bimComponents, world, isPlacingFile, fileScale, fileRotation, modelManager, addDxf, toolsDispatch, raycast, cancelPlacement, setCursor, uploadPlacedFile, onMarkerAction])
 

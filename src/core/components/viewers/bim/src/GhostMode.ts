@@ -43,7 +43,8 @@ export class GhostMode extends OBC.Component {
           firstGrid.three.visible = false;
         }
       }
-    } catch (error) {
+    } catch {
+      // Best effort: the grid is optional, ghosting proceeds without it.
     }
 
     const hexSet = new Set<number>();
@@ -101,7 +102,8 @@ export class GhostMode extends OBC.Component {
       firstGrid.three.visible = true;
       this.gridWasVisible = false;
     }
-  } catch (error) {
+  } catch {
+    // Best effort: the grid is optional, material restore proceeds without it.
   }
 
   for (const [material, data] of this.originalColors) {
@@ -195,7 +197,7 @@ toggleGhost = () => {
     }
 
     const fragManager = this.components.get(OBC.FragmentsManager)
-    fragManager.core.update(true)
+    void fragManager.core.update(true)
   }
 
 }

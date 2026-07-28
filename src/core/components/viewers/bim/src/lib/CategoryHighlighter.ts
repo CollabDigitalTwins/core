@@ -140,7 +140,7 @@ export class CategoryHighlighter {
       )
     }
 
-    fragments.core.update(true)
+    void fragments.core.update(true)
     this._activeKey = entryKey
   }
 
@@ -168,7 +168,7 @@ export class CategoryHighlighter {
     await Promise.all(tasks)
     this._renderedModelIds = []
     this._activeKey = null
-    fragments.core.update(true)
+    void fragments.core.update(true)
   }
 
   /**
@@ -199,7 +199,7 @@ export class CategoryHighlighter {
         )
       }),
     )
-    fragments.core.update(true)
+    void fragments.core.update(true)
   }
 
   invalidateForModel(modelId: string) {

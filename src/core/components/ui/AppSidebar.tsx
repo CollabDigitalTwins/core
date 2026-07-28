@@ -93,7 +93,7 @@ export function AppSidebar({ children, signOut }: AppSidebarProps) {
       <Sidebar collapsible={collapsibleType} className="border-none z-50 shadow-md relative" >
         {/* Sidebar toggle button - right side inside Sidebar */}
         {(sidebarState === 'expanded') && (
-          <div id='sidebar-toggle-button' className={`absolute right-2 top-2 flex items-center justify-center pointer-events-auto z-50 ${isMobile ? '' : ''}`}>
+          <div id='sidebar-toggle-button' className='absolute right-2 top-2 flex items-center justify-center pointer-events-auto z-50'>
             <button onClick={toggleMenuSidebar} className='text-muted-foreground hover:text-primary p-1'>
               <LR.X className='w-5' />
             </button>

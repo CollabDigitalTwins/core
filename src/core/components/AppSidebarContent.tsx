@@ -25,6 +25,7 @@ import {
 import { useUserRole } from '../hooks/users/users'
 import { AppConfigContext, MapContext, useMenusContext } from '../store'
 import { ViewerNames } from '../types/'
+import { resolveAppContent } from '../utils/appContent'
 
 // Shadcn Components
 
@@ -99,14 +100,8 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
 
   const sidebarTitle = organization?.title ?? organization.name ?? 'CDT Platform'
 
-  const allViewers: ViewerNames[] = [ViewerNames.extensions, ViewerNames.bim, ViewerNames.pointcloud, ViewerNames.sites, ViewerNames.infrastructure, ViewerNames.buildings, ViewerNames.files,];
-  const appContent: ViewerNames[] = [ViewerNames.map];
-
-  if (organization.appContent && organization.appContent.length > 0) {
-    appContent.push(...organization.appContent as ViewerNames[]);
-  } else {
-    appContent.push(...allViewers);
-  }
+  // Shared with the map popover's tool row, so a viewer hidden here is not reachable from there.
+  const appContent = resolveAppContent(organization)
 
   const logoKey = organization?.logoKey
   const logoUrl = minioBaseUrl && logoKey

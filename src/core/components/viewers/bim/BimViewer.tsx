@@ -211,13 +211,20 @@ export function BimViewer() {
             if (resizeObserverRef.current) {
                 resizeObserverRef.current.disconnect();
             }
-            if (componentsRef.current) {
-                componentsRef.current.dispose();
+            // OBC walks components in insertion order and does not guard the loop, so one
+            // component throwing during teardown aborts every disposal after it — including
+            // FragmentsManager, which it deliberately leaves for last. The store must be cleared
+            // either way, or it keeps handing out a dead Components/world to whatever mounts next.
+            try {
+                componentsRef.current?.dispose();
+            } catch (error) {
+                console.error("BIM teardown did not complete cleanly", error);
+            } finally {
                 componentsRef.current = null;
+                bimDispatch({
+                    type: "DISPOSE-BIM"
+                });
             }
-            bimDispatch({
-                type: "DISPOSE-BIM"
-            });
         };
     }, []);
 
@@ -274,7 +281,7 @@ export function BimViewer() {
             />
             {/* Bottom-left stack, mirroring MapViewer: cards stack upward with flex so a new
                 overlay never needs a hand-tuned bottom offset. */}
-            <div className="absolute bottom-3 left-3 z-10 flex flex-col gap-2 pointer-events-none">
+            <div className="absolute bottom-20 md:bottom-3 left-3 z-10 flex max-w-[calc(100vw-1.5rem)] flex-col gap-2 pointer-events-none">
                 <SensorLegend />
             </div>
             <PropertiesMenu />

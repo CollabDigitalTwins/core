@@ -17,8 +17,10 @@ import { Button } from '../../../../ui/Button'
 import { Card, CardContent, CardHeader } from '../../../../ui/Card'
 import { Input } from '../../../../ui/Input'
 import { LoadingSpinner } from '../../../../ui/LoadingSpinner'
+import { Progress } from '../../../../ui/Progress'
+import { toast } from 'sonner'
 
-// import { useAppConfigContext } from '../../../../../store/AppConfig/context'
+
 
 
 import type { DbFile } from '../../../../../types/dbTypes'
@@ -65,6 +67,7 @@ export function PointCloudLoadingState({ pointcloudApiUrl }: { pointcloudApiUrl?
 
   const [currentState, setCurrentState] = React.useState<pointCloudViewerState>('opening')
   const [uploading, setUploading] = React.useState(false)
+  const [uploadProgress, setUploadProgress] = React.useState(0)
   const [searchTerm, setSearchTerm] = React.useState('')
   const [searchResults, setSearchResults] = React.useState<any[]>([])
   const [selectedBuilding, setSelectedBuilding] = React.useState<any>(null)
@@ -233,6 +236,7 @@ export function PointCloudLoadingState({ pointcloudApiUrl }: { pointcloudApiUrl?
     }
 
     setUploading(true)
+    setUploadProgress(0)
 
     try {
       console.log('Creating point cloud entry...')
@@ -241,9 +245,10 @@ export function PointCloudLoadingState({ pointcloudApiUrl }: { pointcloudApiUrl?
 
       console.log('Uploading file...')
       await uploadToPresignedUrl(upload.uploadUrl, file, (pct) => {
-        console.log(`Upload progress: ${pct}%`)
+        setUploadProgress(pct)
       })
       console.log('Upload complete!')
+      toast.success('LAZ file uploaded successfully')
 
       console.log('Starting conversion...')
       const convertRes = await fetch(
@@ -257,7 +262,7 @@ export function PointCloudLoadingState({ pointcloudApiUrl }: { pointcloudApiUrl?
       if (!convertRes.ok) throw new Error('Failed to start conversion')
       console.log('Conversion started!')
 
-      window.location.reload()
+      setTimeout(() => window.location.reload(), 1000)
     }
     catch (error) {
       console.error('Error uploading point cloud:', error)
@@ -267,6 +272,7 @@ export function PointCloudLoadingState({ pointcloudApiUrl }: { pointcloudApiUrl?
           : 'Failed to upload point cloud'
       )
       setUploading(false)
+      setUploadProgress(0)
     }
   }
 
@@ -312,6 +318,12 @@ export function PointCloudLoadingState({ pointcloudApiUrl }: { pointcloudApiUrl?
               {(currentState === 'noPointCloudFiles' || currentState === 'noBuilding') && !uploading && (
                 <div className="self-stretch text-center text-muted-foreground text-sm font-normal font-['Inter'] leading-tight">
                   {currentState === 'noBuilding' ? t('selectBuildingHelpText') : t('helpText')}
+                </div>
+              )}
+              {uploading && (
+                <div className="self-stretch flex flex-col gap-1 px-2">
+                  <Progress value={uploadProgress} />
+                  <span className="self-end text-xs text-muted-foreground">{uploadProgress}%</span>
                 </div>
               )}
             </div>

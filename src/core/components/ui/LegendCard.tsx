@@ -51,7 +51,9 @@ export function LegendCard({
 
   return (
     <div data-testid={testId} className="pointer-events-auto">
-      <Menubar className="w-72 h-auto">
+      {/* Never wider than the viewport: on a phone a fixed 18rem card runs under the map's
+          right-hand controls and off the screen. */}
+      <Menubar className="w-[min(18rem,calc(100vw-1.5rem))] h-auto">
         <Command>
           <div>
             <div className={`flex items-center justify-between gap-3 ${open ? 'p-3' : 'pl-1 py-0'}`}>

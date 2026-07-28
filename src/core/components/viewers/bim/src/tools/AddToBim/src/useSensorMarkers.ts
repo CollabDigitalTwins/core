@@ -18,7 +18,7 @@ import { activeSensorTypeId, visibleSensors } from "../../../../../../ui/Sensors
 import { useSensorSeriesMulti } from "../../../../../../ui/Sensors/useSensorSeriesMulti"
 
 import BimSensor from "./BimSensor"
-import { renderCSS2DMarkers, type MarkerRef } from "./renderCSS2DMarkers"
+import { clearCSS2DMarkers, renderCSS2DMarkers, type MarkerRef } from "./renderCSS2DMarkers"
 
 export function useSensorMarkers(world: any, buildingId: number) {
   const { state: menusState, dispatch: menusDispatch } = React.useContext(MenusContext)
@@ -183,6 +183,11 @@ export function useSensorMarkers(world: any, buildingId: number) {
       onRemove: handleRemoveSensor,
     })
   }, [world, sensors, pendingSensors, handleRemoveSensor, visibleSensorTypes, visibleSensorTags, buildingId, currentSensorId, focusedSensorId, haloKey, focusSensor, sensorTypes, coreHooks, timeZone, sessionUser?.id])
+
+  // Separate from the render effect above so it runs only on unmount, not on every re-render.
+  // Without it each sensor's marker left a THREE mesh in the scene and, worse, a mounted React
+  // root behind, both surviving the world that owned them.
+  React.useEffect(() => () => { clearCSS2DMarkers(world, registry) }, [world])
 
   const sensorCount = sensors.filter(
     s => s.viewer === ViewerNames.bim && (!buildingId || buildingId === -1 || s.buildingId === buildingId)

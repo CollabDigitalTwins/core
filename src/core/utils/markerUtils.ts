@@ -6,6 +6,16 @@ import { withAlpha } from './colourUtils'
 /** Platform highlight colour, shared by map + BIM comment/sensor markers. */
 export const HIGHLIGHT_COLOR = '#73cee2'
 
+/**
+ * Props every map `<Marker>` needs so it stays legible when the camera is pitched.
+ *
+ * MapLibre fades a marker to `opacityWhenCovered` (default `0.2`) once it decides the marker sits
+ * behind 3D terrain. Our markers are anchored to the ground, so at a grazing pitch the depth test
+ * reads them as covered by the very surface they stand on and half the scene goes translucent.
+ * Our markers are annotations rather than objects in the scene, so they should never be occluded.
+ */
+export const markerOcclusionProps = { opacityWhenCovered: 1 } as const
+
 // Tailwind class string for marker highlight style
 export const markerStyle  =
   'absolute z-[99999] pointer-events-auto rounded-[16px] transition-[box-shadow] ' +

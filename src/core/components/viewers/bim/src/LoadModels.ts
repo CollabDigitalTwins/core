@@ -245,15 +245,22 @@ export class LoadModels extends OBC.Component {
 
         if (this.cameraProjection && this.world && this._model) {
             this.cameraProjection.onProjectionChanged.add(() => {
-                if (this._model && this.world) {
+                // `world.renderer` is the safe probe for a disposed world: it goes null, whereas
+                // `world.camera` throws. This listener is never removed, so it can outlive the world.
+                if (this._model && this.world?.renderer) {
                     this._model.useCamera(this.world.camera.three);
                 }
             });
         }
 
-        // Apply clipping plane to the model. Without this, we would have issues
+        // Apply clipping plane to the model. Without this, we would have issues.
+        // This callback lives on the fragments model, which outlives the world: the culler keeps
+        // refreshing views during teardown, so once the renderer is nulled the old non-null
+        // assertions threw "Cannot read properties of null (reading 'three')" here. No planes is
+        // the correct answer for a world that is going away.
         model.getClippingPlanesEvent = () => {
-            return Array.from(this.world!.renderer!.three.clippingPlanes) || [];
+            const planes = this.world?.renderer?.three.clippingPlanes;
+            return planes ? Array.from(planes) : [];
         };
 
         if (!this._sharing && this.fitCamera) {

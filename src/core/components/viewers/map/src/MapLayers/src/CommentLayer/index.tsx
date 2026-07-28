@@ -13,7 +13,7 @@ import { useComments, useDeleteComments } from '../../../../../../../hooks/comme
 import { useUser, useUsers } from '../../../../../../../hooks/users/users'
 import { MapContext, MenusContext } from '../../../../../../../store'
 import { ViewerNames, type Comment as IComment } from '../../../../../../../types/dbTypes'
-import { commentRingShadow } from '../../../../../../../utils/markerUtils'
+import { commentRingShadow, markerOcclusionProps } from '../../../../../../../utils/markerUtils'
 import { Avatar } from '../../../../../../ui/Avatar'
 import Comment from '../../../../../../ui/Comments/Comment'
 import { UserAvatar } from '../../../../../../ui/UserAvatar'
@@ -44,7 +44,7 @@ const CommentAvatarMarker = ({ feature, isHighlighted, isFocused, onMouseEnter, 
   const scale = isFocused ? 1.25 : isHighlighted ? 1.2 : 1
 
   return (
-    <Marker key={String(feature.properties?.id ?? `${coords.lng},${coords.lat}`)} longitude={coords.lng} latitude={coords.lat} anchor="center" offset={offset}>
+    <Marker key={String(feature.properties?.id ?? `${coords.lng},${coords.lat}`)} longitude={coords.lng} latitude={coords.lat} anchor="center" offset={offset} {...markerOcclusionProps}>
       <div
         title={onDoubleClick ? 'Double click to zoom' : undefined}
         style={{

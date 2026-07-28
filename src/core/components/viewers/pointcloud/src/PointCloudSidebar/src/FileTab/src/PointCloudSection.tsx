@@ -14,10 +14,10 @@ import { Button } from '../../../../../../../ui/Button'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { FileItemComponent } from '../../../../../../../ui/FilesManager/src/FileItemComponent'
 import { useFileActions } from '../../../../../../../ui/FilesManager/src/useFileActions'
-
 import type { DbFile } from '../../../../../../../../types/dbTypes'
+import { toast } from 'sonner'
+import { Progress } from '../../../../../../../ui/Progress'
 
-// import { useAppConfigContext } from '../../../../../../../../store/AppConfig/context'
 
 type CreatePointCloudResponse = {
   pointCloud: {
@@ -58,6 +58,12 @@ export function PointCloudsSection({ files, pointcloudApiUrl, buildingId }: Poin
   )
   const esRef = React.useRef<EventSource | null>(null)
   const autoLoadedRef = React.useRef(false)
+  const autoConvertedRef = React.useRef<Set<string>>(new Set())
+
+  // Tracks the in-flight upload's presigned-URL progress (0-100); null when no upload is running
+  const [uploadingFile, setUploadingFile] = React.useState<{ name: string; progress: number } | null>(null)
+  // Tracks the in-flight Potree conversion's progress (0-100); null when no conversion is running
+  const [convertingFile, setConvertingFile] = React.useState<{ name: string; progress: number } | null>(null)
 
   const fileSyncKey = files
     .map(
@@ -141,8 +147,23 @@ export function PointCloudsSection({ files, pointcloudApiUrl, buildingId }: Poin
     }
 
     const { jobId } = await res.json() as StartConversionResponse
-    subscribeToProgress(jobId, file.id)
+    subscribeToProgress(jobId, file.id, file.name)
   }, [])
+
+  // Auto-retry conversion for any uploaded file that never finished converting
+  // (e.g. an interrupted session) — silently, with no manual control shown to the user.
+  React.useEffect(() => {
+    const pending = files.filter(f =>
+      Boolean(f.pointCloudUploaded) &&
+      !Boolean(f.pointCloudPotreeConverted) &&
+      !autoConvertedRef.current.has(String(f.id))
+    )
+
+    pending.forEach(f => {
+      autoConvertedRef.current.add(String(f.id))
+      void handleConvert(f)
+    })
+  }, [fileSyncKey, files, handleConvert])
 
   const handleDeletePointCloud = React.useCallback((file: DbFile) => {
     pointCloudDispatch({ type: 'UNLOAD_POINT_CLOUD', payload: { id: String(file.id) } })
@@ -237,7 +258,7 @@ export function PointCloudsSection({ files, pointcloudApiUrl, buildingId }: Poin
   }
 
   // Subscribe to conversion progress
-  function subscribeToProgress(jobId: string, pointCloudId: number) {
+  function subscribeToProgress(jobId: string, pointCloudId: number, fileName: string) {
     if (!jobId) return
 
     if (esRef.current) {
@@ -248,6 +269,8 @@ export function PointCloudsSection({ files, pointcloudApiUrl, buildingId }: Poin
       `${API_BASE}/events/convert-progress/${encodeURIComponent(jobId)}`
     )
     esRef.current = es
+
+    setConvertingFile({ name: fileName, progress: 0 })
 
     es.onopen = () => console.log('SSE connection opened')
 
@@ -261,6 +284,7 @@ export function PointCloudsSection({ files, pointcloudApiUrl, buildingId }: Poin
             : pc
         )
       )
+      setConvertingFile(null)
     }
 
     es.addEventListener('progress', (event) => {
@@ -278,6 +302,7 @@ export function PointCloudsSection({ files, pointcloudApiUrl, buildingId }: Poin
                 : pc
             )
           )
+          setConvertingFile({ name: fileName, progress: data.progress })
         }
       } catch (err) {
         console.error('Failed to parse progress event', err)
@@ -293,9 +318,11 @@ export function PointCloudsSection({ files, pointcloudApiUrl, buildingId }: Poin
             : pc
         )
       )
+      setConvertingFile({ name: fileName, progress: 100 })
+      toast.success('Point cloud conversion completed')
       es.close()
       esRef.current = null
-      window.location.reload()
+      setTimeout(() => window.location.reload(), 1000)
     })
 
     es.addEventListener('failed', () => {
@@ -307,6 +334,7 @@ export function PointCloudsSection({ files, pointcloudApiUrl, buildingId }: Poin
             : pc
         )
       )
+      setConvertingFile(null)
       es.close()
       esRef.current = null
     })
@@ -336,6 +364,8 @@ export function PointCloudsSection({ files, pointcloudApiUrl, buildingId }: Poin
       counter++
     }
 
+    setUploadingFile({ name: fileName, progress: 0 })
+
     try {
       console.log('Creating point cloud entry...')
       const userEmail = session?.user?.email || null
@@ -344,15 +374,16 @@ export function PointCloudsSection({ files, pointcloudApiUrl, buildingId }: Poin
 
       console.log('Uploading file...')
       await uploadToPresignedUrl(upload.uploadUrl, file, (pct) => {
-        console.log(`Upload progress: ${pct}%`)
+        setUploadingFile({ name: fileName, progress: pct })
       })
       console.log('Upload complete!')
+      toast.success('LAZ file uploaded successfully')
 
       console.log('Starting conversion...')
       const conversion = await startConversion(pointCloud.id)
       console.log('Conversion started:', conversion.jobId)
 
-      subscribeToProgress(conversion.jobId, Number(pointCloud.id))
+      subscribeToProgress(conversion.jobId, Number(pointCloud.id), fileName)
     } catch (error) {
       console.error('Error uploading point cloud:', error)
 
@@ -361,6 +392,8 @@ export function PointCloudsSection({ files, pointcloudApiUrl, buildingId }: Poin
           ? `Failed to upload: ${error.message}`
           : 'Failed to upload point cloud'
       )
+    } finally {
+      setUploadingFile(null)
     }
   }
 
@@ -408,6 +441,24 @@ export function PointCloudsSection({ files, pointcloudApiUrl, buildingId }: Poin
         addItemTitle={t('uploadTitle')}
       >
         <div className="space-y-1">
+          {uploadingFile && (
+            <div className="px-2 py-1 space-y-1">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="truncate">{t('uploading')} {uploadingFile.name}</span>
+                <span>{uploadingFile.progress}%</span>
+              </div>
+              <Progress value={uploadingFile.progress} />
+            </div>
+          )}
+          {!uploadingFile && convertingFile && (
+            <div className="px-2 py-1 space-y-1">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="truncate">{t('converting')} {convertingFile.name}</span>
+                <span>{convertingFile.progress}%</span>
+              </div>
+              <Progress value={convertingFile.progress} />
+            </div>
+          )}
           {sortedFiles.length === 0 ? (
             <div className="px-2 py-3 text-sm text-muted-foreground text-center">
               {t('noPointClouds')}
@@ -420,6 +471,7 @@ export function PointCloudsSection({ files, pointcloudApiUrl, buildingId }: Poin
                     file={file}
                     onAction={handleAction}
                     options={POINT_CLOUD_OPTIONS}
+                    confirmDelete={false}
                   />
                 </div>
                 {Boolean(file.pointCloudUploaded) && !Boolean(file.pointCloudPotreeConverted) && (

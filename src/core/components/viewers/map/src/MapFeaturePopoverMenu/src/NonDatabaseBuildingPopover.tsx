@@ -340,23 +340,20 @@ export default function NonDatabaseBuildingPopover({
   }
 
   return (
-    <PopoverContent className="w-64 -m-1" side="top">
-      <form onSubmit={(event) => void handleCreateNewBuilding(event)}>
-        {/* Header row: close button, no overlap with content below */}
-        <div className="flex items-center justify-end mb-1">
-          <Button
-            type="button"
-            onClick={onCloseAction}
-            variant="ghost"
-            size="icon"
-            className="shrink-0 p-0 m-0 text-muted-foreground hover:text-foreground"
-            aria-label={t('closeAriaLabel')}
-          >
-            <LR.X className="w-4 h-4" />
-          </Button>
-        </div>
+    <PopoverContent className="w-64 -m-1 pt-2 relative" side="top">
+    <form onSubmit={(event) => void handleCreateNewBuilding(event)}>
+      <Button
+        type="button"
+        onClick={onCloseAction}
+        variant="ghost"
+        size="icon"
+        className="absolute right-2 top-2 h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+        aria-label={t('closeAriaLabel')}
+      >
+        <LR.X className="w-4 h-4" />
+      </Button>
 
-        <div className="grid gap-4">
+        <div className="grid gap-4 pr-6">
           {/* Show existing building if match found */}
           {showExistingBuildings && matchingBuildings.length > 0 && (
             <div className="space-y-1">

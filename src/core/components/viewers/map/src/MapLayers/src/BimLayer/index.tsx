@@ -11,6 +11,7 @@ import { Marker } from "react-map-gl/maplibre";
 import * as THREE from "three";
 
 import { BimContext, MapContext } from "../../../../../../../store";
+import { markerOcclusionProps } from "../../../../../../../utils/markerUtils";
 import { ViewerContextMenu } from '../../../../../../ui/FilesManager';
 import { disposeThreeScene } from "../disposeThreeScene";
 import { EditPosition, extractPositionAndRotation } from "../EditPosition";
@@ -431,6 +432,7 @@ export const BimLayer = () => {
                                 key={buildingModel.bimFile.id + "-loading-animation" + index}
                                 latitude={lat}
                                 longitude={lng}
+                                {...markerOcclusionProps}
                             >
                                 <LR.Loader className="animate-spin w-6 h-6 text-gray-700" />
                             </Marker>
@@ -441,6 +443,7 @@ export const BimLayer = () => {
                                 key={buildingModel.bimFile.id + "-ctx-target-" + index}
                                 latitude={lat}
                                 longitude={lng}
+                                {...markerOcclusionProps}
                             >
                                 <div
                                     className="w-10 h-10 opacity-0 cursor-context-menu"

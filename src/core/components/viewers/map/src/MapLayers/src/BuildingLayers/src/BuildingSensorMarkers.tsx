@@ -7,6 +7,7 @@ import * as React from "react";
 import { Marker } from "react-map-gl/maplibre";
 
 import { readableTextColour } from "../../../../../../../../utils/colourUtils";
+import { markerOcclusionProps } from "../../../../../../../../utils/markerUtils";
 
 import type { Building } from "../../../../../../../../types/dbTypes";
 import type { UseBuildingSensorColoursResult } from "../../../../../../../ui/Sensors/useBuildingSensorColours";
@@ -56,6 +57,7 @@ export function BuildingSensorMarkers({
             latitude={building.buildingLatitude as number}
             anchor="center"
             style={{ pointerEvents: "none" }}
+            {...markerOcclusionProps}
           >
             <div
               aria-hidden="true"

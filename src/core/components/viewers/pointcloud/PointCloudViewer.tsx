@@ -221,6 +221,10 @@ export function PointCloudViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: stri
         top: 0,
         width: "100%",
         height: "100%",
+        // Clip everything the viewer paints. Without this, anything that
+        // momentarily exceeds these bounds (see the container below) leaks into
+        // the app's `overflow-auto` main element and makes the page scrollable.
+        overflow: "hidden",
       }}
     >
       {/* Potree container — always rendered so the viewer can measure its dimensions on init.
@@ -241,14 +245,29 @@ export function PointCloudViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: stri
             position: "absolute",
             inset: 0,
             backgroundSize: "cover",
+            // Potree sizes its canvas from renderArea.clientWidth/Height inside its
+            // own render loop, so the canvas trails the container by a frame. On
+            // mobile the visible viewport keeps changing as the browser toolbar
+            // slides, so the stale (larger) absolutely positioned canvas escaped
+            // this container, made the page scrollable, which slid the toolbar
+            // again — an endless scroll/shake loop. Upstream avoids it via
+            // `#potree_render_area { overflow: hidden }`, but we never load
+            // potree.css (see loadAllAssets), so clip it here.
+            overflow: "hidden",
+            // Touch drags belong to the camera, not to the page scroller.
+            touchAction: "none",
+            overscrollBehavior: "none",
           }}
         />
       </div>
 
       {/* Show PointCloudLoadingState only when there are no point cloud files uploaded at all.
-          Rendered after the container so it layers on top (higher DOM order = higher paint order). */}
+          Rendered after the container so it layers on top (higher DOM order = higher paint order).
+          It is its own contained scroller: on a short screen the card can be taller than the
+          viewport and the viewer root now clips, so scrolling stays inside this overlay
+          instead of chaining out to the page. */}
       {!hasPointCloudFiles && !hasLoadedClouds && (
-        <div className="absolute inset-0" style={{ zIndex: 10 }}>
+        <div className="absolute inset-0 overflow-y-auto overscroll-contain" style={{ zIndex: 10 }}>
           <PointCloudLoadingState pointcloudApiUrl={pointcloudApiUrl} />
         </div>
       )}

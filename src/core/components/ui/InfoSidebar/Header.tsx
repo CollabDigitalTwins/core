@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
 import { MapContext } from '../../../store'
+import { cn } from '../../../utils/utils'
 import { Button } from '../Button'
 import { LoadingSpinner } from '../LoadingSpinner'
 import { useSidebar } from '../Sidebar'
@@ -48,16 +49,18 @@ export function Header({
     <div className="p-4">
       <div className="flex items-center">
         <div className="flex items-center gap-2 w-full justify-between">
-          <div className="space-y-1 flex justify-center">
+          {/* min-w-0 so a long building/municipality name truncates instead of growing the row
+              and pushing the close button past the sidebar's overflow-hidden edge. */}
+          <div className="space-y-1 flex justify-center min-w-0 flex-1">
             {loadingBuildingInfo
               ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <LoadingSpinner />
-                  <span className="text-sm font-medium text-muted-foreground">{t('loadingText')}</span>
+                  <span className="text-sm font-medium text-muted-foreground truncate">{t('loadingText')}</span>
                 </div>
               )
               : (
-                <h2 className="text-sm font-semibold text-foreground">
+                <h2 className="text-sm font-semibold text-foreground truncate" title={currentBuilding?.buildingName ?? undefined}>
                   {currentBuilding?.buildingName ||
                     (
                       currentLocation?.municipality
@@ -71,11 +74,17 @@ export function Header({
               )}
           </div>
           <Button
+            type="button"
             variant="ghost"
             size="icon"
-            className="group/sidebar-trigger opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent"
+            className={cn(
+              'group/sidebar-trigger relative shrink-0 z-10 opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent',
+              // Widen the tap target on touch viewports (36px button -> 52px hit area).
+              'after:absolute after:-inset-2 after:md:hidden',
+            )}
             onClick={() => setOpenInfo(false)}
             title={t('closeInfoToggle')}
+            aria-label={t('closeInfoToggle')}
           >
             <LR.PanelLeftClose className="h-4 w-4" />
           </Button>

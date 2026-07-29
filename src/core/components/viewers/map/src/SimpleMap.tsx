@@ -5,14 +5,11 @@
 
 import maplibregl from 'maplibre-gl'
 import * as React from 'react'
-import Map, { NavigationControl } from 'react-map-gl/maplibre'
+import Map from 'react-map-gl/maplibre'
 
 import { CountryLayer } from './MapLayers/src/CountryLayer'
 
 import type { MapRef } from 'react-map-gl/maplibre'
-
-
-
 
 interface PaddingOptions {
   top: number
@@ -39,7 +36,6 @@ export default function SimpleMap({
   width = '100vw',
   height = '100vh',
   mapStyleUrl,
-  showCountryLayer = true,
   padding,
 }: Props) {
   const containerRef = React.useRef<HTMLDivElement>(null)
@@ -192,8 +188,6 @@ export default function SimpleMap({
         onLoad={handleMapLoad}
         attributionControl={false}
       >
-        <NavigationControl visualizePitch />
-        {showCountryLayer ? <CountryLayer /> : null}
       </Map>
     </div>
   )

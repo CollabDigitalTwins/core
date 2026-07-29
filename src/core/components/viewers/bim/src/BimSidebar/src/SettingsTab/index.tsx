@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 
 import { GridManagement } from './src/GridManagement'
 import { LightingManagement } from './src/LightingManagement'
+import { MeasurementSettings } from './src/MeasurementSettings'
 import { RenderMode } from './src/RenderMode'
 import { ToggleProjection } from './src/ToggleProjection'
 
@@ -24,6 +25,7 @@ export function SettingsTab() {
       <ToggleProjection />
       <RenderMode />
       <GridManagement />
+      <MeasurementSettings />
       {/* <LightingManagement /> */}
     </div>
   )

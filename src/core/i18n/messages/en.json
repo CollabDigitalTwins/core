@@ -759,7 +759,12 @@
     "edge": "Edge",
     "area": "Area",
     "volume": "Volume",
-    "clear": "Clear"
+    "angle": "Angle",
+    "clear": "Clear",
+    "hintLength": "Double-click two points to measure a distance. Delete removes the measurement under the cursor. Escape exits.",
+    "hintArea": "Double-click each corner, then press Enter to close the shape. Delete removes the measurement under the cursor. Escape exits.",
+    "hintVolume": "Double-click each element to add it, then press Enter to total the volume. Delete removes the measurement under the cursor. Escape exits.",
+    "hintAngle": "Double-click three points: start, corner, then end. Delete removes the measurement under the cursor. Escape exits."
   },
   "MeasureMapTool": {
     "distance": "Distance",
@@ -771,6 +776,17 @@
     "area": "Area",
     "point": "Point",
     "clear": "Clear"
+  },
+  "MeasurementSettings": {
+    "title": "Measurements",
+    "lineColour": "Measurement colour",
+    "lengthUnits": "Length units",
+    "areaUnits": "Area units",
+    "volumeUnits": "Volume units",
+    "angleUnits": "Angle units",
+    "precision": "Decimal places",
+    "snapRange": "Snap range",
+    "markerSize": "Snap marker size"
   },
   "MoreOptions": {
     "viewMap": "View on Map",

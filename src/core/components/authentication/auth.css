@@ -6,8 +6,11 @@
 @import '../../styles/sovereign-tokens.css';
 
 /* ── Auth page wrapper ──────────────────────────────── */
+/* Same surface token as the collabdt.org hero. AnimatedBackground is loaded
+   with ssr:false, so this is what shows for the first frame — keeping it on
+   --hp-surface means no color pop when the canvas layer mounts. */
 .auth-page {
-  background: var(--hp-mid);
+  background: var(--hp-surface);
   color: var(--hp-on-surface);
   font-family: 'Inter', sans-serif;
 }

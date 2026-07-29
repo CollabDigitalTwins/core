@@ -759,7 +759,12 @@
     "edge": "Bord",
     "area": "Surface",
     "volume": "Volume",
-    "clear": "Effacer"
+    "angle": "Angle",
+    "clear": "Effacer",
+    "hintLength": "Double-cliquez sur deux points pour mesurer une distance. Suppr efface la mesure sous le curseur. Échap quitte.",
+    "hintArea": "Double-cliquez sur chaque coin, puis appuyez sur Entrée pour fermer la forme. Suppr efface la mesure sous le curseur. Échap quitte.",
+    "hintVolume": "Double-cliquez sur chaque élément pour l'ajouter, puis appuyez sur Entrée pour totaliser le volume. Suppr efface la mesure sous le curseur. Échap quitte.",
+    "hintAngle": "Double-cliquez sur trois points : début, sommet, puis fin. Suppr efface la mesure sous le curseur. Échap quitte."
   },
   "MeasureMapTool": {
     "distance": "Distance",
@@ -771,6 +776,17 @@
     "area": "Surface",
     "point": "Point",
     "clear": "Effacer"
+  },
+  "MeasurementSettings": {
+    "title": "Mesures",
+    "lineColour": "Couleur des mesures",
+    "lengthUnits": "Unités de longueur",
+    "areaUnits": "Unités de surface",
+    "volumeUnits": "Unités de volume",
+    "angleUnits": "Unités d'angle",
+    "precision": "Décimales",
+    "snapRange": "Portée d'accrochage",
+    "markerSize": "Taille du marqueur d'accrochage"
   },
   "MoreOptions": {
     "viewMap": "Voir sur la carte",

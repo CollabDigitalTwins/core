@@ -40,16 +40,17 @@ export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
   const { dispatch: menusDispatch } = React.useContext(MenusContext)
   const { state: bimState } = React.useContext(BimContext)
   const { bimComponents, world } = bimState.bim
+  const { currentToolId } = toolsState.tools
 
   const [active, setActive] = React.useState(false)
   const keydownRef = React.useRef<(e: KeyboardEvent) => void>(() => {})
 
-  const setCursor = (cursor: CursorType) => {
+  const setCursor = React.useCallback((cursor: CursorType) => {
     if (!bimComponents) return
     const currentCursor = bimComponents.get(Cursor)
     if (!currentCursor) return
     currentCursor.cursor = cursor
-  }
+  }, [bimComponents])
 
   const setTools = (currentToolId: ToolbarToolType) => {
     toolsDispatch({
@@ -156,19 +157,28 @@ export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
     }
   }, [active, handleKeyDown])
 
+  // Another tool taking over has to stop plane creation. Without this, `active`
+  // stays true after a tool switch and the dblclick listener below survives, so
+  // a double-click meant for (say) a measurement also drops a clipping plane.
+  React.useEffect(() => {
+    if (currentToolId === tool.id || !active) return
+    setActive(false)
+    setCursor('')
+  }, [currentToolId, tool.id, active, setCursor])
+
   React.useEffect (() => {
-    if (!world || !bimComponents) return
+    if (!active || !world || !bimComponents) return
 
     const container = world.renderer.three.domElement
+    container.addEventListener("dblclick", handleCreateClippingPlane)
 
-    if (active) {
-      container.addEventListener("dblclick", handleCreateClippingPlane)
-    }
-    else {
+    // Cleanup rather than an else-branch: `handleCreateClippingPlane` is a
+    // useCallback whose identity changes with world/bimComponents, so removing
+    // it on the next run would target a different function than the one added.
+    return () => {
       container.removeEventListener("dblclick", handleCreateClippingPlane)
     }
-
-  }, [active, world, bimComponents])
+  }, [active, world, bimComponents, handleCreateClippingPlane])
 
   return (
     <div>

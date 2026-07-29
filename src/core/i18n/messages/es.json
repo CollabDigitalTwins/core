@@ -759,7 +759,12 @@
     "edge": "Borde",
     "area": "Área",
     "volume": "Volumen",
-    "clear": "Limpiar"
+    "angle": "Ángulo",
+    "clear": "Limpiar",
+    "hintLength": "Haz doble clic en dos puntos para medir una distancia. Suprimir elimina la medición bajo el cursor. Escape sale.",
+    "hintArea": "Haz doble clic en cada esquina y luego pulsa Enter para cerrar la forma. Suprimir elimina la medición bajo el cursor. Escape sale.",
+    "hintVolume": "Haz doble clic en cada elemento para añadirlo y luego pulsa Enter para sumar el volumen. Suprimir elimina la medición bajo el cursor. Escape sale.",
+    "hintAngle": "Haz doble clic en tres puntos: inicio, vértice y final. Suprimir elimina la medición bajo el cursor. Escape sale."
   },
   "MeasureMapTool": {
     "distance": "Distancia",
@@ -771,6 +776,17 @@
     "area": "Área",
     "point": "Punto",
     "clear": "Limpiar"
+  },
+  "MeasurementSettings": {
+    "title": "Mediciones",
+    "lineColour": "Color de las mediciones",
+    "lengthUnits": "Unidades de longitud",
+    "areaUnits": "Unidades de área",
+    "volumeUnits": "Unidades de volumen",
+    "angleUnits": "Unidades de ángulo",
+    "precision": "Decimales",
+    "snapRange": "Alcance del ajuste",
+    "markerSize": "Tamaño del marcador de ajuste"
   },
   "MoreOptions": {
     "viewMap": "Ver en el mapa",

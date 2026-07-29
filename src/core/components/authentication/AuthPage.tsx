@@ -15,8 +15,6 @@ import { CdtIcon } from '../ui/Icons/CdtIcon'
 import AuthSimpleMap from '../viewers/map/src/SimpleMap'
 import './auth.css'
 
-//import { useAppConfigContext } from '../../store/AppConfig/context'
-
 const AnimatedBackground = dynamic(() => import('../ui/AnimatedBackground'), {
   ssr: false,
 })
@@ -33,7 +31,6 @@ interface AuthPageProps {
 export function AuthPage({ children, minioBaseUrl, }: AuthPageProps) {
   const params = useParams<{ instance: string }>()
   const orgName = params.instance ?? 'cdt'
-  //const { state: { runtimeConfig: { minioUrl } } } = useAppConfigContext()
   const logo = minioBaseUrl
     ? `${minioBaseUrl}/org-logos/${orgName}-logo.png`
     : `/images/cdt-logo-stroke.svg`
@@ -90,11 +87,10 @@ export function AuthPage({ children, minioBaseUrl, }: AuthPageProps) {
       {/* Toggle .dark on THIS div — CSS vars cascade to all children, no global html conflict */}
       <div
         className={`auth-page relative flex min-h-screen w-screen flex-col md:flex-row${theme === 'dark' ? ' dark' : ''}`}
-        style={{ background: 'var(--hp-mid)' }}
       >
         {/* Animated background — bottom layer */}
         <div className="absolute inset-0 z-0 pointer-events-none">
-          <AnimatedBackground theme={theme} assetsUrl={minioBaseUrl} />
+          <AnimatedBackground theme={theme} />
         </div>
 
         {/* Globe — on top of animated background, centered on right half */}

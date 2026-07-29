@@ -45,11 +45,11 @@ export function writeStoredSidebarWidth(width: number): void {
 }
 
 export interface ResizableSidebarWidth {
-  /** Current width in px. Only meaningful when `canResize` is true; mobile stays full-width via CSS. */
+  /** Current width in px. Only meaningful when `canResize` is true; mobile uses the fixed drawer width. */
   width: number
   /** True while a drag is in progress (for cursor / no-select styling). */
   isResizing: boolean
-  /** True on desktop only. Mobile is full-width and not resizable. */
+  /** True on desktop only. Mobile uses a fixed drawer width and is not resizable. */
   canResize: boolean
   /** Attach to the drag handle's onPointerDown. */
   startResize: (e: React.PointerEvent) => void
@@ -58,7 +58,7 @@ export interface ResizableSidebarWidth {
 /**
  * Drives a user-resizable sidebar width on desktop. Width is restored from and persisted to
  * localStorage, clamped to [MIN_SIDEBAR_WIDTH, MAX_SIDEBAR_WIDTH]. On mobile (`useIsMobile`)
- * resizing is disabled and the sidebar is expected to render full-width via CSS.
+ * resizing is disabled and the sidebar renders at the fixed mobile drawer width.
  */
 export function useResizableSidebarWidth(): ResizableSidebarWidth {
   const isMobile = useIsMobile()

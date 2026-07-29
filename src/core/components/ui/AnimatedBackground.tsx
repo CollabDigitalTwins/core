@@ -6,12 +6,15 @@
 import { useMotionValue, useSpring } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 
+// --hp-* tokens. Imported here (not only from auth.css) so every consumer of
+// this component gets the surface colors, not a transparent base layer.
+import '../../styles/sovereign-tokens.css'
+
 interface Props {
   theme?: 'light' | 'dark'
-  assetsUrl?: string
 }
 
-export default function AnimatedBackground({ theme, assetsUrl }: Props = {}) {
+export default function AnimatedBackground({ theme }: Props = {}) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
@@ -229,14 +232,14 @@ export default function AnimatedBackground({ theme, assetsUrl }: Props = {}) {
 
   return (
     <>
-      <div className="absolute top-0 right-0 inset-0 z-10 w-screen">
-        <img
-          src={`${assetsUrl ?? ''}/cdt-homepage/home-bg.png`}
-          alt="Background"
-          className="object-cover opacity-10 w-screen"
-          style={{ filter: isDark ? 'invert(0)' : 'invert(1)' }}
-        />
-      </div>
+      {/* Base surface — same token the collabdt.org hero uses, so auth and the
+          homepage read as one system. Light: near-white warm gradient.
+          Dark: deep plum → warm brown. Switches with .dark on the ancestor. */}
+      <div
+        className="absolute w-screen inset-0"
+        style={{ background: 'var(--hp-surface)' }}
+      />
+      {/* Tint layer, matching the homepage stack */}
       <div className="absolute w-screen inset-0 bg-gradient-to-br from-background/10 via-background/5 to-primary/5" />
       <canvas
         ref={canvasRef}

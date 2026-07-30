@@ -79,7 +79,7 @@ export function AppSidebar({ children, signOut }: AppSidebarProps) {
         >
           <button
             onClick={toggleMenuSidebar}
-            className="text-muted-foreground hover:text-primary px-2 py-1.5 rounded-r-lg bg-sidebar"
+            className="text-muted-foreground hover:text-primary px-2 py-1.5 rounded-r-sm bg-sidebar"
             style={{
               border: '1px solid rgba(128,128,128,0.2)',
               borderLeft: 'none',

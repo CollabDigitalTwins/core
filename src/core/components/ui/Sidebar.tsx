@@ -257,7 +257,12 @@ const SidebarProvider = React.forwardRef<
               data-state={openInfo ? 'open' : 'closed'}
               aria-hidden={!openInfo}
               className={cn(
-                'fixed inset-y-0 z-40 w-full overflow-hidden transition-[transform,opacity] duration-300 ease-in-out will-change-transform',
+                // z-50, not z-40: several in-viewer panels (BIM properties menu, IDS legend) are
+                // fixed at z-50 and used to paint over this overlay's header, swallowing taps on
+                // the close button. This div is the last child of the wrapper, so at an equal
+                // z-index it wins on DOM order, while portalled Radix layers (dialogs, dropdowns,
+                // tooltips — also z-50, mounted on body) still stack above it.
+                'fixed inset-y-0 z-50 max-w-full overflow-hidden transition-[transform,opacity] duration-300 ease-in-out will-change-transform',
                 infoResizing && 'select-none',
                 openInfo
                   ? 'translate-x-0 opacity-100'
@@ -267,8 +272,9 @@ const SidebarProvider = React.forwardRef<
                 left: isMobile
                   ? '0'
                   : (open ? 'var(--sidebar-width)' : 'var(--sidebar-width-icon)'),
-                // Desktop: user-resizable width (persisted). Mobile: full-width.
-                width: isMobile ? '100%' : infoWidth,
+                // Desktop: user-resizable width (persisted).
+                // Mobile: same drawer width as the AppSidebar sheet, so both sidebars match.
+                width: isMobile ? SIDEBAR_WIDTH_MOBILE : infoWidth,
               }}
             >
               <InfoSidebar minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} pointcloudApiUrl={pointcloudApiUrl} />

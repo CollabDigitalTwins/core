@@ -264,17 +264,18 @@ const handleGoogleSecurityConfirm = async () => {
   }
 }
   return (
-    <>
+    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex-1 overflow-y-auto">
       {isLoading ? (
         <SettingsSkeleton />
       ) : (
-        <div className="w-full flex flex-col lg:flex-row lg:gap-6 overflow-hidden">
+        <div className="w-full flex flex-col lg:flex-row lg:gap-6">
           <div className="flex-shrink-0 pb-2 px-6 lg:w-1/2 flex flex-col gap-2">
             <p className="text-xl text-foreground font-semibold">{t('header')}</p>
             <p className="text-sm text-muted-foreground">{t('subheader')}</p>
           </div>
 
-          <div className="flex-1 px-6 overflow-auto lg:w-1/2">
+          <div className="flex-1 px-6 lg:w-1/2">
             {user && (
               <div className="w-32 h-32 float-right ml-4 mb-3 bg-muted border-2 rounded-lg relative overflow-hidden group">
                 <label className={`block w-full h-full ${isEditing ? 'cursor-pointer' : 'cursor-default'}`}>
@@ -411,14 +412,15 @@ const handleGoogleSecurityConfirm = async () => {
       )}
 
       {user && !isEditing && (
-        <Button
-          variant="outline"
-          onClick={() => { setIsEditing(true) }}
-          className="w-fit mx-auto mt-6"
-          disabled={!ability.can('update', 'User')}
-        >
-          {t('edit')}
-        </Button>
+        <div className="flex justify-center mt-6 mb-6">
+          <Button
+            variant="outline"
+            onClick={() => { setIsEditing(true) }}
+            disabled={!ability.can('update', 'User')}
+          >
+            {t('edit')}
+          </Button>
+        </div>
       )}
 
       {user && <Separator className={isEditing ? 'my-6' : ''} />}
@@ -508,6 +510,7 @@ const handleGoogleSecurityConfirm = async () => {
   </div>
 )}
       <ChangePassword isEditing={isEditing} />
-    </>
+    </div>
+    </div>
   )
 }

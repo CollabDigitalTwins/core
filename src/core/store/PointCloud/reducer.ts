@@ -65,7 +65,7 @@ export const PointCloudReducer = (
 ): PointCloudState => {
   switch (action.type) {
     case "INIT":
-      return { ...initialPointCloudState, ...action.payload.initialState };
+      return { ...state, ...action.payload.initialState };
     case "SET_READY":
       return {...state, ready: action.payload.ready}
     case "SET_ACTIVE_TOOL":

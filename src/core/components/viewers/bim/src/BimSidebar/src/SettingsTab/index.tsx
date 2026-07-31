@@ -3,30 +3,23 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { useTranslations } from 'next-intl'
-import * as React from "react";
+import * as React from 'react'
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../../ui/Select'
+import { ViewerSidebarPanel } from '../../../../../../ui/ViewerSidebar/Panel'
 
 import { GridManagement } from './src/GridManagement'
-import { LightingManagement } from './src/LightingManagement'
 import { MeasurementSettings } from './src/MeasurementSettings'
 import { RenderMode } from './src/RenderMode'
 import { ToggleProjection } from './src/ToggleProjection'
 
 export function SettingsTab() {
-  // Translation
-  const t = useTranslations('SettingsTab')
-
-  const [accountActivity, setAccountActivity] = React.useState('all')
-
   return (
-    <div className="w-full h-full flex flex-col gap-6 p-4 overflow-y-auto point">
+    <ViewerSidebarPanel variant="scroll">
       <ToggleProjection />
       <RenderMode />
       <GridManagement />
       <MeasurementSettings />
-      {/* <LightingManagement /> */}
-    </div>
+      {/* LightingManagement (./src/LightingManagement) is built but not wired up yet. */}
+    </ViewerSidebarPanel>
   )
 }

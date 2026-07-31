@@ -5,7 +5,7 @@
 
 import * as React from 'react'
 
-import { SearchInput } from '../../../../../../ui/'
+import { SearchInput } from '../../../../../../ui/SearchInput'
 
 import { ElevationSection } from './src/ElevationsSection'
 import { FloorplanSection } from './src/FloorplanSection'

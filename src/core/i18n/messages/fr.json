@@ -1203,9 +1203,6 @@
     "toastSuccessUpdate": "Site mis à jour avec succès",
     "toastErrorUpdate": "Échec de la mise à jour du site"
   },
-  "InfoSidebar": {
-    "resizeHandleLabel": "Redimensionner la barre latérale"
-  },
   "TabSelector": {
     "fileLabel": "Fichier",
     "layersTitle": "Couches",
@@ -1373,6 +1370,9 @@
     "email": "Courriel",
     "role": "Rôle",
     "roleUnknown": "Rôle inconnu"
+  },
+  "ViewerSidebar": {
+    "resizeHandleLabel": "Redimensionner la barre latérale"
   },
   "ViewSection": {
     "floorplanTitle": "Plans d’étage",

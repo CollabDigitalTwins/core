@@ -85,8 +85,10 @@ export { useFileDeleteHandler } from './FilesManager';
 // ShareFeature exports
 export * from './ShareFeature';
 
-// InfoSidebar
-export { InfoSidebar } from './InfoSidebar';
+// ViewerSidebar
+// Only the top-level switch is re-exported here. ViewerSidebarShell/Panel and the
+// tab registry are reached by direct file import, to keep this barrel narrow.
+export { ViewerSidebar } from './ViewerSidebar';
 
 // AddingMedia components
 export { default as FileMarker } from './FilesManager/src/FileMarker';

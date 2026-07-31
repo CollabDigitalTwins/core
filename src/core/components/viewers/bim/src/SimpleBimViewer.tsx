@@ -17,6 +17,7 @@ import { CameraProjection } from './CameraProjection';
 import { ElevationsTool } from './ElevationsTool';
 import { FitCamera } from './FitCamera';
 import { FloorplanTool } from './FloorplanTool';
+import { IfcClasses } from './IfcClasses';
 import { IfcToFragments } from './IfcToFragments';
 import { ViewModeCoordinator } from './lib/ViewModeCoordinator';
 import { LoadModels } from './LoadModels';
@@ -134,6 +135,7 @@ export function SimpleBimViewer({file, width = "100%", height = "100%"}: Props) 
             components.get(FitCamera);
             components.get(CameraProjection);
             components.get(SpatialStructure);
+            components.get(IfcClasses);
             components.get(LoadModels);
             components.get(ViewModeCoordinator);
             components.get(FloorplanTool);

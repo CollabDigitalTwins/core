@@ -19,6 +19,7 @@ import { CurrentWorld } from "./src/CurrentWorld";
 import { ElevationsTool } from "./src/ElevationsTool";
 import { FloorplanTool } from "./src/FloorplanTool";
 import { Highlighter } from "./src/Highlighter";
+import { IfcClasses } from "./src/IfcClasses";
 import { ViewModeCoordinator } from "./src/lib/ViewModeCoordinator";
 import { PropertiesMenu } from "./src/propertiesMenu";
 import { ViewportGizmo } from "./src/ViewportGizmo";
@@ -116,6 +117,9 @@ export function BimViewer() {
             components.get(CurrentWorld).world = world;
             components.get(CurrentCamera).camera = world.camera;
             components.get(Highlighter);
+            // Registered up front so it subscribes to model loads before any
+            // model arrives, rather than when the sidebar first opens.
+            components.get(IfcClasses);
             components.get(ViewModeCoordinator);
             components.get(FloorplanTool);
             components.get(ElevationsTool);

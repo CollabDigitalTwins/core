@@ -29,11 +29,9 @@ export type BimToolbarToolsType =
  * Named as a hook because it calls useTranslations, so it has to run during a
  * component render like any other hook.
  */
-export function useBimToolbarTools(config?: { minioBaseUrl?: string }): Tool[] {
+export function useBimToolbarTools(): Tool[] {
   // Translation
   const t = useTranslations('bimToolbarTools')
-
-  const bimAddExtraProps = (config ?? {}) as unknown as Record<string, unknown>
 
   return [
     // {
@@ -65,7 +63,6 @@ export function useBimToolbarTools(config?: { minioBaseUrl?: string }): Tool[] {
       title: t('add'),
       icon: LR.Plus,
       component: AddToBim,
-      extraProps: bimAddExtraProps,
     },
     {
       id: 'bim-dimensions',

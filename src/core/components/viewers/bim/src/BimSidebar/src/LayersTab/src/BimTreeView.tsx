@@ -133,9 +133,10 @@ const BimTreeRow = React.memo(function BimTreeRow({ node, controls }: RowProps) 
             <LR.Focus className="h-4 w-4" />
           </Button>
           <Switch
-            checked={visibility !== 'hidden'}
-            // A branch with only some of its elements hidden reads as "on" but
-            // is flagged for assistive tech, since the switch itself is binary.
+            // Only a fully visible branch reads as "on", so a partly hidden one
+            // (a storey holding hidden spaces, say) turns everything back on
+            // with one click instead of hiding the rest.
+            checked={visibility === 'visible'}
             aria-checked={visibility === 'partial' ? 'mixed' : undefined}
             onCheckedChange={checked => onNodeVisibilityChange(node, checked)}
             aria-label={t('toggleVisibilityLabel', { name: node.label })}

@@ -3,10 +3,40 @@
 
 import * as OBC from '@thatopen/components'
 
-import { isModelIdMapEmpty, modelIdMapSize, type BimTreeNode } from './lib/bimTree'
+import { setItemsVisible } from './lib/bimItemActions'
+import { isModelIdMapEmpty, modelIdMapSize, type BimTreeNode, type ModelIdMap } from './lib/bimTree'
 
 /** Classification name used in `OBC.Classifier.list`. */
 export const IFC_CLASS_CLASSIFICATION = 'Categories'
+
+/**
+ * IFC classes hidden the first time a model brings them in.
+ *
+ * Mostly topography: exported terrain envelops the building and hides
+ * everything behind it. Which class it lands in depends on the schema and the
+ * authoring software's export mapping, so this covers both common outcomes.
+ * Spaces get the same treatment — they are volumetric and obscure the elements
+ * inside them.
+ *
+ * These classes still appear in the class list with their switch off, so
+ * turning one back on is a single click.
+ *
+ * `IFCBUILDINGELEMENTPROXY` is deliberately **not** here. IFC2x3 exports can put
+ * terrain in it, but it is also the catch-all for any element the authoring
+ * software has no specific IFC class for, so hiding it by default would take
+ * real building geometry with it.
+ *
+ * TODO: replace with a per-organization list stored in the database, so users
+ * can configure this and have it persist.
+ */
+export const DEFAULT_HIDDEN_IFC_CLASSES: readonly string[] = [
+  // IFC4 topography (IfcGeographicElement, usually PredefinedType=TERRAIN).
+  'IFCGEOGRAPHICELEMENT',
+  // IFC2x3 topography, where the terrain hangs off the site itself. Only listed
+  // at all when the site carries geometry, which is exactly the terrain case.
+  'IFCSITE',
+  'IFCSPACE',
+]
 
 /** Models load in a loop, so coalesce the resulting bursts into one rebuild. */
 const REBUILD_DEBOUNCE_MS = 150
@@ -47,6 +77,12 @@ export class IfcClasses extends OBC.Component implements OBC.Disposable {
   private _refreshing: Promise<BimTreeNode[]> | null = null
   /** Set when a model changes mid-refresh; the current pass then runs again. */
   private _staleWhileRefreshing = false
+  /**
+   * `${modelId}:${className}` pairs whose default visibility has been applied.
+   * Keyed per model so a newly loaded file gets the same treatment, and applied
+   * only once so it never overrides a class the user has since turned on.
+   */
+  private _defaultsApplied = new Set<string>()
 
   constructor(components: OBC.Components) {
     super(components)
@@ -54,7 +90,18 @@ export class IfcClasses extends OBC.Component implements OBC.Disposable {
 
     const fragments = components.get(OBC.FragmentsManager)
     fragments.list.onItemSet.add(this.scheduleRefresh)
-    fragments.list.onItemDeleted.add(this.scheduleRefresh)
+    fragments.list.onItemDeleted.add(this.onModelRemoved)
+  }
+
+  /**
+   * Forget a removed model's applied defaults, so re-loading the same file
+   * hides its site and spaces again rather than bringing them in visible.
+   */
+  private onModelRemoved = (modelId: string): void => {
+    for (const key of [...this._defaultsApplied]) {
+      if (key.startsWith(`${modelId}:`)) this._defaultsApplied.delete(key)
+    }
+    this.scheduleRefresh()
   }
 
   get classes(): BimTreeNode[] {
@@ -146,6 +193,10 @@ export class IfcClasses extends OBC.Component implements OBC.Disposable {
         }))
         .sort((a, b) => a.label.localeCompare(b.label))
 
+      // Hide the default-off classes before announcing the list, so the panels
+      // read the final visibility state rather than one frame of it.
+      await this.applyDefaultVisibility()
+
       this.onClassesChanged.trigger({ classes: this._classes })
       return this._classes
     } catch (error) {
@@ -158,6 +209,43 @@ export class IfcClasses extends OBC.Component implements OBC.Disposable {
     }
   }
 
+  /**
+   * Hides the elements of every {@link DEFAULT_HIDDEN_IFC_CLASSES} class the
+   * first time each model contributes them.
+   *
+   * Tracked per (model, class) rather than per class: a file loaded later still
+   * comes in with its site and spaces hidden, but a class the user has already
+   * turned on is never hidden again for the models it was turned on for.
+   */
+  private async applyDefaultVisibility(): Promise<void> {
+    const defaults = new Set(
+      DEFAULT_HIDDEN_IFC_CLASSES.map(name => name.toUpperCase()),
+    )
+
+    const toHide: ModelIdMap = {}
+    for (const node of this._classes) {
+      if (!defaults.has(node.label.toUpperCase())) continue
+
+      for (const modelId of Object.keys(node.items)) {
+        const key = `${modelId}:${node.label}`
+        if (this._defaultsApplied.has(key)) continue
+        this._defaultsApplied.add(key)
+
+        const localIds = node.items[modelId]
+        if (localIds.size === 0) continue
+        toHide[modelId] = new Set([...(toHide[modelId] ?? []), ...localIds])
+      }
+    }
+
+    if (isModelIdMapEmpty(toHide)) return
+
+    try {
+      await setItemsVisible(this.components, toHide, false)
+    } catch (error) {
+      console.warn('Failed to apply default IFC class visibility:', error)
+    }
+  }
+
   dispose(): void {
     this._disposed = true
     if (this._rebuildTimeout !== null) {
@@ -167,12 +255,13 @@ export class IfcClasses extends OBC.Component implements OBC.Disposable {
     try {
       const fragments = this.components.get(OBC.FragmentsManager)
       fragments.list.onItemSet.remove(this.scheduleRefresh)
-      fragments.list.onItemDeleted.remove(this.scheduleRefresh)
+      fragments.list.onItemDeleted.remove(this.onModelRemoved)
     } catch {
       // FragmentsManager is held back to last during Components.dispose(); if it
       // has already gone there is nothing left to unsubscribe from.
     }
     this._classes = []
+    this._defaultsApplied.clear()
     this.onClassesChanged.reset()
     this.onLoadingStateChanged.reset()
     this.onDisposed.trigger(IfcClasses.uuid)

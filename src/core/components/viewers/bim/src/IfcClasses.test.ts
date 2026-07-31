@@ -16,11 +16,19 @@ vi.mock('@thatopen/components', () => {
   }
   class FragmentsManager {}
   class Classifier {}
-  return { Component, Event, FragmentsManager, Classifier }
+  class Hider {
+    set = vi.fn(async () => {})
+    isolate = vi.fn(async () => {})
+    getVisibilityMap = vi.fn(async () => ({}))
+  }
+  return { Component, Event, FragmentsManager, Classifier, Hider }
 })
+vi.mock('./Highlighter', () => ({ Highlighter: class Highlighter {} }))
 
 const OBC = await import('@thatopen/components')
-const { IfcClasses, IFC_CLASS_CLASSIFICATION } = await import('./IfcClasses')
+const { VisibilityState } = await import('./VisibilityState')
+const { IfcClasses, IFC_CLASS_CLASSIFICATION, DEFAULT_HIDDEN_IFC_CLASSES } =
+  await import('./IfcClasses')
 
 /** A group whose `get()` resolves the same way the real query-backed groups do. */
 function group(items: Record<string, number[]>) {
@@ -49,16 +57,31 @@ function makeComponents(options: {
     byCategory: vi.fn(options.byCategory ?? (async () => {})),
   }
 
-  const components = {
+  // The stub above takes no constructor args, unlike the real class it replaces.
+  const hider = new OBC.Hider({} as never)
+  let visibilityState: InstanceType<typeof VisibilityState> | null = null
+
+  const components: any = {
     add: vi.fn(),
     get: (cls: unknown) => {
       if (cls === OBC.FragmentsManager) return fragments
       if (cls === OBC.Classifier) return classifier
+      if (cls === OBC.Hider) return hider
+      if (cls === VisibilityState) {
+        visibilityState ??= new VisibilityState(components)
+        return visibilityState
+      }
       throw new Error('unknown component')
     },
   }
 
-  return { components: components as any, fragments, classifier }
+  return {
+    components,
+    fragments,
+    classifier,
+    hider: hider as any,
+    getVisibilityState: () => components.get(VisibilityState),
+  }
 }
 
 describe('IfcClasses', () => {
@@ -170,6 +193,95 @@ describe('IfcClasses', () => {
     expect(await new IfcClasses(components).refresh()).toEqual([])
 
     error.mockRestore()
+  })
+
+  describe('default-hidden classes', () => {
+    it('covers topography in both schemas, plus spaces', () => {
+      expect([...DEFAULT_HIDDEN_IFC_CLASSES]).toEqual([
+        'IFCGEOGRAPHICELEMENT', 'IFCSITE', 'IFCSPACE',
+      ])
+    })
+
+    it('leaves IFCBUILDINGELEMENTPROXY alone, since it is the generic catch-all', () => {
+      expect(DEFAULT_HIDDEN_IFC_CLASSES).not.toContain('IFCBUILDINGELEMENTPROXY')
+    })
+
+    it('hides them on first load but leaves everything else visible', async () => {
+      const groups = new Map([
+        ['IFCWALL', group({ arq: [1, 2] })],
+        ['IFCBUILDINGELEMENTPROXY', group({ arq: [5] })],
+        ['IFCGEOGRAPHICELEMENT', group({ arq: [9] })],
+        ['IFCSITE', group({ arq: [10] })],
+        ['IFCSPACE', group({ arq: [20, 21] })],
+      ])
+      const { components, hider } = makeComponents({ groups })
+
+      await new IfcClasses(components).refresh()
+
+      expect(hider.set).toHaveBeenCalledTimes(1)
+      const [visible, items] = hider.set.mock.calls[0]
+      expect(visible).toBe(false)
+      expect([...items.arq].sort((a: number, b: number) => a - b)).toEqual([9, 10, 20, 21])
+    })
+
+    it('still lists them, so they can be switched back on', async () => {
+      const groups = new Map([['IFCSPACE', group({ arq: [20] })]])
+      const { components } = makeComponents({ groups })
+
+      const classes = await new IfcClasses(components).refresh()
+
+      expect(classes.map(node => node.label)).toEqual(['IFCSPACE'])
+    })
+
+    it('does not re-hide a class the user has turned back on', async () => {
+      const groups = new Map([['IFCSPACE', group({ arq: [20] })]])
+      const { components, hider } = makeComponents({ groups })
+      const ifcClasses = new IfcClasses(components)
+
+      await ifcClasses.refresh()
+      hider.set.mockClear()
+      // A later rebuild (another model, a re-open) must not undo the user's choice.
+      await ifcClasses.refresh()
+
+      expect(hider.set).not.toHaveBeenCalled()
+    })
+
+    it('applies the default to each model separately', async () => {
+      const groups = new Map([['IFCSPACE', group({ arq: [20] })]])
+      const { components, hider } = makeComponents({ groups })
+      const ifcClasses = new IfcClasses(components)
+
+      await ifcClasses.refresh()
+      hider.set.mockClear()
+
+      // A second model shows up with spaces of its own.
+      groups.set('IFCSPACE', group({ arq: [20], str: [77] }))
+      await ifcClasses.refresh()
+
+      expect(hider.set).toHaveBeenCalledTimes(1)
+      const [, items] = hider.set.mock.calls[0]
+      expect(items).toEqual({ str: new Set([77]) })
+    })
+
+    it('does nothing when the model has none of them', async () => {
+      const groups = new Map([['IFCWALL', group({ arq: [1] })]])
+      const { components, hider } = makeComponents({ groups })
+
+      await new IfcClasses(components).refresh()
+
+      expect(hider.set).not.toHaveBeenCalled()
+    })
+
+    it('announces the change so the other panels re-read visibility', async () => {
+      const groups = new Map([['IFCSITE', group({ arq: [10] })]])
+      const ctx = makeComponents({ groups })
+      const listener = vi.fn()
+      ctx.getVisibilityState().onChanged.add(listener)
+
+      await new IfcClasses(ctx.components).refresh()
+
+      expect(listener).toHaveBeenCalled()
+    })
   })
 
   it('unsubscribes from model events on dispose', async () => {

@@ -7,15 +7,27 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 // matters here, so empty classes are enough.
 vi.mock('@thatopen/components', () => ({ Hider: class Hider {} }))
 vi.mock('../Highlighter', () => ({ Highlighter: class Highlighter {} }))
+vi.mock('../VisibilityState', () => ({
+  VisibilityState: class VisibilityState {
+    listeners = new Set<() => void>()
+    onChanged = {
+      add: (fn: () => void) => this.listeners.add(fn),
+      remove: (fn: () => void) => this.listeners.delete(fn),
+    }
+    notify() { for (const fn of [...this.listeners]) fn() }
+  },
+}))
 
 const OBC = await import('@thatopen/components')
 const { Highlighter } = await import('../Highlighter')
+const { VisibilityState } = await import('../VisibilityState')
 const {
   clearHover,
   getHiddenItems,
   getSelectedItems,
   hoverItems,
   isolateItems,
+  onVisibilityChanged,
   selectItems,
   setItemsVisible,
   showAllItems,
@@ -40,15 +52,23 @@ function makeComponents(overrides: {
     getVisibilityMap: vi.fn(async () => ({ arq: [1, 2] })),
   }
 
+  const visibilityState = new VisibilityState({} as never)
+
   const components = {
     get: (cls: unknown) => {
       if (cls === Highlighter) return highlighter
       if (cls === OBC.Hider) return hider
+      if (cls === VisibilityState) return visibilityState
       throw new Error('unknown component')
     },
   } as unknown as Components
 
-  return { components, highlighter: highlighter as any, hider: hider as any }
+  return {
+    components,
+    highlighter: highlighter as any,
+    hider: hider as any,
+    visibilityState,
+  }
 }
 
 describe('selectItems', () => {
@@ -126,6 +146,53 @@ describe('visibility', () => {
 
     expect(ctx.hider.set).not.toHaveBeenCalled()
     expect(ctx.hider.isolate).not.toHaveBeenCalled()
+  })
+})
+
+describe('onVisibilityChanged', () => {
+  it('fires for every action that changes visibility', async () => {
+    const { components } = makeComponents()
+    const listener = vi.fn()
+    onVisibilityChanged(components, listener)
+
+    await setItemsVisible(components, { arq: new Set([1]) }, false)
+    expect(listener).toHaveBeenCalledTimes(1)
+
+    await isolateItems(components, { arq: new Set([1]) })
+    expect(listener).toHaveBeenCalledTimes(2)
+
+    await showAllItems(components)
+    expect(listener).toHaveBeenCalledTimes(3)
+  })
+
+  it('does not fire when an empty map short-circuits the action', async () => {
+    const { components } = makeComponents()
+    const listener = vi.fn()
+    onVisibilityChanged(components, listener)
+
+    await setItemsVisible(components, {}, false)
+    await isolateItems(components, {})
+
+    expect(listener).not.toHaveBeenCalled()
+  })
+
+  it('stops firing once unsubscribed', async () => {
+    const { components } = makeComponents()
+    const listener = vi.fn()
+    const unsubscribe = onVisibilityChanged(components, listener)
+
+    unsubscribe()
+    await showAllItems(components)
+
+    expect(listener).not.toHaveBeenCalled()
+  })
+
+  it('returns a safe no-op when there is no viewer', () => {
+    const components = {
+      get: () => { throw new Error('not registered') },
+    } as unknown as Components
+
+    expect(() => onVisibilityChanged(components, vi.fn())()).not.toThrow()
   })
 })
 

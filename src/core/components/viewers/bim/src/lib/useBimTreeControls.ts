@@ -10,6 +10,7 @@ import {
   getHiddenItems,
   hoverItems,
   isolateItems,
+  onVisibilityChanged,
   selectItems,
   setItemsVisible,
   showAllItems,
@@ -79,6 +80,13 @@ export function useBimTreeControls({
   // Re-read visibility whenever the tree itself changes: a model finishing its
   // load, or being removed, can change what is hidden.
   React.useEffect(() => { refreshHidden() }, [refreshHidden, nodes])
+
+  // ...and whenever anything else changes it — the other tree, the selection
+  // toolbar, or the default-hidden classes applied when a model loads.
+  React.useEffect(() => {
+    if (!components) return
+    return onVisibilityChanged(components, refreshHidden)
+  }, [components, refreshHidden])
 
   // Open the ancestors of every search hit. Merging rather than replacing keeps
   // whatever the user had already opened.

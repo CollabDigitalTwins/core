@@ -4,6 +4,7 @@
 import * as OBC from '@thatopen/components'
 
 import { Highlighter } from '../Highlighter'
+import { VisibilityState } from '../VisibilityState'
 
 import { isModelIdMapEmpty, modelIdMapSize, type ModelIdMap } from './bimTree'
 
@@ -42,6 +43,29 @@ function getHider(components: OBC.Components): OBC.Hider | null {
     return components.get(OBC.Hider)
   } catch {
     return null
+  }
+}
+
+/** Lets every panel re-read visibility after any of the actions below change it. */
+function notifyVisibilityChanged(components: OBC.Components): void {
+  try {
+    components.get(VisibilityState).notify()
+  } catch {
+    // No viewer to notify (teardown, or a headless test).
+  }
+}
+
+/** Subscribe to visibility changes made anywhere through these actions. */
+export function onVisibilityChanged(
+  components: OBC.Components,
+  listener: () => void,
+): () => void {
+  try {
+    const state = components.get(VisibilityState)
+    state.onChanged.add(listener)
+    return () => state.onChanged.remove(listener)
+  } catch {
+    return () => {}
   }
 }
 
@@ -86,6 +110,7 @@ export async function setItemsVisible(
 ): Promise<void> {
   if (isModelIdMapEmpty(items)) return
   await getHider(components)?.set(visible, items)
+  notifyVisibilityChanged(components)
 }
 
 /** Hides everything except `items`, across every loaded model. */
@@ -95,11 +120,13 @@ export async function isolateItems(
 ): Promise<void> {
   if (isModelIdMapEmpty(items)) return
   await getHider(components)?.isolate(items)
+  notifyVisibilityChanged(components)
 }
 
 /** The escape hatch from isolate: makes every item in every model visible again. */
 export async function showAllItems(components: OBC.Components): Promise<void> {
   await getHider(components)?.set(true)
+  notifyVisibilityChanged(components)
 }
 
 /**

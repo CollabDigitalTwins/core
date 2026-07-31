@@ -465,6 +465,7 @@
   },
   "DrawingLayers": {
     "doorSwings": "Door Swings",
+    "spaces": "Rooms",
     "fill": "Fill",
     "cut": "Cut sections",
     "toggleVisibility": "Toggle visibility",

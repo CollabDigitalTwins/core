@@ -465,6 +465,7 @@
   },
   "DrawingLayers": {
     "doorSwings": "Hojas de puertas",
+    "spaces": "Espacios",
     "fill": "Relleno",
     "cut": "Secciones cortadas",
     "toggleVisibility": "Toggle visibility",

@@ -5,6 +5,7 @@ import * as OBC from '@thatopen/components'
 import * as OBF from '@thatopen/components-front'
 import * as THREE from 'three'
 
+import { CurrentWorld } from '../../CurrentWorld'
 import {
   addDoorSwingsToDrawing,
   addItemsProjectionByClass,
@@ -14,6 +15,9 @@ import {
   getItemIdsByClass,
   patchModelGeometryRepresentationIds,
 } from '../../lib/drawingProjection'
+
+import { addSpacesToDrawing } from '../../lib/spaceOverlay'
+import { initializeCSS2DRenderer } from '../../tools/AddToBim/src/FileMarkerUtils'
 
 import { getStoreyItemIds } from './utils'
 
@@ -110,6 +114,25 @@ export class StoreyProjector {
       // as each IFC class finishes projecting.
       () => { void fragments.core.update(true) },
     )
+    // Room fills / X / name tags. Spaces are deliberately outside the per-class
+    // projection above: they are solids, so projecting them draws a box outline
+    // instead of a room, and they never reach `idFilter` because they hang off
+    // the storey by aggregation rather than containment.
+    try {
+      const spaces = await addSpacesToDrawing(drawing, model, entry.elevation)
+      if (spaces) {
+        // Room names are CSS2D labels, which need the overlay renderer the
+        // comment/file markers also use. Idempotent per world.
+        const world = this.components.get(CurrentWorld).world
+        if (world) initializeCSS2DRenderer(world)
+        entry.spaces = spaces.handle
+        layers.push(spaces.layer)
+        void fragments.core.update(true)
+      }
+    } catch (error) {
+      console.warn('[StoreyProjector] space overlay skipped:', error)
+    }
+
     // Iconic floor-plan swing arcs for doors. Best-effort: a model without
     // IFCDOOR items, or whose worker can't supply bboxes, falls through
     // silently. Runs after the main projection so the arcs sit on top.

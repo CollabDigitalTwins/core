@@ -2,6 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import type { DrawingLayerInfo } from '../../lib/drawingLayers'
+import type { SpaceOverlayHandle } from '../../lib/spaceOverlay'
 import type * as OBC from '@thatopen/components'
 
 export interface FloorplanEntry {
@@ -15,6 +16,9 @@ export interface FloorplanEntry {
   /** Per-IFC-class layer metadata, populated after projection. The sidebar
    *  uses this to render visibility toggles + color pickers. */
   layers: DrawingLayerInfo[]
+  /** Room overlay, when the storey has spaces. Not a `drawing.layers` entry —
+   *  those hold line materials only, and the fill is a mesh. */
+  spaces?: SpaceOverlayHandle | null
 }
 
 export const FLOORPLAN_TOOL_UUID =

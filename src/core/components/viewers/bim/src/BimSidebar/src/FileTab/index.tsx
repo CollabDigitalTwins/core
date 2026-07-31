@@ -8,24 +8,22 @@ import * as React from 'react'
 
 import { useFilesByBuildingId } from '../../../../../../../hooks/files/files'
 import { BuildingsContext } from '../../../../../../../store'
-import { SearchInput } from '../../../../../../ui'
+import { ViewerSidebarPanel } from '../../../../../../ui/ViewerSidebar/Panel'
 
 import { FilesSection } from './src/FilesSection'
 import { ModelsSection } from './src/ModelsSection'
 
 import type { DbFile } from '../../../../../../../types/dbTypes'
 
-
-  export function FileTab() {
-    const { state: buildingState } = React.useContext(BuildingsContext)
-    const { building } = buildingState.buildings
-    let buildingId:number;
-    const [searchQuery, setSearchQuery] = React.useState('')
+export function FileTab() {
+  const { state: buildingState } = React.useContext(BuildingsContext)
+  const { building } = buildingState.buildings
+  const [searchQuery, setSearchQuery] = React.useState('')
 
   const urlBuildingId = useSearchParams().get('buildingId')
-
-  if (building) buildingId = building.id
-  else if (urlBuildingId) buildingId = Number(urlBuildingId)
+  // Resolve from the store building, else the URL param; undefined if neither is
+  // ready yet (e.g. mid viewer-switch) — the hook handles undefined → no files.
+  const buildingId = building?.id ?? (urlBuildingId ? Number(urlBuildingId) : undefined)
 
   const filesData: DbFile[] = useFilesByBuildingId(buildingId).files || []
 
@@ -34,7 +32,7 @@ import type { DbFile } from '../../../../../../../types/dbTypes'
 
   // single pass to populate both arrays
   filesData.forEach((file) => {
-    const {extension} = file
+    const { extension } = file
     if (!extension) return
     const isBim = extension.toLowerCase() === 'ifc' || extension.toLowerCase() === 'frag'
 
@@ -45,18 +43,10 @@ import type { DbFile } from '../../../../../../../types/dbTypes'
     }
   })
 
-
   return (
-    <div className="flex-1 flex flex-col space-y-6 py-4 overflow-hidden">
-      <div className="px-4">
-        <SearchInput
-          placeholder="Search..."
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-        />
-      </div>
+    <ViewerSidebarPanel search={{ value: searchQuery, onChange: setSearchQuery }}>
       <ModelsSection files={bimFiles} query={searchQuery} />
       <FilesSection files={nonBimFiles} query={searchQuery} />
-    </div>
+    </ViewerSidebarPanel>
   )
 }

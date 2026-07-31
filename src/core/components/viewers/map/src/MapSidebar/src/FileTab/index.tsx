@@ -6,7 +6,7 @@
 import * as React from 'react'
 
 import { useFiles } from '../../../../../../../hooks/files/files'
-import { SearchInput } from '../../../../../../ui'
+import { ViewerSidebarPanel } from '../../../../../../ui/ViewerSidebar/Panel'
 
 import { FilesSection } from './src/FilesSection'
 import { ModelsSection } from './src/ModelsSection'
@@ -34,14 +34,7 @@ export function FileTab() {
   })
 
   return (
-    <div className="flex-1 flex flex-col space-y-6 py-4 overflow-hidden">
-      <div className="px-4">
-        <SearchInput
-          placeholder="Search..."
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-        />
-      </div>
+    <ViewerSidebarPanel search={{ value: searchQuery, onChange: setSearchQuery }}>
       <div className="flex-1 min-h-0 flex flex-col divide-y">
         <div className="basis-1/2 min-h-0 overflow-hidden">
           <ModelsSection files={BIMFiles} query={searchQuery} />
@@ -50,6 +43,6 @@ export function FileTab() {
           <FilesSection files={nonBIMFiles} query={searchQuery} />
         </div>
       </div>
-    </div>
+    </ViewerSidebarPanel>
   )
 }

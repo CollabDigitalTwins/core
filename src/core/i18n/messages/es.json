@@ -1203,9 +1203,6 @@
     "toastSuccessUpdate": "Sitio actualizado con éxito",
     "toastErrorUpdate": "Error al actualizar el sitio"
   },
-  "InfoSidebar": {
-    "resizeHandleLabel": "Redimensionar la barra lateral"
-  },
   "TabSelector": {
     "fileLabel": "Archivo",
     "layersTitle": "Capas",
@@ -1373,6 +1370,9 @@
     "email": "Correo electrónico",
     "role": "Rol",
     "roleUnknown": "Rol desconocido"
+  },
+  "ViewerSidebar": {
+    "resizeHandleLabel": "Redimensionar la barra lateral"
   },
   "ViewSection": {
     "floorplanTitle": "Planos de planta",

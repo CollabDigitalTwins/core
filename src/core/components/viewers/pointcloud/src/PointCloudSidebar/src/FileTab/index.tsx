@@ -8,6 +8,7 @@ import * as React from 'react'
 
 import { useFilesByBuildingId } from '../../../../../../../hooks/files/files'
 import { BuildingsContext } from '../../../../../../../store'
+import { ViewerSidebarPanel } from '../../../../../../ui/ViewerSidebar/Panel'
 
 import { FilesSection } from './src/FilesSection'
 import { PointCloudsSection } from './src/PointCloudSection'
@@ -28,8 +29,8 @@ export function FileTab({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
   const pointCloudFiles: DbFile[] = []
   const nonPointCloudFiles: DbFile[] = []
 
-  // single .map pass to populate both arrays
-  filesData.map((file) => {
+  // single pass to populate both arrays
+  filesData.forEach((file) => {
     const {extension, type} = file
     // const isPointCloud = extension.toLowerCase() === 'laz' || extension.toLowerCase() === 'las'
     const isPointCloud = type?.toLowerCase() === 'point-cloud-file'
@@ -42,9 +43,9 @@ export function FileTab({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
   })
 
   return (
-    <div className="flex-1 flex flex-col space-y-6 h-full py-4 overflow-hidden">
+    <ViewerSidebarPanel>
       <PointCloudsSection files={pointCloudFiles} pointcloudApiUrl={pointcloudApiUrl} buildingId={buildingId} />
       <FilesSection files={nonPointCloudFiles} />
-    </div>
+    </ViewerSidebarPanel>
   )
 }

@@ -1204,9 +1204,6 @@
     "toastSuccessUpdate": "Site updated successfully",
     "toastErrorUpdate": "Failed to update Site"
   },
-  "InfoSidebar": {
-    "resizeHandleLabel": "Resize sidebar"
-  },
   "TabSelector": {
     "fileLabel": "File",
     "layersTitle": "Layers",
@@ -1374,6 +1371,9 @@
     "email": "Email",
     "role": "Role",
     "roleUnknown": "Unknown Role"
+  },
+  "ViewerSidebar": {
+    "resizeHandleLabel": "Resize sidebar"
   },
   "ViewSection": {
     "floorplanTitle": "Floorplans",

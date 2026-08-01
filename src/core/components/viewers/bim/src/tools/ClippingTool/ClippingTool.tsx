@@ -4,46 +4,48 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // Dependencies
-import * as OBC from '@thatopen/components'
-import * as OBF from "@thatopen/components-front"
 import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from "react";
-import * as THREE from "three";
-import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
+import { toast } from 'sonner'
 
 // Utilities
-import { MenusContext, ToolsContext } from '../../../../../../store'
+import { ToolsContext } from '../../../../../../store'
 import { BimContext } from '../../../../../../store'
 
-
 // Shadcn components
-import { ToolbarSubmenu, SubmenuContext } from '../../../../../ToolbarSubmenu'
-import { Button } from '../../../../../ui/Button'
-import { Card, CardContent, CardHeader, CardTitle } from '../../../../../ui/Card'
+import { ToolbarSubmenu } from '../../../../../ToolbarSubmenu'
 import { DropdownMenuItem } from '../../../../../ui/DropdownMenu'
 
 // Icons
 import { Cursor } from '../../Cursor'
 
+import { ClippingPlanes } from './ClippingPlanes'
+
 import type { CursorType } from '../../../../../../types/global'
 import type { Tool, ToolbarToolType } from '../../../../../../types/tools'
 
-// Submenu wrapper
+/** Shared id so re-entering the mode replaces the instruction rather than stacking one. */
+const TOAST_ID = 'bim-clipping-toast'
 
 interface ClippingToolProps {
   tool: Tool
 }
 
 export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
+  const t = useTranslations('ClippingTool')
+
   const { dispatch: toolsDispatch, state: toolsState } = React.useContext(ToolsContext)
-  const { dispatch: menusDispatch } = React.useContext(MenusContext)
   const { state: bimState } = React.useContext(BimContext)
   const { bimComponents, world } = bimState.bim
   const { currentToolId } = toolsState.tools
 
   const [active, setActive] = React.useState(false)
-  const keydownRef = React.useRef<(e: KeyboardEvent) => void>(() => {})
+
+  const planes = React.useMemo(
+    () => bimComponents?.get(ClippingPlanes) ?? null,
+    [bimComponents],
+  )
 
   const setCursor = React.useCallback((cursor: CursorType) => {
     if (!bimComponents) return
@@ -52,156 +54,120 @@ export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
     currentCursor.cursor = cursor
   }, [bimComponents])
 
-  const setTools = (currentToolId: ToolbarToolType) => {
+  const setTools = React.useCallback((currentToolId: ToolbarToolType) => {
     toolsDispatch({
       type: 'SET-TOOL',
       payload: { currentToolId },
     })
-  }
+  }, [toolsDispatch])
 
-  const flipAddingPlaneState = async () => {
-    const _active = !active
-
-    setActive(_active)
-    setTools(_active ? tool.id : null)
-    setCursor(_active ? 'crosshair' : '')
-  }
-
-  const removeAllClippingPlanes = React.useCallback(() => {
-    if (!world || !bimComponents) return
-    bimComponents.get(OBC.Clipper).deleteAll()
-  }, [world, bimComponents])
-
-  //use effect to handle controlling the state of adding clipping plane
-  const handleCreateClippingPlane = React.useCallback(async () => {
-    if (!world || !bimComponents) return
-    // set up
-    const casters = bimComponents.get(OBC.Raycasters)
-    casters.get(world)
-
-    //styling
-    const clipStyler = bimComponents.get(OBF.ClipStyler)
-    clipStyler.world = world;
-    clipStyler.styles.set("Black", {
-      linesMaterial: new LineMaterial({
-        color: "black",
-        linewidth: 2,                 // thick, screen-space lines
-      }),
-      fillsMaterial: new THREE.MeshBasicMaterial({
-        color: 0x000000,
-        side: THREE.DoubleSide,       // see the cap from both sides
-        // transparent: true,            // enable opacity blending
-        // opacity: 0.2,                // soft see-through cap
-        // depthWrite: false,            // reduce sorting issues with transparency
-        // polygonOffset: true,          // nudge to prevent z-fighting
-        // polygonOffsetFactor: -2,
-        // polygonOffsetUnits: 1,
-      }),
-    });
-
-    //set up items to be filled
-    const finder = bimComponents.get(OBC.ItemsFinder);
-    finder.create("Walls", [{ categories: [/WALL/] }]);
-    finder.create("Slabs", [{ categories: [/SLAB/] }]);
-    finder.create("Columns", [{ categories: [/COLUMN/] }]);
-    finder.create("Doors", [{ categories: [/DOOR/] }]);
-    finder.create("Curtains", [{ categories: [/PLATE/, /MEMBER/] }]);
-    finder.create("Windows", [{ categories: [/WINDOW/] }]);
-
-    const classifier = bimComponents.get(OBC.Classifier);
-    const classificationName = "ClipperGroups";
-    classifier.setGroupQuery(classificationName, "Walls", { name: "Walls" });
-    classifier.setGroupQuery(classificationName, "Slabs", { name: "Slabs" });
-    classifier.setGroupQuery(classificationName, "Columns", { name: "Columns" });
-    classifier.setGroupQuery(classificationName, "Doors", { name: "Doors" });
-    classifier.setGroupQuery(classificationName, "Curtains", { name: "Curtains" });
-    classifier.setGroupQuery(classificationName, "Windows", { name: "Windows" });
-
-    //Create clipper
-    const clipper = bimComponents.get(OBC.Clipper)
-    clipper.enabled = true
-
-    //Apply styling
-    clipper.list.onItemSet.add(({ key }) => {
-      clipStyler.createFromClipping(key, {
-        items: { All: { style: "Black" } },
-      });
-    });
-
-    await clipper.create(world)
-  }, [world, bimComponents])
-
+  // The Clipper, the cut style and the drag listeners are wired once per world
+  // instead of on every double-click. `setup` is idempotent and reads the world
+  // itself; the dependency is here so a world arriving later still gets wired.
   React.useEffect(() => {
-    keydownRef.current = (event: KeyboardEvent) => {
-      if (event.key === 'Backspace') {
-        // Remove the clipping plane under the cursor
-        if (!world || !bimComponents) return
-        void bimComponents.get(OBC.Clipper).delete(world, undefined)
-      }
-    }
-  }, [world, bimComponents])
+    if (!world) return
+    planes?.setup()
+  }, [planes, world])
 
-  const handleKeyDown = React.useCallback((e: KeyboardEvent) => {
-    keydownRef.current?.(e)
+  const startCreating = React.useCallback(() => {
+    if (!planes) return
+    setActive(true)
+    setTools(tool.id)
+    setCursor('crosshair')
+    planes.setSquaresVisible(true)
+    toast.info(t('hint'), { id: TOAST_ID, duration: Infinity })
+  }, [planes, setTools, setCursor, t, tool.id])
+
+  /**
+   * Single exit path, so cancelling from the menu, finishing with Enter, clearing
+   * with Escape and another tool taking over all leave the same state behind.
+   * The squares go, the arrow gizmos stay: an existing section is still draggable.
+   *
+   * `releaseTool` is false only when another tool has already claimed the
+   * toolbar — clearing it there would deselect the tool the user just picked.
+   */
+  const stopCreating = React.useCallback((deleteAll: boolean, releaseTool: boolean) => {
+    setActive(false)
+    setCursor('')
+    toast.dismiss(TOAST_ID)
+    planes?.setSquaresVisible(false)
+    if (deleteAll) planes?.deleteAll()
+    if (releaseTool) setTools(null)
+  }, [planes, setCursor, setTools])
+
+  // An Infinity toast has no other way out if the viewer unmounts mid-mode.
+  React.useEffect(() => () => {
+    toast.dismiss(TOAST_ID)
   }, [])
-
-  // Handle deleting plane using Backspace
-  React.useEffect(() => {
-    if (!active) {
-      window.removeEventListener('keydown', handleKeyDown)
-      return
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [active, handleKeyDown])
 
   // Another tool taking over has to stop plane creation. Without this, `active`
   // stays true after a tool switch and the dblclick listener below survives, so
   // a double-click meant for (say) a measurement also drops a clipping plane.
   React.useEffect(() => {
     if (currentToolId === tool.id || !active) return
-    setActive(false)
-    setCursor('')
-  }, [currentToolId, tool.id, active, setCursor])
+    stopCreating(false, false)
+  }, [currentToolId, tool.id, active, stopCreating])
 
-  React.useEffect (() => {
-    if (!active || !world || !bimComponents) return
+  // Enter finishes and keeps the planes, Escape clears them, Backspace/Delete
+  // removes the one under the cursor.
+  React.useEffect(() => {
+    if (!active || !planes) return
 
-    const container = world.renderer.three.domElement
-    container.addEventListener("dblclick", handleCreateClippingPlane)
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Something nearer the keystroke already dealt with it — an open menu
+      // closing on Escape, for instance, which must not also clear the planes.
+      if (event.defaultPrevented) return
 
-    // Cleanup rather than an else-branch: `handleCreateClippingPlane` is a
-    // useCallback whose identity changes with world/bimComponents, so removing
-    // it on the next run would target a different function than the one added.
-    return () => {
-      container.removeEventListener("dblclick", handleCreateClippingPlane)
+      if (event.key === 'Enter') {
+        stopCreating(false, true)
+        return
+      }
+      if (event.key === 'Escape') {
+        stopCreating(true, true)
+        return
+      }
+      if (event.key === 'Backspace' || event.key === 'Delete') {
+        planes.deleteAtCursor()
+      }
     }
-  }, [active, world, bimComponents, handleCreateClippingPlane])
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [active, planes, stopCreating])
+
+  React.useEffect(() => {
+    if (!active || !planes) return
+
+    const container = world?.renderer?.three.domElement
+    if (!container) return
+
+    const onDoubleClick = () => {
+      void planes.createAtCursor()
+    }
+    container.addEventListener('dblclick', onDoubleClick)
+
+    return () => {
+      container.removeEventListener('dblclick', onDoubleClick)
+    }
+  }, [active, planes, world])
 
   return (
     <div>
       <ToolbarSubmenu tool={tool}>
-        <DropdownMenuItem onClick={() => void flipAddingPlaneState()}>
+        <DropdownMenuItem
+          onClick={() => (active ? stopCreating(false, true) : startCreating())}
+        >
           <LR.PlusSquare />
-          <span>{active? 'Cancel add' : 'Add'} clipping Plane</span>
+          <span>{active ? t('cancelAdd') : t('add')}</span>
         </DropdownMenuItem>
 
-        <DropdownMenuItem onClick={() => removeAllClippingPlanes()}>
-          <LR.Trash2/>
-          <span> Delete all clipping planes</span>
+        <DropdownMenuItem onClick={() => planes?.deleteAll()}>
+          <LR.Trash2 />
+          <span>{t('deleteAll')}</span>
         </DropdownMenuItem>
       </ToolbarSubmenu>
-
-      {active  &&
-       <Card className="p-3 absolute bottom-10 left-0 bg-background shadow-md z-10 w-full">
-            <span className="text-muted-foreground text-xs">
-              Double click on the model to add a clipping plane. Press Backspace to remove the clipping plane.
-            </span>
-        </Card>
-      }
     </div>
-
   )
 }

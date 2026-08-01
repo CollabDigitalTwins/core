@@ -232,7 +232,11 @@
     "clippingPlane": "Plano de recorte",
     "slice": "Cortar",
     "invert": "Invertir",
-    "reset": "Restablecer"
+    "reset": "Restablecer",
+    "add": "Añadir plano de recorte",
+    "cancelAdd": "Cancelar añadir plano de recorte",
+    "deleteAll": "Eliminar todos los planos de recorte",
+    "hint": "Haz doble clic en el modelo para añadir un plano de recorte. Retroceso elimina el plano bajo el cursor. Enter finaliza. Escape elimina todos los planos."
   },
   "CommentInput": {
     "title": "Añadir comentario",

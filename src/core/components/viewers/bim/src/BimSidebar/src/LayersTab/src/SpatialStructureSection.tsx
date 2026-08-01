@@ -13,6 +13,7 @@ import { Button } from '../../../../../../../ui/Button'
 import { useBimTreeControls } from '../../../../lib/useBimTreeControls'
 import { SpatialStructure } from '../../../../SpatialStructure'
 
+import { useAppearance } from './AppearanceProvider'
 import { BimTreeView } from './BimTreeView'
 import { LayerViewPanel } from './LayerViewPanel'
 
@@ -34,6 +35,7 @@ export function SpatialStructureSection({ searchQuery }: Props) {
   const t = useTranslations('LayersTab')
   const { state: bimState } = React.useContext(BimContext)
   const { bimComponents } = bimState.bim
+  const { clearSource, hasOverrides } = useAppearance()
 
   const [trees, setTrees] = React.useState<BimTreeNode[]>([])
   const [isLoading, setIsLoading] = React.useState(false)
@@ -102,13 +104,23 @@ export function SpatialStructureSection({ searchQuery }: Props) {
       </div>
     )
   } else {
-    body = <BimTreeView nodes={controls.nodes} controls={controls} />
+    body = <BimTreeView nodes={controls.nodes} controls={controls} source="spatial" />
   }
 
   return (
     <LayerViewPanel
       actions={
         <>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 p-0"
+            onClick={() => clearSource('spatial')}
+            disabled={!hasOverrides('spatial')}
+            title={t('resetColorsTitle')}
+          >
+            <LR.Paintbrush className="h-4 w-4" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"

@@ -12,6 +12,7 @@ import { Button } from '../../../../../../../ui/Button'
 import { IfcClasses } from '../../../../IfcClasses'
 import { useBimTreeControls } from '../../../../lib/useBimTreeControls'
 
+import { useAppearance } from './AppearanceProvider'
 import { BimTreeView } from './BimTreeView'
 import { LayerViewPanel } from './LayerViewPanel'
 
@@ -34,6 +35,7 @@ export function IfcClassesSection({ searchQuery }: Props) {
   const t = useTranslations('LayersTab')
   const { state: bimState } = React.useContext(BimContext)
   const { bimComponents } = bimState.bim
+  const { clearSource, hasOverrides } = useAppearance()
 
   const [classes, setClasses] = React.useState<BimTreeNode[]>([])
   const [isLoading, setIsLoading] = React.useState(false)
@@ -91,22 +93,34 @@ export function IfcClassesSection({ searchQuery }: Props) {
       </div>
     )
   } else {
-    body = <BimTreeView nodes={controls.nodes} controls={controls} />
+    body = <BimTreeView nodes={controls.nodes} controls={controls} source="ifc-class" />
   }
 
   return (
     <LayerViewPanel
       count={classes.length}
       actions={
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 p-0"
-          onClick={controls.showAll}
-          title={t('showAllTitle')}
-        >
-          <LR.Eye className="h-4 w-4" />
-        </Button>
+        <>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 p-0"
+            onClick={() => clearSource('ifc-class')}
+            disabled={!hasOverrides('ifc-class')}
+            title={t('resetColorsTitle')}
+          >
+            <LR.Paintbrush className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 p-0"
+            onClick={controls.showAll}
+            title={t('showAllTitle')}
+          >
+            <LR.Eye className="h-4 w-4" />
+          </Button>
+        </>
       }
     >
       {body}

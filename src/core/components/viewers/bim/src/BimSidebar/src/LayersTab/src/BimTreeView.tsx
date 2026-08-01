@@ -11,25 +11,30 @@ import { cn } from '../../../../../../../../utils/utils'
 import { Button } from '../../../../../../../ui/Button'
 import { Switch } from '../../../../../../../ui/Switch'
 
+import { AppearanceSwatch } from './AppearanceSwatch'
+
+import type { AppearanceSource } from '../../../../lib/appearanceOverrides'
 import type { BimTreeNode } from '../../../../lib/bimTree'
 import type { BimTreeControls } from '../../../../lib/useBimTreeControls'
 
 interface Props {
   nodes: BimTreeNode[]
   controls: BimTreeControls
+  /** Which tree this is, so appearance overrides are scoped to it. */
+  source: AppearanceSource
 }
 
 /**
- * Renders a `BimTreeNode` tree with select / hide / isolate on every row.
+ * Renders a `BimTreeNode` tree with colour / select / hide / isolate on every row.
  *
  * Shared by the spatial structure and IFC class sections so both behave the
  * same; all the state lives in `useBimTreeControls`.
  */
-export function BimTreeView({ nodes, controls }: Props) {
+export function BimTreeView({ nodes, controls, source }: Props) {
   return (
     <div className="space-y-1">
       {nodes.map(node => (
-        <BimTreeRow key={node.id} node={node} controls={controls} />
+        <BimTreeRow key={node.id} node={node} controls={controls} source={source} />
       ))}
     </div>
   )
@@ -38,6 +43,7 @@ export function BimTreeView({ nodes, controls }: Props) {
 interface RowProps {
   node: BimTreeNode
   controls: BimTreeControls
+  source: AppearanceSource
 }
 
 /**
@@ -46,7 +52,7 @@ interface RowProps {
  * drags the Layers tab splitters: those re-render the section on every pointer
  * move, and without this the whole tree re-rendered with them.
  */
-const BimTreeRow = React.memo(function BimTreeRow({ node, controls }: RowProps) {
+const BimTreeRow = React.memo(function BimTreeRow({ node, controls, source }: RowProps) {
   const t = useTranslations('LayersTab')
   const {
     expandedIds,
@@ -102,6 +108,8 @@ const BimTreeRow = React.memo(function BimTreeRow({ node, controls }: RowProps) 
           )}
         </Button>
 
+        <AppearanceSwatch source={source} nodeId={node.id} label={node.label} />
+
         <span
           className={cn(
             'text-sm flex-1 truncate',
@@ -147,7 +155,7 @@ const BimTreeRow = React.memo(function BimTreeRow({ node, controls }: RowProps) 
       {isExpanded && hasChildren && (
         <div className="ml-4 space-y-1">
           {node.children.map(child => (
-            <BimTreeRow key={child.id} node={child} controls={controls} />
+            <BimTreeRow key={child.id} node={child} controls={controls} source={source} />
           ))}
         </div>
       )}

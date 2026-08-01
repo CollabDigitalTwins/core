@@ -10,6 +10,7 @@ import * as React from 'react'
 import { FloorplanIcon } from '../../../../../../ui/Icons/FloorPlanIcon'
 import { SearchInput } from '../../../../../../ui/SearchInput'
 
+import { AppearanceProvider } from './src/AppearanceProvider'
 import { ElevationSection } from './src/ElevationsSection'
 import { FloorplanSection } from './src/FloorplanSection'
 import { IfcClassesSection } from './src/IfcClassesSection'
@@ -123,79 +124,81 @@ export function LayersTab() {
     : `${rowFor('drawings')} ${rowFor('classifier')}`
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-      {/* Shared search bar — filters every view below. */}
-      <div className="px-4 py-3 border-b flex-shrink-0">
-        <SearchInput
-          placeholder={t('searchPlaceholder')}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
-
-      <div ref={layoutRef} className="grid flex-1 min-h-0" style={{ gridTemplateRows }}>
-        <div className="min-h-0 overflow-hidden">
-          <LayerGroupSection
-            title={t('drawingsGroup')}
-            icon={FloorplanIcon}
-            open={openGroups.drawings}
-            onOpenChange={setOpen('drawings')}
-            activeId={activeView.drawings}
-            onActiveChange={setView('drawings')}
-            views={[
-              {
-                id: 'floorplans',
-                label: t('floorplansTab'),
-                icon: FloorplanIcon,
-                content: <FloorplanSection query={searchQuery} />,
-              },
-              {
-                id: 'elevations',
-                label: t('elevationsTab'),
-                icon: LR.House,
-                content: <ElevationSection query={searchQuery} />,
-              },
-            ]}
+    <AppearanceProvider>
+      <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+        {/* Shared search bar — filters every view below. */}
+        <div className="px-4 py-3 border-b flex-shrink-0">
+          <SearchInput
+            placeholder={t('searchPlaceholder')}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
 
-        {bothOpen && (
-          <div
-            role="separator"
-            aria-orientation="horizontal"
-            aria-label={t('resizeSectionsLabel')}
-            className="group flex items-center justify-center cursor-row-resize select-none touch-none"
-            onPointerDown={beginResize}
-          >
-            <div className="h-px w-full bg-border transition-colors group-hover:bg-primary/50" />
+        <div ref={layoutRef} className="grid flex-1 min-h-0" style={{ gridTemplateRows }}>
+          <div className="min-h-0 overflow-hidden">
+            <LayerGroupSection
+              title={t('drawingsGroup')}
+              icon={FloorplanIcon}
+              open={openGroups.drawings}
+              onOpenChange={setOpen('drawings')}
+              activeId={activeView.drawings}
+              onActiveChange={setView('drawings')}
+              views={[
+                {
+                  id: 'floorplans',
+                  label: t('floorplansTab'),
+                  icon: FloorplanIcon,
+                  content: <FloorplanSection query={searchQuery} />,
+                },
+                {
+                  id: 'elevations',
+                  label: t('elevationsTab'),
+                  icon: LR.House,
+                  content: <ElevationSection query={searchQuery} />,
+                },
+              ]}
+            />
           </div>
-        )}
 
-        <div className="min-h-0 overflow-hidden">
-          <LayerGroupSection
-            title={t('classifierGroup')}
-            icon={LR.ListTree}
-            open={openGroups.classifier}
-            onOpenChange={setOpen('classifier')}
-            activeId={activeView.classifier}
-            onActiveChange={setView('classifier')}
-            views={[
-              {
-                id: 'spatial',
-                label: t('spatialTab'),
-                icon: LR.ListTree,
-                content: <SpatialStructureSection searchQuery={searchQuery} />,
-              },
-              {
-                id: 'classes',
-                label: t('classesTab'),
-                icon: LR.Tags,
-                content: <IfcClassesSection searchQuery={searchQuery} />,
-              },
-            ]}
-          />
+          {bothOpen && (
+            <div
+              role="separator"
+              aria-orientation="horizontal"
+              aria-label={t('resizeSectionsLabel')}
+              className="group flex items-center justify-center cursor-row-resize select-none touch-none"
+              onPointerDown={beginResize}
+            >
+              <div className="h-px w-full bg-border transition-colors group-hover:bg-primary/50" />
+            </div>
+          )}
+
+          <div className="min-h-0 overflow-hidden">
+            <LayerGroupSection
+              title={t('classifierGroup')}
+              icon={LR.ListTree}
+              open={openGroups.classifier}
+              onOpenChange={setOpen('classifier')}
+              activeId={activeView.classifier}
+              onActiveChange={setView('classifier')}
+              views={[
+                {
+                  id: 'spatial',
+                  label: t('spatialTab'),
+                  icon: LR.ListTree,
+                  content: <SpatialStructureSection searchQuery={searchQuery} />,
+                },
+                {
+                  id: 'classes',
+                  label: t('classesTab'),
+                  icon: LR.Tags,
+                  content: <IfcClassesSection searchQuery={searchQuery} />,
+                },
+              ]}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </AppearanceProvider>
   )
 }

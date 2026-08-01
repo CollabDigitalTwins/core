@@ -9,6 +9,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import * as React from "react";
 import * as THREE from "three";
 
+import { useUndoRedoShortcuts } from "../../../hooks/useUndoRedoShortcuts";
 import { ToolsContext, BimContext, MenusContext } from "../../../store";
 import { SensorLegend } from "../../ui/Sensors/SensorLegend";
 import { useBimCoordinateSystem } from "../useCoordinateSystem";
@@ -16,9 +17,11 @@ import { useBimCoordinateSystem } from "../useCoordinateSystem";
 import { BimLoadingState } from "./src/BimLoadingState";
 import { CurrentCamera } from './src/CurrentCamera';
 import { CurrentWorld } from "./src/CurrentWorld";
+import { ElementAppearance } from "./src/ElementAppearance";
 import { ElevationsTool } from "./src/ElevationsTool";
 import { FloorplanTool } from "./src/FloorplanTool";
 import { Highlighter } from "./src/Highlighter";
+import { IfcClasses } from "./src/IfcClasses";
 import { ViewModeCoordinator } from "./src/lib/ViewModeCoordinator";
 import { PropertiesMenu } from "./src/propertiesMenu";
 import { ViewportGizmo } from "./src/ViewportGizmo";
@@ -37,6 +40,15 @@ export function BimViewer() {
 
     const { state: menusState } = React.useContext(MenusContext);
     const { currentViewer } = menusState.menus;
+
+    // Steps colour and opacity overrides made in the Layers tab back and forward.
+    // Bound at the viewer rather than in the tab so the shortcuts survive
+    // switching tabs, and so the sidebar unmounting does not take the history
+    // with it.
+    useUndoRedoShortcuts({
+        undo: () => { void bimComponents?.get(ElementAppearance).undo(); },
+        redo: () => { void bimComponents?.get(ElementAppearance).redo(); },
+    });
 
 
     const containerRef = React.useRef<HTMLDivElement>(null);
@@ -116,7 +128,14 @@ export function BimViewer() {
             components.get(CurrentWorld).world = world;
             components.get(CurrentCamera).camera = world.camera;
             components.get(Highlighter);
+            // Registered up front so it subscribes to model loads before any
+            // model arrives, rather than when the sidebar first opens.
+            components.get(IfcClasses);
             components.get(ViewModeCoordinator);
+            // Same reason: it has to hear about model loads and about drawing
+            // modes releasing the viewer, both of which need its overrides
+            // repainted, whether or not the Layers tab has ever been opened.
+            components.get(ElementAppearance);
             components.get(FloorplanTool);
             components.get(ElevationsTool);
 

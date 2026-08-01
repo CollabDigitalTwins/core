@@ -9,6 +9,6 @@ import { ToolbarBody } from '../../ToolbarBody'
 
 import { useBimToolbarTools } from './src/tools/bimToolbar'
 
-export function BimToolbar({ minioBaseUrl }: { minioBaseUrl?: string }) {
-  return <ToolbarBody viewer="bim" tools={useBimToolbarTools({ minioBaseUrl })} />
+export function BimToolbar() {
+  return <ToolbarBody viewer="bim" tools={useBimToolbarTools()} />
 }

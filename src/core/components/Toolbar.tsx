@@ -61,7 +61,7 @@ export function Toolbar({ viewer, minioBaseUrl, martinBaseUrl, organization, geo
     )
   }
   if (viewer === ViewerNames.bim) {
-    return <BimToolbar minioBaseUrl={minioBaseUrl} />
+    return <BimToolbar />
   }
   if (viewer === ViewerNames.pointcloud) {
     return <PointCloudToolbar />

@@ -18,6 +18,7 @@ import { CurrentWorld } from '../../../../CurrentWorld'
 import { GhostMode } from '../../../../GhostMode'
 import { Highlighter } from '../../../../Highlighter'
 import { ModelManager } from '../../../../ModelManager'
+import { SpatialStructure } from '../../../../SpatialStructure'
 
 import type { DbFile as DbFile } from '../../../../../../../../types/dbTypes'
 
@@ -184,6 +185,13 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
         })
         // Also clean up BIMManager tracking
         bimManager?.remove(file.name)
+        // Drop the model's spatial tree too, otherwise the sidebar keeps
+        // rendering it and pushing visibility changes at a disposed model.
+        try {
+          bimComponents?.get(SpatialStructure).clearForModel(file.name)
+        } catch {
+          // The viewer may already be tearing down; nothing to clean up then.
+        }
       }
     }
   }, [modelManager, bimComponents, fragments, bimManager])

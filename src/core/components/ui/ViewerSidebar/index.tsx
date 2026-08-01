@@ -28,7 +28,7 @@ export function ViewerSidebar({ minioBaseUrl, martinBaseUrl, organization, point
   return (
     <>
       {currentViewer === 'map' && <MapSidebar minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} />}
-      {currentViewer === 'bim' && <BimSidebar minioBaseUrl={minioBaseUrl} organization={organization} />}
+      {currentViewer === 'bim' && <BimSidebar organization={organization} />}
       {currentViewer === 'pointcloud' && <PointCloudSidebar pointcloudApiUrl={pointcloudApiUrl} organization={organization} />}
     </>
   )

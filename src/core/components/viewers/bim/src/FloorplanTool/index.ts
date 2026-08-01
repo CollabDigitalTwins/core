@@ -13,6 +13,7 @@ import { CUT_CLASSES, FILL_CLASSES } from '../lib/drawingLayers'
 import { disposeDrawing } from '../lib/drawingProjection'
 import { GridController } from '../lib/GridController'
 import { safeRun, safeRunAsync } from '../lib/safeRun'
+import { SPACES_LAYER } from '../lib/spaceOverlay'
 import { ViewModeCoordinator } from '../lib/ViewModeCoordinator'
 import { stagePercent } from '../lib/viewSection'
 
@@ -149,7 +150,20 @@ export class FloorplanTool extends OBC.Component {
   /** Toggle visibility of a single per-class layer on an entry's drawing. */
   setLayerVisible(entryId: string, className: string, visible: boolean) {
     const entry = this._entries.get(entryId)
-    if (!entry?.drawing || !entry.drawing.layers.has(className)) return
+    if (!entry?.drawing) return
+
+    // Rooms live outside `drawing.layers`, which only holds line materials.
+    if (className === SPACES_LAYER) {
+      if (!entry.spaces) return
+      entry.spaces.setVisible(visible)
+      const spaceMeta = entry.layers.find((l) => l.className === SPACES_LAYER)
+      if (spaceMeta) spaceMeta.visible = visible
+      this._requestUpdate()
+      this.onLayersChanged.trigger(entry)
+      return
+    }
+
+    if (!entry.drawing.layers.has(className)) return
     entry.drawing.layers.setVisibility(className, visible)
     const meta = entry.layers.find((l) => l.className === className)
     if (meta) meta.visible = visible
@@ -164,7 +178,21 @@ export class FloorplanTool extends OBC.Component {
    *  outline and its solid fill underneath. */
   async setLayerColor(entryId: string, className: string, color: number) {
     const entry = this._entries.get(entryId)
-    if (!entry?.drawing || !entry.drawing.layers.has(className)) return
+    if (!entry?.drawing) return
+
+    // Picking a colour for the rooms also drops the default X, which only
+    // reads as a room marker while the fill is unstyled.
+    if (className === SPACES_LAYER) {
+      if (!entry.spaces) return
+      entry.spaces.setColor(color)
+      const spaceMeta = entry.layers.find((l) => l.className === SPACES_LAYER)
+      if (spaceMeta) spaceMeta.color = color
+      this._requestUpdate()
+      this.onLayersChanged.trigger(entry)
+      return
+    }
+
+    if (!entry.drawing.layers.has(className)) return
     entry.drawing.layers.setColor(className, color)
     const meta = entry.layers.find((l) => l.className === className)
     if (meta) meta.color = color
@@ -791,6 +819,13 @@ export class FloorplanTool extends OBC.Component {
         entry.drawing.three.visible = true
       }
 
+      // Frame the finished drawing. The Phase 1 `_frameCamera` call runs before
+      // anything is projected, so it can only guess from the model bounds —
+      // which left the plan off-screen and made users reach for the toolbar's
+      // Fit button. Now that the lines exist, fit to what is actually drawn.
+      await safeRunAsync(() => this._fitToDrawing(entry), 'fitToDrawing')
+      if (seq !== this._activateSeq) return
+
       // Prepend Fill / Cut group-color controls so the sidebar shows them
       // at the top of the layers list.
       this._injectGroupColorLayers(entry)
@@ -855,6 +890,9 @@ export class FloorplanTool extends OBC.Component {
     for (const [id, entry] of this._entries) {
       if (entry.modelId !== modelId) continue
       if (this._activeId === id) void this.deactivate()
+      // The room overlay owns DOM label nodes, so it needs an explicit dispose
+      // rather than being collected with the drawing's Three objects.
+      safeRun(() => entry.spaces?.dispose(), 'disposeSpaces')
       disposeDrawing(this.components, entry.drawing)
       this._entries.delete(id)
       this.renderer.invalidateForEntry(id)
@@ -868,6 +906,7 @@ export class FloorplanTool extends OBC.Component {
   dispose() {
     void this.deactivate()
     for (const entry of this._entries.values()) {
+      safeRun(() => entry.spaces?.dispose(), 'disposeSpaces')
       disposeDrawing(this.components, entry.drawing)
     }
     this._entries.clear()
@@ -912,6 +951,31 @@ export class FloorplanTool extends OBC.Component {
   /** Frame the camera over the active floor in orthographic top-down,
    *  then re-apply the building's true-north rotation so storey switches
    *  preserve the user's chosen orientation. */
+  /**
+   * Fit the camera to the projected drawing, so activating a storey lands on a
+   * framed plan without the user having to hit Fit.
+   *
+   * North is applied first: the fit is computed against an axis-aligned box, so
+   * rotating afterwards could push content back out of frame.
+   */
+  private async _fitToDrawing(entry: FloorplanEntry) {
+    if (!entry.drawing) return
+
+    const box = new THREE.Box3().setFromObject(entry.drawing.three)
+    if (box.isEmpty()) {
+      // Nothing projected (empty storey) — fall back to the model-bounds guess.
+      this._frameCamera(entry)
+      return
+    }
+
+    this._applyNorthToCamera()
+
+    const world = this.components.get(CurrentWorld).world
+    const controls = world?.camera?.controls
+    if (!controls) return
+    await controls.fitToBox(box, true)
+  }
+
   private _frameCamera(entry: FloorplanEntry) {
     const fragments = this.components.get(OBC.FragmentsManager)
     const model = fragments.list.get(entry.modelId)

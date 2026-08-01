@@ -5,7 +5,6 @@
 
 import * as React from 'react'
 
-import { BimContext } from '../../../../../../store'
 import { CommunicationTab } from '../../../../../ui/ViewerSidebar/CommunicationTab'
 import { SensorsTab } from '../../../../../ui/ViewerSidebar/SensorsTab'
 import { ViewerSidebarShell } from '../../../../../ui/ViewerSidebar/Shell'
@@ -18,14 +17,10 @@ import { TopicsSection } from './Topics/src/TopicsSection'
 import type { Organization } from '../../../../../../types/dbTypes'
 import type { ViewerSidebarTab } from '../../../../../ui/ViewerSidebar/sidebarTabs'
 
-export function BimSidebar({ minioBaseUrl, organization }: { minioBaseUrl?: string; organization?: Organization }) {
-  const { state: bimState } = React.useContext(BimContext)
-  const { modelId } = bimState.bim
-
+export function BimSidebar({ organization }: { organization?: Organization }) {
   const tabs: ViewerSidebarTab[] = [
     { id: 'file', content: <FileTab /> },
-    { id: 'layers', content: <LayersTab modelId={modelId} /> },
-    // BCF topics sit above the comments in the BIM viewer only.
+    { id: 'layers', content: <LayersTab /> },
     { id: 'communication', content: <CommunicationTab topics={<TopicsSection />} /> },
     { id: 'sensors', content: <SensorsTab /> },
     { id: 'settings', content: <SettingsTab /> },

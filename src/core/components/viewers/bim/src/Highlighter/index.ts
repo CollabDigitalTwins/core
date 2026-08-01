@@ -7,6 +7,13 @@ import { DataSet } from '@thatopen/fragments'
 import * as THREE from 'three'
 
 import { CurrentWorld } from '../CurrentWorld'
+import {
+  mergeModelIdMap,
+  modelIdMapSize,
+  type ModelIdMap,
+} from '../lib/bimTree'
+
+import type * as FRAGS from '@thatopen/fragments'
 
 export class Highlighter extends OBC.Component {
   static uuid = 'c0ceb167-5fad-4727-9630-553405d92021' as const
@@ -16,6 +23,8 @@ export class Highlighter extends OBC.Component {
   private fragments: OBC.FragmentsManager | null = null
   private _selectedMeshes = new DataSet<THREE.Mesh>()
   private _hoveredMeshes = new DataSet<THREE.Mesh>()
+  /** The selection proper, per model. `_selectedLocalIds` is its flattened view. */
+  private _selection: ModelIdMap = {}
   private _selectedLocalIds: Set<number> = new Set()
   private _mouse: THREE.Vector2 = new THREE.Vector2()
   private _disabledModels: Set<string> = new Set()
@@ -64,6 +73,15 @@ export class Highlighter extends OBC.Component {
     return [...this._selectedLocalIds]
   }
 
+  /**
+   * The current selection keyed by model. Prefer this over `selectedElement`
+   * when the caller has to act on the right model — `localId`s are only unique
+   * within one model, so the flattened list is ambiguous in a federated set.
+   */
+  get selectedItems(): ModelIdMap {
+    return mergeModelIdMap({}, this._selection)
+  }
+
   get selectedMeshes() {
     return this._selectedMeshes
   }
@@ -98,7 +116,10 @@ export class Highlighter extends OBC.Component {
 
     this._selectedMeshes.onBeforeDelete.add(removeFromScene)
     this._selectedMeshes.onItemAdded.add(addToScene)
-    this._selectedMeshes.onCleared.add(() => this._selectedLocalIds.clear())
+    this._selectedMeshes.onCleared.add(() => {
+      this._selectedLocalIds.clear()
+      this._selection = {}
+    })
 
     this._hoveredMeshes.onBeforeDelete.add(removeFromScene)
     this._hoveredMeshes.onItemAdded.add(addToScene)
@@ -212,6 +233,7 @@ export class Highlighter extends OBC.Component {
   clearSelection() {
     this._selectedMeshes.clear()
     this._selectedLocalIds.clear()
+    this._selection = {}
     this.onSelectionCleared.trigger()
   }
 
@@ -220,31 +242,7 @@ export class Highlighter extends OBC.Component {
   }
 
   private async _renderHover(localId: number, modelId: string): Promise<void> {
-    if (!this.fragments || !this.world) return
-    const model = this.fragments.list.get(modelId)
-    if (!model) return
-    try {
-      this._hoveredMeshes.clear()
-      const meshDataArray = await model.getItemsGeometry([localId])
-      const modelWorldMatrix = model.object.matrixWorld
-      for (const meshData of meshDataArray) {
-        for (const data of meshData) {
-          const { positions, normals, indices } = data
-          if (!(positions && normals && indices)) continue
-          const geometry = new THREE.BufferGeometry()
-          geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
-          geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3))
-          geometry.setIndex(new THREE.Uint16BufferAttribute(indices, 1))
-          if (data.transform) geometry.applyMatrix4(data.transform)
-          geometry.applyMatrix4(modelWorldMatrix)
-          geometry.computeVertexNormals()
-          this._hoveredMeshes.add(new THREE.Mesh(geometry, this._hoveredMaterial))
-        }
-      }
-    }
-    catch (error) {
-      console.warn('Error rendering hover:', error)
-    }
+    await this.hoverItems({ [modelId]: new Set([localId]) })
   }
 
   /** Raycast all models in parallel, pick the nearest hit, and highlight it. */
@@ -260,87 +258,152 @@ export class Highlighter extends OBC.Component {
       return
     }
 
-    await this.highlightSelection([hit.localId], hit.modelId, isCtrlPressed)
+    await this.highlightItems({ [hit.modelId]: new Set([hit.localId]) }, isCtrlPressed)
   }
 
-  async highlightSelection(localIds: number[], modelId?: string, isCtrlPressed: boolean = false): Promise<void> {
-    if (!this.fragments || !this.world || localIds.length === 0) return
+  /**
+   * Highlights items across any number of models.
+   *
+   * This is the selection entry point the sidebar trees use. Ctrl adds to the
+   * selection (or removes it when every item is already selected); a plain call
+   * replaces it, and re-selecting exactly what is already selected clears.
+   */
+  async highlightItems(items: ModelIdMap, isCtrlPressed: boolean = false): Promise<void> {
+    if (!this.fragments || !this.world) return
+    if (modelIdMapSize(items) === 0) return
 
     try {
-      const model = modelId
-        ? this.fragments.list.get(modelId)
-        : this.fragments.list.values().next().value
-
-      if (!model) return
-
-      const selectedLocalIds = new Set(this._selectedLocalIds)
+      let selection: ModelIdMap
 
       if (isCtrlPressed) {
-        const allAlreadySelected = localIds.every(id => selectedLocalIds.has(id))
-        if (allAlreadySelected) {
-          for (const id of localIds) selectedLocalIds.delete(id)
+        selection = mergeModelIdMap({}, this._selection)
+        if (this._containsAll(items)) {
+          for (const modelId of Object.keys(items)) {
+            const current = selection[modelId]
+            if (!current) continue
+            for (const localId of items[modelId]) current.delete(localId)
+            if (current.size === 0) delete selection[modelId]
+          }
         }
         else {
-          for (const id of localIds) selectedLocalIds.add(id)
+          mergeModelIdMap(selection, items)
         }
       }
       else {
-        const allAlreadySelected = localIds.every(id => selectedLocalIds.has(id))
-        if (allAlreadySelected && selectedLocalIds.size === localIds.length) {
+        const isExactlyCurrent =
+          this._containsAll(items)
+          && modelIdMapSize(this._selection) === modelIdMapSize(items)
+        if (isExactlyCurrent) {
           this.clearSelection()
           return
         }
-        selectedLocalIds.clear()
-        for (const id of localIds) selectedLocalIds.add(id)
+        selection = mergeModelIdMap({}, items)
       }
 
+      // `clear()` resets `_selection` through the DataSet handler, so assign after.
       this._selectedMeshes.clear()
-      this._selectedLocalIds = selectedLocalIds
+      this._selection = selection
+      this._selectedLocalIds = new Set(
+        Object.keys(selection).flatMap(modelId => [...selection[modelId]]),
+      )
 
-      if (selectedLocalIds.size > 0) {
-        const finalLocalIds = [...selectedLocalIds]
-        const meshDataArray = await model.getItemsGeometry(finalLocalIds)
-        const modelWorldMatrix = model.object.matrixWorld
-
-        for (const meshData of meshDataArray) {
-          for (const data of meshData) {
-            const { positions, normals, indices } = data
-            if (!(positions && normals && indices)) continue
-
-            const bufferGeometry = new THREE.BufferGeometry()
-            bufferGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
-            bufferGeometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3))
-            bufferGeometry.setIndex(new THREE.Uint16BufferAttribute(indices, 1))
-
-            if (data.transform) {
-              bufferGeometry.applyMatrix4(data.transform)
-            }
-            bufferGeometry.applyMatrix4(modelWorldMatrix)
-
-            bufferGeometry.computeVertexNormals()
-
-            const mesh = new THREE.Mesh(bufferGeometry, this._selectedMaterial)
-            this._selectedMeshes.add(mesh)
-          }
-        }
+      for (const modelId of Object.keys(selection)) {
+        const model = this.fragments.list.get(modelId)
+        if (!model) continue
+        const localIds = [...selection[modelId]]
+        if (localIds.length === 0) continue
+        await this._addOverlayMeshes(
+          model,
+          localIds,
+          this._selectedMaterial,
+          this._selectedMeshes,
+        )
       }
 
-      this.onElementsSelected.trigger([...selectedLocalIds])
+      this.onElementsSelected.trigger([...this._selectedLocalIds])
     }
     catch (error) {
       console.warn('Error highlighting selection:', error)
     }
   }
 
-  collectAllLocalIds(item: { localId?: number, children?: any[] }): number[] {
-    const localIds: number[] = []
-    if (item.localId !== undefined) localIds.push(item.localId)
-    if (item.children && item.children.length > 0) {
-      for (const child of item.children) {
-        localIds.push(...this.collectAllLocalIds(child))
+  /**
+   * Single-model selection. Kept for the call sites that already know which
+   * model they mean; delegates to {@link highlightItems}.
+   */
+  async highlightSelection(localIds: number[], modelId?: string, isCtrlPressed: boolean = false): Promise<void> {
+    if (!this.fragments || localIds.length === 0) return
+    const resolvedModelId = modelId ?? this.fragments.list.keys().next().value
+    if (!resolvedModelId) return
+    await this.highlightItems({ [resolvedModelId]: new Set(localIds) }, isCtrlPressed)
+  }
+
+  /** Hover-highlights items across any number of models. */
+  async hoverItems(items: ModelIdMap): Promise<void> {
+    if (!this.fragments || !this.world) return
+    try {
+      this._hoveredMeshes.clear()
+      for (const modelId of Object.keys(items)) {
+        const model = this.fragments.list.get(modelId)
+        if (!model) continue
+        const localIds = [...items[modelId]]
+        if (localIds.length === 0) continue
+        await this._addOverlayMeshes(
+          model,
+          localIds,
+          this._hoveredMaterial,
+          this._hoveredMeshes,
+        )
       }
     }
-    return localIds
+    catch (error) {
+      console.warn('Error rendering hover:', error)
+    }
+  }
+
+  /** True when every item in `items` is already selected. */
+  private _containsAll(items: ModelIdMap): boolean {
+    for (const modelId of Object.keys(items)) {
+      const current = this._selection[modelId]
+      if (!current) return false
+      for (const localId of items[modelId]) {
+        if (!current.has(localId)) return false
+      }
+    }
+    return true
+  }
+
+  /**
+   * Builds overlay meshes for the given items and adds them to `target`.
+   * Highlighting is drawn as separate geometry rather than by swapping the
+   * model's materials, so the underlying fragment materials stay untouched.
+   */
+  private async _addOverlayMeshes(
+    model: FRAGS.FragmentsModel,
+    localIds: number[],
+    material: THREE.Material,
+    target: DataSet<THREE.Mesh>,
+  ): Promise<void> {
+    const meshDataArray = await model.getItemsGeometry(localIds)
+    const modelWorldMatrix = model.object.matrixWorld
+
+    for (const meshData of meshDataArray) {
+      for (const data of meshData) {
+        const { positions, normals, indices } = data
+        if (!(positions && normals && indices)) continue
+
+        const geometry = new THREE.BufferGeometry()
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+        geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3))
+        geometry.setIndex(new THREE.Uint16BufferAttribute(indices, 1))
+
+        if (data.transform) geometry.applyMatrix4(data.transform)
+        geometry.applyMatrix4(modelWorldMatrix)
+        geometry.computeVertexNormals()
+
+        target.add(new THREE.Mesh(geometry, material))
+      }
+    }
   }
 
   dispose() {

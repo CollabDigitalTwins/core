@@ -3,32 +3,48 @@
 
 import * as OBC from '@thatopen/components'
 
-export interface SpatialTreeItem {
-  name: string
-  children: SpatialTreeItem[]
-  localId?: number
-  ifcCategory?: string | null
-}
+import { type BimTreeNode } from './lib/bimTree'
+import {
+  buildSpatialTree,
+  collectSpatialLocalIds,
+  nameMapFromItemsData,
+} from './lib/spatialTree'
 
+/**
+ * Builds the IFC spatial structure tree (Building > Storey > Space > Element)
+ * for every loaded model.
+ *
+ * State is kept **per model**: `LoadModels` calls `getSpatialStructure` once per
+ * file, so a single shared tree meant federated models overwrote each other and
+ * one failed model wiped the others. `trees` is the union across models, which
+ * is also what the hide/isolate actions operate on.
+ *
+ * The transform itself lives in `lib/spatialTree.ts` as pure functions, so it is
+ * testable without a viewer.
+ */
 export class SpatialStructure extends OBC.Component {
   static readonly uuid = '8f7e4d2c-1a9b-4e6f-8c3d-5b2a9f7e4d2c' as const
-  private static readonly cacheKeyPrefix = 'bim:spatial-structure:v1'
+  /** v2: v1 cached a different node shape (and IFC categories in place of names). */
+  private static readonly cacheKeyPrefix = 'bim:spatial-structure:v2'
+  /** Trees past this size are rebuilt rather than cached; they blow the quota anyway. */
+  private static readonly maxCachedNodes = 20_000
 
   enabled = true
 
-  // Event that fires when spatial structure is created
-  readonly onSpatialStructureCreated = new OBC.Event<{ tree: SpatialTreeItem | null }>()
+  /** Fires whenever any model's tree changes, with the merged tree for all models. */
+  readonly onSpatialStructureCreated = new OBC.Event<{
+    trees: BimTreeNode[]
+    modelId: string
+  }>()
 
-  // Event that fires when loading state changes
   readonly onLoadingStateChanged = new OBC.Event<{ isLoading: boolean }>()
 
   private fragments: OBC.FragmentsManager | null = null
 
-  private _tree: SpatialTreeItem | null = null
-  private _treeByModelId = new Map<string, SpatialTreeItem | null>()
-  private _loadingPromises = new Map<string, Promise<SpatialTreeItem | null>>()
+  private _treesByModelId = new Map<string, BimTreeNode[]>()
+  private _loadingPromises = new Map<string, Promise<BimTreeNode[]>>()
   private _activeRequests = 0
-  private _isLoading: boolean = false
+  private _isLoading = false
 
   constructor(components: OBC.Components) {
     super(components)
@@ -36,23 +52,22 @@ export class SpatialStructure extends OBC.Component {
     this.fragments = components.get(OBC.FragmentsManager)
   }
 
-  /**
-   * Get the current spatial structure
-   */
-  get tree(): SpatialTreeItem | null {
-    return this._tree
+  /** The merged tree across every model that has been built, in insertion order. */
+  get trees(): BimTreeNode[] {
+    const all: BimTreeNode[] = []
+    for (const nodes of this._treesByModelId.values()) all.push(...nodes)
+    return all
   }
 
-  /**
-   * Get the loading state of spatial structure processing
-   */
   get isLoading(): boolean {
     return this._isLoading
   }
 
-  /**
-   * Set the loading state and trigger the loading state change event
-   */
+  /** True once this model's tree has been built (even if it turned out empty). */
+  hasTree(modelId: string): boolean {
+    return this._treesByModelId.has(modelId)
+  }
+
   private setLoadingState(isLoading: boolean): void {
     if (this._isLoading !== isLoading) {
       this._isLoading = isLoading
@@ -70,315 +85,196 @@ export class SpatialStructure extends OBC.Component {
     this.setLoadingState(this._activeRequests > 0)
   }
 
-  async getSpatialStructure(modelId: string): Promise<SpatialTreeItem | null> {
-    if (!this.fragments || !modelId) {
-      throw new Error('No fragments or modelId available')
+  private emit(modelId: string): void {
+    this.onSpatialStructureCreated.trigger({ trees: this.trees, modelId })
+  }
+
+  /**
+   * Builds (or returns the cached) tree for one model. Concurrent calls for the
+   * same model share one build.
+   */
+  async getSpatialStructure(modelId: string): Promise<BimTreeNode[]> {
+    if (!(this.fragments && modelId)) return []
+
+    const cached = this._treesByModelId.get(modelId)
+    if (cached) {
+      this.emit(modelId)
+      return cached
     }
 
-    const cachedTree = this._treeByModelId.get(modelId)
-    if (cachedTree !== undefined) {
-      this._tree = cachedTree
-      this.onSpatialStructureCreated.trigger({ tree: cachedTree })
-      return cachedTree
+    const persisted = this.readCache(modelId)
+    if (persisted) {
+      this._treesByModelId.set(modelId, persisted)
+      this.emit(modelId)
+      return persisted
     }
 
-    const persistedTree = this.readCachedSpatialStructure(modelId)
-    if (persistedTree) {
-      this._tree = persistedTree
-      this._treeByModelId.set(modelId, persistedTree)
-      this.onSpatialStructureCreated.trigger({ tree: persistedTree })
-      return persistedTree
-    }
+    const inFlight = this._loadingPromises.get(modelId)
+    if (inFlight !== undefined) return inFlight
 
-    const existingPromise = this._loadingPromises.get(modelId)
-    if (existingPromise !== undefined) {
-      return existingPromise
-    }
-
-    const loadingPromise = Promise.resolve()
-      .then(async () => {
-        this.beginLoading()
-
-        const model = this.fragments.list.get(modelId)
-        if (!model) {
-          throw new Error(`Model with ID ${modelId} not found in fragments.`)
-        }
-
-        const structure = await model.getSpatialStructure()
-
-        const transformedStructure = await this.transformSpatialStructure(structure, model, modelId)
-
-        // console.log('Transformed spatial structure:', transformedStructure)
-
-        // Set the current spatial structure
-        this._tree = transformedStructure
-        if (transformedStructure) {
-          this._treeByModelId.set(modelId, transformedStructure)
-          this.writeCachedSpatialStructure(modelId, transformedStructure)
-        } else {
-          this._treeByModelId.delete(modelId)
-        }
-
-        // Trigger the event that spatial structure is created
-        this.onSpatialStructureCreated.trigger({ tree: transformedStructure })
-
-        return transformedStructure
-      })
-      .catch((error) => {
-        console.error('Error getting spatial structure:', error)
-        this._tree = null
-        this.onSpatialStructureCreated.trigger({ tree: null })
-        return null
+    const build = this.buildForModel(modelId)
+      .catch((error: unknown) => {
+        // Scoped to this model on purpose: a corrupt file must not blank out the
+        // trees of the models that loaded fine.
+        console.error(`Error getting spatial structure for "${modelId}":`, error)
+        this._treesByModelId.set(modelId, [])
+        this.emit(modelId)
+        return [] as BimTreeNode[]
       })
       .finally(() => {
         this._loadingPromises.delete(modelId)
         this.endLoading()
       })
 
-    this._loadingPromises.set(modelId, loadingPromise)
-    return loadingPromise
+    this._loadingPromises.set(modelId, build)
+    return build
   }
 
-  /**
-   * Clear the current spatial structure
-   */
-  clearSpatialStructure(): void {
-    this._tree = null
-    this._treeByModelId.clear()
-    this._loadingPromises.clear()
-    this._activeRequests = 0
-    this.setLoadingState(false)
-    this.onSpatialStructureCreated.trigger({ tree: null })
-  }
+  private async buildForModel(modelId: string): Promise<BimTreeNode[]> {
+    this.beginLoading()
 
-  private readCachedSpatialStructure(modelId: string): SpatialTreeItem | null {
-    if (typeof window === 'undefined') {
-      return null
+    const model = this.fragments?.list.get(modelId)
+    if (!model) {
+      throw new Error(`Model with ID ${modelId} not found in fragments.`)
     }
 
-    try {
-      const cachedValue = window.localStorage.getItem(this.getCacheKey(modelId))
-      if (!cachedValue) {
-        return null
-      }
+    const structure = await model.getSpatialStructure()
 
-      const parsed = JSON.parse(cachedValue) as SpatialTreeItem
-      if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.children)) {
-        return null
-      }
-
-      return parsed
-    } catch {
-      return null
-    }
-  }
-
-  private writeCachedSpatialStructure(modelId: string, tree: SpatialTreeItem): void {
-    if (typeof window === 'undefined') {
-      return
-    }
-
-    try {
-      window.localStorage.setItem(this.getCacheKey(modelId), JSON.stringify(tree))
-    } catch (error) {
-      console.warn('Failed to persist spatial structure cache:', error)
-    }
-  }
-
-  private getCacheKey(modelId: string): string {
-    return `${SpatialStructure.cacheKeyPrefix}:${modelId}`
-  }
-
-  private emitSpatialStructureUpdate(tree: SpatialTreeItem | null): void {
-    this._tree = tree
-    this.onSpatialStructureCreated.trigger({ tree: this.cloneSpatialTree(tree) })
-  }
-
-  private cloneSpatialTree(tree: SpatialTreeItem | null): SpatialTreeItem | null {
-    if (!tree) {
-      return null
-    }
-
-    return {
-      name: tree.name,
-      localId: tree.localId,
-      ifcCategory: tree.ifcCategory,
-      children: tree.children.map((child) => this.cloneSpatialTree(child) as SpatialTreeItem),
-    }
-  }
-
-  private async yieldToBrowser(): Promise<void> {
-    await new Promise<void>((resolve) => {
-      setTimeout(resolve, 0)
-    })
-  }
-
-  private async transformSpatialStructure(rawStructure: any, model: any, modelId: string): Promise<SpatialTreeItem | null> {
-    if (!rawStructure) {
-      return null
-    }
-
-    const localIdsNeedingNames = new Set<number>()
-    this.collectLocalIdsNeedingNames(rawStructure, localIdsNeedingNames)
-
-    const nameByLocalId = new Map<number, string>()
-    if (localIdsNeedingNames.size > 0) {
+    // The raw structure carries categories and localIds but no names, so every
+    // name has to be fetched. One batched call for the whole model; the results
+    // come back index-aligned with the ids that were asked for.
+    const localIds = collectSpatialLocalIds(structure)
+    let names = new Map<number, string>()
+    if (localIds.length > 0) {
       try {
-        const localIds = [...localIdsNeedingNames]
-        const itemData = await model.getItemsData(localIds, {
+        const itemsData = await model.getItemsData(localIds, {
           attributesDefault: false,
           attributes: ['Name'],
         })
-
-        for (let i = 0; i < itemData.length; i++) {
-          const data = itemData[i]
-          const localId = localIds[i]
-          const name = data?.Name?.value
-          if (localId !== undefined && typeof name === 'string' && name.trim()) {
-            nameByLocalId.set(localId, name)
-          }
-        }
+        names = nameMapFromItemsData(localIds, itemsData)
       } catch (error) {
         console.warn('Failed to batch spatial-structure names:', error)
       }
     }
 
-    // Find the building first
-    const building = this.findBuilding(rawStructure)
-    if (!building) {
-      console.warn('No IFCBUILDING found in spatial structure')
+    const nodes = buildSpatialTree(structure, modelId, names)
+    if (nodes.length === 0) {
+      console.warn(`No IFCBUILDING found in the spatial structure of "${modelId}"`)
+    }
+
+    this._treesByModelId.set(modelId, nodes)
+    this.writeCache(modelId, nodes)
+    this.emit(modelId)
+
+    return nodes
+  }
+
+  /** Drops one model's tree, e.g. when the model is removed from the scene. */
+  clearForModel(modelId: string): void {
+    if (!this._treesByModelId.has(modelId) && !this._loadingPromises.has(modelId)) {
+      return
+    }
+    this._treesByModelId.delete(modelId)
+    this._loadingPromises.delete(modelId)
+    this.clearCache(modelId)
+    this.emit(modelId)
+  }
+
+  clearSpatialStructure(): void {
+    this._treesByModelId.clear()
+    this._loadingPromises.clear()
+    this._activeRequests = 0
+    this.setLoadingState(false)
+    this.onSpatialStructureCreated.trigger({ trees: [], modelId: '' })
+  }
+
+  // ---------------------------------------------------------------------------
+  // Cache. `items` holds Sets, which JSON cannot round-trip, so the cached form
+  // stores plain arrays and is rehydrated on read.
+  // ---------------------------------------------------------------------------
+
+  private getCacheKey(modelId: string): string {
+    return `${SpatialStructure.cacheKeyPrefix}:${modelId}`
+  }
+
+  private readCache(modelId: string): BimTreeNode[] | null {
+    if (typeof window === 'undefined') return null
+
+    try {
+      const raw = window.localStorage.getItem(this.getCacheKey(modelId))
+      if (!raw) return null
+
+      const parsed: unknown = JSON.parse(raw)
+      if (!Array.isArray(parsed)) return null
+
+      return parsed.map(node => this.rehydrate(node as SerializedNode))
+    } catch {
       return null
     }
-
-    const childrenSource = this.getRenderableChildren(building)
-    const children: SpatialTreeItem[] = childrenSource.map((child) => this.createSpatialNode(child, nameByLocalId))
-    const root: SpatialTreeItem = {
-      name: 'Root',
-      children,
-    }
-
-    if (children.length === 0) {
-      this.emitSpatialStructureUpdate(root)
-      return root
-    }
-
-    this.emitSpatialStructureUpdate(root)
-    await this.yieldToBrowser()
-
-    let frontier: Array<{ source: any; target: SpatialTreeItem }> = children.map((target, index) => ({
-      source: childrenSource[index],
-      target,
-    }))
-
-    while (frontier.length > 0) {
-      const nextFrontier: Array<{ source: any; target: SpatialTreeItem }> = []
-
-      for (const { source, target } of frontier) {
-        const sourceChildren = this.getRenderableChildren(source)
-        const nextChildren = sourceChildren.map((child) => this.createSpatialNode(child, nameByLocalId))
-        target.children = nextChildren
-
-        for (let i = 0; i < nextChildren.length; i++) {
-          nextFrontier.push({ source: sourceChildren[i], target: nextChildren[i] })
-        }
-      }
-
-      this.emitSpatialStructureUpdate(root)
-      await this.yieldToBrowser()
-      frontier = nextFrontier
-    }
-
-    return root
   }
 
-  private collectLocalIdsNeedingNames(item: any, localIds: Set<number>): void {
-    if (!item) {
-      return
-    }
+  private writeCache(modelId: string, nodes: BimTreeNode[]): void {
+    if (typeof window === 'undefined' || nodes.length === 0) return
 
-    if (item?.localId && !item?.Name?.value && !item?.category && !item?.type) {
-      localIds.add(item.localId)
-    }
-
-    if (Array.isArray(item)) {
-      for (const child of item) {
-        this.collectLocalIdsNeedingNames(child, localIds)
-      }
-      return
-    }
-
-    if (item?.children) {
-      for (const child of item.children) {
-        this.collectLocalIdsNeedingNames(child, localIds)
-      }
+    try {
+      if (this.countNodes(nodes) > SpatialStructure.maxCachedNodes) return
+      window.localStorage.setItem(
+        this.getCacheKey(modelId),
+        JSON.stringify(nodes.map(node => this.serialize(node))),
+      )
+    } catch (error) {
+      console.warn('Failed to persist spatial structure cache:', error)
     }
   }
 
-  private getRenderableChildren(item: any): any[] {
-    const children = Array.isArray(item?.children) ? item.children : []
-    const flattened: any[] = []
-
-    for (const child of children) {
-      if (child?.category === 'IFCBUILDINGSTOREY' || child?.type === 'IFCBUILDINGSTOREY') {
-        if (Array.isArray(child.children)) {
-          flattened.push(...child.children)
-        }
-      } else {
-        flattened.push(child)
-      }
+  private clearCache(modelId: string): void {
+    if (typeof window === 'undefined') return
+    try {
+      window.localStorage.removeItem(this.getCacheKey(modelId))
+    } catch {
+      // A full or unavailable store is not worth failing a model removal over.
     }
-
-    return flattened
   }
 
-  private findBuilding(item: any): any {
-    if (!item) return null
-
-    // Check if current item is a building
-    if (item?.category === 'IFCBUILDING' || item?.type === 'IFCBUILDING') {
-      return item
-    }
-
-    // Search in children if it's an array
-    if (Array.isArray(item)) {
-      for (const child of item) {
-        const found = this.findBuilding(child)
-        if (found) return found
-      }
-    }
-
-    // Search in children property
-    if (item?.children) {
-      for (const child of item.children) {
-        const found = this.findBuilding(child)
-        if (found) return found
-      }
-    }
-
-    return null
+  private countNodes(nodes: BimTreeNode[]): number {
+    let total = 0
+    for (const node of nodes) total += 1 + this.countNodes(node.children)
+    return total
   }
 
-  private createSpatialNode(item: any, nameByLocalId: Map<number, string>): SpatialTreeItem {
-    // Get item name
-    let name = 'Unknown'
-    if (item?.Name?.value) {
-      name = item.Name.value
-    } else if (item?.category || item?.type) {
-      name = item.category || item.type
-    } else if (item?.localId && nameByLocalId.has(item.localId)) {
-      name = nameByLocalId.get(item.localId) || `Item ${item.localId}`
-    } else if (item?.localId) {
-      name = `Item ${item.localId}`
+  private serialize(node: BimTreeNode): SerializedNode {
+    const items: Record<string, number[]> = {}
+    for (const modelId of Object.keys(node.items)) {
+      items[modelId] = [...node.items[modelId]]
     }
-
-    const result: SpatialTreeItem = {
-      name: String(name),
-      children: [],
+    return {
+      id: node.id,
+      label: node.label,
+      category: node.category ?? null,
+      items,
+      children: node.children.map(child => this.serialize(child)),
     }
-
-    if (item?.category) result.ifcCategory = item.category
-    if (item?.localId) result.localId = item.localId
-
-    return result
   }
+
+  private rehydrate(node: SerializedNode): BimTreeNode {
+    const items: BimTreeNode['items'] = {}
+    for (const modelId of Object.keys(node.items ?? {})) {
+      items[modelId] = new Set(node.items[modelId])
+    }
+    return {
+      id: node.id,
+      label: node.label,
+      category: node.category,
+      items,
+      children: (node.children ?? []).map(child => this.rehydrate(child)),
+    }
+  }
+}
+
+interface SerializedNode {
+  id: string
+  label: string
+  category: string | null
+  items: Record<string, number[]>
+  children: SerializedNode[]
 }

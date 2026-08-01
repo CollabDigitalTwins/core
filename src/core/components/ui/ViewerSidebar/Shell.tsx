@@ -42,13 +42,11 @@ export function ViewerSidebarShell({ tabs, organization }: ViewerSidebarShellPro
     menusDispatch({ type: 'SET_SIDEBAR_SELECTED_TAB', payload: { selectedTab: tab } })
   }, [menusDispatch])
 
-  // `selectedTab` persists across viewer switches, so it can name a tab this viewer
-  // does not have (Sensors in the map -> point cloud). resolveActiveTabId already
-  // falls back for rendering; sync the store so the rest of the app agrees.
-  React.useEffect(() => {
-    if (activeTabId && activeTabId !== selectedTab) handleTabChange(activeTabId)
-  }, [activeTabId, selectedTab, handleTabChange])
-
+  // The fallback deliberately stays out of the store. `selectedTab` is the user's
+  // choice; writing a fallback back into it made transient tab lists permanent —
+  // permissions resolve after the first render, so every `ability.can(...)` tab
+  // starts hidden, Settings is briefly the only tab left, and the sync effect
+  // latched it as the selection for every viewer.
   const activeTab = visibleTabs.find(tab => tab.id === activeTabId)
 
   return (

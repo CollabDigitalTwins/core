@@ -3,12 +3,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
 import { BimContext } from '../../../../../../../../store'
-import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
+
 import {
   ElevationsTool,
   getElevationStagePercent,
@@ -17,6 +16,8 @@ import { exportDrawingToDxf } from '../../../../lib/exportDrawingToDxf'
 import { useBuildingName } from '../../../../lib/useBuildingName'
 import { useFriendlyIfcClassName } from '../../../../lib/useFriendlyIfcClassName'
 import { ViewSectionList } from '../../../../lib/ViewSectionList'
+
+import { LayerViewPanel } from './LayerViewPanel'
 
 import type {
   ElevationEntry,
@@ -127,13 +128,7 @@ export function ElevationSection({ query = '' }: ElevationSectionProps) {
     stage && stage !== 'done' ? t(`stage.${stage}`) : t('loading')
 
   return (
-    <CollapsibleSection
-      title={t('elevationTitle')}
-      icon={LR.House}
-      className="overflow-y-auto"
-      style={{ height: '100%', minHeight: 0 }}
-      itemCount={filteredEntries.length}
-    >
+    <LayerViewPanel count={filteredEntries.length}>
       <ViewSectionList
         entries={filteredEntries}
         activeId={activeId}
@@ -156,6 +151,6 @@ export function ElevationSection({ query = '' }: ElevationSectionProps) {
         onToggleLayer={handleToggleLayer}
         onChangeLayerColor={handleChangeLayerColor}
       />
-    </CollapsibleSection>
+    </LayerViewPanel>
   )
 }

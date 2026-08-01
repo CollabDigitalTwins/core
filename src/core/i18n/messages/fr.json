@@ -232,7 +232,11 @@
     "clippingPlane": "Plan de découpe",
     "slice": "Tranche",
     "invert": "Inverser",
-    "reset": "Réinitialiser"
+    "reset": "Réinitialiser",
+    "add": "Ajouter un plan de découpe",
+    "cancelAdd": "Annuler l'ajout du plan de découpe",
+    "deleteAll": "Supprimer tous les plans de découpe",
+    "hint": "Double-cliquez sur le modèle pour ajouter un plan de découpe. Retour arrière supprime le plan sous le curseur. Entrée termine. Échap supprime tous les plans."
   },
   "CommentInput": {
     "title": "Ajouter un commentaire",

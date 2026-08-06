@@ -5,6 +5,59 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog, and this project adheres to Semantic Versioning.
 
+## [0.4.5] - 2026-07-31
+
+### Changed
+- **`InfoSidebar` is now `ViewerSidebar`.** The component, its folder
+  (`components/ui/InfoSidebar/` → `components/ui/ViewerSidebar/`) and its i18n
+  namespace were renamed; `InfoSidebarContainer` is replaced by
+  `ViewerSidebarShell`. There is no deprecated alias.
+
+  **Migration:** `import { InfoSidebar } from '@collabdt/core/components/ui'` →
+  `import { ViewerSidebar } from '@collabdt/core/components/ui'`, and the deep path
+  `@collabdt/core/components/ui/InfoSidebar` → `.../ui/ViewerSidebar`. If you
+  override messages, rename the `InfoSidebar` namespace (one key,
+  `resizeHandleLabel`) to `ViewerSidebar`. The `useSidebar()` API is unchanged —
+  `toggleInfoSidebar`, `openInfo` and `setOpenInfo` keep their names.
+- **The sidebar tab strip shows icons.** Each tab is an icon with its label
+  underneath, and the labels drop out when the strip is too narrow to render them
+  legibly. Previously the strip was text-only and truncated to ambiguous stubs
+  ("Se..." for both Sensors and Settings) on a narrow or mobile sidebar.
+- Tabs are now a proper `role="tablist"` of `<button role="tab">` elements with
+  `aria-selected`, `aria-controls`, roving `tabIndex` and Left/Right/Home/End
+  keyboard navigation. They were plain `<div onClick>` elements that could not take
+  keyboard focus.
+
+### Added
+- **`ViewerSidebarShell`** — the shared sidebar chrome (header, tab strip, active
+  panel). A viewer now declares `ViewerSidebarTab[]` (`{ id, content, enabled? }`)
+  instead of reimplementing the selected-tab wiring; the BIM, map and point cloud
+  sidebars each dropped to roughly 25 lines.
+- **`ViewerSidebarPanel`** — the shared tab-body wrapper, with `variant`
+  (`'sections' | 'scroll'`) and an optional `search` slot that replaces the
+  hand-rolled search field each tab carried.
+- **`SIDEBAR_TAB_META`** — icon and i18n key per `SidebarTabType`, declared once
+  rather than repeated in three `TabSelector` copies.
+- **`useCompactTabStrip`** (with pure `isCompactWidth`) — measures the tab strip
+  with a `ResizeObserver` so the compaction also applies when the user drags the
+  desktop sidebar narrow, which a viewport media query cannot detect.
+- Shared `SensorsTab` and `CommunicationTab` under `components/ui/ViewerSidebar/`.
+  The BIM and map copies of `SensorsTab` were byte-identical; `CommunicationTab`
+  now takes an optional `topics` node, which the BIM viewer uses for BCF topics.
+
+### Fixed
+- **Blank sidebar after a viewer switch.** `selectedTab` persists in the Menus
+  store, so switching from the map to the point cloud viewer while Sensors or
+  Layers was active left every tab guard false — an empty panel with no tab
+  highlighted. The shell now falls back to the first available tab and syncs the
+  store.
+- **Tabs for content the user cannot read are hidden** rather than shown and empty.
+  In the map the permission check guarded the panel body, not the tab button, so
+  e.g. a user without `read Comment` could select Comments and see nothing.
+- Removed a stray `point` class from all three settings panels, and switched them
+  from `h-full` to a flex-sized panel so a long settings list scrolls inside the
+  sidebar instead of overflowing it.
+
 ## [0.4.0] - 2026-07-27
 
 > **⚠️ Upgrading from 0.3.2 or earlier?** The breaking sensor change (readings are

@@ -232,7 +232,11 @@
     "clippingPlane": "Clipping Plane",
     "slice": "Slice",
     "invert": "Invert",
-    "reset": "Reset"
+    "reset": "Reset",
+    "add": "Add clipping plane",
+    "cancelAdd": "Cancel add clipping plane",
+    "deleteAll": "Delete all clipping planes",
+    "hint": "Double-click the model to add a clipping plane. Backspace removes the plane under the cursor. Enter finishes. Escape removes every plane."
   },
   "CommentInput": {
     "title": "Add Comment",
@@ -465,6 +469,7 @@
   },
   "DrawingLayers": {
     "doorSwings": "Door Swings",
+    "spaces": "Rooms",
     "fill": "Fill",
     "cut": "Cut sections",
     "toggleVisibility": "Toggle visibility",
@@ -712,6 +717,29 @@
     "expandTitle": "Expand All",
     "noResults": "No items found matching",
     "noneAvailable": "No spatial structure available",
+    "drawingsGroup": "Drawings",
+    "classifierGroup": "Classifier",
+    "floorplansTab": "Floorplans",
+    "elevationsTab": "Elevations",
+    "spatialTab": "Spatial",
+    "classesTab": "IFC Classes",
+    "ifcClasses": "IFC Classes",
+    "loadingClasses": "Loading IFC classes...",
+    "noClasses": "No IFC classes available",
+    "isolateTitle": "Isolate",
+    "isolateLabel": "Isolate {name}",
+    "showAllTitle": "Show all",
+    "toggleVisibilityLabel": "Toggle visibility for {name}",
+    "expandNodeLabel": "Expand {name}",
+    "collapseNodeLabel": "Collapse {name}",
+    "appearanceTitle": "Colour and opacity",
+    "appearanceLabel": "Colour and opacity for {name}",
+    "colorTitle": "Choose colour",
+    "opacityLabel": "Opacity",
+    "resetNodeLabel": "Reset",
+    "resetColorsTitle": "Reset colours",
+    "searchPlaceholder": "Search",
+    "resizeSectionsLabel": "Resize sections",
     "retryButton": "Retry",
     "appliedDatasetsTitle": "Applied Datasets",
     "appliedDatasetsEmpty": "No datasets applied to the map yet.",
@@ -1204,9 +1232,6 @@
     "toastSuccessUpdate": "Site updated successfully",
     "toastErrorUpdate": "Failed to update Site"
   },
-  "InfoSidebar": {
-    "resizeHandleLabel": "Resize sidebar"
-  },
   "TabSelector": {
     "fileLabel": "File",
     "layersTitle": "Layers",
@@ -1374,6 +1399,9 @@
     "email": "Email",
     "role": "Role",
     "roleUnknown": "Unknown Role"
+  },
+  "ViewerSidebar": {
+    "resizeHandleLabel": "Resize sidebar"
   },
   "ViewSection": {
     "floorplanTitle": "Floorplans",

@@ -55,10 +55,10 @@ export default function NavigationBar({ geocodeEarthApiKey, geocoderUrl }: Navig
   const { state: menusState } = React.useContext(MenusContext)
   const { currentViewer } = menusState.menus
 
-  const needsInfoSidebar = currentViewer === ViewerNames.bim || currentViewer === ViewerNames.pointcloud || currentViewer === ViewerNames.map
+  const needsViewerSidebar = currentViewer === ViewerNames.bim || currentViewer === ViewerNames.pointcloud || currentViewer === ViewerNames.map
 
-  // Hide the NavigationBar when InfoSidebar is open in BIM mode
-  if (needsInfoSidebar && openInfo) {
+  // Hide the NavigationBar when the viewer sidebar is open in BIM mode
+  if (needsViewerSidebar && openInfo) {
     return null
   }
 
@@ -72,7 +72,7 @@ export default function NavigationBar({ geocodeEarthApiKey, geocoderUrl }: Navig
           </VisuallyHidden>
         </MenubarMenu>
 
-          {needsInfoSidebar && (
+          {needsViewerSidebar && (
             <Button
               variant="ghost"
               size="icon"

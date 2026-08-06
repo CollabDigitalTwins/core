@@ -16,7 +16,6 @@ import { cn } from '../../utils/utils'
 import NavigationBar from '../TopNavigationBar'
 
 import { Button } from './Button'
-import { InfoSidebar } from './InfoSidebar'
 import { Input } from './Input'
 import { Separator } from './Separator'
 import {
@@ -33,6 +32,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from './Tooltip'
+import { ViewerSidebar } from './ViewerSidebar'
 
 // Menus context
 
@@ -116,8 +116,8 @@ const SidebarProvider = React.forwardRef<
     ref,
   ) => {
     const isMobile = useIsMobile()
-    const tInfo = useTranslations('InfoSidebar')
-    // User-resizable width for the InfoSidebar overlay (desktop only; persisted).
+    const tInfo = useTranslations('ViewerSidebar')
+    // User-resizable width for the ViewerSidebar overlay (desktop only; persisted).
     const {
       width: infoWidth,
       isResizing: infoResizing,
@@ -194,7 +194,7 @@ const SidebarProvider = React.forwardRef<
           toggleMenuSidebar()
         }
 
-        // Close InfoSidebar on Escape key
+        // Close the viewer sidebar on Escape key
         if (event.key === 'Escape' && openInfo) {
           event.preventDefault()
           setOpenInfo(false)
@@ -251,7 +251,7 @@ const SidebarProvider = React.forwardRef<
           >
             {children}
 
-            {/* InfoSidebar overlay */}
+            {/* ViewerSidebar overlay */}
 
             <div
               data-state={openInfo ? 'open' : 'closed'}
@@ -277,7 +277,7 @@ const SidebarProvider = React.forwardRef<
                 width: isMobile ? SIDEBAR_WIDTH_MOBILE : infoWidth,
               }}
             >
-              <InfoSidebar minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} pointcloudApiUrl={pointcloudApiUrl} />
+              <ViewerSidebar minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} pointcloudApiUrl={pointcloudApiUrl} />
 
               {/* Right-edge drag handle (desktop only). Drag to resize the sidebar width. */}
               {canResizeInfo && (

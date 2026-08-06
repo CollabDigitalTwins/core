@@ -7,8 +7,7 @@ import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
 import { BimContext } from '../../../../../../../../store'
-import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
-import { FloorplanIcon } from '../../../../../../../ui/Icons/FloorPlanIcon'
+
 import {
   FloorplanTool,
   getFloorplanStagePercent,
@@ -18,6 +17,8 @@ import { TrueNorthPopover } from '../../../../lib/TrueNorthPopover'
 import { useBuildingName } from '../../../../lib/useBuildingName'
 import { useFriendlyIfcClassName } from '../../../../lib/useFriendlyIfcClassName'
 import { ViewSectionList } from '../../../../lib/ViewSectionList'
+
+import { LayerViewPanel } from './LayerViewPanel'
 
 import type {
   FloorplanEntry,
@@ -169,13 +170,9 @@ export function FloorplanSection({ query = '' }: FloorplanSectionProps) {
     stage && stage !== 'done' ? t(`stage.${stage}`) : t('loading')
 
   return (
-    <CollapsibleSection
-      title={t('floorplanTitle')}
-      icon={FloorplanIcon}
-      className="overflow-y-auto"
-      style={{ height: '100%', minHeight: 0 }}
-      itemCount={filteredEntries.length}
-      headerActions={
+    <LayerViewPanel
+      count={filteredEntries.length}
+      actions={
         <TrueNorthPopover
           northAngle={northAngle}
           pickingNorth={pickingNorth}
@@ -208,6 +205,6 @@ export function FloorplanSection({ query = '' }: FloorplanSectionProps) {
         onToggleLayer={handleToggleLayer}
         onChangeLayerColor={handleChangeLayerColor}
       />
-    </CollapsibleSection>
+    </LayerViewPanel>
   )
 }

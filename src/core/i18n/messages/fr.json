@@ -232,7 +232,11 @@
     "clippingPlane": "Plan de découpe",
     "slice": "Tranche",
     "invert": "Inverser",
-    "reset": "Réinitialiser"
+    "reset": "Réinitialiser",
+    "add": "Ajouter un plan de découpe",
+    "cancelAdd": "Annuler l'ajout du plan de découpe",
+    "deleteAll": "Supprimer tous les plans de découpe",
+    "hint": "Double-cliquez sur le modèle pour ajouter un plan de découpe. Retour arrière supprime le plan sous le curseur. Entrée termine. Échap supprime tous les plans."
   },
   "CommentInput": {
     "title": "Ajouter un commentaire",
@@ -465,6 +469,7 @@
   },
   "DrawingLayers": {
     "doorSwings": "Ouvrants de portes",
+    "spaces": "Espaces",
     "fill": "Remplissage",
     "cut": "Sections coupées",
     "toggleVisibility": "Toggle visibility",
@@ -706,12 +711,35 @@
     "tooltip": "Changer la langue"
   },
   "LayersTab": {
-    "spatialStructure": "Structure spatiale (IFC Tree)",
+    "spatialStructure": "Structure spatiale (arbre IFC)",
     "loadingText": "Chargement de la structure spatiale...",
     "collapseTitle": "Réduire tout",
     "expandTitle": "Développer tout",
     "noResults": "Aucun élément ne correspond à",
     "noneAvailable": "Aucune structure spatiale disponible",
+    "drawingsGroup": "Dessins",
+    "classifierGroup": "Classificateur",
+    "floorplansTab": "Plans",
+    "elevationsTab": "Élévations",
+    "spatialTab": "Spatial",
+    "classesTab": "Classes IFC",
+    "ifcClasses": "Classes IFC",
+    "loadingClasses": "Chargement des classes IFC...",
+    "noClasses": "Aucune classe IFC disponible",
+    "isolateTitle": "Isoler",
+    "isolateLabel": "Isoler {name}",
+    "showAllTitle": "Tout afficher",
+    "toggleVisibilityLabel": "Basculer la visibilité de {name}",
+    "expandNodeLabel": "Développer {name}",
+    "collapseNodeLabel": "Réduire {name}",
+    "appearanceTitle": "Couleur et opacité",
+    "appearanceLabel": "Couleur et opacité de {name}",
+    "colorTitle": "Choisir une couleur",
+    "opacityLabel": "Opacité",
+    "resetNodeLabel": "Réinitialiser",
+    "resetColorsTitle": "Réinitialiser les couleurs",
+    "searchPlaceholder": "Rechercher",
+    "resizeSectionsLabel": "Redimensionner les sections",
     "retryButton": "Réessayer",
     "appliedDatasetsTitle": "Ensembles de données appliqués",
     "appliedDatasetsEmpty": "Aucun ensemble de données appliqué à la carte.",
@@ -1203,9 +1231,6 @@
     "toastSuccessUpdate": "Site mis à jour avec succès",
     "toastErrorUpdate": "Échec de la mise à jour du site"
   },
-  "InfoSidebar": {
-    "resizeHandleLabel": "Redimensionner la barre latérale"
-  },
   "TabSelector": {
     "fileLabel": "Fichier",
     "layersTitle": "Couches",
@@ -1373,6 +1398,9 @@
     "email": "Courriel",
     "role": "Rôle",
     "roleUnknown": "Rôle inconnu"
+  },
+  "ViewerSidebar": {
+    "resizeHandleLabel": "Redimensionner la barre latérale"
   },
   "ViewSection": {
     "floorplanTitle": "Plans d’étage",

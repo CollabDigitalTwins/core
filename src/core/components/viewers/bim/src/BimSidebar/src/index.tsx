@@ -5,44 +5,26 @@
 
 import * as React from 'react'
 
-import { BimContext, MenusContext } from '../../../../../../store'
-import { InfoSidebarContainer } from '../../../../../ui/InfoSidebar/Container'
+import { CommunicationTab } from '../../../../../ui/ViewerSidebar/CommunicationTab'
+import { SensorsTab } from '../../../../../ui/ViewerSidebar/SensorsTab'
+import { ViewerSidebarShell } from '../../../../../ui/ViewerSidebar/Shell'
 
-import { CommunicationTab } from './CommunicationTab'
 import { FileTab } from './FileTab'
 import { LayersTab } from './LayersTab'
-import { SensorsTab } from './SensorsTab'
 import { SettingsTab } from './SettingsTab'
-import { TabSelector } from './TabSelector'
+import { TopicsSection } from './Topics/src/TopicsSection'
 
-import type { SidebarTabType } from '../../../../../../store/Menus/reducer'
 import type { Organization } from '../../../../../../types/dbTypes'
+import type { ViewerSidebarTab } from '../../../../../ui/ViewerSidebar/sidebarTabs'
 
-export function BimSidebar({ minioBaseUrl, organization }: { minioBaseUrl?: string; organization?: Organization }) {
-  const { state: bimState } = React.useContext(BimContext)
-  const { modelId } = bimState.bim
-  const { state: menusState, dispatch: menusDispatch } = React.useContext(MenusContext)
-  const { selectedTab } = menusState.menus
+export function BimSidebar({ organization }: { organization?: Organization }) {
+  const tabs: ViewerSidebarTab[] = [
+    { id: 'file', content: <FileTab /> },
+    { id: 'layers', content: <LayersTab /> },
+    { id: 'communication', content: <CommunicationTab topics={<TopicsSection />} /> },
+    { id: 'sensors', content: <SensorsTab /> },
+    { id: 'settings', content: <SettingsTab /> },
+  ]
 
-  const handleTabChange = (selectedTab: SidebarTabType) => {
-    menusDispatch({ type: 'SET_SIDEBAR_SELECTED_TAB', payload: { selectedTab } })
-  }
-
-  return (
-    <InfoSidebarContainer
-      organization={organization}
-      tabSelector={
-        <TabSelector
-          activeTab={selectedTab}
-          onTabChangeAction={handleTabChange}
-        />
-      }
-    >
-      {selectedTab === 'file' && <FileTab />}
-      {selectedTab === 'layers' && <LayersTab modelId={modelId} />}
-      {selectedTab === 'communication' && <CommunicationTab />}
-      {selectedTab === 'sensors' && <SensorsTab />}
-      {selectedTab === 'settings' && <SettingsTab />}
-    </InfoSidebarContainer>
-  )
+  return <ViewerSidebarShell tabs={tabs} organization={organization} />
 }

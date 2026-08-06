@@ -31,6 +31,10 @@ interface CollapsibleSectionProps {
   /** Extra buttons rendered in the header next to the chevron. Click events
    *  on this content are not propagated to the section's collapse toggle. */
   headerActions?: React.ReactNode
+  /** Controlled open state. Omit to let the section manage its own (`defaultOpen`). */
+  open?: boolean
+  /** Called whenever the section wants to open or close. */
+  onOpenChange?: (open: boolean) => void
 }
 
 export function CollapsibleSection({
@@ -48,8 +52,21 @@ export function CollapsibleSection({
   addItemTitle = 'Add item',
   colour,
   headerActions,
+  open,
+  onOpenChange,
 }: CollapsibleSectionProps) {
-  const [isOpen, setIsOpen] = React.useState(defaultOpen)
+  // Controlled when `open` is supplied (the Layers tab drives its sections so it
+  // can give the collapsed ones no more height than their header), uncontrolled
+  // otherwise so existing callers keep working untouched.
+  const isControlled = open !== undefined
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen)
+  const isOpen = isControlled ? open : uncontrolledOpen
+
+  const setIsOpen = React.useCallback((next: boolean) => {
+    if (!isControlled) setUncontrolledOpen(next)
+    onOpenChange?.(next)
+  }, [isControlled, onOpenChange])
+
   const prevCheckedRef = React.useRef(switchVariant?.checked)
 
   // Auto-expand when visibility turns on, auto-collapse when turns off

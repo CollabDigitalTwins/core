@@ -22,6 +22,19 @@ export class ViewModeCoordinator extends OBC.Component {
 
   enabled = true
 
+  /**
+   * Fires when the viewer goes back to plain 3D, i.e. the active tool released
+   * and nothing claimed the slot in its place.
+   *
+   * Exists because leaving a drawing view resets every highlight in the model
+   * (see `CategoryHighlighter.restore`), so anything holding its own element
+   * appearance has to repaint. Deliberately silent on a tool-to-tool switch:
+   * `claim` records the incoming tool before awaiting the outgoing one's
+   * `deactivate()`, so the outgoing `release()` no-ops here — right, because the
+   * incoming tool is about to repaint anyway.
+   */
+  readonly onReleased = new OBC.Event<void>()
+
   private _active: ExclusiveViewTool | null = null
 
   constructor(components: OBC.Components) {
@@ -48,6 +61,8 @@ export class ViewModeCoordinator extends OBC.Component {
 
   /** Release the claim if `tool` is the active one. No-op otherwise. */
   release(tool: ExclusiveViewTool): void {
-    if (this._active === tool) this._active = null
+    if (this._active !== tool) return
+    this._active = null
+    this.onReleased.trigger()
   }
 }

@@ -14,7 +14,7 @@ import {
 } from '../../../../../../../hooks/openDataPortals/openDataPortals'
 import { DatasetsContext, MenusContext, useMapContext } from '../../../../../../../store'
 import { DatasetGroup } from '../../../../../../../types/dbTypes'
-import { SearchInput } from '../../../../../../ui'
+import { ViewerSidebarPanel } from '../../../../../../ui/ViewerSidebar/Panel'
 import { fetchLocalDatasets } from '../../../../datasets/src/localDatasets'
 import { useDatasetsForPortals } from '../../../../datasets/src/useDatasetsForPortals'
 
@@ -217,14 +217,10 @@ export function LayersTab({ martinBaseUrl, organization }: { martinBaseUrl?: str
   const showMunicipal = Boolean(municipality)
 
   return (
-    <div className="flex-1 flex flex-col space-y-4 py-4 overflow-hidden">
-      <div className="px-4">
-        <SearchInput
-          placeholder="Search..."
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-        />
-      </div>
+    <ViewerSidebarPanel
+      className="space-y-4"
+      search={{ value: searchQuery, onChange: setSearchQuery }}
+    >
       <div className="flex-1 min-h-0 overflow-y-auto space-y-2 divide-y">
         <div className="pb-2">
           <AppliedDatasetsSection />
@@ -244,6 +240,6 @@ export function LayersTab({ martinBaseUrl, organization }: { martinBaseUrl?: str
           />
         </div>
       </div>
-    </div>
+    </ViewerSidebarPanel>
   )
 }

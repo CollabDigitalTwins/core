@@ -13,7 +13,7 @@ import { BuildingsContext, MenusContext } from '../../store'
 import { ViewerNames } from '../../types'
 
 // Deep file import (not the ui barrel): the barrel re-exports heavy modules
-// (InfoSidebar, useFileUploadHandler, …) that would land in the eager map-route bundle.
+// (ViewerSidebar, useFileUploadHandler, …) that would land in the eager map-route bundle.
 import { switchLanguage } from '../../utils/utils'
 import { UserSettings } from '../settings'
 import { Toolbar } from '../Toolbar'

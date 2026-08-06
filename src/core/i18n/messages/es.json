@@ -232,7 +232,11 @@
     "clippingPlane": "Plano de recorte",
     "slice": "Cortar",
     "invert": "Invertir",
-    "reset": "Restablecer"
+    "reset": "Restablecer",
+    "add": "Añadir plano de recorte",
+    "cancelAdd": "Cancelar añadir plano de recorte",
+    "deleteAll": "Eliminar todos los planos de recorte",
+    "hint": "Haz doble clic en el modelo para añadir un plano de recorte. Retroceso elimina el plano bajo el cursor. Enter finaliza. Escape elimina todos los planos."
   },
   "CommentInput": {
     "title": "Añadir comentario",
@@ -465,6 +469,7 @@
   },
   "DrawingLayers": {
     "doorSwings": "Hojas de puertas",
+    "spaces": "Espacios",
     "fill": "Relleno",
     "cut": "Secciones cortadas",
     "toggleVisibility": "Toggle visibility",
@@ -712,6 +717,29 @@
     "expandTitle": "Expandir todo",
     "noResults": "No se encontraron elementos que coincidan con",
     "noneAvailable": "No hay estructura espacial disponible",
+    "drawingsGroup": "Planos",
+    "classifierGroup": "Clasificador",
+    "floorplansTab": "Plantas",
+    "elevationsTab": "Alzados",
+    "spatialTab": "Espacial",
+    "classesTab": "Clases IFC",
+    "ifcClasses": "Clases IFC",
+    "loadingClasses": "Cargando clases IFC...",
+    "noClasses": "No hay clases IFC disponibles",
+    "isolateTitle": "Aislar",
+    "isolateLabel": "Aislar {name}",
+    "showAllTitle": "Mostrar todo",
+    "toggleVisibilityLabel": "Alternar visibilidad de {name}",
+    "expandNodeLabel": "Expandir {name}",
+    "collapseNodeLabel": "Contraer {name}",
+    "appearanceTitle": "Color y opacidad",
+    "appearanceLabel": "Color y opacidad de {name}",
+    "colorTitle": "Elegir color",
+    "opacityLabel": "Opacidad",
+    "resetNodeLabel": "Restablecer",
+    "resetColorsTitle": "Restablecer colores",
+    "searchPlaceholder": "Buscar",
+    "resizeSectionsLabel": "Redimensionar secciones",
     "retryButton": "Reintentar",
     "appliedDatasetsTitle": "Conjuntos de datos aplicados",
     "appliedDatasetsEmpty": "No hay conjuntos de datos aplicados al mapa.",
@@ -1203,9 +1231,6 @@
     "toastSuccessUpdate": "Sitio actualizado con éxito",
     "toastErrorUpdate": "Error al actualizar el sitio"
   },
-  "InfoSidebar": {
-    "resizeHandleLabel": "Redimensionar la barra lateral"
-  },
   "TabSelector": {
     "fileLabel": "Archivo",
     "layersTitle": "Capas",
@@ -1373,6 +1398,9 @@
     "email": "Correo electrónico",
     "role": "Rol",
     "roleUnknown": "Rol desconocido"
+  },
+  "ViewerSidebar": {
+    "resizeHandleLabel": "Redimensionar la barra lateral"
   },
   "ViewSection": {
     "floorplanTitle": "Planos de planta",

@@ -60,6 +60,12 @@ const MEMBER = [
   { action: 'read', subject: 'PluginInstallation' },
   { action: 'update', subject: 'PluginUserSetting' },
 ]
+// Matches the Viewer role as seeded in the app: reads both subjects, writes
+// neither. A Viewer may not change what runs, not even for themselves.
+const VIEWER = [
+  { action: 'read', subject: 'PluginInstallation' },
+  { action: 'read', subject: 'PluginUserSetting' },
+]
 
 function listing(overrides: Partial<ExtensionListing> = {}): ExtensionListing {
   return {
@@ -112,6 +118,26 @@ describe('controls by role', () => {
     expect(scope.queryByRole('switch', { name: 'orgEnabled' })).not.toBeInTheDocument()
     expect(scope.getByRole('switch', { name: 'userRun' })).toBeInTheDocument()
     expect(scope.getByText('orgReadOnlyOnOptional')).toBeInTheDocument()
+  })
+
+  it('gives a viewer no switches at all, not even their own', () => {
+    permissions.current = VIEWER
+    render(<ExtensionsManager listings={[listing()]} />)
+
+    const scope = within(card())
+    expect(scope.queryByRole('switch')).not.toBeInTheDocument()
+    expect(scope.getByText('userReadOnly')).toBeInTheDocument()
+  })
+
+  it('tells a viewer they are read-only rather than blaming an admin lock', () => {
+    // The admin-lock message would be wrong here: nothing about this plugin is
+    // locked, the reader simply cannot change what runs.
+    permissions.current = VIEWER
+    render(<ExtensionsManager listings={[listing({ allowUserOverride: true })]} />)
+
+    const scope = within(card())
+    expect(scope.queryByText('userLockedOn')).not.toBeInTheDocument()
+    expect(scope.getByText('userReadOnly')).toBeInTheDocument()
   })
 
   it('replaces the personal switch with an explanation when an admin locked it', () => {

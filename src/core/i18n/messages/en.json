@@ -2030,6 +2030,7 @@
     "toastUserEnabled": "{name} is now running for you.",
     "toastUserDisabled": "{name} is no longer running for you.",
     "toastFailed": "Could not change {name}. Please try again.",
-    "toastNotConnected": "Extension settings are not connected to the database yet, so this change was not saved."
+    "toastNotConnected": "Extension settings are not connected to the database yet, so this change was not saved.",
+    "userReadOnly": "You can see which extensions are available, but not change what runs."
   }
 }

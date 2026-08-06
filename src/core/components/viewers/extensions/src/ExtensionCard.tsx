@@ -8,6 +8,7 @@ import {
   Box,
   CheckCircle2,
   CircleSlash,
+  Eye,
   Lock,
   MapPin,
   Minus,
@@ -226,6 +227,10 @@ export function ExtensionCard({
                     aria-label={t('userRun')}
                   />
                 </ControlRow>
+              ) : !ability.canChooseForSelf ? (
+                // Distinct from the admin lock below: nothing about this plugin
+                // is locked, this reader simply may not change what runs.
+                <Note icon={Eye} text={t('userReadOnly')} />
               ) : (
                 <Note icon={Lock} text={listing.orgEnabled ? t('userLockedOn') : t('userLockedOff')} />
               )}

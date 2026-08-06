@@ -85,27 +85,29 @@ export function ExtensionsManager({ listings, actions }: Props) {
   )
 
   const canManage: ExtensionsAbility = React.useMemo(() => {
-    // `PluginInstallation` is the subject this should use, and new organizations
-    // will get it from `defaultRoles.ts`. Existing organizations were seeded
-    // before it existed, so no role carries it and `can()` is false for
-    // everybody — which rendered this page read-only even for an admin.
+    // `PluginInstallation` and `PluginUserSetting` are the real subjects, seeded
+    // per role in the app's `defaultRoles.ts`:
     //
-    // Until those role rows are back-filled, fall back to `update Organization`:
-    // making a plugin available to everyone *is* an organization-configuration
-    // change, and that is the permission already gating the organization
-    // settings page. Drop the fallback once roles carry the new subject.
-    const orgAdmin = ability.can('update', 'PluginInstallation')
-      || ability.can('update', 'Organization')
+    //   Admin  — full control of both
+    //   User   — reads installations, manages their own setting
+    //   Viewer — reads both, changes neither
+    //
+    // Organizations seeded before those subjects existed carry neither, and
+    // `can()` is then false for everyone — which rendered this page read-only
+    // even for an admin. The legacy arm below falls back to `update Organization`,
+    // which reproduces the same split: Admin and User hold it, Viewer does not.
+    // Remove both fallbacks once existing role rows are back-filled.
+    const legacyWriter = ability.can('update', 'Organization')
+
+    const orgAdmin = ability.can('update', 'PluginInstallation') || legacyWriter
 
     return {
       canInstall: ability.can('create', 'PluginInstallation') || orgAdmin,
       canConfigureOrg: orgAdmin,
-      // Deliberately ungated. A personal preference is self-scoped, the same way
-      // changing your own password is — requiring an organizational permission to
-      // hide a panel from your own screen would be the wrong shape, and it is
-      // what left every role unable to touch anything. The server still binds the
-      // write to the session's user id, which is the actual enforcement.
-      canChooseForSelf: true,
+      // A Viewer may see what is available but not change what runs, including
+      // for themselves. Presentation only — the route re-checks, and binds the
+      // write to the session's user id so nobody can target another user's row.
+      canChooseForSelf: ability.can('update', 'PluginUserSetting') || legacyWriter,
     }
   }, [ability])
 

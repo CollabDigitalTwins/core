@@ -1,0 +1,56 @@
+{
+  "slug": "hello-bim",
+  "name": "Hello BIM",
+  "version": "1.0.0",
+  "hostApi": 1,
+  "description": "Lists the spaces in a BIM model and selects them in the viewer.",
+  "author": "Collab Digital Twins",
+  "capabilities": ["bim.tools"],
+  "requiredPermissions": [],
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "category": {
+        "type": "string",
+        "description": "Which IFC class to list. Defaults to IFCSPACE.",
+        "default": "IFCSPACE"
+      }
+    },
+    "required": []
+  },
+  "messages": {
+    "en": {
+      "name": "Hello BIM",
+      "description": "Lists the spaces in a BIM model and selects them in the viewer.",
+      "title": "Hello BIM",
+      "noModel": "Load a BIM model to see its spaces.",
+      "loading": "Reading spaces…",
+      "noSpaces": "This model has no spaces defined.",
+      "showSpaces": "Show spaces in the model",
+      "hideSpaces": "Hide spaces in the model",
+      "unnamed": "Unnamed"
+    },
+    "fr": {
+      "name": "Bonjour BIM",
+      "description": "Répertorie les espaces d'une maquette BIM et les sélectionne dans la visionneuse.",
+      "title": "Bonjour BIM",
+      "noModel": "Chargez une maquette BIM pour voir ses espaces.",
+      "loading": "Lecture des espaces…",
+      "noSpaces": "Cette maquette ne définit aucun espace.",
+      "showSpaces": "Afficher les espaces dans la maquette",
+      "hideSpaces": "Masquer les espaces dans la maquette",
+      "unnamed": "Sans nom"
+    },
+    "es": {
+      "name": "Hola BIM",
+      "description": "Enumera los espacios de un modelo BIM y los selecciona en el visor.",
+      "title": "Hola BIM",
+      "noModel": "Cargue un modelo BIM para ver sus espacios.",
+      "loading": "Leyendo los espacios…",
+      "noSpaces": "Este modelo no define ningún espacio.",
+      "showSpaces": "Mostrar los espacios en el modelo",
+      "hideSpaces": "Ocultar los espacios en el modelo",
+      "unnamed": "Sin nombre"
+    }
+  }
+}

@@ -6,7 +6,9 @@
 import * as LR from 'lucide-react'
 import * as React from 'react'
 
-import { usePluginContributions, type PluginContribution } from './provider'
+import { ToolbarSubmenu } from '../../components/ToolbarSubmenu'
+
+import { usePluginConfigs, usePluginContributions, type PluginContribution } from './provider'
 import { PluginScopeProvider } from './scope'
 
 import type { CursorType } from '../../types/global'
@@ -66,6 +68,7 @@ export function usePluginToolbarTools(
   extraProps?: Record<string, unknown>,
 ): Tool[] {
   const contributions = usePluginContributions(capability)
+  const configs = usePluginConfigs()
 
   // Wrapped components are cached by tool id so their identity is stable across
   // renders. Rebuilding them whenever `extraProps` changes — and it changes on
@@ -82,7 +85,7 @@ export function usePluginToolbarTools(
 
       let Component = wrapped.current.get(id)
       if (!Component) {
-        Component = wrapPluginComponent(contribution)
+        Component = wrapPluginComponent(contribution, () => configs[contribution.pluginId])
         wrapped.current.set(id, Component)
       }
 
@@ -113,19 +116,39 @@ function pluginToolId(contribution: PluginContribution<ToolbarCapability>) {
 }
 
 /**
- * Wrap a plugin's component so it renders inside its own plugin scope, which is
- * what the scoped SDK hooks (`usePluginStore`, `usePluginTranslations`) read.
+ * Wrap a plugin's component into a real toolbar entry.
+ *
+ * Two things happen here, and both matter:
+ *
+ * 1. **It gets a button.** `ToolbarButton` renders `tool.component` *instead of*
+ *    a button, so a plugin returning a panel would render that panel inline in
+ *    the toolbar strip and blow the strip out of the viewport. Wrapping in
+ *    `ToolbarSubmenu` gives the plugin the same ghost icon button and dropdown
+ *    every core tool has, from the `label` and `icon` it already declared — so a
+ *    plugin author writes panel content and cannot get the chrome wrong.
+ * 2. **It gets its plugin scope**, which is what the scoped SDK hooks
+ *    (`usePluginTranslations`, and later `usePluginStore`) read.
  */
 function wrapPluginComponent(
   contribution: PluginContribution<ToolbarCapability>,
+  // Read lazily: the component identity is cached, so capturing the config by
+  // value here would freeze it at whatever it was on first render.
+  readConfig: () => Record<string, unknown> | undefined,
 ): ToolComponent {
-  const Component = contribution.component as React.ComponentType<Record<string, unknown>>
+  // The registration's props are typed per capability (MapToolProps, BimToolProps,
+  // …) so a plugin gets checked at `ctx.register`. This wrapper is capability-
+  // agnostic by design — it forwards whatever the hosting toolbar passed — so the
+  // specific shape is erased here. The toolbar supplying the props is what makes
+  // it correct at runtime.
+  const Component = contribution.component as unknown as React.ComponentType<Record<string, unknown>>
 
-  function PluginToolboxItem(props: React.ComponentProps<ToolComponent>) {
+  function PluginToolboxItem({ tool, ...rest }: React.ComponentProps<ToolComponent>) {
     return (
-      <PluginScopeProvider pluginId={contribution.pluginId}>
-        <Component {...props} />
-      </PluginScopeProvider>
+      <ToolbarSubmenu tool={tool}>
+        <PluginScopeProvider pluginId={contribution.pluginId} config={readConfig()}>
+          <Component tool={tool} {...rest} />
+        </PluginScopeProvider>
+      </ToolbarSubmenu>
     )
   }
 

@@ -65,6 +65,6 @@ export {
  * The plugin's own configuration, as set for this organization.
  * Shape is whatever the manifest's `configSchema` describes.
  */
-export { usePluginConfig } from '../host/provider'
+export { usePluginConfig } from './config'
 
 export { usePluginPermissions } from './permissions'

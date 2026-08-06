@@ -39,6 +39,13 @@ const PointCloudViewer = dynamic(
 // DataMenu transitively imports BimViewer (via FilePreview), so keep it lazy
 // too — a static import would pull @thatopen + three/webgpu back into the eager
 // bundle. Only rendered for the data viewers, so map-only sessions skip it.
+// Lazy for the same reason as DataMenu: the extensions page is not on the map
+// route's critical path, and only an admin visits it often.
+const ExtensionsManager = dynamic(
+  () => import('./extensions/ExtensionsManager').then(m => ({ default: m.ExtensionsManager })),
+  { ssr: false, loading: () => <ViewerLoadingFallback label="Loading extensions…" /> },
+)
+
 const DataMenu = dynamic(
   () => import('./Data/DataMenu').then(m => ({ default: m.DataMenu })),
   { ssr: false, loading: () => <ViewerLoadingFallback label="Loading data…" /> },
@@ -174,8 +181,15 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
         </div>
         {validViewer === ViewerNames.bim && <BimViewer />}
         {validViewer === ViewerNames.pointcloud && <PointCloudViewer pointcloudApiUrl={pointcloudApiUrl} />}
-        {[ViewerNames.buildings, ViewerNames.sites, ViewerNames.files, ViewerNames.land, ViewerNames.infrastructure, ViewerNames.extensions, ViewerNames.users].includes(validViewer) && (
+        {[ViewerNames.buildings, ViewerNames.sites, ViewerNames.files, ViewerNames.land, ViewerNames.infrastructure, ViewerNames.users].includes(validViewer) && (
           <DataMenu currentViewer={validViewer} organization={organization} geocodeEarthApiKey={geocodeEarthApiKey} geocoderUrl={geocoderUrl} />
+        )}
+        {/* `extensions` used to route through DataMenu, which rendered nothing:
+            VIEWER_CONFIG gives it no dataType. It has its own page now. */}
+        {validViewer === ViewerNames.extensions && (
+          <div className="h-full w-full overflow-y-auto">
+            <ExtensionsManager />
+          </div>
         )}
         {[ViewerNames.settings].includes(validViewer) && (
           <UserSettings minioBaseUrl={minioBaseUrl} />

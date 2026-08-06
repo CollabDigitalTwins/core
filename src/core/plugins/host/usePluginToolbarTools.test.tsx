@@ -9,10 +9,12 @@ import * as React from 'react'
 import { resolvePluginIcon, usePluginToolbarTools } from './usePluginToolbarTools'
 
 import type { PluginContribution } from './provider'
+import type { Tool } from '../../types/tools'
 
 const { contributions } = vi.hoisted(() => ({ contributions: { current: [] as unknown[] } }))
 vi.mock('./provider', () => ({
   usePluginContributions: () => contributions.current,
+  usePluginConfigs: () => ({}),
 }))
 
 type ToolbarContribution = PluginContribution<'bim.tools'>
@@ -34,13 +36,23 @@ function Probe({ extraProps }: { extraProps?: Record<string, unknown> }) {
   return (
     <ul>
       {tools.map(tool => (
-        <li key={String(tool.id)} data-testid={String(tool.id)}>
-          {tool.title}
-          {tool.component ? <tool.component tool={tool} {...(tool.extraProps ?? {})} /> : null}
-        </li>
+        <li key={String(tool.id)} data-testid={String(tool.id)}>{tool.title}</li>
       ))}
     </ul>
   )
+}
+
+/** Captures the mapped tools so the props contract can be asserted directly. */
+function captureTools(extraProps?: Record<string, unknown>) {
+  const captured: Tool[] = []
+
+  function Capture() {
+    captured.push(...usePluginToolbarTools('bim.tools', extraProps))
+    return null
+  }
+
+  render(<Capture />)
+  return captured
 }
 
 afterEach(() => {
@@ -63,19 +75,36 @@ test('maps the registration label onto the tool title', () => {
   expect(screen.getByText('Space planning')).toBeInTheDocument()
 })
 
-test('renders the plugin component with the viewer props passed by the toolbar', () => {
-  const seen: Record<string, unknown>[] = []
-  contributions.current = [contribution({
-    component: (props: Record<string, unknown>) => {
-      seen.push(props)
-      return <div>panel</div>
-    },
-  })]
+test('attaches the viewer props the toolbar supplied, for ToolbarButton to spread', () => {
+  contributions.current = [contribution()]
 
-  render(<Probe extraProps={{ viewer: { modelIds: ['a'] } }} />)
+  const [tool] = captureTools({ modelIds: ['a'], selection: {} })
 
-  expect(screen.getByText('panel')).toBeInTheDocument()
-  expect(seen[0]).toMatchObject({ viewer: { modelIds: ['a'] } })
+  expect(tool.extraProps).toMatchObject({ modelIds: ['a'] })
+})
+
+test('keeps the registration icon and cursor on the tool', () => {
+  contributions.current = [contribution({ icon: 'Ruler', cursor: 'crosshair', stayActive: true })]
+
+  const [tool] = captureTools()
+
+  expect(tool.icon).toBe(LR.Ruler)
+  expect(tool.cursor).toBe('crosshair')
+  expect(tool.stayActive).toBe(true)
+})
+
+test('wraps the plugin component rather than letting it replace the toolbar button', () => {
+  // ToolbarButton renders `tool.component` *instead of* a button, so an unwrapped
+  // plugin panel would render inline in the toolbar strip and push it off screen.
+  // The wrapper supplies the standard button-and-dropdown from the registration.
+  contributions.current = [contribution({ component: () => <div>panel</div> })]
+
+  const [tool] = captureTools()
+
+  expect(tool.component).toBeDefined()
+  expect(tool.component).not.toBe(contributions.current[0].component)
+  expect((tool.component as { displayName?: string }).displayName)
+    .toBe('PluginTool(space-planning/spaces)')
 })
 
 describe('icon resolution', () => {

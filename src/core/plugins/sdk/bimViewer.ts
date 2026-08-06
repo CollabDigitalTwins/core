@@ -42,16 +42,21 @@ export interface BimToolProps {
 
   /** The live selection, keyed by model id. Updates as the user clicks in the viewport. */
   selection: ModelIdMap
-  select(items: ModelIdMap): Promise<void>
-  clearSelection(): void
+
+  // Declared as properties rather than methods on purpose: they are standalone
+  // closures with no `this`, so a plugin can destructure them out of the props —
+  // which is how every example uses them — without the unbound-`this` hazard that
+  // method shorthand would imply.
+  select: (items: ModelIdMap) => Promise<void>
+  clearSelection: () => void
   /** Frame the camera on whatever is currently selected. */
-  fitToSelection(): Promise<void>
+  fitToSelection: () => Promise<void>
 
   /** Hides everything except `items`, across every loaded model. */
-  isolate(items: ModelIdMap): Promise<void>
-  setItemsVisible(items: ModelIdMap, visible: boolean): Promise<void>
+  isolate: (items: ModelIdMap) => Promise<void>
+  setItemsVisible: (items: ModelIdMap, visible: boolean) => Promise<void>
   /** The escape hatch from `isolate`: makes everything visible again. */
-  showAll(): Promise<void>
+  showAll: () => Promise<void>
 
   /**
    * Every element of one IFC class, e.g. `getItemsOfCategory('IFCSPACE')`.
@@ -60,9 +65,9 @@ export interface BimToolProps {
    * elements inside them — so a plugin that wants to show them needs a
    * `setItemsVisible(spaces, true)` as well.
    */
-  getItemsOfCategory(category: string): Promise<ModelIdMap>
+  getItemsOfCategory: (category: string) => Promise<ModelIdMap>
   /** Attributes for the given elements. Omit `attributes` for the default set. */
-  getProperties(items: ModelIdMap, attributes?: string[]): Promise<BimItemProperties[]>
+  getProperties: (items: ModelIdMap, attributes?: string[]) => Promise<BimItemProperties[]>
 }
 
 /**

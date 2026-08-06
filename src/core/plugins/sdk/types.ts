@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+// Type-only, so the viewer modules' runtime dependencies (@thatopen, three,
+// maplibre) never reach the host's module graph.
+import type { BimToolProps } from './bimViewer'
+import type { MapToolProps } from './mapViewer'
+import type { PointCloudToolProps } from './pointCloudViewer'
 import type { ViewerNames } from '../../types/dbTypes'
 import type { LucideProps } from 'lucide-react'
 
@@ -45,6 +50,24 @@ export interface PluginManifest {
   capabilities: PluginCapability[]
   requiredPermissions?: string[]
   configSchema?: Record<string, unknown>
+  /**
+   * The plugin's own strings, keyed by locale then by message key:
+   *
+   *   "messages": { "en": { "title": "Hello" }, "fr": { "title": "Bonjour" } }
+   *
+   * Kept in the manifest so a small plugin is a single file to write and a single
+   * file to translate. Core folds them into the app's message tree under
+   * `plugins.<slug>`, so `usePluginTranslations()` resolves `t('title')` and a
+   * plugin can never collide with a core namespace or with another plugin.
+   *
+   * Entirely optional. A plugin that ships none still works: every SDK
+   * translation call takes an inline fallback, which is what an untranslated
+   * third-party plugin will rely on.
+   *
+   * Values may nest (`{ "spaces": { "title": "…" } }`), addressed as
+   * `t('spaces.title')`.
+   */
+  messages?: Record<string, Record<string, unknown>>
 }
 
 export function validateManifest(manifest: unknown): { valid: boolean; errors: string[] } {
@@ -86,11 +109,25 @@ export interface SidebarRegistration {
   component: React.ComponentType
 }
 
-export interface ToolbarRegistration {
+/** Every toolbar component receives the toolbar entry core built for it. */
+export interface ToolbarToolProps {
+  tool: unknown
+}
+
+/**
+ * A toolbar contribution.
+ *
+ * `P` is the viewer surface the hosting toolbar passes as props — `MapToolProps`
+ * for `map.tools`, `BimToolProps` for `bim.tools`, and so on. Because
+ * `CapabilityRegistry` binds it per capability, registering a component that
+ * expects the BIM viewer under `map.tools` is a compile error rather than a
+ * runtime surprise.
+ */
+export interface ToolbarRegistration<P = Record<string, unknown>> {
   id: string
   label: string
   icon: string | React.ComponentType<LucideProps>
-  component: React.ComponentType<{ tool: unknown }>
+  component: React.ComponentType<ToolbarToolProps & P>
   cursor?: string
   stayActive?: boolean
 }
@@ -135,9 +172,9 @@ export interface LegendRegistration {
 export interface CapabilityRegistry {
   'sidebar.items': SidebarRegistration
   'viewer.panels': ViewerRegistration
-  'map.tools': ToolbarRegistration
-  'bim.tools': ToolbarRegistration
-  'pointcloud.tools': ToolbarRegistration
+  'map.tools': ToolbarRegistration<MapToolProps>
+  'bim.tools': ToolbarRegistration<BimToolProps>
+  'pointcloud.tools': ToolbarRegistration<PointCloudToolProps>
   'map.legends': LegendRegistration
 }
 

@@ -37,10 +37,12 @@ export function useBimToolbarTools(): Tool[] {
   const t = useTranslations('bimToolbarTools')
 
   // BIM plugin tools receive the viewer handles, the live selection and the
-  // element queries. Reading them here rather than inside the shared toolbar host
-  // keeps `@thatopen` out of the map route's eager bundle.
+  // element queries — spread as props, so a tool's props are `BimToolProps &
+  // { tool }`, matching how map tools receive `MapToolProps`. Reading them here
+  // rather than inside the shared toolbar host keeps `@thatopen` out of the map
+  // route's eager bundle.
   const viewer = useBimViewer()
-  const pluginTools = usePluginToolbarTools('bim.tools', { viewer })
+  const pluginTools = usePluginToolbarTools('bim.tools', viewer as unknown as Record<string, unknown>)
 
   return [
     // {

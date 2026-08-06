@@ -7,8 +7,8 @@ import * as React from 'react'
 
 import { ToolbarBody } from '../../ToolbarBody'
 
-import { pointcloudToolbarTools } from './src/tools'
+import { usePointCloudToolbarTools } from './src/tools'
 
 export function PointCloudToolbar() {
-  return <ToolbarBody viewer="pointcloud" tools={pointcloudToolbarTools()} />
+  return <ToolbarBody viewer="pointcloud" tools={usePointCloudToolbarTools()} />
 }

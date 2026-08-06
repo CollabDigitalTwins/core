@@ -1,0 +1,345 @@
+'use client'
+
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
+import {
+  AlertTriangle,
+  Box,
+  CheckCircle2,
+  CircleSlash,
+  Lock,
+  MapPin,
+  Minus,
+  PackagePlus,
+  PanelLeft,
+  PanelRight,
+  Puzzle,
+  Scan,
+} from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import * as React from 'react'
+
+import { usePluginMessage } from '../../../../plugins/sdk/messages'
+import { cn } from '../../../../utils/utils'
+import { Badge } from '../../../ui/Badge'
+import { Button } from '../../../ui/Button'
+import { Separator } from '../../../ui/Separator'
+import { Switch } from '../../../ui/Switch'
+
+import { effectiveStatus } from './useExtensionListings'
+
+import type { ExtensionListing, ExtensionsAbility } from '../types'
+import type { LucideIcon } from 'lucide-react'
+
+/**
+ * Status reads as an icon *and* a colour, so it survives both a quick scan and
+ * colour-blindness. Four states, four hues, all muted enough to sit inside a
+ * neutral page.
+ */
+const STATUS_STYLE: Record<ExtensionListing['status'], { icon: LucideIcon; className: string }> = {
+  running: {
+    icon: CheckCircle2,
+    className: 'border-green-600/40 bg-green-600/10 text-green-700 dark:text-green-400',
+  },
+  off: {
+    icon: CircleSlash,
+    className: 'border-muted-foreground/40 bg-muted text-muted-foreground',
+  },
+  error: {
+    icon: AlertTriangle,
+    className: 'border-destructive/40 bg-destructive/10 text-destructive',
+  },
+  available: {
+    icon: PackagePlus,
+    className: 'border-sky-600/40 bg-sky-600/10 text-sky-700 dark:text-sky-400',
+  },
+}
+
+/**
+ * Which surface a capability contributes to, shown on its badge. Seeing the map
+ * pin on `map.tools` says where the plugin will appear faster than the key does.
+ */
+const CAPABILITY_ICON: Record<string, LucideIcon> = {
+  'map.tools': MapPin,
+  'map.legends': MapPin,
+  'bim.tools': Box,
+  'pointcloud.tools': Scan,
+  'sidebar.items': PanelLeft,
+  'viewer.panels': PanelRight,
+}
+
+interface Props {
+  listing: ExtensionListing
+  ability: ExtensionsAbility
+  onSetInstalled: (installed: boolean) => void
+  onSetOrgEnabled: (enabled: boolean) => void
+  onSetAllowUserOverride: (allow: boolean) => void
+  onSetUserEnabled: (enabled: boolean) => void
+  onCopyError: () => void
+}
+
+export function ExtensionCard({
+  listing,
+  ability,
+  onSetInstalled,
+  onSetOrgEnabled,
+  onSetAllowUserOverride,
+  onSetUserEnabled,
+  onCopyError,
+}: Props) {
+  const t = useTranslations('Extensions')
+  const { manifest } = listing
+  // Derived from the switches, not from what the host has loaded — otherwise
+  // turning a plugin off leaves the badge reading "Running".
+  const status = effectiveStatus(listing)
+
+  // A plugin's own name and description come from its catalog when it ships one,
+  // and from its manifest when it does not. Never a raw message key.
+  const name = usePluginMessage(manifest.slug, 'name', manifest.name)
+  const description = usePluginMessage(manifest.slug, 'description', manifest.description ?? '')
+
+  const isAdmin = ability.canConfigureOrg || ability.canInstall
+  const userMayChoose = listing.allowUserOverride && ability.canChooseForSelf && status !== 'error'
+  const userEnabled = listing.userEnabled ?? listing.orgEnabled
+
+  return (
+    <article
+      className="grid gap-4 rounded-xl border bg-background p-5 md:grid-cols-[minmax(0,1fr)_auto]"
+      data-testid={`extension-${manifest.slug}`}
+    >
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-lg text-foreground">{name}</h2>
+          <StatusBadge status={status} />
+          {listing.bundled && (
+            <Badge variant="outline" className="font-normal text-muted-foreground">
+              {t('bundled')}
+            </Badge>
+          )}
+        </div>
+
+        <p className="mt-1 text-sm text-muted-foreground">
+          <code>{manifest.slug}</code>
+          <span className="mx-1.5 opacity-40">·</span>
+          <span className="tabular-nums">v{manifest.version}</span>
+          <span className="mx-1.5 opacity-40">·</span>
+          {manifest.author || t('unknownAuthor')}
+        </p>
+
+        {description && <p className="mt-2 max-w-[60ch] text-sm">{description}</p>}
+
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          <span className="text-xs text-muted-foreground">{t('capabilities')}</span>
+          {manifest.capabilities.map(capability => (
+            <CapabilityBadge key={capability} capability={capability} />
+          ))}
+        </div>
+
+        {status === 'error' && listing.error && (
+          <div className="mt-3 rounded-xl border border-destructive/50 bg-destructive/5 p-3">
+            <p className="flex items-center gap-1.5 text-sm font-medium text-destructive">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              {t('errorHeading')}
+            </p>
+            <p className="mt-1.5 overflow-x-auto text-xs"><code>{listing.error}</code></p>
+            <p className="mt-1.5 text-xs text-muted-foreground">{t('errorHint')}</p>
+          </div>
+        )}
+
+        {status === 'available' && (
+          <div className="mt-3 rounded-xl border border-dashed p-3">
+            <p className="text-sm font-medium">{t('trustHeading')}</p>
+            <ul className="mt-1.5 list-disc pl-4 text-xs text-muted-foreground">
+              {listing.mountPath && <li>{t('trustMount', { path: listing.mountPath })}</li>}
+              <li>
+                {manifest.requiredPermissions?.length
+                  ? t('trustPermissions', { permissions: manifest.requiredPermissions.join(', ') })
+                  : t('trustNoPermissions')}
+              </li>
+              <li>{t('trustWarning')}</li>
+            </ul>
+          </div>
+        )}
+      </div>
+
+      <div className="flex min-w-0 flex-col gap-2.5 md:w-[270px]">
+        {status === 'available' ? (
+          ability.canInstall && (
+            <Button size="sm" onClick={() => onSetInstalled(true)}>
+              <PackagePlus className="mr-1.5 h-4 w-4" />
+              {t('addToOrg')}
+            </Button>
+          )
+        ) : (
+          <>
+            {isAdmin ? (
+              <ControlGroup label={t('orgGroup')} who={t('orgGroupWho')}>
+                {ability.canInstall && (
+                  <ControlRow label={t('orgInstalled')}>
+                    <Switch
+                      checked={listing.installed}
+                      disabled={listing.bundled}
+                      onCheckedChange={onSetInstalled}
+                      aria-label={t('orgInstalled')}
+                    />
+                  </ControlRow>
+                )}
+                {ability.canConfigureOrg && (
+                  <>
+                    <ControlRow label={t('orgEnabled')}>
+                      <Switch
+                        checked={listing.orgEnabled}
+                        onCheckedChange={onSetOrgEnabled}
+                        aria-label={t('orgEnabled')}
+                      />
+                    </ControlRow>
+                    <ControlRow
+                      label={t('orgAllowOverride')}
+                      hint={listing.allowUserOverride
+                        ? t('orgAllowOverrideOnHint')
+                        : t('orgAllowOverrideOffHint')}
+                    >
+                      <Switch
+                        checked={listing.allowUserOverride}
+                        onCheckedChange={onSetAllowUserOverride}
+                        aria-label={t('orgAllowOverride')}
+                      />
+                    </ControlRow>
+                  </>
+                )}
+              </ControlGroup>
+            ) : (
+              <ControlGroup label={t('orgGroup')}>
+                <p className="py-1 text-sm text-muted-foreground">{orgSummary(listing, t)}</p>
+              </ControlGroup>
+            )}
+
+            <ControlGroup label={t('userGroup')}>
+              {status === 'error' ? (
+                <Note icon={Minus} text={t('userNothingToRun')} />
+              ) : userMayChoose ? (
+                <ControlRow label={t('userRun')}>
+                  <Switch
+                    checked={userEnabled}
+                    onCheckedChange={onSetUserEnabled}
+                    aria-label={t('userRun')}
+                  />
+                </ControlRow>
+              ) : (
+                <Note icon={Lock} text={listing.orgEnabled ? t('userLockedOn') : t('userLockedOff')} />
+              )}
+            </ControlGroup>
+
+            {status === 'error' && (
+              <Button size="sm" variant="outline" onClick={onCopyError}>
+                {t('copyError')}
+              </Button>
+            )}
+          </>
+        )}
+      </div>
+    </article>
+  )
+}
+
+function StatusBadge({ status }: { status: ExtensionListing['status'] }) {
+  const t = useTranslations('Extensions')
+  const { icon: Icon, className } = STATUS_STYLE[status]
+
+  const label: Record<ExtensionListing['status'], string> = {
+    running: t('statusRunning'),
+    off: t('statusOff'),
+    error: t('statusError'),
+    available: t('statusAvailable'),
+  }
+
+  return (
+    <Badge variant="outline" className={cn('gap-1 font-medium', className)}>
+      <Icon className="h-3.5 w-3.5" />
+      {label[status]}
+    </Badge>
+  )
+}
+
+function CapabilityBadge({ capability }: { capability: string }) {
+  const Icon = CAPABILITY_ICON[capability] ?? Puzzle
+
+  return (
+    <Badge variant="secondary" className="gap-1 font-normal">
+      <Icon className="h-3.5 w-3.5" />
+      <code>{capability}</code>
+    </Badge>
+  )
+}
+
+/**
+ * The controls need to read as a panel, not as loose text beside the description.
+ * A bordered, faintly-tinted box does that with no new colour — it borrows the
+ * same muted token the rest of the app uses for inset surfaces.
+ */
+function ControlGroup({
+  label,
+  who,
+  children,
+}: {
+  label: string
+  who?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="rounded-xl border bg-muted/30 px-3 py-2.5">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        {label}
+        {who && (
+          <Badge variant="outline" className="bg-background px-1.5 py-0 text-[10px] font-normal">
+            {who}
+          </Badge>
+        )}
+      </div>
+      <Separator className="my-2" />
+      {children}
+    </div>
+  )
+}
+
+/** Rows inside a group are separated, so three switches do not run together. */
+function ControlRow({
+  label,
+  hint,
+  children,
+}: {
+  label: string
+  hint?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-1.5 [&+&]:border-t [&+&]:border-border/60">
+      <span className="text-sm leading-tight">
+        {label}
+        {hint && <small className="mt-0.5 block text-xs text-muted-foreground">{hint}</small>}
+      </span>
+      {children}
+    </div>
+  )
+}
+
+function Note({ icon: Icon, text }: { icon: LucideIcon; text: string }) {
+  return (
+    <p className="flex items-start gap-1.5 py-1 text-sm text-muted-foreground">
+      <Icon className="mt-0.5 h-4 w-4 shrink-0" />
+      <span>{text}</span>
+    </p>
+  )
+}
+
+/** What a non-admin is told about the organization's decision. */
+function orgSummary(
+  listing: ExtensionListing,
+  t: ReturnType<typeof useTranslations<'Extensions'>>,
+): string {
+  if (!listing.allowUserOverride) {
+    return listing.orgEnabled ? t('orgReadOnlyForced') : t('orgReadOnlyBlocked')
+  }
+  return listing.orgEnabled ? t('orgReadOnlyOnOptional') : t('orgReadOnlyOffOptional')
+}

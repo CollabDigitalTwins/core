@@ -128,6 +128,7 @@ export interface Organization {
     maxNumberOfUsers?: number | null;
     languages: (Language | `${Language}`)[];
     country?: string | null;
+    suspended: boolean;
     locationSiteId?: number | null;
     locationBuildingId?: number | null;
 }

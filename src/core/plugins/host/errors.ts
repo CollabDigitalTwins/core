@@ -10,3 +10,26 @@ export class PluginActivationError extends Error {
     this.name = 'PluginActivationError'
   }
 }
+
+export class PluginManifestError extends Error {
+  constructor(
+    public pluginId: string,
+    public errors: string[],
+  ) {
+    super(`Plugin "${pluginId}" has an invalid manifest: ${errors.join('; ')}`)
+    this.name = 'PluginManifestError'
+  }
+}
+
+export class PluginHostApiError extends Error {
+  constructor(
+    public pluginId: string,
+    public declared: number,
+    public supported: number,
+  ) {
+    super(
+      `Plugin "${pluginId}" targets plugin host API ${declared}, but this version of @collabdt/core provides ${supported}`,
+    )
+    this.name = 'PluginHostApiError'
+  }
+}

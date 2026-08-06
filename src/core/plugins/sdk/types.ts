@@ -1,22 +1,27 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import type { ViewerNames } from '../../types/dbTypes'
 import type { LucideProps } from 'lucide-react'
 
 // --- Capability definitions ---
 
+/**
+ * A capability exists here if and only if core renders it. Declaring one that has
+ * no consumer is worse than not having it: the plugin registers successfully,
+ * nothing appears, and there is nothing to debug.
+ *
+ * Planned, deliberately absent until they have a consumer: `map.layers`,
+ * `data.collections`, `data.columns`, `commands`, `widgets`. Also `jobs`, which
+ * additionally needs server-side execution that a browser-loaded plugin bundle
+ * cannot provide at all.
+ */
 export const VALID_CAPABILITIES = [
   'sidebar.items',
   'viewer.panels',
   'map.tools',
   'bim.tools',
   'pointcloud.tools',
-  'map.layers',
-  'data.collections',
-  'data.columns',
-  'jobs',
-  'commands',
-  'widgets',
   'map.legends',
 ] as const
 
@@ -28,6 +33,13 @@ export interface PluginManifest {
   slug: string
   name: string
   version: string
+  /**
+   * The `PLUGIN_HOST_API` value this plugin was built against. Omitting it is
+   * allowed but warned about: the host assumes the current API, which means a
+   * future breaking change surfaces as a render-time failure rather than a
+   * refusal to load.
+   */
+  hostApi?: number
   description?: string
   author?: string
   capabilities: PluginCapability[]
@@ -37,11 +49,20 @@ export interface PluginManifest {
 
 export function validateManifest(manifest: unknown): { valid: boolean; errors: string[] } {
   const errors: string[] = []
+
+  if (typeof manifest !== 'object' || manifest === null) {
+    return { valid: false, errors: ['manifest must be an object'] }
+  }
+
   const m = manifest as Record<string, unknown>
 
   if (!m.slug || typeof m.slug !== 'string') errors.push('slug is required')
   if (!m.name || typeof m.name !== 'string') errors.push('name is required')
   if (!m.version || typeof m.version !== 'string') errors.push('version is required')
+
+  if (m.hostApi !== undefined && !Number.isInteger(m.hostApi)) {
+    errors.push('hostApi must be an integer when present')
+  }
 
   if (!Array.isArray(m.capabilities) || m.capabilities.length === 0) {
     errors.push('at least one capability is required')
@@ -79,45 +100,11 @@ export interface ViewerRegistration {
   label: string
   icon: string | React.ComponentType<LucideProps>
   component: React.ComponentType
-}
-
-export interface LayerRegistration {
-  id: string
-  label: string
-  [key: string]: unknown
-}
-
-export interface DataCollectionRegistration {
-  id: string
-  label: string
-  listComponent: React.ComponentType
-  detailComponent?: React.ComponentType
-}
-
-export interface ColumnRegistration {
-  id: string
-  target: string
-  [key: string]: unknown
-}
-
-export interface JobRegistration {
-  id: string
-  cron: string
-  handler: () => Promise<void> | void
-}
-
-export interface CommandRegistration {
-  id: string
-  label?: string
-  handler: (...args: unknown[]) => unknown
-}
-
-export interface WidgetRegistration {
-  id: string
-  label: string
-  component: React.ComponentType
-  width?: string
-  height?: string
+  /**
+   * Which viewers this panel appears in. Omit for all of them.
+   * A space-planning panel, for example, only makes sense in the BIM viewer.
+   */
+  viewers?: ViewerNames[]
 }
 
 export interface LegendRow {
@@ -151,12 +138,6 @@ export interface CapabilityRegistry {
   'map.tools': ToolbarRegistration
   'bim.tools': ToolbarRegistration
   'pointcloud.tools': ToolbarRegistration
-  'map.layers': LayerRegistration
-  'data.collections': DataCollectionRegistration
-  'data.columns': ColumnRegistration
-  'jobs': JobRegistration
-  'commands': CommandRegistration
-  'widgets': WidgetRegistration
   'map.legends': LegendRegistration
 }
 
@@ -185,3 +166,15 @@ export interface PluginEntry {
   activate(ctx: PluginContext): void | Promise<void>
   deactivate?(ctx: PluginContext): void | Promise<void>
 }
+
+/** One loadable plugin: its validated manifest plus its module. */
+export interface PluginSource {
+  manifest: PluginManifest
+  entry: PluginEntry
+}
+
+/**
+ * What the host loads. An array for plugins compiled into the bundle; a thunk for
+ * plugins discovered at runtime, where the list itself has to be fetched first.
+ */
+export type PluginsInput = PluginSource[] | (() => Promise<PluginSource[]>)

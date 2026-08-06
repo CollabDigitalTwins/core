@@ -4,5 +4,8 @@
 // Types
 export * from './types'
 
+// Host contract version
+export * from './version'
+
 // Components
 export * from './components'

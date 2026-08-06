@@ -28,7 +28,11 @@ export function createPluginContext(options: CreateContextOptions): PluginContex
           `Plugin "${pluginId}" did not declare capability "${key}" in its manifest`,
         )
       }
-      registry.register(key, { ...(item as Record<string, unknown>), pluginId })
+      // `pluginId` is spread last so a plugin cannot pass one and claim to be
+      // another plugin. The double cast is needed because the registration types
+      // are interfaces without index signatures, and RegistryEntry has one — the
+      // registry stores heterogeneous shapes keyed by capability, so it has to.
+      registry.register(key, { ...(item as unknown as Record<string, unknown>), pluginId })
     },
   }
 }

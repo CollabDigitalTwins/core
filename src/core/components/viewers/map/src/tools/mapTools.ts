@@ -4,6 +4,8 @@
 import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
+import { usePluginToolbarTools } from '../../../../../plugins/host/usePluginToolbarTools'
+import { useMapViewer } from '../../../../../plugins/sdk/mapViewer'
 // Utilities
 import Compare from '../compare'
 
@@ -54,6 +56,11 @@ export function useMapToolbarTools(config?: MapToolsConfig): Tool[] {
 
   const extraProps = (config ?? {}) as unknown as Record<string, unknown>
 
+  // Map plugin tools get the MapLibre handle. Imported from `sdk/mapViewer`, not
+  // the `sdk/viewer` barrel, so the BIM engine stays out of this eager bundle.
+  const viewer = useMapViewer()
+  const pluginTools = usePluginToolbarTools('map.tools', { ...extraProps, ...viewer })
+
   return [
     { id: 'map-compare', title: t('compareTitle'), url: '/', icon: LR.Columns3, component: Compare },
     { id: 'map-database', title: t('datasetsTitle'), url: '/', icon: LR.Database, component: DatasetMapTool, extraProps },
@@ -77,6 +84,8 @@ export function useMapToolbarTools(config?: MapToolsConfig): Tool[] {
       icon: LR.Share2,
       component: ShareMapTool,
     },
+    // Plugin-contributed tools come last, after everything core ships.
+    ...pluginTools,
   ]
 }
 

@@ -14,10 +14,9 @@ vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
 }))
 
-const { mockRegistry } = vi.hoisted(() => ({ mockRegistry: { getAll: vi.fn() } }))
+const { mockContributions } = vi.hoisted(() => ({ mockContributions: vi.fn() }))
 vi.mock('../../../../plugins/host/provider', () => ({
-  usePluginRegistry: () => mockRegistry,
-  usePluginsReady: () => true,
+  usePluginContributions: () => mockContributions(),
 }))
 
 function makeLegend(
@@ -27,10 +26,10 @@ function makeLegend(
   return { id, title: id, useLegend: () => result }
 }
 
-afterEach(() => mockRegistry.getAll.mockReset())
+afterEach(() => mockContributions.mockReset())
 
 test('renders one section per active legend with a count badge', () => {
-  mockRegistry.getAll.mockReturnValue([
+  mockContributions.mockReturnValue([
     makeLegend('ship', { active: true, rows: [{ label: 'Cargo', color: '#f97316' }] }),
     makeLegend('air', { active: false, rows: [{ label: 'Jet', color: '#000' }] }),
   ])
@@ -41,7 +40,7 @@ test('renders one section per active legend with a count badge', () => {
 })
 
 test('hides the card when no legend is active', () => {
-  mockRegistry.getAll.mockReturnValue([
+  mockContributions.mockReturnValue([
     makeLegend('ship', { active: false, rows: [{ label: 'Cargo', color: '#f97316' }] }),
   ])
   render(<MapLegendHost />)

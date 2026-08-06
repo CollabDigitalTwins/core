@@ -15,6 +15,14 @@
       "types": "./dist/core/i18n/index.d.ts",
       "import": "./dist/core/i18n/index.js"
     },
+    "./plugins-sdk": {
+      "types": "./dist/core/plugins/sdk/index.d.ts",
+      "import": "./dist/core/plugins/sdk/index.js"
+    },
+    "./plugins-sdk/*": {
+      "types": "./dist/core/plugins/sdk/*.d.ts",
+      "import": "./dist/core/plugins/sdk/*.js"
+    },
     "./*": {
       "types": "./dist/*.d.ts",
       "import": "./dist/*.js"

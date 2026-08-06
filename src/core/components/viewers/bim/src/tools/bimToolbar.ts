@@ -6,6 +6,9 @@ import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 
+import { usePluginToolbarTools } from '../../../../../plugins/host/usePluginToolbarTools'
+import { useBimViewer } from '../../../../../plugins/sdk/bimViewer'
+
 import AddToBim from './AddToBim'
 import { ClippingTool } from './ClippingTool/ClippingTool';
 import { ExplodeByLevelTool } from './ExplodeByLevelTool'
@@ -32,6 +35,12 @@ export type BimToolbarToolsType =
 export function useBimToolbarTools(): Tool[] {
   // Translation
   const t = useTranslations('bimToolbarTools')
+
+  // BIM plugin tools receive the viewer handles, the live selection and the
+  // element queries. Reading them here rather than inside the shared toolbar host
+  // keeps `@thatopen` out of the map route's eager bundle.
+  const viewer = useBimViewer()
+  const pluginTools = usePluginToolbarTools('bim.tools', { viewer })
 
   return [
     // {
@@ -77,6 +86,8 @@ export function useBimToolbarTools(): Tool[] {
       component: ShareBimTool
     },
     // Add more tools here if needed
+    // Plugin-contributed tools come last, after everything core ships.
+    ...pluginTools,
   ]
 }
 

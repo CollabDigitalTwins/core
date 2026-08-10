@@ -9,6 +9,8 @@ import { usePluginActions, usePluginInstallations, usePluginUserSettings } from 
 import { usePluginHost, usePluginsReady } from '../../../../plugins/host/provider'
 import { PLUGIN_MANIFESTS } from '../../../../plugins/manifests'
 
+import { useMountedPlugins } from './useMountedPlugins'
+
 import type { PluginInstallation, PluginUserSetting } from '../../../../types/plugins'
 import type { ExtensionListing, ExtensionsActions } from '../types'
 
@@ -20,13 +22,15 @@ import type { ExtensionListing, ExtensionsActions } from '../types'
  * the app supplies the data without any prop threading — which is exactly what
  * that seam is for.
  *
- * Three sources are crossed here:
+ * Four sources are crossed here:
  *
  * 1. **Manifests** — what plugins this build knows about, and their names,
  *    versions and capabilities. Read from `manifests.ts`, not `installed.ts`, so
  *    this does not drag plugin components in.
- * 2. **`PluginInstallation`** — what the organization admitted, and its defaults.
- * 3. **`PluginUserSetting`** — what this user chose.
+ * 2. **Mounted plugins** — what the deployment found on disk. Empty everywhere
+ *    runtime loading is off, which is the default.
+ * 3. **`PluginInstallation`** — what the organization admitted, and its defaults.
+ * 4. **`PluginUserSetting`** — what this user chose.
  *
  * A manifest with no install row shows as `available`: present in the build,
  * not yet added here. An install row with no manifest is dropped — it names a
@@ -38,6 +42,7 @@ export function useExtensionsData(override?: ExtensionListing[]): {
 } {
   const { installations, isLoading: loadingInstalls } = usePluginInstallations()
   const { userSettings, isLoading: loadingSettings } = usePluginUserSettings()
+  const { mounted } = useMountedPlugins()
 
   const host = usePluginHost()
   // Statuses only mean anything once loading has finished; this also re-derives
@@ -51,7 +56,19 @@ export function useExtensionsData(override?: ExtensionListing[]): {
     const settingsByPlugin = new Map(userSettings.map(row => [row.pluginId, row]))
     const statuses = new Map(host?.listPlugins().map(entry => [entry.slug, entry]) ?? [])
 
-    return PLUGIN_MANIFESTS.map(manifest => {
+    // Compiled-in plugins first, then anything mounted that is not also compiled
+    // in. A slug can only appear once: the server's scan refuses a folder whose
+    // manifest declares a different slug, so the two sets cannot disagree about
+    // what a slug means.
+    const compiledSlugs = new Set(PLUGIN_MANIFESTS.map(manifest => manifest.slug))
+    const sources = [
+      ...PLUGIN_MANIFESTS.map(manifest => ({ manifest, bundled: true, mountPath: undefined as string | undefined })),
+      ...mounted
+        .filter(entry => !compiledSlugs.has(entry.manifest.slug))
+        .map(entry => ({ manifest: entry.manifest, bundled: false, mountPath: entry.mountPath })),
+    ]
+
+    return sources.map(({ manifest, bundled, mountPath }) => {
       const install = byPlugin.get(manifest.slug)
       const setting = settingsByPlugin.get(manifest.slug)
       const live = statuses.get(manifest.slug)
@@ -64,12 +81,11 @@ export function useExtensionsData(override?: ExtensionListing[]): {
         orgEnabled: install?.enabled ?? false,
         allowUserOverride: install?.allowUserOverride ?? true,
         userEnabled: setting ? setting.enabled : null,
-        // Compiled into this build rather than mounted at runtime. Nothing is
-        // mounted yet, so every plugin here is bundled.
-        bundled: true,
+        bundled,
+        ...(mountPath ? { mountPath } : {}),
       } satisfies ExtensionListing
     })
-  }, [override, installations, userSettings, host, ready])
+  }, [override, installations, userSettings, mounted, host, ready])
 
   return { listings, isLoading: loadingInstalls || loadingSettings }
 }

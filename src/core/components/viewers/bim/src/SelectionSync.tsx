@@ -14,8 +14,8 @@ import { getSelectedItems, onSelectionChanged } from './lib/bimItemActions'
  *
  * The Highlighter stays the single source of truth — this only publishes it so
  * React can read it. One central subscription rather than one per consumer, for
- * the same reason shadow enrolment is centralised in `ShadowEnroller`
- * (ADR-005): every path that changes the selection is then covered, including a
+ * the same reason shadow enrolment is centralised in `ShadowEnroller`: every
+ * path that changes the selection is then covered, including a
  * viewport click, a sidebar tree action, and a plugin calling `select()`.
  *
  * Renders nothing. Mount it once inside the BIM viewer, after the components are

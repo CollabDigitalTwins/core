@@ -16,9 +16,9 @@ import { BimContext } from '../../../../store/BIM/context'
  * loaded even with one on screen. `FragmentsManager.list` is the truth; this
  * publishes it.
  *
- * One central subscription, the same shape as `SelectionSync` and the
- * `ShadowEnroller` pattern in ADR-005, so every load path is covered rather than
- * each caller wiring its own listener. `IfcClasses` already subscribes to the
+ * One central subscription, the same shape as `SelectionSync` and
+ * `ShadowEnroller`, so every load path is covered rather than each caller wiring
+ * its own listener. `IfcClasses` already subscribes to the
  * same two events to rebuild its class tree.
  *
  * Renders nothing. Mount it once inside the BIM viewer.

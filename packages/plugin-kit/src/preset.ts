@@ -1,0 +1,82 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
+import type { Options } from 'tsup'
+
+import { PLUGIN_EXTERNALS } from './externals'
+import { assertBundleImports } from './importGuard'
+
+const OUT_DIR = 'dist'
+const OUT_FILE = `${OUT_DIR}/index.js`
+// tsup 8.5.1 writes `dist/metafile-${format}.json` (confirmed by reading
+// node_modules/tsup/dist/index.js). Our format is fixed to esm, so this is
+// `dist/metafile-esm.json`.
+const METAFILE = `${OUT_DIR}/metafile-esm.json`
+
+/**
+ * The tsup configuration a CDT plugin needs.
+ *
+ * `splitting: false` and a single entry are not preferences. The host serves
+ * exactly one file per plugin, so a sibling chunk import from the bundle would
+ * 404 in the browser. That is also why plain `tsc` cannot be used here: it emits
+ * one file per module.
+ *
+ * `onSuccess` runs the import guard. Marking the host's modules external is only
+ * half the contract; the other half is importing nothing else, and without this
+ * check a stray `import 'three'` either inlines a second copy of the library or
+ * dies at load with a message that points at the plugin rather than the cause.
+ */
+export function pluginPreset(overrides: Partial<Options> = {}): Options {
+  if (overrides.splitting === true) {
+    throw new Error(
+      'A CDT plugin must build to a single file: the host serves only dist/index.js, ' +
+      'so a code-split chunk would 404 in the browser. Remove `splitting: true`.',
+    )
+  }
+
+  if (overrides.format && !(overrides.format.length === 1 && overrides.format[0] === 'esm')) {
+    throw new Error(
+      'A CDT plugin must be ESM. The browser imports it directly and resolves its ' +
+      'bare specifiers through the host import map. Remove the `format` override.',
+    )
+  }
+
+  // `onSuccess` runs the guard and `external` is what the guard checks against.
+  // Overriding either would switch off the one thing this preset exists to do,
+  // and silently: the build would still pass. Refuse loudly instead.
+  if ('onSuccess' in overrides) {
+    throw new Error(
+      'Overriding `onSuccess` would switch off the CDT plugin import guard, which is ' +
+      'what stops a plugin bundling a second copy of React or three.js. If you need ' +
+      'your own post-build step, call assertBundleImports() from it.',
+    )
+  }
+
+  if ('external' in overrides) {
+    throw new Error(
+      'Overriding `external` would switch off the CDT plugin import guard by changing ' +
+      'what it checks against. The allowlist is fixed by what the host publishes a shim ' +
+      'for; a plugin cannot widen it. If you need your own post-build step, call ' +
+      'assertBundleImports() from it.',
+    )
+  }
+
+  return {
+    entry: ['src/index.ts'],
+    format: ['esm'],
+    outDir: OUT_DIR,
+    splitting: false,
+    treeshake: true,
+    clean: true,
+    target: 'es2022',
+    metafile: true,
+    external: [...PLUGIN_EXTERNALS],
+    esbuildOptions(options) {
+      options.jsx = 'automatic'
+    },
+    async onSuccess() {
+      await assertBundleImports(METAFILE, OUT_FILE)
+    },
+    ...overrides,
+  }
+}

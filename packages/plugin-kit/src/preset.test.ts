@@ -40,4 +40,19 @@ describe('pluginPreset', () => {
     expect(() => pluginPreset({ onSuccess: 'echo hi' })).toThrow(/import guard/i)
     expect(() => pluginPreset({ external: [] })).toThrow(/import guard/i)
   })
+
+  it('accepts `format` as a bare string, since Options.format is `Format[] | Format`', () => {
+    expect(() => pluginPreset({ format: 'esm' })).not.toThrow()
+    expect(() => pluginPreset({ format: ['esm'] })).not.toThrow()
+  })
+
+  it('refuses `format` overrides that are not exactly esm, string or array', () => {
+    expect(() => pluginPreset({ format: 'cjs' })).toThrow(/ESM/i)
+    expect(() => pluginPreset({ format: ['esm', 'cjs'] })).toThrow(/ESM/i)
+  })
+
+  it('refuses `outDir` and `entry` overrides, since METAFILE/OUT_FILE are hardcoded to dist/', () => {
+    expect(() => pluginPreset({ outDir: 'build' })).toThrow(/dist\/index\.js/i)
+    expect(() => pluginPreset({ entry: ['src/main.ts'] })).toThrow(/dist\/index\.js/i)
+  })
 })

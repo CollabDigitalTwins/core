@@ -34,10 +34,26 @@ export function pluginPreset(overrides: Partial<Options> = {}): Options {
     )
   }
 
-  if (overrides.format && !(overrides.format.length === 1 && overrides.format[0] === 'esm')) {
+  if (overrides.format !== undefined) {
+    // `Options.format` is typed `Format[] | Format`, so a bare string such as
+    // `format: 'esm'` is legitimate input, not an array. Normalise before
+    // checking length/contents so that valid shape does not get misread as
+    // three single-character entries.
+    const formats = Array.isArray(overrides.format) ? overrides.format : [overrides.format]
+
+    if (!(formats.length === 1 && formats[0] === 'esm')) {
+      throw new Error(
+        'A CDT plugin must be ESM. The browser imports it directly and resolves its ' +
+        'bare specifiers through the host import map. Remove the `format` override.',
+      )
+    }
+  }
+
+  if ('outDir' in overrides || 'entry' in overrides) {
     throw new Error(
-      'A CDT plugin must be ESM. The browser imports it directly and resolves its ' +
-      'bare specifiers through the host import map. Remove the `format` override.',
+      'A CDT plugin builds to dist/index.js from src/index.ts. The host serves that ' +
+      'exact path and nothing else, so `outDir` and `entry` are fixed by the delivery ' +
+      'contract rather than by preference.',
     )
   }
 

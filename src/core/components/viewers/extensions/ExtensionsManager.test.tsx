@@ -38,15 +38,27 @@ vi.mock('../../../store/Permissions/context', () => ({
   }),
 }))
 
-// Only the host-merging hook is stubbed, so these listings are the whole fixture.
-// `effectiveStatus` keeps its real implementation — it is pure, and it is what
-// decides which badge and which section a row lands in.
-vi.mock('./src/useExtensionListings', async importOriginal => ({
-  ...(await importOriginal<typeof import('./src/useExtensionListings')>()),
-  useExtensionListings: (listings?: ExtensionListing[]) => listings ?? [],
+// The data layer is stubbed so these listings are the whole fixture; the API and
+// SWR are not under test here. `effectiveStatus` keeps its real implementation —
+// it is pure, and it decides which badge and which section a row lands in.
+const { boundActions } = vi.hoisted(() => ({
+  boundActions: {
+    setInstalled: vi.fn(),
+    setOrgEnabled: vi.fn(),
+    setAllowUserOverride: vi.fn(),
+    setUserEnabled: vi.fn(),
+  },
 }))
 
-// The page reconciles the live host when unpersisted; neither is under test here.
+vi.mock('./src/useExtensionsData', () => ({
+  useExtensionsData: (listings?: ExtensionListing[]) => ({
+    listings: listings ?? [],
+    isLoading: false,
+  }),
+  useExtensionsActions: (override?: ExtensionsActions) => override ?? boundActions,
+}))
+
+// The page nudges the live host after a write; not under test here.
 vi.mock('../../../plugins/host/provider', () => ({ usePluginHost: () => null }))
 vi.mock('../../../plugins/installed', () => ({ INSTALLED_PLUGINS: [] }))
 
@@ -190,38 +202,29 @@ describe('failed plugins', () => {
 })
 
 describe('toasts', () => {
-  it('still lets the controls move without persistence, and says so inline', async () => {
-    // The switches stay usable so the page can be evaluated before the tables
-    // exist. Claiming "saved" would be a lie, so no toast fires — the banner
-    // carries the caveat instead.
+  it('moves the switch before the write resolves, so it never feels laggy', async () => {
     permissions.current = MEMBER
-    render(<ExtensionsManager listings={[listing({ userEnabled: false })]} />)
-
-    expect(screen.getByTestId('extensions-not-connected')).toHaveTextContent('toastNotConnected')
-
-    const toggle = within(card()).getByRole('switch', { name: 'userRun' })
-    expect(toggle).toBeEnabled()
-    expect(toggle).toHaveAttribute('aria-checked', 'false')
-
-    toggle.click()
-
-    await vi.waitFor(() => expect(
-      within(card()).getByRole('switch', { name: 'userRun' }),
-    ).toHaveAttribute('aria-checked', 'true'))
-    expect(toast.success).not.toHaveBeenCalled()
-  })
-
-  it('drops the notice once actions are supplied', () => {
-    permissions.current = MEMBER
+    let resolveWrite: () => void = () => {}
     const actions: ExtensionsActions = {
       setInstalled: vi.fn(),
       setOrgEnabled: vi.fn(),
       setAllowUserOverride: vi.fn(),
-      setUserEnabled: vi.fn().mockResolvedValue(undefined),
+      setUserEnabled: vi.fn().mockReturnValue(new Promise<void>(resolve => {
+        resolveWrite = resolve
+      })),
     }
-    render(<ExtensionsManager listings={[listing()]} actions={actions} />)
+    render(<ExtensionsManager listings={[listing({ userEnabled: false })]} actions={actions} />)
 
-    expect(screen.queryByTestId('extensions-not-connected')).not.toBeInTheDocument()
+    within(card()).getByRole('switch', { name: 'userRun' }).click()
+
+    // Still in flight, but the control has already answered the user.
+    await vi.waitFor(() => expect(
+      within(card()).getByRole('switch', { name: 'userRun' }),
+    ).toHaveAttribute('aria-checked', 'true'))
+    expect(toast.success).not.toHaveBeenCalled()
+
+    resolveWrite()
+    await vi.waitFor(() => expect(toast.success).toHaveBeenCalledWith('toastUserEnabled'))
   })
 
   it('reverts the switch when the write fails, so it never looks saved', async () => {

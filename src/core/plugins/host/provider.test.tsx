@@ -126,6 +126,47 @@ test('passes per-plugin config through to ctx.config', async () => {
   expect(seen).toEqual({ apiKey: 'secret' })
 })
 
+test('accepts a lazily-imported entry, so a plugin ships in its own chunk', async () => {
+  // Compiled-in plugins are dynamic imports: a static one would pull every
+  // plugin's components — and @thatopen for a BIM plugin — into the eager bundle.
+  const source = makeSource('lazy', 'Lazy')
+  let imported = false
+
+  render(
+    <PluginHostProvider plugins={[{
+      manifest: source.manifest,
+      entry: () => {
+        imported = true
+        return Promise.resolve(source.entry)
+      },
+    }]}>
+      <SidebarProbe />
+    </PluginHostProvider>,
+  )
+
+  expect(await screen.findByText('Lazy')).toBeInTheDocument()
+  expect(imported).toBe(true)
+})
+
+test('a chunk that fails to import does not stop the plugins after it', async () => {
+  const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+  render(
+    <PluginHostProvider plugins={[
+      {
+        manifest: makeSource('missing').manifest,
+        entry: () => Promise.reject(new Error('chunk load failed')),
+      },
+      makeSource('healthy', 'Healthy'),
+    ]}>
+      <SidebarProbe />
+    </PluginHostProvider>,
+  )
+
+  expect(await screen.findByText('Healthy')).toBeInTheDocument()
+  consoleSpy.mockRestore()
+})
+
 test('a plugin that throws during activation does not stop the next one', async () => {
   const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
   const plugins: PluginSource[] = [

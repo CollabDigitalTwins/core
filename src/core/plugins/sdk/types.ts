@@ -204,10 +204,27 @@ export interface PluginEntry {
   deactivate?(ctx: PluginContext): void | Promise<void>
 }
 
-/** One loadable plugin: its validated manifest plus its module. */
+/**
+ * One loadable plugin: its validated manifest plus its module.
+ *
+ * `entry` may be the module itself, or a thunk returning it. Prefer the thunk for
+ * anything compiled in: a static import pulls the plugin's components — and for a
+ * BIM plugin, `@thatopen` and three with them — into whatever imports
+ * `installed.ts`, which is every route including the map. A thunk defers that to
+ * activation, which happens client-side in an effect, so the weight lands in its
+ * own chunk. Runtime-loaded plugins are thunks by nature.
+ */
 export interface PluginSource {
   manifest: PluginManifest
-  entry: PluginEntry
+  entry: PluginEntry | (() => Promise<PluginEntry>)
+}
+
+/** Resolves either form of `PluginSource.entry` to the module. */
+export async function resolvePluginEntry(
+  entry: PluginSource['entry'],
+): Promise<PluginEntry> {
+  // A plugin module is an object with `activate`; a thunk is a bare function.
+  return typeof entry === 'function' ? entry() : entry
 }
 
 /**

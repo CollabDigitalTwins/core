@@ -2027,7 +2027,7 @@
     "toastUserEnabled": "{name} ahora se ejecuta para usted.",
     "toastUserDisabled": "{name} ya no se ejecuta para usted.",
     "toastFailed": "No se pudo cambiar {name}. Inténtelo de nuevo.",
-    "toastNotConnected": "Los ajustes de extensiones aún no están conectados a la base de datos, así que este cambio no se guardó.",
-    "userReadOnly": "Puede ver qué extensiones están disponibles, pero no cambiar lo que se ejecuta."
+    "userReadOnly": "Puede ver qué extensiones están disponibles, pero no cambiar lo que se ejecuta.",
+    "loading": "Cargando las extensiones…"
   }
 }

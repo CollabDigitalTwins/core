@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 
 import { usePluginHost } from '../../../plugins/host/provider'
 import { INSTALLED_PLUGINS } from '../../../plugins/installed'
+import { resolvePluginEntry } from '../../../plugins/sdk/types'
 import { usePermissions } from '../../../store/Permissions/context'
 import { ViewerNames } from '../../../types/dbTypes'
 import {
@@ -23,19 +24,20 @@ import { VIEWER_CONFIG } from '../Data/utils/viewerConfig'
 
 
 import { ExtensionCard } from './src/ExtensionCard'
-import { effectiveStatus, useExtensionListings } from './src/useExtensionListings'
+import { effectiveStatus } from './src/useExtensionListings'
+import { useExtensionsActions, useExtensionsData } from './src/useExtensionsData'
 
 
 import type { ExtensionListing, ExtensionsAbility, ExtensionsActions } from './types'
 
 interface Props {
   /**
-   * Rows from the app: manifests crossed with `PluginInstallation` and
-   * `PluginUserSetting`. Omit and the page falls back to the plugins compiled
-   * into this build of core, which is what it shows before persistence exists.
+   * Override the rows. Normally omitted — the page reads manifests crossed with
+   * `PluginInstallation` and `PluginUserSetting` through the `ApiAdapter` itself.
+   * Supplied by tests, and later by the runtime loader for mounted plugins.
    */
   listings?: ExtensionListing[]
-  /** The writes. Omit for a read-only page — controls show but do not save. */
+  /** Override the writes. Normally omitted; they bind to the API by default. */
   actions?: ExtensionsActions
 }
 
@@ -62,8 +64,8 @@ export function ExtensionsManager({ listings, actions }: Props) {
   const headerTitle = t('title')
   const MenuIcon = viewerConfig?.icon
 
-  const resolved = useExtensionListings(listings)
-  const connected = actions !== undefined
+  const { listings: resolved, isLoading } = useExtensionsData(listings)
+  const boundActions = useExtensionsActions(actions)
   const host = usePluginHost()
 
   /**
@@ -71,8 +73,8 @@ export function ExtensionsManager({ listings, actions }: Props) {
    *
    * Toggling is optimistic: the switch moves immediately and reverts if the write
    * fails, so the control never sits there looking successful while the server
-   * said no. It is also what makes the page usable before persistence exists —
-   * the switches work, they just do not survive a reload, which the banner says.
+   * said no. Cleared implicitly on the next fetch, when the server's answer
+   * becomes the resolved row.
    */
   const [overrides, setOverrides] = React.useState<Record<string, Partial<ExtensionListing>>>({})
 
@@ -131,15 +133,16 @@ export function ExtensionsManager({ listings, actions }: Props) {
     : []
 
   /**
-   * Apply a local toggle to the running plugins, so switching one off actually
-   * removes its toolbar button instead of only changing a badge.
+   * Reflect a saved change in the running viewer straight away, so turning a
+   * plugin off removes its toolbar button without a reload.
    *
-   * Only while unpersisted. Once the app supplies `actions`, enablement comes back
-   * through `enabledSlugs` and `PluginHostProvider` is the single reconciler —
-   * two of them racing over the same host would be a bug waiting to happen.
+   * `PluginHostProvider` reconciles from `enabledSlugs` too, but only when the
+   * app re-renders with fresh props; this closes the gap between the write
+   * landing and that happening. Both converge on the same target state, so the
+   * two agreeing is the normal case rather than a race.
    */
   React.useEffect(() => {
-    if (connected || !host) return
+    if (!host) return
 
     for (const row of rows) {
       const { slug } = row.manifest
@@ -149,30 +152,30 @@ export function ExtensionsManager({ listings, actions }: Props) {
 
       if (shouldRun) {
         const source = INSTALLED_PLUGINS.find(candidate => candidate.manifest.slug === slug)
-        if (source) void host.loadPlugin(source.manifest, source.entry, {})
+        if (source) {
+          void resolvePluginEntry(source.entry)
+            .then(entry => host.loadPlugin(source.manifest, entry, {}))
+            .catch(error => console.error(`Failed to load plugin "${slug}":`, error))
+        }
       } else {
         void host.unloadPlugin(slug)
       }
     }
-  }, [rows, host, connected])
+  }, [rows, host])
 
   /**
    * Every control routes through here, so optimistic update, revert-on-failure
    * and the toasts are written once rather than per switch.
-   *
-   * With no `actions` the change is applied locally and stays silent: claiming
-   * "saved" would be a lie, and the banner already explains why nothing persists.
    */
   const commit = React.useCallback(
     async (
       slug: string,
       name: string,
       patch: Partial<ExtensionListing>,
-      write: (() => Promise<void>) | undefined,
+      write: () => Promise<void>,
       success: string,
     ) => {
       setOverrides(current => ({ ...current, [slug]: { ...current[slug], ...patch } }))
-      if (!write) return
 
       try {
         await write()
@@ -232,18 +235,9 @@ export function ExtensionsManager({ listings, actions }: Props) {
 
           {/* Content */}
           <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-6 pb-8">
-            {!connected && (
-              <p
-                role="status"
-                data-testid="extensions-not-connected"
-                className="mb-4 flex items-start gap-2 rounded-xl border border-dashed p-3 text-sm text-muted-foreground"
-              >
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                {t('toastNotConnected')}
-              </p>
-            )}
-
-            {rows.length === 0 ? (
+            {isLoading && rows.length === 0 ? (
+              <Empty text={t('loading')} />
+            ) : rows.length === 0 ? (
               <Empty text={canManage.canInstall ? t('emptyAdmin') : t('empty')} />
             ) : filtered.length === 0 ? (
               <Empty text={t('noResults', { query: searchTerm.trim() })} />
@@ -259,7 +253,7 @@ export function ExtensionsManager({ listings, actions }: Props) {
                         key={row.manifest.slug}
                         listing={row}
                         ability={canManage}
-                        actions={actions}
+                        actions={boundActions}
                         commit={commit}
                       />
                     ))}
@@ -273,7 +267,7 @@ export function ExtensionsManager({ listings, actions }: Props) {
                         key={row.manifest.slug}
                         listing={row}
                         ability={canManage}
-                        actions={actions}
+                        actions={boundActions}
                         commit={commit}
                       />
                     ))}
@@ -293,7 +287,7 @@ type Commit = (
   slug: string,
   name: string,
   patch: Partial<ExtensionListing>,
-  write: (() => Promise<void>) | undefined,
+  write: () => Promise<void>,
   success: string,
 ) => Promise<void>
 
@@ -306,7 +300,7 @@ function Row({
 }: {
   listing: ExtensionListing
   ability: ExtensionsAbility
-  actions?: ExtensionsActions
+  actions: ExtensionsActions
   commit: Commit
 }) {
   const t = useTranslations('Extensions')
@@ -322,28 +316,28 @@ function Row({
         slug,
         name,
         { installed, status: installed ? 'off' : 'available' },
-        actions && (() => actions.setInstalled(slug, installed)),
+        () => actions.setInstalled(slug, installed),
         installed ? t('toastInstalled', { name }) : t('toastUninstalled', { name }),
       )}
       onSetOrgEnabled={enabled => void commit(
         slug,
         name,
         { orgEnabled: enabled },
-        actions && (() => actions.setOrgEnabled(slug, enabled)),
+        () => actions.setOrgEnabled(slug, enabled),
         enabled ? t('toastOrgEnabled', { name }) : t('toastOrgDisabled', { name }),
       )}
       onSetAllowUserOverride={allow => void commit(
         slug,
         name,
         { allowUserOverride: allow },
-        actions && (() => actions.setAllowUserOverride(slug, allow)),
+        () => actions.setAllowUserOverride(slug, allow),
         allow ? t('toastOverrideAllowed', { name }) : t('toastOverrideBlocked', { name }),
       )}
       onSetUserEnabled={enabled => void commit(
         slug,
         name,
         { userEnabled: enabled },
-        actions && (() => actions.setUserEnabled(slug, enabled)),
+        () => actions.setUserEnabled(slug, enabled),
         enabled ? t('toastUserEnabled', { name }) : t('toastUserDisabled', { name }),
       )}
       onCopyError={() => {

@@ -12,6 +12,7 @@ import { createInfrastructureHooks } from './infrastructures/createInfrastructur
 import { createOpenDataPortalHooks } from "./openDataPortals/createOpenDataPortalHooks";
 import { createOrganizationHooks } from "./organizations/createOrganizationHooks";
 import { createSensorHooks } from "./sensors/createSensorHooks";
+import { createPluginHooks } from "./plugins/createPluginHooks";
 import { createSensorTypeHooks } from "./sensorTypes/createSensorTypeHooks";
 import { createSiteHooks } from "./sites/createSiteHooks";
 import { createUserHooks } from "./users/createUserHooks";
@@ -34,6 +35,7 @@ export type HooksBag = {
   comment: ReturnType<typeof createCommentHooks>;
   sensor: ReturnType<typeof createSensorHooks>;
   sensorType: ReturnType<typeof createSensorTypeHooks>;
+  plugin: ReturnType<typeof createPluginHooks>;
 };
 export const HooksCtx = createContext<HooksBag | null>(null);
 
@@ -50,6 +52,7 @@ export function CoreHooksProvider({ adapter, children }:{ adapter: ApiAdapter; c
     comment: createCommentHooks(adapter),
     sensor: createSensorHooks(adapter),
     sensorType: createSensorTypeHooks(adapter),
+    plugin: createPluginHooks(adapter),
   }), [adapter]);
   return <HooksCtx.Provider value={hooks}>{children}</HooksCtx.Provider>;
 }

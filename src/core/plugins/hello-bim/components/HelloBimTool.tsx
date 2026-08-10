@@ -8,6 +8,7 @@ import * as React from 'react'
 import { Badge, Button, Separator } from '../../sdk/components'
 import { usePluginConfig } from '../../sdk/config'
 import { usePluginTranslations } from '../../sdk/messages'
+import { usePluginStore } from '../../sdk/store'
 
 import type { BimToolProps, ModelIdMap } from '../../sdk/bimViewer'
 import type { ToolbarToolProps } from '../../sdk/types'
@@ -46,6 +47,11 @@ export function HelloBimTool({
 }: ToolbarToolProps & BimToolProps) {
   const t = usePluginTranslations()
   const { category = 'IFCSPACE' } = usePluginConfig<Config>()
+
+  // The plugin's own storage. Namespaced to this plugin and this organization by
+  // core, so no ids are passed in and nothing else can read it. Keys are the
+  // plugin's choice — model plus element here, which is stable across reloads.
+  const notes = usePluginStore<{ note: string }>('notes')
 
   const [rows, setRows] = React.useState<SpaceRow[] | null>(null)
   const [items, setItems] = React.useState<ModelIdMap>({})
@@ -113,6 +119,16 @@ export function HelloBimTool({
     await fitToSelection()
   }
 
+  /** Proves the round trip: write a document, and see it survive a reload. */
+  const toggleNote = async (row: SpaceRow) => {
+    const key = `${row.modelId}:${row.localId}`
+    if (notes.get(key)) {
+      await notes.remove(key)
+    } else {
+      await notes.put(key, { note: row.name })
+    }
+  }
+
   return (
     <div className="w-72 p-1">
       <div className="flex items-center justify-between gap-2 px-2 py-1">
@@ -150,7 +166,7 @@ export function HelloBimTool({
 
           <ul className="max-h-64 overflow-y-auto">
             {rows.map(row => (
-              <li key={`${row.modelId}:${row.localId}`}>
+              <li key={`${row.modelId}:${row.localId}`} className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => void focus(row)}
@@ -161,6 +177,15 @@ export function HelloBimTool({
                   <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
                     {row.localId}
                   </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void toggleNote(row)}
+                  aria-pressed={Boolean(notes.get(`${row.modelId}:${row.localId}`))}
+                  title={t('noteHint', 'Save this space to the plugin’s own storage')}
+                  className="shrink-0 rounded px-1.5 text-xs text-muted-foreground hover:bg-muted aria-pressed:text-foreground"
+                >
+                  {notes.get(`${row.modelId}:${row.localId}`) ? '★' : '☆'}
                 </button>
               </li>
             ))}

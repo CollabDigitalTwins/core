@@ -5,7 +5,9 @@
   "hostApi": 1,
   "description": "Lists the spaces in a BIM model and selects them in the viewer.",
   "author": "Collab Digital Twins",
-  "capabilities": ["bim.tools"],
+  "capabilities": [
+    "bim.tools"
+  ],
   "requiredPermissions": [],
   "configSchema": {
     "type": "object",
@@ -28,7 +30,8 @@
       "noSpaces": "This model has no spaces defined.",
       "showSpaces": "Show spaces in the model",
       "hideSpaces": "Hide spaces in the model",
-      "unnamed": "Unnamed"
+      "unnamed": "Unnamed",
+      "noteHint": "Save this space to the plugin's own storage"
     },
     "fr": {
       "name": "Bonjour BIM",
@@ -39,7 +42,8 @@
       "noSpaces": "Cette maquette ne définit aucun espace.",
       "showSpaces": "Afficher les espaces dans la maquette",
       "hideSpaces": "Masquer les espaces dans la maquette",
-      "unnamed": "Sans nom"
+      "unnamed": "Sans nom",
+      "noteHint": "Enregistrer cet espace dans le stockage du plugiciel"
     },
     "es": {
       "name": "Hola BIM",
@@ -50,7 +54,8 @@
       "noSpaces": "Este modelo no define ningún espacio.",
       "showSpaces": "Mostrar los espacios en el modelo",
       "hideSpaces": "Ocultar los espacios en el modelo",
-      "unnamed": "Sin nombre"
+      "unnamed": "Sin nombre",
+      "noteHint": "Guardar este espacio en el almacenamiento del complemento"
     }
   }
 }

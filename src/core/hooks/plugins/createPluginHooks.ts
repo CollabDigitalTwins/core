@@ -3,7 +3,7 @@
 
 import useSWR, { mutate } from 'swr'
 
-import type { PluginInstallation, PluginUserSetting } from '../../types/plugins'
+import type { PluginInstallation, PluginRecord, PluginUserSetting } from '../../types/plugins'
 import type { ApiAdapter } from '../ports/apiAdapter'
 
 const INSTALLATIONS = ['pluginInstallations'] as const
@@ -70,5 +70,41 @@ export function createPluginHooks(adapter: ApiAdapter) {
     },
   }
 
-  return { usePluginInstallations, usePluginUserSettings, pluginActions }
+  /**
+   * One plugin's documents in one collection.
+   *
+   * Keyed by both, so two collections of the same plugin cache separately and a
+   * write to one does not revalidate the other. `pluginId` comes from the plugin
+   * scope at the call site, never from the plugin itself.
+   */
+  const usePluginRecords = (pluginId: string, collection: string) => {
+    const key = pluginId && collection ? ['pluginRecords', pluginId, collection] as const : null
+
+    const { data, error, isLoading } = useSWR<PluginRecord[]>(
+      key,
+      () => adapter.listPluginRecords(pluginId, collection),
+    )
+
+    const revalidate = () => (key ? mutate(key) : Promise.resolve())
+
+    return {
+      records: data ?? [],
+      isLoading,
+      isError: error,
+      // Arrow properties, not method shorthand: callers destructure these, and
+      // method shorthand would imply a `this` they do not have.
+      /** Create or replace one document. `key` is the plugin's own identifier. */
+      put: async (recordKey: string, value: unknown) => {
+        const saved = await adapter.putPluginRecord(pluginId, collection, recordKey, value)
+        await revalidate()
+        return saved
+      },
+      remove: async (recordKey: string) => {
+        await adapter.deletePluginRecord(pluginId, collection, recordKey)
+        await revalidate()
+      },
+    }
+  }
+
+  return { usePluginInstallations, usePluginUserSettings, usePluginRecords, pluginActions }
 }

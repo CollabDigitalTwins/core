@@ -10,6 +10,12 @@ import { promisify } from 'node:util'
 import { beforeAll, describe, expect, it } from 'vitest'
 
 import { PLUGIN_EXTERNALS } from './externals'
+import {
+  canVerifyBundled,
+  collectBundledPackages,
+  collectExternalImports,
+  type Metafile,
+} from './importGuard'
 import { PLUGIN_METAFILE, PLUGIN_OUT_FILE } from './preset'
 
 /**
@@ -81,6 +87,11 @@ function outputOf(failure: unknown): string {
     .trim()
 }
 
+/** The metafile a fixture's last build wrote, as the guard reads it. */
+async function metafileOf(name: string): Promise<Metafile> {
+  return JSON.parse(await readFile(join(fixture(name), PLUGIN_METAFILE), 'utf8')) as Metafile
+}
+
 describe('a plugin built with pluginPreset', () => {
   beforeAll(async () => {
     await requireKitBuilt()
@@ -89,21 +100,47 @@ describe('a plugin built with pluginPreset', () => {
     await run('npx', ['tsup'], { cwd: fixture('clean-plugin'), shell: true })
   }, 180_000)
 
-  it('emits exactly one JS file whose every import is on the allowlist', async () => {
+  it('emits exactly one JS file, with no sibling chunk to import', async () => {
     const files = (await readdir(cleanDist)).filter(name => name.endsWith('.js'))
 
     // The host serves dist/index.js and nothing beside it, so a second chunk would
     // 404 in the browser rather than merely bloat the output.
     expect(files).toEqual(['index.js'])
 
-    const source = await readFile(join(cleanDist, 'index.js'), 'utf8')
-    const specifiers = [...source.matchAll(/from\s*["']([^"']+)["']/g)].map(m => m[1])
+    // Read from the metafile rather than by matching `from "…"` in the emitted
+    // source. That regex looked like an independent re-derivation of the guard and
+    // was strictly weaker than one: it missed `import 'x'` and `import('x')`
+    // entirely and matched any text inside a string literal. This is the same data
+    // esbuild hands the guard, and the assertion below is the one the guard does
+    // not make — that nothing in the output is a *non-external* import, i.e. no
+    // chunk of the plugin's own code was split out.
+    const imports = (await metafileOf('clean-plugin')).outputs[PLUGIN_OUT_FILE].imports ?? []
 
+    expect(imports.filter(entry => !entry.external)).toEqual([])
+  })
+
+  it('imports nothing outside the allowlist, read from the build\'s own metafile', async () => {
+    const specifiers = collectExternalImports(await metafileOf('clean-plugin'), PLUGIN_OUT_FILE)
+
+    // A plugin that imported nothing would pass the loop below vacuously, and this
+    // fixture imports React and three SDK modules.
     expect(specifiers.length).toBeGreaterThan(0)
 
     for (const specifier of specifiers) {
       expect(PLUGIN_EXTERNALS).toContain(specifier)
     }
+  })
+
+  it('inlines nothing, and says so from a layout the scan can read', async () => {
+    // The other half of the guard, against real tool output. A correctly written
+    // plugin leaves every host library external, so esbuild reads only the plugin's
+    // own source: `inputs` here is exactly ["src/index.tsx"], with no node_modules
+    // path in it. That shape has to come out *verifiable and clean* — treating "no
+    // node_modules inputs" as suspicious would fail every well-written plugin.
+    const metafile = await metafileOf('clean-plugin')
+
+    expect(canVerifyBundled(metafile)).toEqual({ verifiable: true })
+    expect(collectBundledPackages(metafile)).toEqual([])
   })
 
   it('writes the metafile at the path and output key the import guard reads', async () => {
@@ -186,5 +223,15 @@ describe('a plugin built with pluginPreset', () => {
     expect(output).toMatch(/Forbidden libraries bundled instead of left external/)
     expect(output).toMatch(/three/)
     expect(output).not.toMatch(/Could not resolve/)
+
+    // And the same conclusion drawn from the metafile that build just wrote, which
+    // is the only place in this package where the package-name extraction meets a
+    // path a real installer produced rather than one a test author typed. tsup
+    // writes the metafile before `onSuccess` runs, so it is there despite the
+    // failure above.
+    const metafile = await metafileOf('dirty-plugin')
+
+    expect(canVerifyBundled(metafile)).toEqual({ verifiable: true })
+    expect(collectBundledPackages(metafile)).toContain('three')
   }, 180_000)
 })

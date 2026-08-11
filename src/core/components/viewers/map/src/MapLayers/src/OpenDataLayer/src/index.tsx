@@ -15,6 +15,7 @@ import { fitGeoJsonBounds } from "../../../../../utils/fitGeojsonBounds";
 import { MapLayerClickPriority } from "../../../../../utils/MapEventManager/MapClickManager";
 import MapFeaturePopoverMenu from "../../../../MapFeaturePopoverMenu";
 
+import { groupFeaturesByGeometry } from "./geometryGroups";
 import { WmsTimeControl } from "./WmsTimeControl";
 
 import type { Building } from '../../../../../../../../types/dbTypes';
@@ -107,9 +108,6 @@ const GeoJsonDatasetLayer = React.memo(({ dataset, index, onLayerReady, onLayerR
     const layerContent = React.useMemo(() => {
         if (!featureCollection || featureCollection.features.length === 0) return null;
 
-        const geometryType = featureCollection.features[0]?.geometry?.type;
-        if (!geometryType) return null;
-
         // ── colour resolution ──
         let layerColor: any = dataset.layerColor?.color || '#0d9488';
         let numericFieldName: string | undefined;
@@ -179,27 +177,34 @@ const GeoJsonDatasetLayer = React.memo(({ dataset, index, onLayerReady, onLayerR
             }),
         };
 
-        // ── build layer props per geometry type ──
+        // ── build one layer set per geometry family present ──
+        // MapLibre needs a different layer type for points, lines and polygons,
+        // and clustering only works on a points-only source — so each family
+        // gets its own source. Reading features[0] and picking a single branch
+        // silently dropped every other geometry in a mixed collection.
         const registeredIds: string[] = [];
+        const sources: React.ReactNode[] = [];
 
-        if (geometryType === 'Point' || geometryType === 'MultiPoint') {
-            const paint = {
-                'circle-radius': 6,
-                'circle-color': layerColor,
-                'circle-opacity': 0.8,
-                'circle-stroke-width': 2,
-                'circle-stroke-color': '#ffffff',
-            };
-            registeredIds.push(`${dataset.name}-unclustered-point`);
+        for (const group of groupFeaturesByGeometry(enrichedFC)) {
+            const sourceId = `${dataset.name}-source-${group.kind}`;
+            const sourceKey = `${index}-${sourceId}`;
 
-            return {
-                registeredIds,
-                jsx: (
+            if (group.kind === 'points') {
+                const paint = {
+                    'circle-radius': 6,
+                    'circle-color': layerColor,
+                    'circle-opacity': 0.8,
+                    'circle-stroke-width': 2,
+                    'circle-stroke-color': '#ffffff',
+                };
+                registeredIds.push(`${dataset.name}-unclustered-point`);
+
+                sources.push(
                     <Source
-                        id={`${dataset.name}-source`}
-                        key={`${index}-${dataset.name}-source`}
+                        id={sourceId}
+                        key={sourceKey}
                         type="geojson"
-                        data={enrichedFC}
+                        data={group.featureCollection}
                         cluster={true}
                         clusterMaxZoom={11}
                         clusterRadius={50}
@@ -231,62 +236,58 @@ const GeoJsonDatasetLayer = React.memo(({ dataset, index, onLayerReady, onLayerR
                             type="circle"
                             paint={paint}
                         />
-                    </Source>
-                ),
-            };
-        }
+                    </Source>,
+                );
+                continue;
+            }
 
-        if (geometryType === 'LineString' || geometryType === 'MultiLineString') {
-            const mainId = `${dataset.name}-line`;
-            registeredIds.push(mainId);
-            return {
-                registeredIds,
-                jsx: (
+            if (group.kind === 'lines') {
+                const mainId = `${dataset.name}-line`;
+                registeredIds.push(mainId);
+                sources.push(
                     <Source
-                        id={`${dataset.name}-source`}
-                        key={`${index}-${dataset.name}-source`}
+                        id={sourceId}
+                        key={sourceKey}
                         type="geojson"
-                        data={enrichedFC}
+                        data={group.featureCollection}
                     >
                         <Layer
                             id={mainId}
                             type="line"
                             paint={{ 'line-color': layerColor, 'line-width': 3, 'line-opacity': 1 }}
                         />
-                    </Source>
-                ),
-            };
-        }
+                    </Source>,
+                );
+                continue;
+            }
 
-        if (geometryType === 'Polygon' || geometryType === 'MultiPolygon') {
             const fillId = `${dataset.name}-fill`;
             const outlineId = `${dataset.name}-outline`;
             registeredIds.push(fillId, outlineId);
-            return {
-                registeredIds,
-                jsx: (
-                    <Source
-                        id={`${dataset.name}-source`}
-                        key={`${index}-${dataset.name}-source`}
-                        type="geojson"
-                        data={enrichedFC}
-                    >
-                        <Layer
-                            id={fillId}
-                            type="fill"
-                            paint={{ 'fill-color': layerColor, 'fill-opacity': 0.5 }}
-                        />
-                        <Layer
-                            id={outlineId}
-                            type="line"
-                            paint={{ 'line-color': '#ffffff', 'line-width': 2 }}
-                        />
-                    </Source>
-                ),
-            };
+            sources.push(
+                <Source
+                    id={sourceId}
+                    key={sourceKey}
+                    type="geojson"
+                    data={group.featureCollection}
+                >
+                    <Layer
+                        id={fillId}
+                        type="fill"
+                        paint={{ 'fill-color': layerColor, 'fill-opacity': 0.5 }}
+                    />
+                    <Layer
+                        id={outlineId}
+                        type="line"
+                        paint={{ 'line-color': '#ffffff', 'line-width': 2 }}
+                    />
+                </Source>,
+            );
         }
 
-        return null;
+        if (sources.length === 0) return null;
+
+        return { registeredIds, jsx: <>{sources}</> };
     }, [featureCollection, dataset.name, dataset.layerColor, dataset.selectedFieldName, dataset.fields, index]);
 
     // Register / unregister interactive layer IDs with the parent

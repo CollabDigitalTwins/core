@@ -1,57 +1,190 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
+/**
+ * Drift guard for `@collabdt/plugin-kit`'s restatement of core's plugin types.
+ *
+ * This file used to be six substring matches over the kit's source *text*, which
+ * is worth spelling out because it looked like a test and was not one:
+ * `toContain('maplibre-gl')` was satisfied by the doc comment above the import,
+ * `toContain("'map.tools'")` by a comment on `VALID_CAPABILITIES`, and
+ * `toContain('icon: string')` passed with the line commented out. Every one of
+ * them stayed green through a change that broke what it claimed to check.
+ *
+ * What replaced them:
+ *
+ *  - The two constants are compared as **values**, imported from both sides. A
+ *    number is a number; there is nothing to match a comment against.
+ *  - The shapes are compared as **types**, in the style of the two guards beside
+ *    this one: assertions that are compile errors when they fail, plus a `tsc` run
+ *    that makes vitest see them.
+ *  - The per-surface confinement checks — map must not name the BIM library, and
+ *    so on — stay textual, because what they check *is* a property of the source
+ *    rather than of the types. But they read the file's **module references**,
+ *    parsed out by TypeScript itself, instead of searching the whole text. Prose
+ *    in a doc comment can no longer satisfy them, and the assertion is on the
+ *    exact set: an import added to a surface file has to be looked at.
+ */
 
+import { readFileSync } from 'node:fs'
+import { dirname, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+import ts from 'typescript'
 import { describe, expect, it } from 'vitest'
 
+import {
+  PLUGIN_HOST_API as KIT_PLUGIN_HOST_API,
+  VALID_CAPABILITIES as KIT_VALID_CAPABILITIES,
+} from '../../../../packages/plugin-kit/src/types/base'
 import { VALID_CAPABILITIES } from '../sdk/types'
 import { PLUGIN_HOST_API } from '../sdk/version'
 
-const KIT_TYPES = join(process.cwd(), 'packages/plugin-kit/src/types')
+import { runTsc, type TscRun } from './__tests__/tscProbe'
 
-const read = (file: string) => readFileSync(join(KIT_TYPES, file), 'utf8')
+import type * as Kit from '../../../../packages/plugin-kit/src/types/base'
+import type * as Core from '../sdk/types'
+
+// --- Compile-time assertions ---
+
+type Exact<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false
+
+type Same<A, B> = Exact<A, B> extends true ? true : { got: A, expected: B }
+type Accepts<Given, Wanted> = [Given] extends [Wanted]
+  ? true
+  : { 'DRIFT: core would reject what the kit lets a plugin write': Given, expected: Wanted }
+
+/**
+ * The capability set, as a union rather than as the `as const` tuple, so
+ * reordering the list is not drift but adding or dropping one is.
+ */
+const _capabilities: Same<Kit.PluginCapability, Core.PluginCapability> = true
+
+/**
+ * `icon` is where the kit deliberately parts company with core: core accepts a
+ * string *or* a Lucide component, and the kit types only the string, which is what
+ * keeps the icon package out of a plugin's dependencies. Both halves of that are
+ * asserted — exactly `string`, and still something core takes — because either one
+ * alone is satisfiable by an accident.
+ */
+const _iconIsOnlyAString: Same<Kit.ToolbarRegistration['icon'], string> = true
+const _iconIsStillValid: Accepts<
+  Kit.ToolbarRegistration['icon'],
+  Core.ToolbarRegistration['icon']
+> = true
+
+/**
+ * The two shapes a plugin author writes by hand and hands to core. Assignability
+ * in that direction is the whole contract: core has to accept what the kit told
+ * them to write. The reverse is not required — the kit is allowed to be narrower,
+ * and `icon` above is exactly that.
+ */
+const _manifest: Accepts<Kit.PluginManifest, Core.PluginManifest> = true
+const _registration: Accepts<Kit.ToolbarRegistration, Core.ToolbarRegistration> = true
+
+void [
+  _capabilities,
+  _iconIsOnlyAString, _iconIsStillValid,
+  _manifest, _registration,
+]
+
+// --- The kit's source, as TypeScript parses it ---
+
+const HERE = dirname(fileURLToPath(import.meta.url))
+const KIT_TYPES = resolve(HERE, '../../../../packages/plugin-kit/src/types')
+
+/**
+ * Every module a file references: `import`, `export … from`, and inline
+ * `import('…')` types alike. Parsed rather than matched, so a specifier named in a
+ * doc comment is not one of them — which is the failure this file exists to stop
+ * repeating.
+ */
+function moduleReferences(file: string): string[] {
+  const path = join(KIT_TYPES, file)
+  const source = ts.createSourceFile(
+    path,
+    readFileSync(path, 'utf8'),
+    ts.ScriptTarget.Latest,
+    true,
+  )
+
+  const found = new Set<string>()
+
+  const visit = (node: ts.Node): void => {
+    if (
+      (ts.isImportDeclaration(node) || ts.isExportDeclaration(node))
+      && node.moduleSpecifier
+      && ts.isStringLiteral(node.moduleSpecifier)
+    ) {
+      found.add(node.moduleSpecifier.text)
+    }
+
+    if (
+      ts.isImportTypeNode(node)
+      && ts.isLiteralTypeNode(node.argument)
+      && ts.isStringLiteral(node.argument.literal)
+    ) {
+      found.add(node.argument.literal.text)
+    }
+
+    ts.forEachChild(node, visit)
+  }
+
+  visit(source)
+
+  return [...found].sort()
+}
+
+// --- The runtime half ---
+
+// The compiler run, its settings and the reading of its output are shared with the
+// other plugin-kit guards; see `__tests__/tscProbe.ts` and the tsconfig it names.
+let cachedRun: TscRun | undefined
+const tscRun = () => (cachedRun ??= runTsc('pluginKitTypes.test.ts'))
 
 describe('@collabdt/plugin-kit types', () => {
   it('declares the same host API version core enforces', () => {
-    expect(read('base.ts')).toContain(`PLUGIN_HOST_API = ${PLUGIN_HOST_API}`)
+    expect(KIT_PLUGIN_HOST_API).toBe(PLUGIN_HOST_API)
   })
 
-  it('lists exactly the capabilities core renders', () => {
-    const base = read('base.ts')
-
-    for (const capability of VALID_CAPABILITIES) {
-      expect(base).toContain(`'${capability}'`)
-    }
+  it('lists exactly the capabilities core accepts', () => {
+    // Sorted: the list is a validation set, so its order carries no meaning and a
+    // reorder in core is not something a plugin author should have to react to.
+    expect([...KIT_VALID_CAPABILITIES].sort()).toEqual([...VALID_CAPABILITIES].sort())
   })
 
-  it('keeps the heavy viewer types out of the shared base', () => {
-    const base = read('base.ts')
+  it('actually ran the compiler over the assertions above', () => {
+    const run = tscRun()
 
-    expect(base).not.toContain('@thatopen/components')
-    expect(base).not.toContain('maplibre-gl')
-  })
+    expect([0, 1, 2]).toContain(run.status)
+    expect(run.compiledTheFile).toBe(true)
+    expect(run.fileCount).toBeGreaterThan(1)
+    expect(run.checked).toBe(true)
+  }, 180_000)
 
-  it('narrows icon to a string so a plugin never needs lucide-react', () => {
-    const base = read('base.ts')
+  it('restates shapes core still accepts', () => {
+    expect(tscRun().diagnostics.join('\n')).toBe('')
+  }, 180_000)
 
-    expect(base).toContain('icon: string')
-    expect(base).not.toContain('LucideProps')
-    expect(base).not.toContain('lucide-react')
+  it('keeps the heavy viewer libraries out of the shared base', () => {
+    // `react` is type-only and erased; nothing else may be named here at all,
+    // because every surface file re-exports this one.
+    expect(moduleReferences('base.ts')).toEqual(['react'])
+    expect(moduleReferences('components.ts')).toEqual(['react'])
   })
 
   it('confines each viewer library to its own surface file', () => {
-    expect(read('map.ts')).toContain('maplibre-gl')
-    expect(read('map.ts')).not.toContain('@thatopen/components')
+    // Exact sets, not "does not contain": a surface file gaining an import is the
+    // event worth reviewing, whichever library it names.
+    expect(moduleReferences('map.ts')).toEqual(['./base', 'maplibre-gl'])
+    expect(moduleReferences('bim.ts')).toEqual(['./base', '@thatopen/components'].sort())
+    expect(moduleReferences('pointcloud.ts')).toEqual(['./base'])
+    expect(moduleReferences('legend.ts')).toEqual(['./base'])
+  })
 
-    expect(read('bim.ts')).toContain('@thatopen/components')
-    expect(read('bim.ts')).not.toContain('maplibre-gl')
-
-    expect(read('pointcloud.ts')).not.toContain('@thatopen/components')
-    expect(read('pointcloud.ts')).not.toContain('maplibre-gl')
-
-    expect(read('legend.ts')).not.toContain('@thatopen/components')
-    expect(read('legend.ts')).not.toContain('maplibre-gl')
+  it('keeps the ambient SDK declarations free of anything a plugin must install', () => {
+    // The one module it may name is the kit's own components file, which is where
+    // the component shapes live so that core can compare against them.
+    expect(moduleReferences('sdkModules.d.ts')).toEqual(['./components'])
   })
 })

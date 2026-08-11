@@ -30,12 +30,11 @@
 
 /// <reference path="../../../../packages/plugin-kit/src/types/sdkModules.d.ts" />
 
-import { execFileSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 import { describe, expect, it } from 'vitest'
+
+import { runTsc, TSC, type TscRun } from './__tests__/tscProbe'
 
 // Type-only: nothing here is loaded at runtime, so this stays a node-env test.
 import type * as SdkConfig from '../sdk/config'
@@ -154,69 +153,10 @@ void [
 
 // --- The runtime half that makes the assertions above actually run ---
 
-const HERE = dirname(fileURLToPath(import.meta.url))
-const REPO_ROOT = resolve(HERE, '../../../..')
-const THIS_FILE = join(HERE, 'pluginKitSdkModules.test.ts')
-
-const TSC = join(REPO_ROOT, 'node_modules/typescript/bin/tsc')
-
-/**
- * The settings live in `pluginKit.tsconfig.json` beside this file, which also names
- * the files to compile. Not core's tsconfig: that sets `strict: false`, which would
- * hide a nullability change. See that file for why it is a file and not flags.
- */
-const TSC_ARGS = [
-  '-p', join(HERE, 'pluginKit.tsconfig.json'),
-  // The stats block is evidence the compiler ran and reached the checking phase;
-  // the file list is evidence this file was in the program. Diagnostics alone show
-  // neither, since a clean run and a run that never happened look identical.
-  '--extendedDiagnostics',
-  '--listFiles',
-]
-
-interface TscRun {
-  /** tsc's exit code, or -1 if the process never started. */
-  status: number
-  output: string
-  /** Diagnostic lines reported against this file, and only this file. */
-  diagnostics: string[]
-}
-
-/**
- * Diagnostics are filtered to this file because checking it pulls in core's SDK
- * chain, and with it the viewer typings, which do not compile clean under
- * `--strict`. Failing on those would make this a referendum on unrelated code. The
- * cost of that filter is that "tsc never ran" reads exactly like "tsc found
- * nothing", so the run is reported separately and asserted on first.
- */
-function runTsc(): TscRun {
-  let status = 0
-  let output = ''
-
-  try {
-    output = execFileSync(process.execPath, [TSC, ...TSC_ARGS], {
-      cwd: REPO_ROOT,
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-    })
-  } catch (error) {
-    const failure = error as { stdout?: string; stderr?: string; status?: number }
-    status = failure.status ?? -1
-    output = `${failure.stdout ?? ''}${failure.stderr ?? ''}`
-  }
-
-  return {
-    status,
-    output,
-    diagnostics: output
-      .split(/\r?\n/)
-      .filter(line => line.includes('pluginKitSdkModules.test.ts(')),
-  }
-}
-
-/** One run, shared by the assertions below. tsc over this chain is not cheap. */
+// The compiler run, its settings and the reading of its output are shared with the
+// other plugin-kit guards; see `__tests__/tscProbe.ts` and the tsconfig it names.
 let cachedRun: TscRun | undefined
-const tscRun = () => (cachedRun ??= runTsc())
+const tscRun = () => (cachedRun ??= runTsc('pluginKitSdkModules.test.ts'))
 
 describe('@collabdt/plugin-kit SDK module declarations', () => {
   it('has a compiler to run them with', () => {
@@ -226,19 +166,13 @@ describe('@collabdt/plugin-kit SDK module declarations', () => {
   it('actually ran that compiler over this file', () => {
     const run = tscRun()
 
-    // tsc's ExitStatus: 0 clean, 1 and 2 diagnostics reported, 3 and 4 an unusable
-    // project. -1 is this file's own marker for a process that never started.
+    // A verdict, not a crash and not a broken project.
     expect([0, 1, 2]).toContain(run.status)
-
-    // With `-p`, the file list comes from the tsconfig. Dropping this file from it
-    // would leave every assertion above unchecked and this test green.
-    expect(run.output.split(/\r?\n/)).toContain(THIS_FILE.replace(/\\/g, '/'))
-
-    const files = /^Files:\s+(\d+)$/m.exec(run.output)
-
-    expect(files).not.toBeNull()
-    expect(Number(files?.[1])).toBeGreaterThan(1)
-    expect(run.output).toMatch(/^Check time:/m)
+    // The assertions above were in the program tsc compiled.
+    expect(run.compiledTheFile).toBe(true)
+    // Over core's real SDK chain, and it got as far as checking.
+    expect(run.fileCount).toBeGreaterThan(1)
+    expect(run.checked).toBe(true)
   }, 180_000)
 
   it('declares nothing core does not still provide', () => {

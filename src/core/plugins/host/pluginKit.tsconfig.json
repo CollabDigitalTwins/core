@@ -39,6 +39,7 @@
   // its own file.
   "files": [
     "./pluginKitComponents.test.ts",
-    "./pluginKitSdkModules.test.ts"
+    "./pluginKitSdkModules.test.ts",
+    "./pluginKitTypes.test.ts"
   ]
 }

@@ -26,12 +26,11 @@
  * pass no matter how far core moved.
  */
 
-import { execFileSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 import { describe, expect, it } from 'vitest'
+
+import { runTsc, TSC, type TscRun } from './__tests__/tscProbe'
 
 // Type-only: nothing here is loaded at runtime, so this stays a node-env test.
 import type * as Kit from '../../../../packages/plugin-kit/src/types/components'
@@ -99,83 +98,10 @@ void [
 
 // --- The runtime half that makes the assertions above actually run ---
 
-const HERE = dirname(fileURLToPath(import.meta.url))
-const REPO_ROOT = resolve(HERE, '../../../..')
-const THIS_FILE = join(HERE, 'pluginKitComponents.test.ts')
-
-const TSC = join(REPO_ROOT, 'node_modules/typescript/bin/tsc')
-
-/**
- * The settings live in `pluginKit.tsconfig.json` beside this file, which also
- * names the files to compile. They are the kit's own settings rather than core's,
- * which sets `strict: false` and would collapse `string | undefined` into `string`;
- * and they pin `react` to one copy of its types, without which this comparison
- * fails on version skew between two installs rather than on drift. See that file.
- */
-const TSC_ARGS = [
-  '-p', join(HERE, 'pluginKit.tsconfig.json'),
-  // Prints a stats block ("Files: 823", "Check time: 1.03s") whether or not it
-  // reported anything, and lists every file in the program. Together they are the
-  // evidence the compiler ran, reached the checking phase, and had this file in
-  // front of it — none of which the diagnostics can show, since a clean run and a
-  // run that never happened both produce zero matching lines.
-  '--extendedDiagnostics',
-  '--listFiles',
-]
-
-interface TscRun {
-  /** tsc's exit code: 0 clean, 1 diagnostics reported, 2+ a configuration failure. */
-  status: number
-  /** stdout and stderr together; tsc reports diagnostics on stdout. */
-  output: string
-  /** Diagnostic lines reported against this file, and only this file. */
-  diagnostics: string[]
-}
-
-/**
- * Runs tsc over this file and reports what came back.
- *
- * Diagnostics are filtered to this file because checking it drags in core's whole
- * UI import chain, which does not compile clean under `--strict` — it was never
- * meant to, core builds with `strict: false`. Failing on those would make this test
- * a referendum on unrelated code.
- *
- * That filter is also what makes "tsc never ran" and "every error landed elsewhere"
- * both read as success, which is the shape that let a `skipLibCheck` defect ship.
- * So the run itself is reported separately from its diagnostics, and asserted on
- * before the absence of diagnostics is allowed to mean anything.
- */
-function runTsc(): TscRun {
-  let status = 0
-  let output = ''
-
-  try {
-    output = execFileSync(process.execPath, [TSC, ...TSC_ARGS], {
-      cwd: REPO_ROOT,
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-    })
-  } catch (error) {
-    // tsc exits non-zero whenever it reports anything, including for other files.
-    // A failure to *start* lands here too, with no status and no output, which is
-    // exactly the case this needs to keep separable from a clean compile.
-    const failure = error as { stdout?: string; stderr?: string; status?: number }
-    status = failure.status ?? -1
-    output = `${failure.stdout ?? ''}${failure.stderr ?? ''}`
-  }
-
-  return {
-    status,
-    output,
-    diagnostics: output
-      .split(/\r?\n/)
-      .filter(line => line.includes('pluginKitComponents.test.ts(')),
-  }
-}
-
-/** One run, shared by the assertions below. tsc over this chain is not cheap. */
+// The compiler run, its settings and the reading of its output are shared with the
+// other plugin-kit guards; see `__tests__/tscProbe.ts` and the tsconfig it names.
 let cachedRun: TscRun | undefined
-const tscRun = () => (cachedRun ??= runTsc())
+const tscRun = () => (cachedRun ??= runTsc('pluginKitComponents.test.ts'))
 
 describe('@collabdt/plugin-kit component declarations', () => {
   it('has a compiler to run them with', () => {
@@ -185,24 +111,13 @@ describe('@collabdt/plugin-kit component declarations', () => {
   it('actually ran that compiler over this file', () => {
     const run = tscRun()
 
-    // tsc's ExitStatus: 0 clean, 1 and 2 diagnostics reported (which is expected
-    // here — core's chain does not compile clean under --strict), 3 and 4 an
-    // unusable project. -1 is this file's own marker for a process that never
-    // started. Only the first three are a verdict on the code.
+    // A verdict, not a crash and not a broken project.
     expect([0, 1, 2]).toContain(run.status)
-
-    // With `-p`, the file list comes from the tsconfig. Dropping this file from it
-    // would leave every assertion above unchecked and this test green, so the
-    // program is asked what it actually compiled.
-    expect(run.output.split(/\r?\n/)).toContain(THIS_FILE.replace(/\\/g, '/'))
-
-    // And it got past parsing into checking, over a program that really did pull
-    // in core's chain rather than this file alone.
-    const files = /^Files:\s+(\d+)$/m.exec(run.output)
-
-    expect(files).not.toBeNull()
-    expect(Number(files?.[1])).toBeGreaterThan(1)
-    expect(run.output).toMatch(/^Check time:/m)
+    // The assertions above were in the program tsc compiled.
+    expect(run.compiledTheFile).toBe(true)
+    // Over core's real chain, and it got as far as checking.
+    expect(run.fileCount).toBeGreaterThan(1)
+    expect(run.checked).toBe(true)
   }, 180_000)
 
   it('declares no prop the real components do not have, and none with a different type', () => {

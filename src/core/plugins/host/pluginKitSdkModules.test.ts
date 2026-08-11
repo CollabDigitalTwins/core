@@ -160,22 +160,18 @@ const THIS_FILE = join(HERE, 'pluginKitSdkModules.test.ts')
 
 const TSC = join(REPO_ROOT, 'node_modules/typescript/bin/tsc')
 
-/** Not core's tsconfig: it sets `strict: false`, which would hide a nullability change. */
+/**
+ * The settings live in `pluginKit.tsconfig.json` beside this file, which also names
+ * the files to compile. Not core's tsconfig: that sets `strict: false`, which would
+ * hide a nullability change. See that file for why it is a file and not flags.
+ */
 const TSC_ARGS = [
-  '--noEmit',
-  '--strict',
-  '--skipLibCheck',
-  '--jsx', 'react-jsx',
-  '--target', 'es2022',
-  '--module', 'esnext',
-  '--moduleResolution', 'bundler',
-  '--lib', 'es2022,dom,dom.iterable',
-  '--esModuleInterop',
-  '--resolveJsonModule',
-  // Prints a stats block whether or not anything was reported. It is the evidence
-  // that the compiler ran and got as far as checking; diagnostics alone cannot
-  // give that, since a clean run and a run that never happened look identical.
+  '-p', join(HERE, 'pluginKit.tsconfig.json'),
+  // The stats block is evidence the compiler ran and reached the checking phase;
+  // the file list is evidence this file was in the program. Diagnostics alone show
+  // neither, since a clean run and a run that never happened look identical.
   '--extendedDiagnostics',
+  '--listFiles',
 ]
 
 interface TscRun {
@@ -198,7 +194,7 @@ function runTsc(): TscRun {
   let output = ''
 
   try {
-    output = execFileSync(process.execPath, [TSC, ...TSC_ARGS, THIS_FILE], {
+    output = execFileSync(process.execPath, [TSC, ...TSC_ARGS], {
       cwd: REPO_ROOT,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -233,6 +229,10 @@ describe('@collabdt/plugin-kit SDK module declarations', () => {
     // tsc's ExitStatus: 0 clean, 1 and 2 diagnostics reported, 3 and 4 an unusable
     // project. -1 is this file's own marker for a process that never started.
     expect([0, 1, 2]).toContain(run.status)
+
+    // With `-p`, the file list comes from the tsconfig. Dropping this file from it
+    // would leave every assertion above unchecked and this test green.
+    expect(run.output.split(/\r?\n/)).toContain(THIS_FILE.replace(/\\/g, '/'))
 
     const files = /^Files:\s+(\d+)$/m.exec(run.output)
 

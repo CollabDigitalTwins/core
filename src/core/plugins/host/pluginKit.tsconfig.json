@@ -1,0 +1,44 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+//
+// The compiler settings for the two plugin-kit drift guards next door. They spawn
+// `tsc -p` against this file and read what it says about their own source.
+//
+// Deliberately not core's tsconfig: that one sets `strict: false`, which would
+// collapse `string | undefined` into `string` and let a nullability change through
+// unnoticed. These are the kit's own settings, which are also a plugin author's.
+//
+// The `paths` entry is the reason this is a file rather than a list of CLI flags:
+// `paths` has no command-line form. `packages/plugin-kit` is its own install root,
+// so once anything puts `@types/react` in its node_modules — which npm now does on
+// its own, since the kit lists it as a required peer — the kit's `components.ts`
+// resolves React's types from there while core resolves them from the repo root.
+// Two copies of those declarations are not the same types: a patch-level csstype
+// difference alone makes `HTMLAttributes` structurally unequal, and every
+// assertion fails for a reason that has nothing to do with drift. Pinning both
+// sides to one copy is what makes the comparison about the props.
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "jsx": "react-jsx",
+    "target": "es2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "baseUrl": "../../../..",
+    "paths": {
+      "react": ["node_modules/@types/react"],
+      "react-dom": ["node_modules/@types/react-dom"]
+    }
+  },
+  // Both guards compile in one program; each reads only the diagnostics against
+  // its own file.
+  "files": [
+    "./pluginKitComponents.test.ts",
+    "./pluginKitSdkModules.test.ts"
+  ]
+}

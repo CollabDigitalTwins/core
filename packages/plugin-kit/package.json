@@ -49,9 +49,6 @@
     "@thatopen/components": {
       "optional": true
     },
-    "@types/react": {
-      "optional": true
-    },
     "maplibre-gl": {
       "optional": true
     }

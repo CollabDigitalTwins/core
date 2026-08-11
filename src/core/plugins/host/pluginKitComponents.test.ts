@@ -106,26 +106,21 @@ const THIS_FILE = join(HERE, 'pluginKitComponents.test.ts')
 const TSC = join(REPO_ROOT, 'node_modules/typescript/bin/tsc')
 
 /**
- * Deliberately not core's tsconfig: it sets `strict: false`, which would collapse
- * `string | undefined` into `string` and let a nullability change through. These
- * are the kit's own settings instead.
+ * The settings live in `pluginKit.tsconfig.json` beside this file, which also
+ * names the files to compile. They are the kit's own settings rather than core's,
+ * which sets `strict: false` and would collapse `string | undefined` into `string`;
+ * and they pin `react` to one copy of its types, without which this comparison
+ * fails on version skew between two installs rather than on drift. See that file.
  */
 const TSC_ARGS = [
-  '--noEmit',
-  '--strict',
-  '--skipLibCheck',
-  '--jsx', 'react-jsx',
-  '--target', 'es2022',
-  '--module', 'esnext',
-  '--moduleResolution', 'bundler',
-  '--lib', 'es2022,dom,dom.iterable',
-  '--esModuleInterop',
-  '--resolveJsonModule',
-  // Prints a stats block ("Files: 689", "Check time: 1.10s") whether or not it
-  // reported anything. That block is the evidence the compiler ran and got as far
-  // as checking, which the diagnostics alone cannot give: a clean run and a run
-  // that never happened both produce zero matching lines.
+  '-p', join(HERE, 'pluginKit.tsconfig.json'),
+  // Prints a stats block ("Files: 823", "Check time: 1.03s") whether or not it
+  // reported anything, and lists every file in the program. Together they are the
+  // evidence the compiler ran, reached the checking phase, and had this file in
+  // front of it — none of which the diagnostics can show, since a clean run and a
+  // run that never happened both produce zero matching lines.
   '--extendedDiagnostics',
+  '--listFiles',
 ]
 
 interface TscRun {
@@ -155,7 +150,7 @@ function runTsc(): TscRun {
   let output = ''
 
   try {
-    output = execFileSync(process.execPath, [TSC, ...TSC_ARGS, THIS_FILE], {
+    output = execFileSync(process.execPath, [TSC, ...TSC_ARGS], {
       cwd: REPO_ROOT,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -195,6 +190,11 @@ describe('@collabdt/plugin-kit component declarations', () => {
     // unusable project. -1 is this file's own marker for a process that never
     // started. Only the first three are a verdict on the code.
     expect([0, 1, 2]).toContain(run.status)
+
+    // With `-p`, the file list comes from the tsconfig. Dropping this file from it
+    // would leave every assertion above unchecked and this test green, so the
+    // program is asked what it actually compiled.
+    expect(run.output.split(/\r?\n/)).toContain(THIS_FILE.replace(/\\/g, '/'))
 
     // And it got past parsing into checking, over a program that really did pull
     // in core's chain rather than this file alone.

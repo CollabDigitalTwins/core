@@ -42,20 +42,30 @@ import type * as React from 'react'
 
 type Exact<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false
 
+/** The keys of `T` that a caller cannot leave out. */
+type RequiredKeys<T> = { [K in keyof T]-?: object extends Pick<T, K> ? never : K }[keyof T]
+
 /**
- * The invariant, and it is one-directional: every prop the kit declares must exist
- * on the real component with an identical type. The kit is allowed to omit props —
- * several declarations are deliberately narrower than the Radix-backed original —
- * but it may never invent a prop core does not have, nor type one differently.
+ * The invariant. Two directions, and they are not symmetric:
  *
- * `keyof Declared extends keyof Real` catches a rename or a removal. Comparing
- * against `Pick<Real, keyof Declared>` catches a changed type on a prop the kit
- * does declare. What it deliberately does not catch is core *adding* a prop: that
- * leaves the kit behind but never wrong.
+ *  - Every prop the kit declares must exist on the real component with an
+ *    identical type. The kit is allowed to *omit* props — several declarations are
+ *    deliberately narrower than the Radix-backed original — but it may never invent
+ *    a prop core does not have, nor type one differently. `keyof Declared extends
+ *    keyof Real` catches a rename or a removal; comparing against `Pick<Real, keyof
+ *    Declared>` catches a changed type on a prop the kit does declare.
+ *  - Every prop core *requires* must be one the kit declares. Optional props may
+ *    be omitted freely, but a newly-required one cannot: the kit would let plugin
+ *    code leave it out and still typecheck, and the component would render without
+ *    something core now insists on. `Pick<Real, keyof Declared & keyof Real>` on
+ *    its own is blind to that, because it drops every key the kit does not already
+ *    have — required and optional alike.
  */
 type Narrows<Declared, Real> = [keyof Declared] extends [keyof Real]
   ? Exact<Declared, Pick<Real, keyof Declared & keyof Real>> extends true
-    ? true
+    ? [Exclude<RequiredKeys<Real>, keyof Declared>] extends [never]
+      ? true
+      : { 'DRIFT: core requires a prop the kit does not declare': Exclude<RequiredKeys<Real>, keyof Declared> }
     : 'DRIFT: a prop the kit declares has a different type in core'
   : 'DRIFT: the kit declares a prop core does not have — renamed or removed?'
 
@@ -111,44 +121,91 @@ const TSC_ARGS = [
   '--lib', 'es2022,dom,dom.iterable',
   '--esModuleInterop',
   '--resolveJsonModule',
+  // Prints a stats block ("Files: 689", "Check time: 1.10s") whether or not it
+  // reported anything. That block is the evidence the compiler ran and got as far
+  // as checking, which the diagnostics alone cannot give: a clean run and a run
+  // that never happened both produce zero matching lines.
+  '--extendedDiagnostics',
 ]
 
+interface TscRun {
+  /** tsc's exit code: 0 clean, 1 diagnostics reported, 2+ a configuration failure. */
+  status: number
+  /** stdout and stderr together; tsc reports diagnostics on stdout. */
+  output: string
+  /** Diagnostic lines reported against this file, and only this file. */
+  diagnostics: string[]
+}
+
 /**
- * Diagnostics reported against this file, and only this file.
+ * Runs tsc over this file and reports what came back.
  *
- * Checking this file drags in core's whole UI import chain, which does not compile
- * clean under `--strict` — it was never meant to, core builds with `strict: false`.
- * Failing on those would make this test a referendum on unrelated code. A broken
- * assertion is reported at its own line here, so that is what gets read.
+ * Diagnostics are filtered to this file because checking it drags in core's whole
+ * UI import chain, which does not compile clean under `--strict` — it was never
+ * meant to, core builds with `strict: false`. Failing on those would make this test
+ * a referendum on unrelated code.
+ *
+ * That filter is also what makes "tsc never ran" and "every error landed elsewhere"
+ * both read as success, which is the shape that let a `skipLibCheck` defect ship.
+ * So the run itself is reported separately from its diagnostics, and asserted on
+ * before the absence of diagnostics is allowed to mean anything.
  */
-function diagnosticsAgainstThisFile(): string[] {
+function runTsc(): TscRun {
+  let status = 0
   let output = ''
 
   try {
-    execFileSync(process.execPath, [TSC, ...TSC_ARGS, THIS_FILE], {
+    output = execFileSync(process.execPath, [TSC, ...TSC_ARGS, THIS_FILE], {
       cwd: REPO_ROOT,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
     })
   } catch (error) {
     // tsc exits non-zero whenever it reports anything, including for other files.
-    const failure = error as { stdout?: string; stderr?: string }
+    // A failure to *start* lands here too, with no status and no output, which is
+    // exactly the case this needs to keep separable from a clean compile.
+    const failure = error as { stdout?: string; stderr?: string; status?: number }
+    status = failure.status ?? -1
     output = `${failure.stdout ?? ''}${failure.stderr ?? ''}`
   }
 
-  return output
-    .split(/\r?\n/)
-    .filter(line => line.includes('pluginKitComponents.test.ts('))
+  return {
+    status,
+    output,
+    diagnostics: output
+      .split(/\r?\n/)
+      .filter(line => line.includes('pluginKitComponents.test.ts(')),
+  }
 }
+
+/** One run, shared by the assertions below. tsc over this chain is not cheap. */
+let cachedRun: TscRun | undefined
+const tscRun = () => (cachedRun ??= runTsc())
 
 describe('@collabdt/plugin-kit component declarations', () => {
   it('has a compiler to run them with', () => {
     expect(existsSync(TSC)).toBe(true)
   })
 
-  it('declares no prop the real components do not have, and none with a different type', () => {
-    const diagnostics = diagnosticsAgainstThisFile()
+  it('actually ran that compiler over this file', () => {
+    const run = tscRun()
 
-    expect(diagnostics.join('\n')).toBe('')
+    // tsc's ExitStatus: 0 clean, 1 and 2 diagnostics reported (which is expected
+    // here — core's chain does not compile clean under --strict), 3 and 4 an
+    // unusable project. -1 is this file's own marker for a process that never
+    // started. Only the first three are a verdict on the code.
+    expect([0, 1, 2]).toContain(run.status)
+
+    // And it got past parsing into checking, over a program that really did pull
+    // in core's chain rather than this file alone.
+    const files = /^Files:\s+(\d+)$/m.exec(run.output)
+
+    expect(files).not.toBeNull()
+    expect(Number(files?.[1])).toBeGreaterThan(1)
+    expect(run.output).toMatch(/^Check time:/m)
+  }, 180_000)
+
+  it('declares no prop the real components do not have, and none with a different type', () => {
+    expect(tscRun().diagnostics.join('\n')).toBe('')
   }, 180_000)
 })

@@ -12,7 +12,9 @@ describe('pluginPreset', () => {
 
     expect(config.format).toEqual(['esm'])
     expect(config.splitting).toBe(false)
-    expect(config.entry).toEqual(['src/index.ts'])
+    // A brace glob, not a fixed name: tsup globs an array entry, and a plugin
+    // written in JSX has a .tsx entry that a literal 'src/index.ts' never matches.
+    expect(config.entry).toEqual(['src/index.{ts,tsx}'])
     expect(config.outDir).toBe('dist')
   })
 

@@ -8,9 +8,17 @@ import { assertBundleImports } from './importGuard'
 
 const OUT_DIR = 'dist'
 const OUT_FILE = `${OUT_DIR}/index.js`
-// tsup 8.5.1 writes `dist/metafile-${format}.json` (confirmed by reading
-// node_modules/tsup/dist/index.js). Our format is fixed to esm, so this is
-// `dist/metafile-esm.json`.
+// tsup globs an array `entry`, so this has to match the extension a plugin author
+// actually uses. A plain 'src/index.ts' matches only that exact name, which left
+// every JSX plugin dead on arrival with "Cannot find src/index.ts" — including one
+// written against the `jsx: 'automatic'` setting this same preset configures below.
+const ENTRY = 'src/index.{ts,tsx}'
+// tsup 8.5.1 writes `dist/metafile-${format}.json`. Our format is fixed to esm,
+// so this is `dist/metafile-esm.json`, and esbuild keys the output inside it as
+// `dist/index.js` — relative to the plugin root and forward-slashed even on
+// Windows. Both were read out of tsup's source first and are now pinned against a
+// real fixture build in `build.test.ts`; get either wrong and the guard throws on
+// every build instead of checking one.
 const METAFILE = `${OUT_DIR}/metafile-esm.json`
 
 /**
@@ -51,7 +59,7 @@ export function pluginPreset(overrides: Partial<Options> = {}): Options {
 
   if ('outDir' in overrides || 'entry' in overrides) {
     throw new Error(
-      'A CDT plugin builds to dist/index.js from src/index.ts. The host serves that ' +
+      'A CDT plugin builds to dist/index.js from src/index.ts or src/index.tsx. The host serves that ' +
       'exact path and nothing else, so `outDir` and `entry` are fixed by the delivery ' +
       'contract rather than by preference.',
     )
@@ -78,7 +86,7 @@ export function pluginPreset(overrides: Partial<Options> = {}): Options {
   }
 
   return {
-    entry: ['src/index.ts'],
+    entry: [ENTRY],
     format: ['esm'],
     outDir: OUT_DIR,
     splitting: false,

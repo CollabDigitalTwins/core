@@ -51,6 +51,7 @@ import RowActions from './RowActions'
 import { builtinLiveDatasets } from './src/builtinLiveDatasets'
 import { fetchLocalDatasets } from './src/localDatasets'
 import { fetchOrganizationalMinioDatasets } from './src/minioDatasets'
+import { datasetVisibleForOrg, getOrgVisibility } from './src/orgVisibility'
 import { buildPublishedCatalogMap, stampPublished, type PublishedCatalogEntry } from './src/publishedTiles'
 import { useDatasetsForPortals } from './src/useDatasetsForPortals'
 import { useFastDatasetCache } from './src/useFastDatasetCache'
@@ -58,61 +59,6 @@ import { handleFavouriteDataset } from './utils'
 
 import type { Dataset } from '../../../../types/datasetTypes'
 import type { Organization } from '../../../../types/dbTypes';
-
-type OrgVisibility = {
-  isAdmin: boolean
-  currentOrgId: number
-  allowedOrgIds: number[]
-}
-
-const ADMIN_ALLOWED_ORGS = [1, 2, 3, 4, 5, 6]
-const ORG_BY_PATH_PREFIX: Record<string, number> = {
-  '/envirocentre': 1,
-  '/dnd': 3,
-  '/canada': 4,
-  '/gac': 5,
-  '/carleton': 6,
-}
-
-function normalizeOrgId(org?: number | string | null) {
-  if (org === null || org === undefined) return undefined
-  const parsed = typeof org === 'number' ? org : Number.parseInt(String(org), 10)
-  return Number.isFinite(parsed) ? parsed : undefined
-}
-
-function getOrgVisibilityFromPath(pathname?: string | null): OrgVisibility {
-  const normalizedPath = (pathname || '').toLowerCase()
-  const firstSegment = normalizedPath.split('/').filter(Boolean)[0]
-  const prefix = firstSegment ? `/${firstSegment}` : ''
-
-  if (prefix === '/cdt') {
-    return {
-      isAdmin: true,
-      currentOrgId: 1,
-      allowedOrgIds: ADMIN_ALLOWED_ORGS,
-    }
-  }
-
-  const currentOrgId = ORG_BY_PATH_PREFIX[prefix] ?? 2
-  const allowedOrgIds = Array.from(new Set([2, currentOrgId]))
-
-  return {
-    isAdmin: false,
-    currentOrgId,
-    allowedOrgIds,
-  }
-}
-
-function datasetVisibleForOrg(dataset: Dataset, visibility: OrgVisibility) {
-  if (visibility.isAdmin) return true
-  if (dataset.group !== DatasetGroup.Organizational) return true
-
-  const orgId = normalizeOrgId(dataset.organization)
-  if (orgId === undefined) return false
-
-  return visibility.allowedOrgIds.includes(orgId)
-}
-
 
 type DatasetsProps = {
   isOpen: boolean
@@ -145,7 +91,9 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, minioB
   const { rowsPerPage } = menusState.menus
 
   const pathname = usePathname()
-  const orgVisibility = React.useMemo(() => getOrgVisibilityFromPath(pathname), [pathname])
+  // Pass the instance's real organization — the path-prefix fallback only knows
+  // five orgs, so newer ones could not see their own datasets.
+  const orgVisibility = React.useMemo(() => getOrgVisibility(pathname, org?.id), [pathname, org?.id])
 
   // UI State
   const [view, setView] = React.useState<'table' | 'detail'>('table')

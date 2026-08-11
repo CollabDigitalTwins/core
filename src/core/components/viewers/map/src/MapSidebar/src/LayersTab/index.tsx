@@ -16,6 +16,7 @@ import { DatasetsContext, MenusContext, useMapContext } from '../../../../../../
 import { DatasetGroup } from '../../../../../../../types/dbTypes'
 import { ViewerSidebarPanel } from '../../../../../../ui/ViewerSidebar/Panel'
 import { fetchLocalDatasets } from '../../../../datasets/src/localDatasets'
+import { datasetVisibleForOrg, getOrgVisibility } from '../../../../datasets/src/orgVisibility'
 import { useDatasetsForPortals } from '../../../../datasets/src/useDatasetsForPortals'
 
 import { AppliedDatasetsSection } from './src/AppliedDatasetsSection'
@@ -23,48 +24,6 @@ import { AvailableDatasetsSection } from './src/AvailableDatasetsSection'
 
 import type { Dataset } from '../../../../../../../types/datasetTypes'
 import type { Organization } from '../../../../../../../types/dbTypes';
-
-type OrgVisibility = {
-  isAdmin: boolean
-  currentOrgId: number
-  allowedOrgIds: number[]
-}
-
-const ADMIN_ALLOWED_ORGS = [1, 2, 3, 4, 5, 6]
-const ORG_BY_PATH_PREFIX: Record<string, number> = {
-  '/envirocentre': 1,
-  '/dnd': 3,
-  '/canada': 4,
-  '/gac': 5,
-  '/carleton': 6,
-}
-
-function normalizeOrgId(org?: number | string | null) {
-  if (org === null || org === undefined) return undefined
-  const parsed = typeof org === 'number' ? org : Number.parseInt(String(org), 10)
-  return Number.isFinite(parsed) ? parsed : undefined
-}
-
-function getOrgVisibilityFromPath(pathname?: string | null): OrgVisibility {
-  const normalizedPath = (pathname || '').toLowerCase()
-  const firstSegment = normalizedPath.split('/').filter(Boolean)[0]
-  const prefix = firstSegment ? `/${firstSegment}` : ''
-
-  if (prefix === '/cdt') {
-    return { isAdmin: true, currentOrgId: 1, allowedOrgIds: ADMIN_ALLOWED_ORGS }
-  }
-
-  const currentOrgId = ORG_BY_PATH_PREFIX[prefix] ?? 2
-  return { isAdmin: false, currentOrgId, allowedOrgIds: Array.from(new Set([2, currentOrgId])) }
-}
-
-function datasetVisibleForOrg(dataset: Dataset, visibility: OrgVisibility) {
-  if (visibility.isAdmin) return true
-  if (dataset.group !== DatasetGroup.Organizational) return true
-  const orgId = normalizeOrgId(dataset.organization)
-  if (orgId === undefined) return false
-  return visibility.allowedOrgIds.includes(orgId)
-}
 
 const BLOCKLIST_URLS = [
   '/2021_statistics_canada_boundaries/featureserver',
@@ -112,7 +71,9 @@ export function LayersTab({ martinBaseUrl, organization }: { martinBaseUrl?: str
   const { rowsPerPage } = menusState.menus
 
   const pathname = usePathname()
-  const orgVisibility = React.useMemo(() => getOrgVisibilityFromPath(pathname), [pathname])
+  // Pass the instance's real organization — see getOrgVisibility for why the
+  // path-prefix fallback alone is not enough.
+  const orgVisibility = React.useMemo(() => getOrgVisibility(pathname, org?.id), [pathname, org?.id])
 
   const { openDataPortals: municipalPortals } = useOpenDataPortalsByMunicipality(municipality)
   const { openDataPortals: subdivisionPortals } = useOpenDataPortalsByCountrySubdivision(countrySubdivision)

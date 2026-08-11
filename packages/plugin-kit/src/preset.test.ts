@@ -53,7 +53,7 @@ describe('pluginPreset', () => {
     expect(() => pluginPreset({ format: ['esm', 'cjs'] })).toThrow(/ESM/i)
   })
 
-  it('refuses `outDir` and `entry` overrides, since METAFILE/OUT_FILE are hardcoded to dist/', () => {
+  it('refuses `outDir` and `entry` overrides, since PLUGIN_METAFILE/PLUGIN_OUT_FILE are hardcoded to dist/', () => {
     expect(() => pluginPreset({ outDir: 'build' })).toThrow(/dist\/index\.js/i)
     expect(() => pluginPreset({ entry: ['src/main.ts'] })).toThrow(/dist\/index\.js/i)
   })

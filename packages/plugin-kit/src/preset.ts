@@ -7,7 +7,13 @@ import { PLUGIN_EXTERNALS } from './externals'
 import { assertBundleImports } from './importGuard'
 
 const OUT_DIR = 'dist'
-const OUT_FILE = `${OUT_DIR}/index.js`
+/**
+ * The bundle, as esbuild keys it inside the metafile: relative to the plugin root
+ * and forward-slashed even on Windows. Exported so `build.test.ts` can pin the
+ * value the guard is actually handed instead of a copy of the same literal, which
+ * would keep passing after someone changed this one.
+ */
+export const PLUGIN_OUT_FILE = `${OUT_DIR}/index.js`
 // tsup globs an array `entry`, so this has to match the extension a plugin author
 // actually uses. A plain 'src/index.ts' matches only that exact name, which left
 // every JSX plugin dead on arrival with "Cannot find src/index.ts" — including one
@@ -18,8 +24,9 @@ const ENTRY = 'src/index.{ts,tsx}'
 // `dist/index.js` — relative to the plugin root and forward-slashed even on
 // Windows. Both were read out of tsup's source first and are now pinned against a
 // real fixture build in `build.test.ts`; get either wrong and the guard throws on
-// every build instead of checking one.
-const METAFILE = `${OUT_DIR}/metafile-esm.json`
+// every build instead of checking one. Exported for the same reason as
+// `PLUGIN_OUT_FILE`.
+export const PLUGIN_METAFILE = `${OUT_DIR}/metafile-esm.json`
 
 /**
  * The tsup configuration a CDT plugin needs.
@@ -99,7 +106,7 @@ export function pluginPreset(overrides: Partial<Options> = {}): Options {
       options.jsx = 'automatic'
     },
     async onSuccess() {
-      await assertBundleImports(METAFILE, OUT_FILE)
+      await assertBundleImports(PLUGIN_METAFILE, PLUGIN_OUT_FILE)
     },
     ...overrides,
   }

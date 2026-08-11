@@ -13,13 +13,24 @@
 // after the directive, so the directive stays the first statement (required by
 // the React/Next.js bundler). The file's existing line endings are preserved.
 
-import { readFileSync, writeFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync, readdirSync } from 'node:fs'
 import { join, extname, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..')
-const SRC = join(ROOT, 'src')
-const EXTENSIONS = new Set(['.ts', '.tsx'])
+
+// `packages/` as well as `src/`: SPDX is a repo rule, not a src/ rule, and the
+// plugin kit lives under packages/ with its own sources and build script. One
+// missing header there was already caught by a human reading a diff, which is
+// exactly what this script exists to make unnecessary.
+const ROOTS = [join(ROOT, 'src'), join(ROOT, 'packages')].filter(dir => existsSync(dir))
+
+// Never entered: dependencies and build output are not ours to license, and the
+// fixture plugins under packages/*/fixtures are stand-ins for a third party's
+// code, which carries its own.
+const SKIP_DIRECTORIES = new Set(['node_modules', 'dist', 'fixtures'])
+
+const EXTENSIONS = new Set(['.ts', '.tsx', '.mjs'])
 const SPDX_TAG = 'SPDX-License-Identifier'
 
 const HEADER_LINES = [
@@ -36,8 +47,9 @@ function walk(dir) {
   const files = []
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const full = join(dir, entry.name)
-    if (entry.isDirectory()) files.push(...walk(full))
-    else if (EXTENSIONS.has(extname(entry.name))) files.push(full)
+    if (entry.isDirectory()) {
+      if (!SKIP_DIRECTORIES.has(entry.name)) files.push(...walk(full))
+    } else if (EXTENSIONS.has(extname(entry.name))) files.push(full)
   }
   return files
 }
@@ -60,7 +72,7 @@ function addHeader(content) {
     : header + eol + body // header, blank, body
 }
 
-const files = walk(SRC)
+const files = ROOTS.flatMap(walk)
 const missing = []
 
 for (const file of files) {

@@ -1,0 +1,43 @@
+{
+  "slug": "clean-plugin",
+  "name": "Clean Plugin",
+  "version": "1.0.0",
+  "hostApi": 1,
+  "description": "Fixture: a plugin that imports only what the host publishes a shim for.",
+  "author": "Collab Digital Twins",
+  "capabilities": ["map.tools"],
+  "requiredPermissions": [],
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "decimals": {
+        "type": "number",
+        "description": "How many decimal places to show for latitude and longitude.",
+        "default": 4
+      }
+    },
+    "required": []
+  },
+  "messages": {
+    "en": {
+      "name": "Clean Plugin",
+      "description": "Fixture: a plugin that imports only what the host publishes a shim for.",
+      "title": "Hello Mounted",
+      "loadedFrom": "Loaded at runtime, not compiled in.",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "clicks": "Clicks",
+      "waiting": "Waiting for the map…"
+    },
+    "fr": {
+      "name": "Plugiciel propre",
+      "description": "Test : un plugiciel qui n'importe que ce dont l'hôte publie un relais.",
+      "title": "Bonjour monté",
+      "loadedFrom": "Chargé à l'exécution, non compilé.",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "clicks": "Clics",
+      "waiting": "En attente de la carte…"
+    }
+  }
+}

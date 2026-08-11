@@ -6,6 +6,9 @@ import { defineConfig } from 'tsup'
 export default defineConfig({
   entry: [
     'src/index.ts',
+    // Not a viewer surface, but a real module the ambient SDK declarations import
+    // from, so it has to sit beside them in dist/types.
+    'src/types/components.ts',
     'src/types/map.ts',
     'src/types/bim.ts',
     'src/types/pointcloud.ts',

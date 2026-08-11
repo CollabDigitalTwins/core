@@ -14,10 +14,26 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./types/map": { "types": "./dist/types/map.d.ts", "default": "./dist/types/map.js" },
-    "./types/bim": { "types": "./dist/types/bim.d.ts", "default": "./dist/types/bim.js" },
-    "./types/pointcloud": { "types": "./dist/types/pointcloud.d.ts", "default": "./dist/types/pointcloud.js" },
-    "./types/legend": { "types": "./dist/types/legend.d.ts", "default": "./dist/types/legend.js" }
+    "./types/components": {
+      "types": "./dist/types/components.d.ts",
+      "default": "./dist/types/components.js"
+    },
+    "./types/map": {
+      "types": "./dist/types/map.d.ts",
+      "default": "./dist/types/map.js"
+    },
+    "./types/bim": {
+      "types": "./dist/types/bim.d.ts",
+      "default": "./dist/types/bim.js"
+    },
+    "./types/pointcloud": {
+      "types": "./dist/types/pointcloud.d.ts",
+      "default": "./dist/types/pointcloud.js"
+    },
+    "./types/legend": {
+      "types": "./dist/types/legend.d.ts",
+      "default": "./dist/types/legend.js"
+    }
   },
   "scripts": {
     "build": "tsup && node scripts/shipAmbientTypes.mjs",
@@ -30,13 +46,18 @@
     "tsup": ">=8"
   },
   "peerDependenciesMeta": {
-    "@thatopen/components": { "optional": true },
-    "@types/react": { "optional": true },
-    "maplibre-gl": { "optional": true }
+    "@thatopen/components": {
+      "optional": true
+    },
+    "@types/react": {
+      "optional": true
+    },
+    "maplibre-gl": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@thatopen/components": "~3.4.0",
-    "@types/react": "^19.2.18",
     "maplibre-gl": "^5.24.0",
     "tsup": "^8.5.0",
     "typescript": "^5.9.3",

@@ -16,7 +16,7 @@
  * '@collabdt/core/plugins-sdk/components'` has no types on the other side.
  */
 
-import { copyFileSync, readFileSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -29,10 +29,9 @@ const DIRECTIVE = `/// <reference path="./${AMBIENT}" />`
 
 const SURFACES = ['map', 'bim', 'pointcloud', 'legend']
 
-copyFileSync(
-  join(packageRoot, 'src/types', AMBIENT),
-  join(packageRoot, 'dist/types', AMBIENT),
-)
+const shipped = join(packageRoot, 'dist/types', AMBIENT)
+
+copyFileSync(join(packageRoot, 'src/types', AMBIENT), shipped)
 
 for (const surface of SURFACES) {
   const built = join(packageRoot, 'dist/types', `${surface}.d.ts`)
@@ -41,4 +40,54 @@ for (const surface of SURFACES) {
   if (contents.includes(DIRECTIVE)) continue
 
   writeFileSync(built, `${DIRECTIVE}\n${contents}`)
+}
+
+// Verify rather than assume. A bare `tsup` skips this script entirely and drops the
+// ambient file silently; and a dts bundler that rewrote the directive's path instead
+// of stripping it would slip past the `includes` check above and ship a dangling
+// reference, which surfaces as TS6053 in someone else's build. Both end the build
+// here instead.
+const problems = []
+
+if (!existsSync(shipped)) {
+  problems.push(`missing dist/types/${AMBIENT}`)
+}
+
+// The ambient module for the components barrel imports from `./components`, which
+// only exists in dist if that entry is still in tsup.config.ts.
+if (!existsSync(join(packageRoot, 'dist/types/components.d.ts'))) {
+  problems.push('missing dist/types/components.d.ts, which dist/types/'
+    + `${AMBIENT} imports from`)
+}
+
+for (const surface of SURFACES) {
+  const built = join(packageRoot, 'dist/types', `${surface}.d.ts`)
+
+  if (!existsSync(built)) {
+    problems.push(`missing dist/types/${surface}.d.ts`)
+    continue
+  }
+
+  const contents = readFileSync(built, 'utf8')
+  const paths = [...contents.matchAll(/\/\/\/\s*<reference\s+path="([^"]+)"\s*\/>/g)].map(m => m[1])
+
+  if (!paths.includes(`./${AMBIENT}`)) {
+    problems.push(`dist/types/${surface}.d.ts does not carry ${DIRECTIVE}`)
+  }
+
+  // Every reference has to resolve, not just ours. If a future dts bundler rewrites
+  // the directive's path rather than stripping it, the loop above sees no match and
+  // prepends a second, correct one — leaving the rewritten original behind as a
+  // dangling reference that is TS6053 in a consumer's build.
+  for (const path of paths) {
+    if (!existsSync(join(packageRoot, 'dist/types', path))) {
+      problems.push(`dist/types/${surface}.d.ts references "${path}", which does not exist`)
+    }
+  }
+}
+
+if (problems.length > 0) {
+  console.error(`shipAmbientTypes: ${problems.length} problem(s) after build:`)
+  for (const problem of problems) console.error(`  - ${problem}`)
+  process.exit(1)
 }

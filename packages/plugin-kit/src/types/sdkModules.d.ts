@@ -112,95 +112,51 @@ declare module '@collabdt/core/plugins-sdk/store' {
 }
 
 declare module '@collabdt/core/plugins-sdk/components' {
-  import type * as React from 'react'
+  // Every shape comes from `./components`, which is a real module in this package
+  // and therefore importable by path. That is what lets core's
+  // `pluginKitComponents.test.ts` compare these declarations against the real
+  // components; restating them inline here would leave nothing to compare against.
+  //
+  // Written as inline `import('./components')` types rather than a top-level
+  // `import type … from './components'`: an import *declaration* inside an ambient
+  // module cannot use a relative specifier (TS2439), and because this is a .d.ts
+  // the usual `skipLibCheck: true` hides that from everyone until a consumer turns
+  // it off. Inline import types have no such restriction.
 
-  export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    asChild?: boolean
-    active?: boolean
-    variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
-    size?: 'default' | 'sm' | 'lg' | 'icon'
-  }
-  export const Button: React.ForwardRefExoticComponent<
-    ButtonProps & React.RefAttributes<HTMLButtonElement>
-  >
+  export type ButtonProps = import('./components').ButtonProps
+  export const Button: import('./components').ButtonComponent
 
-  export const Input: React.ForwardRefExoticComponent<
-    React.ComponentPropsWithoutRef<'input'> & React.RefAttributes<HTMLInputElement>
-  >
+  export const Input: import('./components').InputComponent
 
-  export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-    variant?: 'default' | 'secondary' | 'destructive' | 'outline'
-  }
-  export function Badge(props: BadgeProps): React.ReactElement
+  export type BadgeProps = import('./components').BadgeProps
+  export const Badge: import('./components').BadgeComponent
 
-  export interface SeparatorProps extends React.HTMLAttributes<HTMLDivElement> {
-    orientation?: 'horizontal' | 'vertical'
-    /** False announces the separator to assistive technology. */
-    decorative?: boolean
-  }
-  export const Separator: React.ForwardRefExoticComponent<
-    SeparatorProps & React.RefAttributes<HTMLDivElement>
-  >
+  export type SeparatorProps = import('./components').SeparatorProps
+  export const Separator: import('./components').SeparatorComponent
 
-  /** Every part of Card is a plain div that forwards its ref. */
-  type CardPart = React.ForwardRefExoticComponent<
-    React.HTMLAttributes<HTMLDivElement> & React.RefAttributes<HTMLDivElement>
-  >
-  export const Card: CardPart
-  export const CardHeader: CardPart
-  export const CardTitle: CardPart
-  export const CardDescription: CardPart
-  export const CardContent: CardPart
-  export const CardFooter: CardPart
+  export const Card: import('./components').CardComponent
+  export const CardHeader: import('./components').CardComponent
+  export const CardTitle: import('./components').CardComponent
+  export const CardDescription: import('./components').CardComponent
+  export const CardContent: import('./components').CardComponent
+  export const CardFooter: import('./components').CardComponent
 
-  export interface DialogProps {
-    open?: boolean
-    defaultOpen?: boolean
-    onOpenChange?: (open: boolean) => void
-    modal?: boolean
-    children?: React.ReactNode
-  }
-  export function Dialog(props: DialogProps): React.ReactElement
+  export type DialogProps = import('./components').DialogProps
+  export const Dialog: import('./components').DialogComponent
 
-  export interface DialogTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    asChild?: boolean
-  }
-  export const DialogTrigger: React.ForwardRefExoticComponent<
-    DialogTriggerProps & React.RefAttributes<HTMLButtonElement>
-  >
-  export const DialogClose: React.ForwardRefExoticComponent<
-    DialogTriggerProps & React.RefAttributes<HTMLButtonElement>
-  >
+  export type DialogTriggerProps = import('./components').DialogTriggerProps
+  export const DialogTrigger: import('./components').DialogTriggerComponent
+  export const DialogClose: import('./components').DialogTriggerComponent
 
-  /**
-   * The dismissal callbacks the underlying primitive also accepts
-   * (`onEscapeKeyDown`, `onInteractOutside`, …) are deliberately not declared:
-   * their parameter types come from the dialog primitive's own package, and a
-   * plugin must not have to install it. `closeClass` styles the built-in close
-   * button.
-   */
-  export interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {
-    asChild?: boolean
-    closeClass?: string
-  }
-  export const DialogContent: React.ForwardRefExoticComponent<
-    DialogContentProps & React.RefAttributes<HTMLDivElement>
-  >
+  export type DialogContentProps = import('./components').DialogContentProps
+  export const DialogContent: import('./components').DialogContentComponent
 
-  export function DialogHeader(props: React.HTMLAttributes<HTMLDivElement>): React.ReactElement
-  export function DialogFooter(props: React.HTMLAttributes<HTMLDivElement>): React.ReactElement
+  export const DialogHeader: import('./components').DialogSectionComponent
+  export const DialogFooter: import('./components').DialogSectionComponent
 
-  export interface DialogTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {
-    asChild?: boolean
-  }
-  export const DialogTitle: React.ForwardRefExoticComponent<
-    DialogTitleProps & React.RefAttributes<HTMLHeadingElement>
-  >
+  export type DialogTitleProps = import('./components').DialogTitleProps
+  export const DialogTitle: import('./components').DialogTitleComponent
 
-  export interface DialogDescriptionProps extends React.HTMLAttributes<HTMLParagraphElement> {
-    asChild?: boolean
-  }
-  export const DialogDescription: React.ForwardRefExoticComponent<
-    DialogDescriptionProps & React.RefAttributes<HTMLParagraphElement>
-  >
+  export type DialogDescriptionProps = import('./components').DialogDescriptionProps
+  export const DialogDescription: import('./components').DialogDescriptionComponent
 }

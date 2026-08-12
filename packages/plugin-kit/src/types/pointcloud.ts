@@ -3,11 +3,8 @@
 
 import type { CapabilityRegistry, PluginContext } from './base'
 
-/**
- * The point-cloud viewer, as a plugin sees it.
- *
- * No external types at all, so this entry costs a plugin nothing to depend on.
- */
+// The point-cloud viewer, as a plugin sees it. Names no external type, so this entry
+// costs a plugin nothing to depend on.
 
 export * from './base'
 

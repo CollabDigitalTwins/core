@@ -1,25 +1,19 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-/**
- * Runs `tsc` over the plugin-kit drift guards and reports what came back.
- *
- * Those guards are written as compile-time assertions, and vitest strips types
- * without checking them, so each guard spawns the compiler over itself and reads
- * the diagnostics. The reading is the delicate part: diagnostics have to be
- * filtered to the guard's own file, because compiling one drags in core's UI and
- * viewer chains, which do not compile clean under `--strict` and were never meant
- * to. Filtering means an empty result has three causes — nothing wrong, the
- * compiler never ran, or the errors landed on another file — and only the first is
- * success. That ambiguity is the mechanism that let a `skipLibCheck` defect ship.
- *
- * So this returns the run, not a verdict: the exit code, the stats block proving a
- * check phase happened, whether the program actually contained the caller's file,
- * and only then the diagnostics against it.
- *
- * It lives under `__tests__/` because core's build excludes that directory. It is
- * test-only and spawns a process; it must never reach a consumer's bundle.
- */
+// Runs `tsc` over the plugin-kit drift guards and reports what came back.
+//
+// Those guards are compile-time assertions and vitest strips types without checking them,
+// so each guard spawns the compiler over itself. Diagnostics have to be filtered to the
+// guard's own file, because compiling one drags in core's UI and viewer chains, which do
+// not compile clean under `--strict` and were never meant to. Filtering leaves an empty
+// result with three causes — nothing wrong, the compiler never ran, errors landed on
+// another file — and only the first is success; that ambiguity is what let a
+// `skipLibCheck` defect ship. So this returns the run rather than a verdict, and the
+// caller asserts on each part.
+//
+// It lives under `__tests__/` because core's build excludes that directory: it spawns a
+// process and must never reach a consumer's bundle.
 
 import { execFileSync } from 'node:child_process'
 import { dirname, join, resolve } from 'node:path'
@@ -31,28 +25,21 @@ export const REPO_ROOT = resolve(HERE, '../../../../..')
 
 export const TSC = join(REPO_ROOT, 'node_modules/typescript/bin/tsc')
 
-/**
- * The compiler settings and the file list both come from this project. See the
- * file itself for why it is a project rather than a list of flags — in short,
- * `paths` has no command-line form and without it the two sides of the comparison
- * resolve different copies of React's types.
- */
+// A project rather than a list of flags because `paths` has no command-line form, and
+// without it the two sides of the comparison resolve different copies of React's types.
 const TSC_PROJECT = join(GUARD_DIR, 'pluginKit.tsconfig.json')
 
 const TSC_ARGS = [
   '-p', TSC_PROJECT,
-  // The stats block is printed whether or not anything was reported: it is the
-  // evidence that the compiler ran and reached the checking phase. The file list
-  // is the evidence that the caller's file was in the program — with `-p` that is
-  // decided by the tsconfig, so a file dropped from it would leave its assertions
-  // unrun and its test green.
+  // Evidence the compiler ran and reached the checking phase, and that the caller's file
+  // was in the program: with `-p` the tsconfig decides that, so a file dropped from it
+  // would leave its assertions unrun and its test green.
   '--extendedDiagnostics',
   '--listFiles',
 ]
 
 export interface TscRun {
-  /** tsc's ExitStatus: 0 clean, 1 and 2 diagnostics reported, 3 and 4 an unusable
-   * project. -1 means the process never started. */
+  /** tsc's ExitStatus: 0 clean, 1-2 diagnostics reported, 3-4 unusable project, -1 never started. */
   status: number
   /** stdout and stderr together; tsc reports diagnostics on stdout. */
   output: string
@@ -78,9 +65,9 @@ export function runTsc(fileName: string): TscRun {
       stdio: ['ignore', 'pipe', 'pipe'],
     })
   } catch (error) {
-    // tsc exits non-zero whenever it reports anything, including for other files.
-    // A failure to start lands here too, with no status and no output, which is
-    // exactly the case that has to stay separable from a clean compile.
+    // tsc exits non-zero whenever it reports anything, including for other files. A
+    // failure to start lands here too, with no status and no output — the case that has
+    // to stay separable from a clean compile.
     const failure = error as { stdout?: string; stderr?: string; status?: number }
     status = failure.status ?? -1
     output = `${failure.stdout ?? ''}${failure.stderr ?? ''}`

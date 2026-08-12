@@ -3,24 +3,15 @@
 
 import type * as React from 'react'
 
-/**
- * The UI primitives core lends a plugin, as types.
- *
- * Core's own barrel (`plugins-sdk/components`) re-exports shadcn components whose
- * props come from `@radix-ui/*` and `class-variance-authority`. Those are restated
- * by hand here so a plugin does not have to install Radix to typecheck a `<Button>`.
- *
- * Restating means these can drift from core. They are the single definition of the
- * declared shape — `sdkModules.d.ts` builds the ambient module out of this file
- * rather than repeating it — so that core's `pluginKitComponents.test.ts` can
- * import them by path and assert, at compile time, that every prop declared here
- * still exists on the real component with the same type. Drift fails in core, where
- * it originates.
- *
- * Where a shape is deliberately narrower than the real one, it says so. The rule
- * the test enforces is one-directional: the kit may omit a prop, but it may never
- * declare one core does not have, or type one differently.
- */
+// The UI primitives core lends a plugin, as types. Core's components take their props
+// from `@radix-ui/*` and `class-variance-authority`; those are restated by hand here so a
+// plugin does not install Radix to typecheck a `<Button>`.
+//
+// Restating can drift, so these are the single definition of the declared shape —
+// `sdkModules.d.ts` builds the ambient module out of this file rather than repeating it —
+// and core's `pluginKitComponents.test.ts` imports them by path to assert at compile time
+// that the kit never declares a prop core does not have or types one differently.
+// Omitting a prop is allowed, and where a shape is deliberately narrower it says so.
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   asChild?: boolean

@@ -4,13 +4,9 @@
 import type { CapabilityRegistry, PluginContext } from './base'
 import type { Map as MapLibreMap } from 'maplibre-gl'
 
-/**
- * The GIS map, as a plugin sees it.
- *
- * This is the only entry that names the map library, so a plugin that never
- * touches the map never has to install it. `maplibre-gl` is a peer dependency of
- * this entry in practice: install it as a devDependency to typecheck against it.
- */
+// The GIS map, as a plugin sees it. The only entry that names `maplibre-gl`, so a plugin
+// that never touches the map never installs it; one that does needs it as a devDependency
+// to typecheck against this entry.
 
 export * from './base'
 

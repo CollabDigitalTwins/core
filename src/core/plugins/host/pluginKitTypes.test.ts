@@ -1,30 +1,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-/**
- * Drift guard for `@collabdt/plugin-kit`'s restatement of core's plugin types.
- *
- * This file used to be six substring matches over the kit's source *text*, which
- * is worth spelling out because it looked like a test and was not one:
- * `toContain('maplibre-gl')` was satisfied by the doc comment above the import,
- * `toContain("'map.tools'")` by a comment on `VALID_CAPABILITIES`, and
- * `toContain('icon: string')` passed with the line commented out. Every one of
- * them stayed green through a change that broke what it claimed to check.
- *
- * What replaced them:
- *
- *  - The two constants are compared as **values**, imported from both sides. A
- *    number is a number; there is nothing to match a comment against.
- *  - The shapes are compared as **types**, in the style of the two guards beside
- *    this one: assertions that are compile errors when they fail, plus a `tsc` run
- *    that makes vitest see them.
- *  - The per-surface confinement checks — map must not name the BIM library, and
- *    so on — stay textual, because what they check *is* a property of the source
- *    rather than of the types. But they read the file's **module references**,
- *    parsed out by TypeScript itself, instead of searching the whole text. Prose
- *    in a doc comment can no longer satisfy them, and the assertion is on the
- *    exact set: an import added to a surface file has to be looked at.
- */
+// Drift guard for `@collabdt/plugin-kit`'s restatement of core's plugin types.
+//
+// This file used to be six substring matches over the kit's source *text*, which looked
+// like a test and was not one: `toContain('maplibre-gl')` was satisfied by a doc comment,
+// and `toContain('icon: string')` passed with the line commented out. Every one stayed
+// green through a change that broke what it claimed to check.
+//
+// So the constants are compared as values and the shapes as types. The per-surface
+// confinement checks stay textual, because what they check *is* a property of the source,
+// but they read module references parsed out by TypeScript rather than searching the
+// whole text — prose can no longer satisfy them, and the assertion is on the exact set,
+// so an import added to a surface file has to be looked at.
 
 import { readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
@@ -54,31 +42,23 @@ type Accepts<Given, Wanted> = [Given] extends [Wanted]
   ? true
   : { 'DRIFT: core would reject what the kit lets a plugin write': Given, expected: Wanted }
 
-/**
- * The capability set, as a union rather than as the `as const` tuple, so
- * reordering the list is not drift but adding or dropping one is.
- */
+// As a union rather than the `as const` tuple, so reordering the list is not drift but
+// adding or dropping one is.
 const _capabilities: Same<Kit.PluginCapability, Core.PluginCapability> = true
 
-/**
- * `icon` is where the kit deliberately parts company with core: core accepts a
- * string *or* a Lucide component, and the kit types only the string, which is what
- * keeps the icon package out of a plugin's dependencies. Both halves of that are
- * asserted — exactly `string`, and still something core takes — because either one
- * alone is satisfiable by an accident.
- */
+// `icon` is where the kit deliberately parts company with core: core accepts a string
+// *or* a Lucide component, and the kit types only the string, which keeps the icon
+// package out of a plugin's dependencies. Both halves are asserted — exactly `string`,
+// and still something core takes — because either alone is satisfiable by accident.
 const _iconIsOnlyAString: Same<Kit.ToolbarRegistration['icon'], string> = true
 const _iconIsStillValid: Accepts<
   Kit.ToolbarRegistration['icon'],
   Core.ToolbarRegistration['icon']
 > = true
 
-/**
- * The two shapes a plugin author writes by hand and hands to core. Assignability
- * in that direction is the whole contract: core has to accept what the kit told
- * them to write. The reverse is not required — the kit is allowed to be narrower,
- * and `icon` above is exactly that.
- */
+// The two shapes a plugin author writes by hand and hands to core. Assignability in that
+// direction is the whole contract; the reverse is not required, because the kit is
+// allowed to be narrower and `icon` above is exactly that.
 const _manifest: Accepts<Kit.PluginManifest, Core.PluginManifest> = true
 const _registration: Accepts<Kit.ToolbarRegistration, Core.ToolbarRegistration> = true
 
@@ -93,12 +73,9 @@ void [
 const HERE = dirname(fileURLToPath(import.meta.url))
 const KIT_TYPES = resolve(HERE, '../../../../packages/plugin-kit/src/types')
 
-/**
- * Every module a file references: `import`, `export … from`, and inline
- * `import('…')` types alike. Parsed rather than matched, so a specifier named in a
- * doc comment is not one of them — which is the failure this file exists to stop
- * repeating.
- */
+// Every module a file references: `import`, `export … from` and inline `import('…')`
+// types alike. Parsed rather than matched, so a specifier named in a doc comment is not
+// one of them — the failure this file exists to stop repeating.
 function moduleReferences(file: string): string[] {
   const path = join(KIT_TYPES, file)
   const source = ts.createSourceFile(
@@ -137,8 +114,7 @@ function moduleReferences(file: string): string[] {
 
 // --- The runtime half ---
 
-// The compiler run, its settings and the reading of its output are shared with the
-// other plugin-kit guards; see `__tests__/tscProbe.ts` and the tsconfig it names.
+// One run per file, shared by the assertions below.
 let cachedRun: TscRun | undefined
 const tscRun = () => (cachedRun ??= runTsc('pluginKitTypes.test.ts'))
 

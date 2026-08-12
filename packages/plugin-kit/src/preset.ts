@@ -7,40 +7,23 @@ import { PLUGIN_EXTERNALS } from './externals'
 import { assertBundleImports } from './importGuard'
 
 const OUT_DIR = 'dist'
-/**
- * The bundle, as esbuild keys it inside the metafile: relative to the plugin root
- * and forward-slashed even on Windows. Exported so `build.test.ts` can pin the
- * value the guard is actually handed instead of a copy of the same literal, which
- * would keep passing after someone changed this one.
- */
+// The two paths the guard is handed, both read out of tsup's source: esbuild keys the
+// output relative to the plugin root and forward-slashed even on Windows, and tsup 8.5.1
+// writes `dist/metafile-${format}.json` for our fixed esm format. Get either wrong and
+// the guard throws on every build instead of checking one, so they are exported for
+// `build.test.ts` to pin against a real fixture build rather than against copies.
 export const PLUGIN_OUT_FILE = `${OUT_DIR}/index.js`
-// tsup globs an array `entry`, so this has to match the extension a plugin author
-// actually uses. A plain 'src/index.ts' matches only that exact name, which left
-// every JSX plugin dead on arrival with "Cannot find src/index.ts" — including one
-// written against the `jsx: 'automatic'` setting this same preset configures below.
-const ENTRY = 'src/index.{ts,tsx}'
-// tsup 8.5.1 writes `dist/metafile-${format}.json`. Our format is fixed to esm,
-// so this is `dist/metafile-esm.json`, and esbuild keys the output inside it as
-// `dist/index.js` — relative to the plugin root and forward-slashed even on
-// Windows. Both were read out of tsup's source first and are now pinned against a
-// real fixture build in `build.test.ts`; get either wrong and the guard throws on
-// every build instead of checking one. Exported for the same reason as
-// `PLUGIN_OUT_FILE`.
 export const PLUGIN_METAFILE = `${OUT_DIR}/metafile-esm.json`
 
-/**
- * The tsup configuration a CDT plugin needs.
- *
- * `splitting: false` and a single entry are not preferences. The host serves
- * exactly one file per plugin, so a sibling chunk import from the bundle would
- * 404 in the browser. That is also why plain `tsc` cannot be used here: it emits
- * one file per module.
- *
- * `onSuccess` runs the import guard. Marking the host's modules external is only
- * half the contract; the other half is importing nothing else, and without this
- * check a stray `import 'three'` either inlines a second copy of the library or
- * dies at load with a message that points at the plugin rather than the cause.
- */
+// A brace glob, not a fixed name: tsup globs an array `entry`, and a plain
+// 'src/index.ts' left every JSX plugin dead on arrival with "Cannot find src/index.ts".
+const ENTRY = 'src/index.{ts,tsx}'
+
+// The tsup configuration a CDT plugin needs.
+//
+// `splitting: false` and a single entry are a delivery contract, not a preference: the
+// host serves exactly one file per plugin, so a sibling chunk import would 404 in the
+// browser. It is also why plain `tsc` cannot be used — it emits one file per module.
 export function pluginPreset(overrides: Partial<Options> = {}): Options {
   if (overrides.splitting === true) {
     throw new Error(
@@ -50,10 +33,8 @@ export function pluginPreset(overrides: Partial<Options> = {}): Options {
   }
 
   if (overrides.format !== undefined) {
-    // `Options.format` is typed `Format[] | Format`, so a bare string such as
-    // `format: 'esm'` is legitimate input, not an array. Normalise before
-    // checking length/contents so that valid shape does not get misread as
-    // three single-character entries.
+    // `Options.format` is `Format[] | Format`, so a bare `format: 'esm'` is legitimate
+    // input. Normalise first, or that shape reads as three single-character entries.
     const formats = Array.isArray(overrides.format) ? overrides.format : [overrides.format]
 
     if (!(formats.length === 1 && formats[0] === 'esm')) {
@@ -72,9 +53,8 @@ export function pluginPreset(overrides: Partial<Options> = {}): Options {
     )
   }
 
-  // `onSuccess` runs the guard and `external` is what the guard checks against.
-  // Overriding either would switch off the one thing this preset exists to do,
-  // and silently: the build would still pass. Refuse loudly instead.
+  // `onSuccess` runs the guard and `external` is what it checks against, so overriding
+  // either switches the guard off silently — the build would still pass. Refuse loudly.
   if ('onSuccess' in overrides) {
     throw new Error(
       'Overriding `onSuccess` would switch off the CDT plugin import guard, which is ' +

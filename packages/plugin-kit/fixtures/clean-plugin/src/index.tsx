@@ -1,21 +1,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-// A real plugin, written the way the kit tells an author to write one: TypeScript
-// and JSX, built by `pluginPreset()`. It is a port of the hand-written
-// `hello-mounted` plugin the runtime-loading spike used, so the two can be compared
-// line for line.
+// A real plugin, written the way the kit tells an author to write one: TypeScript and
+// JSX, built by `pluginPreset()`.
 //
-// Every value import here is a **bare specifier** the preset leaves external. The
-// browser resolves each one through the import map the host publishes, which points
-// it at a shim handing back the host's own instance. That is what makes this share
-// React with the app rather than loading a second copy, which would break hooks
-// outright.
+// Every value import is a bare specifier the preset leaves external, resolved in the
+// browser through the host's import map to a shim handing back the host's own instance.
+// That is what makes this share React with the app instead of loading a second copy,
+// which breaks hooks outright.
 //
-// Deliberately absent: `three`, `@thatopen/components`, `maplibre-gl`,
-// `lucide-react`. The map arrives as a prop and the icon is named by string, so a
-// plugin never imports the heavy viewer libraries. `maplibre-gl` appears only as a
-// type, through the kit's map surface, and types are erased before the bundle.
+// Deliberately absent: `three`, `@thatopen/components`, `maplibre-gl`, `lucide-react`.
+// The map arrives as a prop and the icon is named by string, so a plugin never imports
+// the heavy viewer libraries; `maplibre-gl` appears only as a type, and types are erased
+// before the bundle.
 
 import { useEffect, useState } from 'react'
 
@@ -29,15 +26,9 @@ interface View {
   lat: number
 }
 
-/**
- * Core wraps every toolbar contribution in the standard button-and-dropdown, built
- * from the `label` and `icon` in the registration below. This renders the panel
- * contents only: a plugin drawing its own floating card would end up inside the
- * toolbar strip.
- *
- * `map` is null until MapLibre has finished initialising, so it is guarded rather
- * than asserted.
- */
+// Core wraps every toolbar contribution in the standard button-and-dropdown built from
+// the registration's `label` and `icon`, so this renders the panel contents only: a
+// plugin drawing its own floating card would end up inside the toolbar strip.
 function HelloMountedTool({ map }: ToolbarToolProps & MapToolProps) {
   const t = usePluginTranslations()
   const { decimals = 4 } = usePluginConfig() as { decimals?: number }
@@ -78,8 +69,8 @@ function HelloMountedTool({ map }: ToolbarToolProps & MapToolProps) {
         <p className="px-2 py-1 text-sm text-muted-foreground">{t('waiting', 'Waiting for the map…')}</p>
       )}
 
-      {/* The point of the counter: local state in a runtime-loaded component. Under
-          a duplicated React this throws "invalid hook call" instead of counting. */}
+      {/* Local state in a runtime-loaded component: under a duplicated React this throws
+          "invalid hook call" instead of counting. */}
       <Button
         size="sm"
         variant="ghost"
@@ -102,11 +93,8 @@ function Row({ label, value }: { label: string; value: string }) {
   )
 }
 
-/**
- * The entry point. The host calls this once, after the administrator has made the
- * plugin available and the user has it switched on, never merely because the folder
- * is mounted.
- */
+// The host calls this once the administrator has made the plugin available and the user
+// has it switched on, never merely because the folder is mounted.
 export function activate(ctx: MapPluginContext) {
   ctx.register('map.tools', {
     id: 'hello-mounted',

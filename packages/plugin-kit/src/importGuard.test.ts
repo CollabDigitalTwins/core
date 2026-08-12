@@ -16,20 +16,12 @@ import {
   collectExternalImports,
 } from './importGuard'
 
-/**
- * Input paths in the shapes the package managers actually emit.
- *
- * The flat-npm entries are copied from a real `dist/metafile-esm.json` written by
- * the dirty fixture's build (`build.test.ts` asserts against that file directly).
- * The pnpm and Yarn entries are the layouts those tools install into — a package
- * reached through `.pnpm/<name>@<version>/node_modules/<name>/`, and a Yarn Berry
- * dependency served out of a zip in `.yarn/cache` — and are here because npm
- * cannot produce them, so no fixture in this repo can.
- *
- * They exist to stop the guard being tested against paths invented to match its
- * own regex, which is how it came to read the *first* `node_modules` segment of a
- * path instead of the last and call an inlined three.js clean.
- */
+// Input paths in the shapes the package managers actually emit: the flat-npm ones copied
+// from a real metafile the dirty fixture's build wrote, the pnpm and Yarn Berry ones
+// because npm cannot produce those layouts and so no fixture here can. They stop the
+// guard being tested against paths invented to match its own regex, which is how it came
+// to read the *first* `node_modules` segment instead of the last and call an inlined
+// three.js clean.
 const FLAT_NPM_THREE = 'node_modules/three/build/three.module.js'
 const PNPM_THREE = 'node_modules/.pnpm/three@0.180.0/node_modules/three/build/three.module.js'
 const PNPM_SCOPED =
@@ -103,8 +95,8 @@ describe('collectBundledPackages', () => {
   })
 
   it('names the package, not `.pnpm`, under a pnpm store layout', () => {
-    // The leftmost node_modules segment here is `.pnpm`. Reading that one and
-    // stopping is what let an inlined three.js through.
+    // The leftmost segment here is `.pnpm`; stopping at it is what let an inlined
+    // three.js through.
     expect(collectBundledPackages(inputsOf(PNPM_THREE))).toEqual(['three'])
   })
 
@@ -137,10 +129,8 @@ describe('collectBundledPackages', () => {
 
 describe('canVerifyBundled', () => {
   it('can verify a bundle whose inputs are all the plugin\'s own source', () => {
-    // The correct shape for a plugin that leaves every host library external, and
-    // the exact inputs list the clean fixture's real build produces. An empty
-    // package list here means "inlined nothing", and must not be mistaken for a
-    // layout the scan cannot read.
+    // The exact inputs the clean fixture's real build produces. An empty package list
+    // here means "inlined nothing", not "a layout the scan cannot read".
     expect(canVerifyBundled(inputsOf('src/index.tsx'))).toEqual({ verifiable: true })
   })
 
@@ -153,8 +143,8 @@ describe('canVerifyBundled', () => {
   })
 
   it('refuses to call a metafile with no inputs clean', () => {
-    // esbuild lists at least the entry point, so an empty list means the file is
-    // not the one this build wrote. Returning [] here reads as "inlined nothing".
+    // esbuild lists at least the entry point, so an empty list means the metafile is not
+    // the one this build wrote — and returning [] would read as "inlined nothing".
     const verdict = canVerifyBundled({ outputs: {} })
 
     expect(verdict.verifiable).toBe(false)
@@ -162,10 +152,10 @@ describe('canVerifyBundled', () => {
   })
 
   it('refuses to call a bundle clean when a module cannot be attributed to a package', () => {
-    // The Yarn PnP case the review named: a dependency reached through a resolver
-    // whose paths carry no node_modules segment. The rule keys off "this module is
-    // outside the plugin and outside any node_modules", not off a guessed vendor
-    // path, because the guard cannot name what it is looking at either way.
+    // The Yarn PnP case: a dependency reached through a resolver whose paths carry no
+    // node_modules segment. The rule keys off "outside the plugin and outside any
+    // node_modules" rather than a guessed vendor path, because either way the guard
+    // cannot name what it is looking at.
     const verdict = canVerifyBundled(inputsOf('src/index.tsx', '/virtual/store/three/three.js'))
 
     expect(verdict.verifiable).toBe(false)

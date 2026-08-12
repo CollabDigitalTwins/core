@@ -5,12 +5,8 @@ import { describe, expect, it } from 'vitest'
 
 import { PLUGIN_RUNTIME_SHIMS } from './runtimeShims'
 
-/**
- * Maps each SDK specifier to the real module, so the shim's declared exports can
- * be checked against what the module actually provides. React's own shims are
- * not checked here: they are validated against the installed React, which is a
- * different concern and moves on upgrade.
- */
+// The real module behind each SDK specifier. React's own shims are left out: they track
+// the installed React, which is a separate concern that moves on upgrade.
 const SDK_MODULES: Record<string, () => Promise<Record<string, unknown>>> = {
   '@collabdt/core/plugins-sdk': () => import('../sdk/index'),
   '@collabdt/core/plugins-sdk/config': () => import('../sdk/config'),
@@ -19,20 +15,13 @@ const SDK_MODULES: Record<string, () => Promise<Record<string, unknown>>> = {
   '@collabdt/core/plugins-sdk/components': () => import('../sdk/components'),
 }
 
-/**
- * Exports a module has on purpose without a shim of its own, and why.
- *
- * An import map cannot rewrite a namespace, so each shim re-exports by name; a
- * name missing from the list is `undefined` in the plugin's import with nothing
- * to debug. Checking only that the shim promises nothing extra caught the wrong
- * half of that: add a hook to `sdk/config.ts` and forget the shim and everything
- * stayed green while the plugin's import was undefined at runtime — the same
- * shape as two defects this plan already produced.
- *
- * So the check runs both ways, and every unshimmed export has to be named here
- * with its reason. The barrel's components are handled separately below, since
- * listing eighteen of them would rot on the first change.
- */
+// Exports a module has on purpose without a shim of its own, and why.
+//
+// An import map cannot rewrite a namespace, so each shim re-exports by name and a missing
+// name is `undefined` in the plugin's import with nothing to debug. Checking only that a
+// shim promises nothing extra caught the wrong half: adding a hook to `sdk/config.ts` and
+// forgetting the shim stayed green while the plugin's import was undefined at runtime. So
+// the check runs both ways, and every unshimmed export is named here with its reason.
 const DELIBERATELY_UNSHIMMED: Record<string, Record<string, string>> = {
   '@collabdt/core/plugins-sdk': {
     PLUGIN_RUNTIME_SHIMS:
@@ -50,10 +39,8 @@ const DELIBERATELY_UNSHIMMED: Record<string, Record<string, string>> = {
   },
 }
 
-/**
- * Type-only exports vanish at runtime, so they never appear here and never need a
- * shim: `PluginManifest`, `PluginStore` and the rest are the kit's to declare.
- */
+// Type-only exports vanish at runtime, so they never appear here and never need a shim:
+// `PluginManifest`, `PluginStore` and the rest are the kit's to declare.
 describe('shim export lists', () => {
   it('covers every SDK specifier that has a shim', () => {
     const sdkShims = PLUGIN_RUNTIME_SHIMS
@@ -78,8 +65,8 @@ describe('shim export lists', () => {
       const actual = await load()
 
       // The barrel re-exports every component, which reaches a plugin through
-      // `plugins-sdk/components` instead. Read from that module rather than
-      // restated, so adding a component needs no change here.
+      // `plugins-sdk/components` instead. Read from that module, not restated, so adding
+      // a component needs no change here.
       const servedElsewhere = specifier === '@collabdt/core/plugins-sdk'
         ? Object.keys(await import('../sdk/components'))
         : []

@@ -2,12 +2,11 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 export { KNOWN_FORBIDDEN, PLUGIN_EXTERNALS } from './externals'
-// The whole guard, not just the entry point. `preset.ts` refuses an `onSuccess` or
-// `external` override and tells the author to call `assertBundleImports()` from
-// their own post-build step instead — which needs the two path constants below, or
-// the advice is unfollowable. `collectBundledPackages`, `canVerifyBundled` and
-// `checkBundled` are exported for the same reason: they are the pieces a stricter
-// or more forgiving check would be built from.
+// The whole guard, not just its entry point. `preset.ts` refuses an `onSuccess` or
+// `external` override and tells the author to call `assertBundleImports()` from their own
+// post-build step, which needs the two path constants below or the advice is
+// unfollowable; the smaller pieces are what a stricter or more forgiving check is built
+// from.
 export {
   assertBundleImports,
   canVerifyBundled,

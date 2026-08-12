@@ -3,12 +3,11 @@
 
 // The clean fixture with one line added: an import of `three`. Its build must fail.
 //
-// `three` is a real dependency of this fixture and is genuinely installed. That is
-// the whole point. If it were absent, esbuild would fail on module *resolution* and
-// the build would still be red, but for a reason that proves nothing about the
-// import guard. Installed, esbuild resolves it, inlines it into the bundle, and the
-// guard's bundled-package check is what rejects the build. The test asserts on the
-// guard's own wording so the two failures cannot be confused.
+// `three` is genuinely installed here, which is the whole point. Absent, esbuild would
+// fail on module *resolution* — red for a reason that proves nothing about the guard.
+// Installed, it is resolved and inlined, and the guard's bundled-package check is what
+// rejects the build. The test asserts on the guard's own wording so the two cannot be
+// confused.
 
 import { useEffect, useState } from 'react'
 import * as THREE from 'three'

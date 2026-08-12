@@ -18,23 +18,15 @@ import {
 } from './importGuard'
 import { PLUGIN_METAFILE, PLUGIN_OUT_FILE } from './preset'
 
-/**
- * The only test in this package that runs a real build. Everything else checks the
- * pieces in isolation: the preset returns the right object, the guard rejects the
- * right metafile. None of that proves tsup writes the metafile where the guard
- * looks, that esbuild keys the output the way the guard reads it, that the types
- * survive the trip into `dist`, or that a failing guard actually turns into a
- * failing build. Two fixture plugins are built for real here, one that should pass
- * and one that must not.
- *
- * Running it needs two things a clean checkout does not have, because both are
- * gitignored build products: the fixtures' dependencies, and this package's own
- * `dist` (which the fixtures import through `"@collabdt/plugin-kit": "file:../.."`).
- * Nothing installs or builds them on your behalf, so every test here checks for
- * what it needs first and fails naming the command to run. Skipping instead would
- * be worse than useless: a capstone that quietly does not run is the same failure
- * as a capstone that passes without proving anything.
- */
+// The only test in this package that runs a real build. The rest check the pieces in
+// isolation, which proves nothing about tsup writing the metafile where the guard looks,
+// esbuild keying the output the way the guard reads it, the types surviving into `dist`,
+// or a failing guard turning into a failing build.
+//
+// Its prerequisites are gitignored build products (the fixtures' dependencies and this
+// package's own `dist`), so each test checks for what it needs and fails naming the
+// command to run. Skipping would be worse: a capstone that quietly does not run is the
+// same failure as one that passes without proving anything.
 
 const run = promisify(execFile)
 
@@ -52,11 +44,9 @@ async function requirePresent(path: string, remedy: string): Promise<void> {
   }
 }
 
-/**
- * Fixture `node_modules/` is gitignored, and `npx` given a package it cannot find
- * locally goes to the network or fails with something that reads like a bug in the
- * kit. Checked by the presence of tsup, which every fixture build needs.
- */
+// `npx` given a package it cannot find locally goes to the network or fails with
+// something that reads like a bug in the kit. Checked through tsup, which every fixture
+// build needs.
 function requireFixtureInstalled(name: string): Promise<void> {
   return requirePresent(
     join(fixture(name), 'node_modules/tsup/package.json'),
@@ -74,10 +64,7 @@ function requireKitBuilt(): Promise<void> {
   )
 }
 
-/**
- * Everything a rejected execFile captured, without asserting on the shape of the
- * rejection. tsup reports through stderr and tsc through stdout, so both are read.
- */
+/** Everything a rejected execFile captured: tsup reports on stderr and tsc on stdout. */
 function outputOf(failure: unknown): string {
   const withStreams = failure as { stdout?: unknown; stderr?: unknown; message?: unknown }
 
@@ -103,17 +90,14 @@ describe('a plugin built with pluginPreset', () => {
   it('emits exactly one JS file, with no sibling chunk to import', async () => {
     const files = (await readdir(cleanDist)).filter(name => name.endsWith('.js'))
 
-    // The host serves dist/index.js and nothing beside it, so a second chunk would
-    // 404 in the browser rather than merely bloat the output.
+    // The host serves dist/index.js and nothing beside it, so a second chunk would 404 in
+    // the browser rather than merely bloat the output.
     expect(files).toEqual(['index.js'])
 
-    // Read from the metafile rather than by matching `from "…"` in the emitted
-    // source. That regex looked like an independent re-derivation of the guard and
-    // was strictly weaker than one: it missed `import 'x'` and `import('x')`
-    // entirely and matched any text inside a string literal. This is the same data
-    // esbuild hands the guard, and the assertion below is the one the guard does
-    // not make — that nothing in the output is a *non-external* import, i.e. no
-    // chunk of the plugin's own code was split out.
+    // Read from the metafile rather than by matching `from "…"` in the emitted source:
+    // that regex missed `import 'x'` and `import('x')` and matched text inside string
+    // literals. The assertion below is the one the guard does not make — that no chunk of
+    // the plugin's own code was split out.
     const imports = (await metafileOf('clean-plugin')).outputs[PLUGIN_OUT_FILE].imports ?? []
 
     expect(imports.filter(entry => !entry.external)).toEqual([])
@@ -122,8 +106,7 @@ describe('a plugin built with pluginPreset', () => {
   it('imports nothing outside the allowlist, read from the build\'s own metafile', async () => {
     const specifiers = collectExternalImports(await metafileOf('clean-plugin'), PLUGIN_OUT_FILE)
 
-    // A plugin that imported nothing would pass the loop below vacuously, and this
-    // fixture imports React and three SDK modules.
+    // A plugin that imported nothing would pass the loop below vacuously.
     expect(specifiers.length).toBeGreaterThan(0)
 
     for (const specifier of specifiers) {
@@ -132,11 +115,10 @@ describe('a plugin built with pluginPreset', () => {
   })
 
   it('inlines nothing, and says so from a layout the scan can read', async () => {
-    // The other half of the guard, against real tool output. A correctly written
-    // plugin leaves every host library external, so esbuild reads only the plugin's
-    // own source: `inputs` here is exactly ["src/index.tsx"], with no node_modules
-    // path in it. That shape has to come out *verifiable and clean* — treating "no
-    // node_modules inputs" as suspicious would fail every well-written plugin.
+    // A correctly written plugin leaves every host library external, so `inputs` here is
+    // exactly ["src/index.tsx"] with no node_modules path in it. That shape has to come
+    // out verifiable *and* clean — treating it as suspicious would fail every
+    // well-written plugin.
     const metafile = await metafileOf('clean-plugin')
 
     expect(canVerifyBundled(metafile)).toEqual({ verifiable: true })
@@ -144,12 +126,9 @@ describe('a plugin built with pluginPreset', () => {
   })
 
   it('writes the metafile at the path and output key the import guard reads', async () => {
-    // Both constants are imported, not restated. They are the values `preset.ts`
-    // hands `assertBundleImports`, and they were originally derived from reading
-    // tsup's source; get either wrong and the guard throws "could not find
-    // dist/index.js in the metafile" on every build, or worse, never runs. A copy
-    // of the literals here would keep asserting the old string after someone
-    // changed the real one.
+    // Both constants are imported, not restated: a copy of the literals here would keep
+    // asserting the old string after someone changed the real one, and a wrong value
+    // makes the guard throw on every build or never run at all.
     const metafile = JSON.parse(
       await readFile(join(fixture('clean-plugin'), PLUGIN_METAFILE), 'utf8'),
     ) as { outputs: Record<string, unknown> }
@@ -159,19 +138,13 @@ describe('a plugin built with pluginPreset', () => {
   })
 
   it('typechecks against the kit as published, not as it sits in src', async () => {
-    // `ambientTypes.test.ts` checks the ambient declarations where they are written.
-    // This checks them where a plugin author meets them: resolved out of `dist`
-    // through the package's `exports` map, by a plugin that imports
-    // `@collabdt/core/plugins-sdk/*` and never installs `@collabdt/core`.
-    //
-    // The gap is real, not theoretical. Those declarations reach `dist` only via
-    // `scripts/shipAmbientTypes.mjs`, which `npm run build` runs and a bare `tsup`
-    // does not. Built the wrong way, the kit resolves, the fixture builds, every
-    // other test here passes, and the plugin's SDK imports are TS2307.
-    //
-    // Which is why this refuses to run without them rather than reporting them as
-    // the plugin's fault: the whole point is to catch a kit built the wrong way,
-    // and a red test blaming the fixture would send the reader to the wrong file.
+    // `ambientTypes.test.ts` checks the ambient declarations where they are written; this
+    // checks them where a plugin author meets them, resolved out of `dist` through the
+    // package's `exports` map. The gap is real: those declarations reach `dist` only via
+    // `scripts/shipAmbientTypes.mjs`, which `npm run build` runs and a bare `tsup` does
+    // not, and built the wrong way every other test here still passes while the plugin's
+    // SDK imports are TS2307. Hence the refusal to run without them — a red test blaming
+    // the fixture would send the reader to the wrong file.
     await requirePresent(
       join(packageRoot, 'dist/types/sdkModules.d.ts'),
       'The kit has no built dist/types/sdkModules.d.ts, which is what a plugin\'s ' +
@@ -181,9 +154,8 @@ describe('a plugin built with pluginPreset', () => {
       'scripts/shipAmbientTypes.mjs, which the build script runs and tsup does not.',
     )
 
-    // tsc writes diagnostics to stdout, which execFile's rejection message drops.
-    // Surfaced by hand so a failure here names the offending import rather than
-    // saying only "Command failed".
+    // tsc writes diagnostics to stdout, which execFile's rejection message drops, so a
+    // failure here would otherwise say only "Command failed".
     const failure = await run('npx', ['tsc', '--noEmit'], { cwd: fixture('clean-plugin'), shell: true })
       .then(() => '')
       .catch((error: unknown) => outputOf(error))
@@ -195,10 +167,8 @@ describe('a plugin built with pluginPreset', () => {
     await requireKitBuilt()
     await requireFixtureInstalled('dirty-plugin')
 
-    // `three` is a real dependency of the dirty fixture and is genuinely installed.
-    // Without it esbuild would fail on resolution long before the guard ran, the
-    // build would still be red, and this test would prove nothing but that esbuild
-    // cannot resolve a missing package. Checked rather than assumed.
+    // Without `three` genuinely installed, esbuild fails on resolution long before the
+    // guard runs: the build is red either way, but for a reason that proves nothing.
     await requirePresent(
       join(fixture('dirty-plugin'), 'node_modules/three/package.json'),
       'The dirty fixture does not have three installed, so the build below would fail on ' +
@@ -215,20 +185,17 @@ describe('a plugin built with pluginPreset', () => {
 
     const output = outputOf(failure)
 
-    // The guard's own wording, not merely a non-zero exit: that is what separates
-    // "the import guard rejected an inlined three.js" from "esbuild could not find
-    // three", which is the failure this fixture exists to avoid mistaking for it.
-    // A bare /three/ would not tell them apart — esbuild's resolution error quotes
-    // the specifier back at you, so it matches too.
+    // The guard's own wording, not merely a non-zero exit: a bare /three/ cannot separate
+    // "the guard rejected an inlined three.js" from "esbuild could not find three",
+    // because the resolution error quotes the specifier back at you too.
     expect(output).toMatch(/Forbidden libraries bundled instead of left external/)
     expect(output).toMatch(/three/)
     expect(output).not.toMatch(/Could not resolve/)
 
-    // And the same conclusion drawn from the metafile that build just wrote, which
-    // is the only place in this package where the package-name extraction meets a
-    // path a real installer produced rather than one a test author typed. tsup
-    // writes the metafile before `onSuccess` runs, so it is there despite the
-    // failure above.
+    // The same conclusion from the metafile that build just wrote — the only place here
+    // where the package-name extraction meets a path a real installer produced rather
+    // than one a test author typed. tsup writes it before `onSuccess` runs, so it exists
+    // despite the failure above.
     const metafile = await metafileOf('dirty-plugin')
 
     expect(canVerifyBundled(metafile)).toEqual({ verifiable: true })

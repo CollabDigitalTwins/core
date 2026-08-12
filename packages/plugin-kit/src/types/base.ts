@@ -1,27 +1,21 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-// Pulls in the ambient declarations for `@collabdt/core/plugins-sdk*` — the
-// modules a plugin imports as real values and the host resolves through its import
-// map. The dts bundler strips this directive, so `scripts/shipAmbientTypes.mjs`
-// puts an equivalent one back on each built surface entry; the path is written to
-// be the same in `src/types/` and in `dist/types/`.
+// Pulls in the ambient declarations for `@collabdt/core/plugins-sdk*`. The dts bundler
+// strips this directive, so `scripts/shipAmbientTypes.mjs` puts an equivalent one back on
+// each built surface entry; the path is written to work from `src/types/` and
+// `dist/types/` alike.
 /// <reference path="./sdkModules.d.ts" />
 
 import type * as React from 'react'
 
-/**
- * Everything a plugin needs that costs nothing to depend on.
- *
- * The viewer surfaces live in sibling files because their prop types name the map
- * and BIM libraries. Keeping those out of here is what lets a map plugin typecheck
- * without the BIM library installed, and the reverse. Each surface file re-exports
- * this one, so a plugin still has a single import path.
- *
- * These shapes mirror core's `src/core/plugins/sdk/types.ts` and `sdk/version.ts`.
- * Core stays the source of truth; a test there (`pluginKitTypes.test.ts`) fails if
- * the two drift.
- */
+// Everything a plugin needs that costs nothing to depend on. The viewer surfaces live in
+// sibling files because their prop types name the map and BIM libraries, which is what
+// lets a map plugin typecheck without the BIM library installed and the reverse; each of
+// those re-exports this file, so a plugin still has a single import path.
+//
+// These shapes mirror core's `sdk/types.ts` and `sdk/version.ts`. Core stays the source
+// of truth, and `pluginKitTypes.test.ts` there fails if the two drift.
 
 // --- Host contract version ---
 

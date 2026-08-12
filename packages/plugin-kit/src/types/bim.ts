@@ -4,36 +4,25 @@
 import type { CapabilityRegistry, PluginContext } from './base'
 import type * as OBC from '@thatopen/components'
 
-/**
- * The BIM viewer, as a plugin sees it.
- *
- * This is the only entry that names the BIM library, so a map or point-cloud
- * plugin never has to install it. Install `@thatopen/components` as a
- * devDependency to typecheck against this entry.
- *
- * Note that a plugin only ever *types* against it: the viewer arrives as props, so
- * a plugin bundle must never import it at runtime. Doing so loads a second copy of
- * three.js and breaks the viewer; the kit's build preset refuses such a bundle.
- */
+// The BIM viewer, as a plugin sees it. The only entry that names `@thatopen/components`,
+// which a plugin installs as a devDependency to typecheck against this entry — and only
+// ever *types* against: the viewer arrives as props, and importing the library at runtime
+// loads a second copy of three.js and breaks the viewer, so the kit's build preset
+// refuses such a bundle.
 
 export * from './base'
 
 /**
  * Elements keyed by the model they belong to.
  *
- * Core takes this from `components/viewers/bim/src/lib/bimTree`, which re-exports
- * the BIM library's own alias. It is restated here because that path is internal
- * to core and unreachable from outside it. The definition is the library's,
- * verbatim.
+ * The BIM library's own alias, restated verbatim because core reaches it through a path
+ * internal to core and unreachable from outside it.
  */
 export type ModelIdMap = Record<string, Set<number>>
 
 /**
- * Attributes read back for one element.
- *
- * Restated from core's `components/viewers/bim/src/lib/bimQueries`, again an
- * internal path. `modelId` and `localId` are always present so a result maps back
- * to the element it came from; everything else depends on which attributes were
+ * Attributes read back for one element. `modelId` and `localId` are always present so a
+ * result maps back to the element it came from; the rest depends on which attributes were
  * requested and what the model carries.
  */
 export interface BimItemProperties extends Record<string, unknown> {

@@ -3,12 +3,8 @@
 
 import type { CapabilityRegistry, PluginContext } from './base'
 
-/**
- * A legend section on the map.
- *
- * Split out from the map surface because it names no external type: a plugin that
- * only contributes a legend needs no viewer library installed to typecheck.
- */
+// A legend section on the map. Split out from the map surface because it names no
+// external type: a legend-only plugin needs no viewer library installed to typecheck.
 
 export * from './base'
 

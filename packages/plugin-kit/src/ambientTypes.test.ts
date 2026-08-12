@@ -1,34 +1,20 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-/**
- * Checks everything under `src/types/` with `skipLibCheck` off.
- *
- * Errors inside a `.d.ts` are invisible under `skipLibCheck: true`, which every
- * sensible project — including this one — turns on. That is a bad place for the
- * files whose whole job is to be shipped to other people as types: they compile
- * clean here and break in a consumer's build.
- *
- * It has already happened once. An `import type … from './components'` inside an
- * ambient module is TS2439 ("cannot reference module through relative module
- * name"), the ambient types silently degraded to `any` for anyone with
- * `skipLibCheck` on, and nothing in this package noticed.
- *
- * The package cannot simply set `skipLibCheck: false`: the viewer libraries it
- * carries as type-only devDependencies do not compile clean on their own
- * (`maplibre-gl` alone wants `@types/geojson`). So only diagnostics against this
- * package's own `src/types/` files count.
- *
- * That filter used to name `sdkModules.d.ts` alone, which left `components.ts`
- * unchecked — the file that holds every component shape the ambient module builds
- * on, and the file that degraded to `any` the first time. It is in the program
- * either way, because the ambient module imports from it; it simply had no way to
- * fail. The surface entries are compiled explicitly for the same reason: a plugin
- * author resolves them directly, so an error in one is an error in their build.
- *
- * Because the filter is what makes a green result meaningful, "tsc ran and found
- * nothing" has to be told apart from "tsc did not run" — see the second test.
- */
+// Checks everything under `src/types/` with `skipLibCheck` off, because errors inside a
+// `.d.ts` are invisible under the `skipLibCheck: true` every sensible project turns on —
+// a bad place for the files whose whole job is to be shipped to other people as types.
+//
+// It has already happened once: an `import type … from './components'` inside an ambient
+// module is TS2439 ("cannot reference module through relative module name"), the ambient
+// types silently degraded to `any` for everyone with `skipLibCheck` on, and nothing here
+// noticed.
+//
+// The package cannot simply set `skipLibCheck: false` — its type-only viewer
+// devDependencies do not compile clean on their own — so only diagnostics against its own
+// `src/types/` files count. Every file there is listed, not just the ambient one: the
+// filter is what makes a green result meaningful, which is also why the second test has
+// to tell "tsc ran and found nothing" apart from "tsc did not run".
 
 import { execFileSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
@@ -39,11 +25,9 @@ import { describe, expect, it } from 'vitest'
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
-/**
- * The ambient declarations plus every entry a plugin author can import. `base.ts`
- * and `components.ts` arrive through them anyway; listing them makes that
- * independent of who imports whom.
- */
+// The ambient declarations plus every entry a plugin author can import. `base.ts` and
+// `components.ts` arrive through those anyway; listing them makes the coverage
+// independent of who imports whom.
 const TYPE_FILES = [
   'sdkModules.d.ts',
   'base.ts',
@@ -68,8 +52,7 @@ const TSC_ARGS = [
   '--module', 'esnext',
   '--moduleResolution', 'bundler',
   '--lib', 'es2022,dom',
-  // Prints a stats block whether or not anything was reported, which is the only
-  // evidence available that the compiler ran at all: a clean run and a run that
+  // The stats block is the only evidence the compiler ran: a clean run and a run that
   // never happened produce the same empty diagnostic list.
   '--extendedDiagnostics',
 ]
@@ -122,10 +105,9 @@ describe('shipped type declarations', () => {
   it('actually ran that compiler over them', () => {
     const run = tscRun()
 
-    // tsc's ExitStatus: 0 clean, 1 and 2 diagnostics reported (expected here — the
-    // viewer libraries do not compile clean with skipLibCheck off), 3 and 4 an
-    // unusable project. -1 is this file's own marker for a process that never
-    // started.
+    // tsc's ExitStatus: 0 clean, 1 and 2 diagnostics reported (expected — the viewer
+    // libraries do not compile clean with skipLibCheck off), 3 and 4 an unusable project.
+    // -1 is this file's own marker for a process that never started.
     expect([0, 1, 2]).toContain(run.status)
 
     const files = /^Files:\s+(\d+)$/m.exec(run.output)

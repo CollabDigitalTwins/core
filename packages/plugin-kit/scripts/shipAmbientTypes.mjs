@@ -1,20 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-/**
- * Ships `src/types/sdkModules.d.ts` and re-attaches the reference to it.
- *
- * The ambient declarations for `@collabdt/core/plugins-sdk*` cannot live in
- * `base.ts`: inside a module, `declare module '<unresolvable>'` is read as an
- * augmentation of a missing module and rejected (TS2664). They therefore sit in a
- * global `.d.ts` that `base.ts` pulls in with a `/// <reference path>` — and the
- * dts bundler drops both the file (nothing imports it) and the directive (it
- * rewrites the file that carried it).
- *
- * So copy the file next to the built surface entries and prepend the directive to
- * each of them. Without this a plugin's `import { Button } from
- * '@collabdt/core/plugins-sdk/components'` has no types on the other side.
- */
+// Ships `src/types/sdkModules.d.ts` and re-attaches the reference to it.
+//
+// The ambient declarations for `@collabdt/core/plugins-sdk*` cannot live in `base.ts`:
+// inside a module, `declare module '<unresolvable>'` is read as an augmentation of a
+// missing module and rejected (TS2664). They therefore sit in a global `.d.ts` that
+// `base.ts` pulls in with a `/// <reference path>` — and the dts bundler drops both the
+// file (nothing imports it) and the directive (it rewrites the file that carried it).
+// Without this copy-and-prepend, a plugin's `@collabdt/core/plugins-sdk/*` imports have
+// no types on the other side.
 
 import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -42,11 +37,8 @@ for (const surface of SURFACES) {
   writeFileSync(built, `${DIRECTIVE}\n${contents}`)
 }
 
-// Verify rather than assume. A bare `tsup` skips this script entirely and drops the
-// ambient file silently; and a dts bundler that rewrote the directive's path instead
-// of stripping it would slip past the `includes` check above and ship a dangling
-// reference, which surfaces as TS6053 in someone else's build. Both end the build
-// here instead.
+// Verify rather than assume: a bare `tsup` skips this script and drops the ambient file
+// silently, and either failure below surfaces as someone else's broken build.
 const problems = []
 
 if (!existsSync(shipped)) {
@@ -75,10 +67,9 @@ for (const surface of SURFACES) {
     problems.push(`dist/types/${surface}.d.ts does not carry ${DIRECTIVE}`)
   }
 
-  // Every reference has to resolve, not just ours. If a future dts bundler rewrites
-  // the directive's path rather than stripping it, the loop above sees no match and
-  // prepends a second, correct one — leaving the rewritten original behind as a
-  // dangling reference that is TS6053 in a consumer's build.
+  // Every reference has to resolve, not just ours: a dts bundler that rewrites the
+  // directive's path rather than stripping it leaves the loop above prepending a second,
+  // correct one and the rewritten original behind — TS6053 in a consumer's build.
   for (const path of paths) {
     if (!existsSync(join(packageRoot, 'dist/types', path))) {
       problems.push(`dist/types/${surface}.d.ts references "${path}", which does not exist`)

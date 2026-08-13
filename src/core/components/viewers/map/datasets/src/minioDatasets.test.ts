@@ -69,6 +69,12 @@ describe('fetchOrganizationalMinioDatasets', () => {
     expect(ds.url).toBe(ds.sourceUrl)
   })
 
+  it('stamps each dataset with the organization it was fetched for', async () => {
+    mockFilesFetch([validRow])
+    const [ds] = await fetchOrganizationalMinioDatasets(42, new Set(), TEST_MINIO_URL)
+    expect(ds.organization).toBe(42)
+  })
+
   it('strips .geojson from the name and falls back to "Dataset {id}"', async () => {
     mockFilesFetch([
       validRow,

@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { Options } from 'tsup'
 
 import { PLUGIN_EXTERNALS } from './externals'
 import { assertBundleImports } from './importGuard'
+
+import type { Options } from 'tsup'
 
 const OUT_DIR = 'dist'
 // The two paths the guard is handed, both read out of tsup's source: esbuild keys the

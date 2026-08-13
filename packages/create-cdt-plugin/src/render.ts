@@ -90,7 +90,11 @@ export function tokensFor(options: Options): TOKENS {
     COMPONENT: componentName(options.name),
     // Matches PLUGIN_HOST_API in core. A drift test there keeps the two equal.
     HOST_API: '1',
-    KIT_SPEC: options.kitSpec,
+    // Escaped because its only use is inside a JSON string in package.json, and a `file:`
+    // specifier on Windows carries backslashes that are invalid JSON escapes. A published
+    // range like ^0.1.0 needs no escaping, which is why this only surfaces when pointing a
+    // plugin at a local build of the kit.
+    KIT_SPEC: jsonSafe(options.kitSpec),
     // The type names and icon the entry and component templates need, so a template
     // states the surface once and the table in surfaces.ts owns what that implies.
     CONTEXT_TYPE: facts.contextType,

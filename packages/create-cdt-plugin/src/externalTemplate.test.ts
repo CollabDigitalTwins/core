@@ -77,6 +77,17 @@ describe('the external package.json template', () => {
     expect(packageJson().devDependencies['@collabdt/core']).toBeUndefined()
   })
 
+  it('depends on React types, without which the generated JSX does not typecheck', () => {
+    expect(packageJson().devDependencies['@types/react']).toBeDefined()
+  })
+
+  it('depends on React types only, never the React package', () => {
+    // The plugin needs React's types to compile and gets React itself from the platform at
+    // runtime through the import map. Depending on the package would contradict that and
+    // put a second copy within reach of an author's bundler.
+    expect(packageJson().devDependencies.react).toBeUndefined()
+  })
+
   it('never depends on a library a plugin must not bundle', () => {
     for (const forbidden of ['three', 'lucide-react', '@thatopen/components-front']) {
       expect(packageJson().devDependencies[forbidden]).toBeUndefined()

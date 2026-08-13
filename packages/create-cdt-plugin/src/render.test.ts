@@ -110,6 +110,20 @@ describe('tokensFor', () => {
     expect(parsed.a).toBe('DOMAIN\\nico')
   })
 
+  it('escapes the kit spec, which carries backslashes when it is a Windows file: path', () => {
+    const tokens = tokensFor({ ...options, kitSpec: 'file:C:\\repo\\packages\\plugin-kit' })
+
+    const parsed = JSON.parse(`{"k":"${tokens.KIT_SPEC}"}`) as { k: string }
+
+    expect(parsed.k).toBe('file:C:\\repo\\packages\\plugin-kit')
+  })
+
+  it('leaves a published range untouched once parsed', () => {
+    const parsed = JSON.parse(`{"k":"${tokensFor(options).KIT_SPEC}"}`) as { k: string }
+
+    expect(parsed.k).toBe(DEFAULT_KIT_SPEC)
+  })
+
   it('escapes a newline rather than breaking the JSON across lines', () => {
     const tokens = tokensFor({ ...options, description: 'One.\nTwo.' })
 

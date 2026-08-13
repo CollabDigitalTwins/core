@@ -165,6 +165,52 @@ describe('the external README template', () => {
   })
 })
 
+describe('the empty body template', () => {
+  const forSurface = (surface: Options['surface']) =>
+    render(
+      readFileSync(templatePath('external', 'src/components', 'Empty.tsx'), 'utf8'),
+      tokensFor({ ...options, surface, body: 'empty' }),
+    )
+
+  it('renders a props intersection for each toolbar surface', () => {
+    expect(forSurface('map.tools')).toContain('ToolbarToolProps & MapToolProps')
+    expect(forSurface('bim.tools')).toContain('ToolbarToolProps & BimToolProps')
+    expect(forSurface('pointcloud.tools')).toContain('ToolbarToolProps & PointCloudToolProps')
+  })
+
+  it('is unusable for map.legends, which is why the scaffolder must never route it there', () => {
+    // A legend has no toolbar props, so PROPS_TYPE is empty and this template renders
+    // `ToolbarToolProps & ` — invalid TypeScript. `bodyFiles` sends map.legends to
+    // ExampleLegend.tsx in both bodies; this pins the reason that is not a preference.
+    expect(forSurface('map.legends')).toContain('ToolbarToolProps & )')
+  })
+})
+
+describe('the empty entry point template', () => {
+  const entry = (surface: Options['surface']) =>
+    render(
+      readFileSync(templatePath('external', 'src', 'index.ts'), 'utf8'),
+      tokensFor({ ...options, surface, body: 'empty' }),
+    )
+
+  it('registers under the chosen capability with the surface-bound context type', () => {
+    expect(entry('map.tools')).toContain("ctx.register('map.tools'")
+    expect(entry('map.tools')).toContain('ctx: MapPluginContext')
+    expect(entry('bim.tools')).toContain('ctx: BimPluginContext')
+  })
+
+  it('names the icon by string, so a plugin never needs lucide-react', () => {
+    expect(entry('map.tools')).toContain("icon: 'MapPin'")
+    // The comment explaining why the icon is a string does mention the package, so the
+    // assertion is on the import rather than on the word appearing anywhere.
+    expect(entry('map.tools')).not.toMatch(/^import .*lucide-react/m)
+  })
+
+  it('uses the slug as the registration id, which must be unique within the plugin', () => {
+    expect(entry('map.tools')).toContain("id: 'room-inventory'")
+  })
+})
+
 describe('every external template', () => {
   const FILES = [
     'manifest.json',

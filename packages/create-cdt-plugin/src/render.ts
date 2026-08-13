@@ -4,6 +4,8 @@
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { factsFor } from './surfaces'
+
 import type { Options, Surface } from './options'
 
 /**
@@ -73,6 +75,8 @@ export function render(source: string, tokens: TOKENS): string {
 const jsonSafe = (value: string) => JSON.stringify(value).slice(1, -1)
 
 export function tokensFor(options: Options): TOKENS {
+  const facts = factsFor(options.surface)
+
   return {
     SLUG: options.slug,
     NAME: options.name,
@@ -87,6 +91,12 @@ export function tokensFor(options: Options): TOKENS {
     // Matches PLUGIN_HOST_API in core. A drift test there keeps the two equal.
     HOST_API: '1',
     KIT_SPEC: options.kitSpec,
+    // The type names and icon the entry and component templates need, so a template
+    // states the surface once and the table in surfaces.ts owns what that implies.
+    CONTEXT_TYPE: facts.contextType,
+    SURFACE_ENTRY: facts.entry,
+    PROPS_TYPE: facts.propsType,
+    ICON: facts.icon,
   }
 }
 

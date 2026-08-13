@@ -119,6 +119,25 @@ describe('tokensFor', () => {
   })
 })
 
+describe('tokensFor, surface-derived tokens', () => {
+  it('supplies the type names the entry and component templates use', () => {
+    const tokens = tokensFor(options)
+
+    expect(tokens.CONTEXT_TYPE).toBe('MapPluginContext')
+    expect(tokens.SURFACE_ENTRY).toBe('@collabdt/plugin-kit/types/map')
+    expect(tokens.PROPS_TYPE).toBe('MapToolProps')
+    expect(tokens.ICON).toBe('MapPin')
+  })
+
+  it('tracks the surface rather than the name, so switching surface reshapes the imports', () => {
+    const tokens = tokensFor({ ...options, surface: 'bim.tools' })
+
+    expect(tokens.CONTEXT_TYPE).toBe('BimPluginContext')
+    expect(tokens.SURFACE_ENTRY).toBe('@collabdt/plugin-kit/types/bim')
+    expect(tokens.PROPS_TYPE).toBe('BimToolProps')
+  })
+})
+
 describe('TEMPLATE_ROOT', () => {
   it('points at a directory that exists, since a missing one fails at scaffold time', () => {
     expect(existsSync(TEMPLATE_ROOT)).toBe(true)

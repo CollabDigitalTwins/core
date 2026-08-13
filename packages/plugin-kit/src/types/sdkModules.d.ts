@@ -55,8 +55,16 @@ declare module '@collabdt/core/plugins-sdk' {
 }
 
 declare module '@collabdt/core/plugins-sdk/config' {
-  /** The plugin's own configuration, as stored for this organization. */
-  export function usePluginConfig(): Record<string, unknown>
+  /**
+   * The plugin's own configuration, as stored for this organization.
+   *
+   * Generic so a plugin can declare the shape its manifest's `configSchema` promises,
+   * which is what core's worked examples do. The parameter defaults, so a bare call is
+   * still valid.
+   */
+  export function usePluginConfig<
+    T extends Record<string, unknown> = Record<string, unknown>,
+  >(): T
   /** The calling plugin's id, from the scope its capability host established. */
   export function usePluginId(): string
 }

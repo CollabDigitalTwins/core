@@ -1,0 +1,28 @@
+{
+  "name": "create-cdt-plugin",
+  "version": "0.1.0",
+  "description": "Scaffold a Collab Digital Twins plugin.",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "bin": {
+    "create-cdt-plugin": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "prompts": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/prompts": "^2.4.9",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.8"
+  }
+}

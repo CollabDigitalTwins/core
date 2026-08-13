@@ -6,32 +6,17 @@ import { join } from 'node:path'
 
 import type { Mode } from './options'
 
-/**
- * The slugs of the plugins compiled into core.
- *
- * A checked copy rather than an import. This package is a `bin` run by plain Node, and
- * core's `dist/` emits extensionless relative imports that only a bundler resolves, so
- * `import { PLUGIN_MANIFESTS } from '@collabdt/core/plugins-sdk'` dies on the barrel's
- * first re-export. Depending on core at all would also pull three.js into a scaffolder.
- * Drift is prevented by a test in core rather than by this file:
- * `src/core/plugins/host/createCdtPluginDrift.test.ts`.
- */
+// A checked copy rather than an import: this package is a bin run by plain Node, which cannot
+// resolve core's extensionless dist imports, and depending on core would pull three.js into a
+// scaffolder. Core's createCdtPluginDrift.test.ts prevents the drift.
 export const COMPILED_IN_SLUGS: readonly string[] = ['hello-map', 'hello-bim']
 
-/**
- * Also the reason a slug cannot contain a path separator or a dot segment: the slug
- * becomes the target directory name, so anything else lets a scaffold escape the
- * directory the resolved path was confirmed against.
- */
+// No separators or dot segments: the slug becomes the directory name, so anything else lets a
+// scaffold escape the path the target checks confirmed.
 export const SLUG_PATTERN = /^[a-z][a-z0-9-]*$/
 
-/**
- * Returns why this slug cannot be used, or null if it can.
- *
- * The collision check is not cosmetic: a mounted folder can never shadow a compiled-in
- * slug, so a plugin named after one would be scaffolded, built, mounted and then ignored
- * forever with nothing pointing at the cause.
- */
+// A mounted folder can never shadow a compiled-in slug, so a plugin named after one would be
+// scaffolded, built, mounted and then ignored forever with nothing pointing at the cause.
 export function checkSlug(slug: string): string | null {
   if (!SLUG_PATTERN.test(slug)) {
     return `"${slug}" is not a usable slug. Use lowercase letters, digits and hyphens, `
@@ -47,13 +32,8 @@ export function checkSlug(slug: string): string | null {
   return null
 }
 
-/**
- * Where the plugin folder goes.
- *
- * External mode prefers an existing `plugins/` directory, so running this in a deployment
- * root puts the folder where `PLUGINS_DIR` already points. Built-in mode has one correct
- * location and ignores the cwd's layout entirely.
- */
+// External mode prefers an existing `plugins/` directory, so running this in a deployment root
+// puts the folder where `PLUGINS_DIR` already points. Built-in mode has one correct location.
 export function resolveTarget(mode: Mode, slug: string, cwd: string): string {
   if (mode === 'builtin') return join(cwd, 'src/core/plugins', slug)
 

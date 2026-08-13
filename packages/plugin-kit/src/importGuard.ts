@@ -12,12 +12,9 @@ export interface Metafile {
   inputs?: Record<string, unknown>
 }
 
-// Global on purpose: a path can hold several `node_modules` segments and only the *last*
-// names the package a file belongs to. The leftmost yields `.pnpm` under pnpm's store
-// (`node_modules/.pnpm/three@0.180.0/node_modules/three/…`) and the wrapper package under
-// a nested install (`node_modules/foo/node_modules/three/…`) — either way an inlined
-// three.js reads as a package nobody forbids, the exact crash this file prevents.
-// esbuild writes forward slashes on every OS, so no backslash handling is needed.
+// Global because only the *last* `node_modules` segment names the owning package. The first
+// yields `.pnpm` under pnpm's store and the wrapper under a nested install, either of which
+// makes an inlined three.js read as a package nobody forbids.
 const NODE_MODULES_PACKAGE = /node_modules\/((?:@[^/]+\/)?[^/]+)\//g
 
 /** The package an input path belongs to, or undefined if it is outside any `node_modules`. */
@@ -31,11 +28,9 @@ function packageOf(input: string): string | undefined {
   return name
 }
 
-// esbuild keys `inputs` relative to the build directory, so a plugin's own files look
-// like `src/index.tsx`; anything absolute or escaping that directory came from elsewhere.
-// A virtual path from an esbuild plugin (`sass:src/a.scss`) counts as own source
-// deliberately: no rule can attribute it to a package, and failing every build that uses
-// an esbuild plugin would cost more than the case it guards.
+// esbuild keys `inputs` relative to the build directory, so own files look like
+// `src/index.tsx`. Virtual paths from an esbuild plugin (`sass:src/a.scss`) count as own
+// source: no rule can attribute them, and failing every such build costs more than it guards.
 function isPluginOwnSource(input: string): boolean {
   return !input.startsWith('../') && !input.startsWith('/') && !/^[a-zA-Z]:\//.test(input)
 }
@@ -60,10 +55,8 @@ export function checkImports(imports: string[]): string[] {
   return imports.filter(specifier => !PLUGIN_EXTERNALS.includes(specifier))
 }
 
-// Distinct package names inlined into the bundle. Reading `inputs` is the only way to
-// catch a forbidden library never marked `external` in the first place: `import * as
-// THREE from 'three'` with no `external: ['three']` leaves `checkImports` nothing to see
-// and inlines a second copy of three.js.
+// Reading `inputs` is the only way to catch a library never marked external: importing
+// `three` without `external: ['three']` leaves `checkImports` nothing to see and inlines it.
 export function collectBundledPackages(metafile: Metafile): string[] {
   const packages = new Set<string>()
 
@@ -77,8 +70,7 @@ export function collectBundledPackages(metafile: Metafile): string[] {
   return [...packages]
 }
 
-// Whether `collectBundledPackages` could see enough to answer, and if not why. An empty
-// package list otherwise means both "inlined nothing" and "a layout the scan cannot
+// An empty package list otherwise means both "inlined nothing" and "a layout the scan cannot
 // read", and only the first is clean.
 export type BundleScanVerdict =
   | { verifiable: true }
@@ -87,13 +79,9 @@ export type BundleScanVerdict =
 /** How many offending paths to name before the message stops being useful. */
 const MAX_LISTED_INPUTS = 5
 
-// Every input must be attributable, to a package or to the plugin's own source. One that
-// is neither is a module the scan read but cannot name, and a forbidden library arriving
-// that way would be reported as a clean bundle — so refuse to answer instead.
-//
-// Inputs with no `node_modules` at all are deliberately not suspicious: that is the
-// normal shape for a plugin that leaves every host library external, so failing on it
-// would fail every well-written plugin.
+// Every input must be attributable to a package or to the plugin's own source. One that is
+// neither would let a forbidden library be reported as a clean bundle, so refuse to answer.
+// Inputs with no `node_modules` at all are the normal shape for a correct plugin, not a smell.
 export function canVerifyBundled(metafile: Metafile): BundleScanVerdict {
   const inputs = Object.keys(metafile.inputs ?? {})
 
@@ -133,8 +121,7 @@ export function canVerifyBundled(metafile: Metafile): BundleScanVerdict {
   return { verifiable: true }
 }
 
-// `KNOWN_FORBIDDEN` plus React itself: a bundled copy of React is the original documented
-// crash (broken hooks) and is exactly as fatal as a bundled three.js.
+// React included: a bundled copy breaks hooks, which is as fatal as a bundled three.js.
 const BUNDLED_FORBIDDEN: readonly string[] = [...KNOWN_FORBIDDEN, 'react', 'react-dom']
 
 /** Only `BUNDLED_FORBIDDEN` entries; an ordinary bundled utility such as `date-fns` is legitimate. */

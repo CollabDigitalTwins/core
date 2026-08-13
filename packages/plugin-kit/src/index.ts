@@ -2,11 +2,8 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 export { KNOWN_FORBIDDEN, PLUGIN_EXTERNALS } from './externals'
-// The whole guard, not just its entry point. `preset.ts` refuses an `onSuccess` or
-// `external` override and tells the author to call `assertBundleImports()` from their own
-// post-build step, which needs the two path constants below or the advice is
-// unfollowable; the smaller pieces are what a stricter or more forgiving check is built
-// from.
+// The whole guard, not just its entry point: preset.ts tells authors to call
+// assertBundleImports() from their own post-build step, which needs the path constants below.
 export {
   assertBundleImports,
   canVerifyBundled,

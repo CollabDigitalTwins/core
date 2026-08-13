@@ -33,10 +33,7 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 export type BadgeComponent = (props: BadgeProps) => React.ReactElement
 
-/**
- * Narrower than the real separator, which also accepts `asChild` and the rest of
- * the underlying primitive's props. These two are the ones core acts on.
- */
+// Narrower than the real separator: these two are the props core acts on.
 export interface SeparatorProps extends React.HTMLAttributes<HTMLDivElement> {
   orientation?: 'horizontal' | 'vertical'
   /** False announces the separator to assistive technology. */
@@ -68,12 +65,8 @@ export type DialogTriggerComponent = React.ForwardRefExoticComponent<
   DialogTriggerProps & React.RefAttributes<HTMLButtonElement>
 >
 
-/**
- * The dismissal callbacks the underlying primitive also accepts
- * (`onEscapeKeyDown`, `onInteractOutside`, …) are deliberately not declared: their
- * parameter types come from the dialog primitive's own package, and a plugin must
- * not have to install it. `closeClass` styles the built-in close button.
- */
+// The primitive's dismissal callbacks are undeclared on purpose: their parameter types come
+// from the dialog package, which a plugin must not have to install.
 export interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {
   asChild?: boolean
   closeClass?: string

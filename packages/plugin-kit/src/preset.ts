@@ -8,23 +8,18 @@ import { assertBundleImports } from './importGuard'
 import type { Options } from 'tsup'
 
 const OUT_DIR = 'dist'
-// The two paths the guard is handed, both read out of tsup's source: esbuild keys the
-// output relative to the plugin root and forward-slashed even on Windows, and tsup 8.5.1
-// writes `dist/metafile-${format}.json` for our fixed esm format. Get either wrong and
-// the guard throws on every build instead of checking one, so they are exported for
-// `build.test.ts` to pin against a real fixture build rather than against copies.
+// Read out of tsup's source, and exported so build.test.ts pins them against a real build:
+// get either wrong and the guard throws on every build instead of checking one.
 export const PLUGIN_OUT_FILE = `${OUT_DIR}/index.js`
 export const PLUGIN_METAFILE = `${OUT_DIR}/metafile-esm.json`
 
-// A brace glob, not a fixed name: tsup globs an array `entry`, and a plain
-// 'src/index.ts' left every JSX plugin dead on arrival with "Cannot find src/index.ts".
+// A brace glob because tsup globs an array `entry`: a plain 'src/index.ts' left every JSX
+// plugin dead with "Cannot find src/index.ts".
 const ENTRY = 'src/index.{ts,tsx}'
 
-// The tsup configuration a CDT plugin needs.
-//
-// `splitting: false` and a single entry are a delivery contract, not a preference: the
-// host serves exactly one file per plugin, so a sibling chunk import would 404 in the
-// browser. It is also why plain `tsc` cannot be used — it emits one file per module.
+// `splitting: false` and a single entry are a delivery contract, not a preference: the host
+// serves one file per plugin, so a sibling chunk would 404. It is also why plain `tsc` cannot
+// be used here, since it emits one file per module.
 export function pluginPreset(overrides: Partial<Options> = {}): Options {
   if (overrides.splitting === true) {
     throw new Error(
@@ -34,8 +29,8 @@ export function pluginPreset(overrides: Partial<Options> = {}): Options {
   }
 
   if (overrides.format !== undefined) {
-    // `Options.format` is `Format[] | Format`, so a bare `format: 'esm'` is legitimate
-    // input. Normalise first, or that shape reads as three single-character entries.
+    // `Options.format` is `Format[] | Format`, so normalise first: a bare `format: 'esm'`
+    // otherwise reads as three single-character entries.
     const formats = Array.isArray(overrides.format) ? overrides.format : [overrides.format]
 
     if (!(formats.length === 1 && formats[0] === 'esm')) {
@@ -54,8 +49,7 @@ export function pluginPreset(overrides: Partial<Options> = {}): Options {
     )
   }
 
-  // `onSuccess` runs the guard and `external` is what it checks against, so overriding
-  // either switches the guard off silently — the build would still pass. Refuse loudly.
+  // Overriding either switches the guard off silently, since the build would still pass.
   if ('onSuccess' in overrides) {
     throw new Error(
       'Overriding `onSuccess` would switch off the CDT plugin import guard, which is ' +

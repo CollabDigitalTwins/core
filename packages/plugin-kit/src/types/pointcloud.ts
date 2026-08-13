@@ -3,18 +3,15 @@
 
 import type { CapabilityRegistry, PluginContext } from './base'
 
-// The point-cloud viewer, as a plugin sees it. Names no external type, so this entry
-// costs a plugin nothing to depend on.
+// Names no external type, so this entry costs a plugin nothing to depend on.
 
 export * from './base'
 
-/**
- * `viewer` is deliberately `unknown`: Potree has no bundled types, and handing a
- * plugin author a fabricated interface would be worse than making them narrow it.
- * `ready` is false until Potree has finished initialising.
- */
+// `viewer` is `unknown` because Potree ships no types, and a fabricated interface would be
+// worse than making the plugin narrow it.
 export interface PointCloudToolProps {
   viewer: unknown
+  /** False until Potree has finished initialising. */
   ready: boolean
 }
 

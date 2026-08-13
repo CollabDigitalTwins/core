@@ -6,14 +6,8 @@ import type { Surface } from './options'
 export interface SurfaceFacts {
   /** The kit type entry to import from. Split per surface so a plugin resolves only what it uses. */
   entry: string
-  /**
-   * Where a *built-in* plugin's component gets the same types from: a path relative to
-   * `src/core/plugins/<slug>/components/`.
-   *
-   * A built-in plugin is compiled with core and is subject to core's ESLint isolation rule,
-   * which allows `../sdk/*` and the plugin's own files and nothing else. It therefore cannot
-   * import the kit, which exists for authors who do not have core's source.
-   */
+  // Where a built-in plugin's component gets the same types from. It cannot import the kit:
+  // core's ESLint isolation rule allows `../sdk/*` and the plugin's own files, nothing else.
   coreEntry: string
   /** The viewer props the hosting toolbar passes, intersected with `ToolbarToolProps`. */
   propsType: string
@@ -25,22 +19,13 @@ export interface SurfaceFacts {
   icon: string
 }
 
-/**
- * What differs between the four capability surfaces.
- *
- * Data rather than four near-identical template files, so the empty body is one template
- * and the differences are reviewable in one place.
- *
- * Only `map.tools` and `bim.tools` carry a type dependency. Their props name `maplibre-gl`
- * and `@thatopen/components` types respectively, so the plugin needs those installed to
- * typecheck. Type-only: the import guard is what keeps them out of the bundle.
- * `pointcloud.tools` takes `viewer: unknown` because Potree ships no types, and
- * `map.legends` names nothing external at all.
- *
- * The `entry` specifiers restate the surface short name that `capabilityConstant` in
- * `render.ts` also knows. Stated twice on purpose: deriving it would make these two modules
- * import each other, and a test asserts they agree.
- */
+// Data rather than four near-identical template files, so the empty body is one template.
+//
+// Only map and BIM carry a type dependency, because only their props name an external type,
+// and only ever as types: the import guard keeps them out of the bundle.
+//
+// The `entry` specifiers restate the short name `capabilityConstant` also knows. Deriving it
+// would make the two modules import each other, so a test asserts they agree instead.
 const FACTS: Record<Surface, SurfaceFacts> = {
   'map.tools': {
     entry: '@collabdt/plugin-kit/types/map',

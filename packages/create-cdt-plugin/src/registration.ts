@@ -16,26 +16,16 @@ function manifestIdentifier(slug: string): string {
 const MANIFESTS_ANCHOR = 'export const PLUGIN_MANIFESTS: PluginManifest[] = ['
 const INSTALLED_ANCHOR = 'export const INSTALLED_PLUGINS: PluginSource[] = ['
 
-/**
- * Adds the manifest import and its array entry.
- *
- * Returns null when either anchor is missing rather than attempting the edit. A built-in
- * plugin that is scaffolded but not registered loads nothing and reports nothing, so a
- * half-applied edit is worse than printing the two snippets and letting a person paste them.
- */
-/**
- * The file's own line ending.
- *
- * Everything here works line by line rather than on reconstructed blocks. An earlier version
- * rebuilt the import block by joining with `\n`, which silently matched nothing in core's
- * CRLF files: the array entry landed without its import, and the result was a file
- * referencing an undefined identifier. Exactly the half-applied edit this module exists to
- * avoid, so the seam is gone rather than merely fixed.
- */
+// Everything here works line by line rather than on reconstructed blocks. Rebuilding the
+// import block joined with a bare newline matched nothing in core's CRLF files, so the array
+// entry landed without its import and the file referenced an undefined identifier.
 const eolOf = (source: string) => (source.includes('\r\n') ? '\r\n' : '\n')
 
 const MANIFEST_IMPORT = /^import \w+Manifest from '\.\/[^']+'$/
 
+// Returns null when either anchor is missing rather than attempting the edit: an unregistered
+// built-in plugin loads nothing and reports nothing, so a half-applied edit is worse than
+// printing the snippets for a person to paste.
 export function addToManifests(source: string, slug: string): string | null {
   const identifier = manifestIdentifier(slug)
   const entry = `  ${identifier} as PluginManifest,`
@@ -63,13 +53,8 @@ export function addToManifests(source: string, slug: string): string | null {
   return lines.join(eol).replace(MANIFESTS_ANCHOR, `${MANIFESTS_ANCHOR}${eol}${entry}`)
 }
 
-/**
- * Adds the installed-plugins entry.
- *
- * A dynamic import, never a static one: `installed.ts` is reachable from every route's
- * provider tree, so a static import would pull this plugin's components into the eager
- * bundle, and for a BIM plugin that means `@thatopen` and three on the map route.
- */
+// A dynamic import, never static: installed.ts is reachable from every route's provider tree,
+// so a static one would pull this plugin's components into the eager bundle.
 export function addToInstalled(source: string, slug: string): string | null {
   const entry = `  { manifest: manifestFor('${slug}'), entry: () => import('./${slug}') },`
 
@@ -79,12 +64,8 @@ export function addToInstalled(source: string, slug: string): string | null {
   return source.replace(INSTALLED_ANCHOR, `${INSTALLED_ANCHOR}${eolOf(source)}${entry}`)
 }
 
-/**
- * Applies both edits, reporting what changed and what has to be pasted by hand.
- *
- * Never throws on an unrecognised file: `snippets` is how the caller tells the person what
- * to add, which is the whole point of not guessing at the edit.
- */
+// Never throws on an unrecognised file: `snippets` is how the caller tells the person what to
+// add, which is the whole point of not guessing at the edit.
 export async function registerBuiltin(
   coreRoot: string,
   options: Options,

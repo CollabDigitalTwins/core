@@ -4,14 +4,8 @@
 export type Mode = 'external' | 'builtin'
 export type Body = 'example' | 'empty'
 
-/**
- * The capabilities a scaffolded plugin may target.
- *
- * `sidebar.items` and `viewer.panels` are valid in the manifest schema and deliberately
- * absent here: nothing in core renders them, so scaffolding one produces a plugin that
- * builds, loads, registers and shows nothing. When either gains a consumer it gains a
- * template in the same change.
- */
+// `sidebar.items` and `viewer.panels` are valid in the manifest schema and absent here:
+// nothing renders them, so scaffolding one produces a plugin that shows nothing.
 export const SURFACES = ['map.tools', 'bim.tools', 'pointcloud.tools', 'map.legends'] as const
 
 export type Surface = typeof SURFACES[number]
@@ -19,14 +13,8 @@ export type Surface = typeof SURFACES[number]
 const MODES: readonly Mode[] = ['external', 'builtin']
 const BODIES: readonly Body[] = ['example', 'empty']
 
-/**
- * What a generated `package.json` asks npm for.
- *
- * Overridable with `--kit-spec` so the build tests can point at the kit in this repo
- * with a `file:` specifier. Without that, the only test proving a scaffolded plugin
- * actually builds could not run until after the kit was published, which is the wrong
- * way round.
- */
+// Overridable with `--kit-spec` so the build tests can point at a local kit. Otherwise the
+// only test proving a scaffolded plugin builds could not run until after the kit shipped.
 export const DEFAULT_KIT_SPEC = '^0.1.0'
 
 export interface Options {
@@ -72,14 +60,9 @@ function oneOf<T extends string>(flag: string, value: string, allowed: readonly 
   return value as T
 }
 
-/**
- * Reads the flag equivalent of every prompt. Returns only what was supplied, so the
- * prompt flow can tell "not given" from "given empty" and ask for exactly the rest.
- *
- * Unknown flags and bare positionals throw rather than being ignored. `--surfce
- * map.tools` silently falling back to a prompt, or hanging in CI where there is no TTY,
- * is the kind of thing that wastes an afternoon before anyone suspects a typo.
- */
+// Returns only what was supplied, so the prompt flow can tell "not given" from "given empty".
+// Unknown flags and bare positionals throw: `--surfce map.tools` falling back to a prompt, or
+// hanging where there is no TTY, costs far more to diagnose than to reject.
 export function parseFlags(argv: string[]): Partial<Options> {
   const options: Partial<Options> = {}
 

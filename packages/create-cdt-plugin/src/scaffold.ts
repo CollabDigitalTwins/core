@@ -33,19 +33,12 @@ function planFor(options: Options): Array<[string, string]> {
   ]
 }
 
-/**
- * The body's component files, which is more than one for the example.
- *
- * The example composes a child component from its own file rather than defining it inline.
- * The bundle is still a single file, and that is the point: the delivery constraint says
- * nothing about how the source is organised, and a one-file example is read as saying a
- * plugin is one component.
- *
- * A legend has no empty variant. Its hook is the plugin, and an empty one would register a
- * section with no rows, which the host omits anyway. Routing the legend at `Empty.tsx`
- * would also emit invalid TypeScript, since that template interpolates a props type the
- * legend surface does not have.
- */
+// More than one file for the example, which composes a child component from its own file. The
+// bundle is still single-file: the delivery constraint says nothing about how source is
+// organised, and a one-file example reads as saying a plugin is one component.
+//
+// A legend has no empty variant. Its hook is the plugin, and Empty.tsx interpolates a props
+// type the legend surface does not have, so routing it there would emit invalid TypeScript.
 function bodyFiles(options: Options): Array<[string, string]> {
   const templates = options.mode === 'builtin' ? 'builtin/components' : 'external/src/components'
   const destination = options.mode === 'builtin' ? 'components' : 'src/components'
@@ -88,12 +81,8 @@ function withTypeDependency(packageJson: string, options: Options): string {
   return `${JSON.stringify(parsed, null, 2)}\n`
 }
 
-/**
- * Writes the plugin folder.
- *
- * Every refusal is checked before anything is written, so a rejected scaffold leaves no
- * half-populated directory for the author to clean up or, worse, to mount.
- */
+// Every refusal is checked before anything is written, so a rejected scaffold leaves no
+// half-populated directory to clean up or, worse, to mount.
 export async function scaffold(
   options: Options,
   cwd: string,

@@ -8,13 +8,8 @@ import { factsFor } from './surfaces'
 
 import type { Options, Surface } from './options'
 
-/**
- * Templates sit beside `dist/`, not inside it: tsup bundles TypeScript and would not copy
- * them. `package.json`'s `files` ships the directory as-is.
- *
- * Resolved from this module's own URL rather than from `process.cwd()`, because the CLI
- * runs in the directory the author is scaffolding into.
- */
+// Beside `dist/`, not inside it: tsup bundles TypeScript and would not copy templates.
+// Resolved from this module's URL, not the cwd, since the CLI runs where it is scaffolding.
 export const TEMPLATE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../templates')
 
 export type TOKENS = Record<string, string>
@@ -46,17 +41,10 @@ export function componentName(name: string): string {
   return pascal.endsWith('Tool') ? pascal : `${pascal}Tool`
 }
 
-/**
- * Substitutes `{{TOKEN}}` and nothing else.
- *
- * A missing token throws rather than rendering the placeholder through: a scaffolded plugin
- * containing a literal `{{SLUG}}` fails much later and much less clearly. The double brace
- * is what keeps this from touching the single-brace JSX expressions the component templates
- * are full of.
- *
- * `replace` with a function does not rescan what it inserted, so a value that happens to
- * contain braces is substituted once and left alone.
- */
+// A missing token throws rather than rendering the placeholder through: a plugin containing a
+// literal `{{SLUG}}` fails much later and less clearly. The double brace keeps this away from
+// the single-brace JSX the component templates are full of, and `replace` with a function does
+// not rescan what it inserted.
 export function render(source: string, tokens: TOKENS): string {
   return source.replace(/\{\{([A-Z_]+)\}\}/g, (_match, token: string) => {
     if (!(token in tokens)) {
@@ -67,11 +55,8 @@ export function render(source: string, tokens: TOKENS): string {
   })
 }
 
-/**
- * The body of a JSON string, so a quote, backslash or newline in a name cannot break the
- * generated manifest. Slicing off the quotes `JSON.stringify` adds lets the template keep
- * its own, which is what makes the file readable as JSON.
- */
+// A JSON string body, so a quote, backslash or newline cannot break the generated manifest.
+// Slicing off the quotes JSON.stringify adds lets the template keep its own and stay readable.
 const jsonSafe = (value: string) => JSON.stringify(value).slice(1, -1)
 
 export function tokensFor(options: Options): TOKENS {

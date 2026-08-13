@@ -1,37 +1,19 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-/**
- * Ambient declarations for the SDK modules a plugin imports at runtime.
- *
- * A plugin writes `import { Button } from '@collabdt/core/plugins-sdk/components'`,
- * the bundler marks the specifier external, and the browser resolves it through the
- * host's import map to a shim backed by core's own singletons. Nothing is bundled,
- * so the plugin never installs `@collabdt/core` — but its typecheck still has to
- * know what those specifiers export. That is what this file supplies.
- *
- * Shipping declarations for implementations this package does not contain is the
- * point, not an oversight.
- *
- * The module list and the exported names are the ones in `PLUGIN_RUNTIME_SHIMS`
- * (core's `src/core/plugins/host/runtimeShims.ts`); the signatures are copied from
- * the matching file in core's `src/core/plugins/sdk/`. `react`, `react-dom` and
- * `react/jsx-runtime` are shimmed too, but they have real published types, so they
- * are absent here.
- *
- * This file has no top-level import or export on purpose. That keeps it a global
- * script, which is the only place TypeScript accepts an ambient module declaration
- * for a specifier it cannot resolve; inside a module the same block would be read
- * as an augmentation of a missing module and rejected.
- */
+// Types for the SDK modules a plugin imports at runtime but never installs: the specifier is
+// marked external, and the browser resolves it through the host's import map. Shipping
+// declarations for implementations this package does not contain is the point.
+//
+// Module and export names come from PLUGIN_RUNTIME_SHIMS in core; signatures are copied from
+// core's sdk/. React's shims are absent because they have real published types.
+//
+// No top-level import or export, deliberately: that keeps this a global script, the only place
+// TypeScript accepts an ambient declaration for a specifier it cannot resolve.
 
 declare module '@collabdt/core/plugins-sdk' {
-  /**
-   * Only the four values the host shim re-exports at runtime. The SDK's *types*
-   * live in `@collabdt/plugin-kit/types/<surface>` rather than being restated
-   * here, so there is one definition of each shape and it is the one a plugin
-   * already imports.
-   */
+  // Only the values the shim re-exports. The SDK's types live in the surface entries, so each
+  // shape has one definition and it is the one a plugin already imports.
   export const VALID_CAPABILITIES: readonly [
     'sidebar.items',
     'viewer.panels',
@@ -45,23 +27,13 @@ declare module '@collabdt/core/plugins-sdk' {
 
   export function validateManifest(manifest: unknown): { valid: boolean; errors: string[] }
 
-  /**
-   * Core declares this as `(entry: PluginSource['entry']) => Promise<PluginEntry>`.
-   * It is generic here because an ambient block cannot import `PluginEntry` from
-   * the kit's own type entries, and restating that interface would give a plugin
-   * two definitions of it. The call site behaves identically.
-   */
+  // Generic because an ambient block cannot import `PluginEntry` from the kit's own entries,
+  // and restating it would give a plugin two definitions. The call site behaves identically.
   export function resolvePluginEntry<E>(entry: E | (() => Promise<E>)): Promise<E>
 }
 
 declare module '@collabdt/core/plugins-sdk/config' {
-  /**
-   * The plugin's own configuration, as stored for this organization.
-   *
-   * Generic so a plugin can declare the shape its manifest's `configSchema` promises,
-   * which is what core's worked examples do. The parameter defaults, so a bare call is
-   * still valid.
-   */
+  /** The plugin's config for this organization. Generic so a plugin can type its own shape. */
   export function usePluginConfig<
     T extends Record<string, unknown> = Record<string, unknown>,
   >(): T
@@ -75,18 +47,11 @@ declare module '@collabdt/core/plugins-sdk/messages' {
   /** A `t()` scoped to the calling plugin's own namespace. */
   export function usePluginTranslations(): PluginTranslator
 
-  /**
-   * One piece of plugin-supplied text, with the manifest string as the fallback.
-   * All three parameters are required, matching core.
-   */
+  /** One piece of plugin text. All three parameters are required, matching core. */
   export function usePluginMessage(pluginId: string, key: string, fallback: string): string
 
-  /**
-   * Core's own strings. Core returns next-intl's translator verbatim; it is
-   * narrowed to a plain callable here because typing it faithfully would drag
-   * `next-intl` into a plugin's dependencies, which is exactly what this package
-   * exists to avoid.
-   */
+  // Narrowed to a plain callable: typing next-intl's translator faithfully would drag
+  // next-intl into a plugin's dependencies.
   export function useCoreTranslations(
     namespace: string,
   ): (key: string, values?: Record<string, unknown>) => string
@@ -112,24 +77,17 @@ declare module '@collabdt/core/plugins-sdk/store' {
     remove: (key: string) => Promise<void>
   }
 
-  /**
-   * Storage a plugin owns, scoped by organization, by plugin and by collection.
-   * `T` is your declaration of the stored shape, not a guarantee.
-   */
+  /** Storage scoped by organization, plugin and collection. `T` is your declaration, not a guarantee. */
   export function usePluginStore<T = unknown>(collection: string): PluginStore<T>
 }
 
 declare module '@collabdt/core/plugins-sdk/components' {
-  // Every shape comes from `./components`, which is a real module in this package
-  // and therefore importable by path. That is what lets core's
-  // `pluginKitComponents.test.ts` compare these declarations against the real
-  // components; restating them inline here would leave nothing to compare against.
+  // Shapes come from `./components`, a real module here, which is what lets core's
+  // pluginKitComponents.test.ts compare these declarations against the real components.
   //
-  // Written as inline `import('./components')` types rather than a top-level
-  // `import type … from './components'`: an import *declaration* inside an ambient
-  // module cannot use a relative specifier (TS2439), and because this is a .d.ts
-  // the usual `skipLibCheck: true` hides that from everyone until a consumer turns
-  // it off. Inline import types have no such restriction.
+  // Inline `import('./components')` rather than a top-level import: an import declaration
+  // inside an ambient module cannot use a relative specifier (TS2439), and skipLibCheck hides
+  // that from everyone until a consumer turns it off.
 
   export type ButtonProps = import('./components').ButtonProps
   export const Button: import('./components').ButtonComponent

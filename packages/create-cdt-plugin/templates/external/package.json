@@ -1,0 +1,16 @@
+{
+  "name": "{{SLUG}}",
+  "version": "0.1.0",
+  "description": "{{DESCRIPTION_JSON}}",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "devDependencies": {
+    "@collabdt/plugin-kit": "{{KIT_SPEC}}",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
+  }
+}

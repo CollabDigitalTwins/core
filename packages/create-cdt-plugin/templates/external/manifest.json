@@ -1,0 +1,32 @@
+{
+  "slug": "{{SLUG}}",
+  "name": "{{NAME_JSON}}",
+  "version": "0.1.0",
+  "hostApi": {{HOST_API}},
+  "description": "{{DESCRIPTION_JSON}}",
+  "author": "{{AUTHOR_JSON}}",
+  "capabilities": ["{{CAPABILITY}}"],
+  "requiredPermissions": [],
+  "configSchema": {
+    "type": "object",
+    "properties": {},
+    "required": []
+  },
+  "messages": {
+    "en": {
+      "name": "{{NAME_JSON}}",
+      "description": "{{DESCRIPTION_JSON}}",
+      "title": "{{NAME_JSON}}"
+    },
+    "fr": {
+      "name": "{{NAME_JSON}}",
+      "description": "{{DESCRIPTION_JSON}}",
+      "title": "{{NAME_JSON}}"
+    },
+    "es": {
+      "name": "{{NAME_JSON}}",
+      "description": "{{DESCRIPTION_JSON}}",
+      "title": "{{NAME_JSON}}"
+    }
+  }
+}

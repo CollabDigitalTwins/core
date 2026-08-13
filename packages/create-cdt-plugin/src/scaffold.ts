@@ -4,6 +4,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 
+import { registerBuiltin } from './registration'
 import { render, templatePath, tokensFor } from './render'
 import { factsFor } from './surfaces'
 import { checkSlug, checkTarget, isCorePackage, resolveTarget } from './target'
@@ -96,7 +97,7 @@ function withTypeDependency(packageJson: string, options: Options): string {
 export async function scaffold(
   options: Options,
   cwd: string,
-): Promise<{ directory: string; files: string[] }> {
+): Promise<{ directory: string; files: string[]; edited: string[]; snippets: string[] }> {
   const slugProblem = checkSlug(options.slug)
   if (slugProblem) throw new Error(slugProblem)
 
@@ -127,5 +128,12 @@ export async function scaffold(
     written.push(destination)
   }
 
-  return { directory, files: written }
+  // A built-in plugin does not load unless it is in both manifests.ts and installed.ts.
+  // Registering it here rather than leaving it to the author is the difference between a
+  // working plugin and one where everything appears to have succeeded and nothing happens.
+  const { edited, snippets } = options.mode === 'builtin'
+    ? await registerBuiltin(cwd, options)
+    : { edited: [], snippets: [] }
+
+  return { directory, files: written, edited, snippets }
 }

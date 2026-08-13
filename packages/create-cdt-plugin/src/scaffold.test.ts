@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -199,5 +199,135 @@ describe('scaffold, built-in mode', () => {
     await expect(
       scaffold({ ...optionsFor('map.tools', 'example'), mode: 'builtin' }, root),
     ).rejects.toThrow(/@collabdt\/core/)
+  })
+
+  /** A temp directory that looks enough like core for built-in mode to run. */
+  function fakeCore(): string {
+    const root = temp()
+    mkdirSync(join(root, 'src/core/plugins'), { recursive: true })
+    writeFileSync(join(root, 'package.json'), JSON.stringify({ name: '@collabdt/core' }))
+
+    writeFileSync(join(root, 'src/core/plugins/manifests.ts'), [
+      "import helloBimManifest from './hello-bim/manifest.json'",
+      "import helloMapManifest from './hello-map/manifest.json'",
+      '',
+      "import type { PluginManifest } from './sdk/types'",
+      '',
+      'export const PLUGIN_MANIFESTS: PluginManifest[] = [',
+      '  helloMapManifest as PluginManifest,',
+      '  helloBimManifest as PluginManifest,',
+      ']',
+      '',
+    ].join('\n'))
+
+    writeFileSync(join(root, 'src/core/plugins/installed.ts'), [
+      'export const INSTALLED_PLUGINS: PluginSource[] = [',
+      "  { manifest: manifestFor('hello-map'), entry: () => import('./hello-map') },",
+      ']',
+      '',
+    ].join('\n'))
+
+    return root
+  }
+
+  for (const surface of SURFACES) {
+    for (const body of BODIES) {
+      it(`writes the three-file built-in tree for ${surface} / ${body}`, async () => {
+        const { directory, files } = await scaffold(
+          { ...optionsFor(surface, body), mode: 'builtin' },
+          fakeCore(),
+        )
+
+        const composes = body === 'example' && surface !== 'map.legends'
+
+        expect(files.sort()).toEqual([
+          'components/RoomInventoryTool.tsx',
+          ...(composes ? ['components/ReadoutRow.tsx'] : []),
+          'index.ts',
+          'manifest.json',
+        ].sort())
+
+        // No build files: a built-in plugin is compiled with core.
+        expect(directory).toContain(join('src', 'core', 'plugins'))
+        expect(files).not.toContain('package.json')
+        expect(files).not.toContain('tsup.config.ts')
+      })
+
+      it(`imports only from ../sdk for ${surface} / ${body}`, async () => {
+        const { directory, files } = await scaffold(
+          { ...optionsFor(surface, body), mode: 'builtin' },
+          fakeCore(),
+        )
+
+        for (const file of files.filter(name => name.endsWith('.ts') || name.endsWith('.tsx'))) {
+          const source = readFileSync(join(directory, file), 'utf8')
+          const specifiers = [...source.matchAll(/from '([^']+)'/g)].map(match => match[1])
+
+          for (const specifier of specifiers) {
+            // Core's ESLint isolation rule allows ../sdk/*, the plugin's own files, and
+            // react. Anything else stops the plugin compiling inside core.
+            expect(specifier).toMatch(/^(\.\.\/)+sdk\/|^\.\/|^react$/)
+          }
+        }
+      })
+    }
+  }
+
+  it('registers the plugin in both files, since one alone loads nothing', async () => {
+    const root = fakeCore()
+    const { edited, snippets } = await scaffold(
+      { ...optionsFor('map.tools', 'example'), mode: 'builtin' },
+      root,
+    )
+
+    expect(snippets).toEqual([])
+    expect(edited).toEqual(['src/core/plugins/manifests.ts', 'src/core/plugins/installed.ts'])
+
+    const manifests = readFileSync(join(root, 'src/core/plugins/manifests.ts'), 'utf8')
+    const installed = readFileSync(join(root, 'src/core/plugins/installed.ts'), 'utf8')
+
+    expect(manifests).toContain("import roomInventoryManifest from './room-inventory/manifest.json'")
+    expect(manifests).toContain('roomInventoryManifest as PluginManifest,')
+    expect(installed).toContain("manifestFor('room-inventory'), entry: () => import('./room-inventory')")
+  })
+
+  it('prints snippets instead of guessing when a registration file is unrecognisable', async () => {
+    const root = fakeCore()
+    writeFileSync(join(root, 'src/core/plugins/installed.ts'), 'export const SOMETHING_ELSE = []\n')
+
+    const { edited, snippets } = await scaffold(
+      { ...optionsFor('map.tools', 'example'), mode: 'builtin' },
+      root,
+    )
+
+    expect(edited).toEqual(['src/core/plugins/manifests.ts'])
+    expect(snippets).toHaveLength(1)
+    expect(snippets[0]).toContain('installed.ts')
+    expect(snippets[0]).toContain("manifestFor('room-inventory')")
+
+    // The unrecognised file is left exactly as it was rather than half-edited.
+    expect(readFileSync(join(root, 'src/core/plugins/installed.ts'), 'utf8'))
+      .toBe('export const SOMETHING_ELSE = []\n')
+  })
+
+  it('reports a missing registration file rather than throwing', async () => {
+    const root = temp()
+    mkdirSync(join(root, 'src/core/plugins'), { recursive: true })
+    writeFileSync(join(root, 'package.json'), JSON.stringify({ name: '@collabdt/core' }))
+
+    const { snippets } = await scaffold(
+      { ...optionsFor('map.tools', 'empty'), mode: 'builtin' },
+      root,
+    )
+
+    expect(snippets).toHaveLength(2)
+    expect(snippets.join('\n')).toContain('not found')
+  })
+
+  it('leaves external mode alone, editing nothing in core', async () => {
+    const { edited, snippets } = await scaffold(optionsFor('map.tools', 'example'), temp())
+
+    expect(edited).toEqual([])
+    expect(snippets).toEqual([])
   })
 })

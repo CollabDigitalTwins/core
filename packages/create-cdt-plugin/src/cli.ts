@@ -141,7 +141,7 @@ async function main(): Promise<void> {
     }
   }
 
-  const { directory, files } = await scaffold(options, process.cwd())
+  const { directory, files, edited, snippets } = await scaffold(options, process.cwd())
   const where = relative(process.cwd(), directory) || '.'
 
   console.log(`\nCreated ${files.length} files in ${where}\n`)
@@ -149,12 +149,32 @@ async function main(): Promise<void> {
   if (options.mode === 'external') {
     console.log(`Next:\n  cd ${where}\n  npm install\n  npm run build\n`)
     console.log('Then mount the folder and enable the plugin. See the generated README.md.')
-  } else {
-    console.log(
-      'Next: register it in src/core/plugins/manifests.ts and installed.ts. A built-in '
-      + 'plugin that is not in both loads nothing and reports nothing.',
-    )
+    return
   }
+
+  if (edited.length > 0) console.log(`Registered it in:\n${edited.map(f => `  ${f}`).join('\n')}\n`)
+
+  // Loud, because the alternative failure is silent: an unregistered built-in plugin loads
+  // nothing and reports nothing, so everything looks like it worked.
+  if (snippets.length > 0) {
+    console.warn(
+      'Could not edit the following automatically. The plugin will NOT load until these are\n'
+      + 'added by hand:\n',
+    )
+    for (const snippet of snippets) console.warn(`${snippet}\n`)
+  }
+
+  console.log(`Then implement the component in ${where}/components/ and run the tests.`)
+
+  // The scaffolder cannot import core, so it keeps a checked copy of the compiled-in slugs
+  // and a drift test in core fails until the two agree. Without the slug there, this
+  // scaffolder would later let someone create a *mounted* plugin of the same name, which
+  // would load and then be ignored forever.
+  console.log(
+    `\nOne more: add '${options.slug}' to COMPILED_IN_SLUGS in\n`
+    + '  packages/create-cdt-plugin/src/target.ts\n'
+    + 'createCdtPluginDrift.test.ts in core fails until you do.',
+  )
 }
 
 main().catch((error: unknown) => {

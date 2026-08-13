@@ -99,6 +99,9 @@ export function tokensFor(options: Options): TOKENS {
     // states the surface once and the table in surfaces.ts owns what that implies.
     CONTEXT_TYPE: facts.contextType,
     SURFACE_ENTRY: facts.entry,
+    // The built-in templates' equivalent of SURFACE_ENTRY. Both are always supplied; each
+    // template tree uses the one that resolves where its output lives.
+    CORE_ENTRY: facts.coreEntry,
     PROPS_TYPE: facts.propsType,
     ICON: facts.icon,
   }

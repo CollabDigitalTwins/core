@@ -6,6 +6,15 @@ import type { Surface } from './options'
 export interface SurfaceFacts {
   /** The kit type entry to import from. Split per surface so a plugin resolves only what it uses. */
   entry: string
+  /**
+   * Where a *built-in* plugin's component gets the same types from: a path relative to
+   * `src/core/plugins/<slug>/components/`.
+   *
+   * A built-in plugin is compiled with core and is subject to core's ESLint isolation rule,
+   * which allows `../sdk/*` and the plugin's own files and nothing else. It therefore cannot
+   * import the kit, which exists for authors who do not have core's source.
+   */
+  coreEntry: string
   /** The viewer props the hosting toolbar passes, intersected with `ToolbarToolProps`. */
   propsType: string
   /** The `activate()` context alias with this surface's registry bound. */
@@ -35,6 +44,7 @@ export interface SurfaceFacts {
 const FACTS: Record<Surface, SurfaceFacts> = {
   'map.tools': {
     entry: '@collabdt/plugin-kit/types/map',
+    coreEntry: '../../sdk/mapViewer',
     propsType: 'MapToolProps',
     contextType: 'MapPluginContext',
     typeDependency: ['maplibre-gl', '^5.24.0'],
@@ -42,6 +52,7 @@ const FACTS: Record<Surface, SurfaceFacts> = {
   },
   'bim.tools': {
     entry: '@collabdt/plugin-kit/types/bim',
+    coreEntry: '../../sdk/bimViewer',
     propsType: 'BimToolProps',
     contextType: 'BimPluginContext',
     typeDependency: ['@thatopen/components', '~3.4.0'],
@@ -49,6 +60,7 @@ const FACTS: Record<Surface, SurfaceFacts> = {
   },
   'pointcloud.tools': {
     entry: '@collabdt/plugin-kit/types/pointcloud',
+    coreEntry: '../../sdk/pointCloudViewer',
     propsType: 'PointCloudToolProps',
     contextType: 'PointCloudPluginContext',
     typeDependency: null,
@@ -57,6 +69,8 @@ const FACTS: Record<Surface, SurfaceFacts> = {
   'map.legends': {
     // A legend registers a hook rather than a component, so it takes no toolbar props.
     entry: '@collabdt/plugin-kit/types/legend',
+    // A legend names no viewer type, so its shapes live in the SDK's own types module.
+    coreEntry: '../../sdk/types',
     propsType: '',
     contextType: 'LegendPluginContext',
     typeDependency: null,

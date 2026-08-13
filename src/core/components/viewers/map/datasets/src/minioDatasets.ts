@@ -107,6 +107,9 @@ export async function fetchOrganizationalMinioDatasets(
 
     datasets.push({
       id,
+      // Stamped so the map's org-visibility filter can tell whose dataset this
+      // is. Without it every rebuilt dataset is dropped for non-admin viewers.
+      organization: organizationId,
       name,
       type: 'Organizational',
       publisher: 'Organizational',

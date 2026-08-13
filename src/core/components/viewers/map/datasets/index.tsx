@@ -6,7 +6,6 @@
 // Icons
 import * as LR from 'lucide-react'
 // Dependencies
-import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import * as  React from 'react'
 
@@ -49,70 +48,15 @@ import DatasetSkeleton from './DatasetSkeleton'
 import Filters from './Filters'
 import RowActions from './RowActions'
 import { builtinLiveDatasets } from './src/builtinLiveDatasets'
-import { fetchLocalDatasets } from './src/localDatasets'
-import { fetchOrganizationalMinioDatasets } from './src/minioDatasets'
-import { buildPublishedCatalogMap, stampPublished, type PublishedCatalogEntry } from './src/publishedTiles'
+import { datasetVisibleForOrg } from './src/orgVisibility'
+import { stampPublished } from './src/publishedTiles'
 import { useDatasetsForPortals } from './src/useDatasetsForPortals'
 import { useFastDatasetCache } from './src/useFastDatasetCache'
+import { useOrganizationalDatasets } from './src/useOrganizationalDatasets'
 import { handleFavouriteDataset } from './utils'
 
 import type { Dataset } from '../../../../types/datasetTypes'
 import type { Organization } from '../../../../types/dbTypes';
-
-type OrgVisibility = {
-  isAdmin: boolean
-  currentOrgId: number
-  allowedOrgIds: number[]
-}
-
-const ADMIN_ALLOWED_ORGS = [1, 2, 3, 4, 5, 6]
-const ORG_BY_PATH_PREFIX: Record<string, number> = {
-  '/envirocentre': 1,
-  '/dnd': 3,
-  '/canada': 4,
-  '/gac': 5,
-  '/carleton': 6,
-}
-
-function normalizeOrgId(org?: number | string | null) {
-  if (org === null || org === undefined) return undefined
-  const parsed = typeof org === 'number' ? org : Number.parseInt(String(org), 10)
-  return Number.isFinite(parsed) ? parsed : undefined
-}
-
-function getOrgVisibilityFromPath(pathname?: string | null): OrgVisibility {
-  const normalizedPath = (pathname || '').toLowerCase()
-  const firstSegment = normalizedPath.split('/').filter(Boolean)[0]
-  const prefix = firstSegment ? `/${firstSegment}` : ''
-
-  if (prefix === '/cdt') {
-    return {
-      isAdmin: true,
-      currentOrgId: 1,
-      allowedOrgIds: ADMIN_ALLOWED_ORGS,
-    }
-  }
-
-  const currentOrgId = ORG_BY_PATH_PREFIX[prefix] ?? 2
-  const allowedOrgIds = Array.from(new Set([2, currentOrgId]))
-
-  return {
-    isAdmin: false,
-    currentOrgId,
-    allowedOrgIds,
-  }
-}
-
-function datasetVisibleForOrg(dataset: Dataset, visibility: OrgVisibility) {
-  if (visibility.isAdmin) return true
-  if (dataset.group !== DatasetGroup.Organizational) return true
-
-  const orgId = normalizeOrgId(dataset.organization)
-  if (orgId === undefined) return false
-
-  return visibility.allowedOrgIds.includes(orgId)
-}
-
 
 type DatasetsProps = {
   isOpen: boolean
@@ -144,8 +88,18 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, minioB
   const { state: menusState } = React.useContext(MenusContext)
   const { rowsPerPage } = menusState.menus
 
-  const pathname = usePathname()
-  const orgVisibility = React.useMemo(() => getOrgVisibilityFromPath(pathname), [pathname])
+  const { datasets: orgDatasets, publishedCatalog, orgVisibility } = useOrganizationalDatasets({
+    organization: org,
+    minioBaseUrl,
+    martinBaseUrl,
+    refreshNonce: datasetState.datasets.orgRefreshNonce,
+  })
+
+  React.useEffect(() => {
+    // Skip the pre-load null so a reopen keeps the previous list on screen.
+    if (!orgDatasets) return
+    datasetDispatch({ type: 'SET_DATASETS', payload: { datasets: orgDatasets } })
+  }, [datasetDispatch, orgDatasets])
 
   // UI State
   const [view, setView] = React.useState<'table' | 'detail'>('table')
@@ -155,10 +109,6 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, minioB
   const [appliedFilters, setAppliedFilters] = React.useState<{ countrySubdivisions: string[], municipalities: string[], types: string[], sources: string[] }>({ countrySubdivisions: [], municipalities: [], types: [], sources: [] })
   const [currentTab, setCurrentTab] = React.useState('all')
   const [isAddPortalOpen, setIsAddPortalOpen] = React.useState(false)
-  // Open-data datasets already published to Martin tiles, keyed by
-  // "{portalId}:{datasetId}". Lets the original portal entry (National/Applied/
-  // All tabs) show as converted, not just the organizational-list copy.
-  const [publishedCatalog, setPublishedCatalog] = React.useState<Map<string, PublishedCatalogEntry>>(new Map())
   const showMunicipalTab = React.useMemo(() => Boolean(municipality), [municipality])
 
   const { openDataPortals: municipalPortals } = useOpenDataPortalsByMunicipality(municipality)
@@ -195,93 +145,6 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, minioB
   const municipal = useDatasetsForPortals(filteredMunicipalPortals, { rowsPerPage })
   const subdivision = useDatasetsForPortals(filteredSubdivisionPortals, { rowsPerPage })
   const national = useDatasetsForPortals(filteredNationalPortals, { rowsPerPage })
-  React.useEffect(() => {
-    const loadOrganizationalDatasets = async () => {
-      // First, refresh the published-catalog lookup (a fast /api/files read) so
-      // converted open-data datasets flip promptly across every tab — ahead of
-      // the slower Martin tile-sampling below. Non-fatal on failure.
-      try {
-        const filesRes = await fetch('/api/files')
-        if (filesRes.ok) {
-          const body = await filesRes.json()
-          const rows = Array.isArray(body?.files) ? body.files : []
-          setPublishedCatalog(buildPublishedCatalogMap(rows))
-        }
-      }
-      catch (err) {
-        console.warn('Failed to refresh published-catalog map:', err)
-      }
-
-      // Two parallel sources: Martin vector tiles (if configured) and MinIO-
-      // backed GeoJSON uploads (the "Add Dataset" path). Errors from either
-      // are isolated so a failure on one side does not block the other.
-      const martinBaseUrlClean = (martinBaseUrl ?? '').replace(/\/+$/, '')
-
-      const martinPromise: Promise<Dataset[]> = martinBaseUrlClean
-        ? (async () => {
-            const datasetsUrl = martinBaseUrlClean.includes('/tiles/index.json')
-              ? martinBaseUrlClean
-              : `${martinBaseUrlClean}/tiles/index.json`
-
-            const localPortal = {
-              id: -1,
-              name: 'Organizational Datasets',
-              apiUrl: datasetsUrl,
-              dataManagementSystem: 'Other' as const,
-              countrySubdivision: null,
-              municipality: null,
-              group: 'Organizational' as const,
-            }
-
-            try {
-              return await fetchLocalDatasets(localPortal as any)
-            }
-            catch (err) {
-              console.error('Failed to load Martin organizational datasets:', err)
-              return []
-            }
-          })()
-        : Promise.resolve([])
-
-      if (!martinBaseUrlClean) {
-        console.warn('NEXT_PUBLIC_MARTIN_SERVER_URL not configured — skipping Martin pre-load')
-      }
-
-      // The MinIO key prefix is the *session* organization (set server-side
-      // by the upload route), not orgVisibility.currentOrgId (which is
-      // path-derived and hardcoded for admin routes like /cdt).
-      const sessionOrgId = typeof org?.id === 'number'
-        ? org.id
-        : Number.parseInt(String(org?.id ?? ''), 10)
-
-      // Martin must resolve first so MinIO suppression can check live catalog
-      // membership — prevents "file disappeared" during the publish→restart gap.
-      const martinDatasets = await martinPromise
-      const publishedTilesInCatalog = new Set<string>(
-        martinDatasets.map(d => typeof d.id === 'string' ? d.id : '').filter(Boolean),
-      )
-
-      const minioDatasets: Dataset[] = Number.isFinite(sessionOrgId)
-        ? await fetchOrganizationalMinioDatasets(sessionOrgId, publishedTilesInCatalog, minioBaseUrl).catch((err) => {
-            console.error('Failed to load MinIO organizational datasets:', err)
-            return []
-          })
-        : []
-
-      const combined = [...martinDatasets, ...minioDatasets]
-      const visibleOrgDatasets = combined.filter(ds => datasetVisibleForOrg(ds, orgVisibility))
-
-      if (visibleOrgDatasets.length === 0) {
-        console.warn('No organizational datasets found')
-      }
-      datasetDispatch({
-        type: 'SET_DATASETS',
-        payload: { datasets: visibleOrgDatasets },
-      })
-    }
-
-    void loadOrganizationalDatasets()
-  }, [datasetDispatch, orgVisibility, org?.id, datasetState.datasets.orgRefreshNonce])
 
   // Stamp each portal list with published-tile identity so a converted open-data
   // dataset shows as converted on its own tab (National/Subdivision/Municipal),

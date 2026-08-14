@@ -10,7 +10,7 @@
 // errors are fixed (run `yarn build:types:strict` to see the full list).
 import { spawnSync } from 'node:child_process'
 
-const BASELINE = 13 // pre-existing type errors as of 2026-05-27 — only lower this
+const BASELINE = 11 // pre-existing type errors as of 2026-08-14 — only lower this
 
 const res = spawnSync('npx', ['tsc', '-p', 'tsconfig.build.json'], {
   shell: true,

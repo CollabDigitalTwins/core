@@ -17,59 +17,47 @@ function orgDataset(organization?: number): Dataset {
 }
 
 describe('getOrgVisibility', () => {
-  it('treats the /cdt path as admin', () => {
-    const v = getOrgVisibility('/cdt/map')
-    expect(v.isAdmin).toBe(true)
-  })
-
-  it('is not admin on an organization path', () => {
-    expect(getOrgVisibility('/carleton').isAdmin).toBe(false)
-  })
-
-  it('resolves a known path prefix to its organization', () => {
-    expect(getOrgVisibility('/carleton').currentOrgId).toBe(6)
-  })
-
-  it('always allows the shared organization 2', () => {
-    expect(getOrgVisibility('/carleton').allowedOrgIds).toContain(2)
-  })
-
-  it('prefers the supplied organization over the path prefix table', () => {
-    expect(getOrgVisibility('/arts-ottawa', 27).currentOrgId).toBe(27)
-  })
-
-  it('allows an organization that is absent from the path prefix table', () => {
-    expect(getOrgVisibility('/arts-ottawa', 27).allowedOrgIds).toContain(27)
-  })
-
-  it('falls back to the prefix table when no organization is supplied', () => {
-    expect(getOrgVisibility('/carleton', undefined).currentOrgId).toBe(6)
+  it('takes the organization it is given', () => {
+    expect(getOrgVisibility(27).currentOrgId).toBe(27)
   })
 
   it('accepts a numeric string organization id', () => {
-    expect(getOrgVisibility('/arts-ottawa', '27').currentOrgId).toBe(27)
+    expect(getOrgVisibility('27').currentOrgId).toBe(27)
+  })
+
+  it('resolves no organization when none is supplied', () => {
+    expect(getOrgVisibility(undefined).currentOrgId).toBeUndefined()
   })
 })
 
 describe('datasetVisibleForOrg', () => {
-  it('shows every dataset to an admin', () => {
-    expect(datasetVisibleForOrg(orgDataset(99), getOrgVisibility('/cdt'))).toBe(true)
+  it("shows a member their own organization's dataset", () => {
+    expect(datasetVisibleForOrg(orgDataset(27), getOrgVisibility(27))).toBe(true)
+  })
+
+  it('hides an organizational dataset belonging to another organization', () => {
+    expect(datasetVisibleForOrg(orgDataset(99), getOrgVisibility(27))).toBe(false)
+  })
+
+  it('hides an organizational dataset with no organization recorded', () => {
+    expect(datasetVisibleForOrg(orgDataset(undefined), getOrgVisibility(27))).toBe(false)
+  })
+
+  it('hides every organizational dataset when the viewer has no organization', () => {
+    expect(datasetVisibleForOrg(orgDataset(27), getOrgVisibility(undefined))).toBe(false)
   })
 
   it('shows non-organizational datasets to everyone', () => {
     const open = { name: 'x', dataManagementSystem: 'other', group: DatasetGroup.National } as Dataset
-    expect(datasetVisibleForOrg(open, getOrgVisibility('/carleton'))).toBe(true)
+    expect(datasetVisibleForOrg(open, getOrgVisibility(27))).toBe(true)
   })
 
-  it('hides an organizational dataset belonging to another organization', () => {
-    expect(datasetVisibleForOrg(orgDataset(99), getOrgVisibility('/carleton'))).toBe(false)
+  it('grants no cross-organization view to any path', () => {
+    // The /cdt path used to return isAdmin and unlock organizations 1-6.
+    expect(datasetVisibleForOrg(orgDataset(1), getOrgVisibility(27))).toBe(false)
   })
 
-  it('hides an organizational dataset with no organization recorded', () => {
-    expect(datasetVisibleForOrg(orgDataset(undefined), getOrgVisibility('/carleton'))).toBe(false)
-  })
-
-  it("shows a member their own organization's dataset", () => {
-    expect(datasetVisibleForOrg(orgDataset(27), getOrgVisibility('/arts-ottawa', 27))).toBe(true)
+  it('grants no blanket visibility to the organization that used to be shared', () => {
+    expect(datasetVisibleForOrg(orgDataset(2), getOrgVisibility(27))).toBe(false)
   })
 })

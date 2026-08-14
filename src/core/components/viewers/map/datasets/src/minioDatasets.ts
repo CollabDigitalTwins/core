@@ -8,10 +8,9 @@ import type { Dataset } from '../../../../../types/datasetTypes'
 import type { AllGeoJSON } from '@turf/turf'
 
 /**
- * Hydrates uploaded GeoJSON datasets persisted via "Add Dataset". Looks up
- * File rows tagged `organizational-dataset`, reads the bucket from each row's
- * description JSON, and builds Dataset entries whose `getFeatures` lazy-loads
- * the GeoJSON from MinIO on first render.
+ * Hydrates uploaded GeoJSON datasets persisted via "Add Dataset". Looks up File
+ * rows tagged `organizational-dataset` and builds Dataset entries whose
+ * `getFeatures` lazy-loads the GeoJSON on first render.
  */
 
 interface OrgDatasetDescription {
@@ -29,7 +28,8 @@ interface RawFileRow {
   type?: string | null
   tag?: string | null
   name?: string | null
-  assetId?: string | null
+  /** Presigned, expiring download URL minted per request by /api/files. */
+  url?: string | null
   description?: string | null
   uploadedAt?: string | Date | null
 }
@@ -47,14 +47,9 @@ function parseDescription(value: string | null | undefined): OrgDatasetDescripti
   }
 }
 
-function buildMinioUrl(base: string, bucket: string, organizationId: number, assetId: string): string {
-  return `${base.replace(/\/+$/, '')}/${bucket}/${organizationId}/${assetId}`
-}
-
 export async function fetchOrganizationalMinioDatasets(
   organizationId: number,
   publishedTilesInCatalog: ReadonlySet<string> = new Set(),
-  minioUrl?: string,
 ): Promise<Dataset[]> {
   let rows: RawFileRow[] = []
   try {
@@ -75,7 +70,6 @@ export async function fetchOrganizationalMinioDatasets(
   for (const row of rows) {
     if (row.type !== 'map-file') continue
     if (row.tag !== TAG) continue
-    if (!row.assetId) continue
 
     const meta = parseDescription(row.description)
     // Suppress the MinIO entry only once Martin actually serves the published
@@ -83,10 +77,10 @@ export async function fetchOrganizationalMinioDatasets(
     // gap. Un-publish drops the table immediately, so the MinIO row reappears
     // on next reload with no extra plumbing.
     if (meta?.tiledTable && publishedTilesInCatalog.has(meta.tiledTable)) continue
-    const bucket = meta?.bucket
-    if (!bucket) continue
 
-    const sourceUrl = minioUrl ? buildMinioUrl(minioUrl, bucket, organizationId, row.assetId) : null
+    // Only ever the presigned URL the server minted for this session. Rebuilding
+    // the object path here would require the bucket to allow anonymous reads.
+    const sourceUrl = row.url
     if (!sourceUrl) continue
 
     const name = row.name?.replace(/\.geojson$/i, '') || `Dataset ${row.id}`

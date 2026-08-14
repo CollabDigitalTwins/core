@@ -41,14 +41,13 @@ import type { Tool, ToolbarToolType } from '../../../../../../types/tools'
 interface AddToMapToolProps {
   tool: Tool
   organization?: Organization
-  minioBaseUrl?: string
   martinBaseUrl?: string
   geocodeEarthApiKey?: string
   geocoderUrl?: string
   [key: string]: unknown
 }
 
-export default function AddToMap({ tool, organization, minioBaseUrl, martinBaseUrl, geocodeEarthApiKey, geocoderUrl }: AddToMapToolProps) {
+export default function AddToMap({ tool, organization, martinBaseUrl, geocodeEarthApiKey, geocoderUrl }: AddToMapToolProps) {
   // Translation
   const t = useTranslations('AddToMap')
 
@@ -266,7 +265,6 @@ export default function AddToMap({ tool, organization, minioBaseUrl, martinBaseU
         isOpen={datasetOpen}
         setIsOpenAction={setDatasetOpen}
         organization={organization}
-        minioBaseUrl={minioBaseUrl}
         martinBaseUrl={martinBaseUrl}
       />
     </>

@@ -62,11 +62,10 @@ type DatasetsProps = {
   isOpen: boolean
   setIsOpenAction: (open: boolean) => void
   organization?: Organization
-  minioBaseUrl?: string
   martinBaseUrl?: string
 }
 
-export default function Datasets({ isOpen, setIsOpenAction, organization, minioBaseUrl, martinBaseUrl }: DatasetsProps) {
+export default function Datasets({ isOpen, setIsOpenAction, organization, martinBaseUrl }: DatasetsProps) {
   // Translation
   const t = useTranslations('Datasets')
 
@@ -90,7 +89,6 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, minioB
 
   const { datasets: orgDatasets, publishedCatalog, orgVisibility } = useOrganizationalDatasets({
     organization: org,
-    minioBaseUrl,
     martinBaseUrl,
     refreshNonce: datasetState.datasets.orgRefreshNonce,
   })

@@ -4,9 +4,8 @@
 // @vitest-environment jsdom
 import { renderHook, waitFor } from '@testing-library/react'
 
-const session = vi.hoisted(() => ({ organizationId: 2 as number | undefined }))
+const session = vi.hoisted(() => ({ organizationId: 3 as number | undefined }))
 
-vi.mock('next/navigation', () => ({ usePathname: () => '/dnd' }))
 vi.mock('next-auth/react', () => ({
   useSession: () => ({ data: { user: { id: '1', organizationId: session.organizationId } } }),
 }))
@@ -14,24 +13,23 @@ vi.mock('next-auth/react', () => ({
 import { useOrganizationalDatasets } from './useOrganizationalDatasets'
 
 const realFetch = global.fetch
-const TEST_MINIO_URL = 'https://minio.example.com/'
 
-/** The instance being viewed. On /dnd this is DND, organization 3. */
+/** The instance being viewed. */
 const DND_INSTANCE = { id: 3, name: 'dnd' } as any
 
-/** An uploaded GeoJSON row as /api/files returns it. */
+/** An uploaded GeoJSON row as /api/files returns it, presigned URL included. */
 const uploadedRow = {
   id: 1,
   type: 'map-file',
   tag: 'organizational-dataset',
   name: 'roads.geojson',
-  assetId: 'asset-123',
-  description: JSON.stringify({ bucket: 'pointclouds-demo', geometryType: 'lines' }),
+  url: 'https://minio.example.com/datasets/3/asset-123?X-Amz-Signature=abc',
+  description: JSON.stringify({ geometryType: 'lines' }),
   uploadedAt: '2025-01-01',
 }
 
 beforeEach(() => {
-  session.organizationId = 2
+  session.organizationId = 3
   vi.spyOn(console, 'warn').mockImplementation(() => {})
   global.fetch = vi.fn().mockImplementation((url: string) => {
     if (url === '/api/files') {
@@ -47,67 +45,50 @@ afterEach(() => {
 })
 
 describe('useOrganizationalDatasets', () => {
-  it('builds the MinIO path from the org that owns the file, not the org being viewed', async () => {
-    // /api/files is scoped to the signed-in user's organization, and the upload
-    // route keys objects under that same org — so org 2 owns this file even
-    // though we are looking at DND's instance (org 3).
-    const { result } = renderHook(() => useOrganizationalDatasets({
-      organization: DND_INSTANCE,
-      minioBaseUrl: TEST_MINIO_URL,
-    }))
+  it("lists the signed-in organization's own datasets", async () => {
+    const { result } = renderHook(() => useOrganizationalDatasets({ organization: DND_INSTANCE }))
 
     await waitFor(() => expect(result.current.datasets).toHaveLength(1))
-    expect(result.current.datasets[0].sourceUrl).toBe('https://minio.example.com/pointclouds-demo/2/asset-123')
+    expect(result.current.datasets![0].sourceUrl).toBe(uploadedRow.url)
   })
 
-  it('stamps the dataset with the org that owns it', async () => {
-    const { result } = renderHook(() => useOrganizationalDatasets({
-      organization: DND_INSTANCE,
-      minioBaseUrl: TEST_MINIO_URL,
-    }))
+  it('stamps the dataset with the organization that owns it', async () => {
+    const { result } = renderHook(() => useOrganizationalDatasets({ organization: DND_INSTANCE }))
 
     await waitFor(() => expect(result.current.datasets).toHaveLength(1))
-    expect(result.current.datasets[0].organization).toBe(2)
+    expect(result.current.datasets![0].organization).toBe(3)
   })
 
-  it('drops a dataset whose owning org this instance may not see', async () => {
-    // Org 4 signed in, looking at DND (org 3). DND may see its own datasets and
-    // the shared org's, not org 4's — and the file would 404 here anyway, so
-    // hiding it beats listing an empty layer.
+  it("lists nothing when viewing another organization's instance", async () => {
     session.organizationId = 4
 
-    const { result } = renderHook(() => useOrganizationalDatasets({
-      organization: DND_INSTANCE,
-      minioBaseUrl: TEST_MINIO_URL,
-    }))
+    const { result } = renderHook(() => useOrganizationalDatasets({ organization: DND_INSTANCE }))
 
-    // Wait for the load to settle, not for fetch: fetch is called on the first
-    // tick, so an empty-list assertion against it would pass before the load
-    // had any chance to produce something.
     await waitFor(() => expect(result.current.datasets).not.toBeNull())
     expect(result.current.datasets).toEqual([])
   })
 
-  it('fetches nothing from MinIO before the session has loaded', async () => {
-    session.organizationId = undefined
+  it("asks for nothing when viewing another organization's instance", async () => {
+    session.organizationId = 4
 
-    const { result } = renderHook(() => useOrganizationalDatasets({
-      organization: DND_INSTANCE,
-      minioBaseUrl: TEST_MINIO_URL,
-    }))
+    const { result } = renderHook(() => useOrganizationalDatasets({ organization: DND_INSTANCE }))
 
-    await waitFor(() => expect(console.warn).toHaveBeenCalledWith('No organizational datasets found'))
-    expect(result.current.datasets).toEqual([])
-    // Only the published-catalog read; no attempt at a MinIO object URL.
-    const urls = (global.fetch as any).mock.calls.map((c: unknown[]) => c[0])
-    expect(urls.every((u: string) => u === '/api/files')).toBe(true)
+    await waitFor(() => expect(result.current.datasets).not.toBeNull())
+    expect(global.fetch).not.toHaveBeenCalled()
   })
 
-  it('still reports visibility for the org being viewed, not the signed-in org', async () => {
-    const { result } = renderHook(() => useOrganizationalDatasets({
-      organization: DND_INSTANCE,
-      minioBaseUrl: TEST_MINIO_URL,
-    }))
+  it('fetches nothing before the session has loaded', async () => {
+    session.organizationId = undefined
+
+    const { result } = renderHook(() => useOrganizationalDatasets({ organization: DND_INSTANCE }))
+
+    await waitFor(() => expect(result.current.datasets).not.toBeNull())
+    expect(result.current.datasets).toEqual([])
+    expect(global.fetch).not.toHaveBeenCalled()
+  })
+
+  it('reports visibility for the organization being viewed', async () => {
+    const { result } = renderHook(() => useOrganizationalDatasets({ organization: DND_INSTANCE }))
 
     await waitFor(() => expect(result.current.datasets).toHaveLength(1))
     expect(result.current.orgVisibility.currentOrgId).toBe(3)

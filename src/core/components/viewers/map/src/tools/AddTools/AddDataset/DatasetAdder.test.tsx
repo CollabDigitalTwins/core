@@ -6,15 +6,19 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 
 const session = vi.hoisted(() => ({ organizationId: 2 as number | undefined }))
-const { uploadMock, toastErrorMock } = vi.hoisted(() => ({
+const { uploadMock, toastErrorMock, toastSuccessMock } = vi.hoisted(() => ({
   uploadMock: vi.fn(),
   toastErrorMock: vi.fn(),
+  toastSuccessMock: vi.fn(),
 }))
 
 vi.mock('next-auth/react', () => ({
   useSession: () => ({ data: { user: { id: '1', organizationId: session.organizationId } } }),
 }))
-vi.mock('sonner', () => ({ toast: { error: toastErrorMock } }))
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string) => key,
+}))
+vi.mock('sonner', () => ({ toast: { error: toastErrorMock, success: toastSuccessMock } }))
 vi.mock('../AddFile/utils/uploadToPresignedURLS', () => ({
   uploadToPresignedUrl: (...args: unknown[]) => uploadMock(...args),
 }))
@@ -82,6 +86,7 @@ beforeEach(() => {
   session.organizationId = 2
   uploadMock.mockReset().mockResolvedValue(undefined)
   toastErrorMock.mockReset()
+  toastSuccessMock.mockReset()
   vi.spyOn(console, 'warn').mockImplementation(() => {})
 
   // persistFile mints the assetId with crypto.randomUUID; not every jsdom has it.
@@ -139,6 +144,15 @@ describe('DatasetAdder — persisted uploads', () => {
 
     const added = dispatchedAction(dispatch, 'ADD_DATASET')
     expect((added as { payload: { dataset: { id: string } } }).payload.dataset.id).toMatch(/^local-/)
+  })
+
+  it('confirms a persisted upload with a toast', async () => {
+    renderAdder()
+
+    await addGeoJsonFile()
+
+    expect(toastSuccessMock).toHaveBeenCalled()
+    expect(toastErrorMock).not.toHaveBeenCalled()
   })
 
   it('refreshes the organizational list once the upload is persisted', async () => {

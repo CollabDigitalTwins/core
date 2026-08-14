@@ -16,12 +16,11 @@ import type { Tool } from '../../../../../types/tools'
 interface DatasetMapToolProps {
   tool: Tool
   organization?: Organization
-  minioBaseUrl?: string
   martinBaseUrl?: string
   [key: string]: unknown
 }
 
-export default function DatasetMapTool({ tool, organization, minioBaseUrl, martinBaseUrl }: DatasetMapToolProps) {
+export default function DatasetMapTool({ tool, organization, martinBaseUrl }: DatasetMapToolProps) {
   // Permissions
   const { ability } = usePermissions()
 
@@ -44,7 +43,6 @@ export default function DatasetMapTool({ tool, organization, minioBaseUrl, marti
         isOpen={isOpen}
         setIsOpenAction={setIsOpen}
         organization={organization}
-        minioBaseUrl={minioBaseUrl}
         martinBaseUrl={martinBaseUrl}
       />
     </>

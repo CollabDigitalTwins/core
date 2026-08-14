@@ -5,6 +5,7 @@
 
 import { Upload } from 'lucide-react'
 import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { toast } from 'sonner'
 
@@ -70,6 +71,7 @@ interface DatasetAdderProps {
  * raster overlay. File uploads also persist to MinIO and re-hydrate on reload.
  */
 export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
+  const t = useTranslations('Datasets')
   const { dispatch: datasetDispatch } = React.useContext(DatasetsContext)
   const { state: mapState } = React.useContext(MapContext)
   const map = mapState.map.map
@@ -202,9 +204,10 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
       }
       catch (e) {
         console.warn('DatasetAdder: MinIO persistence failed; dataset will be session-only', e)
-        toast.error(
-          `"${loaded.sourceName}" couldn't be saved and will be lost on reload: ${e instanceof Error ? e.message : 'unknown error'}`,
-        )
+        toast.error(t('toastDatasetNotSaved', {
+          name: loaded.sourceName,
+          error: e instanceof Error ? e.message : 'unknown error',
+        }))
       }
       finally {
         setSaving(false)
@@ -238,7 +241,10 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
     datasetDispatch({ type: 'ADD_DATASET_TO_MAP', payload: { dataset } })
 
     // Swap the optimistic row for the hydrated one, which carries the MinIO source URL.
-    if (persistedFileId != null) datasetDispatch({ type: 'REFRESH_ORG_DATASETS' })
+    if (persistedFileId != null) {
+      datasetDispatch({ type: 'REFRESH_ORG_DATASETS' })
+      toast.success(t('toastDatasetAdded', { name }))
+    }
 
     const bbox = loaded.summary.bbox
     if (map && bbox) {
@@ -248,7 +254,7 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
     setLoaded(null)
     setError(null)
     onClose?.()
-  }, [loaded, map, datasetDispatch, persistFile, onClose, owningOrgId])
+  }, [loaded, map, datasetDispatch, persistFile, onClose, owningOrgId, t])
 
   return (
     <div className="flex flex-col gap-3 mt-2">

@@ -23,7 +23,7 @@ import { VIEWER_CONFIG } from '../Data/utils/viewerConfig'
 
 
 import { ExtensionCard } from './src/ExtensionCard'
-import { effectiveStatus } from './src/useExtensionListings'
+import { effectiveStatus } from './src/extensionStatus'
 import { useExtensionsActions, useExtensionsData } from './src/useExtensionsData'
 
 

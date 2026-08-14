@@ -28,7 +28,7 @@ import { Button } from '../../../ui/Button'
 import { Separator } from '../../../ui/Separator'
 import { Switch } from '../../../ui/Switch'
 
-import { effectiveStatus } from './useExtensionListings'
+import { effectiveStatus } from './extensionStatus'
 
 import type { ExtensionListing, ExtensionsAbility } from '../types'
 import type { LucideIcon } from 'lucide-react'
@@ -173,7 +173,6 @@ export function ExtensionCard({
                   <ControlRow label={t('orgInstalled')}>
                     <Switch
                       checked={listing.installed}
-                      disabled={listing.bundled}
                       onCheckedChange={onSetInstalled}
                       aria-label={t('orgInstalled')}
                     />

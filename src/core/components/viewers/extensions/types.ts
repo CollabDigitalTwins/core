@@ -34,7 +34,11 @@ export interface ExtensionListing {
   /** This user's own choice; null when they have not made one. */
   userEnabled: boolean | null
 
-  /** Compiled into this build of core rather than mounted. Cannot be removed. */
+  /**
+   * Compiled into this build of core rather than mounted from disk. Says where the
+   * code came from, nothing about whether it runs: a bundled plugin is added,
+   * enabled and removed by an admin like any other.
+   */
   bundled: boolean
   /** Where a mounted plugin was found, shown before an admin adds it. */
   mountPath?: string

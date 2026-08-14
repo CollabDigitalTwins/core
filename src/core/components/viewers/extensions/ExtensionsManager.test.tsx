@@ -166,6 +166,23 @@ describe('controls by role', () => {
     expect(screen.queryByTestId('extension-space-planning')).not.toBeInTheDocument()
   })
 
+  it('lets an admin remove a bundled plugin, which ships in the build but is not forced on', async () => {
+    permissions.current = ADMIN
+    const setInstalled = vi.fn().mockResolvedValue(undefined)
+    const actions: ExtensionsActions = { ...boundActions, setInstalled }
+    render(<ExtensionsManager listings={[listing({ bundled: true })]} actions={actions} />)
+
+    const scope = within(card())
+    const installed = scope.getByRole('switch', { name: 'orgInstalled' })
+    expect(installed).toBeEnabled()
+
+    installed.click()
+
+    await vi.waitFor(() => expect(setInstalled).toHaveBeenCalledWith('space-planning', false))
+    // Back to the section it came from, rather than stuck in the organization's list.
+    expect(within(card()).getByText('statusAvailable')).toBeInTheDocument()
+  })
+
   it('shows an admin the trust prompt before they add a discovered plugin', () => {
     permissions.current = ADMIN
     render(<ExtensionsManager listings={[listing({

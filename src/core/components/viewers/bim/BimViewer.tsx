@@ -23,7 +23,9 @@ import { FloorplanTool } from "./src/FloorplanTool";
 import { Highlighter } from "./src/Highlighter";
 import { IfcClasses } from "./src/IfcClasses";
 import { ViewModeCoordinator } from "./src/lib/ViewModeCoordinator";
+import { ModelsSync } from "./src/ModelsSync";
 import { PropertiesMenu } from "./src/propertiesMenu";
+import { SelectionSync } from "./src/SelectionSync";
 import { ClippingPlanes } from "./src/tools/ClippingTool/ClippingPlanes";
 import { ViewportGizmo } from "./src/ViewportGizmo";
 
@@ -326,6 +328,8 @@ export function BimViewer() {
             }}
         >
             <BimLoadingState />
+            <ModelsSync />
+            <SelectionSync />
             <div
                 className="bim-container"
                 id="bim-viewer-container"

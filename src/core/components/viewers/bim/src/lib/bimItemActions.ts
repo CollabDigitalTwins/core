@@ -69,6 +69,30 @@ export function onVisibilityChanged(
   }
 }
 
+/**
+ * Subscribe to selection changes, however they were made — a click in the
+ * viewport, a tree action, or a plugin calling `select()`.
+ *
+ * Fires for both selection and clearing, so a listener can just re-read
+ * `getSelectedItems`. Mirrors {@link onVisibilityChanged}: one subscription point
+ * so callers never reach into the Highlighter's events themselves.
+ */
+export function onSelectionChanged(
+  components: OBC.Components,
+  listener: () => void,
+): () => void {
+  const highlighter = getHighlighter(components)
+  if (!highlighter) return () => {}
+
+  highlighter.onElementsSelected.add(listener)
+  highlighter.onSelectionCleared.add(listener)
+
+  return () => {
+    highlighter.onElementsSelected.remove(listener)
+    highlighter.onSelectionCleared.remove(listener)
+  }
+}
+
 export async function selectItems(
   components: OBC.Components,
   items: ModelIdMap,
@@ -102,6 +126,9 @@ export function clearSelection(components: OBC.Components): void {
 export function getSelectedItems(components: OBC.Components): ModelIdMap {
   return getHighlighter(components)?.selectedItems ?? {}
 }
+
+/** Reaching the Highlighter is this module's job; `lib/bimCamera` needs it too. */
+export { getHighlighter }
 
 export async function setItemsVisible(
   components: OBC.Components,

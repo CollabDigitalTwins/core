@@ -251,7 +251,7 @@ export function DataMenu({ currentViewer, height, hideTitle, hideActions, hideFr
     if (selectedInfrastructure) return selectedInfrastructure.infrastructureName || selectedInfrastructure.infrastructureType
     if (selectedFile) return selectedFile.name
     if (selectedUser) return selectedUser.name
-    if (currentViewer === ViewerNames.extensions) return 'Extension Details'
+    if (currentViewer === ViewerNames.extensions) return 'Plugin Details'
     return undefined
   }, [selectedItem, selectedSite, selectedInfrastructure, selectedFile, selectedUser, currentViewer])
 

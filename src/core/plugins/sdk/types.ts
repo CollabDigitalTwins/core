@@ -1,22 +1,24 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+// Type-only: keeps the viewer modules' runtime deps (@thatopen, three, maplibre)
+// out of the host's module graph.
+import type { BimToolProps } from './bimViewer'
+import type { MapToolProps } from './mapViewer'
+import type { PointCloudToolProps } from './pointCloudViewer'
+import type { ViewerNames } from '../../types/dbTypes'
 import type { LucideProps } from 'lucide-react'
 
 // --- Capability definitions ---
 
+// Only capabilities core actually renders. One with no consumer registers fine,
+// shows nothing, and leaves nothing to debug.
 export const VALID_CAPABILITIES = [
   'sidebar.items',
   'viewer.panels',
   'map.tools',
   'bim.tools',
   'pointcloud.tools',
-  'map.layers',
-  'data.collections',
-  'data.columns',
-  'jobs',
-  'commands',
-  'widgets',
   'map.legends',
 ] as const
 
@@ -28,20 +30,37 @@ export interface PluginManifest {
   slug: string
   name: string
   version: string
+  /** The `PLUGIN_HOST_API` this plugin was built against. Omitted is warned about, not rejected. */
+  hostApi?: number
   description?: string
   author?: string
   capabilities: PluginCapability[]
   requiredPermissions?: string[]
   configSchema?: Record<string, unknown>
+  /**
+   * Strings keyed by locale then message key, e.g. `{ en: { title: 'Hello' } }`.
+   * Core folds them under `plugins.<slug>`, so `t('title')` resolves and no plugin
+   * can collide with another. Values may nest, addressed as `t('spaces.title')`.
+   */
+  messages?: Record<string, Record<string, unknown>>
 }
 
 export function validateManifest(manifest: unknown): { valid: boolean; errors: string[] } {
   const errors: string[] = []
+
+  if (typeof manifest !== 'object' || manifest === null) {
+    return { valid: false, errors: ['manifest must be an object'] }
+  }
+
   const m = manifest as Record<string, unknown>
 
   if (!m.slug || typeof m.slug !== 'string') errors.push('slug is required')
   if (!m.name || typeof m.name !== 'string') errors.push('name is required')
   if (!m.version || typeof m.version !== 'string') errors.push('version is required')
+
+  if (m.hostApi !== undefined && !Number.isInteger(m.hostApi)) {
+    errors.push('hostApi must be an integer when present')
+  }
 
   if (!Array.isArray(m.capabilities) || m.capabilities.length === 0) {
     errors.push('at least one capability is required')
@@ -65,11 +84,21 @@ export interface SidebarRegistration {
   component: React.ComponentType
 }
 
-export interface ToolbarRegistration {
+/** Every toolbar component receives the toolbar entry core built for it. */
+export interface ToolbarToolProps {
+  tool: unknown
+}
+
+/**
+ * A toolbar contribution. `P` is the viewer surface the hosting toolbar passes as
+ * props, bound per capability by `CapabilityRegistry` — so a BIM component
+ * registered under `map.tools` is a compile error.
+ */
+export interface ToolbarRegistration<P = Record<string, unknown>> {
   id: string
   label: string
   icon: string | React.ComponentType<LucideProps>
-  component: React.ComponentType<{ tool: unknown }>
+  component: React.ComponentType<ToolbarToolProps & P>
   cursor?: string
   stayActive?: boolean
 }
@@ -79,45 +108,8 @@ export interface ViewerRegistration {
   label: string
   icon: string | React.ComponentType<LucideProps>
   component: React.ComponentType
-}
-
-export interface LayerRegistration {
-  id: string
-  label: string
-  [key: string]: unknown
-}
-
-export interface DataCollectionRegistration {
-  id: string
-  label: string
-  listComponent: React.ComponentType
-  detailComponent?: React.ComponentType
-}
-
-export interface ColumnRegistration {
-  id: string
-  target: string
-  [key: string]: unknown
-}
-
-export interface JobRegistration {
-  id: string
-  cron: string
-  handler: () => Promise<void> | void
-}
-
-export interface CommandRegistration {
-  id: string
-  label?: string
-  handler: (...args: unknown[]) => unknown
-}
-
-export interface WidgetRegistration {
-  id: string
-  label: string
-  component: React.ComponentType
-  width?: string
-  height?: string
+  /** Which viewers this panel appears in. Omit for all of them. */
+  viewers?: ViewerNames[]
 }
 
 export interface LegendRow {
@@ -129,12 +121,10 @@ export interface LegendRow {
 export interface LegendRegistration {
   id: string
   title: string
-  // Called by <MapLegendHost> on each render. Re-runs when the plugin's live
-  // store changes (live counts) and reads the plugin's enabled flag (active).
-  // active:false ⇒ host omits this section.
+  // Called by <MapLegendHost> on each render; active:false omits the section.
   useLegend: () => {
     active: boolean
-    // Overrides registration.title when set (e.g. a city-scoped label). Host resolves title ?? registration.title.
+    // Overrides registration.title when set, e.g. a city-scoped label.
     title?: string
     unavailable?: boolean
     rows: LegendRow[]
@@ -142,26 +132,19 @@ export interface LegendRegistration {
 }
 
 // --- Capability → registration type map ---
-// Adding a new contribution point: add one entry here, define the type above,
-// add a consumer that calls `registry.getAll('your.key')`. No host changes.
+// A new contribution point needs one entry here, its type above, and a consumer
+// calling `registry.getAll('your.key')`. No host changes.
 
 export interface CapabilityRegistry {
   'sidebar.items': SidebarRegistration
   'viewer.panels': ViewerRegistration
-  'map.tools': ToolbarRegistration
-  'bim.tools': ToolbarRegistration
-  'pointcloud.tools': ToolbarRegistration
-  'map.layers': LayerRegistration
-  'data.collections': DataCollectionRegistration
-  'data.columns': ColumnRegistration
-  'jobs': JobRegistration
-  'commands': CommandRegistration
-  'widgets': WidgetRegistration
+  'map.tools': ToolbarRegistration<MapToolProps>
+  'bim.tools': ToolbarRegistration<BimToolProps>
+  'pointcloud.tools': ToolbarRegistration<PointCloudToolProps>
   'map.legends': LegendRegistration
 }
 
-// Compile-time assertion: VALID_CAPABILITIES and keyof CapabilityRegistry must stay in sync.
-// If this line errors, one list gained or lost an entry without the other.
+// Errors if VALID_CAPABILITIES and keyof CapabilityRegistry drift apart.
 type _CapabilityParity =
   PluginCapability extends keyof CapabilityRegistry
     ? keyof CapabilityRegistry extends PluginCapability
@@ -185,3 +168,23 @@ export interface PluginEntry {
   activate(ctx: PluginContext): void | Promise<void>
   deactivate?(ctx: PluginContext): void | Promise<void>
 }
+
+/**
+ * One loadable plugin: its manifest plus its module, or a thunk returning it.
+ * Prefer the thunk when compiled in — a static import pulls the plugin's
+ * components into every route that reaches `installed.ts`.
+ */
+export interface PluginSource {
+  manifest: PluginManifest
+  entry: PluginEntry | (() => Promise<PluginEntry>)
+}
+
+/** Resolves either form of `PluginSource.entry` to the module. */
+export async function resolvePluginEntry(
+  entry: PluginSource['entry'],
+): Promise<PluginEntry> {
+  return typeof entry === 'function' ? entry() : entry
+}
+
+/** An array for compiled-in plugins; a thunk when the list itself must be fetched. */
+export type PluginsInput = PluginSource[] | (() => Promise<PluginSource[]>)

@@ -8,7 +8,16 @@ import type { PointCloudToolType } from '../components/viewers/pointcloud/src/to
 import type { Building } from '../types/dbTypes'
 import type { LucideProps } from 'lucide-react'
 
-export type ToolbarToolType = BimToolbarToolsType | MapToolbarToolType | PointCloudToolType | 'settings' | 'file-manager' | null
+/**
+ * A plugin-contributed tool id, namespaced as `plugin:<pluginId>:<toolId>`.
+ *
+ * Core's own tool ids are a closed union so a typo is a compile error. Plugin ids
+ * cannot be, since they come from third-party manifests — the namespace prefix is
+ * what keeps them from colliding with core's or with each other's.
+ */
+export type PluginToolId = `plugin:${string}`
+
+export type ToolbarToolType = BimToolbarToolsType | MapToolbarToolType | PointCloudToolType | PluginToolId | 'settings' | 'file-manager' | null
 export interface Tool {
   id: ToolbarToolType
   title: string

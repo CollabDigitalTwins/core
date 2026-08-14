@@ -1,0 +1,56 @@
+{
+  "slug": "hello-map",
+  "name": "Hello Map",
+  "version": "1.0.0",
+  "hostApi": 1,
+  "description": "The smallest useful map plugin: shows where the map is currently centred.",
+  "author": "Collab Digital Twins",
+  "capabilities": ["map.tools"],
+  "requiredPermissions": [],
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "decimals": {
+        "type": "number",
+        "description": "How many decimal places to show for latitude and longitude.",
+        "default": 5
+      }
+    },
+    "required": []
+  },
+  "messages": {
+    "en": {
+      "name": "Hello Map",
+      "description": "The smallest useful map plugin: shows where the map is currently centred.",
+      "title": "Hello Map",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "zoom": "Zoom",
+      "waiting": "Waiting for the map…",
+      "copy": "Copy coordinates",
+      "copied": "Coordinates copied."
+    },
+    "fr": {
+      "name": "Bonjour la carte",
+      "description": "Le plus petit plugiciel de carte utile : indique où la carte est centrée.",
+      "title": "Bonjour la carte",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "zoom": "Zoom",
+      "waiting": "En attente de la carte…",
+      "copy": "Copier les coordonnées",
+      "copied": "Coordonnées copiées."
+    },
+    "es": {
+      "name": "Hola mapa",
+      "description": "El complemento de mapa más pequeño que resulta útil: muestra dónde está centrado el mapa.",
+      "title": "Hola mapa",
+      "latitude": "Latitud",
+      "longitude": "Longitud",
+      "zoom": "Zum",
+      "waiting": "Esperando el mapa…",
+      "copy": "Copiar las coordenadas",
+      "copied": "Coordenadas copiadas."
+    }
+  }
+}

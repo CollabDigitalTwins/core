@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import type { PluginInstallation, PluginRecord, PluginUserSetting } from '../../../core/types/plugins'
 import type { Building, DbFile, Site, OpenDataPortal, DatasetGroup, User, Role, Organization, Comment, Sensor, Infrastructure, SensorType } from '../../../core/types/dbTypes'
 
 /*
@@ -111,6 +112,21 @@ export interface ApiAdapter {
     updateSensorType(id: number, sensorTypeData: Partial<SensorType>): Promise<SensorType>
     deleteSensorType(id: number): Promise<SensorType>
     createSensorType(input: { sensorTypeData: Partial<SensorType>; }): Promise<SensorType>
+
+    //Plugins
+    // Which plugins this organization has admitted, and how they default.
+    listPluginInstallations(): Promise<PluginInstallation[]>;
+    upsertPluginInstallation(pluginId: string, patch: Partial<PluginInstallation>): Promise<PluginInstallation>;
+    deletePluginInstallation(pluginId: string): Promise<void>;
+    // The signed-in user's own choices. The server takes the user from the
+    // session, never from the request, so there is no userId parameter here.
+    listPluginUserSettings(): Promise<PluginUserSetting[]>;
+    upsertPluginUserSetting(pluginId: string, patch: Partial<PluginUserSetting>): Promise<PluginUserSetting>;
+    // A plugin's own documents, namespaced by (pluginId, collection, key) within
+    // the caller's organization. `data` is opaque to core.
+    listPluginRecords(pluginId: string, collection: string): Promise<PluginRecord[]>;
+    putPluginRecord(pluginId: string, collection: string, key: string, data: unknown): Promise<PluginRecord>;
+    deletePluginRecord(pluginId: string, collection: string, key: string): Promise<void>;
 
     //Infrastructure
     listInfrastructure(): Promise<Infrastructure[]>;

@@ -17,6 +17,10 @@ interface BimTypes {
     world: OBC.World | null;
     fragments: OBC.FragmentsManager | null;
     modelId: string | null;
+    /**
+     * Every loaded model, mirrored out of `FragmentsManager.list` so React can
+     * read it. `ModelsSync` is the only thing that dispatches SET_MODEL_IDS.
+     */
     modelIds: string[];
     floorplans: Plan[];
     grid: OBC.SimpleGrid | null;
@@ -31,6 +35,12 @@ interface BimTypes {
     }[];
     editingBimModel: string | null;
     bimModelName: string | null;
+    /**
+     * The current element selection, mirrored out of the Highlighter component so
+     * React can read it. The Highlighter owns the truth; SelectionSync is the only
+     * thing that dispatches SET_BIM_SELECTION.
+     */
+    selection: OBC.ModelIdMap;
     bcfTopic: OBC.Topic | Partial<OBC.Topic> | null;
     bcfTopics: OBC.Topic[] | Partial<OBC.Topic>[];
     bcfTopicId: string | null;
@@ -54,6 +64,8 @@ export type BimPayload = {
     ["REMOVE_BCF_TOPIC"]: Pick<BimTypes, "bcfTopicId">;
     ['EDIT_BCF_TOPIC']: Pick<BimTypes, "bcfTopic">;
     ["SET_MODEL_UI_STATE"]: { fileId: number; isVisible?: boolean; isGhost?: boolean };
+    ["SET_BIM_SELECTION"]: Pick<BimTypes, "selection">;
+    ["SET_MODEL_IDS"]: Pick<BimTypes, "modelIds">;
 };
 
 export type BimActions = ActionMap<BimPayload>[keyof ActionMap<BimPayload>];
@@ -89,6 +101,16 @@ export const BimReducer = (state: BimState, action: BimActions) => {
                 ...state,
                 "grid": action.payload.grid,
             };
+        case "SET_BIM_SELECTION":
+            return {
+                ...state,
+                "selection": action.payload.selection,
+            };
+        case "SET_MODEL_IDS":
+            return {
+                ...state,
+                "modelIds": action.payload.modelIds,
+            };
         case "DISPOSE-BIM":
             return {
                 ...state,
@@ -96,6 +118,8 @@ export const BimReducer = (state: BimState, action: BimActions) => {
                 "world": null,
                 "fragments": null,
                 "modelId": null,
+                "modelIds": [],
+                "selection": {},
             };
         case "TOGGLE_BIM_TO_MAP": {
 

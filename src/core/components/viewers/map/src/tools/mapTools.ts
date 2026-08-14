@@ -3,7 +3,10 @@
 
 import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import * as React from 'react'
 
+import { usePluginToolbarTools } from '../../../../../plugins/host/usePluginToolbarTools'
+import { useMapViewer } from '../../../../../plugins/sdk/mapViewer'
 // Utilities
 import Compare from '../compare'
 
@@ -54,6 +57,17 @@ export function useMapToolbarTools(config?: MapToolsConfig): Tool[] {
 
   const extraProps = (config ?? {}) as unknown as Record<string, unknown>
 
+  // Map plugin tools get the MapLibre handle as `MapToolProps`, alongside the
+  // same config core tools receive. Imported from `sdk/mapViewer`, not the
+  // `sdk/viewer` barrel, so the BIM engine stays out of this eager bundle.
+  // Memoized: a fresh object every render would recompute the tool list each time.
+  const viewer = useMapViewer()
+  const pluginProps = React.useMemo(
+    () => ({ ...extraProps, ...viewer }),
+    [extraProps, viewer],
+  )
+  const pluginTools = usePluginToolbarTools('map.tools', pluginProps)
+
   return [
     { id: 'map-compare', title: t('compareTitle'), url: '/', icon: LR.Columns3, component: Compare },
     { id: 'map-database', title: t('datasetsTitle'), url: '/', icon: LR.Database, component: DatasetMapTool, extraProps },
@@ -77,6 +91,8 @@ export function useMapToolbarTools(config?: MapToolsConfig): Tool[] {
       icon: LR.Share2,
       component: ShareMapTool,
     },
+    // Plugin-contributed tools come last, after everything core ships.
+    ...pluginTools,
   ]
 }
 

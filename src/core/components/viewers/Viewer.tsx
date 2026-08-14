@@ -39,11 +39,11 @@ const PointCloudViewer = dynamic(
 // DataMenu transitively imports BimViewer (via FilePreview), so keep it lazy
 // too — a static import would pull @thatopen + three/webgpu back into the eager
 // bundle. Only rendered for the data viewers, so map-only sessions skip it.
-// Lazy for the same reason as DataMenu: the extensions page is not on the map
+// Lazy for the same reason as DataMenu: the plugins page is not on the map
 // route's critical path, and only an admin visits it often.
-const ExtensionsManager = dynamic(
-  () => import('./extensions/ExtensionsManager').then(m => ({ default: m.ExtensionsManager })),
-  { ssr: false, loading: () => <ViewerLoadingFallback label="Loading extensions…" /> },
+const PluginsManager = dynamic(
+  () => import('./plugins/PluginsManager').then(m => ({ default: m.PluginsManager })),
+  { ssr: false, loading: () => <ViewerLoadingFallback label="Loading plugins…" /> },
 )
 
 const DataMenu = dynamic(
@@ -184,11 +184,11 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
         {[ViewerNames.buildings, ViewerNames.sites, ViewerNames.files, ViewerNames.land, ViewerNames.infrastructure, ViewerNames.users].includes(validViewer) && (
           <DataMenu currentViewer={validViewer} organization={organization} geocodeEarthApiKey={geocodeEarthApiKey} geocoderUrl={geocoderUrl} />
         )}
-        {/* `extensions` used to route through DataMenu, which rendered nothing:
+        {/* `plugins` used to route through DataMenu, which rendered nothing:
             VIEWER_CONFIG gives it no dataType. It has its own page now. */}
         {validViewer === ViewerNames.extensions && (
           <div className="h-full w-full overflow-y-auto">
-            <ExtensionsManager />
+            <PluginsManager />
           </div>
         )}
         {[ViewerNames.settings].includes(validViewer) && (

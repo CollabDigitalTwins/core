@@ -28,13 +28,13 @@ import { Button } from '../../../ui/Button'
 import { Separator } from '../../../ui/Separator'
 import { Switch } from '../../../ui/Switch'
 
-import { effectiveStatus } from './extensionStatus'
+import { effectiveStatus } from './pluginStatus'
 
-import type { ExtensionListing, ExtensionsAbility } from '../types'
+import type { PluginListing, PluginsAbility } from '../types'
 import type { LucideIcon } from 'lucide-react'
 
 // Icon and colour both, so status survives a quick scan and colour-blindness.
-const STATUS_STYLE: Record<ExtensionListing['status'], { icon: LucideIcon; className: string }> = {
+const STATUS_STYLE: Record<PluginListing['status'], { icon: LucideIcon; className: string }> = {
   running: {
     icon: CheckCircle2,
     className: 'border-green-600/40 bg-green-600/10 text-green-700 dark:text-green-400',
@@ -64,8 +64,8 @@ const CAPABILITY_ICON: Record<string, LucideIcon> = {
 }
 
 interface Props {
-  listing: ExtensionListing
-  ability: ExtensionsAbility
+  listing: PluginListing
+  ability: PluginsAbility
   onSetInstalled: (installed: boolean) => void
   onSetOrgEnabled: (enabled: boolean) => void
   onSetAllowUserOverride: (allow: boolean) => void
@@ -73,7 +73,7 @@ interface Props {
   onCopyError: () => void
 }
 
-export function ExtensionCard({
+export function PluginCard({
   listing,
   ability,
   onSetInstalled,
@@ -82,7 +82,7 @@ export function ExtensionCard({
   onSetUserEnabled,
   onCopyError,
 }: Props) {
-  const t = useTranslations('Extensions')
+  const t = useTranslations('PluginsPage')
   const { manifest } = listing
   // From the switches, not the host: otherwise turning a plugin off leaves the badge
   // reading "Running".
@@ -100,7 +100,7 @@ export function ExtensionCard({
   return (
     <article
       className="grid gap-4 rounded-xl border bg-background p-5 md:grid-cols-[minmax(0,1fr)_auto]"
-      data-testid={`extension-${manifest.slug}`}
+      data-testid={`plugin-${manifest.slug}`}
     >
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
@@ -240,11 +240,11 @@ export function ExtensionCard({
   )
 }
 
-function StatusBadge({ status }: { status: ExtensionListing['status'] }) {
-  const t = useTranslations('Extensions')
+function StatusBadge({ status }: { status: PluginListing['status'] }) {
+  const t = useTranslations('PluginsPage')
   const { icon: Icon, className } = STATUS_STYLE[status]
 
-  const label: Record<ExtensionListing['status'], string> = {
+  const label: Record<PluginListing['status'], string> = {
     running: t('statusRunning'),
     off: t('statusOff'),
     error: t('statusError'),
@@ -329,8 +329,8 @@ function Note({ icon: Icon, text }: { icon: LucideIcon; text: string }) {
 
 /** What a non-admin is told about the organization's decision. */
 function orgSummary(
-  listing: ExtensionListing,
-  t: ReturnType<typeof useTranslations<'Extensions'>>,
+  listing: PluginListing,
+  t: ReturnType<typeof useTranslations<'PluginsPage'>>,
 ): string {
   if (!listing.allowUserOverride) {
     return listing.orgEnabled ? t('orgReadOnlyForced') : t('orgReadOnlyBlocked')

@@ -18,7 +18,7 @@ interface LoadedPlugin {
   /** Null when the plugin was rejected before a context could be created. */
   context: PluginContext | null
   status: PluginStatus
-  /** Set when status is 'errored', so the extensions page can show the reason. */
+  /** Set when status is 'errored', so the plugins page can show the reason. */
   error?: string
 }
 

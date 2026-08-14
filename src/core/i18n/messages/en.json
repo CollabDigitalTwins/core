@@ -89,7 +89,7 @@
     "platform": "Platform",
     "3dViewer": "3D Viewers",
     "data": "Data",
-    "extensions": "Extensions",
+    "plugins": "Plugins",
     "service": "Service",
     "mapTitle": "Map",
     "bimTitle": "BIM",
@@ -101,7 +101,7 @@
     "infrastructureTitle": "Infrastructure",
     "preferences": "Preferences",
     "lcaTitle": "LCA",
-    "addExtensions": "Add Extensions",
+    "addPlugins": "Add Plugins",
     "contact": "Contact the Team"
   },
   "AssociateBuildings": {
@@ -308,7 +308,7 @@
     "siteHeader": "Sites",
     "fileHeader": "Files",
     "infrastructureHeader": "Infrastructure",
-    "extensionsHeader": "Extensions",
+    "pluginsHeader": "Plugins",
     "usersHeader": "Users",
     "landHeader": "Land",
     "toastSuccessCreateBuilding": "Building created successfully",
@@ -1977,13 +1977,13 @@
     "sensorMetadata": "Sensor metadata",
     "selfLink": "Self link"
   },
-  "Extensions": {
-    "title": "Extensions",
+  "PluginsPage": {
+    "title": "Plugins",
     "intro": "Plugins add tools, panels and map layers to this deployment. An administrator decides which are available here; you choose which of those run for you.",
-    "searchPlaceholder": "Search extensions",
-    "noResults": "No extensions match \"{query}\".",
-    "empty": "No extensions are available in this organization yet.",
-    "emptyAdmin": "No extensions have been added yet. Mounted plugins appear here once the server finds them.",
+    "searchPlaceholder": "Search plugins",
+    "noResults": "No plugins match \"{query}\".",
+    "empty": "No plugins are available in this organization yet.",
+    "emptyAdmin": "No plugins have been added yet. Mounted plugins appear here once the server finds them.",
     "sectionAvailable": "Available in this organization",
     "sectionFound": "Found on this server",
     "sectionFoundHint": "Mounted but not yet added to your organization",
@@ -2012,7 +2012,7 @@
     "userNothingToRun": "Nothing to turn on until this loads.",
     "capabilities": "Adds",
     "errorHeading": "This plugin did not start",
-    "errorHint": "Nothing else is affected. The other extensions loaded normally.",
+    "errorHint": "Nothing else is affected. The other plugins loaded normally.",
     "copyError": "Copy error",
     "errorCopied": "Error message copied.",
     "trustHeading": "Before you add this",
@@ -2030,7 +2030,7 @@
     "toastUserEnabled": "{name} is now running for you.",
     "toastUserDisabled": "{name} is no longer running for you.",
     "toastFailed": "Could not change {name}. Please try again.",
-    "userReadOnly": "You can see which extensions are available, but not change what runs.",
-    "loading": "Loading extensions…"
+    "userReadOnly": "You can see which plugins are available, but not change what runs.",
+    "loading": "Loading plugins…"
   }
 }

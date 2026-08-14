@@ -4,7 +4,7 @@
 import type { PluginManifest } from '../../../plugins/sdk/types'
 
 /** Why a plugin is or is not currently contributing anything. */
-export type ExtensionStatus =
+export type PluginStatus =
   /** Loaded and contributing. */
   | 'running'
   /** Available here, but not switched on for this user. */
@@ -15,13 +15,13 @@ export type ExtensionStatus =
   | 'available'
 
 /**
- * One row on the extensions page: the manifest plus the state deciding whether it
+ * One row on the plugins page: the manifest plus the state deciding whether it
  * runs for the person looking at it. The org fields mirror `PluginInstallation`,
  * `userEnabled` mirrors `PluginUserSetting`.
  */
-export interface ExtensionListing {
+export interface PluginListing {
   manifest: PluginManifest
-  status: ExtensionStatus
+  status: PluginStatus
   /** Message from `PluginHost.getError()`, present only when status is 'error'. */
   error?: string
 
@@ -48,7 +48,7 @@ export interface ExtensionListing {
  * The writes the page can perform. A port like `ApiAdapter`: core defines it, the
  * app implements it against its own routes. Omitting it renders the page read-only.
  */
-export interface ExtensionsActions {
+export interface PluginsActions {
   /** Add to, or remove from, this organization. Admin only. */
   setInstalled(pluginId: string, installed: boolean): Promise<void>
   /** Change the organization default. Admin only. */
@@ -64,7 +64,7 @@ export interface ExtensionsActions {
  * control. Presentation only: every write is re-checked server-side, and the
  * user-settings routes take the user id from the session, not the request.
  */
-export interface ExtensionsAbility {
+export interface PluginsAbility {
   /** `create` / `delete PluginInstallation` — add or remove for the organization. */
   canInstall: boolean
   /** `update PluginInstallation` — change the default or lock the choice. */

@@ -5,9 +5,9 @@
 import { render, screen, within } from '@testing-library/react'
 import * as React from 'react'
 
-import { ExtensionsManager } from './ExtensionsManager'
+import { PluginsManager } from './PluginsManager'
 
-import type { ExtensionListing, ExtensionsActions } from './types'
+import type { PluginListing, PluginsActions } from './types'
 
 // Translate to the key so assertions name the string being shown, not its wording.
 vi.mock('next-intl', () => ({
@@ -49,12 +49,12 @@ const { boundActions } = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('./src/useExtensionsData', () => ({
-  useExtensionsData: (listings?: ExtensionListing[]) => ({
+vi.mock('./src/usePluginsData', () => ({
+  usePluginsData: (listings?: PluginListing[]) => ({
     listings: listings ?? [],
     isLoading: false,
   }),
-  useExtensionsActions: (override?: ExtensionsActions) => override ?? boundActions,
+  usePluginsActions: (override?: PluginsActions) => override ?? boundActions,
 }))
 
 // The page nudges the live host after a write; not under test here.
@@ -77,7 +77,7 @@ const VIEWER = [
   { action: 'read', subject: 'PluginUserSetting' },
 ]
 
-function listing(overrides: Partial<ExtensionListing> = {}): ExtensionListing {
+function listing(overrides: Partial<PluginListing> = {}): PluginListing {
   return {
     manifest: {
       slug: 'space-planning',
@@ -97,7 +97,7 @@ function listing(overrides: Partial<ExtensionListing> = {}): ExtensionListing {
 }
 
 function card() {
-  return screen.getByTestId('extension-space-planning')
+  return screen.getByTestId('plugin-space-planning')
 }
 
 afterEach(() => {
@@ -110,7 +110,7 @@ afterEach(() => {
 describe('controls by role', () => {
   it('gives an admin the organization switches and their own', () => {
     permissions.current = ADMIN
-    render(<ExtensionsManager listings={[listing()]} />)
+    render(<PluginsManager listings={[listing()]} />)
 
     const scope = within(card())
     expect(scope.getByRole('switch', { name: 'orgInstalled' })).toBeInTheDocument()
@@ -121,7 +121,7 @@ describe('controls by role', () => {
 
   it('gives a non-admin only their own switch, and the org state read-only', () => {
     permissions.current = MEMBER
-    render(<ExtensionsManager listings={[listing()]} />)
+    render(<PluginsManager listings={[listing()]} />)
 
     const scope = within(card())
     expect(scope.queryByRole('switch', { name: 'orgInstalled' })).not.toBeInTheDocument()
@@ -132,7 +132,7 @@ describe('controls by role', () => {
 
   it('gives a viewer no switches at all, not even their own', () => {
     permissions.current = VIEWER
-    render(<ExtensionsManager listings={[listing()]} />)
+    render(<PluginsManager listings={[listing()]} />)
 
     const scope = within(card())
     expect(scope.queryByRole('switch')).not.toBeInTheDocument()
@@ -142,7 +142,7 @@ describe('controls by role', () => {
   it('tells a viewer they are read-only rather than blaming an admin lock', () => {
     // Not the admin-lock message: nothing is locked, the reader just cannot change it.
     permissions.current = VIEWER
-    render(<ExtensionsManager listings={[listing({ allowUserOverride: true })]} />)
+    render(<PluginsManager listings={[listing({ allowUserOverride: true })]} />)
 
     const scope = within(card())
     expect(scope.queryByText('userLockedOn')).not.toBeInTheDocument()
@@ -151,7 +151,7 @@ describe('controls by role', () => {
 
   it('replaces the personal switch with an explanation when an admin locked it', () => {
     permissions.current = MEMBER
-    render(<ExtensionsManager listings={[listing({ allowUserOverride: false })]} />)
+    render(<PluginsManager listings={[listing({ allowUserOverride: false })]} />)
 
     const scope = within(card())
     expect(scope.queryByRole('switch', { name: 'userRun' })).not.toBeInTheDocument()
@@ -160,17 +160,17 @@ describe('controls by role', () => {
 
   it('hides the "found on this server" section from anyone who cannot install', () => {
     permissions.current = MEMBER
-    render(<ExtensionsManager listings={[listing({ status: 'available', installed: false })]} />)
+    render(<PluginsManager listings={[listing({ status: 'available', installed: false })]} />)
 
     expect(screen.queryByText('sectionFound')).not.toBeInTheDocument()
-    expect(screen.queryByTestId('extension-space-planning')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('plugin-space-planning')).not.toBeInTheDocument()
   })
 
   it('lets an admin remove a bundled plugin, which ships in the build but is not forced on', async () => {
     permissions.current = ADMIN
     const setInstalled = vi.fn().mockResolvedValue(undefined)
-    const actions: ExtensionsActions = { ...boundActions, setInstalled }
-    render(<ExtensionsManager listings={[listing({ bundled: true })]} actions={actions} />)
+    const actions: PluginsActions = { ...boundActions, setInstalled }
+    render(<PluginsManager listings={[listing({ bundled: true })]} actions={actions} />)
 
     const scope = within(card())
     const installed = scope.getByRole('switch', { name: 'orgInstalled' })
@@ -185,7 +185,7 @@ describe('controls by role', () => {
 
   it('shows an admin the trust prompt before they add a discovered plugin', () => {
     permissions.current = ADMIN
-    render(<ExtensionsManager listings={[listing({
+    render(<PluginsManager listings={[listing({
       status: 'available',
       installed: false,
       mountPath: '/app/plugins/space-planning',
@@ -202,7 +202,7 @@ describe('controls by role', () => {
 describe('failed plugins', () => {
   it('surfaces the host error message instead of hiding it in the console', () => {
     permissions.current = MEMBER
-    render(<ExtensionsManager listings={[listing({
+    render(<PluginsManager listings={[listing({
       status: 'error',
       error: 'Plugin "space-planning" targets plugin host API 2, but this version of @collabdt/core provides 1',
     })]} />)
@@ -219,7 +219,7 @@ describe('toasts', () => {
   it('moves the switch before the write resolves, so it never feels laggy', async () => {
     permissions.current = MEMBER
     let resolveWrite: () => void = () => {}
-    const actions: ExtensionsActions = {
+    const actions: PluginsActions = {
       setInstalled: vi.fn(),
       setOrgEnabled: vi.fn(),
       setAllowUserOverride: vi.fn(),
@@ -227,7 +227,7 @@ describe('toasts', () => {
         resolveWrite = resolve
       })),
     }
-    render(<ExtensionsManager listings={[listing({ userEnabled: false })]} actions={actions} />)
+    render(<PluginsManager listings={[listing({ userEnabled: false })]} actions={actions} />)
 
     within(card()).getByRole('switch', { name: 'userRun' }).click()
 
@@ -244,13 +244,13 @@ describe('toasts', () => {
   it('reverts the switch when the write fails, so it never looks saved', async () => {
     permissions.current = MEMBER
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    const actions: ExtensionsActions = {
+    const actions: PluginsActions = {
       setInstalled: vi.fn(),
       setOrgEnabled: vi.fn(),
       setAllowUserOverride: vi.fn(),
       setUserEnabled: vi.fn().mockRejectedValue(new Error('503')),
     }
-    render(<ExtensionsManager listings={[listing({ userEnabled: false })]} actions={actions} />)
+    render(<PluginsManager listings={[listing({ userEnabled: false })]} actions={actions} />)
 
     within(card()).getByRole('switch', { name: 'userRun' }).click()
 
@@ -263,13 +263,13 @@ describe('toasts', () => {
   it('confirms a saved change', async () => {
     permissions.current = MEMBER
     const setUserEnabled = vi.fn().mockResolvedValue(undefined)
-    const actions: ExtensionsActions = {
+    const actions: PluginsActions = {
       setInstalled: vi.fn().mockResolvedValue(undefined),
       setOrgEnabled: vi.fn().mockResolvedValue(undefined),
       setAllowUserOverride: vi.fn().mockResolvedValue(undefined),
       setUserEnabled,
     }
-    render(<ExtensionsManager listings={[listing({ userEnabled: false })]} actions={actions} />)
+    render(<PluginsManager listings={[listing({ userEnabled: false })]} actions={actions} />)
 
     within(card()).getByRole('switch', { name: 'userRun' }).click()
 
@@ -280,13 +280,13 @@ describe('toasts', () => {
   it('reports a failed write instead of leaving the switch looking successful', async () => {
     permissions.current = MEMBER
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    const actions: ExtensionsActions = {
+    const actions: PluginsActions = {
       setInstalled: vi.fn(),
       setOrgEnabled: vi.fn(),
       setAllowUserOverride: vi.fn(),
       setUserEnabled: vi.fn().mockRejectedValue(new Error('503')),
     }
-    render(<ExtensionsManager listings={[listing({ userEnabled: false })]} actions={actions} />)
+    render(<PluginsManager listings={[listing({ userEnabled: false })]} actions={actions} />)
 
     within(card()).getByRole('switch', { name: 'userRun' }).click()
 

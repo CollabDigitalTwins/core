@@ -10,7 +10,7 @@ const INSTALLATIONS = ['pluginInstallations'] as const
 const USER_SETTINGS = ['pluginUserSettings'] as const
 
 /**
- * Enablement state for the extensions page.
+ * Enablement state for the plugins page.
  *
  * Both lists are small — bounded by the number of plugins a deployment has — so
  * they are fetched whole and mutated by revalidation rather than by patching the
@@ -51,7 +51,7 @@ export function createPluginHooks(adapter: ApiAdapter) {
   /**
    * The writes, each revalidating the list it changed.
    *
-   * Deliberately not wrapped in a hook: the extensions page hands these straight
+   * Deliberately not wrapped in a hook: the plugins page hands these straight
    * to its `ExtensionsActions` port, and they are called from event handlers
    * rather than during render.
    */

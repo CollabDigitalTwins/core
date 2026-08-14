@@ -12,10 +12,10 @@ import { PLUGIN_MANIFESTS } from '../../../../plugins/manifests'
 import { useMountedPlugins } from './useMountedPlugins'
 
 import type { PluginInstallation, PluginUserSetting } from '../../../../types/plugins'
-import type { ExtensionListing, ExtensionsActions } from '../types'
+import type { PluginListing, PluginsActions } from '../types'
 
 /**
- * Everything the extensions page needs. Core's `Viewer` renders the page with no
+ * Everything the plugins page needs. Core's `Viewer` renders the page with no
  * props, so it reads through the same `ApiAdapter` port every other domain uses.
  *
  * Four sources cross here: the manifests this build knows about (from
@@ -26,8 +26,8 @@ import type { ExtensionListing, ExtensionsActions } from '../types'
  * A manifest with no install row shows as `available`. An install row with no
  * manifest is dropped — normal after a downgrade.
  */
-export function useExtensionsData(override?: ExtensionListing[]): {
-  listings: ExtensionListing[]
+export function usePluginsData(override?: PluginListing[]): {
+  listings: PluginListing[]
   isLoading: boolean
 } {
   const { installations, isLoading: loadingInstalls } = usePluginInstallations()
@@ -71,18 +71,18 @@ export function useExtensionsData(override?: ExtensionListing[]): {
         userEnabled: setting ? setting.enabled : null,
         bundled,
         ...(mountPath ? { mountPath } : {}),
-      } satisfies ExtensionListing
+      } satisfies PluginListing
     })
   }, [override, installations, userSettings, mounted, host, ready])
 
   return { listings, isLoading: loadingInstalls || loadingSettings }
 }
 
-/** The writes, bound to the API, shaped to the page's `ExtensionsActions` port. */
-export function useExtensionsActions(override?: ExtensionsActions): ExtensionsActions {
+/** The writes, bound to the API, shaped to the page's `PluginsActions` port. */
+export function usePluginsActions(override?: PluginsActions): PluginsActions {
   const actions = usePluginActions()
 
-  return React.useMemo<ExtensionsActions>(() => override ?? {
+  return React.useMemo<PluginsActions>(() => override ?? {
     setInstalled: async (pluginId, installed) => {
       if (installed) {
         // Adding turns it on in the same step: an admin who adds something and finds

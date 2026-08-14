@@ -9,5 +9,5 @@ export const usePluginInstallations = () => useCoreHooks().plugin.usePluginInsta
 
 export const usePluginUserSettings = () => useCoreHooks().plugin.usePluginUserSettings()
 
-/** The write functions, for the extensions page's actions port. */
+/** The write functions, for the plugins page's actions port. */
 export const usePluginActions = () => useCoreHooks().plugin.pluginActions

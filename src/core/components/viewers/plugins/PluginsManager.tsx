@@ -22,22 +22,22 @@ import { Input } from '../../ui/Input'
 import { VIEWER_CONFIG } from '../Data/utils/viewerConfig'
 
 
-import { ExtensionCard } from './src/ExtensionCard'
-import { effectiveStatus } from './src/extensionStatus'
-import { useExtensionsActions, useExtensionsData } from './src/useExtensionsData'
+import { PluginCard } from './src/PluginCard'
+import { effectiveStatus } from './src/pluginStatus'
+import { usePluginsActions, usePluginsData } from './src/usePluginsData'
 
 
-import type { ExtensionListing, ExtensionsAbility, ExtensionsActions } from './types'
+import type { PluginListing, PluginsAbility, PluginsActions } from './types'
 
 interface Props {
   /** Override the rows. Normally omitted; the page reads them through the `ApiAdapter`. */
-  listings?: ExtensionListing[]
+  listings?: PluginListing[]
   /** Override the writes. Normally omitted; they bind to the API by default. */
-  actions?: ExtensionsActions
+  actions?: PluginsActions
 }
 
 /**
- * The Extensions page: what plugins this deployment has, and who decided they run.
+ * The Plugins page: what plugins this deployment has, and who decided they run.
  *
  * The frame mirrors `DataMenu`, since this belongs to the same management group.
  * Two levels of control rather than one switch (see `plugins/enablement.ts`): an
@@ -45,8 +45,8 @@ interface Props {
  * unless the admin locked it. CASL only decides which controls render — every write
  * is re-checked server-side.
  */
-export function ExtensionsManager({ listings, actions }: Props) {
-  const t = useTranslations('Extensions')
+export function PluginsManager({ listings, actions }: Props) {
+  const t = useTranslations('PluginsPage')
   const tData = useTranslations('DataMenu')
   const { ability } = usePermissions()
   const [searchTerm, setSearchTerm] = React.useState('')
@@ -55,14 +55,14 @@ export function ExtensionsManager({ listings, actions }: Props) {
   const headerTitle = t('title')
   const MenuIcon = viewerConfig?.icon
 
-  const { listings: resolved, isLoading } = useExtensionsData(listings)
-  const boundActions = useExtensionsActions(actions)
+  const { listings: resolved, isLoading } = usePluginsData(listings)
+  const boundActions = usePluginsActions(actions)
   const host = usePluginHost()
 
   // Optimistic overrides on top of the resolved rows: the switch moves at once and
   // reverts if the write fails, so it never looks successful while the server said
   // no. Cleared by the next fetch.
-  const [overrides, setOverrides] = React.useState<Record<string, Partial<ExtensionListing>>>({})
+  const [overrides, setOverrides] = React.useState<Record<string, Partial<PluginListing>>>({})
 
   const rows = React.useMemo(
     () => resolved.map(row => {
@@ -72,7 +72,7 @@ export function ExtensionsManager({ listings, actions }: Props) {
     [resolved, overrides],
   )
 
-  const canManage: ExtensionsAbility = React.useMemo(() => {
+  const canManage: PluginsAbility = React.useMemo(() => {
     // Orgs seeded before the `PluginInstallation`/`PluginUserSetting` subjects
     // existed hold neither, which left this page read-only even for an admin.
     // `update Organization` reproduces the same split (Admin and User hold it,
@@ -138,7 +138,7 @@ export function ExtensionsManager({ listings, actions }: Props) {
     async (
       slug: string,
       name: string,
-      patch: Partial<ExtensionListing>,
+      patch: Partial<PluginListing>,
       write: () => Promise<void>,
       success: string,
     ) => {
@@ -148,7 +148,7 @@ export function ExtensionsManager({ listings, actions }: Props) {
         await write()
         toast.success(success)
       } catch (error) {
-        console.error('Extension update failed:', error)
+        console.error('Plugin update failed:', error)
         setOverrides(current => {
           const { [slug]: _reverted, ...rest } = current
           return rest
@@ -253,7 +253,7 @@ export function ExtensionsManager({ listings, actions }: Props) {
 type Commit = (
   slug: string,
   name: string,
-  patch: Partial<ExtensionListing>,
+  patch: Partial<PluginListing>,
   write: () => Promise<void>,
   success: string,
 ) => Promise<void>
@@ -265,17 +265,17 @@ function Row({
   actions,
   commit,
 }: {
-  listing: ExtensionListing
-  ability: ExtensionsAbility
-  actions: ExtensionsActions
+  listing: PluginListing
+  ability: PluginsAbility
+  actions: PluginsActions
   commit: Commit
 }) {
-  const t = useTranslations('Extensions')
+  const t = useTranslations('PluginsPage')
   const { slug } = listing.manifest
   const name = listing.manifest.name
 
   return (
-    <ExtensionCard
+    <PluginCard
       listing={listing}
       ability={ability}
       onSetInstalled={installed => void commit(

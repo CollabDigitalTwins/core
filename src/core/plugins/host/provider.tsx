@@ -96,7 +96,7 @@ export function PluginHostProvider({
   }, [plugins])
 
   // Reconcile: activate what should be running, deactivate what should not.
-  // Runs again whenever enablement or config changes, so the extensions page can
+  // Runs again whenever enablement or config changes, so the plugins page can
   // toggle a plugin without a page reload.
   React.useEffect(() => {
     if (!sources) return
@@ -165,7 +165,7 @@ export function usePluginsReady(): boolean {
   return context?.ready ?? false
 }
 
-/** The host itself. Only the extensions page needs this; capability consumers do not. */
+/** The host itself. Only the plugins page needs this; capability consumers do not. */
 export function usePluginHost(): PluginHost | null {
   return React.useContext(PluginHostContext)?.host ?? null
 }

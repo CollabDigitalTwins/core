@@ -4,7 +4,7 @@
 // @vitest-environment jsdom
 import { renderHook } from '@testing-library/react'
 
-import { useExtensionsData } from './useExtensionsData'
+import { usePluginsData } from './usePluginsData'
 
 import type { PluginManifest } from '../../../../plugins/sdk/types'
 
@@ -58,9 +58,9 @@ beforeEach(() => {
   mounted.current = []
 })
 
-describe('useExtensionsData', () => {
+describe('usePluginsData', () => {
   it('lists compiled-in plugins as bundled, with no mount path', () => {
-    const { result } = renderHook(() => useExtensionsData())
+    const { result } = renderHook(() => usePluginsData())
 
     expect(result.current.listings).toHaveLength(1)
     expect(result.current.listings[0].manifest.slug).toBe('hello-map')
@@ -75,7 +75,7 @@ describe('useExtensionsData', () => {
       mountPath: '/app/plugins/hello-mounted',
     }]
 
-    const { result } = renderHook(() => useExtensionsData())
+    const { result } = renderHook(() => usePluginsData())
 
     const row = result.current.listings.find(listing => listing.manifest.slug === 'hello-mounted')
     expect(row).toBeDefined()
@@ -97,7 +97,7 @@ describe('useExtensionsData', () => {
       mountPath: '/app/plugins/hello-map',
     }]
 
-    const { result } = renderHook(() => useExtensionsData())
+    const { result } = renderHook(() => usePluginsData())
 
     expect(result.current.listings).toHaveLength(1)
     expect(result.current.listings[0].manifest.name).toBe('hello-map')
@@ -105,7 +105,7 @@ describe('useExtensionsData', () => {
   })
 
   it('is unchanged when nothing is mounted, which is every default deployment', () => {
-    const { result } = renderHook(() => useExtensionsData())
+    const { result } = renderHook(() => usePluginsData())
 
     expect(result.current.listings.every(listing => listing.bundled)).toBe(true)
   })

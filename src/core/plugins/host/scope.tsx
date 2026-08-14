@@ -13,22 +13,14 @@ interface PluginScope {
 const PluginScopeContext = React.createContext<PluginScope | null>(null)
 
 /**
- * Names the plugin that owns the subtree, and carries its configuration.
+ * Names the plugin that owns the subtree, and carries its configuration. Every
+ * capability host wraps what it renders from the registry in one of these, which is
+ * how the SDK hooks are scoped without a plugin passing its own id around.
+ * `pluginId` comes from the registry entry, never from the plugin.
  *
- * Every capability host wraps the components it renders from the registry in one
- * of these. It is what lets SDK hooks be scoped without the plugin passing its own
- * id around: `usePluginStore()` reads the namespace from here, `usePluginConfig()`
- * reads the settings, and `usePluginTranslations()` resolves its message prefix
- * the same way.
- *
- * `pluginId` comes from the registry entry, where the host set it itself — never
- * from anything the plugin supplied.
- *
- * This module deliberately holds no reference to the plugin host or to
- * `installed.ts`. Plugin components import from here (through the SDK), and
- * `installed.ts` imports plugin components — so anything they can reach must not
- * reach back, or the module graph becomes a cycle and the bindings are undefined
- * by the time a plugin renders.
+ * Holds no reference to the host or `installed.ts`: plugin components import from
+ * here and `installed.ts` imports plugin components, so reaching back would make the
+ * module graph a cycle and leave the bindings undefined at render time.
  */
 export function PluginScopeProvider({
   pluginId,
@@ -51,19 +43,12 @@ export function PluginScopeProvider({
   )
 }
 
-/**
- * The owning plugin's id. Throws outside a plugin subtree, because every caller is
- * an SDK hook that needs a namespace — silently falling back to a shared one would
- * mix plugins' data together.
- */
+/** The owning plugin's id. Throws outside a plugin subtree: a shared fallback would mix plugins' data. */
 export function usePluginId(): string {
   return usePluginScope().pluginId
 }
 
-/**
- * The plugin's configuration for this organization, layered with any per-user
- * overrides. Shape is whatever the manifest's `configSchema` describes.
- */
+/** The org's config for this plugin, layered with per-user overrides. Shaped by the manifest's `configSchema`. */
 export function usePluginConfig<
   T extends Record<string, unknown> = Record<string, unknown>,
 >(): T {

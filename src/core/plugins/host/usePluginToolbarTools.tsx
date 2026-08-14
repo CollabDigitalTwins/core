@@ -25,12 +25,7 @@ type ToolComponent = NonNullable<Tool['component']>
 /** Shown when a plugin names an icon that does not exist, so the button still appears. */
 const FALLBACK_ICON = LR.Puzzle
 
-/**
- * Resolve a registration's icon to a component.
- *
- * A plugin may pass a lucide component directly, or its name as a string — the
- * string form is what survives a JSON manifest and is what the docs show.
- */
+/** A plugin may pass a lucide component, or its name as a string — JSON manifests only carry the string. */
 export function resolvePluginIcon(
   icon: ToolbarRegistration['icon'],
 ): React.ComponentType<LucideProps> {
@@ -40,28 +35,20 @@ export function resolvePluginIcon(
   return isComponent(candidate) ? candidate : FALLBACK_ICON
 }
 
-/**
- * Lucide icons are `forwardRef` objects, not functions, so a `typeof === 'function'`
- * check rejects every real icon. Anything React can render is either callable or
- * carries `$$typeof`.
- */
+// Lucide icons are `forwardRef` objects, so a bare `typeof === 'function'` check
+// rejects every real icon. Anything renderable is callable or carries `$$typeof`.
 function isComponent(value: unknown): value is React.ComponentType<LucideProps> {
   if (typeof value === 'function') return true
   return typeof value === 'object' && value !== null && '$$typeof' in value
 }
 
 /**
- * Plugin contributions for one toolbar, as `Tool` objects the existing toolbars
- * already know how to render.
+ * Plugin contributions for one toolbar, as `Tool` objects the toolbars already
+ * render: `[...coreTools, ...usePluginToolbarTools('bim.tools', viewerProps)]`.
  *
- * Merge the result into the viewer's own tool array:
- *
- *   return [...coreTools, ...usePluginToolbarTools('bim.tools', viewerProps)]
- *
- * `extraProps` is spread onto the plugin's component by `ToolbarButton`, which is
- * how a BIM tool receives its viewer handles. Each viewer passes its own, so this
- * module stays free of any viewer-engine import — importing `@thatopen` here would
- * pull three into the eager map-route bundle.
+ * `extraProps` is spread onto the plugin's component by `ToolbarButton` — how a BIM
+ * tool gets its viewer handles. Each viewer passes its own, keeping this module free
+ * of viewer-engine imports that would pull three into the map bundle.
  */
 export function usePluginToolbarTools(
   capability: ToolbarCapability,
@@ -70,10 +57,9 @@ export function usePluginToolbarTools(
   const contributions = usePluginContributions(capability)
   const configs = usePluginConfigs()
 
-  // Wrapped components are cached by tool id so their identity is stable across
-  // renders. Rebuilding them whenever `extraProps` changes — and it changes on
-  // most renders, since it carries live viewer handles — would remount the
-  // plugin's panel and throw away its state on every camera move.
+  // Cached by tool id to keep component identity stable. `extraProps` changes on
+  // most renders (it carries live viewer handles), and rebuilding on each would
+  // remount the plugin's panel and lose its state on every camera move.
   const wrapped = React.useRef(new Map<string, ToolComponent>())
 
   return React.useMemo(() => {
@@ -93,8 +79,7 @@ export function usePluginToolbarTools(
         id,
         title: contribution.label,
         icon: resolvePluginIcon(contribution.icon),
-        // A cursor a plugin invents is a CSS no-op, not a crash, so it is taken
-        // at its word rather than validated against the core union.
+        // An invented cursor is a CSS no-op, not a crash, so it goes unvalidated.
         cursor: contribution.cursor as CursorType | undefined,
         stayActive: contribution.stayActive,
         component: Component,
@@ -118,28 +103,20 @@ function pluginToolId(contribution: PluginContribution<ToolbarCapability>) {
 /**
  * Wrap a plugin's component into a real toolbar entry.
  *
- * Two things happen here, and both matter:
- *
- * 1. **It gets a button.** `ToolbarButton` renders `tool.component` *instead of*
- *    a button, so a plugin returning a panel would render that panel inline in
- *    the toolbar strip and blow the strip out of the viewport. Wrapping in
- *    `ToolbarSubmenu` gives the plugin the same ghost icon button and dropdown
- *    every core tool has, from the `label` and `icon` it already declared — so a
- *    plugin author writes panel content and cannot get the chrome wrong.
- * 2. **It gets its plugin scope**, which is what the scoped SDK hooks
- *    (`usePluginTranslations`, and later `usePluginStore`) read.
+ * `ToolbarButton` renders `tool.component` *instead of* a button, so a plugin
+ * returning a panel would render it inline and blow the strip out of the viewport.
+ * `ToolbarSubmenu` gives it the same ghost button and dropdown every core tool has,
+ * built from the `label` and `icon` it already declared. The wrapper also supplies
+ * the plugin scope the scoped SDK hooks read.
  */
 function wrapPluginComponent(
   contribution: PluginContribution<ToolbarCapability>,
-  // Read lazily: the component identity is cached, so capturing the config by
-  // value here would freeze it at whatever it was on first render.
+  // Lazily, because the component identity is cached: capturing the config by value
+  // would freeze it at whatever it was on first render.
   readConfig: () => Record<string, unknown> | undefined,
 ): ToolComponent {
-  // The registration's props are typed per capability (MapToolProps, BimToolProps,
-  // …) so a plugin gets checked at `ctx.register`. This wrapper is capability-
-  // agnostic by design — it forwards whatever the hosting toolbar passed — so the
-  // specific shape is erased here. The toolbar supplying the props is what makes
-  // it correct at runtime.
+  // Props are typed per capability at `ctx.register`. This wrapper forwards whatever
+  // the hosting toolbar passed, so the shape is erased here on purpose.
   const Component = contribution.component as unknown as React.ComponentType<Record<string, unknown>>
 
   function PluginToolboxItem({ tool, ...rest }: React.ComponentProps<ToolComponent>) {

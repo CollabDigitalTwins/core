@@ -4,15 +4,14 @@
 // Drift guard for `@collabdt/plugin-kit`'s hand-restated component declarations.
 //
 // The kit cannot import core's real component types — they come from `@radix-ui/*` and
-// `class-variance-authority`, and making a plugin author install Radix to typecheck a
-// `<Button>` is what the kit exists to avoid — so it restates them, and a restatement
-// rots: rename a prop in `components/ui/` and the kit keeps publishing the old name in a
-// `.d.ts` nobody rebuilds. The guard lives in core because that rename happens here.
+// `class-variance-authority`, and the kit exists so a plugin author need not install Radix
+// to typecheck a `<Button>`. So it restates them, and restatements rot: rename a prop in
+// `components/ui/` and the kit keeps publishing the old name. The guard lives in core
+// because that rename happens here.
 //
-// The kit's types are imported by **file path**, never through
-// `@collabdt/core/plugins-sdk/components`: that specifier resolves to the kit's own
-// ambient declaration, so it would compare the declaration to itself and pass no matter
-// how far core moved.
+// The kit's types come in by file path, never through
+// `@collabdt/core/plugins-sdk/components` — that specifier resolves to the kit's own
+// ambient declaration, comparing it to itself.
 
 import { existsSync } from 'node:fs'
 
@@ -32,16 +31,14 @@ type Exact<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false
 /** The keys of `T` that a caller cannot leave out. */
 type RequiredKeys<T> = { [K in keyof T]-?: object extends Pick<T, K> ? never : K }[keyof T]
 
-// The invariant, in two directions that are not symmetric:
+// The invariant, in two asymmetric directions:
 //
-//  - Every prop the kit declares must exist on the real component with an identical type.
-//    Omitting props is allowed and several declarations are deliberately narrower, but
-//    the kit may never invent a prop core lacks or type one differently. `keyof Declared
-//    extends keyof Real` catches a rename or removal; `Pick<Real, keyof Declared>`
-//    catches a changed type on a prop the kit does declare.
-//  - Every prop core *requires* must be one the kit declares, or plugin code leaves it
-//    out and still typechecks. `Pick<Real, keyof Declared & keyof Real>` is blind to
-//    that, since it drops every key the kit does not already have.
+//  - Every prop the kit declares must exist on the real component with the same type.
+//    Omitting props is fine and several declarations are narrower on purpose, but the kit
+//    may never invent one or retype one. `keyof Declared extends keyof Real` catches a
+//    rename; `Pick<Real, keyof Declared>` catches a changed type.
+//  - Every prop core requires must be one the kit declares, or plugin code omits it and
+//    still typechecks. `Pick<Real, keyof Declared & keyof Real>` is blind to that.
 type Narrows<Declared, Real> = [keyof Declared] extends [keyof Real]
   ? Exact<Declared, Pick<Real, keyof Declared & keyof Real>> extends true
     ? [Exclude<RequiredKeys<Real>, keyof Declared>] extends [never]

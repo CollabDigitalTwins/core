@@ -26,11 +26,10 @@ import type * as OBC from '@thatopen/components'
 /**
  * The BIM viewer, as a plugin sees it.
  *
- * This module has a **runtime** dependency on `@thatopen/components` and three, so
- * it is kept out of the `plugins-sdk` barrel and out of anything the map route
- * imports. Core consumes it only from inside the BIM viewer's own lazy chunk;
- * plugins import `@collabdt/core/plugins-sdk/bimViewer` (or the `viewer` barrel,
- * which is fine — a plugin bundle is loaded separately anyway).
+ * Has a runtime dependency on `@thatopen/components` and three, so it stays out of
+ * the `plugins-sdk` barrel and out of anything the map route imports. Core reaches
+ * it only from inside the BIM viewer's own lazy chunk; plugins import
+ * `@collabdt/core/plugins-sdk/bimViewer`.
  */
 
 export interface BimToolProps {
@@ -43,10 +42,8 @@ export interface BimToolProps {
   /** The live selection, keyed by model id. Updates as the user clicks in the viewport. */
   selection: ModelIdMap
 
-  // Declared as properties rather than methods on purpose: they are standalone
-  // closures with no `this`, so a plugin can destructure them out of the props —
-  // which is how every example uses them — without the unbound-`this` hazard that
-  // method shorthand would imply.
+  // Properties, not methods: standalone closures with no `this`, so a plugin can
+  // destructure them out of the props without an unbound-`this` hazard.
   select: (items: ModelIdMap) => Promise<void>
   clearSelection: () => void
   /** Frame the camera on whatever is currently selected. */
@@ -59,11 +56,8 @@ export interface BimToolProps {
   showAll: () => Promise<void>
 
   /**
-   * Every element of one IFC class, e.g. `getItemsOfCategory('IFCSPACE')`.
-   *
-   * Spaces in particular start hidden — they are volumetric and would obscure the
-   * elements inside them — so a plugin that wants to show them needs a
-   * `setItemsVisible(spaces, true)` as well.
+   * Every element of one IFC class, e.g. `getItemsOfCategory('IFCSPACE')`. Spaces
+   * start hidden, being volumetric, so showing them needs `setItemsVisible` too.
    */
   getItemsOfCategory: (category: string) => Promise<ModelIdMap>
   /** Attributes for the given elements. Omit `attributes` for the default set. */
@@ -71,16 +65,13 @@ export interface BimToolProps {
 }
 
 /**
- * Thin façade: every action delegates to the same `lib/bimItemActions`,
- * `lib/bimCamera` and `lib/bimQueries` helpers the core sidebar and toolbars use,
- * so a plugin cannot drift from core behaviour. `selection` is read from the
- * store, which `SelectionSync` keeps in step with the Highlighter.
+ * Thin façade over the same `lib/bim*` helpers the core sidebar and toolbars use, so
+ * a plugin cannot drift from core behaviour.
  *
- * Colour and opacity overrides are deliberately absent. Core routes those through
- * `ElementAppearance`, which buckets them into one Fragments material definition
- * per appearance and shares a CTRL+Z history with the sidebar; raw per-element
- * painting would spend one of the model's ~65 500 material slots per element per
- * call and exhaust them. Use `select` and `isolate` to draw attention instead.
+ * No colour or opacity overrides, on purpose: raw per-element painting spends one of
+ * the model's ~65 500 Fragments material slots per element per call and exhausts
+ * them. Core buckets those through `ElementAppearance`; plugins use `select` and
+ * `isolate` to draw attention.
  */
 export function useBimViewer(): BimToolProps {
   const { state } = React.useContext(BimContext)

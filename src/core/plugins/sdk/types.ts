@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-// Type-only, so the viewer modules' runtime dependencies (@thatopen, three,
-// maplibre) never reach the host's module graph.
+// Type-only: keeps the viewer modules' runtime deps (@thatopen, three, maplibre)
+// out of the host's module graph.
 import type { BimToolProps } from './bimViewer'
 import type { MapToolProps } from './mapViewer'
 import type { PointCloudToolProps } from './pointCloudViewer'
@@ -11,16 +11,8 @@ import type { LucideProps } from 'lucide-react'
 
 // --- Capability definitions ---
 
-/**
- * A capability exists here if and only if core renders it. Declaring one that has
- * no consumer is worse than not having it: the plugin registers successfully,
- * nothing appears, and there is nothing to debug.
- *
- * Planned, deliberately absent until they have a consumer: `map.layers`,
- * `data.collections`, `data.columns`, `commands`, `widgets`. Also `jobs`, which
- * additionally needs server-side execution that a browser-loaded plugin bundle
- * cannot provide at all.
- */
+// Only capabilities core actually renders. One with no consumer registers fine,
+// shows nothing, and leaves nothing to debug.
 export const VALID_CAPABILITIES = [
   'sidebar.items',
   'viewer.panels',
@@ -38,12 +30,7 @@ export interface PluginManifest {
   slug: string
   name: string
   version: string
-  /**
-   * The `PLUGIN_HOST_API` value this plugin was built against. Omitting it is
-   * allowed but warned about: the host assumes the current API, which means a
-   * future breaking change surfaces as a render-time failure rather than a
-   * refusal to load.
-   */
+  /** The `PLUGIN_HOST_API` this plugin was built against. Omitted is warned about, not rejected. */
   hostApi?: number
   description?: string
   author?: string
@@ -51,21 +38,9 @@ export interface PluginManifest {
   requiredPermissions?: string[]
   configSchema?: Record<string, unknown>
   /**
-   * The plugin's own strings, keyed by locale then by message key:
-   *
-   *   "messages": { "en": { "title": "Hello" }, "fr": { "title": "Bonjour" } }
-   *
-   * Kept in the manifest so a small plugin is a single file to write and a single
-   * file to translate. Core folds them into the app's message tree under
-   * `plugins.<slug>`, so `usePluginTranslations()` resolves `t('title')` and a
-   * plugin can never collide with a core namespace or with another plugin.
-   *
-   * Entirely optional. A plugin that ships none still works: every SDK
-   * translation call takes an inline fallback, which is what an untranslated
-   * third-party plugin will rely on.
-   *
-   * Values may nest (`{ "spaces": { "title": "…" } }`), addressed as
-   * `t('spaces.title')`.
+   * Strings keyed by locale then message key, e.g. `{ en: { title: 'Hello' } }`.
+   * Core folds them under `plugins.<slug>`, so `t('title')` resolves and no plugin
+   * can collide with another. Values may nest, addressed as `t('spaces.title')`.
    */
   messages?: Record<string, Record<string, unknown>>
 }
@@ -115,13 +90,9 @@ export interface ToolbarToolProps {
 }
 
 /**
- * A toolbar contribution.
- *
- * `P` is the viewer surface the hosting toolbar passes as props — `MapToolProps`
- * for `map.tools`, `BimToolProps` for `bim.tools`, and so on. Because
- * `CapabilityRegistry` binds it per capability, registering a component that
- * expects the BIM viewer under `map.tools` is a compile error rather than a
- * runtime surprise.
+ * A toolbar contribution. `P` is the viewer surface the hosting toolbar passes as
+ * props, bound per capability by `CapabilityRegistry` — so a BIM component
+ * registered under `map.tools` is a compile error.
  */
 export interface ToolbarRegistration<P = Record<string, unknown>> {
   id: string
@@ -137,10 +108,7 @@ export interface ViewerRegistration {
   label: string
   icon: string | React.ComponentType<LucideProps>
   component: React.ComponentType
-  /**
-   * Which viewers this panel appears in. Omit for all of them.
-   * A space-planning panel, for example, only makes sense in the BIM viewer.
-   */
+  /** Which viewers this panel appears in. Omit for all of them. */
   viewers?: ViewerNames[]
 }
 
@@ -153,12 +121,10 @@ export interface LegendRow {
 export interface LegendRegistration {
   id: string
   title: string
-  // Called by <MapLegendHost> on each render. Re-runs when the plugin's live
-  // store changes (live counts) and reads the plugin's enabled flag (active).
-  // active:false ⇒ host omits this section.
+  // Called by <MapLegendHost> on each render; active:false omits the section.
   useLegend: () => {
     active: boolean
-    // Overrides registration.title when set (e.g. a city-scoped label). Host resolves title ?? registration.title.
+    // Overrides registration.title when set, e.g. a city-scoped label.
     title?: string
     unavailable?: boolean
     rows: LegendRow[]
@@ -166,8 +132,8 @@ export interface LegendRegistration {
 }
 
 // --- Capability → registration type map ---
-// Adding a new contribution point: add one entry here, define the type above,
-// add a consumer that calls `registry.getAll('your.key')`. No host changes.
+// A new contribution point needs one entry here, its type above, and a consumer
+// calling `registry.getAll('your.key')`. No host changes.
 
 export interface CapabilityRegistry {
   'sidebar.items': SidebarRegistration
@@ -178,8 +144,7 @@ export interface CapabilityRegistry {
   'map.legends': LegendRegistration
 }
 
-// Compile-time assertion: VALID_CAPABILITIES and keyof CapabilityRegistry must stay in sync.
-// If this line errors, one list gained or lost an entry without the other.
+// Errors if VALID_CAPABILITIES and keyof CapabilityRegistry drift apart.
 type _CapabilityParity =
   PluginCapability extends keyof CapabilityRegistry
     ? keyof CapabilityRegistry extends PluginCapability
@@ -205,14 +170,9 @@ export interface PluginEntry {
 }
 
 /**
- * One loadable plugin: its validated manifest plus its module.
- *
- * `entry` may be the module itself, or a thunk returning it. Prefer the thunk for
- * anything compiled in: a static import pulls the plugin's components — and for a
- * BIM plugin, `@thatopen` and three with them — into whatever imports
- * `installed.ts`, which is every route including the map. A thunk defers that to
- * activation, which happens client-side in an effect, so the weight lands in its
- * own chunk. Runtime-loaded plugins are thunks by nature.
+ * One loadable plugin: its manifest plus its module, or a thunk returning it.
+ * Prefer the thunk when compiled in — a static import pulls the plugin's
+ * components into every route that reaches `installed.ts`.
  */
 export interface PluginSource {
   manifest: PluginManifest
@@ -223,12 +183,8 @@ export interface PluginSource {
 export async function resolvePluginEntry(
   entry: PluginSource['entry'],
 ): Promise<PluginEntry> {
-  // A plugin module is an object with `activate`; a thunk is a bare function.
   return typeof entry === 'function' ? entry() : entry
 }
 
-/**
- * What the host loads. An array for plugins compiled into the bundle; a thunk for
- * plugins discovered at runtime, where the list itself has to be fetched first.
- */
+/** An array for compiled-in plugins; a thunk when the list itself must be fetched. */
 export type PluginsInput = PluginSource[] | (() => Promise<PluginSource[]>)

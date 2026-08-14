@@ -17,13 +17,12 @@ import { PLUGIN_HOST_API } from '../sdk/version'
 /**
  * `create-cdt-plugin` is a `bin` run by plain Node, which cannot resolve core's
  * extensionless dist imports, so it keeps checked copies of three facts rather than
- * importing them. This is what stops them diverging: the change that would break the
- * scaffolder fails here, in core, where it was made.
+ * importing them. This is what stops them diverging — the breaking change fails here, in
+ * core, where it was made.
  *
- * The manifest validation below lives here for the mirror-image reason. Importing core from
- * the scaffolder's own test would pull core's whole type graph into that package's `tsc`
- * run, and core does not compile clean in isolation. Core's vitest bundles, so it can import
- * the scaffolder where the scaffolder cannot import it.
+ * The manifest validation below is here for the mirror reason: importing core from the
+ * scaffolder's own test would pull core's whole type graph into that package's `tsc` run.
+ * Core's vitest bundles, so it can import the scaffolder where the reverse fails.
  */
 describe('create-cdt-plugin', () => {
   it('knows every plugin compiled into core, so it can refuse a colliding slug', () => {
@@ -37,8 +36,7 @@ describe('create-cdt-plugin', () => {
   })
 
   it('offers no capability that nothing renders', () => {
-    // Valid in the manifest schema, deliberately never scaffolded: a plugin registering one
-    // loads, registers and shows nothing.
+    // Valid in the schema, never scaffolded: a plugin registering one shows nothing.
     expect(SURFACES).not.toContain('sidebar.items')
     expect(SURFACES).not.toContain('viewer.panels')
   })
@@ -97,8 +95,8 @@ describe('a scaffolded manifest', () => {
       hostApi: number
     }
 
-    // Omitting hostApi is permitted and only warned about, which defers a future
-    // incompatibility to a render-time failure. A scaffolded plugin should not start there.
+    // Omitting hostApi is only warned about, deferring an incompatibility to render time.
+    // A scaffolded plugin should not start there.
     expect(manifest.hostApi).toBe(PLUGIN_HOST_API)
   })
 })

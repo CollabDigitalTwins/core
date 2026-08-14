@@ -20,21 +20,18 @@ interface MountedResponse {
   enabled?: boolean
 }
 
-// Plugins mounted into the running deployment.
+// Plugins mounted into the running deployment. Fetched directly rather than through
+// `ApiAdapter`, which is the seam for domain data every backend must provide — a
+// deployment with no filesystem of plugins has nothing sensible to return, and the
+// empty list a failed request yields here is the right answer for it.
 //
-// Fetched directly rather than through `ApiAdapter`: the adapter is the seam for *domain*
-// data any backend must provide, and mounted plugins are a property of one deployment's
-// filesystem, so an implementation without one has nothing sensible to return. An empty
-// list is the correct answer everywhere else, which is what a failed request yields here.
-//
-// `enabled` lets the page tell "none mounted" from "runtime loading not turned on".
+// `enabled` tells "none mounted" from "runtime loading not turned on".
 export function useMountedPlugins(): { mounted: MountedPlugin[]; enabled: boolean; isLoading: boolean } {
   const { data, isLoading } = useSWR<MountedResponse>(
     ['mountedPlugins'],
     async () => {
       const response = await fetch('/api/plugins/mounted')
-      // A role without read access gets 403; neither that nor a deployment with loading
-      // off is an error worth surfacing.
+      // A 403 for a role without read access is not worth surfacing.
       if (!response.ok) return {}
       return (await response.json()) as MountedResponse
     },

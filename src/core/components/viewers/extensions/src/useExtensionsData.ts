@@ -15,26 +15,16 @@ import type { PluginInstallation, PluginUserSetting } from '../../../../types/pl
 import type { ExtensionListing, ExtensionsActions } from '../types'
 
 /**
- * Everything the extensions page needs, from the database.
+ * Everything the extensions page needs. Core's `Viewer` renders the page with no
+ * props, so it reads through the same `ApiAdapter` port every other domain uses.
  *
- * The page cannot be handed props: core's `Viewer` renders it with none. It
- * therefore reads through the same `ApiAdapter` port every other domain uses, so
- * the app supplies the data without any prop threading — which is exactly what
- * that seam is for.
+ * Four sources cross here: the manifests this build knows about (from
+ * `manifests.ts`, not `installed.ts`, so plugin components stay out), whatever the
+ * deployment mounted on disk, `PluginInstallation` for the org and
+ * `PluginUserSetting` for this user.
  *
- * Four sources are crossed here:
- *
- * 1. **Manifests** — what plugins this build knows about, and their names,
- *    versions and capabilities. Read from `manifests.ts`, not `installed.ts`, so
- *    this does not drag plugin components in.
- * 2. **Mounted plugins** — what the deployment found on disk. Empty everywhere
- *    runtime loading is off, which is the default.
- * 3. **`PluginInstallation`** — what the organization admitted, and its defaults.
- * 4. **`PluginUserSetting`** — what this user chose.
- *
- * A manifest with no install row shows as `available`: present in the build,
- * not yet added here. An install row with no manifest is dropped — it names a
- * plugin this build does not have, which is normal after a downgrade.
+ * A manifest with no install row shows as `available`. An install row with no
+ * manifest is dropped — normal after a downgrade.
  */
 export function useExtensionsData(override?: ExtensionListing[]): {
   listings: ExtensionListing[]
@@ -45,8 +35,8 @@ export function useExtensionsData(override?: ExtensionListing[]): {
   const { mounted } = useMountedPlugins()
 
   const host = usePluginHost()
-  // Statuses only mean anything once loading has finished; this also re-derives
-  // the list when a plugin finishes activating.
+  // Statuses only mean anything once loading finishes, and this re-derives the list
+  // when a plugin finishes activating.
   const ready = usePluginsReady()
 
   const listings = React.useMemo(() => {
@@ -56,10 +46,8 @@ export function useExtensionsData(override?: ExtensionListing[]): {
     const settingsByPlugin = new Map(userSettings.map(row => [row.pluginId, row]))
     const statuses = new Map(host?.listPlugins().map(entry => [entry.slug, entry]) ?? [])
 
-    // Compiled-in plugins first, then anything mounted that is not also compiled
-    // in. A slug can only appear once: the server's scan refuses a folder whose
-    // manifest declares a different slug, so the two sets cannot disagree about
-    // what a slug means.
+    // Compiled-in first, then anything mounted that is not. A slug appears once: the
+    // server's scan refuses a folder whose manifest declares a different slug.
     const compiledSlugs = new Set(PLUGIN_MANIFESTS.map(manifest => manifest.slug))
     const sources = [
       ...PLUGIN_MANIFESTS.map(manifest => ({ manifest, bundled: true, mountPath: undefined as string | undefined })),
@@ -90,21 +78,15 @@ export function useExtensionsData(override?: ExtensionListing[]): {
   return { listings, isLoading: loadingInstalls || loadingSettings }
 }
 
-/**
- * The writes, bound to the API.
- *
- * Shaped to the page's `ExtensionsActions` port so the component stays testable
- * with a stub, and so a future consumer (the runtime loader) can supply its own.
- */
+/** The writes, bound to the API, shaped to the page's `ExtensionsActions` port. */
 export function useExtensionsActions(override?: ExtensionsActions): ExtensionsActions {
   const actions = usePluginActions()
 
   return React.useMemo<ExtensionsActions>(() => override ?? {
     setInstalled: async (pluginId, installed) => {
       if (installed) {
-        // Adding a plugin turns it on for the organization in the same step:
-        // an admin who adds something and finds it inert would reasonably call
-        // that a bug.
+        // Adding turns it on in the same step: an admin who adds something and finds
+        // it inert would reasonably call that a bug.
         await actions.setInstallation(pluginId, { enabled: true })
       } else {
         await actions.removeInstallation(pluginId)

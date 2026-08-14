@@ -3,17 +3,15 @@
 
 // Runs `tsc` over the plugin-kit drift guards and reports what came back.
 //
-// Those guards are compile-time assertions and vitest strips types without checking them,
-// so each guard spawns the compiler over itself. Diagnostics have to be filtered to the
-// guard's own file, because compiling one drags in core's UI and viewer chains, which do
-// not compile clean under `--strict` and were never meant to. Filtering leaves an empty
-// result with three causes — nothing wrong, the compiler never ran, errors landed on
-// another file — and only the first is success; that ambiguity is what let a
-// `skipLibCheck` defect ship. So this returns the run rather than a verdict, and the
-// caller asserts on each part.
+// The guards are compile-time assertions and vitest strips types without checking them, so
+// each guard spawns the compiler over itself. Diagnostics are filtered to the guard's own
+// file, since compiling one drags in core's UI and viewer chains, which never compiled
+// clean under `--strict`. An empty filtered result has three causes — nothing wrong, the
+// compiler never ran, errors landed elsewhere — and only the first is success, so this
+// returns the run rather than a verdict and the caller asserts on each part.
 //
-// It lives under `__tests__/` because core's build excludes that directory: it spawns a
-// process and must never reach a consumer's bundle.
+// Under `__tests__/` because core's build excludes that directory: it spawns a process and
+// must never reach a consumer's bundle.
 
 import { execFileSync } from 'node:child_process'
 import { dirname, join, resolve } from 'node:path'
@@ -31,9 +29,8 @@ const TSC_PROJECT = join(GUARD_DIR, 'pluginKit.tsconfig.json')
 
 const TSC_ARGS = [
   '-p', TSC_PROJECT,
-  // Evidence the compiler ran and reached the checking phase, and that the caller's file
-  // was in the program: with `-p` the tsconfig decides that, so a file dropped from it
-  // would leave its assertions unrun and its test green.
+  // Evidence the compiler ran, reached checking, and had the caller's file in the program:
+  // with `-p` the tsconfig decides that, so a dropped file leaves its assertions unrun.
   '--extendedDiagnostics',
   '--listFiles',
 ]
@@ -65,9 +62,8 @@ export function runTsc(fileName: string): TscRun {
       stdio: ['ignore', 'pipe', 'pipe'],
     })
   } catch (error) {
-    // tsc exits non-zero whenever it reports anything, including for other files. A
-    // failure to start lands here too, with no status and no output — the case that has
-    // to stay separable from a clean compile.
+    // tsc exits non-zero whenever it reports anything, other files included. A failure to
+    // start lands here too, with no status and no output — kept separable from a clean run.
     const failure = error as { stdout?: string; stderr?: string; status?: number }
     status = failure.status ?? -1
     output = `${failure.stdout ?? ''}${failure.stderr ?? ''}`

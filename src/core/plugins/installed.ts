@@ -13,29 +13,20 @@ function manifestFor(slug: string): PluginManifest {
 }
 
 /**
- * The plugins compiled into this build of core, in load order.
+ * The plugins compiled into this build of core, in load order. To add one: put its
+ * manifest in `manifests.ts`, then pair that slug with a dynamic import here.
  *
- * To add a plugin: add its manifest to `manifests.ts`, then add an entry here
- * pairing that slug with a dynamic import of its module. To disable one: comment
- * it out.
+ * Entries must stay dynamic imports. `installed.ts` is reachable from
+ * `PluginHostProvider`, which sits in every route's provider tree, so a static
+ * import would put every plugin's components — `@thatopen` and three among them —
+ * in the eager bundle. Resolved at activation time instead, one chunk each.
  *
- * **Entries are dynamic imports, not static ones.** `installed.ts` is reachable
- * from `PluginHostProvider`, which sits in every route's provider tree — so a
- * static import would pull every plugin's components into the eager bundle, and
- * for a BIM plugin that means `@thatopen` and three on the map route, undoing the
- * code splitting the viewers are careful about. The host resolves these at
- * activation time, client-side, so each plugin lands in its own chunk.
+ * A default only: a consumer can pass its own list via
+ * `<PluginHostProvider plugins={...}>` and gate it with `enabledSlugs`.
  *
- * Manifests stay in `manifests.ts` because the i18n layer needs to read plugin
- * strings without importing plugin components at all — see the note there.
- *
- * This is the default only. A consumer can pass its own list — including one
- * resolved at runtime — via `<PluginHostProvider plugins={...}>`, and enable or
- * disable individual plugins per organization and per user with `enabledSlugs`.
- *
- * The two `hello-*` plugins are the documentation's worked examples and double as
- * the boundary's regression test: they import nothing outside `sdk/`, so if the
- * plugin surface stops being sufficient, they stop compiling.
+ * The `hello-*` pair are the documentation's worked examples and the boundary's
+ * regression test — they import nothing outside `sdk/`, so an insufficient plugin
+ * surface stops them compiling.
  */
 export const INSTALLED_PLUGINS: PluginSource[] = [
   { manifest: manifestFor('hello-map'), entry: () => import('./hello-map') },

@@ -3,19 +3,15 @@
 
 // Drift guard for `@collabdt/plugin-kit`'s hand-copied SDK module signatures.
 //
-// A plugin never installs `@collabdt/core`: it typechecks against the kit's
-// `src/types/sdkModules.d.ts`, where those signatures are written out by hand. Nothing
-// checked them — `runtimeShims.exports.test.ts` compares *names* only, so a hook whose
-// parameters or return type moved in core kept typechecking in a plugin and failed at
-// runtime. Demonstrated risk, not theoretical: three signatures were found wrong by
-// hand-reading core while the kit was being written, and no test noticed.
+// A plugin never installs `@collabdt/core`; it typechecks against the kit's
+// `src/types/sdkModules.d.ts`, written out by hand. `runtimeShims.exports.test.ts`
+// compares names only, so a hook whose parameters moved in core would still typecheck
+// in a plugin and fail at runtime.
 //
-// The `/// <reference path>` below pulls in the ambient file, so
-// `import('@collabdt/core/plugins-sdk/config')` in a type position resolves to the
-// declaration rather than to a package on disk (there is none — core is this repo), while
-// the real modules are imported by relative path. The two sides are genuinely different
-// definitions. Component declarations have their own guard in
-// `pluginKitComponents.test.ts`.
+// The `/// <reference path>` pulls in the ambient file, so a type-position
+// `import('@collabdt/core/plugins-sdk/config')` resolves to the declaration while the
+// real modules come in by relative path — two genuinely separate definitions.
+// Components have their own guard in `pluginKitComponents.test.ts`.
 
 /// <reference path="../../../../packages/plugin-kit/src/types/sdkModules.d.ts" />
 
@@ -38,62 +34,53 @@ type DeclaredConfig = typeof import('@collabdt/core/plugins-sdk/config')
 type DeclaredMessages = typeof import('@collabdt/core/plugins-sdk/messages')
 type DeclaredStore = typeof import('@collabdt/core/plugins-sdk/store')
 
-// The invariant, one-directional in the direction that matters: whatever the kit promises
-// a plugin, core must deliver. `Real extends Declared` means the real export can stand in
-// for the declared one everywhere it is used, so a declaration narrower than core (a
-// dropped type parameter, say) still satisfies it while one promising more does not. The
-// failure branch carries both types so the diagnostic names the mismatch instead of
-// saying `true` was not assignable to `false`.
+// The invariant, one-directional: whatever the kit promises a plugin, core must deliver.
+// `Real extends Declared` lets a declaration narrower than core pass while one promising
+// more fails. The failure branch carries both types so the diagnostic names the mismatch.
 type Provides<Real, Declared> = [Real] extends [Declared]
   ? true
   : { 'DRIFT: core no longer provides what the kit declares': Real, declared: Declared }
 
-// Core's `usePluginConfig` takes a type parameter for the stored shape; the declaration
-// drops it and returns the default, a narrowing a plugin can still cast from.
+// Core's `usePluginConfig` takes a type parameter; the declaration drops it and returns
+// the default, a narrowing a plugin can still cast from.
 const _usePluginConfig: Provides<typeof SdkConfig.usePluginConfig, DeclaredConfig['usePluginConfig']> = true
 const _usePluginId: Provides<typeof SdkConfig.usePluginId, DeclaredConfig['usePluginId']> = true
 
-// `fallback` being required on `usePluginMessage` is the whole point of the hook, so a
-// core signature that made it optional would be a real change.
+// A required `fallback` is the point of `usePluginMessage`; making it optional in core
+// would be a real change.
 const _usePluginMessage: Provides<typeof SdkMessages.usePluginMessage, DeclaredMessages['usePluginMessage']> = true
 const _usePluginTranslations: Provides<typeof SdkMessages.usePluginTranslations, DeclaredMessages['usePluginTranslations']> = true
-// `typeof import(…)` is a query over the module's *values*, so the exported type
-// has to be reached through the module type itself.
+// `typeof import(…)` queries values, so the exported type comes through the module type.
 const _pluginTranslator: Provides<
   SdkMessages.PluginTranslator,
   import('@collabdt/core/plugins-sdk/messages').PluginTranslator
 > = true
 
-// `PluginStore` and `PluginDocument` are restated inside the ambient module rather than
-// imported, so this compares two genuinely separate definitions structurally.
+// `PluginStore` and `PluginDocument` are restated in the ambient module, not imported, so
+// this compares two separate definitions structurally.
 const _usePluginStore: Provides<typeof SdkStore.usePluginStore, DeclaredStore['usePluginStore']> = true
 
 const _validCapabilities: Provides<typeof SdkIndex.VALID_CAPABILITIES, DeclaredSdk['VALID_CAPABILITIES']> = true
 const _hostApi: Provides<typeof SdkIndex.PLUGIN_HOST_API, DeclaredSdk['PLUGIN_HOST_API']> = true
 const _validateManifest: Provides<typeof SdkIndex.validateManifest, DeclaredSdk['validateManifest']> = true
 
-// `resolvePluginEntry` cannot be compared as written. The declaration is generic because
-// an ambient module cannot import `PluginEntry`, and restating that interface would give a
-// plugin two definitions of it — but a concrete signature is never assignable to a generic
-// one, since `E` is opaque and satisfies `PluginEntry` for no value of core. So the
-// declaration is instantiated at core's own `PluginEntry` first, which is the one type a
-// plugin will ever use it at.
+// `resolvePluginEntry` cannot be compared as written: the declaration is generic (an
+// ambient module cannot import `PluginEntry`, and restating it would give a plugin two
+// definitions), and a concrete signature is never assignable to a generic one. So it is
+// instantiated at core's own `PluginEntry` first, the only type a plugin uses it at.
 declare const declaredResolve: DeclaredSdk['resolvePluginEntry']
 const _resolvePluginEntry: Provides<
   typeof SdkIndex.resolvePluginEntry,
   typeof declaredResolve<SdkIndex.PluginEntry>
 > = true
 
-// `useCoreTranslations` cannot be compared either, for a reason that is the kit's whole
-// purpose. Core returns next-intl's translator verbatim, whose key parameter is
-// constrained to the message catalogue's keys, so the declaration's plain `string` key is
-// deliberately *wider* and fails assignability in both directions. Declaring it
-// faithfully would drag next-intl into every plugin's dependencies.
+// `useCoreTranslations` cannot be compared either: core returns next-intl's translator
+// verbatim, keyed to the catalogue, so the declaration's plain `string` key is wider and
+// fails in both directions. Declaring it faithfully would drag next-intl into every
+// plugin's dependencies.
 //
-// What can be asserted is the contract at the call sites the declaration promises. This
-// function is never called; TypeScript checks its body regardless, which is the entire
-// mechanism. It is named as a hook because it calls one, which also keeps the
-// rules-of-hooks lint honest about it.
+// What can be asserted is the call sites the declaration promises. This is never called;
+// tsc checks the body regardless, which is the mechanism.
 function useCoreTranslationCallSites(
   useCoreTranslations: typeof SdkMessages.useCoreTranslations,
 ): void {

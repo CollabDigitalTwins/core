@@ -28,33 +28,20 @@ export interface PluginStore<T> {
 }
 
 /**
- * Storage a plugin owns.
+ * Storage a plugin owns, without a change to CDT's database.
  *
- * A place to keep a plugin's own data — a room inventory, a set of annotations —
- * without needing a change to CDT's database. Documents are scoped three ways:
- *
- * - **By organization**, from the session on the server. A plugin cannot read
- *   another tenant's data, and does not pass an organization id to try.
- * - **By plugin**, from the plugin scope its capability host established. The
- *   `pluginId` is not a parameter, so a plugin cannot name someone else's
- *   namespace even by accident.
- * - **By collection**, which the plugin chooses — its own equivalent of a table.
- *
- * Within that, `key` is the plugin's own stable identifier. Use something
- * meaningful and durable — an IFC GlobalId rather than an array index — because
- * writing to the same key replaces the document rather than adding another.
+ * Scoped by organization (from the session, server-side), by plugin (from the plugin
+ * scope, never a parameter, so no plugin can name another's namespace) and by
+ * collection, which the plugin picks. `key` is the plugin's own identifier — use
+ * something durable like an IFC GlobalId, since writing the same key replaces.
  *
  * ```tsx
  * const spaces = usePluginStore<{ programme: string; capacity: number }>('spaces')
- *
  * await spaces.put(globalId, { programme: 'Office', capacity: 4 })
- * const room = spaces.get(globalId)
  * ```
  *
- * `data` is whatever you put in it; core never inspects it. `T` is your
- * declaration of that shape, not a guarantee — a document written by an older
- * version of your plugin is still whatever it was, so treat reads defensively if
- * the shape has changed.
+ * Core never inspects `data`, so `T` is a declaration rather than a guarantee —
+ * read defensively if an older version of the plugin wrote a different shape.
  */
 export function usePluginStore<T = unknown>(collection: string): PluginStore<T> {
   const pluginId = usePluginId()

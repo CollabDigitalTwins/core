@@ -4,19 +4,14 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 /**
- * Data access for plugins.
+ * Data access for plugins: core's own bound hooks, re-exported. A plugin goes
+ * through the same `ApiAdapter` as everything else and inherits its auth, org
+ * scoping and SWR cache — no second data path, and no way past the tenant boundary.
  *
- * These are the app's own bound hooks, re-exported. A plugin therefore goes
- * through the same `ApiAdapter` the rest of core uses, and inherits its auth, its
- * organization scoping and its SWR cache for free — there is no second data path
- * to keep in step, and no way for a plugin to reach past the tenant boundary.
- *
- * Read-only where a write belongs to core. Buildings and sites are the canonical
- * asset records; a feature that needs to change them is a core change, not a
- * plugin. Sensors and comments are read-write because they are the two domains
- * plugins are expected to author.
- *
- * A plugin's *own* data goes in `plugins-sdk/store` instead, namespaced by plugin.
+ * Read-only where the write belongs to core: buildings and sites are canonical asset
+ * records, so changing them is a core change. Sensors and comments are read-write,
+ * being the domains plugins are expected to author. A plugin's own data goes in
+ * `plugins-sdk/store`.
  */
 
 // --- Read: assets -----------------------------------------------------------
@@ -61,10 +56,7 @@ export {
 
 // --- Plugin context ---------------------------------------------------------
 
-/**
- * The plugin's own configuration, as set for this organization.
- * Shape is whatever the manifest's `configSchema` describes.
- */
+/** The plugin's config for this organization, shaped by the manifest's `configSchema`. */
 export { usePluginConfig } from './config'
 
 export { usePluginPermissions } from './permissions'

@@ -33,11 +33,7 @@ import { effectiveStatus } from './useExtensionListings'
 import type { ExtensionListing, ExtensionsAbility } from '../types'
 import type { LucideIcon } from 'lucide-react'
 
-/**
- * Status reads as an icon *and* a colour, so it survives both a quick scan and
- * colour-blindness. Four states, four hues, all muted enough to sit inside a
- * neutral page.
- */
+// Icon and colour both, so status survives a quick scan and colour-blindness.
 const STATUS_STYLE: Record<ExtensionListing['status'], { icon: LucideIcon; className: string }> = {
   running: {
     icon: CheckCircle2,
@@ -57,10 +53,7 @@ const STATUS_STYLE: Record<ExtensionListing['status'], { icon: LucideIcon; class
   },
 }
 
-/**
- * Which surface a capability contributes to, shown on its badge. Seeing the map
- * pin on `map.tools` says where the plugin will appear faster than the key does.
- */
+// Which surface a capability contributes to: a map pin reads faster than the key.
 const CAPABILITY_ICON: Record<string, LucideIcon> = {
   'map.tools': MapPin,
   'map.legends': MapPin,
@@ -91,12 +84,12 @@ export function ExtensionCard({
 }: Props) {
   const t = useTranslations('Extensions')
   const { manifest } = listing
-  // Derived from the switches, not from what the host has loaded — otherwise
-  // turning a plugin off leaves the badge reading "Running".
+  // From the switches, not the host: otherwise turning a plugin off leaves the badge
+  // reading "Running".
   const status = effectiveStatus(listing)
 
-  // A plugin's own name and description come from its catalog when it ships one,
-  // and from its manifest when it does not. Never a raw message key.
+  // The plugin's catalog when it ships one, its manifest when it does not — never a
+  // raw message key.
   const name = usePluginMessage(manifest.slug, 'name', manifest.name)
   const description = usePluginMessage(manifest.slug, 'description', manifest.description ?? '')
 
@@ -228,8 +221,8 @@ export function ExtensionCard({
                   />
                 </ControlRow>
               ) : !ability.canChooseForSelf ? (
-                // Distinct from the admin lock below: nothing about this plugin
-                // is locked, this reader simply may not change what runs.
+                // Not the admin lock below: nothing is locked, this reader just may
+                // not change what runs.
                 <Note icon={Eye} text={t('userReadOnly')} />
               ) : (
                 <Note icon={Lock} text={listing.orgEnabled ? t('userLockedOn') : t('userLockedOff')} />
@@ -278,11 +271,8 @@ function CapabilityBadge({ capability }: { capability: string }) {
   )
 }
 
-/**
- * The controls need to read as a panel, not as loose text beside the description.
- * A bordered, faintly-tinted box does that with no new colour — it borrows the
- * same muted token the rest of the app uses for inset surfaces.
- */
+// A bordered, faintly-tinted box so the controls read as a panel rather than loose
+// text, borrowing the muted token the app uses for inset surfaces.
 function ControlGroup({
   label,
   who,

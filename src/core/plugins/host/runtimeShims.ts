@@ -13,16 +13,14 @@ export interface RuntimeShim {
   exports: string[]
 }
 
-// Part of the plugin host contract, which is why it lives here beside `PLUGIN_HOST_API`
-// rather than in the app. Three consumers derive from it — the app's shim generator, the
-// import map the document publishes, and `@collabdt/plugin-kit`'s build preset — and when
-// they disagree a plugin either bundles a second copy of a singleton or dies on an
-// unmapped specifier, neither failure naming the real cause.
+// Part of the host contract, so it lives beside `PLUGIN_HOST_API` rather than in the
+// app. Three consumers derive from it — the app's shim generator, the published import
+// map, and `@collabdt/plugin-kit`'s build preset — and when they disagree a plugin
+// either bundles a second copy of a singleton or dies on an unmapped specifier.
 //
-// Deliberately absent: `@thatopen/components`, `three`, `maplibre-gl`, `lucide-react`. A
-// plugin receives viewer instances as props and names icons by string, so it never
-// imports those at runtime, which is what stops it loading a second copy of three.js.
-// Adding one is a change to this list, not a change of design.
+// Absent on purpose: `@thatopen/components`, `three`, `maplibre-gl`, `lucide-react`. A
+// plugin gets viewer instances as props and names icons by string, so it never imports
+// those at runtime — which is what stops a second copy of three.js loading.
 export const PLUGIN_RUNTIME_SHIMS: readonly RuntimeShim[] = [
   {
     file: 'react.js',

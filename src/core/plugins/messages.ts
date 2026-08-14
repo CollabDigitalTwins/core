@@ -4,18 +4,13 @@
 import { PLUGIN_MANIFESTS } from './manifests'
 
 /**
- * Plugin-owned strings, collected from every compiled-in manifest and re-keyed
- * from `manifest.messages[locale][key]` into `locale → slug → key`, which is the
- * shape `coreMessages` needs.
+ * Plugin-owned strings, re-keyed from `manifest.messages[locale][key]` into
+ * `locale → slug → key`, the shape `coreMessages` needs. Keeping them in the
+ * manifest makes a plugin one file to write and one to hand a translator, and lets
+ * mounted plugins resolve identically at `plugins.<slug>.<key>`.
  *
- * Strings live in the manifest so a plugin is one file to write and one file to
- * hand a translator, rather than a folder of near-empty JSON per locale. The
- * runtime loader in Phase D reads the same field out of a mounted
- * `manifest.json`, so compiled-in and mounted plugins resolve identically at
- * `plugins.<slug>.<key>`.
- *
- * A plugin shipping no `messages` simply contributes nothing here and falls back
- * to the inline English its components pass to `usePluginTranslations`.
+ * A plugin with no `messages` contributes nothing and falls back to the inline
+ * English its components pass to `usePluginTranslations`.
  */
 export const pluginMessages: Record<string, Record<string, unknown>> = collectPluginMessages(PLUGIN_MANIFESTS)
 

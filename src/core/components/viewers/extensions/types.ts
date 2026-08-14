@@ -15,12 +15,9 @@ export type ExtensionStatus =
   | 'available'
 
 /**
- * One row on the extensions page: the plugin's manifest plus the state that
- * decides whether it runs for the person looking at it.
- *
- * The org fields mirror `PluginInstallation`, `userEnabled` mirrors
- * `PluginUserSetting`. Both are supplied by the app, so this component works the
- * same whether that state comes from the database or, for now, from defaults.
+ * One row on the extensions page: the manifest plus the state deciding whether it
+ * runs for the person looking at it. The org fields mirror `PluginInstallation`,
+ * `userEnabled` mirrors `PluginUserSetting`.
  */
 export interface ExtensionListing {
   manifest: PluginManifest
@@ -44,12 +41,8 @@ export interface ExtensionListing {
 }
 
 /**
- * The writes the page can perform.
- *
- * A port, like `ApiAdapter`: core defines it, the app implements it against its
- * own routes. Omitting it renders the page read-only, which is what happens until
- * the persistence tables land — the controls stay visible so the page is
- * reviewable, and explain themselves instead of silently doing nothing.
+ * The writes the page can perform. A port like `ApiAdapter`: core defines it, the
+ * app implements it against its own routes. Omitting it renders the page read-only.
  */
 export interface ExtensionsActions {
   /** Add to, or remove from, this organization. Admin only. */
@@ -63,12 +56,9 @@ export interface ExtensionsActions {
 }
 
 /**
- * What the signed-in user is allowed to change, resolved from CASL once so the
- * card does not re-derive it per control.
- *
- * Hiding a control is presentation only. Every one of these writes is re-checked
- * server-side, and the user-settings routes take the user id from the session
- * rather than the request, so a crafted request gets a 403.
+ * What the signed-in user may change, resolved from CASL once rather than per
+ * control. Presentation only: every write is re-checked server-side, and the
+ * user-settings routes take the user id from the session, not the request.
  */
 export interface ExtensionsAbility {
   /** `create` / `delete PluginInstallation` — add or remove for the organization. */

@@ -28,18 +28,16 @@ export class PluginHost {
   constructor(private registry: PluginRegistry) {}
 
   /**
-   * Validate, then activate. Rejection is recorded as an `errored` plugin rather
-   * than thrown: the caller is loading a list, and one bad plugin must not stop
-   * the rest — nor take down the app around them.
+   * Validate, then activate. Rejection is recorded as an `errored` plugin rather than
+   * thrown: the caller is loading a list, and one bad plugin must not stop the rest.
    */
   async loadPlugin(
     manifest: PluginManifest,
     entry: PluginEntry,
     config: Record<string, unknown>,
   ): Promise<void> {
-    // Plugin bundles are third-party input from here on. `manifest.slug` is used
-    // as the map key and the context's identity, so it has to be trusted before
-    // anything else reads it.
+    // Third-party input from here on, and `slug` becomes the map key and the
+    // context's identity, so validate before anything else reads it.
     const { valid, errors } = validateManifest(manifest)
     const slug = typeof manifest?.slug === 'string' && manifest.slug ? manifest.slug : '<invalid>'
 
@@ -79,8 +77,7 @@ export class PluginHost {
       const error = new PluginActivationError(slug, err as Error)
       loaded.error = error.message
       console.error(error.message)
-      // A plugin that threw part-way through activate() may already have
-      // registered some contributions. Drop them so it is all-or-nothing.
+      // It may have registered before throwing; drop those so it is all-or-nothing.
       this.registry.deregisterAll(slug)
     }
 
@@ -111,8 +108,8 @@ export class PluginHost {
     return this.plugins.get(slug)?.error
   }
 
-  // Keyed off the map, not `manifest.slug` — a plugin rejected for an invalid
-  // manifest may have no usable slug of its own.
+  // Keyed off the map, not `manifest.slug`: a plugin rejected for an invalid manifest
+  // may have no usable slug of its own.
   listPlugins(): Array<{ slug: string; status: PluginStatus; error?: string }> {
     return Array.from(this.plugins, ([slug, p]) => ({
       slug,

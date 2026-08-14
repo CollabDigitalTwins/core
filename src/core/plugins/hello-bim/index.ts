@@ -6,15 +6,12 @@ import { HelloBimTool } from './components/HelloBimTool'
 import type { PluginContext } from '../sdk/types'
 
 /**
- * The worked example for the BIM viewer.
+ * The worked example for the BIM viewer. Exercises the whole `bim.tools` surface —
+ * query a category, read properties, drive the selection, control visibility, move
+ * the camera — so a regression at the plugin/core boundary breaks a test.
  *
- * Exercises the whole `bim.tools` surface end to end — query a category, read
- * element properties, drive the selection, control visibility, move the camera —
- * so that if the plugin/core boundary regresses, this stops working and a test
- * says so.
- *
- * Isolation rule, enforced by ESLint: a plugin may import from `../sdk/*` and its
- * own files, never from the rest of core.
+ * ESLint enforces the isolation rule — a plugin imports from `../sdk/*` and its own
+ * files, never the rest of core.
  */
 export function activate(ctx: PluginContext): void {
   ctx.register('bim.tools', {

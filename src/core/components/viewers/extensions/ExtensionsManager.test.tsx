@@ -38,9 +38,8 @@ vi.mock('../../../store/Permissions/context', () => ({
   }),
 }))
 
-// The data layer is stubbed so these listings are the whole fixture; the API and
-// SWR are not under test here. `effectiveStatus` keeps its real implementation —
-// it is pure, and it decides which badge and which section a row lands in.
+// The data layer is stubbed, so these listings are the whole fixture. `effectiveStatus`
+// keeps its real implementation: it is pure, and it picks the badge and the section.
 const { boundActions } = vi.hoisted(() => ({
   boundActions: {
     setInstalled: vi.fn(),
@@ -72,8 +71,7 @@ const MEMBER = [
   { action: 'read', subject: 'PluginInstallation' },
   { action: 'update', subject: 'PluginUserSetting' },
 ]
-// Matches the Viewer role as seeded in the app: reads both subjects, writes
-// neither. A Viewer may not change what runs, not even for themselves.
+// The Viewer role as seeded in the app: reads both subjects, writes neither.
 const VIEWER = [
   { action: 'read', subject: 'PluginInstallation' },
   { action: 'read', subject: 'PluginUserSetting' },
@@ -142,8 +140,7 @@ describe('controls by role', () => {
   })
 
   it('tells a viewer they are read-only rather than blaming an admin lock', () => {
-    // The admin-lock message would be wrong here: nothing about this plugin is
-    // locked, the reader simply cannot change what runs.
+    // Not the admin-lock message: nothing is locked, the reader just cannot change it.
     permissions.current = VIEWER
     render(<ExtensionsManager listings={[listing({ allowUserOverride: true })]} />)
 

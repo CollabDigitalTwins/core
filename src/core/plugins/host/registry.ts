@@ -18,18 +18,15 @@ export class PluginRegistry {
   private version = 0
 
   /**
-   * Contributions are stored copy-on-write: a mutation replaces the array for
-   * that extension point instead of pushing into it. Consumers read the registry
-   * through `useSyncExternalStore` (see host/provider.tsx), which bails out of a
-   * re-render when the snapshot is `Object.is`-equal to the previous one — an
-   * in-place push would notify and then be discarded as "unchanged". Copying also
-   * keeps every *untouched* extension point at its old identity, so registering a
-   * map tool does not re-render the BIM toolbar.
+   * Copy-on-write: a mutation replaces the array rather than pushing into it.
+   * Consumers read through `useSyncExternalStore`, which bails out when the snapshot
+   * is `Object.is`-equal, so an in-place push would notify and then be discarded.
+   * Copying also leaves untouched extension points at their old identity, so
+   * registering a map tool does not re-render the BIM toolbar.
    */
   register(extensionPoint: PluginCapability | string, entry: RegistryEntry): void {
     const list = this.entries.get(extensionPoint) ?? []
 
-    // Prevent duplicate: same pluginId + same id
     if (entry.id) {
       const exists = list.some(e => e.pluginId === entry.pluginId && e.id === entry.id)
       if (exists) return

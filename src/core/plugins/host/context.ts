@@ -28,10 +28,9 @@ export function createPluginContext(options: CreateContextOptions): PluginContex
           `Plugin "${pluginId}" did not declare capability "${key}" in its manifest`,
         )
       }
-      // `pluginId` is spread last so a plugin cannot pass one and claim to be
-      // another plugin. The double cast is needed because the registration types
-      // are interfaces without index signatures, and RegistryEntry has one — the
-      // registry stores heterogeneous shapes keyed by capability, so it has to.
+      // `pluginId` last, so a plugin cannot pass one and claim to be another. The
+      // double cast is because the registration types have no index signature and
+      // `RegistryEntry` needs one to store shapes keyed by capability.
       registry.register(key, { ...(item as unknown as Record<string, unknown>), pluginId })
     },
   }

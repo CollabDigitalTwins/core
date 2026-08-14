@@ -3,16 +3,13 @@
 
 // Drift guard for `@collabdt/plugin-kit`'s restatement of core's plugin types.
 //
-// This file used to be six substring matches over the kit's source *text*, which looked
-// like a test and was not one: `toContain('maplibre-gl')` was satisfied by a doc comment,
-// and `toContain('icon: string')` passed with the line commented out. Every one stayed
-// green through a change that broke what it claimed to check.
+// Constants are compared as values, shapes as types. Substring matches over the kit's
+// source text are not enough — `toContain('icon: string')` passes with the line
+// commented out.
 //
-// So the constants are compared as values and the shapes as types. The per-surface
-// confinement checks stay textual, because what they check *is* a property of the source,
-// but they read module references parsed out by TypeScript rather than searching the
-// whole text — prose can no longer satisfy them, and the assertion is on the exact set,
-// so an import added to a surface file has to be looked at.
+// The per-surface confinement checks stay textual, since what they check is a property of
+// the source, but they read module references parsed by TypeScript rather than searching
+// the whole text, and assert on the exact set — so a new import has to be looked at.
 
 import { readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'

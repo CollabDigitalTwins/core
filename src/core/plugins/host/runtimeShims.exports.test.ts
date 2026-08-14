@@ -17,11 +17,10 @@ const SDK_MODULES: Record<string, () => Promise<Record<string, unknown>>> = {
 
 // Exports a module has on purpose without a shim of its own, and why.
 //
-// An import map cannot rewrite a namespace, so each shim re-exports by name and a missing
-// name is `undefined` in the plugin's import with nothing to debug. Checking only that a
-// shim promises nothing extra caught the wrong half: adding a hook to `sdk/config.ts` and
-// forgetting the shim stayed green while the plugin's import was undefined at runtime. So
-// the check runs both ways, and every unshimmed export is named here with its reason.
+// An import map cannot rewrite a namespace, so each shim re-exports by name, and a missing
+// name reaches the plugin as `undefined` with nothing to debug. Checking only that a shim
+// promises nothing extra catches the wrong half — a hook added to `sdk/config.ts` without
+// its shim stays green. So the check runs both ways and every unshimmed export is listed.
 const DELIBERATELY_UNSHIMMED: Record<string, Record<string, string>> = {
   '@collabdt/core/plugins-sdk': {
     PLUGIN_RUNTIME_SHIMS:
@@ -64,9 +63,8 @@ describe('shim export lists', () => {
       const shim = PLUGIN_RUNTIME_SHIMS.find(entry => entry.specifier === specifier)
       const actual = await load()
 
-      // The barrel re-exports every component, which reaches a plugin through
-      // `plugins-sdk/components` instead. Read from that module, not restated, so adding
-      // a component needs no change here.
+      // The barrel re-exports every component; a plugin gets them through
+      // `plugins-sdk/components`. Read from that module, so a new component needs no edit.
       const servedElsewhere = specifier === '@collabdt/core/plugins-sdk'
         ? Object.keys(await import('../sdk/components'))
         : []

@@ -19,19 +19,11 @@ interface Config extends Record<string, unknown> {
 /**
  * Reads the map's centre and zoom, and keeps them current as the user pans.
  *
- * Four things a plugin author should copy from this:
- *
- * 1. **Render panel content, not chrome.** Core wraps every toolbar contribution
- *    in the standard button-and-dropdown, built from the `label` and `icon` in
- *    the registration. A plugin that renders its own floating card would end up
- *    inside the toolbar strip.
- * 2. **`map` is nullable.** The component can render before MapLibre has
- *    finished initialising. Guard it rather than asserting.
- * 3. **Every listener is removed on cleanup.** A plugin that leaks a `move`
- *    handler keeps firing after the user has switched viewers.
- * 4. **Strings come from the manifest's `messages`**, with an inline English
- *    fallback, so the plugin still reads correctly in a locale it has not
- *    translated — and works at all if it ships no translations.
+ * Four things to copy from this: render panel content and let core supply the
+ * button-and-dropdown chrome; guard `map`, which is null until MapLibre finishes
+ * initialising; remove every listener on cleanup, or a leaked `move` handler keeps
+ * firing after the user switches viewers; and take strings from the manifest's
+ * `messages` with an inline English fallback.
  */
 export function HelloMapTool({ map }: ToolbarToolProps & MapToolProps) {
   const t = usePluginTranslations()

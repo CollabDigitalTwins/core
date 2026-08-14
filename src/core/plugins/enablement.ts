@@ -2,21 +2,15 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 /**
- * Resolves which plugins run for one signed-in user, from the organization's
- * installations and that user's own settings.
+ * Which plugins run for one signed-in user, from the organization's installations
+ * and that user's own settings.
  *
- * Two levels, with different owners:
+ * Two levels, with different owners. The organization's install is what admits
+ * third-party code at all, and a plugin runs with full app privileges — so nothing
+ * a user does can make an uninstalled plugin run. Within that, the user opts in or
+ * out, unless the admin took the choice away (`allowUserOverride: false`).
  *
- * - **The organization installs.** This is what admits third-party code to the
- *   deployment at all. A mounted plugin runs with full app privileges, so nothing
- *   an individual user does can make an uninstalled plugin run.
- * - **The user opts in or out**, within what the organization allows. An admin can
- *   also take that choice away per plugin (`allowUserOverride: false`) when a
- *   plugin has to be on — or off — for everyone.
- *
- * Pure and framework-free so it can be unit tested and called from either side:
- * the app's route handler resolves this server-side and hands the result to
- * `<PluginHostProvider enabledSlugs configs>`.
+ * Pure and framework-free, so either side can call it.
  */
 
 /** One organization-level install record. */
@@ -56,9 +50,8 @@ export interface ResolvedPluginEnablement {
  * | yes, on   | true              | off          | off (opt-out)|
  * | yes, on   | true              | absent       | on           |
  *
- * A user setting for a plugin the organization has not installed is ignored, not
- * honoured — that is the property that keeps the org the gatekeeper of which code
- * may run.
+ * A setting for a plugin the org has not installed is ignored, which is what keeps
+ * the org the gatekeeper of which code may run.
  */
 export function resolvePluginEnablement(
   installations: OrgPluginInstallation[],
@@ -78,9 +71,8 @@ export function resolvePluginEnablement(
 
     enabledSlugs.push(pluginId)
 
-    // Shallow merge, user over organization. Shallow on purpose: plugin config is
-    // a flat settings bag, and a user overriding a nested object should replace it
-    // outright rather than have their value silently merged into the admin's.
+    // Shallow on purpose: config is a flat settings bag, and a user overriding a
+    // nested object should replace it rather than merge into the admin's.
     const orgConfig = installation.config ?? {}
     const userConfig = (allowUserOverride && setting?.config) || {}
     configs[pluginId] = { ...orgConfig, ...userConfig }

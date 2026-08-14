@@ -11,17 +11,10 @@ import { usePluginId } from '../host/scope'
 /**
  * Translations for plugin-supplied text.
  *
- * A plugin ships `messages/{locale}.json`, merged into the app's message tree
- * under `plugins.<pluginId>`. That merge already gives two of the three fallback
- * layers for free (see `cdt-na/src/i18n/request.ts`):
- *
- *   core EN → core locale → plugin EN → plugin locale → app overrides
- *
- * The third layer is the one this module adds: a plugin may ship **no** catalog at
- * all, or ship one missing the key. Rather than render `plugins.foo.name` at the
- * user, fall back to the literal string in the plugin's manifest — which is the
- * author's own text, and in practice English. A plugin with no translations is
- * therefore usable, just untranslated.
+ * A plugin's catalog is merged under `plugins.<pluginId>`, giving the locale
+ * fallbacks for free. What this module adds is the last one: a plugin may ship no
+ * catalog, or one missing the key, and the manifest's own string is shown rather
+ * than `plugins.foo.name`. An untranslated plugin stays usable.
  */
 
 /** Reads `plugins.<pluginId>.<key>` out of the merged catalog, if it is there. */
@@ -48,13 +41,8 @@ function lookupPluginMessage(
 
 /**
  * One piece of plugin-supplied text, with the manifest string as the fallback.
- *
- * Use this for anything core renders *on a plugin's behalf* — its name,
- * description, the label on a contributed tool — so an untranslated plugin shows
- * the author's own wording instead of a raw message key.
- *
- * `fallback` is what the plugin declared in its manifest. It is returned verbatim
- * when the plugin ships no catalog entry for `key`.
+ * For anything core renders on a plugin's behalf — its name, description, a
+ * contributed tool's label.
  */
 export function usePluginMessage(pluginId: string, key: string, fallback: string): string {
   const messages = useMessages() as Record<string, unknown> | undefined
@@ -68,13 +56,9 @@ export function usePluginMessage(pluginId: string, key: string, fallback: string
 export type PluginTranslator = (key: string, fallback?: string) => string
 
 /**
- * A `t()` scoped to the calling plugin's own namespace.
- *
- * Only valid inside a plugin subtree — the namespace comes from the plugin scope
- * its capability host established, so a plugin cannot read another's strings.
- * Pass a `fallback` for any key the plugin might not have translated yet;
- * without one, a missing key renders as `plugins.<pluginId>.<key>` rather than
- * throwing, matching the app's `getMessageFallback`.
+ * A `t()` scoped to the calling plugin's namespace. Only valid inside a plugin
+ * subtree, so a plugin cannot read another's strings. Without a `fallback`, a
+ * missing key renders as `plugins.<pluginId>.<key>` rather than throwing.
  */
 export function usePluginTranslations(): PluginTranslator {
   const pluginId = usePluginId()
@@ -89,13 +73,7 @@ export function usePluginTranslations(): PluginTranslator {
   )
 }
 
-/**
- * Core's own strings, for components that render plugin UI.
- *
- * Thin re-export so a capability host has one obvious import rather than reaching
- * for `next-intl` directly, and so core strings and plugin strings are visibly
- * different calls at the point of use.
- */
+/** Core's own strings, kept a separate call so plugin and core text differ at the point of use. */
 export function useCoreTranslations(namespace: string) {
   return useTranslations(namespace)
 }

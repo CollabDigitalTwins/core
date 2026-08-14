@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { AlertTriangle } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { toast } from 'sonner'
@@ -31,11 +30,7 @@ import { useExtensionsActions, useExtensionsData } from './src/useExtensionsData
 import type { ExtensionListing, ExtensionsAbility, ExtensionsActions } from './types'
 
 interface Props {
-  /**
-   * Override the rows. Normally omitted — the page reads manifests crossed with
-   * `PluginInstallation` and `PluginUserSetting` through the `ApiAdapter` itself.
-   * Supplied by tests, and later by the runtime loader for mounted plugins.
-   */
+  /** Override the rows. Normally omitted; the page reads them through the `ApiAdapter`. */
   listings?: ExtensionListing[]
   /** Override the writes. Normally omitted; they bind to the API by default. */
   actions?: ExtensionsActions
@@ -44,15 +39,11 @@ interface Props {
 /**
  * The Extensions page: what plugins this deployment has, and who decided they run.
  *
- * Frame, breadcrumb, title row and search row deliberately mirror `DataMenu`
- * (buildings, sites, files), because this is another item in the same management
- * group and should not read as a different product. The icon is the one already
- * declared for this viewer in `VIEWER_CONFIG`.
- *
- * Two levels of control, deliberately not one switch (see `plugins/enablement.ts`):
- * an admin decides what is available here and what the default is; anyone may then
- * choose for themselves, unless the admin locked it. Which controls appear comes
- * from CASL — and that is presentation only. Every write is re-checked server-side.
+ * The frame mirrors `DataMenu`, since this belongs to the same management group.
+ * Two levels of control rather than one switch (see `plugins/enablement.ts`): an
+ * admin sets what is available and its default, then anyone chooses for themselves
+ * unless the admin locked it. CASL only decides which controls render — every write
+ * is re-checked server-side.
  */
 export function ExtensionsManager({ listings, actions }: Props) {
   const t = useTranslations('Extensions')
@@ -68,14 +59,9 @@ export function ExtensionsManager({ listings, actions }: Props) {
   const boundActions = useExtensionsActions(actions)
   const host = usePluginHost()
 
-  /**
-   * Local overrides applied on top of the resolved rows.
-   *
-   * Toggling is optimistic: the switch moves immediately and reverts if the write
-   * fails, so the control never sits there looking successful while the server
-   * said no. Cleared implicitly on the next fetch, when the server's answer
-   * becomes the resolved row.
-   */
+  // Optimistic overrides on top of the resolved rows: the switch moves at once and
+  // reverts if the write fails, so it never looks successful while the server said
+  // no. Cleared by the next fetch.
   const [overrides, setOverrides] = React.useState<Record<string, Partial<ExtensionListing>>>({})
 
   const rows = React.useMemo(
@@ -87,18 +73,10 @@ export function ExtensionsManager({ listings, actions }: Props) {
   )
 
   const canManage: ExtensionsAbility = React.useMemo(() => {
-    // `PluginInstallation` and `PluginUserSetting` are the real subjects, seeded
-    // per role in the app's `defaultRoles.ts`:
-    //
-    //   Admin  — full control of both
-    //   User   — reads installations, manages their own setting
-    //   Viewer — reads both, changes neither
-    //
-    // Organizations seeded before those subjects existed carry neither, and
-    // `can()` is then false for everyone — which rendered this page read-only
-    // even for an admin. The legacy arm below falls back to `update Organization`,
-    // which reproduces the same split: Admin and User hold it, Viewer does not.
-    // Remove both fallbacks once existing role rows are back-filled.
+    // Orgs seeded before the `PluginInstallation`/`PluginUserSetting` subjects
+    // existed hold neither, which left this page read-only even for an admin.
+    // `update Organization` reproduces the same split (Admin and User hold it,
+    // Viewer does not). Drop both fallbacks once role rows are back-filled.
     const legacyWriter = ability.can('update', 'Organization')
 
     const orgAdmin = ability.can('update', 'PluginInstallation') || legacyWriter
@@ -106,9 +84,6 @@ export function ExtensionsManager({ listings, actions }: Props) {
     return {
       canInstall: ability.can('create', 'PluginInstallation') || orgAdmin,
       canConfigureOrg: orgAdmin,
-      // A Viewer may see what is available but not change what runs, including
-      // for themselves. Presentation only — the route re-checks, and binds the
-      // write to the session's user id so nobody can target another user's row.
       canChooseForSelf: ability.can('update', 'PluginUserSetting') || legacyWriter,
     }
   }, [ability])
@@ -125,22 +100,16 @@ export function ExtensionsManager({ listings, actions }: Props) {
     )
   }, [rows, searchTerm])
 
-  // Runtime-discovered plugins an admin has not added yet are a separate decision
-  // from managing what is already here, so they get their own section.
+  // Plugins not added yet are their own decision, so they get their own section.
   const inOrg = filtered.filter(row => effectiveStatus(row) !== 'available')
   const found = canManage.canInstall
     ? filtered.filter(row => effectiveStatus(row) === 'available')
     : []
 
-  /**
-   * Reflect a saved change in the running viewer straight away, so turning a
-   * plugin off removes its toolbar button without a reload.
-   *
-   * `PluginHostProvider` reconciles from `enabledSlugs` too, but only when the
-   * app re-renders with fresh props; this closes the gap between the write
-   * landing and that happening. Both converge on the same target state, so the
-   * two agreeing is the normal case rather than a race.
-   */
+  // Reflect a saved change in the running viewer at once, so turning a plugin off
+  // removes its toolbar button without a reload. `PluginHostProvider` reconciles
+  // from `enabledSlugs` too, but only on fresh props; both converge on the same
+  // target state, so agreeing is the normal case rather than a race.
   React.useEffect(() => {
     if (!host) return
 
@@ -163,10 +132,8 @@ export function ExtensionsManager({ listings, actions }: Props) {
     }
   }, [rows, host])
 
-  /**
-   * Every control routes through here, so optimistic update, revert-on-failure
-   * and the toasts are written once rather than per switch.
-   */
+  // Every control routes through here, so the optimistic update, the revert and the
+  // toasts are written once rather than per switch.
   const commit = React.useCallback(
     async (
       slug: string,
@@ -305,7 +272,6 @@ function Row({
 }) {
   const t = useTranslations('Extensions')
   const { slug } = listing.manifest
-  // Toasts name the plugin the way the user sees it in the card.
   const name = listing.manifest.name
 
   return (

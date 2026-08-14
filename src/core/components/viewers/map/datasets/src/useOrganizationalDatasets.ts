@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import * as React from 'react'
 
@@ -15,16 +14,11 @@ import type { Organization } from '../../../../../types/dbTypes'
 
 /**
  * Loads the Organizational dataset list: Martin vector tiles plus the MinIO-
- * backed GeoJSON uploads from "Add Dataset", filtered to what this viewer may
- * see.
- *
- * Extracted from the Datasets panel so the two organization ids in play can be
- * tested apart — see {@link useOrganizationalDatasets} for why they differ.
+ * backed GeoJSON uploads from "Add Dataset", for the signed-in organization.
  */
 export type UseOrganizationalDatasetsArgs = {
   /** The organization this instance belongs to — i.e. the one being *viewed*. */
   organization?: Organization
-  minioBaseUrl?: string
   martinBaseUrl?: string
   /** Bumped by the store to force a reload after an upload or a publish. */
   refreshNonce?: unknown
@@ -44,42 +38,33 @@ export type UseOrganizationalDatasetsResult = {
 
 export function useOrganizationalDatasets({
   organization,
-  minioBaseUrl,
   martinBaseUrl,
   refreshNonce,
 }: UseOrganizationalDatasetsArgs): UseOrganizationalDatasetsResult {
-  const pathname = usePathname()
+  const orgVisibility = React.useMemo(() => getOrgVisibility(organization?.id), [organization?.id])
 
-  // Pass the instance's real organization — the path-prefix fallback only knows
-  // five orgs, so newer ones could not see their own datasets.
-  const orgVisibility = React.useMemo(
-    () => getOrgVisibility(pathname, organization?.id),
-    [pathname, organization?.id],
-  )
-
-  // Two different organizations are in play, and they must not be confused:
-  //
-  //   owningOrgId — whose files these are. `/api/files` only ever returns the
-  //     signed-in user's organization, and the upload route keys objects under
-  //     that same organization, so this is where the bytes actually live.
-  //   orgVisibility.currentOrgId — whose instance is being *looked at*, taken
-  //     from the address bar. That decides what the viewer is allowed to see.
-  //
-  // They differ whenever you view another organization's instance. Using the
-  // viewed organization to build the storage path asks for a file that was
-  // never written there: the dataset lists, then draws nothing.
+  // `/api/files` only ever returns the signed-in user's organization, so this is
+  // whose datasets any of this would be.
   const { data: sessionData } = useSession()
   const owningOrgId = normalizeOrgId(sessionData?.user?.organizationId)
 
+  // A platform admin may legitimately be looking at another organization's
+  // instance. Listing their own datasets under it would be misleading, so the
+  // organizational list is empty there and nothing is fetched.
+  const viewingOwnOrg = owningOrgId !== undefined && owningOrgId === orgVisibility.currentOrgId
+
   const [datasets, setDatasets] = React.useState<Dataset[] | null>(null)
-  // Open-data datasets already published to Martin tiles, keyed by
-  // "{portalId}:{datasetId}". Lets the original portal entry (National/Applied/
-  // All tabs) show as converted, not just the organizational-list copy.
   const [publishedCatalog, setPublishedCatalog] = React.useState<Map<string, PublishedCatalogEntry>>(new Map())
 
   React.useEffect(() => {
     const loadOrganizationalDatasets = async () => {
-      // First, refresh the published-catalog lookup (a fast /api/files read) so
+      if (!viewingOwnOrg || owningOrgId === undefined) {
+        setPublishedCatalog(new Map())
+        setDatasets([])
+        return
+      }
+
+      // Refresh the published-catalog lookup first (a fast /api/files read) so
       // converted open-data datasets flip promptly across every tab — ahead of
       // the slower Martin tile-sampling below. Non-fatal on failure.
       try {
@@ -94,9 +79,6 @@ export function useOrganizationalDatasets({
         console.warn('Failed to refresh published-catalog map:', err)
       }
 
-      // Two parallel sources: Martin vector tiles (if configured) and MinIO-
-      // backed GeoJSON uploads (the "Add Dataset" path). Errors from either
-      // are isolated so a failure on one side does not block the other.
       const martinBaseUrlClean = (martinBaseUrl ?? '').replace(/\/+$/, '')
 
       const martinPromise: Promise<Dataset[]> = martinBaseUrlClean
@@ -136,12 +118,11 @@ export function useOrganizationalDatasets({
         martinDatasets.map(d => typeof d.id === 'string' ? d.id : '').filter(Boolean),
       )
 
-      const minioDatasets: Dataset[] = owningOrgId !== undefined
-        ? await fetchOrganizationalMinioDatasets(owningOrgId, publishedTilesInCatalog, minioBaseUrl).catch((err) => {
-            console.error('Failed to load MinIO organizational datasets:', err)
-            return []
-          })
-        : []
+      const minioDatasets = await fetchOrganizationalMinioDatasets(owningOrgId, publishedTilesInCatalog)
+        .catch((err) => {
+          console.error('Failed to load MinIO organizational datasets:', err)
+          return [] as Dataset[]
+        })
 
       const combined = [...martinDatasets, ...minioDatasets]
       const visibleOrgDatasets = combined.filter(ds => datasetVisibleForOrg(ds, orgVisibility))
@@ -153,7 +134,7 @@ export function useOrganizationalDatasets({
     }
 
     void loadOrganizationalDatasets()
-  }, [orgVisibility, owningOrgId, minioBaseUrl, martinBaseUrl, refreshNonce])
+  }, [orgVisibility, owningOrgId, viewingOwnOrg, martinBaseUrl, refreshNonce])
 
   return { datasets, publishedCatalog, orgVisibility }
 }

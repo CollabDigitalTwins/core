@@ -5,13 +5,25 @@
 
 // Dependencies
 import * as LR from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import React from 'react'
+import { toast } from 'sonner'
 
 import { usePermissions } from '../../../../store'
 
 // Utility functions
 import { DatasetsContext } from '../../../../store'
 import { Checkbox, Button } from '../../../ui/'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../../../ui/AlertDialog'
 
 import { buildPublishedTileDatasets } from './src/publishedTiles'
 import { handleFavouriteDataset } from './utils'
@@ -36,6 +48,8 @@ export default function RowActions({
   setFavouriteDatasets,
   martinBaseUrl,
 }: RowActionsProps) {
+  const t = useTranslations('Datasets')
+
   // Permissions
   const { ability } = usePermissions()
 
@@ -69,12 +83,14 @@ export default function RowActions({
         type: 'REMOVE_DATASET_FROM_MAP',
         payload: { datasetId: dataset.id },
       })
+      toast.success(t('toastRemoved', { name: dataset.name }))
     }
     else {
       datasetsDispatch({
         type: 'ADD_DATASET_TO_MAP',
         payload: { dataset: dataset },
       })
+      toast.success(t('toastApplied', { name: dataset.name }))
     }
   }
 
@@ -104,7 +120,7 @@ export default function RowActions({
 
   const onUnpublish = async () => {
     if (tiledFileId == null) return
-    if (!window.confirm(`Un-publish "${dataset.name}"? The Martin table will be dropped; the original GeoJSON in MinIO is untouched.`)) return
+    if (!window.confirm(t('unpublishConfirm', { name: dataset.name }))) return
     setUnpublishing(true)
     try {
       const res = await fetch('/api/datasets/publish-tiles', {
@@ -115,15 +131,52 @@ export default function RowActions({
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
         console.error('un-publish failed', res.status, body)
-        window.alert(`Un-publish failed: ${body?.error ?? res.status}`)
+        toast.error(t('toastUnpublishFailed', { error: String(body?.error ?? res.status) }))
         return
       }
       setUnpublished(true)
       datasetsDispatch({ type: 'REFRESH_ORG_DATASETS' })
-      window.alert(`Un-published. The dataset list has been refreshed.`)
+      toast.success(t('toastUnpublished', { name: dataset.name }))
     }
     finally {
       setUnpublishing(false)
+    }
+  }
+
+  // Never a catalog row that merely has a published copy: that is tiledFileId.
+  const orgFileId = isOrgMinio
+    ? fileId
+    : (tiledMatch ? Number(tiledMatch[2]) : null)
+  const canDelete = orgFileId != null && !Number.isNaN(orgFileId) && ability.can('delete', 'File')
+
+  const [confirmingDelete, setConfirmingDelete] = React.useState(false)
+  const [deleting, setDeleting] = React.useState(false)
+
+  const onDelete = async () => {
+    if (orgFileId == null) return
+    setDeleting(true)
+    try {
+      if (tiledMatch) {
+        await fetch('/api/datasets/publish-tiles', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileId: orgFileId }),
+        })
+      }
+      const res = await fetch(`/api/files/${orgFileId}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        console.error('delete dataset failed', res.status, body)
+        toast.error(t('toastDeleteFailed', { error: String(body?.error ?? res.status) }))
+        return
+      }
+      datasetsDispatch({ type: 'REMOVE_DATASET_FROM_MAP', payload: { datasetId: dataset.id } })
+      datasetsDispatch({ type: 'REFRESH_ORG_DATASETS' })
+      toast.success(t('toastDeleted', { name: dataset.name }))
+    }
+    finally {
+      setDeleting(false)
+      setConfirmingDelete(false)
     }
   }
 
@@ -139,7 +192,7 @@ export default function RowActions({
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
         console.error('publish-tiles failed', res.status, body)
-        window.alert(`Publish failed: ${body?.error ?? res.status}`)
+        toast.error(t('toastPublishFailed', { error: String(body?.error ?? res.status) }))
         return
       }
       const result = await res.json()
@@ -174,10 +227,11 @@ export default function RowActions({
       }
 
       datasetsDispatch({ type: 'REFRESH_ORG_DATASETS' })
-      window.alert(
-        `Tiled as ${result.table}. The dataset list has been refreshed.\n\n`
-        + `Features ingested: ${result.featuresIngested}, skipped: ${result.featuresSkipped}.`,
-      )
+      toast.success(t('toastPublished', {
+        name: dataset.name,
+        ingested: String(result.featuresIngested),
+        skipped: String(result.featuresSkipped),
+      }))
     }
     finally {
       setPublishing(false)
@@ -208,16 +262,17 @@ export default function RowActions({
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
         console.error('publish-catalog-tiles failed', res.status, body)
-        window.alert(`Publish failed: ${body?.error ?? res.status}`)
+        toast.error(t('toastPublishFailed', { error: String(body?.error ?? res.status) }))
         return
       }
       const result = await res.json()
       setPublishedCatalog(true)
       datasetsDispatch({ type: 'REFRESH_ORG_DATASETS' })
-      window.alert(
-        `Tiled as ${result.table}. The dataset list has been refreshed.\n\n`
-        + `Features ingested: ${result.featuresIngested}, skipped: ${result.featuresSkipped}.`,
-      )
+      toast.success(t('toastPublished', {
+        name: dataset.name,
+        ingested: String(result.featuresIngested),
+        skipped: String(result.featuresSkipped),
+      }))
     }
     finally {
       setPublishingCatalog(false)
@@ -259,7 +314,7 @@ export default function RowActions({
         <Button
           variant="ghost"
           size="icon"
-          title={published ? 'Tiled' : 'Publish as vector tiles'}
+          title={published ? t('publishedTooltip') : t('publishTooltip')}
           className="h-8 w-8 sm:h-9 sm:w-9 opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent"
           onClick={() => void onPublish()}
           disabled={publishing || published || !ability.can('update', 'File')}
@@ -272,7 +327,7 @@ export default function RowActions({
         <Button
           variant="ghost"
           size="icon"
-          title={publishedCatalog ? 'Tiled' : 'Publish open-data dataset as vector tiles'}
+          title={publishedCatalog ? t('publishedTooltip') : t('publishCatalogTooltip')}
           className="h-8 w-8 sm:h-9 sm:w-9 opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent"
           onClick={() => void onPublishCatalog()}
           disabled={publishingCatalog || publishedCatalog || !ability.can('update', 'File')}
@@ -285,13 +340,43 @@ export default function RowActions({
         <Button
           variant="ghost"
           size="icon"
-          title={unpublished ? 'Un-published' : 'Un-publish vector tiles'}
+          title={unpublished ? t('unpublishedTooltip') : t('unpublishTooltip')}
           className="h-8 w-8 sm:h-9 sm:w-9 opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent"
           onClick={() => void onUnpublish()}
           disabled={unpublishing || unpublished || !ability.can('update', 'File')}
         >
           <LR.CloudOff color={unpublished ? 'hsl(var(--chart-5))' : 'black'} />
         </Button>
+      )}
+
+      {canDelete && (
+        <>
+          <Button
+            variant="ghost"
+            size="icon"
+            title={t('deleteDataset')}
+            className="h-8 w-8 sm:h-9 sm:w-9 opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent"
+            onClick={() => setConfirmingDelete(true)}
+            disabled={deleting}
+          >
+            <LR.Trash2 color="black" />
+          </Button>
+
+          <AlertDialog open={confirmingDelete} onOpenChange={setConfirmingDelete}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t('deleteTitle', { name: dataset.name })}</AlertDialogTitle>
+                <AlertDialogDescription>{t('deleteDescription')}</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={deleting}>{t('deleteCancel')}</AlertDialogCancel>
+                <AlertDialogAction onClick={() => void onDelete()} disabled={deleting}>
+                  {t('deleteConfirm')}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
       )}
     </div>
   )

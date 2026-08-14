@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { usePathname } from 'next/navigation'
 import * as React from 'react'
 
 // import { useAppConfigContext } from '../../../../../../../store/AppConfig/context'
@@ -70,10 +69,7 @@ export function LayersTab({ martinBaseUrl, organization }: { martinBaseUrl?: str
   const { state: menusState } = React.useContext(MenusContext)
   const { rowsPerPage } = menusState.menus
 
-  const pathname = usePathname()
-  // Pass the instance's real organization — see getOrgVisibility for why the
-  // path-prefix fallback alone is not enough.
-  const orgVisibility = React.useMemo(() => getOrgVisibility(pathname, org?.id), [pathname, org?.id])
+  const orgVisibility = React.useMemo(() => getOrgVisibility(org?.id), [org?.id])
 
   const { openDataPortals: municipalPortals } = useOpenDataPortalsByMunicipality(municipality)
   const { openDataPortals: subdivisionPortals } = useOpenDataPortalsByCountrySubdivision(countrySubdivision)

@@ -143,8 +143,7 @@ export default function RowActions({
     }
   }
 
-  // Only the org's own file, never a catalog row that merely has a published
-  // copy — `tiledFileId` also covers those and must not drive a delete.
+  // Never a catalog row that merely has a published copy: that is tiledFileId.
   const orgFileId = isOrgMinio
     ? fileId
     : (tiledMatch ? Number(tiledMatch[2]) : null)

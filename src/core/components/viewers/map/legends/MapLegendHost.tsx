@@ -7,9 +7,8 @@ import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
 import { LegendCard } from '../../../../components/ui/LegendCard'
-import { usePluginRegistry, usePluginsReady } from '../../../../plugins/host/provider'
+import { usePluginContributions } from '../../../../plugins/host/provider'
 
-import type { RegistryEntry } from '../../../../plugins/host/registry'
 import type { LegendRegistration } from '../../../../plugins/sdk/types'
 
 /**
@@ -20,14 +19,9 @@ import type { LegendRegistration } from '../../../../plugins/sdk/types'
  * bottom-[Npx] offsets — sections auto-stack inside the one card.
  */
 export function MapLegendHost() {
-  const registry = usePluginRegistry()
-  const ready = usePluginsReady()
+  const registrations = usePluginContributions('map.legends')
   const t = useTranslations('MapLegend')
   const [activeMap, setActiveMap] = React.useState<Record<string, boolean>>({})
-
-  const registrations = ready
-    ? (registry.getAll('map.legends') as (RegistryEntry & LegendRegistration)[])
-    : []
 
   const reportActive = React.useCallback((id: string, active: boolean) => {
     setActiveMap(prev => (prev[id] === active ? prev : { ...prev, [id]: active }))

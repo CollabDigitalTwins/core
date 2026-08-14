@@ -196,4 +196,43 @@ export default [
       // - restrict-template-expressions (11): mostly benign number/boolean interpolation.
     },
   },
+
+  // ── Plugin isolation ────────────────────────────────────────────────────
+  // A plugin may import from the SDK and from its own files. Nothing else.
+  //
+  // `error`, not `warn`, breaking the house rule that new rules start as warnings
+  // (knowledge/Runbooks/eslint-hardening-tiers.md). The rationale there is about
+  // code quality degrading gradually; this is different in kind. A plugin that
+  // reaches into core still works in-repo and silently stops working the moment it
+  // is built as a standalone bundle, which is precisely the failure the plugin
+  // model exists to prevent. It has to fail here, where it is cheap to see.
+  //
+  // The example plugins are the live proof: if the SDK stops being sufficient,
+  // hello-map and hello-bim stop linting.
+  {
+    files: ['src/core/plugins/*/**/*.{ts,tsx}'],
+    ignores: ['src/core/plugins/host/**', 'src/core/plugins/sdk/**'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [
+          {
+            group: [
+              '../../../*',      // escapes plugins/ entirely
+              '../../components/*', '../../store/*', '../../hooks/*',
+              '../../utils/*', '../../types/*', '../../i18n/*',
+              // The host in particular: `installed.ts` imports plugin components,
+              // so a plugin importing the host closes an import cycle and the
+              // bindings are undefined by the time it renders. It also is not
+              // part of the public surface. Everything a plugin needs is re-
+              // exported through sdk/.
+              '../../host/*', '../../installed', '../../manifests',
+              '@collabdt/core', '@collabdt/core/*',
+            ],
+            message:
+              'Plugins may only import from ../sdk/* and their own files. Reaching into core breaks isolation: it works in-repo and fails as a standalone bundle, and importing the host creates a module cycle. If the SDK is missing something, add it there.',
+          },
+        ],
+      }],
+    },
+  },
 ];

@@ -1,0 +1,10 @@
+{
+  "slug": "dirty-plugin",
+  "name": "Dirty Plugin",
+  "version": "1.0.0",
+  "hostApi": 1,
+  "description": "Fixture: the clean plugin plus an import of three. Its build must fail.",
+  "author": "Collab Digital Twins",
+  "capabilities": ["map.tools"],
+  "requiredPermissions": []
+}

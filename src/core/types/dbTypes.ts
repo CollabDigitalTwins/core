@@ -107,6 +107,12 @@ export interface Organization {
     title?: string | null;
     description?: string | null;
     geocoder: boolean;
+    /**
+     * Optional so a consumer on an older core keeps compiling. The platform added
+     * the column and started mapping it before core carried the field, which left
+     * the app's typecheck failing against core — see `adaptPrismaOrganizationToCore`.
+     */
+    suspended?: boolean;
     mainColor?: string | null;
     secondaryColor?: string | null;
     locationId?: string | null;

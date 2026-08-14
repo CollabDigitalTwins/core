@@ -29,6 +29,7 @@ const initialState = {
     bimModelsAddedToMap: [],
     bimModelName: null,
     editingBimModel: null,
+    selection: {},
     bcfTopic: null,
     bcfTopics: [],
     bcfTopicId: null,

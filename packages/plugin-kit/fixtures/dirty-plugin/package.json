@@ -1,0 +1,20 @@
+{
+  "name": "@collabdt/fixture-dirty-plugin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Fixture: the clean plugin plus an import of three. Its build must fail. Built by src/build.test.ts.",
+  "type": "module",
+  "scripts": {
+    "build": "tsup",
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@collabdt/plugin-kit": "file:../..",
+    "@types/react": "^19.2.2",
+    "@types/three": "^0.180.0",
+    "maplibre-gl": "^5.24.0",
+    "three": "^0.180.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
+  }
+}

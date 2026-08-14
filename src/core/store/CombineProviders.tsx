@@ -5,7 +5,7 @@
 
 import * as React from 'react'
 
-import { PluginHostProvider } from '../plugins/host/provider'
+import { PluginHostProvider, type PluginHostProviderProps } from '../plugins/host/provider'
 
 import { AppConfigProvider, type RuntimeConfig } from './AppConfig/context'
 import { BimProvider } from './BIM/context'
@@ -32,6 +32,9 @@ const compose = providers =>
       },
   )
 
+// PluginHostProvider is deliberately NOT in this list: it takes props, and
+// `compose` only threads `children`. It wraps the composed tree below instead, so
+// it stays the innermost provider (plugins can read every store above it).
 const InnerProviders = compose([
   BimProvider,
   MapProvider,
@@ -44,14 +47,26 @@ const InnerProviders = compose([
   BuildingsProvider,
   PointCloudProvider,
   PermissionsProvider,
-  PluginHostProvider,
 ])
 
-export function AppProvider({ children, runtimeConfig }: { children: React.ReactNode, runtimeConfig?: RuntimeConfig }) {
+interface AppProviderProps extends Omit<PluginHostProviderProps, 'children'> {
+  children: React.ReactNode
+  runtimeConfig?: RuntimeConfig
+}
+
+export function AppProvider({
+  children,
+  runtimeConfig,
+  plugins,
+  enabledSlugs,
+  configs,
+}: AppProviderProps) {
   return (
     <AppConfigProvider runtimeConfig={runtimeConfig}>
       <InnerProviders>
-        {children}
+        <PluginHostProvider plugins={plugins} enabledSlugs={enabledSlugs} configs={configs}>
+          {children}
+        </PluginHostProvider>
       </InnerProviders>
     </AppConfigProvider>
   )

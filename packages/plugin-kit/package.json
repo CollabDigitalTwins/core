@@ -1,0 +1,63 @@
+{
+  "name": "@collabdt/plugin-kit",
+  "version": "0.1.0",
+  "description": "Build preset and types for authoring CDT plugins.",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./types/components": {
+      "types": "./dist/types/components.d.ts",
+      "default": "./dist/types/components.js"
+    },
+    "./types/map": {
+      "types": "./dist/types/map.d.ts",
+      "default": "./dist/types/map.js"
+    },
+    "./types/bim": {
+      "types": "./dist/types/bim.d.ts",
+      "default": "./dist/types/bim.js"
+    },
+    "./types/pointcloud": {
+      "types": "./dist/types/pointcloud.d.ts",
+      "default": "./dist/types/pointcloud.js"
+    },
+    "./types/legend": {
+      "types": "./dist/types/legend.d.ts",
+      "default": "./dist/types/legend.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup && node scripts/shipAmbientTypes.mjs",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "@thatopen/components": ">=3.4",
+    "@types/react": ">=18",
+    "maplibre-gl": ">=5",
+    "tsup": ">=8"
+  },
+  "peerDependenciesMeta": {
+    "@thatopen/components": {
+      "optional": true
+    },
+    "maplibre-gl": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@thatopen/components": "~3.4.0",
+    "maplibre-gl": "^5.24.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.8"
+  }
+}

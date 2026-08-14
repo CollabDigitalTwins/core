@@ -208,7 +208,7 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
     //   accessibleTo: [RoleNames.admin],
     // },
     {
-      title: t('addExtensions'),
+      title: t('addPlugins'),
       id: ViewerNames.extensions,
       icon: LR.Blocks,
       onClick: () => changeViewer(ViewerNames.extensions),
@@ -354,7 +354,7 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
           )}
           {isCollapsed && <Separator className="z-30 w-2/3 mx-auto" />}
           <SidebarGroup>
-            <SidebarGroupLabel>{t('extensions')}</SidebarGroupLabel>
+            <SidebarGroupLabel>{t('plugins')}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {managementItems.filter(canRenderItem).map(item => {

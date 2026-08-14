@@ -2,24 +2,31 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 //
-// Adds (or, with --check, verifies) SPDX license headers on all source files
-// under src/. Idempotent: files that already carry a header are left untouched.
+// Adds (or, with --check, verifies) SPDX license headers on source files. Idempotent.
 //
 //   node scripts/add-license-headers.mjs            add a header to any file missing one
 //   node scripts/add-license-headers.mjs --check    exit non-zero if any file lacks one (CI)
 //
-// The header is inserted at the top of each file, EXCEPT when the file begins
-// with a "use client" / "use server" directive — there it is inserted right
-// after the directive, so the directive stays the first statement (required by
-// the React/Next.js bundler). The file's existing line endings are preserved.
+// A "use client" / "use server" directive has to stay the first statement for the
+// React/Next.js bundler, so the header goes after it rather than at the top.
 
-import { readFileSync, writeFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync, readdirSync } from 'node:fs'
 import { join, extname, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..')
-const SRC = join(ROOT, 'src')
-const EXTENSIONS = new Set(['.ts', '.tsx'])
+
+// `packages/` as well as `src/`: SPDX is a repo rule, not a src/ rule, and a missing
+// header under packages/ was already caught by a human reading a diff — exactly what this
+// script exists to make unnecessary.
+const ROOTS = [join(ROOT, 'src'), join(ROOT, 'packages')].filter(dir => existsSync(dir))
+
+// Never entered: dependencies and build output are not ours to license, and the
+// fixture plugins under packages/*/fixtures are stand-ins for a third party's
+// code, which carries its own.
+const SKIP_DIRECTORIES = new Set(['node_modules', 'dist', 'fixtures'])
+
+const EXTENSIONS = new Set(['.ts', '.tsx', '.mjs'])
 const SPDX_TAG = 'SPDX-License-Identifier'
 
 const HEADER_LINES = [
@@ -36,8 +43,9 @@ function walk(dir) {
   const files = []
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const full = join(dir, entry.name)
-    if (entry.isDirectory()) files.push(...walk(full))
-    else if (EXTENSIONS.has(extname(entry.name))) files.push(full)
+    if (entry.isDirectory()) {
+      if (!SKIP_DIRECTORIES.has(entry.name)) files.push(...walk(full))
+    } else if (EXTENSIONS.has(extname(entry.name))) files.push(full)
   }
   return files
 }
@@ -56,11 +64,11 @@ function addHeader(content) {
   const body = content.slice(directive.length).replace(/^(?:[ \t]*\r?\n)+/, '')
 
   return directive
-    ? directive + eol + header + eol + body // directive, blank, header, blank, body
-    : header + eol + body // header, blank, body
+    ? directive + eol + header + eol + body
+    : header + eol + body
 }
 
-const files = walk(SRC)
+const files = ROOTS.flatMap(walk)
 const missing = []
 
 for (const file of files) {

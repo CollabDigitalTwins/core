@@ -4,6 +4,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { Upload } from 'lucide-react'
+import { useSession } from 'next-auth/react'
 import * as React from 'react'
 import { toast } from 'sonner'
 
@@ -11,6 +12,7 @@ import { DatasetsContext, MapContext } from '../../../../../../../store'
 import { DatasetGroup } from '../../../../../../../types/dbTypes'
 import { Button, Input } from '../../../../../../ui/'
 import { parseGeoJSON, type GeoJSONSummary } from '../../../../datasets/src/geojsonFile'
+import { normalizeOrgId } from '../../../../datasets/src/orgVisibility'
 import {
   addWmsToMap,
   detectSourceType,
@@ -24,7 +26,7 @@ import { uploadToPresignedUrl } from '../AddFile/utils/uploadToPresignedURLS'
 
 import type { Dataset } from '../../../../../../../types/datasetTypes'
 
-/** Bucket uploaded org datasets land in (orgId prefix added server-side). */
+/** The orgId prefix is added server-side. */
 const DATASETS_BUCKET = 'pointclouds-demo'
 
 /** Default per-geometry paint, persisted so reload hydration can restyle. */
@@ -36,7 +38,6 @@ const DEFAULT_LAYER_STYLES = {
 
 type PersistGeometry = 'points' | 'lines' | 'polygons'
 
-/** Pick the dominant geometry family for the persisted File row's layerType hint. */
 function dominantGeometry(summary: GeoJSONSummary): PersistGeometry {
   let points = 0
   let lines = 0
@@ -64,22 +65,18 @@ interface DatasetAdderProps {
 }
 
 /**
- * Add a dataset to the map — from a dropped/picked GeoJSON file, or from a
- * pasted URL (GeoJSON, ArcGIS Feature Service, or WMS).
- *
- * Vector sources (file / GeoJSON URL / ArcGIS) are parsed client-side and
- * registered into DatasetsContext; the existing OpenDataLayers renderer draws
- * them. WMS is a raster overlay added straight to the map.
- *
- * File uploads are additionally persisted: the raw GeoJSON is uploaded to MinIO
- * and a File row is created so the dataset re-hydrates on the next load (via
- * minioDatasets.ts). URL/WMS imports are session-only — there is no file to
- * persist.
+ * Add a dataset from a GeoJSON file or a pasted URL (GeoJSON, ArcGIS, WMS).
+ * Vector sources render through OpenDataLayers; WMS goes straight on the map as a
+ * raster overlay. File uploads also persist to MinIO and re-hydrate on reload.
  */
 export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
   const { dispatch: datasetDispatch } = React.useContext(DatasetsContext)
   const { state: mapState } = React.useContext(MapContext)
   const map = mapState.map.map
+
+  // Uploads are keyed under the signed-in org; unstamped datasets are hidden from non-admins.
+  const { data: sessionData } = useSession()
+  const owningOrgId = normalizeOrgId(sessionData?.user?.organizationId)
 
   const [loaded, setLoaded] = React.useState<Loaded | null>(null)
   const [error, setError] = React.useState<string | null>(null)
@@ -155,12 +152,8 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
     }
   }, [map, url, wmsLayers, onClose])
 
-  /**
-   * Upload the dropped/picked file to MinIO and create a File row so the
-   * dataset survives a reload. Best-effort: a failure leaves the dataset
-   * session-only rather than blocking the add.
-   */
-  const persistFile = React.useCallback(async (file: File, geometry: PersistGeometry) => {
+  /** Throws rather than blocking the add; the caller degrades to a session-only dataset. */
+  const persistFile = React.useCallback(async (file: File, geometry: PersistGeometry): Promise<number> => {
     const assetId = `${crypto.randomUUID()}.geojson`
     const presignedRes = await fetch(
       `/api/presigned-url-upload?asset=${encodeURIComponent(assetId)}&bucket=${DATASETS_BUCKET}`,
@@ -189,9 +182,11 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(fileRow),
     })
-    if (!fileRes.ok) {
-      console.warn(`DatasetAdder: File row create returned ${fileRes.status}; dataset will be session-only`)
-    }
+    if (!fileRes.ok) throw new Error(`File row create returned ${fileRes.status}`)
+
+    const { newFile } = await fileRes.json()
+    if (typeof newFile?.id !== 'number') throw new Error('File row create returned no id')
+    return newFile.id
   }, [])
 
   const addToMap = React.useCallback(async () => {
@@ -199,11 +194,11 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
     const name = loaded.sourceName.replace(/\.(geo)?json$/i, '') || loaded.sourceName
     const featureCollection = loaded.featureCollection
 
-    // File sources persist to MinIO; URL/WMS imports are session-only.
+    let persistedFileId: number | null = null
     if (loaded.file) {
       setSaving(true)
       try {
-        await persistFile(loaded.file, dominantGeometry(loaded.summary))
+        persistedFileId = await persistFile(loaded.file, dominantGeometry(loaded.summary))
       }
       catch (e) {
         console.warn('DatasetAdder: MinIO persistence failed; dataset will be session-only', e)
@@ -216,8 +211,10 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
       }
     }
 
+    // Must match the id minioDatasets.ts rebuilds: the panel dedups by name and keeps this row.
     const dataset: Dataset = {
-      id: `local-${Date.now()}`,
+      id: persistedFileId != null ? `org-minio-${persistedFileId}` : `local-${Date.now()}`,
+      organization: owningOrgId,
       name,
       type: 'Organizational',
       publisher: loaded.file ? 'Organizational' : 'Local / URL',
@@ -240,6 +237,9 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
     datasetDispatch({ type: 'ADD_DATASET', payload: { dataset } })
     datasetDispatch({ type: 'ADD_DATASET_TO_MAP', payload: { dataset } })
 
+    // Swap the optimistic row for the hydrated one, which carries the MinIO source URL.
+    if (persistedFileId != null) datasetDispatch({ type: 'REFRESH_ORG_DATASETS' })
+
     const bbox = loaded.summary.bbox
     if (map && bbox) {
       map.fitBounds([[bbox[0], bbox[1]], [bbox[2], bbox[3]]], { padding: 48, duration: 800 })
@@ -248,7 +248,7 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
     setLoaded(null)
     setError(null)
     onClose?.()
-  }, [loaded, map, datasetDispatch, persistFile, onClose])
+  }, [loaded, map, datasetDispatch, persistFile, onClose, owningOrgId])
 
   return (
     <div className="flex flex-col gap-3 mt-2">

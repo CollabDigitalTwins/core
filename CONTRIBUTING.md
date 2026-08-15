@@ -142,7 +142,7 @@ Enhancement suggestions are tracked as [GitHub issues](/issues).
 The full setup and workflow live in the documentation — see [Dev Environment Setup](https://docs.collabdt.org/docs/contributing/dev-environment) and [Git Workflow](https://docs.collabdt.org/docs/contributing/git-workflow). In short:
 
 1. Set up your local environment (see [Dev Environment Setup](https://docs.collabdt.org/docs/contributing/dev-environment)). Note: this library renders inside the CDT platform — validate your change with the unit test suite (`yarn test:unit`); maintainers exercise every PR inside the platform during review.
-2. **Fork** the repository and clone your fork locally; install dependencies with `yarn install`.
+2. **Fork** the repository and clone your fork locally; install dependencies with `yarn install`, then enable the repository's git hooks with `yarn hooks:install`.
 3. Create a feature branch off **`dev`** (the integration branch), named after your feature or issue.
 4. Make your change, then run the linter and tests before committing:
    - `yarn lint`
@@ -174,6 +174,16 @@ CDT follows the [Conventional Commits](https://www.conventionalcommits.org/en/v1
 | `BREAKING CHANGE:` in the footer (or `!` after the type) | major | `feat!: migrate auth to Auth.js` |
 
 Keep the subject under ~72 characters and use the body to explain the *why* when it isn't obvious. See [Git Workflow → Commit message convention](https://docs.collabdt.org/docs/contributing/git-workflow#commit-message-convention) for the full reference.
+
+### Authorship
+
+Commits credit the people who wrote them. Do not add an AI assistant as an author or co-author — no `Co-authored-by:` trailer naming an assistant, and no generated-by footer. You are welcome to use an assistant; describe how in the pull request, where it is useful context for reviewers rather than a permanent claim on the contributor record.
+
+`yarn hooks:install` rejects such a trailer before the commit is written, and the **AI attribution** check enforces the same rule on every pull request. To check a branch yourself:
+
+```
+node scripts/check-ai-attribution.mjs --range dev..HEAD
+```
 
 ## Join The Project Team
 

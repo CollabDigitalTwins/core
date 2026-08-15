@@ -1,0 +1,55 @@
+name: AI attribution
+
+# Blocks a pull request whose commits credit an AI assistant as author or co-author.
+# The contributor graph of this repository is read by people evaluating the project,
+# so authorship stays human; assistants are credited in the PR description instead.
+#
+# The push job is the backstop: GitHub composes a squash-merge message from the branch
+# commits, and a maintainer can edit it in the merge box after the PR check has passed.
+#
+# ONE-TIME SETUP
+#   In branch protection for `dev`, require the "commits" status check to pass.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [dev]
+
+permissions:
+  contents: read
+
+jobs:
+  commits:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Both ends of the range have to be present locally to walk it.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Values arrive as env rather than inline ${{ }} so a crafted ref name cannot
+      # break out of the shell command.
+      - name: Check commits for AI attribution
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            RANGE="$BASE_SHA..$HEAD_SHA"
+          elif git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
+            RANGE="$BEFORE_SHA..$GITHUB_SHA"
+          else
+            RANGE=""
+          fi
+
+          if [ -n "$RANGE" ]; then
+            node scripts/check-ai-attribution.mjs --range "$RANGE"
+          else
+            node scripts/check-ai-attribution.mjs
+          fi

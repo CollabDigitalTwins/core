@@ -1,0 +1,11 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2025 Collab Digital Twins
+#
+# Rejects a commit that credits an AI assistant as author or co-author, so the trailer
+# never reaches a branch in the first place. CI enforces the same rule on every pull
+# request; this hook just moves the failure to the moment it is cheap to fix.
+#
+# Enable it once per clone:  yarn hooks:install
+
+exec node "$(git rev-parse --show-toplevel)/scripts/check-ai-attribution.mjs" --message-file "$1"

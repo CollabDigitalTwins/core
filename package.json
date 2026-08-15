@@ -50,6 +50,8 @@
     "lint": "eslint src",
     "license:headers": "node scripts/add-license-headers.mjs",
     "license:check": "node scripts/add-license-headers.mjs --check",
+    "attribution:check": "node scripts/check-ai-attribution.mjs",
+    "hooks:install": "git config core.hooksPath .githooks",
     "prepublishOnly": "npm run build",
     "test": "jest",
     "test:unit": "vitest run",

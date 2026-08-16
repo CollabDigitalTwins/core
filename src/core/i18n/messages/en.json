@@ -1998,6 +1998,11 @@
     "sensorMetadata": "Sensor metadata",
     "selfLink": "Self link"
   },
+  "PluginDataPage": {
+    "loading": "Loading…",
+    "empty": "Nothing here yet.",
+    "noResults": "Nothing matches \"{query}\"."
+  },
   "PluginsPage": {
     "title": "Plugins",
     "intro": "Plugins add tools, panels and map layers to this deployment. An administrator decides which are available here; you choose which of those run for you.",

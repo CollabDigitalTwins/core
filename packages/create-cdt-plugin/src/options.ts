@@ -4,9 +4,17 @@
 export type Mode = 'external' | 'builtin'
 export type Body = 'example' | 'empty'
 
-// `sidebar.items` and `viewer.panels` are valid in the manifest schema and absent here:
-// nothing renders them, so scaffolding one produces a plugin that shows nothing.
-export const SURFACES = ['map.tools', 'bim.tools', 'pointcloud.tools', 'map.legends'] as const
+// Every capability core renders. A plugin spanning several composes them by hand; the
+// scaffold picks one, because a first plugin that registers five surfaces teaches nothing.
+export const SURFACES = [
+  'map.tools',
+  'bim.tools',
+  'pointcloud.tools',
+  'map.legends',
+  'data.pages',
+  'viewer.tabs',
+  'ui.dialogs',
+] as const
 
 export type Surface = typeof SURFACES[number]
 

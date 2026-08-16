@@ -1,0 +1,89 @@
+{
+  "slug": "hello-everywhere",
+  "name": "Hello Everywhere",
+  "version": "1.0.0",
+  "hostApi": 1,
+  "description": "One plugin across five surfaces: a map tool, a legend, a viewer sidebar tab, a data page and a dialog, all sharing one selection.",
+  "author": "Collab Digital Twins",
+  "capabilities": ["map.tools", "map.legends", "viewer.tabs", "data.pages", "ui.dialogs"],
+  "requiredPermissions": [],
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "colour": {
+        "type": "string",
+        "description": "Swatch colour for picked points in the legend.",
+        "default": "#2563eb"
+      }
+    },
+    "required": []
+  },
+  "messages": {
+    "en": {
+      "name": "Hello Everywhere",
+      "description": "One plugin across five surfaces: a map tool, a legend, a viewer sidebar tab, a data page and a dialog, all sharing one selection.",
+      "toolTitle": "Pick a point",
+      "tabTitle": "Picks",
+      "pageTitle": "Picked points",
+      "dialogTitle": "Picked point",
+      "legendTitle": "Picked points",
+      "legendRow": "Picked",
+      "pick": "Pick the map centre",
+      "clear": "Clear",
+      "waiting": "Waiting for the map…",
+      "selected": "Selected",
+      "nothingSelected": "Nothing picked yet. Use the Pick a point tool on the map.",
+      "empty": "No points picked yet.",
+      "columnName": "Point",
+      "columnLatitude": "Latitude",
+      "columnLongitude": "Longitude",
+      "openDetail": "Open",
+      "close": "Close",
+      "crossSurface": "Picked on the map, shown here — the same plugin state reaches every surface."
+    },
+    "fr": {
+      "name": "Bonjour partout",
+      "description": "Un seul plugiciel sur cinq surfaces : un outil de carte, une légende, un onglet de barre latérale, une page de données et une boîte de dialogue, partageant une même sélection.",
+      "toolTitle": "Choisir un point",
+      "tabTitle": "Sélections",
+      "pageTitle": "Points choisis",
+      "dialogTitle": "Point choisi",
+      "legendTitle": "Points choisis",
+      "legendRow": "Choisi",
+      "pick": "Choisir le centre de la carte",
+      "clear": "Effacer",
+      "waiting": "En attente de la carte…",
+      "selected": "Sélection",
+      "nothingSelected": "Aucun point choisi. Utilisez l'outil Choisir un point sur la carte.",
+      "empty": "Aucun point choisi pour l'instant.",
+      "columnName": "Point",
+      "columnLatitude": "Latitude",
+      "columnLongitude": "Longitude",
+      "openDetail": "Ouvrir",
+      "close": "Fermer",
+      "crossSurface": "Choisi sur la carte, affiché ici : le même état de plugiciel atteint toutes les surfaces."
+    },
+    "es": {
+      "name": "Hola en todas partes",
+      "description": "Un solo complemento en cinco superficies: una herramienta de mapa, una leyenda, una pestaña de barra lateral, una página de datos y un diálogo, compartiendo una misma selección.",
+      "toolTitle": "Elegir un punto",
+      "tabTitle": "Selecciones",
+      "pageTitle": "Puntos elegidos",
+      "dialogTitle": "Punto elegido",
+      "legendTitle": "Puntos elegidos",
+      "legendRow": "Elegido",
+      "pick": "Elegir el centro del mapa",
+      "clear": "Borrar",
+      "waiting": "Esperando el mapa…",
+      "selected": "Selección",
+      "nothingSelected": "Todavía no hay ningún punto elegido. Use la herramienta Elegir un punto en el mapa.",
+      "empty": "Todavía no hay puntos elegidos.",
+      "columnName": "Punto",
+      "columnLatitude": "Latitud",
+      "columnLongitude": "Longitud",
+      "openDetail": "Abrir",
+      "close": "Cerrar",
+      "crossSurface": "Elegido en el mapa y mostrado aquí: el mismo estado del complemento llega a todas las superficies."
+    }
+  }
+}

@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest'
 
 import { DEFAULT_KIT_SPEC, SURFACES } from './options'
 import { scaffold } from './scaffold'
+import { factsFor } from './surfaces'
 
 import type { Body, Options, Surface } from './options'
 
@@ -67,7 +68,7 @@ describe('scaffold, external mode', () => {
         // The example body is deliberately two components in two files, so a reader does
         // not infer from the single-file bundle that a plugin is one component. The legend
         // has no empty variant: its hook is the plugin.
-        const composes = body === 'example' && surface !== 'map.legends'
+        const composes = body === 'example' && factsFor(surface).usesReadoutRow
 
         expect(files.sort()).toEqual([
           '.gitignore',
@@ -238,7 +239,7 @@ describe('scaffold, built-in mode', () => {
           fakeCore(),
         )
 
-        const composes = body === 'example' && surface !== 'map.legends'
+        const composes = body === 'example' && factsFor(surface).usesReadoutRow
 
         expect(files.sort()).toEqual([
           'components/RoomInventoryTool.tsx',

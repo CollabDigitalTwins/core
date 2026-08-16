@@ -23,6 +23,7 @@ import {
   useSidebar,
 } from '../components/ui/Sidebar'
 import { useUserRole } from '../hooks/users/users'
+import { usePluginDataPages } from '../plugins/host/usePluginDataPages'
 import { AppConfigContext, MapContext, useMenusContext } from '../store'
 import { ViewerNames } from '../types/'
 import { resolveAppContent } from '../utils/appContent'
@@ -40,7 +41,7 @@ import { Button } from './ui/Button'
 import { Separator } from './ui/Separator'
 
 
-import type { Organization, Language } from '../types/dbTypes'
+import type { Organization, Language, ViewerKey } from '../types/dbTypes'
 import type { RoleNames } from '../types/global'
 
 
@@ -48,7 +49,7 @@ import type { RoleNames } from '../types/global'
 
 
 export const handleChangeViewer = (
-  viewer: ViewerNames,
+  viewer: ViewerKey,
   setSelectedItem: React.Dispatch<React.SetStateAction<any>>,
   setSelectedSite: React.Dispatch<React.SetStateAction<any>>,
   setSelectedFile: React.Dispatch<React.SetStateAction<any>>,
@@ -124,7 +125,9 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
     setBugReportOpen, setFeatureRequestOpen,
   } = useSidebar()
 
-  const changeViewer = (viewer: ViewerNames) => {
+  const pluginPages = usePluginDataPages()
+
+  const changeViewer = (viewer: ViewerKey) => {
     handleChangeViewer(viewer, setSelectedItem, setSelectedSite, setSelectedFile, setView, menusDispatch)
     setOpenInfo(false)
   }
@@ -135,7 +138,7 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
 
   interface MenuItem {
     title: string
-    id: ViewerNames | string
+    id: ViewerKey | string
     icon: React.ElementType
     onClick?: () => void
     accessibleTo?: RoleNames[],
@@ -196,7 +199,14 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
       icon: LR.TrainTrack,
       onClick: () => changeViewer(ViewerNames.infrastructure),
     },
-
+    // Plugin pages sit here rather than in a group of their own, so a contributed page
+    // reads as part of the platform instead of as an add-on.
+    ...pluginPages.map(page => ({
+      title: page.title,
+      id: page.id,
+      icon: page.icon,
+      onClick: () => changeViewer(page.id),
+    })),
   ]
 
   const managementItems: MenuItem[] = [

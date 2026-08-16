@@ -17,6 +17,15 @@ export interface SurfaceFacts {
   typeDependency: [string, string] | null
   /** A lucide icon name. A string, never a component: that is why a plugin needs no icon package. */
   icon: string
+  /** Entry template basename under each mode's tree. Registration shapes differ per surface. */
+  indexTemplate: string
+  /** Example body component template basename. */
+  example: string
+  // Whether Empty.tsx is a valid body here. It interpolates a toolbar props type, so a surface
+  // without one would emit invalid TypeScript — the example is the only body it can have.
+  allowsEmpty: boolean
+  /** Whether the example composes ReadoutRow.tsx. */
+  usesReadoutRow: boolean
 }
 
 // Data rather than four near-identical template files, so the empty body is one template.
@@ -34,6 +43,10 @@ const FACTS: Record<Surface, SurfaceFacts> = {
     contextType: 'MapPluginContext',
     typeDependency: ['maplibre-gl', '^5.24.0'],
     icon: 'MapPin',
+    indexTemplate: 'index',
+    example: 'ExampleMap',
+    allowsEmpty: true,
+    usesReadoutRow: true,
   },
   'bim.tools': {
     entry: '@collabdt/plugin-kit/types/bim',
@@ -42,6 +55,10 @@ const FACTS: Record<Surface, SurfaceFacts> = {
     contextType: 'BimPluginContext',
     typeDependency: ['@thatopen/components', '~3.4.0'],
     icon: 'Boxes',
+    indexTemplate: 'index',
+    example: 'ExampleBim',
+    allowsEmpty: true,
+    usesReadoutRow: true,
   },
   'pointcloud.tools': {
     entry: '@collabdt/plugin-kit/types/pointcloud',
@@ -50,6 +67,10 @@ const FACTS: Record<Surface, SurfaceFacts> = {
     contextType: 'PointCloudPluginContext',
     typeDependency: null,
     icon: 'Cloud',
+    indexTemplate: 'index',
+    example: 'ExamplePointcloud',
+    allowsEmpty: true,
+    usesReadoutRow: true,
   },
   'map.legends': {
     // A legend registers a hook rather than a component, so it takes no toolbar props.
@@ -60,6 +81,48 @@ const FACTS: Record<Surface, SurfaceFacts> = {
     contextType: 'LegendPluginContext',
     typeDependency: null,
     icon: 'List',
+    indexTemplate: 'indexLegend',
+    example: 'ExampleLegend',
+    allowsEmpty: false,
+    usesReadoutRow: false,
+  },
+  // The three below name no viewer library either, so they share one kit entry and take
+  // their shapes from the SDK's own types module.
+  'data.pages': {
+    entry: '@collabdt/plugin-kit/types/ui',
+    coreEntry: '../../sdk/types',
+    propsType: '',
+    contextType: 'UiPluginContext',
+    typeDependency: null,
+    icon: 'Table',
+    indexTemplate: 'indexPage',
+    example: 'ExamplePage',
+    allowsEmpty: false,
+    usesReadoutRow: false,
+  },
+  'viewer.tabs': {
+    entry: '@collabdt/plugin-kit/types/ui',
+    coreEntry: '../../sdk/types',
+    propsType: '',
+    contextType: 'UiPluginContext',
+    typeDependency: null,
+    icon: 'PanelRight',
+    indexTemplate: 'indexTab',
+    example: 'ExampleTab',
+    allowsEmpty: false,
+    usesReadoutRow: false,
+  },
+  'ui.dialogs': {
+    entry: '@collabdt/plugin-kit/types/ui',
+    coreEntry: '../../sdk/types',
+    propsType: '',
+    contextType: 'UiPluginContext',
+    typeDependency: null,
+    icon: 'SquareStack',
+    indexTemplate: 'indexDialog',
+    example: 'ExampleDialog',
+    allowsEmpty: false,
+    usesReadoutRow: false,
   },
 }
 

@@ -9,6 +9,7 @@ import dynamic from 'next/dynamic'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import * as React from 'react'
 
+import { parsePluginViewerKey } from '../../plugins/host/pluginViewerKey'
 import { BuildingsContext, MenusContext } from '../../store'
 import { ViewerNames } from '../../types'
 
@@ -20,8 +21,9 @@ import { Toolbar } from '../Toolbar'
 import { SidebarTrigger } from '../ui/Sidebar'
 
 import { MapViewer } from './map/MapViewer'
+import { isViewerAllowed } from './viewerAccess'
 
-import type { Organization } from '../../types/dbTypes'
+import type { Organization, ViewerKey } from '../../types/dbTypes'
 
 // Code-split the heavy viewers: BimViewer pulls in ~456 KB gzipped of
 // @thatopen/*, PointCloudViewer the Potree loader stack — loaded only when
@@ -49,6 +51,13 @@ const PluginsManager = dynamic(
 const DataMenu = dynamic(
   () => import('./Data/DataMenu').then(m => ({ default: m.DataMenu })),
   { ssr: false, loading: () => <ViewerLoadingFallback label="Loading data…" /> },
+)
+
+// Lazy for the same reason: a plugin page is never the map route's critical path, and a
+// static import would put every plugin's page code in the eager bundle for every user.
+const PluginDataPageHost = dynamic(
+  () => import('../../plugins/host/PluginDataPageHost').then(m => ({ default: m.PluginDataPageHost })),
+  { ssr: false, loading: () => <ViewerLoadingFallback label="Loading page…" /> },
 )
 
 // Styled to match the in-viewer loading card (see BimLoadingState): a soft
@@ -79,7 +88,7 @@ interface ViewerProps {
 export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudApiUrl, maptilerKey, geocodeEarthApiKey, geocoderUrl }: ViewerProps) {
 
   const searchParams = useSearchParams()
-  const viewer = (searchParams.get('viewer') as ViewerNames) || ViewerNames.map
+  const viewer = (searchParams.get('viewer') as ViewerKey) || ViewerNames.map
 
   const { dispatch: menusDispatch, state: menusState } = React.useContext(MenusContext)
   const { state: buildingState } = React.useContext(BuildingsContext)
@@ -95,8 +104,8 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
 
     const { appContent } = organization
 
-  // Check if viewer is valid based on appContent
-  const isViewerValid = appContent.length === 0 || appContent.includes(viewer)
+  const pluginPage = parsePluginViewerKey(viewer)
+  const isViewerValid = isViewerAllowed(viewer, appContent)
 
   // Use default viewer (map) if current viewer is not valid
   const validViewer = isViewerValid ? viewer : ViewerNames.map
@@ -172,27 +181,39 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
     }
   }, [validViewer, menusDispatch, isMounted, currentViewer])
 
+  // Null while a plugin page is showing, which keeps the branches below exhaustive over
+  // ViewerNames rather than each one having to re-exclude the plugin case.
+  const builtInViewer = pluginPage ? null : (validViewer as ViewerNames)
+
   const selectedViewer = (
     <>
-      {[ViewerNames.map, ViewerNames.bim, ViewerNames.pointcloud].includes(validViewer) && <SidebarTrigger />}
+      {builtInViewer !== null
+        && [ViewerNames.map, ViewerNames.bim, ViewerNames.pointcloud].includes(builtInViewer)
+        && <SidebarTrigger />}
       <div style={{ height: '100%', width: '100%', position: 'relative' }}>
-        <div style={{ display: validViewer === ViewerNames.map ? 'block' : 'none', width: '100%', height: '100%' }}>
+        <div style={{ display: builtInViewer === ViewerNames.map ? 'block' : 'none', width: '100%', height: '100%' }}>
           <MapViewer organization={organization} maptilerKey={maptilerKey} />
         </div>
-        {validViewer === ViewerNames.bim && <BimViewer />}
-        {validViewer === ViewerNames.pointcloud && <PointCloudViewer pointcloudApiUrl={pointcloudApiUrl} />}
-        {[ViewerNames.buildings, ViewerNames.sites, ViewerNames.files, ViewerNames.land, ViewerNames.infrastructure, ViewerNames.users].includes(validViewer) && (
-          <DataMenu currentViewer={validViewer} organization={organization} geocodeEarthApiKey={geocodeEarthApiKey} geocoderUrl={geocoderUrl} />
+        {builtInViewer === ViewerNames.bim && <BimViewer />}
+        {builtInViewer === ViewerNames.pointcloud && <PointCloudViewer pointcloudApiUrl={pointcloudApiUrl} />}
+        {builtInViewer !== null
+          && [ViewerNames.buildings, ViewerNames.sites, ViewerNames.files, ViewerNames.land, ViewerNames.infrastructure, ViewerNames.users].includes(builtInViewer) && (
+          <DataMenu currentViewer={builtInViewer} organization={organization} geocodeEarthApiKey={geocodeEarthApiKey} geocoderUrl={geocoderUrl} />
         )}
         {/* `plugins` used to route through DataMenu, which rendered nothing:
             VIEWER_CONFIG gives it no dataType. It has its own page now. */}
-        {validViewer === ViewerNames.extensions && (
+        {builtInViewer === ViewerNames.extensions && (
           <div className="h-full w-full overflow-y-auto">
             <PluginsManager />
           </div>
         )}
-        {[ViewerNames.settings].includes(validViewer) && (
+        {builtInViewer === ViewerNames.settings && (
           <UserSettings minioBaseUrl={minioBaseUrl} />
+        )}
+        {pluginPage && (
+          <div className="h-full w-full overflow-y-auto">
+            <PluginDataPageHost viewer={validViewer} />
+          </div>
         )}
       </div>
     </>

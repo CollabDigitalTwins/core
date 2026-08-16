@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest'
 import { PLUGIN_EXTERNALS, PLUGIN_RUNTIME_SHIMS } from './runtimeShims'
 
 describe('PLUGIN_RUNTIME_SHIMS', () => {
-  it('lists exactly the eight specifiers the host publishes an import map for', () => {
+  it('lists exactly the ten specifiers the host publishes an import map for', () => {
     expect(PLUGIN_EXTERNALS).toEqual([
       'react',
       'react-dom',
@@ -15,6 +15,8 @@ describe('PLUGIN_RUNTIME_SHIMS', () => {
       '@collabdt/core/plugins-sdk/config',
       '@collabdt/core/plugins-sdk/messages',
       '@collabdt/core/plugins-sdk/store',
+      '@collabdt/core/plugins-sdk/state',
+      '@collabdt/core/plugins-sdk/ui',
       '@collabdt/core/plugins-sdk/components',
     ])
   })

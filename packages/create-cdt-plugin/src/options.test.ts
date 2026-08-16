@@ -6,13 +6,16 @@ import { describe, expect, it } from 'vitest'
 import { DEFAULT_KIT_SPEC, parseFlags, slugFromName, SURFACES } from './options'
 
 describe('SURFACES', () => {
-  it('offers exactly the four capabilities core renders', () => {
-    expect([...SURFACES]).toEqual(['map.tools', 'bim.tools', 'pointcloud.tools', 'map.legends'])
-  })
-
-  it('never offers a capability nothing renders', () => {
-    expect(SURFACES).not.toContain('sidebar.items')
-    expect(SURFACES).not.toContain('viewer.panels')
+  it('offers exactly the seven capabilities core renders', () => {
+    expect([...SURFACES]).toEqual([
+      'map.tools',
+      'bim.tools',
+      'pointcloud.tools',
+      'map.legends',
+      'data.pages',
+      'viewer.tabs',
+      'ui.dialogs',
+    ])
   })
 })
 

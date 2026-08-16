@@ -95,7 +95,7 @@ The French and Spanish message blocks start as copies of the English ones. Every
 
 ## Choosing a surface
 
-Four capabilities, because these are the four the platform renders:
+Seven capabilities, which is every one the platform renders:
 
 | Surface | Where it appears | What your component receives |
 |---|---|---|
@@ -103,8 +103,13 @@ Four capabilities, because these are the four the platform renders:
 | `bim.tools` | BIM viewer toolbar | Model ids, selection, and methods to query, select, isolate and frame elements |
 | `pointcloud.tools` | Point cloud toolbar | The Potree viewer as `unknown`, plus a `ready` flag |
 | `map.legends` | Map legend | Nothing: a legend registers a hook, so its rows can carry live counts |
+| `data.pages` | Datasets nav, as a full page | Nothing: you supply a rows hook and columns, and the platform renders the page |
+| `viewer.tabs` | Viewer sidebar, as a tab | Nothing: the platform owns the tab strip and panel frame |
+| `ui.dialogs` | Anywhere, opened by id | `close`, plus whatever `open(id, props)` passed |
 
-`sidebar.items` and `viewer.panels` appear in the manifest schema and are deliberately **not** offered. Nothing renders them, so a plugin registering one builds, loads, registers without error, and shows nothing.
+The scaffolder picks one, because a first plugin that registers five surfaces teaches nothing. Adding more later is a second `ctx.register` call and a second entry in `manifest.capabilities`.
+
+**One plugin can span several.** A map tool, a sidebar tab and a dialog from the same plugin share state through `usePluginState`, which is in memory and scoped to your plugin — so the tool sets a selection and the tab re-renders with it, with no round trip and no shared parent. `ui.dialogs` is what makes that composable: register the dialog once, open it by id from whichever surface needs it, and it stays on screen when the surface that opened it unmounts.
 
 ---
 

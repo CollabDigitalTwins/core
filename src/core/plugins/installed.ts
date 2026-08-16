@@ -31,4 +31,5 @@ function manifestFor(slug: string): PluginManifest {
 export const INSTALLED_PLUGINS: PluginSource[] = [
   { manifest: manifestFor('hello-map'), entry: () => import('./hello-map') },
   { manifest: manifestFor('hello-bim'), entry: () => import('./hello-bim') },
+  { manifest: manifestFor('hello-everywhere'), entry: () => import('./hello-everywhere') },
 ]

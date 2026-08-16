@@ -3,7 +3,7 @@
 
 import * as LR from 'lucide-react'
 
-import type { SidebarTabType } from '../../../store/Menus/reducer'
+import type { SidebarTabKey, SidebarTabType } from '../../../store/Menus/reducer'
 import type * as React from 'react'
 
 /**
@@ -12,10 +12,19 @@ import type * as React from 'react'
  * only says *which* tabs it has and what goes inside them.
  */
 export interface ViewerSidebarTab {
-  id: SidebarTabType
+  id: SidebarTabKey
   content: React.ReactNode
   /** Omitted or true = shown. false hides the tab from the strip entirely. */
   enabled?: boolean
+  // Icon and label for a tab with no `SIDEBAR_TAB_META` entry, which is every plugin tab.
+  // The label is already resolved: a plugin's strings live in its own i18n namespace, not
+  // in `TabSelector`, so there is no key here the strip could look up.
+  meta?: PluginTabMeta
+}
+
+export interface PluginTabMeta {
+  icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>
+  label: string
 }
 
 interface SidebarTabMeta {
@@ -37,12 +46,12 @@ export const SIDEBAR_TAB_META: Record<SidebarTabType, SidebarTabMeta> = {
 }
 
 /** DOM id of a tab button, referenced by its panel's `aria-labelledby`. */
-export function sidebarTabId(id: SidebarTabType): string {
+export function sidebarTabId(id: SidebarTabKey): string {
   return `viewer-sidebar-tab-${id}`
 }
 
 /** DOM id of a tab panel, referenced by its button's `aria-controls`. */
-export function sidebarPanelId(id: SidebarTabType): string {
+export function sidebarPanelId(id: SidebarTabKey): string {
   return `viewer-sidebar-panel-${id}`
 }
 
@@ -63,8 +72,8 @@ export function visibleSidebarTabs(tabs: ViewerSidebarTab[]): ViewerSidebarTab[]
  */
 export function resolveActiveTabId(
   tabs: ViewerSidebarTab[],
-  selectedTab: SidebarTabType,
-): SidebarTabType | null {
+  selectedTab: SidebarTabKey,
+): SidebarTabKey | null {
   const visible = visibleSidebarTabs(tabs)
   if (visible.length === 0) return null
   return visible.some(tab => tab.id === selectedTab) ? selectedTab : visible[0].id

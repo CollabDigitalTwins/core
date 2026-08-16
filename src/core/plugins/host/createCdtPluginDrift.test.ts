@@ -35,10 +35,10 @@ describe('create-cdt-plugin', () => {
     }
   })
 
-  it('offers no capability that nothing renders', () => {
-    // Valid in the schema, never scaffolded: a plugin registering one shows nothing.
-    expect(SURFACES).not.toContain('sidebar.items')
-    expect(SURFACES).not.toContain('viewer.panels')
+  it('offers every capability core renders', () => {
+    // Every capability now has a host, so anything core renders is scaffoldable. A new
+    // capability that reaches VALID_CAPABILITIES without a template fails here.
+    expect([...SURFACES].sort()).toEqual([...VALID_CAPABILITIES].sort())
   })
 
   it('stamps every generated manifest with the host API core enforces', () => {

@@ -8,7 +8,8 @@ import * as React from 'react'
 import { sidebarPanelId, sidebarTabId } from './sidebarTabs'
 import { TabStrip } from './TabStrip'
 
-import type { SidebarTabType } from '../../../store/Menus/reducer'
+import type { ViewerSidebarTab } from './sidebarTabs'
+import type { SidebarTabKey, SidebarTabType } from '../../../store/Menus/reducer'
 
 // The translation mock echoes the key, so a tab's accessible name is its labelKey.
 vi.mock('next-intl', () => ({
@@ -24,13 +25,22 @@ vi.mock('../../../hooks/ui/useCompactTabStrip', () => ({
 
 const MAP_TABS: SidebarTabType[] = ['file', 'layers', 'communication', 'sensors', 'settings']
 
+// The strip takes whole tabs, not ids, so a plugin tab can carry its own icon and label.
+// Built-in ones need neither, so the id is still all a case has to name.
+const asTabs = (ids: SidebarTabKey[]): ViewerSidebarTab[] =>
+  ids.map(id => ({ id, content: null }))
+
 function renderStrip(
-  tabs: SidebarTabType[] = MAP_TABS,
-  activeTab: SidebarTabType = 'file',
+  tabs: SidebarTabKey[] | ViewerSidebarTab[] = MAP_TABS,
+  activeTab: SidebarTabKey = 'file',
 ) {
+  const resolved = tabs.every(tab => typeof tab === 'string')
+    ? asTabs(tabs as SidebarTabKey[])
+    : tabs as ViewerSidebarTab[]
+
   const onTabChangeAction = vi.fn()
   const view = render(
-    <TabStrip tabs={tabs} activeTab={activeTab} onTabChangeAction={onTabChangeAction} />,
+    <TabStrip tabs={resolved} activeTab={activeTab} onTabChangeAction={onTabChangeAction} />,
   )
   return { ...view, onTabChangeAction }
 }
@@ -142,6 +152,36 @@ describe('TabStrip', () => {
       const { onTabChangeAction } = renderStrip(MAP_TABS, 'file')
       fireEvent.keyDown(tabNamed('fileLabel'), { key: 'ArrowUp' })
       expect(onTabChangeAction).not.toHaveBeenCalled()
+    })
+  })
+
+  // A plugin tab has no SIDEBAR_TAB_META entry. The strip used to index that record
+  // directly, so one would have crashed the whole sidebar rather than rendering.
+  describe('a plugin tab', () => {
+    const PLUGIN_TAB: ViewerSidebarTab = {
+      id: 'plugin:room-inventory:rooms',
+      content: null,
+      meta: { icon: () => null, label: 'Rooms' },
+    }
+
+    const withPlugin = (): ViewerSidebarTab[] => [...asTabs(['file', 'settings']), PLUGIN_TAB]
+
+    it('renders from its own meta rather than the built-in table', () => {
+      renderStrip(withPlugin(), 'file')
+      expect(tabNamed('Rooms')).toBeInTheDocument()
+    })
+
+    it('takes its turn in the keyboard order', () => {
+      const { onTabChangeAction } = renderStrip(withPlugin(), 'settings')
+      fireEvent.keyDown(tabNamed('settingsTitle'), { key: 'ArrowRight' })
+      expect(onTabChangeAction).toHaveBeenCalledWith('plugin:room-inventory:rooms')
+    })
+
+    it('links to its own panel', () => {
+      renderStrip(withPlugin(), 'plugin:room-inventory:rooms')
+      const tab = tabNamed('Rooms')
+      expect(tab).toHaveAttribute('aria-selected', 'true')
+      expect(tab).toHaveAttribute('aria-controls', sidebarPanelId('plugin:room-inventory:rooms'))
     })
   })
 })

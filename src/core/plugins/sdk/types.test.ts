@@ -8,7 +8,7 @@ describe('validateManifest', () => {
     slug: 'test-plugin',
     name: 'Test Plugin',
     version: '1.0.0',
-    capabilities: ['sidebar.items'],
+    capabilities: ['data.pages'],
   }
 
   it('accepts a valid manifest', () => {

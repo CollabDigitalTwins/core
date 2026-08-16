@@ -23,25 +23,33 @@ const base: Options = {
   kitSpec: DEFAULT_KIT_SPEC,
 }
 
-const FILES: Record<Surface, string> = {
-  'map.tools': 'ExampleMap.tsx',
-  'bim.tools': 'ExampleBim.tsx',
-  'pointcloud.tools': 'ExamplePointcloud.tsx',
-  'map.legends': 'ExampleLegend.tsx',
-}
-
 const body = (surface: Surface) =>
   render(
-    readFileSync(templatePath('external', 'src/components', FILES[surface]), 'utf8'),
+    readFileSync(
+      templatePath('external', 'src/components', `${factsFor(surface).example}.tsx`),
+      'utf8',
+    ),
     tokensFor({ ...base, surface }),
   )
 
-const TOOLBAR_SURFACES = SURFACES.filter(candidate => candidate !== 'map.legends')
+const entry = (surface: Surface) =>
+  render(
+    readFileSync(
+      templatePath('external', 'src', `${factsFor(surface).indexTemplate}.ts`),
+      'utf8',
+    ),
+    tokensFor({ ...base, surface }),
+  )
+
+const TOOLBAR_SURFACES = SURFACES.filter(candidate => factsFor(candidate).usesReadoutRow)
 
 describe('every example body', () => {
   for (const surface of SURFACES) {
-    it(`imports its types from the kit entry for ${surface}, which loads the ambient SDK types`, () => {
-      expect(body(surface)).toContain(factsFor(surface).entry)
+    it(`reaches the ambient SDK types through the kit entry for ${surface}`, () => {
+      // The `declare module` block for the SDK specifiers is reachable only through a kit
+      // entry import, and one anywhere in the program is enough. A tab and a dialog need no
+      // type from the kit, so for those it is the entry file that carries the import.
+      expect(`${entry(surface)}${body(surface)}`).toContain(factsFor(surface).entry)
     })
 
     it(`never imports a library ${surface} must not bundle`, () => {
@@ -65,8 +73,12 @@ describe('every example body', () => {
       expect(body(surface)).toContain('SPDX-License-Identifier: AGPL-3.0-or-later')
     })
 
-    it(`translates every string it shows for ${surface}, with an inline fallback`, () => {
-      expect(body(surface)).toContain('usePluginTranslations')
+    it(`routes its user-visible strings through translation for ${surface}`, () => {
+      const source = body(surface)
+
+      // A data page renders no text of its own: its column labels are `labelKey` strings the
+      // host resolves. Every other body shows text directly and translates it inline.
+      expect(source.includes('usePluginTranslations') || source.includes('labelKey')).toBe(true)
     })
 
     it(`leaves no unrendered token for ${surface}`, () => {

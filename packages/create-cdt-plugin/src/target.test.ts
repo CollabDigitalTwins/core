@@ -39,7 +39,7 @@ describe('checkSlug', () => {
   })
 
   it('lists the plugins compiled into core', () => {
-    expect([...COMPILED_IN_SLUGS]).toEqual(['hello-map', 'hello-bim'])
+    expect([...COMPILED_IN_SLUGS]).toEqual(['hello-map', 'hello-bim', 'hello-everywhere'])
   })
 })
 

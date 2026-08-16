@@ -17,6 +17,7 @@ import {
   PanelRight,
   Puzzle,
   Scan,
+  SquareStack,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
@@ -59,8 +60,9 @@ const CAPABILITY_ICON: Record<string, LucideIcon> = {
   'map.legends': MapPin,
   'bim.tools': Box,
   'pointcloud.tools': Scan,
-  'sidebar.items': PanelLeft,
-  'viewer.panels': PanelRight,
+  'data.pages': PanelLeft,
+  'viewer.tabs': PanelRight,
+  'ui.dialogs': SquareStack,
 }
 
 interface Props {

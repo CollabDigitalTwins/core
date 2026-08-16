@@ -7,8 +7,10 @@ import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
 import { LegendCard } from '../../../../components/ui/LegendCard'
-import { usePluginContributions } from '../../../../plugins/host/provider'
+import { usePluginConfigs, usePluginContributions } from '../../../../plugins/host/provider'
+import { PluginScopeProvider } from '../../../../plugins/host/scope'
 
+import type { PluginContribution } from '../../../../plugins/host/provider'
 import type { LegendRegistration } from '../../../../plugins/sdk/types'
 
 /**
@@ -20,6 +22,7 @@ import type { LegendRegistration } from '../../../../plugins/sdk/types'
  */
 export function MapLegendHost() {
   const registrations = usePluginContributions('map.legends')
+  const configs = usePluginConfigs()
   const t = useTranslations('MapLegend')
   const [activeMap, setActiveMap] = React.useState<Record<string, boolean>>({})
 
@@ -34,7 +37,13 @@ export function MapLegendHost() {
       {/* Hidden probes keep useLegend() hooks alive even while the card is hidden. */}
       <div className="hidden">
         {registrations.map(r => (
-          <LegendSection key={`probe-${r.id}`} registration={r} onActiveChange={reportActive} renderBody={false} />
+          <ScopedLegendSection
+            key={`probe-${r.id}`}
+            registration={r}
+            config={configs[r.pluginId]}
+            onActiveChange={reportActive}
+            renderBody={false}
+          />
         ))}
       </div>
 
@@ -46,12 +55,35 @@ export function MapLegendHost() {
           countTestId="map-legend-count"
         >
           {registrations.map(r => (
-            <LegendSection key={r.id} registration={r} onActiveChange={reportActive} renderBody />
+            <ScopedLegendSection
+              key={r.id}
+              registration={r}
+              config={configs[r.pluginId]}
+              onActiveChange={reportActive}
+              renderBody
+            />
           ))}
         </LegendCard>
       )}
     </>
   )
+}
+
+// The scope has to be a *parent* of the component that calls `useLegend`, not a wrapper
+// around the call: a legend contributes a hook, and that hook runs in this component's own
+// body. Without it, a legend reaching for usePluginTranslations, usePluginConfig or
+// usePluginState throws — which is what the first legend to use one did.
+function ScopedLegendSection({ registration, config, ...rest }: ScopedLegendSectionProps) {
+  return (
+    <PluginScopeProvider pluginId={registration.pluginId} config={config}>
+      <LegendSection registration={registration} {...rest} />
+    </PluginScopeProvider>
+  )
+}
+
+interface ScopedLegendSectionProps extends LegendSectionProps {
+  registration: PluginContribution<'map.legends'>
+  config?: Record<string, unknown>
 }
 
 interface LegendSectionProps {

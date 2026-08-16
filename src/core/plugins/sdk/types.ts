@@ -6,6 +6,10 @@
 import type { BimToolProps } from './bimViewer'
 import type { MapToolProps } from './mapViewer'
 import type { PointCloudToolProps } from './pointCloudViewer'
+// Re-exported as a value, not just a type: a `viewer.tabs` contribution names the viewers it
+// belongs in, and a plugin may not import from anywhere else in core to get them.
+export { ViewerNames } from '../../types/dbTypes'
+
 import type { ViewerNames } from '../../types/dbTypes'
 import type { LucideProps } from 'lucide-react'
 
@@ -14,8 +18,9 @@ import type { LucideProps } from 'lucide-react'
 // Only capabilities core actually renders. One with no consumer registers fine,
 // shows nothing, and leaves nothing to debug.
 export const VALID_CAPABILITIES = [
-  'sidebar.items',
-  'viewer.panels',
+  'data.pages',
+  'viewer.tabs',
+  'ui.dialogs',
   'map.tools',
   'bim.tools',
   'pointcloud.tools',
@@ -77,11 +82,36 @@ export function validateManifest(manifest: unknown): { valid: boolean; errors: s
 
 // --- Registration shapes (one per capability) ---
 
-export interface SidebarRegistration {
+export interface DataPageColumn<Row> {
+  key: string
+  /** Resolved in the plugin's own namespace, falling back to the literal string. */
+  labelKey: string
+  render?: (row: Row) => React.ReactNode
+}
+
+/**
+ * A full page in the app's Datasets nav, rendered by core: frame, breadcrumb, title,
+ * search and table. The plugin supplies rows and columns; a row click opens one of its
+ * own `ui.dialogs` rather than a detail view of its own.
+ */
+export interface DataPageRows<Row> {
+  rows: Row[]
+  isLoading?: boolean
+  // Returned from the hook rather than declared on the registration so it can close over
+  // hooks — `usePluginDialogs` in particular, which is how a row opens a detail view.
+  // `activate()` runs outside React and could never supply one.
+  onRowClick?: (row: Row) => void
+}
+
+export interface DataPageRegistration<Row = Record<string, unknown>> {
   id: string
-  label: string
+  titleKey: string
   icon: string | React.ComponentType<LucideProps>
-  component: React.ComponentType
+  useRows: () => DataPageRows<Row>
+  columns: DataPageColumn<Row>[]
+  /** Column keys the search box filters on. Omit to search every column. */
+  searchKeys?: string[]
+  emptyKey?: string
 }
 
 /** Every toolbar component receives the toolbar entry core built for it. */
@@ -103,13 +133,24 @@ export interface ToolbarRegistration<P = Record<string, unknown>> {
   stayActive?: boolean
 }
 
-export interface ViewerRegistration {
+export interface ViewerTabRegistration {
   id: string
-  label: string
+  labelKey: string
   icon: string | React.ComponentType<LucideProps>
   component: React.ComponentType
-  /** Which viewers this panel appears in. Omit for all of them. */
+  /** Which viewers this tab appears in. Omit for all of them. */
   viewers?: ViewerNames[]
+}
+
+/**
+ * A modal core owns. Registered here, opened by id from any of the plugin's surfaces via
+ * `usePluginDialogs()`, so it outlives whichever one opened it.
+ */
+export interface DialogRegistration<P = Record<string, unknown>> {
+  id: string
+  titleKey: string
+  size?: 'sm' | 'md' | 'lg' | 'xl'
+  component: React.ComponentType<P & { close: () => void }>
 }
 
 export interface LegendRow {
@@ -136,8 +177,9 @@ export interface LegendRegistration {
 // calling `registry.getAll('your.key')`. No host changes.
 
 export interface CapabilityRegistry {
-  'sidebar.items': SidebarRegistration
-  'viewer.panels': ViewerRegistration
+  'data.pages': DataPageRegistration
+  'viewer.tabs': ViewerTabRegistration
+  'ui.dialogs': DialogRegistration
   'map.tools': ToolbarRegistration<MapToolProps>
   'bim.tools': ToolbarRegistration<BimToolProps>
   'pointcloud.tools': ToolbarRegistration<PointCloudToolProps>

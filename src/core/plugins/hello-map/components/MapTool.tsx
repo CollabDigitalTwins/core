@@ -8,6 +8,7 @@ import * as React from 'react'
 import { Button, Separator } from '../../sdk/components'
 import { usePluginConfig } from '../../sdk/config'
 import { usePluginTranslations } from '../../sdk/messages'
+import { useMarkers } from '../markers'
 
 import type { MapToolProps } from '../../sdk/mapViewer'
 import type { ToolbarToolProps } from '../../sdk/types'
@@ -17,19 +18,22 @@ interface Config extends Record<string, unknown> {
 }
 
 /**
- * Reads the map's centre and zoom, and keeps them current as the user pans.
+ * Where the map is, and a button to record it.
  *
- * Four things to copy from this: render panel content and let core supply the
- * button-and-dropdown chrome; guard `map`, which is null until MapLibre finishes
- * initialising; remove every listener on cleanup, or a leaked `move` handler keeps
- * firing after the user switches viewers; and take strings from the manifest's
- * `messages` with an inline English fallback.
+ * Two things worth copying: render panel content and let core supply the button and
+ * dropdown chrome, and remove every listener on cleanup — a leaked `move` handler keeps
+ * firing after the user switches viewers.
+ *
+ * The marker this records is drawn by `MarkersLayer`, not here, because this panel unmounts
+ * as soon as the dropdown closes.
  */
-export function HelloMapTool({ map }: ToolbarToolProps & MapToolProps) {
+export function MapTool({ map }: ToolbarToolProps & MapToolProps) {
   const t = usePluginTranslations()
   const { decimals = 5 } = usePluginConfig<Config>()
+  const { add, markers, lastError } = useMarkers()
 
   const [view, setView] = React.useState<{ lng: number; lat: number; zoom: number } | null>(null)
+  const [saving, setSaving] = React.useState(false)
 
   React.useEffect(() => {
     if (!map) return
@@ -46,8 +50,19 @@ export function HelloMapTool({ map }: ToolbarToolProps & MapToolProps) {
     }
   }, [map])
 
+  const record = async () => {
+    if (!view || saving) return
+
+    setSaving(true)
+    try {
+      await add(view.lat, view.lng, view.zoom)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
-    <div className="w-60 p-1">
+    <div className="w-64 p-1">
       <p className="px-2 py-1 text-sm font-medium">{t('title', 'Hello Map')}</p>
       <Separator className="my-1" />
 
@@ -59,18 +74,27 @@ export function HelloMapTool({ map }: ToolbarToolProps & MapToolProps) {
             <Row label={t('zoom', 'Zoom')} value={view.zoom.toFixed(2)} />
           </dl>
 
+          <Separator className="my-1" />
+
           <Button
             size="sm"
             variant="ghost"
-            className="mt-1 w-full justify-start font-normal"
-            onClick={() => {
-              void navigator.clipboard?.writeText(
-                `${view.lat.toFixed(decimals)}, ${view.lng.toFixed(decimals)}`,
-              )
-            }}
+            className="w-full justify-start font-normal"
+            disabled={saving}
+            onClick={() => { void record() }}
           >
-            {t('copy', 'Copy coordinates')}
+            {saving ? t('recording', 'Recording…') : t('record', 'Record a marker here')}
           </Button>
+
+          <p className="px-2 py-1 text-xs text-muted-foreground">
+            {t('markerCount', 'Markers: ')}{markers.length}
+          </p>
+
+          {lastError && (
+            <p className="px-2 py-1 text-xs text-destructive">
+              {t('saveFailed', 'Could not save: ')}{lastError}
+            </p>
+          )}
         </>
       ) : (
         <p className="px-2 py-1 text-sm text-muted-foreground">

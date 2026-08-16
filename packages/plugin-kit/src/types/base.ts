@@ -23,6 +23,7 @@ export const VALID_CAPABILITIES = [
   'bim.tools',
   'pointcloud.tools',
   'map.legends',
+  'map.layers',
 ] as const
 
 export type PluginCapability = typeof VALID_CAPABILITIES[number]
@@ -57,6 +58,13 @@ export interface ToolbarRegistration<P = Record<string, unknown>> {
   component: React.ComponentType<ToolbarToolProps & P>
   cursor?: string
   stayActive?: boolean
+}
+
+// Mounted for as long as the map is, unlike a toolbar panel, which unmounts when its
+// dropdown closes. `P` is the map surface, bound by `CapabilityRegistry`.
+export interface MapLayerRegistration<P = unknown> {
+  id: string
+  component: React.ComponentType<P>
 }
 
 export interface DataPageColumn<Row> {
@@ -115,6 +123,7 @@ export interface CapabilityRegistry<
   'bim.tools': ToolbarRegistration<BimProps>
   'pointcloud.tools': ToolbarRegistration<PointCloudProps>
   'map.legends': Legend
+  'map.layers': MapLayerRegistration<MapProps>
 }
 
 // The surface parameters must be bound for `register` to accept a component typed against a

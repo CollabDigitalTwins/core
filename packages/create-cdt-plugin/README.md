@@ -95,7 +95,7 @@ The French and Spanish message blocks start as copies of the English ones. Every
 
 ## Choosing a surface
 
-Seven capabilities, which is every one the platform renders:
+Eight capabilities, which is every one the platform renders:
 
 | Surface | Where it appears | What your component receives |
 |---|---|---|
@@ -103,6 +103,7 @@ Seven capabilities, which is every one the platform renders:
 | `bim.tools` | BIM viewer toolbar | Model ids, selection, and methods to query, select, isolate and frame elements |
 | `pointcloud.tools` | Point cloud toolbar | The Potree viewer as `unknown`, plus a `ready` flag |
 | `map.legends` | Map legend | Nothing: a legend registers a hook, so its rows can carry live counts |
+| `map.layers` | Drawn on the map, for as long as the map exists | The MapLibre map. Renders `null` and manages its own sources and layers |
 | `data.pages` | Datasets nav, as a full page | Nothing: you supply a rows hook and columns, and the platform renders the page |
 | `viewer.tabs` | Viewer sidebar, as a tab | Nothing: the platform owns the tab strip and panel frame |
 | `ui.dialogs` | Anywhere, opened by id | `close`, plus whatever `open(id, props)` passed |
@@ -110,6 +111,8 @@ Seven capabilities, which is every one the platform renders:
 The scaffolder picks one, because a first plugin that registers five surfaces teaches nothing. Adding more later is a second `ctx.register` call and a second entry in `manifest.capabilities`.
 
 **One plugin can span several.** A map tool, a sidebar tab and a dialog from the same plugin share state through `usePluginState`, which is in memory and scoped to your plugin — so the tool sets a selection and the tab re-renders with it, with no round trip and no shared parent. `ui.dialogs` is what makes that composable: register the dialog once, open it by id from whichever surface needs it, and it stays on screen when the surface that opened it unmounts.
+
+**Drawing on the map is `map.layers`, not `map.tools`.** A tool's panel is a dropdown and unmounts when it closes, taking its sources and layers with it. A `map.layers` contribution is mounted for as long as the map, so what it draws survives — and so does anything another of your surfaces adds while the toolbar is shut.
 
 ---
 

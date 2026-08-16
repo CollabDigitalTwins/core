@@ -86,6 +86,18 @@ const FACTS: Record<Surface, SurfaceFacts> = {
     allowsEmpty: false,
     usesReadoutRow: false,
   },
+  'map.layers': {
+    entry: '@collabdt/plugin-kit/types/map',
+    coreEntry: '../../sdk/mapViewer',
+    propsType: 'MapToolProps',
+    contextType: 'MapPluginContext',
+    typeDependency: ['maplibre-gl', '^5.24.0'],
+    icon: 'Layers',
+    indexTemplate: 'indexLayer',
+    example: 'ExampleLayer',
+    allowsEmpty: false,
+    usesReadoutRow: false,
+  },
   // The three below name no viewer library either, so they share one kit entry and take
   // their shapes from the SDK's own types module.
   'data.pages': {

@@ -9,12 +9,14 @@ import React from 'react'
 import Map, { NavigationControl } from 'react-map-gl/maplibre'
 
 
+import { PluginMapLayerHost } from '../../../plugins/host/PluginMapLayerHost'
 import { MapContext } from '../../../store'
 import { SensorLegend } from '../../ui/Sensors/SensorLegend'
 import SettingsButton from '../../ui/SettingsButton'
 import { StatsOverlay } from '../../ui/stats'
 
 import DatasetManagerMenu from './datasets/DatasetManager'
+
 import { MapLegendHost } from './legends/MapLegendHost'
 import { MapLayers } from './src/MapLayers'
 import { MapClickManager } from './utils/MapEventManager/MapClickManager'
@@ -227,6 +229,9 @@ export function MapViewer({ width = '100%', height = '100%', organization, mapti
           )}
       </Map>
       <StatsOverlay mapRef={mapRef} enabled={isDebug} />
+      {/* Renders nothing itself. Outside <Map> and unconditional, so a plugin's layer
+          outlives the toolbar panel that created it and survives a viewer switch. */}
+      <PluginMapLayerHost />
     </>
 
   )

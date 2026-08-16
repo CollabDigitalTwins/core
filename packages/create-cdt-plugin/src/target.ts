@@ -9,7 +9,7 @@ import type { Mode } from './options'
 // A checked copy rather than an import: this package is a bin run by plain Node, which cannot
 // resolve core's extensionless dist imports, and depending on core would pull three.js into a
 // scaffolder. Core's createCdtPluginDrift.test.ts prevents the drift.
-export const COMPILED_IN_SLUGS: readonly string[] = ['hello-map', 'hello-bim', 'hello-everywhere']
+export const COMPILED_IN_SLUGS: readonly string[] = ['hello-map', 'hello-bim']
 
 // No separators or dot segments: the slug becomes the directory name, so anything else lets a
 // scaffold escape the path the target checks confirmed.

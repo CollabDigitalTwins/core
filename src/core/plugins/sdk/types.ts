@@ -25,6 +25,7 @@ export const VALID_CAPABILITIES = [
   'bim.tools',
   'pointcloud.tools',
   'map.legends',
+  'map.layers',
 ] as const
 
 export type PluginCapability = typeof VALID_CAPABILITIES[number]
@@ -153,6 +154,22 @@ export interface DialogRegistration<P = Record<string, unknown>> {
   component: React.ComponentType<P & { close: () => void }>
 }
 
+/**
+ * Something drawn on the map, mounted for as long as the map itself.
+ *
+ * The component receives the map and renders `null` — or a portal into
+ * `map.getContainer()` for a popup. It owns its sources and layers through effects and
+ * removes them on unmount.
+ *
+ * Separate from `map.tools` because a toolbar panel unmounts when its dropdown closes,
+ * which would take the layer with it. A plugin that draws on the map needs something that
+ * outlives the panel, and this is it.
+ */
+export interface MapLayerRegistration {
+  id: string
+  component: React.ComponentType<MapToolProps>
+}
+
 export interface LegendRow {
   label: string
   color: string
@@ -184,6 +201,7 @@ export interface CapabilityRegistry {
   'bim.tools': ToolbarRegistration<BimToolProps>
   'pointcloud.tools': ToolbarRegistration<PointCloudToolProps>
   'map.legends': LegendRegistration
+  'map.layers': MapLayerRegistration
 }
 
 // Errors if VALID_CAPABILITIES and keyof CapabilityRegistry drift apart.

@@ -2,7 +2,6 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import helloBimManifest from './hello-bim/manifest.json'
-import helloEverywhereManifest from './hello-everywhere/manifest.json'
 import helloMapManifest from './hello-map/manifest.json'
 
 import type { PluginManifest } from './sdk/types'
@@ -18,5 +17,4 @@ import type { PluginManifest } from './sdk/types'
 export const PLUGIN_MANIFESTS: PluginManifest[] = [
   helloMapManifest as PluginManifest,
   helloBimManifest as PluginManifest,
-  helloEverywhereManifest as PluginManifest,
 ]

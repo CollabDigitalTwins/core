@@ -22,6 +22,7 @@ declare module '@collabdt/core/plugins-sdk' {
     'bim.tools',
     'pointcloud.tools',
     'map.legends',
+    'map.layers',
   ]
 
   export const PLUGIN_HOST_API: 1
@@ -42,6 +43,12 @@ declare module '@collabdt/core/plugins-sdk' {
     settings: 'settings'
     users: 'users'
   }
+
+  /** Map-friendly, colourblind-accessible colours. Use these rather than inventing a set. */
+  export const MAP_COLOUR_PALETTE: readonly string[]
+
+  /** A stable colour from `MAP_COLOUR_PALETTE`, chosen by hashing the string. */
+  export function stringToColour(str: string, variant?: 'min' | 'max'): string
 
   export function validateManifest(manifest: unknown): { valid: boolean; errors: string[] }
 

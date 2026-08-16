@@ -56,6 +56,8 @@ export const PLUGIN_RUNTIME_SHIMS: readonly RuntimeShim[] = [
       'VALID_CAPABILITIES', 'validateManifest', 'PLUGIN_HOST_API', 'resolvePluginEntry',
       // A value, not just a type: a `viewer.tabs` contribution names the viewers it belongs in.
       'ViewerNames',
+      // So a plugin colouring something on the map uses the platform's palette.
+      'MAP_COLOUR_PALETTE', 'stringToColour',
     ],
   },
   {

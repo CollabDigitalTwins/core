@@ -20,6 +20,7 @@ const SURFACE_ENTRY: Record<Surface, string> = {
   'bim.tools': 'bim',
   'pointcloud.tools': 'pointcloud',
   'map.legends': 'legend',
+  'map.layers': 'map',
   'data.pages': 'ui',
   'viewer.tabs': 'ui',
   'ui.dialogs': 'ui',

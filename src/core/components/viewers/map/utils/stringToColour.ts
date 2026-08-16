@@ -3,10 +3,15 @@
 
 import type { LayerColors } from '../../../../types/datasetTypes'
 
-export const stringToColour = (str: string, variant?: 'min' | 'max') => {
-  // Expanded palette: 36 map-friendly, colorblind-accessible, high-contrast colors
-  // Carefully chosen for distinctiveness and good contrast with both black and white
-  const palette = [
+/**
+ * Map-friendly, colourblind-accessible, high-contrast colours, chosen for distinctiveness
+ * and for readability against both black and white.
+ *
+ * A named export rather than a local, because anything that offers a colour choice should
+ * offer these rather than inventing its own set. Re-exported through `plugins-sdk` so a
+ * plugin can use the same palette without reaching into core.
+ */
+export const MAP_COLOUR_PALETTE = [
     '#1b9e77', // teal
     '#d95f02', // orange
     '#7570b3', // purple
@@ -41,7 +46,11 @@ export const stringToColour = (str: string, variant?: 'min' | 'max') => {
     '#fbafe4', // pastel pink
     '#8dd3c7', // turquoise
     '#ccebc5', // mint
-  ]
+  ] as const
+
+/** A stable colour from `MAP_COLOUR_PALETTE`, chosen by hashing the string. */
+export const stringToColour = (str: string, variant?: 'min' | 'max') => {
+  const palette = MAP_COLOUR_PALETTE
 
   // Simple hash to index
   let hash = 0

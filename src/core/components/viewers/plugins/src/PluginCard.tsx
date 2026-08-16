@@ -11,6 +11,7 @@ import {
   Eye,
   Lock,
   MapPin,
+  Layers,
   Minus,
   PackagePlus,
   PanelLeft,
@@ -58,6 +59,7 @@ const STATUS_STYLE: Record<PluginListing['status'], { icon: LucideIcon; classNam
 const CAPABILITY_ICON: Record<string, LucideIcon> = {
   'map.tools': MapPin,
   'map.legends': MapPin,
+  'map.layers': Layers,
   'bim.tools': Box,
   'pointcloud.tools': Scan,
   'data.pages': PanelLeft,

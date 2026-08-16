@@ -11,6 +11,7 @@ export const SURFACES = [
   'bim.tools',
   'pointcloud.tools',
   'map.legends',
+  'map.layers',
   'data.pages',
   'viewer.tabs',
   'ui.dialogs',

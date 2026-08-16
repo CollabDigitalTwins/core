@@ -73,12 +73,17 @@ describe('every example body', () => {
       expect(body(surface)).toContain('SPDX-License-Identifier: AGPL-3.0-or-later')
     })
 
-    it(`routes its user-visible strings through translation for ${surface}`, () => {
+    it(`leaves no untranslated user-visible string for ${surface}`, () => {
       const source = body(surface)
 
-      // A data page renders no text of its own: its column labels are `labelKey` strings the
-      // host resolves. Every other body shows text directly and translates it inline.
-      expect(source.includes('usePluginTranslations') || source.includes('labelKey')).toBe(true)
+      // Three shapes are all correct here: a body that shows text translates it inline; a
+      // data page contributes `labelKey` strings the host resolves; and a map layer renders
+      // nothing at all, so it has no string to translate.
+      const translates = source.includes('usePluginTranslations')
+      const contributesKeys = source.includes('labelKey')
+      const rendersNothing = /return null\s*$/m.test(source)
+
+      expect(translates || contributesKeys || rendersNothing).toBe(true)
     })
 
     it(`leaves no unrendered token for ${surface}`, () => {

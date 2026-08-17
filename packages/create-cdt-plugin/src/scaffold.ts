@@ -13,10 +13,12 @@ import type { Options } from './options'
 
 /** Template file -> path inside the generated plugin. */
 function planFor(options: Options): Array<[string, string]> {
+  const entry = `${factsFor(options.surface).indexTemplate}.ts`
+
   if (options.mode === 'builtin') {
     return [
       ['builtin/manifest.json', 'manifest.json'],
-      [options.surface === 'map.legends' ? 'builtin/indexLegend.ts' : 'builtin/index.ts', 'index.ts'],
+      [`builtin/${entry}`, 'index.ts'],
       ...bodyFiles(options),
     ]
   }
@@ -28,36 +30,27 @@ function planFor(options: Options): Array<[string, string]> {
     ['external/tsup.config.ts', 'tsup.config.ts'],
     ['external/gitignore', '.gitignore'],
     ['external/README.md', 'README.md'],
-    [options.surface === 'map.legends' ? 'external/src/indexLegend.ts' : 'external/src/index.ts', 'src/index.ts'],
+    [`external/src/${entry}`, 'src/index.ts'],
     ...bodyFiles(options),
   ]
 }
 
-// More than one file for the example, which composes a child component from its own file. The
-// bundle is still single-file: the delivery constraint says nothing about how source is
-// organised, and a one-file example reads as saying a plugin is one component.
-//
-// A legend has no empty variant. Its hook is the plugin, and Empty.tsx interpolates a props
-// type the legend surface does not have, so routing it there would emit invalid TypeScript.
+// Two files, so a reader does not infer that a plugin is one component.
 function bodyFiles(options: Options): Array<[string, string]> {
+  const facts = factsFor(options.surface)
   const templates = options.mode === 'builtin' ? 'builtin/components' : 'external/src/components'
   const destination = options.mode === 'builtin' ? 'components' : 'src/components'
   const root = `${destination}/${tokensFor(options).COMPONENT}.tsx`
 
-  if (options.surface === 'map.legends') {
-    return [[`${templates}/ExampleLegend.tsx`, root]]
-  }
-
-  if (options.body === 'empty') {
+  if (options.body === 'empty' && facts.allowsEmpty) {
     return [[`${templates}/Empty.tsx`, root]]
   }
 
-  const suffix = { 'map.tools': 'Map', 'bim.tools': 'Bim', 'pointcloud.tools': 'Pointcloud' } as const
+  const example: Array<[string, string]> = [[`${templates}/${facts.example}.tsx`, root]]
 
-  return [
-    [`${templates}/Example${suffix[options.surface]}.tsx`, root],
-    [`${templates}/ReadoutRow.tsx`, `${destination}/ReadoutRow.tsx`],
-  ]
+  if (!facts.usesReadoutRow) return example
+
+  return [...example, [`${templates}/ReadoutRow.tsx`, `${destination}/ReadoutRow.tsx`]]
 }
 
 export function plannedFiles(options: Options): string[] {

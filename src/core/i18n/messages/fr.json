@@ -1995,6 +1995,11 @@
     "sensorMetadata": "Métadonnées du capteur",
     "selfLink": "Lien propre"
   },
+  "PluginDataPage": {
+    "loading": "Chargement…",
+    "empty": "Rien pour l'instant.",
+    "noResults": "Aucun résultat pour « {query} »."
+  },
   "PluginsPage": {
     "title": "Plugins",
     "intro": "Les plugins ajoutent des outils, des panneaux et des couches cartographiques à ce déploiement. Un administrateur décide lesquels sont disponibles ici; vous choisissez lesquels s’exécutent pour vous.",

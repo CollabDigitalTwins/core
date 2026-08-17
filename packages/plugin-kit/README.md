@@ -64,7 +64,7 @@ import type { MapToolProps, ToolbarToolProps } from '@collabdt/plugin-kit/types/
 | `@collabdt/plugin-kit/types/map` | `map.tools` | `maplibre-gl` types |
 | `@collabdt/plugin-kit/types/bim` | `bim.tools` | `@thatopen/components` types |
 | `@collabdt/plugin-kit/types/pointcloud` | `pointcloud.tools` | nothing external |
-| `@collabdt/plugin-kit/types/legend` | `map.legends` | nothing external |
+| `@collabdt/plugin-kit/types/legend` | `viewer.legends` | nothing external |
 
 Split per surface on purpose. A single combined entry would make a map plugin's typecheck fail on unresolved `@thatopen/components` references it has no reason to install, so only the map and BIM surfaces need a type-only dependency at all.
 

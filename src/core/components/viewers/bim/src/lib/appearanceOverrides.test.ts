@@ -284,3 +284,65 @@ describe('removeOverride / clearSourceOverrides / findOverride', () => {
     expect(findOverride(list, 'spatial', 'ifc-class:IFCWALL')).toBeUndefined()
   })
 })
+
+// Per-element overrides exist for plugins, which have no tree node to hang one on.
+describe('resolveAppearance with per-element overrides', () => {
+  const forOwner = (owner: string, modelId: string, localIds: number[], colour: number) =>
+    new Map([[owner, new Map([[modelId, new Map(localIds.map(id => [id, { color: colour }]))]])]])
+
+  it('paints elements with no tree override anywhere', () => {
+    const resolved = resolveAppearance([], trees(), forOwner('plugin-a', 'm', [10, 11], RED))
+
+    expect(resolved.get('m')?.get(10)).toEqual({ color: RED })
+    expect(resolved.get('m')?.get(11)).toEqual({ color: RED })
+  })
+
+  // The early return used to bail before these were applied.
+  it('does not short-circuit when only a plugin is painting', () => {
+    const resolved = resolveAppearance(
+      [override('spatial', 'gone:404', 0, { color: BLUE })],
+      trees(),
+      forOwner('plugin-a', 'm', [10], RED),
+    )
+
+    expect(resolved.get('m')?.get(10)).toEqual({ color: RED })
+  })
+
+  it('wins over a tree override on the same element', () => {
+    const resolved = resolveAppearance(
+      [override('spatial', 'm:2', 0, { color: BLUE })],
+      trees(),
+      forOwner('plugin-a', 'm', [10], RED),
+    )
+
+    expect(resolved.get('m')?.get(10)).toEqual({ color: RED })
+    // Its sibling keeps the storey's colour: only the painted element is taken over.
+    expect(resolved.get('m')?.get(11)).toEqual({ color: BLUE })
+  })
+
+  it('merges with a tree opacity rather than replacing it', () => {
+    const resolved = resolveAppearance(
+      [override('spatial', 'm:2', 0, { opacity: 0.5 })],
+      trees(),
+      forOwner('plugin-a', 'm', [10], RED),
+    )
+
+    expect(resolved.get('m')?.get(10)).toEqual({ opacity: 0.5, color: RED })
+  })
+
+  it('keeps two owners apart', () => {
+    const both = new Map([
+      ...forOwner('plugin-a', 'm', [10], RED),
+      ...forOwner('plugin-b', 'm', [11], BLUE),
+    ])
+
+    const resolved = resolveAppearance([], trees(), both)
+
+    expect(resolved.get('m')?.get(10)).toEqual({ color: RED })
+    expect(resolved.get('m')?.get(11)).toEqual({ color: BLUE })
+  })
+
+  it('is a no-op when there are none', () => {
+    expect(resolveAppearance([], trees(), new Map()).size).toBe(0)
+  })
+})

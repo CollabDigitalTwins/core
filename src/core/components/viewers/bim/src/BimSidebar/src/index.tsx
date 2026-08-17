@@ -5,6 +5,8 @@
 
 import * as React from 'react'
 
+import { usePluginViewerTabs } from '../../../../../../plugins/host/usePluginViewerTabs'
+import { ViewerNames } from '../../../../../../types/dbTypes'
 import { CommunicationTab } from '../../../../../ui/ViewerSidebar/CommunicationTab'
 import { SensorsTab } from '../../../../../ui/ViewerSidebar/SensorsTab'
 import { ViewerSidebarShell } from '../../../../../ui/ViewerSidebar/Shell'
@@ -18,12 +20,15 @@ import type { Organization } from '../../../../../../types/dbTypes'
 import type { ViewerSidebarTab } from '../../../../../ui/ViewerSidebar/sidebarTabs'
 
 export function BimSidebar({ organization }: { organization?: Organization }) {
+  const pluginTabs = usePluginViewerTabs(ViewerNames.bim)
+
   const tabs: ViewerSidebarTab[] = [
     { id: 'file', content: <FileTab /> },
     { id: 'layers', content: <LayersTab /> },
     { id: 'communication', content: <CommunicationTab topics={<TopicsSection />} /> },
     { id: 'sensors', content: <SensorsTab /> },
     { id: 'settings', content: <SettingsTab /> },
+    ...pluginTabs,
   ]
 
   return <ViewerSidebarShell tabs={tabs} organization={organization} />

@@ -12,13 +12,14 @@ import { Separator } from '../Separator'
 
 import { SIDEBAR_TAB_META, sidebarPanelId, sidebarTabId } from './sidebarTabs'
 
-import type { SidebarTabType } from '../../../store/Menus/reducer'
+import type { ViewerSidebarTab } from './sidebarTabs'
+import type { SidebarTabKey, SidebarTabType } from '../../../store/Menus/reducer'
 
 interface TabStripProps {
-  /** Visible tab ids, in display order. */
-  tabs: SidebarTabType[]
-  activeTab: SidebarTabType
-  onTabChangeAction: (tab: SidebarTabType) => void
+  /** Visible tabs, in display order. */
+  tabs: ViewerSidebarTab[]
+  activeTab: SidebarTabKey
+  onTabChangeAction: (tab: SidebarTabKey) => void
 }
 
 /**
@@ -63,7 +64,7 @@ export function TabStrip({ tabs, activeTab, onTabChangeAction }: TabStripProps) 
     if (!nextTab) return
 
     event.preventDefault()
-    onTabChangeAction(nextTab)
+    onTabChangeAction(nextTab.id)
     buttonsRef.current[nextIndex]?.focus()
   }
 
@@ -73,9 +74,11 @@ export function TabStrip({ tabs, activeTab, onTabChangeAction }: TabStripProps) 
 
       <div className="px-4 py-3">
         <div ref={listRef} role="tablist" aria-orientation="horizontal" className="flex items-center gap-1 w-full">
-          {tabs.map((tab, index) => {
-            const { icon: Icon, labelKey } = SIDEBAR_TAB_META[tab]
-            const label = t(labelKey)
+          {tabs.map(({ id: tab, meta }, index) => {
+            // A plugin tab has no meta entry here; its label is already resolved.
+            const builtIn = SIDEBAR_TAB_META[tab as SidebarTabType]
+            const Icon = meta?.icon ?? builtIn.icon
+            const label = meta?.label ?? t(builtIn.labelKey)
             const isActive = tab === activeTab
 
             return (

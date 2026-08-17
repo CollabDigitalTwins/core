@@ -14,7 +14,7 @@ describe('createPluginContext', () => {
   it('exposes pluginId, config, and register', () => {
     const ctx = createPluginContext({
       pluginId: 'test',
-      capabilities: ['sidebar.items'],
+      capabilities: ['viewer.tabs'],
       config: { foo: 'bar' },
       registry,
     })
@@ -26,18 +26,18 @@ describe('createPluginContext', () => {
   it('registers an entry for a declared capability with pluginId merged', () => {
     const ctx = createPluginContext({
       pluginId: 'my-plugin',
-      capabilities: ['sidebar.items'],
+      capabilities: ['viewer.tabs'],
       config: {},
       registry,
     })
-    ctx.register('sidebar.items', {
+    ctx.register('viewer.tabs', {
       id: 'home',
-      label: 'Home',
+      labelKey: 'Home',
       icon: 'Home',
       component: () => null,
     })
 
-    const entries = registry.getAll('sidebar.items')
+    const entries = registry.getAll('viewer.tabs')
     expect(entries).toHaveLength(1)
     expect(entries[0]).toMatchObject({ id: 'home', pluginId: 'my-plugin' })
   })
@@ -45,22 +45,22 @@ describe('createPluginContext', () => {
   it('supports multiple declared capabilities', () => {
     const ctx = createPluginContext({
       pluginId: 'test',
-      capabilities: ['sidebar.items', 'map.tools'],
+      capabilities: ['viewer.tabs', 'map.tools'],
       config: {},
       registry,
     })
 
-    ctx.register('sidebar.items', { id: 's', label: 'S', icon: 'Home', component: () => null })
+    ctx.register('viewer.tabs', { id: 's', labelKey: 'S', icon: 'Home', component: () => null })
     ctx.register('map.tools', { id: 't', label: 'T', icon: 'Wrench', component: () => null })
 
-    expect(registry.getAll('sidebar.items')).toHaveLength(1)
+    expect(registry.getAll('viewer.tabs')).toHaveLength(1)
     expect(registry.getAll('map.tools')).toHaveLength(1)
   })
 
   it('throws when registering for an undeclared capability', () => {
     const ctx = createPluginContext({
       pluginId: 'strict-plugin',
-      capabilities: ['sidebar.items'],
+      capabilities: ['viewer.tabs'],
       config: {},
       registry,
     })
@@ -78,41 +78,41 @@ describe('createPluginContext', () => {
   it('pluginId in the item payload cannot override the context pluginId', () => {
     const ctx = createPluginContext({
       pluginId: 'real-id',
-      capabilities: ['sidebar.items'],
+      capabilities: ['viewer.tabs'],
       config: {},
       registry,
     })
 
-    ctx.register('sidebar.items', {
+    ctx.register('viewer.tabs', {
       id: 'x',
-      label: 'X',
+      labelKey: 'X',
       icon: 'Home',
       component: () => null,
       // @ts-expect-error - caller attempts to inject a different pluginId
       pluginId: 'spoofed',
     })
 
-    expect(registry.getAll('sidebar.items')[0].pluginId).toBe('real-id')
+    expect(registry.getAll('viewer.tabs')[0].pluginId).toBe('real-id')
   })
 
   it('separate contexts register side-by-side in the same capability', () => {
     const ctxA = createPluginContext({
       pluginId: 'A',
-      capabilities: ['sidebar.items'],
+      capabilities: ['viewer.tabs'],
       config: {},
       registry,
     })
     const ctxB = createPluginContext({
       pluginId: 'B',
-      capabilities: ['sidebar.items'],
+      capabilities: ['viewer.tabs'],
       config: {},
       registry,
     })
 
-    ctxA.register('sidebar.items', { id: 'a', label: 'A', icon: 'Home', component: () => null })
-    ctxB.register('sidebar.items', { id: 'b', label: 'B', icon: 'Home', component: () => null })
+    ctxA.register('viewer.tabs', { id: 'a', labelKey: 'A', icon: 'Home', component: () => null })
+    ctxB.register('viewer.tabs', { id: 'b', labelKey: 'B', icon: 'Home', component: () => null })
 
-    const entries = registry.getAll('sidebar.items')
+    const entries = registry.getAll('viewer.tabs')
     expect(entries.map(e => e.pluginId).sort()).toEqual(['A', 'B'])
   })
 })

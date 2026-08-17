@@ -11,7 +11,9 @@ import * as THREE from "three";
 
 import { useUndoRedoShortcuts } from "../../../hooks/useUndoRedoShortcuts";
 import { ToolsContext, BimContext, MenusContext } from "../../../store";
+import { ViewerNames } from "../../../types/dbTypes";
 import { SensorLegend } from "../../ui/Sensors/SensorLegend";
+import { ViewerLegendHost } from "../shared/legends/ViewerLegendHost";
 import { useBimCoordinateSystem } from "../useCoordinateSystem";
 
 import { BimLoadingState } from "./src/BimLoadingState";
@@ -345,6 +347,7 @@ export function BimViewer() {
                 overlay never needs a hand-tuned bottom offset. */}
             <div className="absolute bottom-20 md:bottom-3 left-3 z-10 flex max-w-[calc(100vw-1.5rem)] flex-col gap-2 pointer-events-none">
                 <SensorLegend />
+                <ViewerLegendHost viewer={ViewerNames.bim} />
             </div>
             <PropertiesMenu />
         </div>

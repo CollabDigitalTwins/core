@@ -9,6 +9,7 @@ import { INSTALLED_PLUGINS } from '../installed'
 
 import { resolvePluginEntry } from '../sdk/types'
 
+import { PluginDialogProvider } from './dialogs'
 import { PluginHost } from './host'
 import { PluginRegistry } from './registry'
 
@@ -147,7 +148,9 @@ export function PluginHostProvider({
 
   return (
     <PluginHostContext.Provider value={value}>
-      {children}
+      <PluginDialogProvider>
+        {children}
+      </PluginDialogProvider>
     </PluginHostContext.Provider>
   )
 }

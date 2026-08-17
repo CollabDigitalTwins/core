@@ -61,7 +61,7 @@ export function ViewerSidebarShell({ tabs, organization }: ViewerSidebarShellPro
 
       {activeTabId && (
         <TabStrip
-          tabs={visibleTabs.map(tab => tab.id)}
+          tabs={visibleTabs}
           activeTab={activeTabId}
           onTabChangeAction={handleTabChange}
         />

@@ -11,7 +11,7 @@ import type { LegendPluginContext } from '{{SURFACE_ENTRY}}'
 // `register` may be called more than once. See the README before adding a second one: every
 // capability has to be declared in the manifest, and each entry needs its own id.
 export function activate(ctx: LegendPluginContext): void {
-  ctx.register('map.legends', {
+  ctx.register('viewer.legends', {
     id: '{{SLUG}}',
     title: '{{NAME}}',
     useLegend,

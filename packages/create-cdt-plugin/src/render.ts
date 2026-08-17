@@ -19,7 +19,11 @@ const SURFACE_ENTRY: Record<Surface, string> = {
   'map.tools': 'map',
   'bim.tools': 'bim',
   'pointcloud.tools': 'pointcloud',
-  'map.legends': 'legend',
+  'viewer.legends': 'legend',
+  'map.layers': 'map',
+  'data.pages': 'ui',
+  'viewer.tabs': 'ui',
+  'ui.dialogs': 'ui',
 }
 
 export function capabilityConstant(surface: Surface): string {

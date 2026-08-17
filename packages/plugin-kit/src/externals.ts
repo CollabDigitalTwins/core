@@ -14,6 +14,8 @@ export const PLUGIN_EXTERNALS: readonly string[] = [
   '@collabdt/core/plugins-sdk/config',
   '@collabdt/core/plugins-sdk/messages',
   '@collabdt/core/plugins-sdk/store',
+  '@collabdt/core/plugins-sdk/state',
+  '@collabdt/core/plugins-sdk/ui',
   '@collabdt/core/plugins-sdk/components',
 ]
 

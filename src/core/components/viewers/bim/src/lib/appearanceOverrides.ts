@@ -28,6 +28,19 @@ export interface AppearanceOverride extends NodeAppearance {
 /** `modelId` → `localId` → the appearance that element ends up with. */
 export type ResolvedAppearance = Map<string, Map<number, NodeAppearance>>
 
+/**
+ * Appearances addressed by element rather than tree node, keyed by owner so two plugins
+ * painting the same model cannot clobber each other.
+ */
+export type ElementAppearanceOverrides = Map<string, ResolvedAppearance>
+
+/** One appearance and the elements wearing it. Several of these make up one owner's paint. */
+export interface ElementAppearanceGroup {
+  /** `modelId` → local ids. Sets in practice, since that is what `ModelIdMap` holds. */
+  items: Record<string, Iterable<number>>
+  appearance: NodeAppearance
+}
+
 /** One `model.highlight()` call's worth of work. */
 export interface AppearanceBucket {
   modelId: string
@@ -74,6 +87,7 @@ function indexNodes(roots: BimTreeNode[]): Map<string, IndexedNode> {
 export function resolveAppearance(
   overrides: readonly AppearanceOverride[],
   nodesBySource: Record<AppearanceSource, BimTreeNode[]>,
+  elementOverrides?: ElementAppearanceOverrides,
 ): ResolvedAppearance {
   const indexes: Record<AppearanceSource, Map<string, IndexedNode>> = {
     'spatial': indexNodes(nodesBySource.spatial),
@@ -81,7 +95,8 @@ export function resolveAppearance(
   }
 
   const live = overrides.filter(o => indexes[o.source].has(o.nodeId))
-  if (live.length === 0) return new Map()
+  // Not an early return: a plugin can be the only thing painting.
+  if (live.length === 0) return applyElementOverrides(new Map(), elementOverrides)
 
   const lastSeq = new Map<AppearanceSource, number>()
   for (const o of live) {
@@ -117,6 +132,32 @@ export function resolveAppearance(
           ...(override.color !== undefined && { color: override.color }),
           ...(override.opacity !== undefined && { opacity: override.opacity }),
         })
+      }
+    }
+  }
+
+  return applyElementOverrides(resolved, elementOverrides)
+}
+
+/**
+ * Lays per-element overrides over the tree-resolved result, last, so a plugin's thematic
+ * paint wins over a tinted storey rather than being quietly repainted by it.
+ */
+function applyElementOverrides(
+  resolved: ResolvedAppearance,
+  elementOverrides: ElementAppearanceOverrides | undefined,
+): ResolvedAppearance {
+  if (!elementOverrides || elementOverrides.size === 0) return resolved
+
+  for (const perOwner of elementOverrides.values()) {
+    for (const [modelId, perModel] of perOwner) {
+      let target = resolved.get(modelId)
+      if (!target) {
+        target = new Map()
+        resolved.set(modelId, target)
+      }
+      for (const [localId, appearance] of perModel) {
+        target.set(localId, { ...target.get(localId), ...appearance })
       }
     }
   }

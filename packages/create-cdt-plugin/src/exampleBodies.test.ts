@@ -23,25 +23,31 @@ const base: Options = {
   kitSpec: DEFAULT_KIT_SPEC,
 }
 
-const FILES: Record<Surface, string> = {
-  'map.tools': 'ExampleMap.tsx',
-  'bim.tools': 'ExampleBim.tsx',
-  'pointcloud.tools': 'ExamplePointcloud.tsx',
-  'map.legends': 'ExampleLegend.tsx',
-}
-
 const body = (surface: Surface) =>
   render(
-    readFileSync(templatePath('external', 'src/components', FILES[surface]), 'utf8'),
+    readFileSync(
+      templatePath('external', 'src/components', `${factsFor(surface).example}.tsx`),
+      'utf8',
+    ),
     tokensFor({ ...base, surface }),
   )
 
-const TOOLBAR_SURFACES = SURFACES.filter(candidate => candidate !== 'map.legends')
+const entry = (surface: Surface) =>
+  render(
+    readFileSync(
+      templatePath('external', 'src', `${factsFor(surface).indexTemplate}.ts`),
+      'utf8',
+    ),
+    tokensFor({ ...base, surface }),
+  )
+
+const TOOLBAR_SURFACES = SURFACES.filter(candidate => factsFor(candidate).usesReadoutRow)
 
 describe('every example body', () => {
   for (const surface of SURFACES) {
-    it(`imports its types from the kit entry for ${surface}, which loads the ambient SDK types`, () => {
-      expect(body(surface)).toContain(factsFor(surface).entry)
+    it(`reaches the ambient SDK types through the kit entry for ${surface}`, () => {
+      // One kit-entry import loads the ambient SDK types; a tab and a dialog need none.
+      expect(`${entry(surface)}${body(surface)}`).toContain(factsFor(surface).entry)
     })
 
     it(`never imports a library ${surface} must not bundle`, () => {
@@ -65,8 +71,15 @@ describe('every example body', () => {
       expect(body(surface)).toContain('SPDX-License-Identifier: AGPL-3.0-or-later')
     })
 
-    it(`translates every string it shows for ${surface}, with an inline fallback`, () => {
-      expect(body(surface)).toContain('usePluginTranslations')
+    it(`leaves no untranslated user-visible string for ${surface}`, () => {
+      const source = body(surface)
+
+      // Translated inline, or `labelKey` for the host to resolve, or no text at all.
+      const translates = source.includes('usePluginTranslations')
+      const contributesKeys = source.includes('labelKey')
+      const rendersNothing = /return null\s*$/m.test(source)
+
+      expect(translates || contributesKeys || rendersNothing).toBe(true)
     })
 
     it(`leaves no unrendered token for ${surface}`, () => {
@@ -119,11 +132,11 @@ describe('the point cloud example', () => {
 
 describe('the legend example', () => {
   it('registers a useLegend hook rather than a component', () => {
-    expect(body('map.legends')).toContain('useLegend')
+    expect(body('viewer.legends')).toContain('useLegend')
   })
 
   it('returns rows with a label and a colour', () => {
-    const source = body('map.legends')
+    const source = body('viewer.legends')
 
     expect(source).toContain('label')
     expect(source).toContain('color')
@@ -160,11 +173,11 @@ describe('the legend entry point', () => {
   const source = () =>
     render(
       readFileSync(templatePath('external', 'src/indexLegend.ts'), 'utf8'),
-      tokensFor({ ...base, surface: 'map.legends' }),
+      tokensFor({ ...base, surface: 'viewer.legends' }),
     )
 
   it('registers the legend registration object, not a toolbar component', () => {
-    expect(source()).toContain("ctx.register('map.legends'")
+    expect(source()).toContain("ctx.register('viewer.legends'")
     expect(source()).toContain('useLegend')
     // On the property, not the word: the comment above the registration explains that a
     // legend is a hook rather than a component, and says so in prose.

@@ -5,6 +5,7 @@
 
 import * as React from 'react'
 
+import { ElementAppearance } from '../../components/viewers/bim/src/ElementAppearance'
 import { fitToSelection } from '../../components/viewers/bim/src/lib/bimCamera'
 import {
   clearSelection,
@@ -18,20 +19,16 @@ import {
   getItemsOfCategory,
 } from '../../components/viewers/bim/src/lib/bimQueries'
 import { BimContext } from '../../store/BIM/context'
+import { usePluginId } from '../host/scope'
 
 import type { BimItemProperties } from '../../components/viewers/bim/src/lib/bimQueries'
 import type { ModelIdMap } from '../../components/viewers/bim/src/lib/bimTree'
 import type * as OBC from '@thatopen/components'
 
 /**
- * The BIM viewer, as a plugin sees it.
- *
- * Has a runtime dependency on `@thatopen/components` and three, so it stays out of
- * the `plugins-sdk` barrel and out of anything the map route imports. Core reaches
- * it only from inside the BIM viewer's own lazy chunk; plugins import
- * `@collabdt/core/plugins-sdk/bimViewer`.
+ * The BIM viewer, as a plugin sees it. Kept out of the `plugins-sdk` barrel: it depends on
+ * `@thatopen/components` and three at runtime.
  */
-
 export interface BimToolProps {
   components: OBC.Components | null
   world: OBC.World | null
@@ -42,8 +39,7 @@ export interface BimToolProps {
   /** The live selection, keyed by model id. Updates as the user clicks in the viewport. */
   selection: ModelIdMap
 
-  // Properties, not methods: standalone closures with no `this`, so a plugin can
-  // destructure them out of the props without an unbound-`this` hazard.
+  // Properties, not methods, so a plugin can destructure them safely.
   select: (items: ModelIdMap) => Promise<void>
   clearSelection: () => void
   /** Frame the camera on whatever is currently selected. */
@@ -65,13 +61,8 @@ export interface BimToolProps {
 }
 
 /**
- * Thin façade over the same `lib/bim*` helpers the core sidebar and toolbars use, so
- * a plugin cannot drift from core behaviour.
- *
- * No colour or opacity overrides, on purpose: raw per-element painting spends one of
- * the model's ~65 500 Fragments material slots per element per call and exhausts
- * them. Core buckets those through `ElementAppearance`; plugins use `select` and
- * `isolate` to draw attention.
+ * Thin façade over the `lib/bim*` helpers core itself uses. Colour lives in
+ * {@link usePluginBimAppearance}, which knows the calling plugin; this cannot.
  */
 export function useBimViewer(): BimToolProps {
   const { state } = React.useContext(BimContext)
@@ -109,6 +100,48 @@ export function useBimViewer(): BimToolProps {
     getProperties: async (items: ModelIdMap, attributes?: string[]) =>
       bimComponents ? getItemProperties(bimComponents, items, attributes) : [],
   }), [bimComponents, world, fragments, modelIds, selection])
+}
+
+export interface BimAppearance {
+  /** `0xRRGGBB`. Omit to keep each element's own colour. */
+  color?: number
+  /** `0`–`1`. Omit to leave elements opaque. */
+  opacity?: number
+}
+
+/** One appearance and the elements wearing it. */
+export interface BimAppearanceGroup {
+  items: ModelIdMap
+  appearance: BimAppearance
+}
+
+export interface PluginBimAppearance {
+  /**
+   * Every group in one call, replacing this plugin's previous paint. Calling it per group
+   * would replace that same entry each time and leave only the last. An empty list clears.
+   */
+  setAppearance: (groups: readonly BimAppearanceGroup[]) => void
+  /** Gives this plugin's elements back their own colours. */
+  clearAppearance: () => void
+}
+
+/**
+ * Colour and opacity, bucketed into one `highlight()` per appearance — per element would
+ * exhaust the model's ~65 500 material slots. Scoped to this plugin, outside the sidebar's undo.
+ */
+export function usePluginBimAppearance(): PluginBimAppearance {
+  const pluginId = usePluginId()
+  const { state } = React.useContext(BimContext)
+  const { bimComponents } = state.bim
+
+  return React.useMemo<PluginBimAppearance>(() => ({
+    setAppearance: (groups: readonly BimAppearanceGroup[]) => {
+      bimComponents?.get(ElementAppearance).setElementAppearance(pluginId, groups)
+    },
+    clearAppearance: () => {
+      bimComponents?.get(ElementAppearance).clearElementAppearance(pluginId)
+    },
+  }), [bimComponents, pluginId])
 }
 
 export type { ModelIdMap, BimItemProperties }

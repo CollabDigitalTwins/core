@@ -1995,6 +1995,11 @@
     "sensorMetadata": "Metadatos del sensor",
     "selfLink": "Enlace propio"
   },
+  "PluginDataPage": {
+    "loading": "Cargando…",
+    "empty": "Todavía no hay nada aquí.",
+    "noResults": "No hay coincidencias con «{query}»."
+  },
   "PluginsPage": {
     "title": "Plugins",
     "intro": "Los plugins añaden herramientas, paneles y capas de mapa a esta instalación. Un administrador decide cuáles están disponibles aquí; usted elige cuáles se ejecutan para usted.",

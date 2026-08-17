@@ -42,7 +42,7 @@ function renderWithComponents(bimComponents: unknown) {
   const state = { bim: { bimComponents, modelIds: [] } }
 
   render(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- only the two fields ModelsSync reads are needed
+     
     <BimContext.Provider value={{ state, dispatch } as any}>
       <ModelsSync />
     </BimContext.Provider>,
@@ -104,4 +104,37 @@ test('does not subscribe before the viewer components exist', () => {
 
   expect(listeners.set).toHaveLength(0)
   expect(dispatch).not.toHaveBeenCalled()
+})
+
+// Leaving the BIM viewer disposes the FragmentsManager, and `list` is a getter that throws
+// "not initialized" from then on. Reading it again during cleanup crashed the unmount, which
+// surfaced as an error boundary on the way from the viewer to any other page.
+test('unsubscribes without touching the manager again, so a disposed one cannot crash the unmount', () => {
+  let disposed = false
+  const removed: string[] = []
+
+  const live = {
+    keys: () => new Map<string, unknown>().keys(),
+    onItemSet: { add: () => {}, remove: () => removed.push('set') },
+    onItemDeleted: { add: () => {}, remove: () => removed.push('deleted') },
+  }
+
+  const manager = {
+    get list() {
+      if (disposed) throw new Error('FragmentsManager not initialized. Call init() first.')
+      return live
+    },
+  }
+
+  const { unmount } = render(
+     
+    <BimContext.Provider value={{ state: { bim: { bimComponents: { get: () => manager }, modelIds: [] } }, dispatch: vi.fn() } as any}>
+      <ModelsSync />
+    </BimContext.Provider>,
+  )
+
+  disposed = true
+
+  expect(() => unmount()).not.toThrow()
+  expect(removed).toEqual(['set', 'deleted'])
 })

@@ -6,23 +6,30 @@
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
-import { LegendCard } from '../../../../components/ui/LegendCard'
 import { usePluginConfigs, usePluginContributions } from '../../../../plugins/host/provider'
 import { PluginScopeProvider } from '../../../../plugins/host/scope'
+import { LegendCard } from '../../../ui/LegendCard'
 
 import type { PluginContribution } from '../../../../plugins/host/provider'
 import type { LegendRegistration } from '../../../../plugins/sdk/types'
+import type { ViewerNames } from '../../../../types/dbTypes'
 
 /**
- * Single shared legend card. Reads all `map.legends` registrations and renders
+ * Single shared legend card. Reads all `viewer.legends` registrations and renders
  * one DatasetManager-styled card (bottom-left, aligned with the layers/styling
  * card) with a titled section per
  * ACTIVE legend. Replaces the per-plugin floating legends and their hand-tuned
  * bottom-[Npx] offsets — sections auto-stack inside the one card.
  */
-export function MapLegendHost() {
-  const registrations = usePluginContributions('map.legends')
+export function ViewerLegendHost({ viewer }: { viewer: ViewerNames }) {
+  const all = usePluginContributions('viewer.legends')
   const configs = usePluginConfigs()
+
+  // A legend with no `viewers` belongs everywhere; one that names them appears only there.
+  const registrations = React.useMemo(
+    () => all.filter(entry => !entry.viewers || entry.viewers.includes(viewer)),
+    [all, viewer],
+  )
   const t = useTranslations('MapLegend')
   const [activeMap, setActiveMap] = React.useState<Record<string, boolean>>({})
 
@@ -82,7 +89,7 @@ function ScopedLegendSection({ registration, config, ...rest }: ScopedLegendSect
 }
 
 interface ScopedLegendSectionProps extends LegendSectionProps {
-  registration: PluginContribution<'map.legends'>
+  registration: PluginContribution<'viewer.legends'>
   config?: Record<string, unknown>
 }
 

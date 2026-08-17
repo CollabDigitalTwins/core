@@ -10,6 +10,8 @@ import Map, { NavigationControl } from 'react-map-gl/maplibre'
 
 
 import { PluginMapLayerHost } from '../../../plugins/host/PluginMapLayerHost'
+import { ViewerNames } from '../../../types/dbTypes'
+import { ViewerLegendHost } from '../shared/legends/ViewerLegendHost'
 import { MapContext } from '../../../store'
 import { SensorLegend } from '../../ui/Sensors/SensorLegend'
 import SettingsButton from '../../ui/SettingsButton'
@@ -17,7 +19,6 @@ import { StatsOverlay } from '../../ui/stats'
 
 import DatasetManagerMenu from './datasets/DatasetManager'
 
-import { MapLegendHost } from './legends/MapLegendHost'
 import { MapLayers } from './src/MapLayers'
 import { MapClickManager } from './utils/MapEventManager/MapClickManager'
 import { MapHoverManager } from './utils/MapEventManager/MapHoverManager'
@@ -222,7 +223,7 @@ export function MapViewer({ width = '100%', height = '100%', organization, mapti
                     above the legend + dataset-manager cards. */}
                 <div id="wms-time-slot" style={{ display: 'contents' }} />
                 <SensorLegend />
-                <MapLegendHost />
+                <ViewerLegendHost viewer={ViewerNames.map} />
                 <DatasetManagerMenu />
               </div>
             </>

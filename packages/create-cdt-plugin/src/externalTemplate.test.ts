@@ -189,11 +189,11 @@ describe('the empty body template', () => {
     expect(forSurface('pointcloud.tools')).toContain('ToolbarToolProps & PointCloudToolProps')
   })
 
-  it('is unusable for map.legends, which is why the scaffolder must never route it there', () => {
+  it('is unusable for viewer.legends, which is why the scaffolder must never route it there', () => {
     // A legend has no toolbar props, so PROPS_TYPE is empty and this template renders
-    // `ToolbarToolProps & ` — invalid TypeScript. `bodyFiles` sends map.legends to
+    // `ToolbarToolProps & ` — invalid TypeScript. `bodyFiles` sends viewer.legends to
     // ExampleLegend.tsx in both bodies; this pins the reason that is not a preference.
-    expect(forSurface('map.legends')).toContain('ToolbarToolProps & )')
+    expect(forSurface('viewer.legends')).toContain('ToolbarToolProps & )')
   })
 })
 

@@ -11,7 +11,7 @@ import type { PluginContext } from '../sdk/types'
 // Isolation rule, enforced by ESLint: a plugin may import from `../sdk/*` and its own files,
 // never from the rest of core.
 export function activate(ctx: PluginContext): void {
-  ctx.register('map.legends', {
+  ctx.register('viewer.legends', {
     id: '{{SLUG}}',
     title: '{{NAME}}',
     useLegend,

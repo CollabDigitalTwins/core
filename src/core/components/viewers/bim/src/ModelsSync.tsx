@@ -37,10 +37,17 @@ export function ModelsSync() {
       return
     }
 
+    // Held from setup rather than read again on teardown. `FragmentsManager.list` is a
+    // getter that throws "not initialized" once the manager is disposed, and leaving the
+    // viewer disposes it before this cleanup runs — so unsubscribing through the getter
+    // crashed on the way out. The list object itself stays valid, and removing a listener
+    // from it is harmless whether or not the manager is still alive.
+    const list = fragments.list
+
     const publish = () => {
       dispatch({
         type: 'SET_MODEL_IDS',
-        payload: { modelIds: [...fragments.list.keys()] },
+        payload: { modelIds: [...list.keys()] },
       })
     }
 
@@ -48,12 +55,12 @@ export function ModelsSync() {
     // subscribes, which is the common case when switching back to the viewer.
     publish()
 
-    fragments.list.onItemSet.add(publish)
-    fragments.list.onItemDeleted.add(publish)
+    list.onItemSet.add(publish)
+    list.onItemDeleted.add(publish)
 
     return () => {
-      fragments.list.onItemSet.remove(publish)
-      fragments.list.onItemDeleted.remove(publish)
+      list.onItemSet.remove(publish)
+      list.onItemDeleted.remove(publish)
     }
   }, [bimComponents, dispatch])
 

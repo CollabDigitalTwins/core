@@ -40,7 +40,7 @@ export function activate(ctx: PluginContext): void {
     component: MarkersLayer,
   })
 
-  ctx.register('map.legends', {
+  ctx.register('viewer.legends', {
     id: 'markers',
     title: 'Markers',
     useLegend: useMarkersLegend,

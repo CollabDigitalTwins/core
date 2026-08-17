@@ -11,7 +11,7 @@ describe('SURFACES', () => {
       'map.tools',
       'bim.tools',
       'pointcloud.tools',
-      'map.legends',
+      'viewer.legends',
       'map.layers',
       'data.pages',
       'viewer.tabs',

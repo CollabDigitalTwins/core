@@ -72,7 +72,7 @@ const FACTS: Record<Surface, SurfaceFacts> = {
     allowsEmpty: true,
     usesReadoutRow: true,
   },
-  'map.legends': {
+  'viewer.legends': {
     // A legend registers a hook rather than a component, so it takes no toolbar props.
     entry: '@collabdt/plugin-kit/types/legend',
     // A legend names no viewer type, so its shapes live in the SDK's own types module.

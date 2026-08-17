@@ -7,8 +7,9 @@ import * as React from 'react'
 
 import { usePluginConfig, usePluginId } from '../../../../plugins/host/scope'
 import { usePluginTranslations } from '../../../../plugins/sdk/messages'
+import { ViewerNames } from '../../../../types/dbTypes'
 
-import { MapLegendHost } from './MapLegendHost'
+import { ViewerLegendHost } from './ViewerLegendHost'
 
 import type { LegendRegistration } from '../../../../plugins/sdk/types'
 
@@ -42,7 +43,7 @@ test('renders one section per active legend with a count badge', () => {
     makeLegend('ship', { active: true, rows: [{ label: 'Cargo', color: '#f97316' }] }),
     makeLegend('air', { active: false, rows: [{ label: 'Jet', color: '#000' }] }),
   ])
-  render(<MapLegendHost />)
+  render(<ViewerLegendHost viewer={ViewerNames.map} />)
   expect(screen.getByText('Cargo')).toBeInTheDocument()
   expect(screen.queryByText('Jet')).not.toBeInTheDocument()
   expect(screen.getByTestId('map-legend-count')).toHaveTextContent('1')
@@ -52,13 +53,40 @@ test('hides the card when no legend is active', () => {
   mockContributions.mockReturnValue([
     makeLegend('ship', { active: false, rows: [{ label: 'Cargo', color: '#f97316' }] }),
   ])
-  render(<MapLegendHost />)
+  render(<ViewerLegendHost viewer={ViewerNames.map} />)
   expect(screen.queryByTestId('map-legend-card')).not.toBeInTheDocument()
+})
+
+// The same host now renders in the map and the BIM viewer, so a legend has to be able to say
+// where it belongs — a BIM space legend has no business on the map.
+describe('viewer targeting', () => {
+  const targeted = (viewers?: ViewerNames[]) => [{
+    ...makeLegend('spaces', { active: true, rows: [{ label: 'Office', color: '#000' }] }),
+    ...(viewers ? { viewers } : {}),
+  }]
+
+  test('shows a legend that names this viewer', () => {
+    mockContributions.mockReturnValue(targeted([ViewerNames.bim]))
+    render(<ViewerLegendHost viewer={ViewerNames.bim} />)
+    expect(screen.getByText('Office')).toBeInTheDocument()
+  })
+
+  test('hides a legend that names another viewer', () => {
+    mockContributions.mockReturnValue(targeted([ViewerNames.bim]))
+    render(<ViewerLegendHost viewer={ViewerNames.map} />)
+    expect(screen.queryByText('Office')).not.toBeInTheDocument()
+  })
+
+  test('shows an untargeted legend everywhere', () => {
+    mockContributions.mockReturnValue(targeted())
+    render(<ViewerLegendHost viewer={ViewerNames.pointcloud} />)
+    expect(screen.getByText('Office')).toBeInTheDocument()
+  })
 })
 
 // A legend contributes a hook, and that hook runs in the host's own component body — so the
 // scope has to be a parent of it, not a wrapper around the call. Missing that, every scoped
-// hook threw, and no shipped legend used one until hello-everywhere did.
+// hook threw, and no shipped legend used one until hello-map did.
 describe('the plugin scope around a legend', () => {
   test('lets useLegend call the scoped SDK hooks', () => {
     mockContributions.mockReturnValue([
@@ -78,7 +106,7 @@ describe('the plugin scope around a legend', () => {
       } as LegendRegistration & { pluginId: string },
     ])
 
-    render(<MapLegendHost />)
+    render(<ViewerLegendHost viewer={ViewerNames.map} />)
 
     expect(screen.getByText('Picked')).toBeInTheDocument()
   })
@@ -89,7 +117,7 @@ describe('the plugin scope around a legend', () => {
       { id: 'b', title: 'b', pluginId: 'beta', useLegend: () => useIdLegend() },
     ] as Array<LegendRegistration & { pluginId: string }>)
 
-    render(<MapLegendHost />)
+    render(<ViewerLegendHost viewer={ViewerNames.map} />)
 
     expect(screen.getByText('alpha')).toBeInTheDocument()
     expect(screen.getByText('beta')).toBeInTheDocument()

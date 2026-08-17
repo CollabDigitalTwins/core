@@ -137,7 +137,7 @@ describe('PluginRegistry', () => {
     })
 
     it('returns a stable empty snapshot for an unregistered capability', () => {
-      expect(registry.getAll('map.legends')).toBe(registry.getAll('ui.dialogs'))
+      expect(registry.getAll('viewer.legends')).toBe(registry.getAll('ui.dialogs'))
     })
   })
 })

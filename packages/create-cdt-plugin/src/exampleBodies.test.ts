@@ -136,11 +136,11 @@ describe('the point cloud example', () => {
 
 describe('the legend example', () => {
   it('registers a useLegend hook rather than a component', () => {
-    expect(body('map.legends')).toContain('useLegend')
+    expect(body('viewer.legends')).toContain('useLegend')
   })
 
   it('returns rows with a label and a colour', () => {
-    const source = body('map.legends')
+    const source = body('viewer.legends')
 
     expect(source).toContain('label')
     expect(source).toContain('color')
@@ -177,11 +177,11 @@ describe('the legend entry point', () => {
   const source = () =>
     render(
       readFileSync(templatePath('external', 'src/indexLegend.ts'), 'utf8'),
-      tokensFor({ ...base, surface: 'map.legends' }),
+      tokensFor({ ...base, surface: 'viewer.legends' }),
     )
 
   it('registers the legend registration object, not a toolbar component', () => {
-    expect(source()).toContain("ctx.register('map.legends'")
+    expect(source()).toContain("ctx.register('viewer.legends'")
     expect(source()).toContain('useLegend')
     // On the property, not the word: the comment above the registration explains that a
     // legend is a hook rather than a component, and says so in prose.

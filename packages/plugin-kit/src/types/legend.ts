@@ -17,6 +17,8 @@ export interface LegendRow {
 export interface LegendRegistration {
   id: string
   title: string
+  /** Viewer names as core spells them: 'map', 'bim', 'pointcloud'. Omit for all of them. */
+  viewers?: string[]
   // A hook, called by the host's legend on each render, so rows can carry live counts.
   useLegend: () => {
     /** False omits the section entirely, which is what a legend with nothing to say should do. */

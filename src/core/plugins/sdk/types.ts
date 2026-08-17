@@ -24,7 +24,7 @@ export const VALID_CAPABILITIES = [
   'map.tools',
   'bim.tools',
   'pointcloud.tools',
-  'map.legends',
+  'viewer.legends',
   'map.layers',
 ] as const
 
@@ -179,6 +179,8 @@ export interface LegendRow {
 export interface LegendRegistration {
   id: string
   title: string
+  /** Which viewers this legend appears in. Omit for all of them. */
+  viewers?: ViewerNames[]
   // Called by <MapLegendHost> on each render; active:false omits the section.
   useLegend: () => {
     active: boolean
@@ -200,7 +202,7 @@ export interface CapabilityRegistry {
   'map.tools': ToolbarRegistration<MapToolProps>
   'bim.tools': ToolbarRegistration<BimToolProps>
   'pointcloud.tools': ToolbarRegistration<PointCloudToolProps>
-  'map.legends': LegendRegistration
+  'viewer.legends': LegendRegistration
   'map.layers': MapLayerRegistration
 }
 

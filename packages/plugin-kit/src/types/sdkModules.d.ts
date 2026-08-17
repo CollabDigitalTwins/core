@@ -21,7 +21,7 @@ declare module '@collabdt/core/plugins-sdk' {
     'map.tools',
     'bim.tools',
     'pointcloud.tools',
-    'map.legends',
+    'viewer.legends',
     'map.layers',
   ]
 

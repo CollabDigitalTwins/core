@@ -58,7 +58,7 @@ const STATUS_STYLE: Record<PluginListing['status'], { icon: LucideIcon; classNam
 // Which surface a capability contributes to: a map pin reads faster than the key.
 const CAPABILITY_ICON: Record<string, LucideIcon> = {
   'map.tools': MapPin,
-  'map.legends': MapPin,
+  'viewer.legends': MapPin,
   'map.layers': Layers,
   'bim.tools': Box,
   'pointcloud.tools': Scan,

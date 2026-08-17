@@ -17,7 +17,9 @@ import {
   upsertOverride,
   type AppearanceOverride,
   type AppearanceSource,
+  type ElementAppearanceOverrides,
   type NodeAppearance,
+  type ResolvedAppearance,
 } from './lib/appearanceOverrides'
 import { safeRunAsync } from './lib/safeRun'
 import { ViewModeCoordinator } from './lib/ViewModeCoordinator'
@@ -100,6 +102,14 @@ export class ElementAppearance extends OBC.Component implements OBC.Disposable {
   readonly history: UndoHistory = createUndoHistory()
 
   private _overrides: AppearanceOverride[] = []
+  /**
+   * Per-element paint, keyed by owner — in practice a plugin id.
+   *
+   * Kept out of {@link history} on purpose. CTRL+Z is for the colour work the user did in
+   * the sidebar; stepping back through a plugin's programmatic repaint would desync the
+   * plugin's own state from the model, and the plugin already owns an off switch.
+   */
+  private _elementOverrides: ElementAppearanceOverrides = new Map()
   private _seq = 0
   /**
    * Group the last change belonged to, so a slider drag is one undo step rather
@@ -171,6 +181,43 @@ export class ElementAppearance extends OBC.Component implements OBC.Disposable {
   /** Closes the current coalescing group, e.g. when a slider is released. */
   endCoalescing(): void {
     this._coalescingKey = null
+  }
+
+  /**
+   * Paints specific elements on behalf of one owner, replacing whatever that owner painted
+   * before. Passing no items clears it.
+   *
+   * Goes through the same resolve-and-bucket pass as the trees, so it costs one material
+   * slot per distinct appearance rather than one per element.
+   */
+  setElementAppearance(
+    owner: string,
+    items: Record<string, number[]>,
+    change: NodeAppearance,
+  ): void {
+    const hasPaint = change.color !== undefined || change.opacity !== undefined
+    const entries = Object.entries(items).filter(([, localIds]) => localIds.length > 0)
+
+    if (!hasPaint || entries.length === 0) {
+      this.clearElementAppearance(owner)
+      return
+    }
+
+    const perOwner: ResolvedAppearance = new Map()
+    for (const [modelId, localIds] of entries) {
+      perOwner.set(modelId, new Map(localIds.map(localId => [localId, change])))
+    }
+
+    this._elementOverrides.set(owner, perOwner)
+    this.onChanged.trigger()
+    void this.reapply()
+  }
+
+  /** Drops one owner's paint, leaving every other owner's and both trees' alone. */
+  clearElementAppearance(owner: string): void {
+    if (!this._elementOverrides.delete(owner)) return
+    this.onChanged.trigger()
+    void this.reapply()
   }
 
   /** Drops one node's override, giving its elements back to whatever they inherit. */
@@ -297,7 +344,7 @@ export class ElementAppearance extends OBC.Component implements OBC.Disposable {
       return
     }
 
-    const resolved = resolveAppearance(this._overrides, this.nodesBySource())
+    const resolved = resolveAppearance(this._overrides, this.nodesBySource(), this._elementOverrides)
     const buckets = bucketByAppearance(resolved)
     const nextTouched = touchedIdsByModel(resolved)
 

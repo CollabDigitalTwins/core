@@ -22,7 +22,7 @@ export const VALID_CAPABILITIES = [
   'map.tools',
   'bim.tools',
   'pointcloud.tools',
-  'map.legends',
+  'viewer.legends',
   'map.layers',
 ] as const
 
@@ -122,7 +122,7 @@ export interface CapabilityRegistry<
   'map.tools': ToolbarRegistration<MapProps>
   'bim.tools': ToolbarRegistration<BimProps>
   'pointcloud.tools': ToolbarRegistration<PointCloudProps>
-  'map.legends': Legend
+  'viewer.legends': Legend
   'map.layers': MapLayerRegistration<MapProps>
 }
 

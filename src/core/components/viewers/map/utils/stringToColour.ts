@@ -54,7 +54,7 @@ export const stringToColour = (str: string, variant?: 'min' | 'max') => {
   const baseColour = palette[index]
 
   // No default lightening, just use as-is for good contrast
-  let colour = baseColour
+  let colour: string = baseColour
 
   // Optionally adjust for variant
   if (variant === 'min') {

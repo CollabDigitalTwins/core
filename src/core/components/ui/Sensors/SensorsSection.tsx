@@ -34,7 +34,7 @@ import { valueColoursBySensor } from './sensorValueColours'
 import { activeSensorTypeId, legendScopeSensors, UNTAGGED_TAG } from './sensorVisibility'
 import { useSensorSeriesMulti } from './useSensorSeriesMulti'
 
-import type { Sensor } from '../../../types/dbTypes';
+import type { Sensor, ViewerNames } from '../../../types/dbTypes';
 
 /** Sidebar readings: compact, at most one decimal, so a row stays on one line. */
 const readingNumber = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 })
@@ -53,6 +53,8 @@ export function SensorsSection() {
   const { dispatch: toolsDispatch } = React.useContext(ToolsContext)
   const { state: menusState, dispatch: menusDispatch } = React.useContext(MenusContext)
   const { currentViewer, visibleSensorTypes, visibleSensorTags, focusedSensorId, sensorLegendVisible, sensorLegendTypeId } = menusState.menus
+  // Only mounted from a built-in viewer's sidebar, so the key is never a plugin page's.
+  const viewer = currentViewer as ViewerNames
 
   const { sensors: allSensors }: { sensors: Sensor[] } = useSensors()
   const { sensorTypes, isLoading } = useSensorTypes()
@@ -69,14 +71,14 @@ export function SensorsSection() {
   const { deleteSensor } = useSensor(sensorToDelete)
 
   const handleAddSensor = React.useCallback((currentSensorTypeId?: number) => {
-    if (!currentViewer) return
+    if (!viewer) return
       toolsDispatch({
         type: 'SET-TOOL',
         payload: {
           currentToolId:
-            currentViewer === 'bim'
+            viewer === 'bim'
               ? 'bim-add-sensor'
-              : currentViewer === 'map'
+              : viewer === 'map'
                 ? 'map-add-sensor'
                 : undefined,
         },
@@ -87,7 +89,7 @@ export function SensorsSection() {
           payload: { currentSensorTypeId },
         })
       }
-  }, [toolsDispatch, currentViewer])
+  }, [toolsDispatch, viewer])
 
   const handleSensorAction = React.useCallback((action: SensorAction, id: number) => {
     switch (action) {
@@ -114,7 +116,7 @@ export function SensorsSection() {
     }
   }, [sensorToDelete, deleteSensor])
 
-  const currentSensors: Sensor[] = allSensors.filter((sensor) => currentViewer === sensor.viewer && (!sensor.buildingId || sensor.buildingId === buildingId))
+  const currentSensors: Sensor[] = allSensors.filter((sensor) => viewer === sensor.viewer && (!sensor.buildingId || sensor.buildingId === buildingId))
 
   // Readings for every listed sensor, so each row can be ringed by its current value. This is the
   // only place that polls across types; the viewers poll the focused type alone. Bounded by
@@ -140,14 +142,14 @@ export function SensorsSection() {
   React.useEffect(() => {
     if (displayTimeZoneUserSet) return
     // BIM sensors live in a building (use its longitude); map sensors carry their own.
-    const candidates = currentViewer === 'bim'
+    const candidates = viewer === 'bim'
       ? [buildingLongitude, firstSensorLongitude]
       : [firstSensorLongitude, buildingLongitude]
     const zone = resolveDefaultTimeZone(candidates)
     if (zone !== displayTimeZone) {
       appConfigDispatch({ type: 'SET_DEFAULT_TIME_ZONE', payload: { displayTimeZone: zone } })
     }
-  }, [currentViewer, buildingLongitude, firstSensorLongitude, displayTimeZone, displayTimeZoneUserSet, appConfigDispatch])
+  }, [viewer, buildingLongitude, firstSensorLongitude, displayTimeZone, displayTimeZoneUserSet, appConfigDispatch])
 
   // Filter sensors based on search query
   const filteredSensors = React.useMemo(() => {
@@ -168,51 +170,51 @@ export function SensorsSection() {
     menusDispatch({
       type: 'TOGGLE_SENSOR_TYPE_VISIBILITY',
       payload: {
-        viewer: currentViewer,
+        viewer,
         sensorTypeId: sensorTypeId,
       },
     })
-  }, [currentViewer, menusDispatch])
+  }, [viewer, menusDispatch])
 
   const handleGroupByChange = React.useCallback((newGroupBy: 'type' | 'tag') => {
     setGroupBy(newGroupBy)
     // Clear the opposing visibility state so markers from the old filter don't bleed through
     if (newGroupBy === 'tag') {
-      menusDispatch({ type: 'HIDE_ALL_SENSORS_IN_VIEWER', payload: { viewer: currentViewer } })
+      menusDispatch({ type: 'HIDE_ALL_SENSORS_IN_VIEWER', payload: { viewer } })
     } else {
-      menusDispatch({ type: 'HIDE_ALL_SENSOR_TAGS_IN_VIEWER', payload: { viewer: currentViewer } })
+      menusDispatch({ type: 'HIDE_ALL_SENSOR_TAGS_IN_VIEWER', payload: { viewer } })
     }
-  }, [currentViewer, menusDispatch])
+  }, [viewer, menusDispatch])
 
   // Mirrors what the legend itself decides, so the button never claims the card is on while the
   // viewer is showing nothing. With no sensors of the active type there is nothing to toggle.
   const legendHasContent = legendScopeSensors(
     allSensors,
     {
-      viewer: currentViewer,
-      visibleTypeIds: visibleSensorTypes?.[currentViewer] ?? [],
-      visibleTags: visibleSensorTags?.[currentViewer] ?? [],
+      viewer,
+      visibleTypeIds: visibleSensorTypes?.[viewer] ?? [],
+      visibleTags: visibleSensorTags?.[viewer] ?? [],
     },
     activeSensorTypeId(allSensors, {
-      legendTypeId: sensorLegendTypeId?.[currentViewer],
+      legendTypeId: sensorLegendTypeId?.[viewer],
       activeSensorId: focusedSensorId,
     }),
   ).length > 0
-  const legendVisible = legendHasContent && sensorLegendVisible?.[currentViewer] !== false
+  const legendVisible = legendHasContent && sensorLegendVisible?.[viewer] !== false
 
   const toggleLegend = React.useCallback(() => {
-    menusDispatch({ type: 'TOGGLE_SENSOR_LEGEND', payload: { viewer: currentViewer } })
-  }, [currentViewer, menusDispatch])
+    menusDispatch({ type: 'TOGGLE_SENSOR_LEGEND', payload: { viewer } })
+  }, [viewer, menusDispatch])
 
   const toggleSensorTagVisibility = React.useCallback((tag: string) => {
     menusDispatch({
       type: 'TOGGLE_SENSOR_TAG_VISIBILITY',
       payload: {
-        viewer: currentViewer,
+        viewer,
         sensorTag: tag,
       },
     })
-  }, [currentViewer, menusDispatch])
+  }, [viewer, menusDispatch])
 
   // Group sensors by type, using sensorTypes as the source of truth for types
   const sensorsByType = React.useMemo(() => {
@@ -310,7 +312,7 @@ export function SensorsSection() {
           const type = sensorTypes.find(t => t.name === typeName)
           const typeId = type?.id ?? -1
 
-          const viewerTypes = visibleSensorTypes?.[currentViewer]
+          const viewerTypes = visibleSensorTypes?.[viewer]
           const isTypeVisible = viewerTypes?.length > 0 && viewerTypes.includes(typeId)
 
           const sensorIcon = resolveLucideIcon(type?.icon)
@@ -354,7 +356,7 @@ export function SensorsSection() {
         })
       ) : (
         Object.entries(sensorsByTag).map(([tag, sensorsOfTag]) => {
-          const isTagVisible = visibleSensorTags?.[currentViewer]?.includes(tag) ?? false
+          const isTagVisible = visibleSensorTags?.[viewer]?.includes(tag) ?? false
           return (
           <CollapsibleSection
             key={tag}
@@ -396,7 +398,7 @@ export function SensorsSection() {
 
       {editSensorId != null && allSensors.some(s => s.id === editSensorId) && (
         <SensorInput
-          viewer={currentViewer}
+          viewer={viewer}
           layout="dialog"
           isOpen={editSensorId != null}
           editSensor={allSensors.find(s => s.id === editSensorId)}

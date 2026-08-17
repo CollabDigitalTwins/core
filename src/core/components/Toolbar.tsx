@@ -12,7 +12,7 @@ import { ViewerNames } from '../types'
 
 import { ToolbarBody } from './ToolbarBody'
 
-import type { Organization } from '../types/dbTypes'
+import type { Organization, ViewerKey } from '../types/dbTypes'
 
 // The BIM and PointCloud toolbar tool registries transitively import
 // @thatopen and Potree-adjacent code. Statically importing them here (eagerly
@@ -31,7 +31,7 @@ const PointCloudToolbar = dynamic(
 )
 
 interface Props {
-  viewer: ViewerNames
+  viewer: ViewerKey
   minioBaseUrl?: string
   martinBaseUrl?: string
   organization?: Organization

@@ -1,6 +1,6 @@
 {
   "name": "@collabdt/plugin-kit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Build preset and types for authoring CDT plugins.",
   "license": "AGPL-3.0-or-later",
   "type": "module",

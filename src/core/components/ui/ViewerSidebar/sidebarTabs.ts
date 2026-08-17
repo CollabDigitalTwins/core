@@ -20,13 +20,16 @@ export interface ViewerSidebarTab {
   meta?: PluginTabMeta
 }
 
+// `aria-hidden` is React's Booleanish, not boolean, or a lucide icon fails to fit.
+type TabIcon = React.ComponentType<{ className?: string; 'aria-hidden'?: React.AriaAttributes['aria-hidden'] }>
+
 export interface PluginTabMeta {
-  icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>
+  icon: TabIcon
   label: string
 }
 
 interface SidebarTabMeta {
-  icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>
+  icon: TabIcon
   /** Key in the `TabSelector` i18n namespace. */
   labelKey: string
 }

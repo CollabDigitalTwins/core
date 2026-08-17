@@ -17,7 +17,7 @@ import { SearchInput } from '../SearchInput'
 
 import { CollapsibleCommentItem } from './CollapsibleCommentItem'
 
-import type { Comment } from '../../../types/dbTypes'
+import type { Comment, ViewerNames } from '../../../types/dbTypes'
 
 
 
@@ -32,12 +32,14 @@ export function CommentsSection() {
   const { dispatch: toolsDispatch } = React.useContext(ToolsContext)
   const { state: menusState, dispatch: menusDispatch } = React.useContext(MenusContext)
   const { currentViewer, commentsVisibleInViewer, focusedCommentId, pendingCommentAction } = menusState.menus
+  // Only mounted from a built-in viewer's sidebar, so the key is never a plugin page's.
+  const viewer = currentViewer as ViewerNames
 
   const focusComment = React.useCallback((commentId: number) => {
     // Ensure comments are visible in the active viewer so the zoom target is actually rendered.
-    menusDispatch({ type: 'SHOW_COMMENTS_IN_VIEWER', payload: { viewer: currentViewer } })
+    menusDispatch({ type: 'SHOW_COMMENTS_IN_VIEWER', payload: { viewer } })
     menusDispatch({ type: 'SET_FOCUSED_COMMENT_ID', payload: { commentId } })
-  }, [menusDispatch, currentViewer])
+  }, [menusDispatch, viewer])
 
   // A pending action (open editor/reply from a marker) is one-shot: child items consume it
   // on their mount/update effect (children run before this parent effect), then we clear it so
@@ -59,19 +61,19 @@ export function CommentsSection() {
   const { deleteComments } = useDeleteComments()
 
   const handleAddComment = React.useCallback(() => {
-    if (!currentViewer) return
+    if (!viewer) return
       toolsDispatch({
         type: 'SET-TOOL',
         payload: {
           currentToolId:
-            currentViewer === 'bim'
+            viewer === 'bim'
               ? 'bim-add-comment'
-              : currentViewer === 'map'
+              : viewer === 'map'
                 ? 'map-add-comment'
                 : undefined,
         },
       })
-  }, [toolsDispatch, currentViewer])
+  }, [toolsDispatch, viewer])
 
   const handleCommentAction = React.useCallback((action: CommentAction, id: number) => {
     switch (action) {
@@ -121,7 +123,7 @@ export function CommentsSection() {
     // ⚠️ Comment file upload not implemented (files are discarded)
   }, [])
 
-  const currentComments = comments.filter((comment) => currentViewer === comment.viewer && (!comment.buildingId || comment.buildingId === buildingId))
+  const currentComments = comments.filter((comment) => viewer === comment.viewer && (!comment.buildingId || comment.buildingId === buildingId))
 
   // Group replies under their parent (flat, single level)
   const repliesByParent = React.useMemo(() => {
@@ -152,16 +154,16 @@ export function CommentsSection() {
     )
   }, [topLevelComments, searchQuery])
 
-  const commentsVisible = commentsVisibleInViewer.includes(currentViewer)
+  const commentsVisible = commentsVisibleInViewer.includes(viewer)
 
   const toggleCommentsVisibility = React.useCallback(() => {
       menusDispatch({
         type: commentsVisible ? 'HIDE_COMMENTS_IN_VIEWER' : 'SHOW_COMMENTS_IN_VIEWER',
         payload: {
-          viewer: currentViewer,
+          viewer,
         },
       })
-  }, [currentViewer, commentsVisible, menusDispatch])
+  }, [viewer, commentsVisible, menusDispatch])
 
   return (
     <div className="flex-1 flex flex-col space-y-4 overflow-hidden">

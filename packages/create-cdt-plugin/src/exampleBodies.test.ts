@@ -46,9 +46,7 @@ const TOOLBAR_SURFACES = SURFACES.filter(candidate => factsFor(candidate).usesRe
 describe('every example body', () => {
   for (const surface of SURFACES) {
     it(`reaches the ambient SDK types through the kit entry for ${surface}`, () => {
-      // The `declare module` block for the SDK specifiers is reachable only through a kit
-      // entry import, and one anywhere in the program is enough. A tab and a dialog need no
-      // type from the kit, so for those it is the entry file that carries the import.
+      // One kit-entry import loads the ambient SDK types; a tab and a dialog need none.
       expect(`${entry(surface)}${body(surface)}`).toContain(factsFor(surface).entry)
     })
 
@@ -76,9 +74,7 @@ describe('every example body', () => {
     it(`leaves no untranslated user-visible string for ${surface}`, () => {
       const source = body(surface)
 
-      // Three shapes are all correct here: a body that shows text translates it inline; a
-      // data page contributes `labelKey` strings the host resolves; and a map layer renders
-      // nothing at all, so it has no string to translate.
+      // Translated inline, or `labelKey` for the host to resolve, or no text at all.
       const translates = source.includes('usePluginTranslations')
       const contributesKeys = source.includes('labelKey')
       const rendersNothing = /return null\s*$/m.test(source)

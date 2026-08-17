@@ -60,8 +60,7 @@ export interface ToolbarRegistration<P = Record<string, unknown>> {
   stayActive?: boolean
 }
 
-// Mounted for as long as the map is, unlike a toolbar panel, which unmounts when its
-// dropdown closes. `P` is the map surface, bound by `CapabilityRegistry`.
+// Mounted for as long as the map, unlike a toolbar panel. `P` is the map surface.
 export interface MapLayerRegistration<P = unknown> {
   id: string
   component: React.ComponentType<P>
@@ -76,8 +75,7 @@ export interface DataPageColumn<Row> {
 export interface DataPageRows<Row> {
   rows: Row[]
   isLoading?: boolean
-  // Returned from the hook rather than declared on the registration so it can close over
-  // hooks — `usePluginDialogs` in particular, which is how a row opens a detail view.
+  /** From the hook, not the registration, so it can close over `usePluginDialogs`. */
   onRowClick?: (row: Row) => void
 }
 
@@ -107,9 +105,7 @@ export interface DialogRegistration<P = Record<string, unknown>> {
   component: React.ComponentType<P & { close: () => void }>
 }
 
-// Generic over the viewer surface shapes rather than importing them, so this file names no viewer
-// library. Each surface file exports a ready-bound alias; a plugin spanning two composes its own.
-// The three surfaces below name no viewer library, so they are concrete here.
+// Generic over the viewer shapes so this file names no viewer library; the rest are concrete.
 export interface CapabilityRegistry<
   MapProps = unknown,
   BimProps = unknown,

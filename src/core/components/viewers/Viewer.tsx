@@ -53,8 +53,7 @@ const DataMenu = dynamic(
   { ssr: false, loading: () => <ViewerLoadingFallback label="Loading data…" /> },
 )
 
-// Lazy for the same reason: a plugin page is never the map route's critical path, and a
-// static import would put every plugin's page code in the eager bundle for every user.
+// Lazy too, or every plugin's page code lands in the eager bundle for every user.
 const PluginDataPageHost = dynamic(
   () => import('../../plugins/host/PluginDataPageHost').then(m => ({ default: m.PluginDataPageHost })),
   { ssr: false, loading: () => <ViewerLoadingFallback label="Loading page…" /> },
@@ -181,8 +180,7 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
     }
   }, [validViewer, menusDispatch, isMounted, currentViewer])
 
-  // Null while a plugin page is showing, which keeps the branches below exhaustive over
-  // ViewerNames rather than each one having to re-exclude the plugin case.
+  // Null while a plugin page shows, so the branches below stay exhaustive over ViewerNames.
   const builtInViewer = pluginPage ? null : (validViewer as ViewerNames)
 
   const selectedViewer = (

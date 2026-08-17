@@ -25,8 +25,7 @@ vi.mock('../../../hooks/ui/useCompactTabStrip', () => ({
 
 const MAP_TABS: SidebarTabType[] = ['file', 'layers', 'communication', 'sensors', 'settings']
 
-// The strip takes whole tabs, not ids, so a plugin tab can carry its own icon and label.
-// Built-in ones need neither, so the id is still all a case has to name.
+// The strip takes whole tabs, so a plugin tab can carry its own icon and label.
 const asTabs = (ids: SidebarTabKey[]): ViewerSidebarTab[] =>
   ids.map(id => ({ id, content: null }))
 
@@ -155,8 +154,7 @@ describe('TabStrip', () => {
     })
   })
 
-  // A plugin tab has no SIDEBAR_TAB_META entry. The strip used to index that record
-  // directly, so one would have crashed the whole sidebar rather than rendering.
+  // A plugin tab has no SIDEBAR_TAB_META entry, and the strip used to index that directly.
   describe('a plugin tab', () => {
     const PLUGIN_TAB: ViewerSidebarTab = {
       id: 'plugin:room-inventory:rooms',

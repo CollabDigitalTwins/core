@@ -13,15 +13,8 @@ import { MarkersTab } from './components/MarkersTab'
 import type { PluginContext } from '../sdk/types'
 
 /**
- * One plugin across six surfaces, which is what the contribution surfaces are for.
- *
- * `hello-bim` shows a single surface in isolation. This one shows the part it cannot: the
- * tool, the layer, the legend, the tab, the page and the dialog all read one store and one
- * selection, from React subtrees with no common ancestor. Without that, spanning
- * environments would mean shipping six unrelated widgets in one bundle.
- *
- * ESLint enforces the isolation rule — a plugin imports from `../sdk/*` and its own files,
- * never the rest of core.
+ * Six surfaces over one store and one selection, in React subtrees with no common ancestor.
+ * Without that shared state this would be six unrelated widgets in one bundle.
  */
 export function activate(ctx: PluginContext): void {
   ctx.register('map.tools', {
@@ -32,9 +25,7 @@ export function activate(ctx: PluginContext): void {
     stayActive: true,
   })
 
-  // Separate from the tool because the tool's panel unmounts when its dropdown closes.
-  // This stays mounted for as long as the map, so markers survive that — and so a marker
-  // added from the sidebar tab has a layer to appear on.
+  // Separate from the tool, whose panel unmounts when its dropdown closes.
   ctx.register('map.layers', {
     id: 'markers',
     component: MarkersLayer,
@@ -43,6 +34,8 @@ export function activate(ctx: PluginContext): void {
   ctx.register('viewer.legends', {
     id: 'markers',
     title: 'Markers',
+    // Map only: a list of map markers means nothing in BIM.
+    viewers: [ViewerNames.map],
     useLegend: useMarkersLegend,
   })
 
@@ -50,8 +43,7 @@ export function activate(ctx: PluginContext): void {
     id: 'markers',
     labelKey: 'tabTitle',
     icon: 'MapPin',
-    // Recorded on the map, read in BIM. Omitting this would add the tab to the point cloud
-    // viewer too, which has nothing to do with it.
+    // Recorded on the map, read in BIM; the point cloud has nothing to do with it.
     viewers: [ViewerNames.map, ViewerNames.bim],
     component: MarkersTab,
   })

@@ -9,15 +9,8 @@ import { useMarkers } from '../markers'
 import type { LegendRow } from '../../sdk/types'
 
 /**
- * One row per marker: its name and its colour, so the legend reads as a key to what is on
- * the map rather than a tally of colours.
- *
- * A hook, not a component: the host calls it while rendering the shared legend card, which
- * is what keeps it live as markers are added, renamed and recoloured. Returning
- * `active: false` while there are none keeps the card off the map entirely.
- *
- * Every marker gets a row. The host's card caps its body at 40vh and scrolls, so a long
- * list cannot cover the map.
+ * One row per marker, live as they are added, renamed and recoloured. Every marker gets a row;
+ * the host's card caps its body at 40vh and scrolls.
  */
 export function useMarkersLegend(): { active: boolean; title?: string; rows: LegendRow[] } {
   const t = usePluginTranslations()

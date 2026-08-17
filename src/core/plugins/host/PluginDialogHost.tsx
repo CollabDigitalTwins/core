@@ -43,8 +43,7 @@ export function PluginDialogHost() {
           candidate => candidate.pluginId === entry.pluginId && candidate.id === entry.dialogId,
         )
 
-        // A dialog can be open when its plugin is disabled mid-flight. Dropping it silently
-        // is right: the contribution is gone, so there is nothing left to render.
+        // Its plugin may have been disabled mid-flight, leaving nothing to render.
         if (!registration) return null
 
         return (

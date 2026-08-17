@@ -15,11 +15,8 @@ import type { LegendRegistration } from '../../../../plugins/sdk/types'
 import type { ViewerNames } from '../../../../types/dbTypes'
 
 /**
- * Single shared legend card. Reads all `viewer.legends` registrations and renders
- * one DatasetManager-styled card (bottom-left, aligned with the layers/styling
- * card) with a titled section per
- * ACTIVE legend. Replaces the per-plugin floating legends and their hand-tuned
- * bottom-[Npx] offsets — sections auto-stack inside the one card.
+ * One shared legend card per viewer, with a titled section per active `viewer.legends`
+ * registration. Replaces the per-plugin floating legends and their hand-tuned offsets.
  */
 export function ViewerLegendHost({ viewer }: { viewer: ViewerNames }) {
   const all = usePluginContributions('viewer.legends')
@@ -76,10 +73,7 @@ export function ViewerLegendHost({ viewer }: { viewer: ViewerNames }) {
   )
 }
 
-// The scope has to be a *parent* of the component that calls `useLegend`, not a wrapper
-// around the call: a legend contributes a hook, and that hook runs in this component's own
-// body. Without it, a legend reaching for usePluginTranslations, usePluginConfig or
-// usePluginState throws — which is what the first legend to use one did.
+// The scope must be a parent: `useLegend` runs in LegendSection's own body.
 function ScopedLegendSection({ registration, config, ...rest }: ScopedLegendSectionProps) {
   return (
     <PluginScopeProvider pluginId={registration.pluginId} config={config}>

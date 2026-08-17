@@ -199,8 +199,7 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
       icon: LR.TrainTrack,
       onClick: () => changeViewer(ViewerNames.infrastructure),
     },
-    // Plugin pages sit here rather than in a group of their own, so a contributed page
-    // reads as part of the platform instead of as an add-on.
+    // In Datasets, so a contributed page reads as part of the platform.
     ...pluginPages.map(page => ({
       title: page.title,
       id: page.id,

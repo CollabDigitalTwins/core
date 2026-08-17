@@ -36,8 +36,7 @@ describe('create-cdt-plugin', () => {
   })
 
   it('offers every capability core renders', () => {
-    // Every capability now has a host, so anything core renders is scaffoldable. A new
-    // capability that reaches VALID_CAPABILITIES without a template fails here.
+    // Every capability has a host, so a new one without a template fails here.
     expect([...SURFACES].sort()).toEqual([...VALID_CAPABILITIES].sort())
   })
 

@@ -27,8 +27,7 @@ declare module '@collabdt/core/plugins-sdk' {
 
   export const PLUGIN_HOST_API: 1
 
-  // A value, not just a type: a `viewer.tabs` contribution names the viewers it belongs in.
-  // Restated rather than imported, because an ambient block cannot reach the kit's entries.
+  // A value, not just a type: a `viewer.tabs` contribution names its viewers.
   export const ViewerNames: {
     auth: 'auth'
     map: 'map'
@@ -108,9 +107,8 @@ declare module '@collabdt/core/plugins-sdk/store' {
 
 declare module '@collabdt/core/plugins-sdk/state' {
   /**
-   * Shared state for one plugin's surfaces, in memory and scoped to the calling plugin. A map
-   * tool and a sidebar tab using the same key see the same value; another plugin never does.
-   * Gone when the plugin is disabled or the tab closes — `usePluginStore` is the persisted one.
+   * Shared state for one plugin's surfaces: in memory, scoped to the plugin, gone when it is
+   * disabled. `usePluginStore` is the persisted counterpart.
    */
   export function usePluginState<T>(
     key: string,

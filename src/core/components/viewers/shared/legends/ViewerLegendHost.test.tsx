@@ -19,8 +19,7 @@ vi.mock('next-intl', () => ({
   useMessages: () => ({}),
 }))
 
-// Only the provider is mocked. `PluginScopeProvider` is the real one, so these tests cover
-// the scope the host establishes around each legend's hook.
+// Only the provider is mocked, so these cover the real scope around each legend hook.
 const { mockContributions } = vi.hoisted(() => ({ mockContributions: vi.fn() }))
 vi.mock('../../../../plugins/host/provider', () => ({
   usePluginContributions: () => mockContributions(),
@@ -57,8 +56,7 @@ test('hides the card when no legend is active', () => {
   expect(screen.queryByTestId('map-legend-card')).not.toBeInTheDocument()
 })
 
-// The same host now renders in the map and the BIM viewer, so a legend has to be able to say
-// where it belongs — a BIM space legend has no business on the map.
+// One host in both viewers, so a legend has to be able to say where it belongs.
 describe('viewer targeting', () => {
   const targeted = (viewers?: ViewerNames[]) => [{
     ...makeLegend('spaces', { active: true, rows: [{ label: 'Office', color: '#000' }] }),
@@ -84,9 +82,7 @@ describe('viewer targeting', () => {
   })
 })
 
-// A legend contributes a hook, and that hook runs in the host's own component body — so the
-// scope has to be a parent of it, not a wrapper around the call. Missing that, every scoped
-// hook threw, and no shipped legend used one until hello-map did.
+// A legend's hook runs in the host's body, so the scope must be its parent, not a wrapper.
 describe('the plugin scope around a legend', () => {
   test('lets useLegend call the scoped SDK hooks', () => {
     mockContributions.mockReturnValue([

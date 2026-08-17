@@ -16,9 +16,7 @@ export interface ViewerSidebarTab {
   content: React.ReactNode
   /** Omitted or true = shown. false hides the tab from the strip entirely. */
   enabled?: boolean
-  // Icon and label for a tab with no `SIDEBAR_TAB_META` entry, which is every plugin tab.
-  // The label is already resolved: a plugin's strings live in its own i18n namespace, not
-  // in `TabSelector`, so there is no key here the strip could look up.
+  /** Icon and resolved label for a tab with no `SIDEBAR_TAB_META` entry: every plugin tab. */
   meta?: PluginTabMeta
 }
 

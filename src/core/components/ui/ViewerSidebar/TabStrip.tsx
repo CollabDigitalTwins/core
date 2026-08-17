@@ -75,8 +75,7 @@ export function TabStrip({ tabs, activeTab, onTabChangeAction }: TabStripProps) 
       <div className="px-4 py-3">
         <div ref={listRef} role="tablist" aria-orientation="horizontal" className="flex items-center gap-1 w-full">
           {tabs.map(({ id: tab, meta }, index) => {
-            // A plugin tab has no SIDEBAR_TAB_META entry and carries its own icon and an
-            // already-resolved label, because its strings live in its own i18n namespace.
+            // A plugin tab has no meta entry here; its label is already resolved.
             const builtIn = SIDEBAR_TAB_META[tab as SidebarTabType]
             const Icon = meta?.icon ?? builtIn.icon
             const label = meta?.label ?? t(builtIn.labelKey)

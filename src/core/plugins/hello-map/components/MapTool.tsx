@@ -18,14 +18,8 @@ interface Config extends Record<string, unknown> {
 }
 
 /**
- * Where the map is, and a button to record it.
- *
- * Two things worth copying: render panel content and let core supply the button and
- * dropdown chrome, and remove every listener on cleanup — a leaked `move` handler keeps
- * firing after the user switches viewers.
- *
- * The marker this records is drawn by `MarkersLayer`, not here, because this panel unmounts
- * as soon as the dropdown closes.
+ * Where the map is, and a button to record it. The marker itself is drawn by `MarkersLayer`,
+ * because this panel unmounts as soon as the dropdown closes.
  */
 export function MapTool({ map }: ToolbarToolProps & MapToolProps) {
   const t = usePluginTranslations()

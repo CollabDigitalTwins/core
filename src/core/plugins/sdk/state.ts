@@ -9,16 +9,8 @@ import { pluginStateStore } from '../host/pluginState'
 import { usePluginId } from '../host/scope'
 
 /**
- * Shared state for one plugin's surfaces, in memory and scoped to the calling plugin.
- *
- * Use it when a map tool, a sidebar tab, a data page and a dialog from the same plugin need
- * to agree on something — a selection, a filter, a draft — that has no business reaching the
- * database. `usePluginStore` is the persisted counterpart; reach for that when the value
- * should survive a reload.
- *
- * The value is gone when the plugin is disabled or the tab closes. Two plugins using the
- * same key never see each other's value: the key is scoped by the plugin id the host
- * established, which a plugin cannot set.
+ * Shared state for one plugin's surfaces: in memory, scoped to the plugin, gone when it is
+ * disabled. `usePluginStore` is the persisted counterpart.
  */
 export function usePluginState<T>(
   key: string,
@@ -26,9 +18,7 @@ export function usePluginState<T>(
 ): [T, (next: T | ((previous: T) => T)) => void] {
   const pluginId = usePluginId()
 
-  // Held in a ref so `getSnapshot` keeps one identity across renders. A fresh object literal
-  // as `initial` would otherwise return a new value every call, which useSyncExternalStore
-  // treats as a change and loops on.
+  // In a ref, or a fresh `initial` literal makes getSnapshot loop.
   const initialRef = React.useRef(initial)
 
   const subscribe = React.useCallback(

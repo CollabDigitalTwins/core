@@ -6,12 +6,7 @@ import type { ActionMap } from '../ActionMap'
 
 export type SidebarTabType = 'file' | 'layers' | 'communication' |  'sensors' | 'settings'
 
-/**
- * A tab the viewer sidebar may show: a built-in one, or one a plugin contributed.
- *
- * Separate from `SidebarTabType` so `SIDEBAR_TAB_META` stays an exhaustive record of the
- * built-in tabs. A plugin tab carries its own icon and label instead.
- */
+/** A built-in tab or a plugin one. Separate from `SidebarTabType`, which stays exhaustive. */
 export type SidebarTabKey = SidebarTabType | `plugin:${string}`
 
 /** Request from a viewer marker to open a comment's editor/reply box in the sidebar. */

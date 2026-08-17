@@ -4,8 +4,7 @@
 export type Mode = 'external' | 'builtin'
 export type Body = 'example' | 'empty'
 
-// Every capability core renders. A plugin spanning several composes them by hand; the
-// scaffold picks one, because a first plugin that registers five surfaces teaches nothing.
+// Every capability core renders. The scaffold picks one; spanning several is done by hand.
 export const SURFACES = [
   'map.tools',
   'bim.tools',

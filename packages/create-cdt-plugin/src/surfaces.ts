@@ -21,8 +21,7 @@ export interface SurfaceFacts {
   indexTemplate: string
   /** Example body component template basename. */
   example: string
-  // Whether Empty.tsx is a valid body here. It interpolates a toolbar props type, so a surface
-  // without one would emit invalid TypeScript — the example is the only body it can have.
+  /** Whether Empty.tsx fits: it interpolates a toolbar props type not every surface has. */
   allowsEmpty: boolean
   /** Whether the example composes ReadoutRow.tsx. */
   usesReadoutRow: boolean
@@ -98,8 +97,7 @@ const FACTS: Record<Surface, SurfaceFacts> = {
     allowsEmpty: false,
     usesReadoutRow: false,
   },
-  // The three below name no viewer library either, so they share one kit entry and take
-  // their shapes from the SDK's own types module.
+  // These name no viewer library, so they share one kit entry.
   'data.pages': {
     entry: '@collabdt/plugin-kit/types/ui',
     coreEntry: '../../sdk/types',

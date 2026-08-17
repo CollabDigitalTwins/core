@@ -3,9 +3,7 @@
 
 import type { CapabilityRegistry, PluginContext } from './base'
 
-// The three surfaces that name no viewer library: a data page, a viewer sidebar tab and a
-// dialog. Their registration shapes live in `base`, so this entry exists to give them a
-// context alias of their own rather than sending an author to the map or legend entry.
+// The surfaces that name no viewer library, so they share one entry and one context alias.
 
 export * from './base'
 

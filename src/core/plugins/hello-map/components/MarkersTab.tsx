@@ -15,15 +15,8 @@ import { useMarkers } from '../markers'
 const SWATCHES = 8
 
 /**
- * The name, edited locally and saved only when confirmed.
- *
- * Deliberately not saved on blur. With an explicit confirm button, blurring to reach that
- * button would save first and make it decorative, and blurring to click anything else would
- * commit an edit the user never confirmed. Enter confirms, Escape abandons.
- *
- * Local state rather than writing per keystroke: each save is an API round trip, and one per
- * character would be slow and would churn the record's history. The caller keys this on the
- * marker id, so selecting another marker resets the field.
+ * The name, saved only when confirmed. Not on blur: with a confirm button, blurring to reach
+ * it would save first, and blurring elsewhere would commit an unconfirmed edit.
  */
 function NameField({
   name,
@@ -94,11 +87,7 @@ function NameField({
   )
 }
 
-// Drawn here rather than imported. A registration names its icon as a string and the host
-// resolves it, but inside a plugin's own component there is no icon library to reach for:
-// `lucide-react` is deliberately unshimmed, so importing it would fail at load. These trace
-// the lucide glyphs core uses, so they sit correctly beside the app's own icon buttons. The
-// labels live on each button's aria-label, so these stay hidden from assistive technology.
+// Drawn here: `lucide-react` is unshimmed, so a plugin cannot import it.
 function Glyph({ children }: { children: React.ReactNode }) {
   return (
     <svg
@@ -154,11 +143,7 @@ function MarkerPlusIcon() {
   )
 }
 
-/**
- * The markers, in the viewer sidebar. Reads the same store the map tool writes, so a marker
- * recorded on the map is already listed here — including after switching to the BIM viewer,
- * where this tab also appears.
- */
+/** The markers in the viewer sidebar, in the map and BIM viewers alike. */
 export function MarkersTab() {
   const t = usePluginTranslations()
   const { map } = useMapViewer()
@@ -247,7 +232,7 @@ export function MarkersTab() {
           <NameField
             key={selected.key}
             name={selected.name}
-            label={t('name', 'Name')}
+            label={t('nameLabel', 'Name')}
             saveLabel={t('saveName', 'Save name')}
             revertLabel={t('revertName', 'Discard the change')}
             onCommit={name => { void rename(selected.key, name) }}

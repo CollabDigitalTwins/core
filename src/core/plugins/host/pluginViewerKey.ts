@@ -18,12 +18,7 @@ export function pluginViewerKey(pluginId: string, pageId: string): ViewerKey {
   return `${PREFIX}${pluginId}:${pageId}`
 }
 
-/**
- * Splits a plugin viewer key, or returns null for a built-in viewer or a malformed one.
- *
- * Null rather than a throw: the value arrives from the URL, so anything at all can appear
- * here and a bad one should fall back to the default viewer, not break the page.
- */
+/** Null, not a throw, for a built-in or malformed key: this value comes from the URL. */
 export function parsePluginViewerKey(key: string | null | undefined): PluginViewerTarget | null {
   if (typeof key !== 'string' || !key.startsWith(PREFIX)) return null
 

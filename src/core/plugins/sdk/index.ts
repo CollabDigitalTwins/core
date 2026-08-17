@@ -5,9 +5,7 @@ export * from './types'
 export * from './version'
 export * from './components'
 
-// Colours for anything a plugin draws or lets a user recolour. Re-exported so a plugin uses
-// the platform's palette rather than inventing its own; the module is a pure function and a
-// frozen array, so it drags no viewer library into the barrel.
+// Colours for anything a plugin draws: a pure function and an array, no viewer library.
 export { MAP_COLOUR_PALETTE, stringToColour } from '../../components/viewers/map/utils/stringToColour'
 
 // The single source the app's shim generator, the import map it publishes and

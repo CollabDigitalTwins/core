@@ -17,11 +17,8 @@ interface Props {
 }
 
 /**
- * One space in full, including the IFC attributes the plugin does not store.
- *
- * Core owns the overlay, the title bar, the focus trap and Escape; this renders the body.
- * It outlives whatever opened it, so opening it from the toolbar panel and then clicking
- * away leaves it on screen.
+ * One space in full, including the IFC attributes the plugin does not store. Core owns the
+ * overlay and Escape; this renders the body, and outlives whatever opened it.
  */
 export function SpaceDialog({ close, spaceKey }: Props) {
   const t = usePluginTranslations()
@@ -98,11 +95,7 @@ export function SpaceDialog({ close, spaceKey }: Props) {
   )
 }
 
-/**
- * IFC attributes arrive either bare or wrapped in `{ value }`, depending on the model, and
- * some are nested objects with no useful text at all. Only primitives are rendered — the
- * rest show as blank rather than as `[object Object]`.
- */
+/** Only primitives render; nested objects would come out as `[object Object]`. */
 function readable(value: unknown): string {
   const unwrapped = value && typeof value === 'object' && 'value' in value
     ? (value as { value: unknown }).value

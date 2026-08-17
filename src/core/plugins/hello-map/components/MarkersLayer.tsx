@@ -16,15 +16,8 @@ const SOURCE = 'hello-map-markers'
 const LAYER = 'hello-map-markers'
 
 /**
- * The markers on the map, and the popup for whichever one is open.
- *
- * A `map.layers` contribution rather than part of the toolbar tool: the tool's panel is a
- * dropdown that unmounts when it closes, so a layer owned there would vanish with it — and
- * a marker created from the sidebar tab would draw nothing at all.
- *
- * Everything goes through the map handle. A plugin cannot import `maplibre-gl`, because a
- * second copy of it breaks the viewer, so there is no `new maplibregl.Marker()` here: a
- * GeoJSON source and a circle layer do the same job and pan and zoom on the GPU for free.
+ * The markers and the open popup. A `map.layers` contribution, not part of the tool, whose
+ * panel unmounts. A GeoJSON source, because a plugin cannot import `maplibre-gl`.
  */
 export function MarkersLayer({ map }: MapToolProps) {
   const { markers, open } = useMarkers()
@@ -35,8 +28,7 @@ export function MarkersLayer({ map }: MapToolProps) {
   React.useEffect(() => {
     if (!map) return
 
-    // Re-run on every style change, not just once. The basemap switcher replaces the whole
-    // style, which silently drops every source and layer added before it.
+    // Re-run on every style change: the basemap switcher drops every source and layer.
     const ensureLayer = () => {
       if (!map.getStyle() || map.getSource(SOURCE)) return
 
@@ -76,16 +68,14 @@ export function MarkersLayer({ map }: MapToolProps) {
       map.off('mouseenter', LAYER, pointer)
       map.off('mouseleave', LAYER, clearPointer)
 
-      // Both guarded: the style can be torn down before this runs, and removing something
-      // already gone throws.
+      // Guarded: the style may be gone, and removing what is already gone throws.
       if (map.getLayer(LAYER)) map.removeLayer(LAYER)
       if (map.getSource(SOURCE)) map.removeSource(SOURCE)
       clearPointer()
     }
   }, [map, open])
 
-  // Data updates are a setData call, not a teardown: re-adding the layer on every change
-  // would make the markers flicker.
+  // setData, not a teardown: re-adding the layer would make the markers flicker.
   React.useEffect(() => {
     if (!map) return
 

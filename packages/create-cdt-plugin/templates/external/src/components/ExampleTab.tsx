@@ -4,11 +4,7 @@
 import { usePluginState } from '@collabdt/core/plugins-sdk/state'
 import { usePluginTranslations } from '@collabdt/core/plugins-sdk/messages'
 
-// The platform renders this inside the viewer sidebar's panel, so it gets the panel's width
-// and nothing else to worry about. Fill the height and let the panel scroll.
-//
-// `usePluginState` is per-plugin and in memory, so a tool this plugin puts on the map can set
-// `selected` and this tab re-renders with it — without a round trip or a shared parent.
+// Rendered in the sidebar panel. `usePluginState` is per-plugin, so a map tool can set it.
 export function {{COMPONENT}}() {
   const t = usePluginTranslations()
   const [selected, setSelected] = usePluginState<string | null>('selected', null)

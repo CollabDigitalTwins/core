@@ -6,13 +6,8 @@
 import * as React from 'react'
 
 /**
- * Drawn here rather than imported. A registration names its icon as a string and the host
- * resolves it, but inside a plugin's own component there is no icon library to reach for:
- * `lucide-react` is deliberately unshimmed, so importing it would fail at load.
- *
- * These trace the lucide glyphs core uses, so they sit correctly beside the app's own icon
- * buttons. Labels live on each button's aria-label, so the glyphs stay hidden from
- * assistive technology.
+ * Drawn here: `lucide-react` is unshimmed, so a plugin cannot import it. Icon *names* work in
+ * registrations, where the host resolves them. Labels live on each button's aria-label.
  */
 export function Glyph({ children }: { children: React.ReactNode }) {
   return (

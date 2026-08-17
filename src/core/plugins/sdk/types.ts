@@ -6,8 +6,7 @@
 import type { BimToolProps } from './bimViewer'
 import type { MapToolProps } from './mapViewer'
 import type { PointCloudToolProps } from './pointCloudViewer'
-// Re-exported as a value, not just a type: a `viewer.tabs` contribution names the viewers it
-// belongs in, and a plugin may not import from anywhere else in core to get them.
+// A value, not just a type: a `viewer.tabs` contribution names the viewers it belongs in.
 export { ViewerNames } from '../../types/dbTypes'
 
 import type { ViewerNames } from '../../types/dbTypes'
@@ -91,16 +90,13 @@ export interface DataPageColumn<Row> {
 }
 
 /**
- * A full page in the app's Datasets nav, rendered by core: frame, breadcrumb, title,
- * search and table. The plugin supplies rows and columns; a row click opens one of its
- * own `ui.dialogs` rather than a detail view of its own.
+ * A full page in the Datasets nav, rendered by core. The plugin declares rows and columns; a
+ * row click opens one of its own `ui.dialogs` rather than a detail view of its own.
  */
 export interface DataPageRows<Row> {
   rows: Row[]
   isLoading?: boolean
-  // Returned from the hook rather than declared on the registration so it can close over
-  // hooks — `usePluginDialogs` in particular, which is how a row opens a detail view.
-  // `activate()` runs outside React and could never supply one.
+  /** From the hook, not the registration, so it can close over `usePluginDialogs`. */
   onRowClick?: (row: Row) => void
 }
 
@@ -155,15 +151,8 @@ export interface DialogRegistration<P = Record<string, unknown>> {
 }
 
 /**
- * Something drawn on the map, mounted for as long as the map itself.
- *
- * The component receives the map and renders `null` — or a portal into
- * `map.getContainer()` for a popup. It owns its sources and layers through effects and
- * removes them on unmount.
- *
- * Separate from `map.tools` because a toolbar panel unmounts when its dropdown closes,
- * which would take the layer with it. A plugin that draws on the map needs something that
- * outlives the panel, and this is it.
+ * Something drawn on the map, mounted for as long as the map. Separate from `map.tools`,
+ * whose panel unmounts when its dropdown closes and would take the layer with it.
  */
 export interface MapLayerRegistration {
   id: string

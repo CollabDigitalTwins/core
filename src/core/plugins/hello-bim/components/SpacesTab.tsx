@@ -6,51 +6,33 @@
 import * as React from 'react'
 
 import { MAP_COLOUR_PALETTE } from '../../sdk'
-import { usePluginBimAppearance, useBimViewer } from '../../sdk/bimViewer'
+import { useBimViewer } from '../../sdk/bimViewer'
 import { Button, Input, Separator } from '../../sdk/components'
 import { usePluginTranslations } from '../../sdk/messages'
 import { usePluginDialogs } from '../../sdk/ui'
-import { toModelIdMap, useSpaces } from '../spaces'
+import { toModelIdMap, useSpacePainting, useSpaces } from '../spaces'
 
 import { CheckIcon, Glyph, PlusIcon, XIcon } from './icons'
 
 /** How many palette entries to offer as swatches before the free colour input. */
 const SWATCHES = 8
 
-/**
- * The spaces, in the BIM viewer's sidebar. Renaming and colouring both live here rather than
- * in the toolbar panel, because the panel is a dropdown that closes the moment you click
- * elsewhere — no use for a form.
- */
+/** The spaces in the BIM sidebar. Renaming and colouring live here, not in the dropdown. */
 export function SpacesTab() {
   const t = usePluginTranslations()
-  const { select, isolate, showAll, fitToSelection } = useBimViewer()
-  const { setAppearance, clearAppearance } = usePluginBimAppearance()
+  const { select, isolate, showAll, fitToSelection, setItemsVisible } = useBimViewer()
   const { spaces, isLoading, lastError, selected, select: choose, rename, setColour, reset } = useSpaces()
   const { open: openDialog } = usePluginDialogs()
-
-  const [painted, setPainted] = React.useState(false)
-
-  // Colour every space by its own colour, in one call. The SDK buckets identical
-  // appearances, so this costs one material slot per distinct colour rather than per space.
-  const paintAll = () => {
-    for (const space of spaces) {
-      setAppearance(toModelIdMap([space]), { color: hexToInt(space.colour) })
-    }
-    setPainted(true)
-  }
-
-  const clearPaint = () => {
-    clearAppearance()
-    setPainted(false)
-  }
+  const { painted, setPainted } = useSpacePainting()
 
   const showOnly = async (key: string) => {
     const space = spaces.find(candidate => candidate.key === key)
     if (!space) return
 
-    await isolate(toModelIdMap([space]))
-    await select(toModelIdMap([space]))
+    const items = toModelIdMap([space])
+    await setItemsVisible(items, true)
+    await isolate(items)
+    await select(items)
     await fitToSelection()
   }
 
@@ -61,7 +43,7 @@ export function SpacesTab() {
   if (spaces.length === 0) {
     return (
       <p className="p-4 text-sm text-muted-foreground">
-        {t('empty', 'No IfcSpaces in the loaded model.')}
+        {t('empty', 'This model has no IfcSpaces.')}
       </p>
     )
   }
@@ -69,16 +51,19 @@ export function SpacesTab() {
   return (
     <div className="flex flex-col gap-3 p-4">
       <div className="flex gap-2">
-        <Button size="sm" variant={painted ? 'default' : 'outline'} className="flex-1" onClick={paintAll}>
-          {t('paintAll', 'Colour the spaces')}
-        </Button>
-        <Button size="sm" variant="ghost" onClick={clearPaint}>
-          {t('clearPaint', 'Reset')}
+        <Button
+          size="sm"
+          variant={painted ? 'default' : 'outline'}
+          aria-pressed={painted}
+          className="flex-1"
+          onClick={() => setPainted(current => !current)}
+        >
+          {painted ? t('clearColours', 'Clear colours') : t('colourSpaces', 'Colour the spaces')}
         </Button>
       </div>
 
       <Button size="sm" variant="outline" onClick={() => { void showAll() }}>
-        {t('showAll', 'Show everything again')}
+        {t('showAllElements', 'Show all elements')}
       </Button>
 
       {lastError && (
@@ -115,7 +100,7 @@ export function SpacesTab() {
           <NameField
             key={selected.key}
             name={selected.name}
-            label={t('name', 'Name')}
+            label={t('nameLabel', 'Name')}
             saveLabel={t('saveName', 'Save name')}
             revertLabel={t('revertName', 'Discard the change')}
             onCommit={name => { void rename(selected.key, name) }}
@@ -161,7 +146,7 @@ export function SpacesTab() {
 
           <div className="flex gap-2">
             <Button size="sm" variant="outline" className="flex-1" onClick={() => { void showOnly(selected.key) }}>
-              {t('isolate', 'Isolate')}
+              {t('isolateSpace', 'Isolate space')}
             </Button>
             <Button size="sm" variant="outline" onClick={() => openDialog('detail', { spaceKey: selected.key })}>
               {t('details', 'Details')}
@@ -177,11 +162,6 @@ export function SpacesTab() {
       )}
     </div>
   )
-}
-
-/** `#rrggbb` to the `0xRRGGBB` the BIM appearance API takes. */
-function hexToInt(colour: string): number {
-  return Number.parseInt(colour.replace('#', ''), 16)
 }
 
 /**

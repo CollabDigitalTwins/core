@@ -13,12 +13,7 @@ interface Props {
   markerKey?: string
 }
 
-/**
- * One marker in full. Core owns the overlay, the title bar, the focus trap and Escape;
- * this renders the body and calls `close` when it is done.
- *
- * It outlives whatever opened it: closing the map tool's panel leaves this on screen.
- */
+/** One marker in full. Core owns the overlay and Escape; this outlives whatever opened it. */
 export function MarkerDialog({ close, markerKey }: Props) {
   const t = usePluginTranslations()
   const { markers, selected } = useMarkers()

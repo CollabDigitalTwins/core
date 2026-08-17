@@ -29,13 +29,17 @@ export interface AppearanceOverride extends NodeAppearance {
 export type ResolvedAppearance = Map<string, Map<number, NodeAppearance>>
 
 /**
- * Appearances addressed by element rather than by tree node, keyed by whoever set them.
- *
- * A plugin paints specific elements — the IfcSpaces it found — and has no tree node to hang
- * an override on. Keyed by owner so two plugins painting the same model do not clobber one
- * another, and so one can be cleared without touching the other.
+ * Appearances addressed by element rather than tree node, keyed by owner so two plugins
+ * painting the same model cannot clobber each other.
  */
 export type ElementAppearanceOverrides = Map<string, ResolvedAppearance>
+
+/** One appearance and the elements wearing it. Several of these make up one owner's paint. */
+export interface ElementAppearanceGroup {
+  /** `modelId` → local ids. Sets in practice, since that is what `ModelIdMap` holds. */
+  items: Record<string, Iterable<number>>
+  appearance: NodeAppearance
+}
 
 /** One `model.highlight()` call's worth of work. */
 export interface AppearanceBucket {
@@ -91,8 +95,7 @@ export function resolveAppearance(
   }
 
   const live = overrides.filter(o => indexes[o.source].has(o.nodeId))
-  // Not an early return when there are element overrides: a plugin can be the only thing
-  // painting, with both sidebar trees untouched.
+  // Not an early return: a plugin can be the only thing painting.
   if (live.length === 0) return applyElementOverrides(new Map(), elementOverrides)
 
   const lastSeq = new Map<AppearanceSource, number>()
@@ -137,12 +140,8 @@ export function resolveAppearance(
 }
 
 /**
- * Lays per-element overrides over the tree-resolved result.
- *
- * Applied last, so a plugin painting spaces by programme wins over a storey tinted from the
- * sidebar. That is the point of a thematic overlay, and the user can always switch the
- * plugin off; the reverse — a tree cascade quietly repainting what a plugin just set — would
- * leave the plugin's own legend lying about what is on screen.
+ * Lays per-element overrides over the tree-resolved result, last, so a plugin's thematic
+ * paint wins over a tinted storey rather than being quietly repainted by it.
  */
 function applyElementOverrides(
   resolved: ResolvedAppearance,

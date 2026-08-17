@@ -79,8 +79,7 @@ describe('parseFlags', () => {
   })
 
   it('rejects an invalid surface, naming the valid ones', () => {
-    // `jobs` is in the manifest vocabulary's history but has no consumer and cannot have
-    // one — it needs server-side execution, which a browser-loaded bundle cannot provide.
+    // `jobs` can never render: it needs a server, which a browser bundle is not.
     expect(() => parseFlags(['--surface', 'jobs'])).toThrow(/map\.tools/)
   })
 

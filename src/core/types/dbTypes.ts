@@ -27,12 +27,8 @@ export enum DatasetGroup { Organizational = 'Organizational', Municipal = 'Munic
 export enum DataManagementSystem  {Ckan = 'Ckan', Arcgis = 'Arcgis', Opendatasoft = 'Opendatasoft', Socrata = 'Socrata', Other = 'Other'}
 export enum ViewerNames  {auth = 'auth', map = 'map', bim = 'bim', pointcloud = 'pointcloud', buildings = 'buildings', sites = 'sites', files = 'files', land = 'land', infrastructure = 'infrastructure', extensions = 'extensions', settings = 'settings', users= 'users'}
 /**
- * What the `viewer` URL param and `currentViewer` may hold: a built-in viewer, or a page a
- * plugin contributed, as `plugin:<pluginId>:<pageId>`.
- *
- * A widened type rather than more enum members, because `ViewerNames` is mirrored by the
- * Prisma `appContent` enum. A plugin id cannot be an enum member of a database type, and
- * plugin pages are gated by plugin enablement rather than by `appContent`.
+ * A built-in viewer or a plugin page, as `plugin:<pluginId>:<pageId>`. Widened rather than
+ * adding enum members: `ViewerNames` mirrors the Prisma `appContent` enum.
  */
 export type ViewerKey = ViewerNames | `plugin:${string}`
 

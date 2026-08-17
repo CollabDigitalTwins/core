@@ -3,14 +3,7 @@
 
 import type { LayerColors } from '../../../../types/datasetTypes'
 
-/**
- * Map-friendly, colourblind-accessible, high-contrast colours, chosen for distinctiveness
- * and for readability against both black and white.
- *
- * A named export rather than a local, because anything that offers a colour choice should
- * offer these rather than inventing its own set. Re-exported through `plugins-sdk` so a
- * plugin can use the same palette without reaching into core.
- */
+/** Map-friendly, colourblind-accessible colours. Re-exported through `plugins-sdk`. */
 export const MAP_COLOUR_PALETTE = [
     '#1b9e77', // teal
     '#d95f02', // orange

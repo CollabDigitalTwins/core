@@ -76,11 +76,8 @@ export function usePluginTranslations(): PluginTranslator {
 export type PluginMessageLookup = (pluginId: string, key: string, fallback: string) => string
 
 /**
- * Resolves text for several plugins at once, for a host rendering a list of contributions —
- * a tab strip, a nav group, a page title. `usePluginMessage` covers one string; a host
- * mapping over registrations cannot call a hook per row.
- *
- * Host-side only. A plugin has `usePluginTranslations`, already scoped to itself.
+ * Text for several plugins at once, for a host rendering a list of contributions — a hook
+ * cannot be called per row. Host-side only; a plugin has `usePluginTranslations`.
  */
 export function usePluginMessageLookup(): PluginMessageLookup {
   const messages = useMessages() as Record<string, unknown> | undefined

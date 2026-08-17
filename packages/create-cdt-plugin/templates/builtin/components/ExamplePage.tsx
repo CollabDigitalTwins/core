@@ -11,8 +11,7 @@ export interface Row extends Record<string, unknown> {
   floor: string
 }
 
-// A hook, not a value: the host calls it while rendering the page, so rows can come from
-// `usePluginStore`, from the SDK's data hooks, or from anywhere else a hook can read.
+// A hook, so rows can come from `usePluginStore` or any other hook.
 export function useRows(): { rows: Row[]; isLoading?: boolean } {
   const store = usePluginStore<Omit<Row, 'key'>>('{{SLUG}}')
 
@@ -22,8 +21,7 @@ export function useRows(): { rows: Row[]; isLoading?: boolean } {
   }
 }
 
-// `labelKey` is looked up in this plugin's own message namespace and falls back to the
-// literal, so this reads sensibly before any translation exists.
+// `labelKey` falls back to the literal, so this reads before any translation exists.
 export const columns: DataPageColumn<Row>[] = [
   { key: 'name', labelKey: 'Name' },
   { key: 'floor', labelKey: 'Floor' },

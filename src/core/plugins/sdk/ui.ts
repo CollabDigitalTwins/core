@@ -16,10 +16,8 @@ export interface PluginDialogs {
 }
 
 /**
- * Opens and closes this plugin's `ui.dialogs` contributions from any of its surfaces.
- *
- * The plugin id comes from the scope the host established, so a plugin can only address its
- * own dialogs — the same property that stops `usePluginStore` reading another namespace.
+ * Opens and closes this plugin's dialogs from any of its surfaces. The id comes from the
+ * scope, so a plugin can only address its own.
  */
 export function usePluginDialogs(): PluginDialogs {
   const pluginId = usePluginId()

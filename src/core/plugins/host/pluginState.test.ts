@@ -15,8 +15,7 @@ describe('pluginStateStore', () => {
     expect(pluginStateStore.get('a', 'selection', null)).toBe('room-1')
   })
 
-  // The property that makes this safe to share between a plugin's surfaces: two plugins
-  // picking the same obvious key ('selection') must not see each other's value.
+  // The property that makes this safe to share between surfaces.
   it('keeps two plugins using the same key apart', () => {
     pluginStateStore.set('one', 'shared', 'mine')
     pluginStateStore.set('two', 'shared', 'theirs')
@@ -58,8 +57,7 @@ describe('pluginStateStore', () => {
     expect(listener).not.toHaveBeenCalled()
   })
 
-  // Called on unload, so a plugin re-enabled in the same session starts clean rather than
-  // resuming a selection made before it was switched off.
+  // Called on unload, so a re-enabled plugin starts clean.
   describe('clear', () => {
     it('drops that plugin\'s values and notifies its subscribers', () => {
       pluginStateStore.set('gone', 'key', 'value')
@@ -81,8 +79,7 @@ describe('pluginStateStore', () => {
       expect(pluginStateStore.get('kept', 'key', null)).toBe('value')
     })
 
-    // A prefix match on `pluginId` alone would take 'room-inventory-v2' down with
-    // 'room-inventory'. The separator is what stops that.
+    // A bare prefix match would take 'room-inventory-v2' down with 'room-inventory'.
     it('does not clear a plugin whose id merely starts the same', () => {
       pluginStateStore.set('rooms', 'key', 'value')
       pluginStateStore.set('rooms-extra', 'key', 'value')

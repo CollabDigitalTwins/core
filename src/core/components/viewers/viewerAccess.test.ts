@@ -24,9 +24,7 @@ describe('isViewerAllowed', () => {
     })
   })
 
-  // appContent is a Prisma enum array and can never hold a plugin key. Gating plugin pages
-  // on it would send them back to the map for every organization that restricts anything —
-  // and the redirect strips the param, so it would not even be visible in the URL.
+  // appContent is a Prisma enum and can never hold a plugin key.
   describe('a plugin page', () => {
     it('is allowed against a restrictive appContent', () => {
       expect(isViewerAllowed('plugin:room-inventory:rooms', RESTRICTED)).toBe(true)
@@ -37,8 +35,7 @@ describe('isViewerAllowed', () => {
     })
   })
 
-  // A malformed key is not a plugin page, so it falls through to the appContent check and
-  // is refused like any other unknown viewer.
+  // A malformed key is not a plugin page, so it falls through to the appContent check.
   it('refuses a malformed plugin key under a restrictive appContent', () => {
     expect(isViewerAllowed('plugin:' as never, RESTRICTED)).toBe(false)
   })

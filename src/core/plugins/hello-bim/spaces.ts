@@ -6,7 +6,7 @@
 import * as React from 'react'
 
 import { stringToColour } from '../sdk'
-import { useBimViewer } from '../sdk/bimViewer'
+import { usePluginBimAppearance, useBimViewer } from '../sdk/bimViewer'
 import { usePluginState } from '../sdk/state'
 import { usePluginStore } from '../sdk/store'
 
@@ -37,11 +37,11 @@ export function spaceKey(modelId: string, localId: number): string {
   return `${modelId}::${localId}`
 }
 
-/** Back to the `ModelIdMap` the BIM SDK takes, for select, isolate and paint. */
+/** Sets, not arrays: `ModelIdMap` is `Record<string, Set<number>>`. */
 export function toModelIdMap(spaces: Space[]): ModelIdMap {
   const items: ModelIdMap = {}
   for (const space of spaces) {
-    (items[space.modelId] ??= []).push(space.localId)
+    (items[space.modelId] ??= new Set<number>()).add(space.localId)
   }
   return items
 }
@@ -52,54 +52,51 @@ export interface DiscoveredSpace {
   ifcName: string
 }
 
-/**
- * Finds the model's IfcSpaces once per set of loaded models, and shares the result with
- * every surface of this plugin.
- *
- * Each surface calls this, but only one scan runs: the scan key is claimed in plugin state
- * before the async work starts, and that state is shared, so whichever surface renders first
- * does the query and the rest read its result. Without that, the toolbar panel, the sidebar
- * tab and the legend would each query the model.
- */
+// Module scope, not plugin state: a state claim is an effect dep, so it cancels its own scan.
+const scans = new Map<string, Promise<DiscoveredSpace[]>>()
+
 export function useSpaceDiscovery(): { discovered: DiscoveredSpace[]; scanning: boolean } {
   const { components, modelIds, getItemsOfCategory, getProperties } = useBimViewer()
   const [discovered, setDiscovered] = usePluginState<DiscoveredSpace[]>('discovered', [])
   const [scannedFor, setScannedFor] = usePluginState<string | null>('scannedFor', null)
 
-  // Identity of the loaded set, so unloading a model rescans and a re-render does not.
   const modelKey = modelIds.join('|')
 
   React.useEffect(() => {
     if (!components || modelKey === scannedFor) return
 
-    // Claimed before awaiting, so a second surface rendering in the same tick does not
-    // start its own scan.
-    setScannedFor(modelKey)
-
     if (modelIds.length === 0) {
       setDiscovered([])
+      setScannedFor(modelKey)
       return
     }
 
     let cancelled = false
 
-    const scan = async () => {
+    const scan = scans.get(modelKey) ?? (async () => {
       const items = await getItemsOfCategory('IFCSPACE')
       const properties = await getProperties(items, ['Name', 'LongName'])
-      if (cancelled) return
 
-      setDiscovered(properties.map(entry => ({
+      return properties.map(entry => ({
         modelId: entry.modelId,
         localId: entry.localId,
         ifcName: readName(entry) ?? `Space ${entry.localId}`,
-      })))
-    }
+      }))
+    })()
 
-    void scan().catch((error) => {
-      console.error('[hello-bim] could not read the model\'s spaces:', error)
-      // Released so a later render tries again rather than sitting on an empty list.
-      if (!cancelled) setScannedFor(null)
-    })
+    scans.set(modelKey, scan)
+
+    void scan
+      .then((found) => {
+        if (cancelled) return
+        setDiscovered(found)
+        // Only once there is a result, or a cancelled surface marks it looked-at.
+        setScannedFor(modelKey)
+      })
+      .catch((error) => {
+        console.error('[hello-bim] could not read the model\'s spaces:', error)
+        scans.delete(modelKey)
+      })
 
     return () => {
       cancelled = true
@@ -109,7 +106,7 @@ export function useSpaceDiscovery(): { discovered: DiscoveredSpace[]; scanning: 
   return { discovered, scanning: components !== null && modelKey !== scannedFor }
 }
 
-/** IFC attributes arrive either as a bare string or wrapped in `{ value }`, depending on the model. */
+/** IFC attributes arrive bare or wrapped in `{ value }`, depending on the model. */
 function readName(entry: Record<string, unknown>): string | null {
   for (const key of ['LongName', 'Name']) {
     const raw = entry[key]
@@ -124,12 +121,8 @@ function readName(entry: Record<string, unknown>): string | null {
 }
 
 /**
- * The spaces this plugin knows about, and what it has stored against them.
- *
- * The IFC is read-only geometry — a "rename" cannot write back to the model, so a name is an
- * annotation this plugin owns and displays. Annotations are records, because they belong to
- * the organization and should outlive the session; which space is selected is `usePluginState`,
- * because it does not.
+ * The spaces, plus the annotations this plugin stores against them. The IFC is read-only, so
+ * a rename is an annotation, never a write to the model.
  */
 export function useSpaces() {
   const { discovered, scanning } = useSpaceDiscovery()
@@ -170,8 +163,7 @@ export function useSpaces() {
         localId: found.localId,
         ifcName: found.ifcName,
         name: annotation?.name ?? found.ifcName,
-        // A colour before anyone picks one, so the legend and the model are readable from
-        // the first render. Hashed, so it is stable per space rather than shuffling.
+        // Hashed, so an unpicked colour is stable per space rather than shuffling.
         colour: annotation?.colour ?? stringToColour(key),
         annotated: annotation !== undefined,
       }
@@ -232,4 +224,38 @@ export function useSpaces() {
     setColour,
     reset,
   }
+}
+
+/**
+ * Whether the spaces are painted, applied from an effect so a recolour repaints at once.
+ * The flag is plugin state, so the toolbar and the tab agree on it.
+ */
+export function useSpacePainting() {
+  const { spaces } = useSpaces()
+  const { setItemsVisible } = useBimViewer()
+  const { setAppearance, clearAppearance } = usePluginBimAppearance()
+  const [painted, setPainted] = usePluginState('painted', false)
+
+  React.useEffect(() => {
+    if (!painted) {
+      clearAppearance()
+      return
+    }
+    if (spaces.length === 0) return
+
+    // IfcSpaces start hidden, so painting them without this colours nothing visible.
+    void setItemsVisible(toModelIdMap(spaces), true)
+
+    setAppearance(spaces.map(space => ({
+      items: toModelIdMap([space]),
+      appearance: { color: hexToInt(space.colour) },
+    })))
+  }, [painted, spaces, setAppearance, clearAppearance, setItemsVisible])
+
+  return { painted, setPainted }
+}
+
+/** `#rrggbb` to the `0xRRGGBB` the appearance API takes. */
+export function hexToInt(colour: string): number {
+  return Number.parseInt(colour.replace('#', ''), 16)
 }

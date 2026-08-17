@@ -106,9 +106,7 @@ test('does not subscribe before the viewer components exist', () => {
   expect(dispatch).not.toHaveBeenCalled()
 })
 
-// Leaving the BIM viewer disposes the FragmentsManager, and `list` is a getter that throws
-// "not initialized" from then on. Reading it again during cleanup crashed the unmount, which
-// surfaced as an error boundary on the way from the viewer to any other page.
+// Leaving the viewer disposes the manager, and `list` throws from then on.
 test('unsubscribes without touching the manager again, so a disposed one cannot crash the unmount', () => {
   let disposed = false
   const removed: string[] = []

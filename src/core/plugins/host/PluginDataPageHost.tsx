@@ -27,11 +27,8 @@ type Row = Record<string, unknown>
 type Registration = DataPageRegistration & { pluginId: string }
 
 /**
- * Renders the `data.pages` contribution the current viewer key names.
- *
- * The frame mirrors `PluginsManager`, which mirrors `DataMenu` — a plugin page should be
- * indistinguishable from a built-in one, since it sits beside them in the same nav group.
- * The plugin supplies rows and columns and core supplies everything around them.
+ * Renders the `data.pages` contribution the viewer key names. The frame mirrors
+ * `PluginsManager`, so a plugin page is indistinguishable from a built-in one.
  */
 export function PluginDataPageHost({ viewer }: { viewer: ViewerKey }) {
   const registrations = usePluginContributions('data.pages')
@@ -43,8 +40,7 @@ export function PluginDataPageHost({ viewer }: { viewer: ViewerKey }) {
     )
     : undefined
 
-  // A key can name a page whose plugin was just disabled, or one that never existed — the
-  // value comes from the URL. Rendering nothing lets `Viewer` fall back rather than crash.
+  // The key comes from the URL, so rendering nothing lets `Viewer` fall back.
   if (!registration) return null
 
   return <PluginDataPage key={viewer} registration={registration} />
@@ -157,8 +153,7 @@ function PluginDataTable({ registration, searchTerm }: TableProps) {
             <tr
               key={rowKey(row, index)}
               className={onRowClick ? 'border-b hover:bg-accent/50 cursor-pointer' : 'border-b'}
-              // A row is only interactive when the plugin gave it something to do, so a
-              // read-only page does not announce itself as a button to a screen reader.
+              // Interactive only when the plugin gave it something to do.
               {...(onRowClick
                 ? {
                   role: 'button' as const,
@@ -190,8 +185,7 @@ function rowKey(row: Row, index: number): string {
   return typeof row.key === 'string' ? row.key : String(index)
 }
 
-// Anything not a string or number renders empty rather than "[object Object]". A plugin that
-// wants more supplies a `render` for the column.
+// Non-primitives render empty rather than "[object Object]"; use a column `render` instead.
 function formatCell(value: unknown): string {
   if (typeof value === 'string') return value
   if (typeof value === 'number' || typeof value === 'boolean') return String(value)

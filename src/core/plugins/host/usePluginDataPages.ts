@@ -22,10 +22,8 @@ export interface PluginNavItem {
 }
 
 /**
- * The `data.pages` contributions as nav items, for the Datasets group in the app sidebar.
- *
- * They sit beside Buildings and Sites rather than in a group of their own, so a plugin page
- * reads as part of the platform — which is the point of letting a plugin contribute one.
+ * The `data.pages` contributions as nav items. They sit in Datasets beside Buildings, so a
+ * contributed page reads as part of the platform.
  */
 export function usePluginDataPages(): PluginNavItem[] {
   const registrations = usePluginContributions('data.pages')

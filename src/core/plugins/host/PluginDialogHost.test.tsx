@@ -14,8 +14,7 @@ import { PluginScopeProvider } from './scope'
 
 import type { PluginManifest, PluginSource } from '../sdk/types'
 
-// The dialog title is looked up in the merged catalog and falls back to the key, which is
-// what these assertions read. next-intl needs no real messages for that path.
+// The title falls back to its key, which is what these assertions read.
 vi.mock('next-intl', () => ({
   useMessages: () => ({}),
   useTranslations: () => (key: string) => key,
@@ -112,13 +111,11 @@ describe('plugin dialogs', () => {
     await waitFor(() => expect(screen.queryByText('body of alpha')).not.toBeInTheDocument())
   })
 
-  // The whole reason the host owns dialogs rather than the plugin: a dialog opened from a
-  // map tool's panel has to survive that panel closing.
+  // The whole reason the host owns dialogs rather than the plugin.
   it('stays open when the surface that opened it unmounts', async () => {
     const plugins = [makeSource('alpha')]
 
-    // Rerendered rather than toggled by a button: an open Radix dialog marks the rest of the
-    // page aria-hidden, so a control behind it is genuinely unreachable — as it should be.
+    // Rerendered, not clicked: an open Radix dialog aria-hides the rest of the page.
     const { rerender } = renderHost(plugins, <ScopedOpener pluginId="alpha" />)
 
     await waitFor(() => expect(screen.getByRole('button', { name: 'open' })).toBeInTheDocument())
@@ -135,8 +132,7 @@ describe('plugin dialogs', () => {
     expect(screen.getByText('body of alpha')).toBeInTheDocument()
   })
 
-  // The same isolation property usePluginStore has: the id comes from the scope the host
-  // established, so naming another plugin's dialog id addresses nothing.
+  // The same isolation `usePluginStore` has: the id comes from the scope, not the plugin.
   it('cannot open another plugin\'s dialog', async () => {
     renderHost(
       [makeSource('alpha', 'alpha-only'), makeSource('beta', 'beta-only')],

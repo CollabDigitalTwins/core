@@ -23,13 +23,8 @@ const DialogStackContext = React.createContext<OpenDialog[]>([])
 const DialogControlsContext = React.createContext<DialogControls | null>(null)
 
 /**
- * Holds every plugin dialog that is open. Provided by `PluginHostProvider` so the stack sits
- * above all of a plugin's surfaces: a dialog opened from a map tool's panel stays on screen
- * when that panel closes, which it could not do if the plugin rendered its own overlay.
- *
- * State only, and imports nothing from `./provider` on purpose — the provider renders this,
- * so reaching back would make the module graph a cycle. `PluginDialogHost` does the
- * rendering and is mounted separately.
+ * Holds every open plugin dialog, above all of a plugin's surfaces so one outlives whatever
+ * opened it. State only: the provider renders this, so importing it back would cycle.
  */
 export function PluginDialogProvider({ children }: { children: React.ReactNode }) {
   const [stack, setStack] = React.useState<OpenDialog[]>([])
@@ -41,8 +36,7 @@ export function PluginDialogProvider({ children }: { children: React.ReactNode }
       const instanceId = nextInstance.current
       setStack(previous => [...previous, { pluginId, dialogId, props, instanceId }])
     },
-    // Closes the topmost match, so a plugin that stacked the same dialog twice does not lose
-    // both to one call.
+    // Topmost match only, so stacking the same dialog twice does not lose both.
     close: (pluginId, dialogId) => {
       setStack((previous) => {
         const matches = (entry: OpenDialog) =>

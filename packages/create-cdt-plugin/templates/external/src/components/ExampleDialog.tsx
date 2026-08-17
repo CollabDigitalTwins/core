@@ -4,11 +4,7 @@
 import { Button } from '@collabdt/core/plugins-sdk/components'
 import { usePluginTranslations } from '@collabdt/core/plugins-sdk/messages'
 
-// The platform supplies `close` and owns everything around this: the overlay, the title bar,
-// the focus trap and Escape. Render the body only.
-//
-// Whatever `open(id, props)` passed arrives here as props, so type them and they are checked
-// at the call site.
+// The platform owns the overlay, title bar, focus trap and Escape. Render the body only.
 interface Props {
   close: () => void
   subject?: string

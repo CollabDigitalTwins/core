@@ -9,12 +9,7 @@ import { useMarkers } from '../markers'
 import type { DataPageColumn, DataPageRows } from '../../sdk/types'
 import type { Marker } from '../markers'
 
-/**
- * The page's rows, and what a click on one does.
- *
- * Both come from here rather than from the registration because both need hooks: the rows
- * read the plugin's store, and the click opens the plugin's own dialog.
- */
+/** Rows and the click handler both need hooks, so both come from here. */
 export function useMarkerRows(): DataPageRows<Marker> {
   const { markers, isLoading, select, open } = useMarkers()
   const { open: openDialog } = usePluginDialogs()
@@ -30,8 +25,7 @@ export function useMarkerRows(): DataPageRows<Marker> {
   }
 }
 
-// `labelKey` is resolved in this plugin's own namespace and falls back to the literal, so
-// the page reads sensibly even before a translator reaches it.
+// `labelKey` falls back to the literal, so this reads before any translation exists.
 export const markerColumns: DataPageColumn<Marker>[] = [
   {
     key: 'colour',

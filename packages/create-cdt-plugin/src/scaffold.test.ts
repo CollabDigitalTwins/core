@@ -265,9 +265,7 @@ describe('scaffold, built-in mode', () => {
           const specifiers = [...source.matchAll(/from '([^']+)'/g)].map(match => match[1])
 
           for (const specifier of specifiers) {
-            // Core's ESLint isolation rule allows the SDK barrel and its submodules, the
-            // plugin's own files, and react. Anything else stops the plugin compiling
-            // inside core.
+            // Core's isolation rule allows the SDK, the plugin's own files, and react.
             expect(specifier).toMatch(/^(\.\.\/)+sdk(\/|$)|^\.\/|^react$/)
           }
         }

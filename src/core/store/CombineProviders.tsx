@@ -5,6 +5,7 @@
 
 import * as React from 'react'
 
+import { PluginDialogHost } from '../plugins/host/PluginDialogHost'
 import { PluginHostProvider, type PluginHostProviderProps } from '../plugins/host/provider'
 
 import { AppConfigProvider, type RuntimeConfig } from './AppConfig/context'
@@ -66,6 +67,8 @@ export function AppProvider({
       <InnerProviders>
         <PluginHostProvider plugins={plugins} enabledSlugs={enabledSlugs} configs={configs}>
           {children}
+          {/* Here, not in PluginHostProvider: importing it there would cycle. */}
+          <PluginDialogHost />
         </PluginHostProvider>
       </InnerProviders>
     </AppConfigProvider>

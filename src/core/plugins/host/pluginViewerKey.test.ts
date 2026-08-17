@@ -21,8 +21,7 @@ describe('pluginViewerKey', () => {
   })
 })
 
-// The value arrives from the URL, so anything can appear here. Every rejection has to be a
-// null the caller falls back on, never a throw that takes the page down.
+// From the URL, so every rejection has to be a null the caller falls back on.
 describe('parsePluginViewerKey rejects', () => {
   it.each([
     ['a built-in viewer', 'buildings'],

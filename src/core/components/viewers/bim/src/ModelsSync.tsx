@@ -37,11 +37,7 @@ export function ModelsSync() {
       return
     }
 
-    // Held from setup rather than read again on teardown. `FragmentsManager.list` is a
-    // getter that throws "not initialized" once the manager is disposed, and leaving the
-    // viewer disposes it before this cleanup runs — so unsubscribing through the getter
-    // crashed on the way out. The list object itself stays valid, and removing a listener
-    // from it is harmless whether or not the manager is still alive.
+    // Held from setup: `list` throws once the manager is disposed, which happens first.
     const list = fragments.list
 
     const publish = () => {

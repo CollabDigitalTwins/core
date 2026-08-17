@@ -27,7 +27,7 @@
   },
   "messages": {
     "en": {
-      "name": "Name",
+      "name": "Hello Map",
       "description": "Records markers on the map and shows them everywhere: a toolbar readout, a map layer, a legend, a viewer sidebar tab, a data page and a dialog.",
       "title": "Hello Map",
       "latitude": "Latitude",
@@ -56,10 +56,11 @@
       "saveFailed": "Could not save: ",
       "flyTo": "Fly to on the map",
       "saveName": "Save name",
-      "revertName": "Discard the change"
+      "revertName": "Discard the change",
+      "nameLabel": "Name"
     },
     "fr": {
-      "name": "Nom",
+      "name": "Bonjour la carte",
       "description": "Enregistre des repères sur la carte et les affiche partout : un relevé dans la barre d'outils, une couche, une légende, un onglet de barre latérale, une page de données et une boîte de dialogue.",
       "title": "Bonjour la carte",
       "latitude": "Latitude",
@@ -88,10 +89,11 @@
       "saveFailed": "Échec de l’enregistrement : ",
       "flyTo": "Aller au repère sur la carte",
       "saveName": "Enregistrer le nom",
-      "revertName": "Annuler la modification"
+      "revertName": "Annuler la modification",
+      "nameLabel": "Nom"
     },
     "es": {
-      "name": "Nombre",
+      "name": "Hola mapa",
       "description": "Registra marcadores en el mapa y los muestra en todas partes: una lectura en la barra de herramientas, una capa, una leyenda, una pestaña de barra lateral, una página de datos y un diálogo.",
       "title": "Hola mapa",
       "latitude": "Latitud",
@@ -120,7 +122,8 @@
       "saveFailed": "No se pudo guardar: ",
       "flyTo": "Ir al marcador en el mapa",
       "saveName": "Guardar el nombre",
-      "revertName": "Descartar el cambio"
+      "revertName": "Descartar el cambio",
+      "nameLabel": "Nombre"
     }
   }
 }

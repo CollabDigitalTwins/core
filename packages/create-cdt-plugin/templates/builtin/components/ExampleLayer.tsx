@@ -13,12 +13,8 @@ const SOURCE = '{{SLUG}}-source'
 const LAYER = '{{SLUG}}-layer'
 
 /**
- * Draws a circle at the map's centre. Renders nothing: everything it does goes through the
- * map handle, which is the only way a plugin can draw — `maplibre-gl` is not importable,
- * because a second copy of it would break the viewer.
- *
- * The cleanup is the part worth copying. This component unmounts whenever the plugin is
- * disabled, and a source left behind makes the next mount throw on a duplicate id.
+ * Draws a circle at the map's centre. Renders nothing: a plugin cannot import `maplibre-gl`,
+ * so everything goes through the map handle. Cleaning up matters — see below.
  */
 export function {{COMPONENT}}({ map }: MapToolProps) {
   React.useEffect(() => {
@@ -48,8 +44,7 @@ export function {{COMPONENT}}({ map }: MapToolProps) {
     })
 
     return () => {
-      // Guard both: the style can be torn down before this runs, and removing a layer
-      // that is already gone throws.
+      // Guarded: the style may be gone, and removing what is already gone throws.
       if (map.getLayer(LAYER)) map.removeLayer(LAYER)
       if (map.getSource(SOURCE)) map.removeSource(SOURCE)
     }

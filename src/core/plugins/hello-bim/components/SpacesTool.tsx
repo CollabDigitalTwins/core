@@ -3,49 +3,47 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { usePluginBimAppearance, useBimViewer } from '../../sdk/bimViewer'
 import { Button, Separator } from '../../sdk/components'
 import { usePluginTranslations } from '../../sdk/messages'
-import { usePluginDialogs } from '../../sdk/ui'
-import { toModelIdMap, useSpaces } from '../spaces'
+import { toModelIdMap, useSpacePainting, useSpaces } from '../spaces'
 
 import type { BimToolProps } from '../../sdk/bimViewer'
 import type { ToolbarToolProps } from '../../sdk/types'
 
 /**
- * The toolbar panel: what the model contains, and the two actions worth having one click
- * away. Renaming and colouring live in the sidebar tab instead — this panel is a dropdown
- * that closes as soon as you click elsewhere, which is no place for a form.
+ * Three things worth one click. Renaming and colouring live in the sidebar tab: this panel is
+ * a dropdown that closes on the next click. The viewer arrives as props, as the host intends.
  */
-export function SpacesTool({ modelIds }: ToolbarToolProps & BimToolProps) {
+export function SpacesTool({
+  modelIds,
+  isolate,
+  setItemsVisible,
+  showAll,
+  fitToSelection,
+  select,
+}: ToolbarToolProps & BimToolProps) {
   const t = usePluginTranslations()
-  const { select, isolate, showAll, fitToSelection } = useBimViewer()
-  const { setAppearance, clearAppearance } = usePluginBimAppearance()
-  const { spaces, isLoading, selected } = useSpaces()
-  const { open } = usePluginDialogs()
+  const { spaces, isLoading } = useSpaces()
+  const { painted, setPainted } = useSpacePainting()
 
-  const selectAll = async () => {
+  const items = () => toModelIdMap(spaces)
+
+  const isolateSpaces = async () => {
     if (spaces.length === 0) return
-    await select(toModelIdMap(spaces))
+
+    await setItemsVisible(items(), true)
+    await isolate(items())
+    await select(items())
     await fitToSelection()
   }
 
-  const isolateAll = async () => {
-    if (spaces.length === 0) return
-    await isolate(toModelIdMap(spaces))
-    await fitToSelection()
-  }
-
-  const paintAll = () => {
-    for (const space of spaces) {
-      setAppearance(toModelIdMap([space]), {
-        color: Number.parseInt(space.colour.replace('#', ''), 16),
-      })
-    }
+  const reset = async () => {
+    setPainted(false)
+    await showAll()
   }
 
   return (
-    <div className="w-64 p-1">
+    <div className="w-60 p-1">
       <p className="px-2 py-1 text-sm font-medium">{t('title', 'Spaces')}</p>
       <Separator className="my-1" />
 
@@ -57,29 +55,22 @@ export function SpacesTool({ modelIds }: ToolbarToolProps & BimToolProps) {
         <p className="px-2 py-1 text-sm text-muted-foreground">
           {t('loading', 'Reading the model…')}
         </p>
+      ) : spaces.length === 0 ? (
+        <p className="px-2 py-1 text-sm text-muted-foreground">
+          {t('empty', 'This model has no IfcSpaces.')}
+        </p>
       ) : (
         <>
-          <p className="px-2 py-1 text-sm text-muted-foreground">
-            {t('count', 'Spaces: ')}{spaces.length}
+          <p className="px-2 pb-1 text-xs text-muted-foreground">
+            {t('count', 'Spaces in this model: ')}{spaces.length}
           </p>
 
-          <Separator className="my-1" />
-
-          <Item label={t('selectAll', 'Select them all')} onClick={() => { void selectAll() }} />
-          <Item label={t('isolateAll', 'Isolate them')} onClick={() => { void isolateAll() }} />
-          <Item label={t('paintAll', 'Colour the spaces')} onClick={paintAll} />
-          <Item label={t('clearPaint', 'Reset the colours')} onClick={clearAppearance} />
-          <Item label={t('showAll', 'Show everything again')} onClick={() => { void showAll() }} />
-
-          {selected && (
-            <>
-              <Separator className="my-1" />
-              <Item
-                label={t('detailsFor', 'Details: ') + selected.name}
-                onClick={() => open('detail', { spaceKey: selected.key })}
-              />
-            </>
-          )}
+          <Item
+            label={painted ? t('clearColours', 'Clear colours') : t('colourSpaces', 'Colour the spaces')}
+            onClick={() => setPainted(current => !current)}
+          />
+          <Item label={t('isolateSpaces', 'Isolate spaces')} onClick={() => { void isolateSpaces() }} />
+          <Item label={t('resetView', 'Reset the view')} onClick={() => { void reset() }} />
         </>
       )}
     </div>

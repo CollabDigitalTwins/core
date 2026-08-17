@@ -35,13 +35,7 @@ function planFor(options: Options): Array<[string, string]> {
   ]
 }
 
-// More than one file for the example, which composes a child component from its own file. The
-// bundle is still single-file: the delivery constraint says nothing about how source is
-// organised, and a one-file example reads as saying a plugin is one component.
-//
-// Empty.tsx interpolates a toolbar props type, so a surface without one (`allowsEmpty: false`)
-// takes its example whatever the caller asked for: routing it to Empty would emit invalid
-// TypeScript, and its example is the smallest thing that surface can be.
+// Two files, so a reader does not infer that a plugin is one component.
 function bodyFiles(options: Options): Array<[string, string]> {
   const facts = factsFor(options.surface)
   const templates = options.mode === 'builtin' ? 'builtin/components' : 'external/src/components'

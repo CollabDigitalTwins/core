@@ -78,8 +78,7 @@ describe('PluginDataPageHost', () => {
     expect(screen.getByText('Second')).toBeInTheDocument()
   })
 
-  // The key comes from the URL, so it can name anything at all. Rendering nothing is what
-  // lets Viewer fall back instead of the page crashing.
+  // The key comes from the URL, so it can name anything at all.
   it.each([
     ['an unknown page id', 'plugin:rooms-plugin:missing'],
     ['an unknown plugin', 'plugin:not-installed:rooms'],
@@ -113,8 +112,7 @@ describe('PluginDataPageHost', () => {
     expect(screen.queryByText('Atrium')).not.toBeInTheDocument()
   })
 
-  // onRowClick comes back from the rows hook, not the registration, so it can close over
-  // usePluginDialogs — which is the only way a row can open a detail view.
+  // onRowClick comes from the rows hook, so it can close over usePluginDialogs.
   it('calls the onRowClick the rows hook returned', async () => {
     const onRowClick = vi.fn()
     renderPage(

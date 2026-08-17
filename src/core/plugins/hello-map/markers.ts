@@ -25,13 +25,7 @@ export interface Marker extends MarkerData {
 /** Used when a record was written before `zoom` existed — `T` is a declaration, not a guarantee. */
 export const DEFAULT_ZOOM = 15
 
-/**
- * The stored shape of a marker, without the key.
- *
- * Every edit goes through this rather than listing the fields it keeps. Rebuilding the
- * record field by field meant each new field had to be added to every writer, and missing
- * one silently dropped it on the next rename.
- */
+/** One edit path, so a field added to `MarkerData` cannot be dropped by a rename. */
 function toData({ key: _key, ...data }: Marker): MarkerData {
   return data
 }
@@ -42,20 +36,14 @@ function nextKey(): string {
 }
 
 /**
- * Everything every surface of this plugin reads.
- *
- * The markers themselves are records — they belong to the organization and should survive a
- * reload, so they go through `usePluginStore`. Which marker is selected, and which popup is
- * open, are this session's business only, so they stay in `usePluginState`. Putting either
- * in the other place would be wrong in an obvious way: a reload that forgets your markers,
- * or a database write every time you click one.
+ * Everything every surface reads. Markers are records, so they survive a reload; the selection
+ * and the open popup are session state, so they do not belong in the database.
  */
 export function useMarkers() {
   const store = usePluginStore<MarkerData>('markers')
   const [selectedKey, setSelectedKey] = usePluginState<string | null>('selected', null)
   const [openKey, setOpenKey] = usePluginState<string | null>('open', null)
-  // Every write goes through `attempt`, so a rejected save is shown rather than swallowed.
-  // Without this a failing write looks exactly like a button that does nothing.
+  // Every write goes through `attempt`, or a rejected save looks like a dead button.
   const [lastError, setLastError] = usePluginState<string | null>('lastError', null)
 
   const attempt = React.useCallback(
@@ -94,8 +82,7 @@ export function useMarkers() {
     async (latitude: number, longitude: number, zoom: number) => {
       const key = nextKey()
 
-      // The palette rather than an arbitrary colour, so a page of markers stays readable
-      // and colourblind-safe. The tab can override it to anything afterwards.
+      // A palette colour, so a page of markers stays readable and colourblind-safe.
       const saved = await attempt(() => store.put(key, {
         name: `Marker ${store.items.length + 1}`,
         latitude,
@@ -129,8 +116,7 @@ export function useMarkers() {
   const rename = React.useCallback(
     async (key: string, name: string) => {
       const trimmed = name.trim()
-      // An empty name would leave a row with nothing to click and an unlabelled legend
-      // entry, so the previous one stands.
+      // An empty name would leave an unlabelled row and legend entry.
       if (!trimmed || trimmed === byKey.get(key)?.name) return
 
       await patch(key, { name: trimmed })

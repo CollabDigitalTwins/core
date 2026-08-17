@@ -9,14 +9,8 @@ import { usePluginConfigs, usePluginContributions } from './provider'
 import { PluginScopeProvider } from './scope'
 
 /**
- * Mounts every `map.layers` contribution for as long as the map exists.
- *
- * Rendered by `MapViewer`, not by a toolbar: a tool's panel is a dropdown that unmounts
- * when it closes, so a layer owned there would disappear with it — and anything else the
- * plugin does, from a sidebar tab or a data page, would draw onto a map with no layer.
- *
- * The contributions render nothing themselves. They receive the map, manage their own
- * sources and layers through effects, and clean up on unmount.
+ * Mounts every `map.layers` contribution for as long as the map exists — a toolbar panel
+ * unmounts when its dropdown closes and would take its layers with it.
  */
 export function PluginMapLayerHost() {
   const registrations = usePluginContributions('map.layers')

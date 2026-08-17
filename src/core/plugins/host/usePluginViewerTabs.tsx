@@ -21,11 +21,8 @@ export function pluginTabId(pluginId: string, tabId: string): SidebarTabKey {
 }
 
 /**
- * The `viewer.tabs` contributions this viewer should show, ready to append to its own tab
- * list. A registration with no `viewers` appears in every viewer.
- *
- * The panel content is wrapped in the plugin's scope here, which is what lets the component
- * inside call `usePluginState`, `usePluginDialogs` and the rest without passing an id around.
+ * The `viewer.tabs` contributions for this viewer; no `viewers` means every viewer. The panel
+ * is wrapped in the plugin scope, which is what lets the component inside reach the SDK hooks.
  */
 export function usePluginViewerTabs(viewer: ViewerNames): ViewerSidebarTab[] {
   const registrations = usePluginContributions('viewer.tabs')

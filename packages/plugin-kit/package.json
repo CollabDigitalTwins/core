@@ -33,6 +33,10 @@
     "./types/legend": {
       "types": "./dist/types/legend.d.ts",
       "default": "./dist/types/legend.js"
+    },
+    "./types/ui": {
+      "types": "./dist/types/ui.d.ts",
+      "default": "./dist/types/ui.js"
     }
   },
   "scripts": {

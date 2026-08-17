@@ -12,6 +12,8 @@ const SDK_MODULES: Record<string, () => Promise<Record<string, unknown>>> = {
   '@collabdt/core/plugins-sdk/config': () => import('../sdk/config'),
   '@collabdt/core/plugins-sdk/messages': () => import('../sdk/messages'),
   '@collabdt/core/plugins-sdk/store': () => import('../sdk/store'),
+  '@collabdt/core/plugins-sdk/state': () => import('../sdk/state'),
+  '@collabdt/core/plugins-sdk/ui': () => import('../sdk/ui'),
   '@collabdt/core/plugins-sdk/components': () => import('../sdk/components'),
 }
 
@@ -35,6 +37,10 @@ const DELIBERATELY_UNSHIMMED: Record<string, Record<string, string>> = {
     __lookupPluginMessage:
       'a test seam for the lookup that backs the two hooks, exported under a __ '
       + 'prefix precisely because it is not API.',
+    usePluginMessageLookup:
+      'host-side: it resolves text for several plugins at once, which a capability host '
+      + 'rendering a list of contributions needs and a plugin never does. A plugin has '
+      + 'usePluginTranslations, already scoped to itself.',
   },
 }
 

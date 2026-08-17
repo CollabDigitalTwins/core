@@ -29,7 +29,7 @@ describe('PluginHost', () => {
     slug: 'test-plugin',
     name: 'Test Plugin',
     version: '1.0.0',
-    capabilities: ['sidebar.items'],
+    capabilities: ['viewer.tabs'],
   }
 
   it('activates a plugin and calls activate()', async () => {
@@ -50,8 +50,8 @@ describe('PluginHost', () => {
     expect(typeof receivedCtx!.register).toBe('function')
     expect(receivedCtx!.pluginId).toBe('test-plugin')
     // Declared capability: register succeeds
-    expect(() => receivedCtx!.register('sidebar.items', {
-      id: 'ok', label: 'OK', icon: 'Zap', component: () => null,
+    expect(() => receivedCtx!.register('viewer.tabs', {
+      id: 'ok', labelKey: 'OK', icon: 'Zap', component: () => null,
     })).not.toThrow()
     // Undeclared capability: register throws
     expect(() => receivedCtx!.register('map.tools', {
@@ -72,14 +72,14 @@ describe('PluginHost', () => {
   it('deactivates a plugin and cleans up registry', async () => {
     await host.loadPlugin(manifest, {
       activate(ctx) {
-        ctx.register('sidebar.items', { id: 'item', label: 'Item', icon: 'Zap', component: () => null })
+        ctx.register('viewer.tabs', { id: 'item', labelKey: 'Item', icon: 'Zap', component: () => null })
       },
     }, {})
 
-    expect(registry.getAll('sidebar.items')).toHaveLength(1)
+    expect(registry.getAll('viewer.tabs')).toHaveLength(1)
 
     await host.unloadPlugin('test-plugin')
-    expect(registry.getAll('sidebar.items')).toHaveLength(0)
+    expect(registry.getAll('viewer.tabs')).toHaveLength(0)
     expect(host.getStatus('test-plugin')).toBe('inactive')
   })
 
@@ -113,12 +113,12 @@ describe('PluginHost', () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     await host.loadPlugin(manifest, {
       activate(ctx) {
-        ctx.register('sidebar.items', { id: 'half', label: 'Half', icon: 'Zap', component: () => null })
+        ctx.register('viewer.tabs', { id: 'half', labelKey: 'Half', icon: 'Zap', component: () => null })
         throw new Error('boom')
       },
     }, {})
 
-    expect(registry.getAll('sidebar.items')).toHaveLength(0)
+    expect(registry.getAll('viewer.tabs')).toHaveLength(0)
     consoleSpy.mockRestore()
   })
 

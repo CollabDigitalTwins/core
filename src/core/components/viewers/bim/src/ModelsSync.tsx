@@ -37,10 +37,13 @@ export function ModelsSync() {
       return
     }
 
+    // Held from setup: `list` throws once the manager is disposed, which happens first.
+    const list = fragments.list
+
     const publish = () => {
       dispatch({
         type: 'SET_MODEL_IDS',
-        payload: { modelIds: [...fragments.list.keys()] },
+        payload: { modelIds: [...list.keys()] },
       })
     }
 
@@ -48,12 +51,12 @@ export function ModelsSync() {
     // subscribes, which is the common case when switching back to the viewer.
     publish()
 
-    fragments.list.onItemSet.add(publish)
-    fragments.list.onItemDeleted.add(publish)
+    list.onItemSet.add(publish)
+    list.onItemDeleted.add(publish)
 
     return () => {
-      fragments.list.onItemSet.remove(publish)
-      fragments.list.onItemDeleted.remove(publish)
+      list.onItemSet.remove(publish)
+      list.onItemDeleted.remove(publish)
     }
   }, [bimComponents, dispatch])
 

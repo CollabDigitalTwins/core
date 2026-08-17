@@ -6,20 +6,27 @@
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
-import { LegendCard } from '../../../../components/ui/LegendCard'
-import { usePluginContributions } from '../../../../plugins/host/provider'
+import { usePluginConfigs, usePluginContributions } from '../../../../plugins/host/provider'
+import { PluginScopeProvider } from '../../../../plugins/host/scope'
+import { LegendCard } from '../../../ui/LegendCard'
 
+import type { PluginContribution } from '../../../../plugins/host/provider'
 import type { LegendRegistration } from '../../../../plugins/sdk/types'
+import type { ViewerNames } from '../../../../types/dbTypes'
 
 /**
- * Single shared legend card. Reads all `map.legends` registrations and renders
- * one DatasetManager-styled card (bottom-left, aligned with the layers/styling
- * card) with a titled section per
- * ACTIVE legend. Replaces the per-plugin floating legends and their hand-tuned
- * bottom-[Npx] offsets — sections auto-stack inside the one card.
+ * One shared legend card per viewer, with a titled section per active `viewer.legends`
+ * registration. Replaces the per-plugin floating legends and their hand-tuned offsets.
  */
-export function MapLegendHost() {
-  const registrations = usePluginContributions('map.legends')
+export function ViewerLegendHost({ viewer }: { viewer: ViewerNames }) {
+  const all = usePluginContributions('viewer.legends')
+  const configs = usePluginConfigs()
+
+  // A legend with no `viewers` belongs everywhere; one that names them appears only there.
+  const registrations = React.useMemo(
+    () => all.filter(entry => !entry.viewers || entry.viewers.includes(viewer)),
+    [all, viewer],
+  )
   const t = useTranslations('MapLegend')
   const [activeMap, setActiveMap] = React.useState<Record<string, boolean>>({})
 
@@ -34,7 +41,13 @@ export function MapLegendHost() {
       {/* Hidden probes keep useLegend() hooks alive even while the card is hidden. */}
       <div className="hidden">
         {registrations.map(r => (
-          <LegendSection key={`probe-${r.id}`} registration={r} onActiveChange={reportActive} renderBody={false} />
+          <ScopedLegendSection
+            key={`probe-${r.id}`}
+            registration={r}
+            config={configs[r.pluginId]}
+            onActiveChange={reportActive}
+            renderBody={false}
+          />
         ))}
       </div>
 
@@ -46,12 +59,32 @@ export function MapLegendHost() {
           countTestId="map-legend-count"
         >
           {registrations.map(r => (
-            <LegendSection key={r.id} registration={r} onActiveChange={reportActive} renderBody />
+            <ScopedLegendSection
+              key={r.id}
+              registration={r}
+              config={configs[r.pluginId]}
+              onActiveChange={reportActive}
+              renderBody
+            />
           ))}
         </LegendCard>
       )}
     </>
   )
+}
+
+// The scope must be a parent: `useLegend` runs in LegendSection's own body.
+function ScopedLegendSection({ registration, config, ...rest }: ScopedLegendSectionProps) {
+  return (
+    <PluginScopeProvider pluginId={registration.pluginId} config={config}>
+      <LegendSection registration={registration} {...rest} />
+    </PluginScopeProvider>
+  )
+}
+
+interface ScopedLegendSectionProps extends LegendSectionProps {
+  registration: PluginContribution<'viewer.legends'>
+  config?: Record<string, unknown>
 }
 
 interface LegendSectionProps {

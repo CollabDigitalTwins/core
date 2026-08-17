@@ -37,7 +37,7 @@ you several toolbar buttons, each with its own component, and a plugin can contr
 more than one surface at a time:
 
 ```ts
-// manifest.json: "capabilities": ["map.tools", "map.legends"]
+// manifest.json: "capabilities": ["map.tools", "viewer.legends"]
 export function activate(ctx: MapPluginContext): void {
   ctx.register('map.tools', {
     id: '{{SLUG}}-inspect', label: 'Inspect', icon: 'Search', component: InspectTool,

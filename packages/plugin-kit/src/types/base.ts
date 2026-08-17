@@ -15,15 +15,15 @@ import type * as React from 'react'
 /** Declare as `hostApi` in your manifest. The host refuses a plugin that declares another value. */
 export const PLUGIN_HOST_API = 1
 
-// `sidebar.items` and `viewer.panels` are here because core validates against this list, but
-// they have no CapabilityRegistry entry: nothing renders them, so a plugin cannot register one.
 export const VALID_CAPABILITIES = [
-  'sidebar.items',
-  'viewer.panels',
+  'data.pages',
+  'viewer.tabs',
+  'ui.dialogs',
   'map.tools',
   'bim.tools',
   'pointcloud.tools',
-  'map.legends',
+  'viewer.legends',
+  'map.layers',
 ] as const
 
 export type PluginCapability = typeof VALID_CAPABILITIES[number]
@@ -60,18 +60,66 @@ export interface ToolbarRegistration<P = Record<string, unknown>> {
   stayActive?: boolean
 }
 
-// Generic over the four surface shapes rather than importing them, so this file names no viewer
-// library. Each surface file exports a ready-bound alias; a plugin spanning two composes its own.
+// Mounted for as long as the map, unlike a toolbar panel. `P` is the map surface.
+export interface MapLayerRegistration<P = unknown> {
+  id: string
+  component: React.ComponentType<P>
+}
+
+export interface DataPageColumn<Row> {
+  key: string
+  labelKey: string
+  render?: (row: Row) => React.ReactNode
+}
+
+export interface DataPageRows<Row> {
+  rows: Row[]
+  isLoading?: boolean
+  /** From the hook, not the registration, so it can close over `usePluginDialogs`. */
+  onRowClick?: (row: Row) => void
+}
+
+export interface DataPageRegistration<Row = Record<string, unknown>> {
+  id: string
+  titleKey: string
+  icon: string
+  useRows: () => DataPageRows<Row>
+  columns: DataPageColumn<Row>[]
+  searchKeys?: string[]
+  emptyKey?: string
+}
+
+export interface ViewerTabRegistration {
+  id: string
+  labelKey: string
+  icon: string
+  component: React.ComponentType
+  /** Viewer names as core spells them: 'map', 'bim', 'pointcloud'. Omit for all of them. */
+  viewers?: string[]
+}
+
+export interface DialogRegistration<P = Record<string, unknown>> {
+  id: string
+  titleKey: string
+  size?: 'sm' | 'md' | 'lg' | 'xl'
+  component: React.ComponentType<P & { close: () => void }>
+}
+
+// Generic over the viewer shapes so this file names no viewer library; the rest are concrete.
 export interface CapabilityRegistry<
   MapProps = unknown,
   BimProps = unknown,
   PointCloudProps = unknown,
   Legend = unknown,
 > {
+  'data.pages': DataPageRegistration
+  'viewer.tabs': ViewerTabRegistration
+  'ui.dialogs': DialogRegistration
   'map.tools': ToolbarRegistration<MapProps>
   'bim.tools': ToolbarRegistration<BimProps>
   'pointcloud.tools': ToolbarRegistration<PointCloudProps>
-  'map.legends': Legend
+  'viewer.legends': Legend
+  'map.layers': MapLayerRegistration<MapProps>
 }
 
 // The surface parameters must be bound for `register` to accept a component typed against a

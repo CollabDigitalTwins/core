@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest'
 
 import { DEFAULT_KIT_SPEC, SURFACES } from './options'
 import { scaffold } from './scaffold'
+import { factsFor } from './surfaces'
 
 import type { Body, Options, Surface } from './options'
 
@@ -67,7 +68,7 @@ describe('scaffold, external mode', () => {
         // The example body is deliberately two components in two files, so a reader does
         // not infer from the single-file bundle that a plugin is one component. The legend
         // has no empty variant: its hook is the plugin.
-        const composes = body === 'example' && surface !== 'map.legends'
+        const composes = body === 'example' && factsFor(surface).usesReadoutRow
 
         expect(files.sort()).toEqual([
           '.gitignore',
@@ -93,7 +94,7 @@ describe('scaffold, external mode', () => {
   }
 
   it('never routes the legend surface at the empty template, which cannot render for it', async () => {
-    const { directory } = await scaffold(optionsFor('map.legends', 'empty'), temp())
+    const { directory } = await scaffold(optionsFor('viewer.legends', 'empty'), temp())
     const source = readFileSync(join(directory, 'src/components/RoomInventoryTool.tsx'), 'utf8')
 
     // Empty.tsx interpolates a props type the legend surface does not have, so routing it
@@ -103,10 +104,10 @@ describe('scaffold, external mode', () => {
   })
 
   it('gives the legend surface the legend entry point, not the toolbar one', async () => {
-    const { directory } = await scaffold(optionsFor('map.legends', 'example'), temp())
+    const { directory } = await scaffold(optionsFor('viewer.legends', 'example'), temp())
     const entry = readFileSync(join(directory, 'src/index.ts'), 'utf8')
 
-    expect(entry).toContain("ctx.register('map.legends'")
+    expect(entry).toContain("ctx.register('viewer.legends'")
     expect(entry).not.toMatch(/^\s*component:/m)
   })
 
@@ -122,7 +123,7 @@ describe('scaffold, external mode', () => {
     expect((await read('map.tools')).devDependencies['maplibre-gl']).toBeDefined()
     expect((await read('bim.tools')).devDependencies['@thatopen/components']).toBeDefined()
     expect((await read('pointcloud.tools')).devDependencies['maplibre-gl']).toBeUndefined()
-    expect((await read('map.legends')).devDependencies['@thatopen/components']).toBeUndefined()
+    expect((await read('viewer.legends')).devDependencies['@thatopen/components']).toBeUndefined()
   })
 
   it('keeps devDependencies key-sorted, so the spliced entry does not land arbitrarily', async () => {
@@ -238,7 +239,7 @@ describe('scaffold, built-in mode', () => {
           fakeCore(),
         )
 
-        const composes = body === 'example' && surface !== 'map.legends'
+        const composes = body === 'example' && factsFor(surface).usesReadoutRow
 
         expect(files.sort()).toEqual([
           'components/RoomInventoryTool.tsx',
@@ -264,9 +265,8 @@ describe('scaffold, built-in mode', () => {
           const specifiers = [...source.matchAll(/from '([^']+)'/g)].map(match => match[1])
 
           for (const specifier of specifiers) {
-            // Core's ESLint isolation rule allows ../sdk/*, the plugin's own files, and
-            // react. Anything else stops the plugin compiling inside core.
-            expect(specifier).toMatch(/^(\.\.\/)+sdk\/|^\.\/|^react$/)
+            // Core's isolation rule allows the SDK, the plugin's own files, and react.
+            expect(specifier).toMatch(/^(\.\.\/)+sdk(\/|$)|^\.\/|^react$/)
           }
         }
       })

@@ -12,7 +12,7 @@ describe('factsFor', () => {
     expect(factsFor('map.tools').entry).toBe('@collabdt/plugin-kit/types/map')
     expect(factsFor('bim.tools').entry).toBe('@collabdt/plugin-kit/types/bim')
     expect(factsFor('pointcloud.tools').entry).toBe('@collabdt/plugin-kit/types/pointcloud')
-    expect(factsFor('map.legends').entry).toBe('@collabdt/plugin-kit/types/legend')
+    expect(factsFor('viewer.legends').entry).toBe('@collabdt/plugin-kit/types/legend')
   })
 
   it('agrees with capabilityConstant, which names the same entry for the token', () => {
@@ -29,14 +29,14 @@ describe('factsFor', () => {
     expect(factsFor('map.tools').contextType).toBe('MapPluginContext')
     expect(factsFor('bim.tools').contextType).toBe('BimPluginContext')
     expect(factsFor('pointcloud.tools').contextType).toBe('PointCloudPluginContext')
-    expect(factsFor('map.legends').contextType).toBe('LegendPluginContext')
+    expect(factsFor('viewer.legends').contextType).toBe('LegendPluginContext')
   })
 
   it('gives a type-only dependency to exactly the two surfaces that name an external type', () => {
     expect(factsFor('map.tools').typeDependency).toEqual(['maplibre-gl', '^5.24.0'])
     expect(factsFor('bim.tools').typeDependency).toEqual(['@thatopen/components', '~3.4.0'])
     expect(factsFor('pointcloud.tools').typeDependency).toBeNull()
-    expect(factsFor('map.legends').typeDependency).toBeNull()
+    expect(factsFor('viewer.legends').typeDependency).toBeNull()
   })
 
   it('never names a library a plugin must not bundle as a dependency', () => {
@@ -65,7 +65,7 @@ describe('factsFor', () => {
     expect(factsFor('map.tools').coreEntry).toBe('../../sdk/mapViewer')
     expect(factsFor('bim.tools').coreEntry).toBe('../../sdk/bimViewer')
     expect(factsFor('pointcloud.tools').coreEntry).toBe('../../sdk/pointCloudViewer')
-    expect(factsFor('map.legends').coreEntry).toBe('../../sdk/types')
+    expect(factsFor('viewer.legends').coreEntry).toBe('../../sdk/types')
   })
 
   it('keeps the core entry inside sdk/, which is all core lets a plugin import', () => {
@@ -77,7 +77,7 @@ describe('factsFor', () => {
   })
 
   it('gives the legend surface no toolbar props, since it registers a hook not a component', () => {
-    expect(factsFor('map.legends').propsType).toBe('')
+    expect(factsFor('viewer.legends').propsType).toBe('')
   })
 
   it('gives every toolbar surface a props type to intersect with ToolbarToolProps', () => {

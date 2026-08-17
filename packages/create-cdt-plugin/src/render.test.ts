@@ -46,7 +46,7 @@ describe('capabilityConstant', () => {
     expect(capabilityConstant('map.tools')).toBe('map')
     expect(capabilityConstant('bim.tools')).toBe('bim')
     expect(capabilityConstant('pointcloud.tools')).toBe('pointcloud')
-    expect(capabilityConstant('map.legends')).toBe('legend')
+    expect(capabilityConstant('viewer.legends')).toBe('legend')
   })
 })
 

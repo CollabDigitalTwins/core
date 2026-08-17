@@ -16,6 +16,8 @@ import * as React from 'react'
 
 import { useMenusContext } from '../../store'
 import { ViewerNames } from '../../types'
+
+import type { ViewerKey } from '../../types/dbTypes'
 import { BugReportDialog } from '../support/BugReportDialog'
 import { FeatureRequestDialog } from '../support/FeatureRequestDialog'
 
@@ -25,7 +27,7 @@ import { CdtIcon } from './Icons/CdtIcon'
 import { Sidebar, useSidebar, NavUser } from './'
 
 export const handleChangeViewer = (
-  viewer: ViewerNames,
+  viewer: ViewerKey,
   setSelectedItem: React.Dispatch<React.SetStateAction<any>>,
   setSelectedSite: React.Dispatch<React.SetStateAction<any>>,
   setSelectedFile: React.Dispatch<React.SetStateAction<any>>,

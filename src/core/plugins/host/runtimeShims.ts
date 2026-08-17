@@ -52,7 +52,13 @@ export const PLUGIN_RUNTIME_SHIMS: readonly RuntimeShim[] = [
     file: 'sdk.js',
     bridge: 'sdk',
     specifier: '@collabdt/core/plugins-sdk',
-    exports: ['VALID_CAPABILITIES', 'validateManifest', 'PLUGIN_HOST_API', 'resolvePluginEntry'],
+    exports: [
+      'VALID_CAPABILITIES', 'validateManifest', 'PLUGIN_HOST_API', 'resolvePluginEntry',
+      // A value, not just a type: a `viewer.tabs` contribution names the viewers it belongs in.
+      'ViewerNames',
+      // So a plugin colouring something on the map uses the platform's palette.
+      'MAP_COLOUR_PALETTE', 'stringToColour',
+    ],
   },
   {
     file: 'sdk-config.js',
@@ -71,6 +77,18 @@ export const PLUGIN_RUNTIME_SHIMS: readonly RuntimeShim[] = [
     bridge: 'sdkStore',
     specifier: '@collabdt/core/plugins-sdk/store',
     exports: ['usePluginStore'],
+  },
+  {
+    file: 'sdk-state.js',
+    bridge: 'sdkState',
+    specifier: '@collabdt/core/plugins-sdk/state',
+    exports: ['usePluginState'],
+  },
+  {
+    file: 'sdk-ui.js',
+    bridge: 'sdkUi',
+    specifier: '@collabdt/core/plugins-sdk/ui',
+    exports: ['usePluginDialogs'],
   },
   {
     file: 'sdk-components.js',

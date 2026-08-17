@@ -8,7 +8,9 @@ import * as React from 'react'
 import { CommunicationTab } from '../../../../../components/ui/ViewerSidebar/CommunicationTab'
 import { SensorsTab } from '../../../../../components/ui/ViewerSidebar/SensorsTab'
 import { ViewerSidebarShell } from '../../../../../components/ui/ViewerSidebar/Shell'
+import { usePluginViewerTabs } from '../../../../../plugins/host/usePluginViewerTabs'
 import { usePermissions } from '../../../../../store'
+import { ViewerNames } from '../../../../../types/dbTypes'
 
 import { FileTab } from './src/FileTab'
 import { LayersTab } from './src/LayersTab'
@@ -20,6 +22,8 @@ import type { Organization } from '../../../../../types/dbTypes'
 export function MapSidebar({ minioBaseUrl, martinBaseUrl, organization }: { minioBaseUrl?: string; martinBaseUrl?: string; organization?: Organization }) {
   // Permissions
   const { ability } = usePermissions()
+
+  const pluginTabs = usePluginViewerTabs(ViewerNames.map)
 
   // `enabled: false` hides the tab outright. It used to stay in the strip and open
   // an empty panel, because the permission check guarded the body, not the button.
@@ -33,6 +37,7 @@ export function MapSidebar({ minioBaseUrl, martinBaseUrl, organization }: { mini
     { id: 'communication', content: <CommunicationTab />, enabled: ability.can('read', 'Comment') },
     { id: 'sensors', content: <SensorsTab />, enabled: ability.can('read', 'Sensor') },
     { id: 'settings', content: <SettingsTab countryCode={organization?.country} /> },
+    ...pluginTabs,
   ]
 
   return <ViewerSidebarShell tabs={tabs} organization={organization} />

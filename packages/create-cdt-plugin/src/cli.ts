@@ -19,7 +19,7 @@ const SURFACE_LABELS: Record<Surface, string> = {
   'map.tools': 'Map toolbar',
   'bim.tools': 'BIM toolbar',
   'pointcloud.tools': 'Point cloud toolbar',
-  'map.legends': 'Map legend',
+  'viewer.legends': 'Viewer legend',
 }
 
 const USAGE = `

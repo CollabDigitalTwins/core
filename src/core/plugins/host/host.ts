@@ -6,6 +6,7 @@ import { PLUGIN_HOST_API } from '../sdk/version'
 
 import { createPluginContext } from './context'
 import { PluginActivationError, PluginHostApiError, PluginManifestError } from './errors'
+import { pluginStateStore } from './pluginState'
 
 import type { PluginRegistry } from './registry'
 import type { PluginManifest, PluginEntry, PluginContext } from '../sdk/types'
@@ -97,6 +98,7 @@ export class PluginHost {
     }
 
     this.registry.deregisterAll(slug)
+    pluginStateStore.clear(slug)
     loaded.status = 'inactive'
   }
 

@@ -6,6 +6,9 @@
 import type { BimToolProps } from './bimViewer'
 import type { MapToolProps } from './mapViewer'
 import type { PointCloudToolProps } from './pointCloudViewer'
+// A value, not just a type: a `viewer.tabs` contribution names the viewers it belongs in.
+export { ViewerNames } from '../../types/dbTypes'
+
 import type { ViewerNames } from '../../types/dbTypes'
 import type { LucideProps } from 'lucide-react'
 
@@ -14,12 +17,14 @@ import type { LucideProps } from 'lucide-react'
 // Only capabilities core actually renders. One with no consumer registers fine,
 // shows nothing, and leaves nothing to debug.
 export const VALID_CAPABILITIES = [
-  'sidebar.items',
-  'viewer.panels',
+  'data.pages',
+  'viewer.tabs',
+  'ui.dialogs',
   'map.tools',
   'bim.tools',
   'pointcloud.tools',
-  'map.legends',
+  'viewer.legends',
+  'map.layers',
 ] as const
 
 export type PluginCapability = typeof VALID_CAPABILITIES[number]
@@ -77,11 +82,33 @@ export function validateManifest(manifest: unknown): { valid: boolean; errors: s
 
 // --- Registration shapes (one per capability) ---
 
-export interface SidebarRegistration {
+export interface DataPageColumn<Row> {
+  key: string
+  /** Resolved in the plugin's own namespace, falling back to the literal string. */
+  labelKey: string
+  render?: (row: Row) => React.ReactNode
+}
+
+/**
+ * A full page in the Datasets nav, rendered by core. The plugin declares rows and columns; a
+ * row click opens one of its own `ui.dialogs` rather than a detail view of its own.
+ */
+export interface DataPageRows<Row> {
+  rows: Row[]
+  isLoading?: boolean
+  /** From the hook, not the registration, so it can close over `usePluginDialogs`. */
+  onRowClick?: (row: Row) => void
+}
+
+export interface DataPageRegistration<Row = Record<string, unknown>> {
   id: string
-  label: string
+  titleKey: string
   icon: string | React.ComponentType<LucideProps>
-  component: React.ComponentType
+  useRows: () => DataPageRows<Row>
+  columns: DataPageColumn<Row>[]
+  /** Column keys the search box filters on. Omit to search every column. */
+  searchKeys?: string[]
+  emptyKey?: string
 }
 
 /** Every toolbar component receives the toolbar entry core built for it. */
@@ -103,13 +130,33 @@ export interface ToolbarRegistration<P = Record<string, unknown>> {
   stayActive?: boolean
 }
 
-export interface ViewerRegistration {
+export interface ViewerTabRegistration {
   id: string
-  label: string
+  labelKey: string
   icon: string | React.ComponentType<LucideProps>
   component: React.ComponentType
-  /** Which viewers this panel appears in. Omit for all of them. */
+  /** Which viewers this tab appears in. Omit for all of them. */
   viewers?: ViewerNames[]
+}
+
+/**
+ * A modal core owns. Registered here, opened by id from any of the plugin's surfaces via
+ * `usePluginDialogs()`, so it outlives whichever one opened it.
+ */
+export interface DialogRegistration<P = Record<string, unknown>> {
+  id: string
+  titleKey: string
+  size?: 'sm' | 'md' | 'lg' | 'xl'
+  component: React.ComponentType<P & { close: () => void }>
+}
+
+/**
+ * Something drawn on the map, mounted for as long as the map. Separate from `map.tools`,
+ * whose panel unmounts when its dropdown closes and would take the layer with it.
+ */
+export interface MapLayerRegistration {
+  id: string
+  component: React.ComponentType<MapToolProps>
 }
 
 export interface LegendRow {
@@ -121,6 +168,8 @@ export interface LegendRow {
 export interface LegendRegistration {
   id: string
   title: string
+  /** Which viewers this legend appears in. Omit for all of them. */
+  viewers?: ViewerNames[]
   // Called by <MapLegendHost> on each render; active:false omits the section.
   useLegend: () => {
     active: boolean
@@ -136,12 +185,14 @@ export interface LegendRegistration {
 // calling `registry.getAll('your.key')`. No host changes.
 
 export interface CapabilityRegistry {
-  'sidebar.items': SidebarRegistration
-  'viewer.panels': ViewerRegistration
+  'data.pages': DataPageRegistration
+  'viewer.tabs': ViewerTabRegistration
+  'ui.dialogs': DialogRegistration
   'map.tools': ToolbarRegistration<MapToolProps>
   'bim.tools': ToolbarRegistration<BimToolProps>
   'pointcloud.tools': ToolbarRegistration<PointCloudToolProps>
-  'map.legends': LegendRegistration
+  'viewer.legends': LegendRegistration
+  'map.layers': MapLayerRegistration
 }
 
 // Errors if VALID_CAPABILITIES and keyof CapabilityRegistry drift apart.

@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { ViewerNames } from '../../types/dbTypes'
+import type { ViewerKey, ViewerNames } from '../../types/dbTypes'
 import type { ActionMap } from '../ActionMap'
 
 export type SidebarTabType = 'file' | 'layers' | 'communication' |  'sensors' | 'settings'
+
+/** A built-in tab or a plugin one. Separate from `SidebarTabType`, which stays exhaustive. */
+export type SidebarTabKey = SidebarTabType | `plugin:${string}`
 
 /** Request from a viewer marker to open a comment's editor/reply box in the sidebar. */
 export type CommentActionRequest = {
@@ -23,9 +26,9 @@ export type SensorActionRequest = {
 }
 
 interface MenusTypes {
-  currentViewer: ViewerNames
+  currentViewer: ViewerKey
   rowsPerPage: number
-  selectedTab: SidebarTabType
+  selectedTab: SidebarTabKey
   commentsVisibleInViewer: ViewerNames[]
   currentCommentId: number | null
   /** Comment double-clicked to zoom/focus. Drives the thick focus ring + camera move. */

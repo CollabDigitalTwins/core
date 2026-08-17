@@ -18,20 +18,20 @@ function makeSource(slug: string, label = slug): PluginSource {
       name: slug,
       version: '1.0.0',
       hostApi: PLUGIN_HOST_API,
-      capabilities: ['sidebar.items'],
+      capabilities: ['viewer.tabs'],
     } satisfies PluginManifest,
     entry: {
       activate(ctx) {
-        ctx.register('sidebar.items', { id: `${slug}-item`, label, icon: 'Zap', component: () => null })
+        ctx.register('viewer.tabs', { id: `${slug}-item`, labelKey: label, icon: 'Zap', component: () => null })
       },
     },
   }
 }
 
-/** Renders the label of every registered sidebar item, so assertions read off the DOM. */
-function SidebarProbe() {
-  const items = usePluginContributions('sidebar.items')
-  return <ul>{items.map(i => <li key={i.id}>{i.label}</li>)}</ul>
+/** Renders the label of every registered viewer tab, so assertions read off the DOM. */
+function TabProbe() {
+  const tabs = usePluginContributions('viewer.tabs')
+  return <ul>{tabs.map(t => <li key={t.id}>{t.labelKey}</li>)}</ul>
 }
 
 test('loads the plugins passed via the plugins prop', async () => {
@@ -39,7 +39,7 @@ test('loads the plugins passed via the plugins prop', async () => {
 
   render(
     <PluginHostProvider plugins={plugins}>
-      <SidebarProbe />
+      <TabProbe />
     </PluginHostProvider>,
   )
 
@@ -52,7 +52,7 @@ test('resolves an async plugin source and renders its late registrations', async
 
   render(
     <PluginHostProvider plugins={source}>
-      <SidebarProbe />
+      <TabProbe />
     </PluginHostProvider>,
   )
 
@@ -67,7 +67,7 @@ test('activates only the slugs listed in enabledSlugs', async () => {
 
   render(
     <PluginHostProvider plugins={plugins} enabledSlugs={['on']}>
-      <SidebarProbe />
+      <TabProbe />
     </PluginHostProvider>,
   )
 
@@ -84,7 +84,7 @@ test('deactivates a plugin removed from enabledSlugs without a reload', async ()
       <>
         <button onClick={() => setSlugs([])}>disable</button>
         <PluginHostProvider plugins={plugins} enabledSlugs={slugs}>
-          <SidebarProbe />
+          <TabProbe />
         </PluginHostProvider>
       </>
     )
@@ -106,19 +106,19 @@ test('passes per-plugin config through to ctx.config', async () => {
       name: 'Configured',
       version: '1.0.0',
       hostApi: PLUGIN_HOST_API,
-      capabilities: ['sidebar.items'],
+      capabilities: ['viewer.tabs'],
     },
     entry: {
       activate(ctx) {
         seen = ctx.config
-        ctx.register('sidebar.items', { id: 'c', label: 'Configured', icon: 'Zap', component: () => null })
+        ctx.register('viewer.tabs', { id: 'c', labelKey: 'Configured', icon: 'Zap', component: () => null })
       },
     },
   }]
 
   render(
     <PluginHostProvider plugins={plugins} configs={{ configured: { apiKey: 'secret' } }}>
-      <SidebarProbe />
+      <TabProbe />
     </PluginHostProvider>,
   )
 
@@ -140,7 +140,7 @@ test('accepts a lazily-imported entry, so a plugin ships in its own chunk', asyn
         return Promise.resolve(source.entry)
       },
     }]}>
-      <SidebarProbe />
+      <TabProbe />
     </PluginHostProvider>,
   )
 
@@ -159,7 +159,7 @@ test('a chunk that fails to import does not stop the plugins after it', async ()
       },
       makeSource('healthy', 'Healthy'),
     ]}>
-      <SidebarProbe />
+      <TabProbe />
     </PluginHostProvider>,
   )
 
@@ -176,7 +176,7 @@ test('a plugin that throws during activation does not stop the next one', async 
         name: 'Broken',
         version: '1.0.0',
         hostApi: PLUGIN_HOST_API,
-        capabilities: ['sidebar.items'],
+        capabilities: ['viewer.tabs'],
       },
       entry: { activate() { throw new Error('boom') } },
     },
@@ -185,7 +185,7 @@ test('a plugin that throws during activation does not stop the next one', async 
 
   render(
     <PluginHostProvider plugins={plugins}>
-      <SidebarProbe />
+      <TabProbe />
     </PluginHostProvider>,
   )
 

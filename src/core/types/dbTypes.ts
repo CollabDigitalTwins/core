@@ -26,6 +26,12 @@ export enum SiteProjectType  {Modification = 'Modification', New_Build = 'New_Bu
 export enum DatasetGroup { Organizational = 'Organizational', Municipal = 'Municipal', National = 'National', Provincial = 'Provincial'}
 export enum DataManagementSystem  {Ckan = 'Ckan', Arcgis = 'Arcgis', Opendatasoft = 'Opendatasoft', Socrata = 'Socrata', Other = 'Other'}
 export enum ViewerNames  {auth = 'auth', map = 'map', bim = 'bim', pointcloud = 'pointcloud', buildings = 'buildings', sites = 'sites', files = 'files', land = 'land', infrastructure = 'infrastructure', extensions = 'extensions', settings = 'settings', users= 'users'}
+/**
+ * A built-in viewer or a plugin page, as `plugin:<pluginId>:<pageId>`. Widened rather than
+ * adding enum members: `ViewerNames` mirrors the Prisma `appContent` enum.
+ */
+export type ViewerKey = ViewerNames | `plugin:${string}`
+
 export enum SensorTypes  {Temperature = 'Temperature', Light = 'Light', Humidity = 'Humidity', Energy_Consumption = 'Energy_Consumption', Movement = 'Movement', Air_Quality = 'Air_Quality', Atmospheric_Pressure = 'Atmospheric_Pressure', Irradiance = 'Irradiance', Flow = 'Flow', State = 'State', Noise_Level = 'Noise_Level'}
 export enum SensorDataFormat  {Csv = 'Csv', Json = 'Json'}
 

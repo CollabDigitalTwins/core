@@ -6,13 +6,17 @@ import { describe, expect, it } from 'vitest'
 import { DEFAULT_KIT_SPEC, parseFlags, slugFromName, SURFACES } from './options'
 
 describe('SURFACES', () => {
-  it('offers exactly the four capabilities core renders', () => {
-    expect([...SURFACES]).toEqual(['map.tools', 'bim.tools', 'pointcloud.tools', 'map.legends'])
-  })
-
-  it('never offers a capability nothing renders', () => {
-    expect(SURFACES).not.toContain('sidebar.items')
-    expect(SURFACES).not.toContain('viewer.panels')
+  it('offers exactly the eight capabilities core renders', () => {
+    expect([...SURFACES]).toEqual([
+      'map.tools',
+      'bim.tools',
+      'pointcloud.tools',
+      'viewer.legends',
+      'map.layers',
+      'data.pages',
+      'viewer.tabs',
+      'ui.dialogs',
+    ])
   })
 })
 
@@ -75,7 +79,8 @@ describe('parseFlags', () => {
   })
 
   it('rejects an invalid surface, naming the valid ones', () => {
-    expect(() => parseFlags(['--surface', 'map.layers'])).toThrow(/map\.tools/)
+    // `jobs` can never render: it needs a server, which a browser bundle is not.
+    expect(() => parseFlags(['--surface', 'jobs'])).toThrow(/map\.tools/)
   })
 
   it('rejects an invalid mode and an invalid body', () => {

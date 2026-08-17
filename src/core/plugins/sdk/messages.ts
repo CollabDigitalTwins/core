@@ -73,6 +73,22 @@ export function usePluginTranslations(): PluginTranslator {
   )
 }
 
+export type PluginMessageLookup = (pluginId: string, key: string, fallback: string) => string
+
+/**
+ * Text for several plugins at once, for a host rendering a list of contributions — a hook
+ * cannot be called per row. Host-side only; a plugin has `usePluginTranslations`.
+ */
+export function usePluginMessageLookup(): PluginMessageLookup {
+  const messages = useMessages() as Record<string, unknown> | undefined
+
+  return React.useCallback(
+    (pluginId: string, key: string, fallback: string) =>
+      lookupPluginMessage(messages, pluginId, key) ?? fallback,
+    [messages],
+  )
+}
+
 /** Core's own strings, kept a separate call so plugin and core text differ at the point of use. */
 export function useCoreTranslations(namespace: string) {
   return useTranslations(namespace)

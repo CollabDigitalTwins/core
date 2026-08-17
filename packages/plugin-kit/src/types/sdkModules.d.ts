@@ -15,15 +15,39 @@ declare module '@collabdt/core/plugins-sdk' {
   // Only the values the shim re-exports. The SDK's types live in the surface entries, so each
   // shape has one definition and it is the one a plugin already imports.
   export const VALID_CAPABILITIES: readonly [
-    'sidebar.items',
-    'viewer.panels',
+    'data.pages',
+    'viewer.tabs',
+    'ui.dialogs',
     'map.tools',
     'bim.tools',
     'pointcloud.tools',
-    'map.legends',
+    'viewer.legends',
+    'map.layers',
   ]
 
   export const PLUGIN_HOST_API: 1
+
+  // A value, not just a type: a `viewer.tabs` contribution names its viewers.
+  export const ViewerNames: {
+    auth: 'auth'
+    map: 'map'
+    bim: 'bim'
+    pointcloud: 'pointcloud'
+    buildings: 'buildings'
+    sites: 'sites'
+    files: 'files'
+    land: 'land'
+    infrastructure: 'infrastructure'
+    extensions: 'extensions'
+    settings: 'settings'
+    users: 'users'
+  }
+
+  /** Map-friendly, colourblind-accessible colours. Use these rather than inventing a set. */
+  export const MAP_COLOUR_PALETTE: readonly string[]
+
+  /** A stable colour from `MAP_COLOUR_PALETTE`, chosen by hashing the string. */
+  export function stringToColour(str: string, variant?: 'min' | 'max'): string
 
   export function validateManifest(manifest: unknown): { valid: boolean; errors: string[] }
 
@@ -79,6 +103,29 @@ declare module '@collabdt/core/plugins-sdk/store' {
 
   /** Storage scoped by organization, plugin and collection. `T` is your declaration, not a guarantee. */
   export function usePluginStore<T = unknown>(collection: string): PluginStore<T>
+}
+
+declare module '@collabdt/core/plugins-sdk/state' {
+  /**
+   * Shared state for one plugin's surfaces: in memory, scoped to the plugin, gone when it is
+   * disabled. `usePluginStore` is the persisted counterpart.
+   */
+  export function usePluginState<T>(
+    key: string,
+    initial: T,
+  ): [T, (next: T | ((previous: T) => T)) => void]
+}
+
+declare module '@collabdt/core/plugins-sdk/ui' {
+  export interface PluginDialogs {
+    /** Opens one of this plugin's registered dialogs. `props` reaches the component as props. */
+    open: (dialogId: string, props?: Record<string, unknown>) => void
+    /** Closes the topmost instance of `dialogId`, or of any of this plugin's dialogs. */
+    close: (dialogId?: string) => void
+  }
+
+  /** Opens and closes this plugin's `ui.dialogs` contributions from any of its surfaces. */
+  export function usePluginDialogs(): PluginDialogs
 }
 
 declare module '@collabdt/core/plugins-sdk/components' {

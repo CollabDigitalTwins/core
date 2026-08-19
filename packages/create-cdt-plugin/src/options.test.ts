@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 import { describe, expect, it } from 'vitest'
 
 import { DEFAULT_KIT_SPEC, parseFlags, slugFromName, SURFACES } from './options'
@@ -108,5 +112,17 @@ describe('parseFlags', () => {
 describe('DEFAULT_KIT_SPEC', () => {
   it('is a published range rather than a local path, so a real author can install', () => {
     expect(DEFAULT_KIT_SPEC).toMatch(/^\^?\d+\.\d+\.\d+/)
+  })
+
+  // A caret on a 0.x range pins the minor, so a kit released at 0.3.0 leaves `^0.2.0`
+  // resolving nothing and every scaffolded plugin installing no kit at all.
+  it('resolves the kit version in this repo', () => {
+    const kit = JSON.parse(
+      readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../plugin-kit/package.json'), 'utf8'),
+    ) as { version: string }
+
+    const [major, minor] = kit.version.split('.')
+
+    expect(DEFAULT_KIT_SPEC).toBe(`^${major}.${minor}.0`)
   })
 })

@@ -79,6 +79,24 @@ export const PLUGIN_RUNTIME_SHIMS: readonly RuntimeShim[] = [
     exports: ['usePluginStore'],
   },
   {
+    file: 'sdk-data.js',
+    bridge: 'sdkData',
+    specifier: '@collabdt/core/plugins-sdk/data',
+    exports: [
+      'useBuildings', 'useBuilding', 'useBuildingsByOsm', 'useBuildingOsmIds',
+      'useSites', 'useSite',
+      'useInfrastructures', 'useInfrastructure',
+      'useOrganization', 'useOrganizationByName',
+      'useFiles', 'useFile', 'useFilesByBuildingId', 'useFilesBySiteId', 'useDownloadFile',
+      'useSensors', 'useSensor', 'useSensorsByBuilding', 'useSensorsByAuthor', 'useCreateSensor',
+      'useSensorTypes', 'useSensorType',
+      'useComments', 'useComment', 'useCommentsByBuilding', 'useCommentsByAuthor',
+      'useCreateComment', 'useDeleteComments',
+      // Re-exported by the module, so a plugin reaching for data finds both here too.
+      'usePluginConfig', 'usePluginPermissions',
+    ],
+  },
+  {
     file: 'sdk-state.js',
     bridge: 'sdkState',
     specifier: '@collabdt/core/plugins-sdk/state',

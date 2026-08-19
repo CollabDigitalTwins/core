@@ -45,11 +45,12 @@ if (!existsSync(shipped)) {
   problems.push(`missing dist/types/${AMBIENT}`)
 }
 
-// The ambient module for the components barrel imports from `./components`, which
-// only exists in dist if that entry is still in tsup.config.ts.
-if (!existsSync(join(packageRoot, 'dist/types/components.d.ts'))) {
-  problems.push('missing dist/types/components.d.ts, which dist/types/'
-    + `${AMBIENT} imports from`)
+// The ambient modules import from `./components` and `./data`, which only exist in dist
+// if those entries are still in tsup.config.ts.
+for (const module of ['components', 'data']) {
+  if (!existsSync(join(packageRoot, `dist/types/${module}.d.ts`))) {
+    problems.push(`missing dist/types/${module}.d.ts, which dist/types/${AMBIENT} imports from`)
+  }
 }
 
 for (const surface of SURFACES) {

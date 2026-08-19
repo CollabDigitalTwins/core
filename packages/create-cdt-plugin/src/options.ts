@@ -23,7 +23,7 @@ const BODIES: readonly Body[] = ['example', 'empty']
 
 // Overridable with `--kit-spec` so the build tests can point at a local kit. Otherwise the
 // only test proving a scaffolded plugin builds could not run until after the kit shipped.
-export const DEFAULT_KIT_SPEC = '^0.1.0'
+export const DEFAULT_KIT_SPEC = '^0.3.0'
 
 export interface Options {
   mode: Mode

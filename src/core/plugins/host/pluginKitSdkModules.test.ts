@@ -23,6 +23,7 @@ import { runTsc, TSC, type TscRun } from './__tests__/tscProbe'
 
 // Type-only: nothing here is loaded at runtime, so this stays a node-env test.
 import type * as SdkConfig from '../sdk/config'
+import type * as SdkData from '../sdk/data'
 import type * as SdkIndex from '../sdk/index'
 import type * as SdkMessages from '../sdk/messages'
 import type * as SdkStore from '../sdk/store'
@@ -31,6 +32,7 @@ import type * as SdkStore from '../sdk/store'
 
 type DeclaredSdk = typeof import('@collabdt/core/plugins-sdk')
 type DeclaredConfig = typeof import('@collabdt/core/plugins-sdk/config')
+type DeclaredData = typeof import('@collabdt/core/plugins-sdk/data')
 type DeclaredMessages = typeof import('@collabdt/core/plugins-sdk/messages')
 type DeclaredStore = typeof import('@collabdt/core/plugins-sdk/store')
 
@@ -59,6 +61,37 @@ const _pluginTranslator: Provides<
 // `PluginStore` and `PluginDocument` are restated in the ambient module, not imported, so
 // this compares two separate definitions structurally.
 const _usePluginStore: Provides<typeof SdkStore.usePluginStore, DeclaredStore['usePluginStore']> = true
+
+// Each result drops the mutation handles core returns beside it, which is what makes buildings and sites read-only to a plugin.
+const _useBuildings: Provides<typeof SdkData.useBuildings, DeclaredData['useBuildings']> = true
+const _useBuilding: Provides<typeof SdkData.useBuilding, DeclaredData['useBuilding']> = true
+const _useBuildingsByOsm: Provides<typeof SdkData.useBuildingsByOsm, DeclaredData['useBuildingsByOsm']> = true
+const _useBuildingOsmIds: Provides<typeof SdkData.useBuildingOsmIds, DeclaredData['useBuildingOsmIds']> = true
+const _useSites: Provides<typeof SdkData.useSites, DeclaredData['useSites']> = true
+const _useSite: Provides<typeof SdkData.useSite, DeclaredData['useSite']> = true
+const _useInfrastructures: Provides<typeof SdkData.useInfrastructures, DeclaredData['useInfrastructures']> = true
+const _useInfrastructure: Provides<typeof SdkData.useInfrastructure, DeclaredData['useInfrastructure']> = true
+const _useOrganization: Provides<typeof SdkData.useOrganization, DeclaredData['useOrganization']> = true
+const _useOrganizationByName: Provides<typeof SdkData.useOrganizationByName, DeclaredData['useOrganizationByName']> = true
+const _useFiles: Provides<typeof SdkData.useFiles, DeclaredData['useFiles']> = true
+const _useFile: Provides<typeof SdkData.useFile, DeclaredData['useFile']> = true
+const _useFilesByBuildingId: Provides<typeof SdkData.useFilesByBuildingId, DeclaredData['useFilesByBuildingId']> = true
+const _useFilesBySiteId: Provides<typeof SdkData.useFilesBySiteId, DeclaredData['useFilesBySiteId']> = true
+const _useSensors: Provides<typeof SdkData.useSensors, DeclaredData['useSensors']> = true
+const _useSensor: Provides<typeof SdkData.useSensor, DeclaredData['useSensor']> = true
+const _useSensorsByBuilding: Provides<typeof SdkData.useSensorsByBuilding, DeclaredData['useSensorsByBuilding']> = true
+const _useSensorsByAuthor: Provides<typeof SdkData.useSensorsByAuthor, DeclaredData['useSensorsByAuthor']> = true
+const _useSensorTypes: Provides<typeof SdkData.useSensorTypes, DeclaredData['useSensorTypes']> = true
+const _useSensorType: Provides<typeof SdkData.useSensorType, DeclaredData['useSensorType']> = true
+const _useComments: Provides<typeof SdkData.useComments, DeclaredData['useComments']> = true
+const _useComment: Provides<typeof SdkData.useComment, DeclaredData['useComment']> = true
+const _useCommentsByBuilding: Provides<typeof SdkData.useCommentsByBuilding, DeclaredData['useCommentsByBuilding']> = true
+const _useCommentsByAuthor: Provides<typeof SdkData.useCommentsByAuthor, DeclaredData['useCommentsByAuthor']> = true
+const _usePluginPermissions: Provides<typeof SdkData.usePluginPermissions, DeclaredData['usePluginPermissions']> = true
+const _useCreateSensor: Provides<typeof SdkData.useCreateSensor, DeclaredData['useCreateSensor']> = true
+const _useCreateComment: Provides<typeof SdkData.useCreateComment, DeclaredData['useCreateComment']> = true
+const _useDeleteComments: Provides<typeof SdkData.useDeleteComments, DeclaredData['useDeleteComments']> = true
+const _useDownloadFile: Provides<typeof SdkData.useDownloadFile, DeclaredData['useDownloadFile']> = true
 
 const _validCapabilities: Provides<typeof SdkIndex.VALID_CAPABILITIES, DeclaredSdk['VALID_CAPABILITIES']> = true
 const _hostApi: Provides<typeof SdkIndex.PLUGIN_HOST_API, DeclaredSdk['PLUGIN_HOST_API']> = true
@@ -93,6 +126,15 @@ function useCoreTranslationCallSites(
 }
 
 void [
+  _useBuildings, _useBuilding, _useBuildingsByOsm, _useBuildingOsmIds,
+  _useSites, _useSite, _useInfrastructures, _useInfrastructure,
+  _useOrganization, _useOrganizationByName,
+  _useFiles, _useFile, _useFilesByBuildingId, _useFilesBySiteId,
+  _useSensors, _useSensor, _useSensorsByBuilding, _useSensorsByAuthor,
+  _useSensorTypes, _useSensorType,
+  _useComments, _useComment, _useCommentsByBuilding, _useCommentsByAuthor,
+  _usePluginPermissions,
+  _useCreateSensor, _useCreateComment, _useDeleteComments, _useDownloadFile,
   _usePluginConfig, _usePluginId,
   _usePluginMessage, _usePluginTranslations, _pluginTranslator,
   _usePluginStore,

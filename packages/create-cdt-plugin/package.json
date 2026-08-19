@@ -1,6 +1,6 @@
 {
   "name": "create-cdt-plugin",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Scaffold a CDT plugin.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
@@ -13,6 +13,7 @@
   },
   "scripts": {
     "build": "tsup",
+    "prepublishOnly": "npm run build",
     "test": "vitest run"
   },
   "dependencies": {

@@ -12,6 +12,7 @@ const SDK_MODULES: Record<string, () => Promise<Record<string, unknown>>> = {
   '@collabdt/core/plugins-sdk/config': () => import('../sdk/config'),
   '@collabdt/core/plugins-sdk/messages': () => import('../sdk/messages'),
   '@collabdt/core/plugins-sdk/store': () => import('../sdk/store'),
+  '@collabdt/core/plugins-sdk/data': () => import('../sdk/data'),
   '@collabdt/core/plugins-sdk/state': () => import('../sdk/state'),
   '@collabdt/core/plugins-sdk/ui': () => import('../sdk/ui'),
   '@collabdt/core/plugins-sdk/components': () => import('../sdk/components'),

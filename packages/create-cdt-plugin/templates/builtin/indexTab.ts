@@ -3,6 +3,8 @@
 
 import { {{COMPONENT}} } from './components/{{COMPONENT}}'
 
+import { ViewerNames } from '../sdk/types'
+
 import type { PluginContext } from '../sdk/types'
 
 // A tab in the viewer sidebar; the host owns the tab strip and the panel frame.
@@ -14,7 +16,7 @@ export function activate(ctx: PluginContext): void {
     // A name, not a component, so a plugin never imports the icon library.
     icon: '{{ICON}}',
     component: {{COMPONENT}},
-    // Which viewers show this tab. Drop the line to appear in all of them.
-    viewers: ['bim'],
+    // Explicit on purpose: the field is optional, and omitting it means every viewer.
+    viewers: {{VIEWERS}},
   })
 }

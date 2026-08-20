@@ -156,8 +156,8 @@ describe('@collabdt/plugin-kit types', () => {
   })
 
   it('keeps the ambient SDK declarations free of anything a plugin must install', () => {
-    // The one module it may name is the kit's own components file, which is where
-    // the component shapes live so that core can compare against them.
-    expect(moduleReferences('sdkModules.d.ts')).toEqual(['./components'])
+    // The only modules it may name are the kit's own, which is where the shapes live
+    // so that core can compare against them.
+    expect(moduleReferences('sdkModules.d.ts')).toEqual(['./components', './data'])
   })
 })

@@ -105,6 +105,70 @@ declare module '@collabdt/core/plugins-sdk/store' {
   export function usePluginStore<T = unknown>(collection: string): PluginStore<T>
 }
 
+declare module '@collabdt/core/plugins-sdk/data' {
+  // Shapes come from `./data`, inline rather than imported at the top: an ambient module cannot carry a relative import (TS2439).
+
+  export type PluginBuilding = import('./data').PluginBuilding
+  export type PluginSite = import('./data').PluginSite
+  export type PluginInfrastructure = import('./data').PluginInfrastructure
+  export type PluginOrganization = import('./data').PluginOrganization
+  export type PluginFile = import('./data').PluginFile
+  export type PluginSensor = import('./data').PluginSensor
+  export type PluginSensorType = import('./data').PluginSensorType
+  export type PluginComment = import('./data').PluginComment
+  export type PluginAbility = import('./data').PluginAbility
+  export type PluginPermissions = import('./data').PluginPermissions
+
+  export function useBuildings(): import('./data').PluginBuildingsQuery
+  export function useBuilding(id: number | null): import('./data').PluginBuildingQuery
+  export function useBuildingsByOsm(osmId: number | null): import('./data').PluginBuildingsQuery
+  export function useBuildingOsmIds(): import('./data').PluginBuildingOsmIdsQuery
+
+  export function useSites(): import('./data').PluginSitesQuery
+  export function useSite(siteId: string): import('./data').PluginSiteQuery
+
+  export function useInfrastructures(): import('./data').PluginInfrastructuresQuery
+  export function useInfrastructure(
+    infrastructureId: number,
+  ): import('./data').PluginInfrastructureQuery
+
+  export function useOrganization(id: string | null): import('./data').PluginOrganizationQuery
+  export function useOrganizationByName(
+    name: string | null,
+  ): import('./data').PluginOrganizationQuery
+
+  export function useFiles(): import('./data').PluginFilesQuery
+  export function useFile(id: number | null): import('./data').PluginFileQuery
+  export function useFilesByBuildingId(
+    buildingId: number,
+    tag?: string,
+  ): import('./data').PluginFilesQuery
+  export function useFilesBySiteId(siteId: number, tag?: string): import('./data').PluginFilesQuery
+  export function useDownloadFile(): import('./data').PluginDownloadFile
+
+  export function useSensors(): import('./data').PluginSensorsQuery
+  export function useSensor(id: number | null): import('./data').PluginSensorQuery
+  export function useSensorsByBuilding(buildingId: number | null): import('./data').PluginSensorsQuery
+  export function useSensorsByAuthor(authorId: number | null): import('./data').PluginSensorsQuery
+  export function useCreateSensor(): import('./data').PluginCreateSensor
+
+  export function useSensorTypes(): import('./data').PluginSensorTypesQuery
+  export function useSensorType(id: number): import('./data').PluginSensorTypeQuery
+
+  export function useComments(): import('./data').PluginCommentsQuery
+  export function useComment(id: number | null): import('./data').PluginCommentQuery
+  export function useCommentsByBuilding(buildingId: number | null): import('./data').PluginCommentsQuery
+  export function useCommentsByAuthor(authorId: number | null): import('./data').PluginCommentsQuery
+  export function useCreateComment(): import('./data').PluginCreateComment
+  export function useDeleteComments(): import('./data').PluginDeleteComments
+
+  /** Re-exported by core's data module, so a plugin finds both here as well as at their own specifiers. */
+  export function usePluginConfig<
+    T extends Record<string, unknown> = Record<string, unknown>,
+  >(): T
+  export function usePluginPermissions(): import('./data').PluginPermissions
+}
+
 declare module '@collabdt/core/plugins-sdk/state' {
   /**
    * Shared state for one plugin's surfaces: in memory, scoped to the plugin, gone when it is

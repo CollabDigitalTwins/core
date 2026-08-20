@@ -3,6 +3,8 @@
 
 import { useLegend } from './components/{{COMPONENT}}'
 
+import { ViewerNames } from '../sdk/types'
+
 import type { PluginContext } from '../sdk/types'
 
 // A legend contributes a hook, not a component: the host calls `useLegend` while rendering
@@ -14,6 +16,8 @@ export function activate(ctx: PluginContext): void {
   ctx.register('viewer.legends', {
     id: '{{SLUG}}',
     title: '{{NAME}}',
+    // Explicit on purpose: the field is optional, and omitting it means every viewer.
+    viewers: {{VIEWERS}},
     useLegend,
   })
 }

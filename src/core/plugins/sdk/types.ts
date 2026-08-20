@@ -39,6 +39,8 @@ export interface PluginManifest {
   hostApi?: number
   description?: string
   author?: string
+  /** A lucide icon name shown beside the plugin's name. Unset or unknown shows a puzzle piece. */
+  icon?: string
   capabilities: PluginCapability[]
   requiredPermissions?: string[]
   configSchema?: Record<string, unknown>

@@ -5,7 +5,8 @@
   "hostApi": {{HOST_API}},
   "description": "{{DESCRIPTION_JSON}}",
   "author": "{{AUTHOR_JSON}}",
-  "capabilities": ["{{CAPABILITY}}"],
+  "icon": "{{ICON}}",
+  "capabilities": [{{CAPABILITIES_JSON}}],
   "requiredPermissions": [],
   "configSchema": {
     "type": "object",

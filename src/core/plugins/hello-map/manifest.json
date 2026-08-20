@@ -5,6 +5,7 @@
   "hostApi": 1,
   "description": "Records markers on the map and shows them everywhere: a toolbar readout, a map layer, a legend, a viewer sidebar tab, a data page and a dialog.",
   "author": "Collab Digital Twins",
+  "icon": "MapPin",
   "capabilities": [
     "map.tools",
     "map.layers",

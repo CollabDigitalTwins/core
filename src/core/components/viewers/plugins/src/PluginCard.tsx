@@ -18,11 +18,13 @@ import {
   PanelRight,
   Puzzle,
   Scan,
+  SquareMenu,
   SquareStack,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
+import { resolvePluginIcon } from '../../../../plugins/host/pluginIcon'
 import { usePluginMessage } from '../../../../plugins/sdk/messages'
 import { cn } from '../../../../utils/utils'
 import { Badge } from '../../../ui/Badge'
@@ -55,10 +57,10 @@ const STATUS_STYLE: Record<PluginListing['status'], { icon: LucideIcon; classNam
   },
 }
 
-// Which surface a capability contributes to: a map pin reads faster than the key.
+// Which surface a capability contributes to: an icon reads faster than the dotted key.
 const CAPABILITY_ICON: Record<string, LucideIcon> = {
   'map.tools': MapPin,
-  'viewer.legends': MapPin,
+  'viewer.legends': SquareMenu,
   'map.layers': Layers,
   'bim.tools': Box,
   'pointcloud.tools': Scan,
@@ -92,6 +94,8 @@ export function PluginCard({
   // reading "Running".
   const status = effectiveStatus(listing)
 
+  const Icon = resolvePluginIcon(manifest.icon ?? 'Puzzle')
+
   // The plugin's catalog when it ships one, its manifest when it does not — never a
   // raw message key.
   const name = usePluginMessage(manifest.slug, 'name', manifest.name)
@@ -108,6 +112,11 @@ export function PluginCard({
     >
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
+          <Icon
+            aria-hidden
+            className="h-5 w-5 shrink-0 text-muted-foreground"
+            data-testid={`plugin-icon-${manifest.slug}`}
+          />
           <h2 className="text-lg text-foreground">{name}</h2>
           <StatusBadge status={status} />
           {listing.bundled && (

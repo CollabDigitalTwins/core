@@ -5,6 +5,7 @@
   "hostApi": 1,
   "description": "Annotates the model's IfcSpaces: rename and colour them, across a toolbar panel, a sidebar tab, a legend and a dialog.",
   "author": "Collab Digital Twins",
+  "icon": "Boxes",
   "capabilities": [
     "bim.tools",
     "viewer.tabs",

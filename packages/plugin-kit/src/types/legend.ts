@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { CapabilityRegistry, PluginContext } from './base'
+import type { CapabilityRegistry, PluginContext, PluginViewerTarget } from './base'
 
 // Split out from the map surface because it names no external type: a legend-only plugin
 // needs no viewer library installed to typecheck.
@@ -17,8 +17,8 @@ export interface LegendRow {
 export interface LegendRegistration {
   id: string
   title: string
-  /** Viewer names as core spells them: 'map', 'bim', 'pointcloud'. Omit for all of them. */
-  viewers?: string[]
+  /** Which viewers this legend appears in. Omit for all of them. */
+  viewers?: PluginViewerTarget[]
   // A hook, called by the host's legend on each render, so rows can carry live counts.
   useLegend: () => {
     /** False omits the section entirely, which is what a legend with nothing to say should do. */

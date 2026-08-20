@@ -36,6 +36,8 @@ export interface PluginManifest {
   hostApi?: number
   description?: string
   author?: string
+  /** A lucide icon name shown beside the plugin's name. Unset or unknown shows a puzzle piece. */
+  icon?: string
   capabilities: PluginCapability[]
   requiredPermissions?: string[]
   configSchema?: Record<string, unknown>
@@ -89,13 +91,16 @@ export interface DataPageRegistration<Row = Record<string, unknown>> {
   emptyKey?: string
 }
 
+/** The viewers that host a tab or a legend. Core spells them exactly this way. */
+export type PluginViewerTarget = 'map' | 'bim' | 'pointcloud'
+
 export interface ViewerTabRegistration {
   id: string
   labelKey: string
   icon: string
   component: React.ComponentType
-  /** Viewer names as core spells them: 'map', 'bim', 'pointcloud'. Omit for all of them. */
-  viewers?: string[]
+  /** Which viewers this tab appears in. Omit for all of them. */
+  viewers?: PluginViewerTarget[]
 }
 
 export interface DialogRegistration<P = Record<string, unknown>> {

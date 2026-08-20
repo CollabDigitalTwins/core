@@ -7,9 +7,9 @@ import * as React from 'react'
 
 import { usePluginMessageLookup } from '../sdk/messages'
 
+import { resolvePluginIcon } from './pluginIcon'
 import { pluginViewerKey } from './pluginViewerKey'
 import { usePluginContributions } from './provider'
-import { resolvePluginIcon } from './usePluginToolbarTools'
 
 import type { ViewerKey } from '../../types/dbTypes'
 import type { LucideProps } from 'lucide-react'

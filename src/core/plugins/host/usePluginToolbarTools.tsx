@@ -8,12 +8,14 @@ import * as React from 'react'
 
 import { ToolbarSubmenu } from '../../components/ToolbarSubmenu'
 
+import { resolvePluginIcon } from './pluginIcon'
 import { usePluginConfigs, usePluginContributions, type PluginContribution } from './provider'
 import { PluginScopeProvider } from './scope'
 
 import type { CursorType } from '../../types/global'
 import type { Tool } from '../../types/tools'
 import type { ToolbarRegistration } from '../sdk/types'
+
 import type { LucideProps } from 'lucide-react'
 
 /** The three toolbar capabilities. All share `ToolbarRegistration`. */
@@ -21,26 +23,6 @@ export type ToolbarCapability = 'map.tools' | 'bim.tools' | 'pointcloud.tools'
 
 /** What `ToolbarButton` renders for a tool that supplies its own component. */
 type ToolComponent = NonNullable<Tool['component']>
-
-/** Shown when a plugin names an icon that does not exist, so the button still appears. */
-const FALLBACK_ICON = LR.Puzzle
-
-/** A plugin may pass a lucide component, or its name as a string — JSON manifests only carry the string. */
-export function resolvePluginIcon(
-  icon: ToolbarRegistration['icon'],
-): React.ComponentType<LucideProps> {
-  if (typeof icon !== 'string') return icon
-
-  const candidate = (LR as unknown as Record<string, unknown>)[icon]
-  return isComponent(candidate) ? candidate : FALLBACK_ICON
-}
-
-// Lucide icons are `forwardRef` objects, so a bare `typeof === 'function'` check
-// rejects every real icon. Anything renderable is callable or carries `$$typeof`.
-function isComponent(value: unknown): value is React.ComponentType<LucideProps> {
-  if (typeof value === 'function') return true
-  return typeof value === 'object' && value !== null && '$$typeof' in value
-}
 
 /**
  * Plugin contributions for one toolbar, as `Tool` objects the toolbars already

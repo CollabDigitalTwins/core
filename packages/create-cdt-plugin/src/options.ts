@@ -4,7 +4,8 @@
 export type Mode = 'external' | 'builtin'
 export type Body = 'example' | 'empty'
 
-// Every capability core renders. The scaffold picks one; spanning several is done by hand.
+// Every capability core renders. A scaffold may pick several: one plugin spans surfaces and
+// shares state between them, so the questionnaire multi-selects rather than forcing a choice.
 export const SURFACES = [
   'map.tools',
   'bim.tools',
@@ -23,13 +24,13 @@ const BODIES: readonly Body[] = ['example', 'empty']
 
 // Overridable with `--kit-spec` so the build tests can point at a local kit. Otherwise the
 // only test proving a scaffolded plugin builds could not run until after the kit shipped.
-export const DEFAULT_KIT_SPEC = '^0.1.0'
+export const DEFAULT_KIT_SPEC = '^0.5.0'
 
 export interface Options {
   mode: Mode
   name: string
   slug: string
-  surface: Surface
+  surfaces: Surface[]
   body: Body
   author: string
   description: string
@@ -49,11 +50,11 @@ export function slugFromName(name: string): string {
 type StringOption = 'name' | 'slug' | 'author' | 'description' | 'kitSpec'
 
 /** Flag name as written on the command line, paired with the `Options` key it sets. */
-const VALUE_FLAGS: Record<string, StringOption | 'mode' | 'surface' | 'body'> = {
+const VALUE_FLAGS: Record<string, StringOption | 'mode' | 'surfaces' | 'body'> = {
   mode: 'mode',
   name: 'name',
   slug: 'slug',
-  surface: 'surface',
+  surface: 'surfaces',
   body: 'body',
   author: 'author',
   description: 'description',
@@ -66,6 +67,19 @@ function oneOf<T extends string>(flag: string, value: string, allowed: readonly 
   }
 
   return value as T
+}
+
+// `--surface` is repeatable and also takes a comma-separated list, so a multi-capability
+// plugin is one flag or several. Duplicates are dropped: two contributions sharing an id
+// would silently lose one, and the manifest would declare the same capability twice.
+function withSurfaces(existing: Surface[] | undefined, value: string): Surface[] {
+  const chosen = value.split(',').map(part => part.trim()).filter(part => part.length > 0)
+
+  if (chosen.length === 0) throw new Error('--surface needs at least one capability.')
+
+  const all = [...existing ?? [], ...chosen.map(part => oneOf('surface', part, SURFACES))]
+
+  return [...new Set(all)]
 }
 
 // Returns only what was supplied, so the prompt flow can tell "not given" from "given empty".
@@ -113,7 +127,7 @@ export function parseFlags(argv: string[]): Partial<Options> {
 
     switch (key) {
       case 'mode': options.mode = oneOf('mode', value, MODES); break
-      case 'surface': options.surface = oneOf('surface', value, SURFACES); break
+      case 'surfaces': options.surfaces = withSurfaces(options.surfaces, value); break
       case 'body': options.body = oneOf('body', value, BODIES); break
       // Narrowed to the string-valued keys by the switch above, so no cast is needed.
       default: options[key] = value

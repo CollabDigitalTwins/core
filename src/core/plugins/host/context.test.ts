@@ -116,3 +116,69 @@ describe('createPluginContext', () => {
     expect(entries.map(e => e.pluginId).sort()).toEqual(['A', 'B'])
   })
 })
+
+describe('createPluginContext viewer targeting', () => {
+  let registry: PluginRegistry
+  let warn: ReturnType<typeof vi.spyOn>
+
+  beforeEach(() => {
+    registry = new PluginRegistry()
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    warn.mockRestore()
+  })
+
+  const contextFor = () => createPluginContext({
+    pluginId: 'targeted',
+    capabilities: ['viewer.tabs'],
+    config: {},
+    registry,
+  })
+
+  const tab = (viewers?: unknown) => ({
+    id: 'panel',
+    labelKey: 'Panel',
+    icon: 'Home',
+    component: () => null,
+    ...(viewers === undefined ? {} : { viewers }),
+  }) as Parameters<ReturnType<typeof contextFor>['register']>[1]
+
+  it('stays silent for the three viewers that host contributions', () => {
+    contextFor().register('viewer.tabs', tab(['map', 'bim', 'pointcloud']))
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  it('stays silent when viewers is omitted, which means every viewer', () => {
+    contextFor().register('viewer.tabs', tab())
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  it('warns for a viewer name that is not a viewer at all', () => {
+    contextFor().register('viewer.tabs', tab(['BIM']))
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn.mock.calls[0][0]).toContain('"BIM"')
+    expect(warn.mock.calls[0][0]).toContain('targeted')
+  })
+
+  it('warns for a ViewerNames member that hosts no contributions', () => {
+    contextFor().register('viewer.tabs', tab(['settings']))
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn.mock.calls[0][0]).toContain('"settings"')
+  })
+
+  it('names every bad value in one warning, keeping the good ones out of it', () => {
+    contextFor().register('viewer.tabs', tab(['map', 'Map', 'land']))
+    expect(warn).toHaveBeenCalledTimes(1)
+    const message = warn.mock.calls[0][0] as string
+    expect(message).toContain('"Map"')
+    expect(message).toContain('"land"')
+    expect(message).not.toContain('"map"')
+  })
+
+  it('registers the contribution anyway, so one bad name never rolls the plugin back', () => {
+    contextFor().register('viewer.tabs', tab(['BIM']))
+    expect(registry.getAll('viewer.tabs')).toHaveLength(1)
+  })
+})

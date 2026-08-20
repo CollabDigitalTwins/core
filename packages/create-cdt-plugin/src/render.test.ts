@@ -14,7 +14,7 @@ const options: Options = {
   mode: 'external',
   name: 'Room Inventory',
   slug: 'room-inventory',
-  surface: 'map.tools',
+  surfaces: ['map.tools'],
   body: 'example',
   author: 'Nico',
   description: 'Counts rooms.',
@@ -144,7 +144,7 @@ describe('tokensFor, surface-derived tokens', () => {
   })
 
   it('tracks the surface rather than the name, so switching surface reshapes the imports', () => {
-    const tokens = tokensFor({ ...options, surface: 'bim.tools' })
+    const tokens = tokensFor({ ...options, surfaces: ['bim.tools'] })
 
     expect(tokens.CONTEXT_TYPE).toBe('BimPluginContext')
     expect(tokens.SURFACE_ENTRY).toBe('@collabdt/plugin-kit/types/bim')

@@ -25,7 +25,7 @@ const optionsFor = (surface: Surface, body: Body): Options => ({
   mode: 'external',
   name: 'Room Inventory',
   slug: 'room-inventory',
-  surface,
+  surfaces: [surface],
   body,
   author: 'Nico',
   description: 'Counts rooms.',
@@ -329,5 +329,168 @@ describe('scaffold, built-in mode', () => {
 
     expect(edited).toEqual([])
     expect(snippets).toEqual([])
+  })
+})
+
+describe('scaffold, spanning several surfaces', () => {
+  const spanning = (surfaces: Surface[], body: Body = 'example'): Options => ({
+    ...optionsFor('map.tools', body),
+    surfaces,
+  })
+
+  const read = (directory: string, file: string) =>
+    readFileSync(join(directory, file), 'utf8')
+
+  it('declares every chosen capability in the manifest', async () => {
+    const { directory } = await scaffold(
+      spanning(['bim.tools', 'viewer.tabs', 'viewer.legends']),
+      temp(),
+    )
+
+    const manifest = JSON.parse(read(directory, 'manifest.json')) as { capabilities: string[] }
+
+    expect(manifest.capabilities).toEqual(['bim.tools', 'viewer.tabs', 'viewer.legends'])
+  })
+
+  it('registers every chosen capability from one activate', async () => {
+    const { directory } = await scaffold(spanning(['bim.tools', 'viewer.tabs']), temp())
+    const entry = read(directory, 'src/index.ts')
+
+    expect(entry).toContain("ctx.register('bim.tools'")
+    expect(entry).toContain("ctx.register('viewer.tabs'")
+    expect(entry.match(/export function activate/g)).toHaveLength(1)
+  })
+
+  it('gives each surface its own body file, so two never collide on one name', async () => {
+    const { files } = await scaffold(spanning(['bim.tools', 'viewer.tabs']), temp())
+
+    expect(files).toContain('src/components/RoomInventoryBim.tsx')
+    expect(files).toContain('src/components/RoomInventoryTab.tsx')
+  })
+
+  it('writes ReadoutRow once, however many toolbars are chosen', async () => {
+    const { files } = await scaffold(spanning(['map.tools', 'bim.tools']), temp())
+
+    expect(files.filter(file => file.endsWith('ReadoutRow.tsx'))).toHaveLength(1)
+  })
+
+  it('omits ReadoutRow when no chosen surface composes it', async () => {
+    const { files } = await scaffold(spanning(['viewer.tabs', 'ui.dialogs']), temp())
+
+    expect(files.some(file => file.endsWith('ReadoutRow.tsx'))).toBe(false)
+  })
+
+  it('unions the type dependencies and keeps devDependencies sorted', async () => {
+    const { directory } = await scaffold(spanning(['map.tools', 'bim.tools']), temp())
+    const parsed = JSON.parse(read(directory, 'package.json')) as {
+      devDependencies: Record<string, string>
+    }
+    const names = Object.keys(parsed.devDependencies)
+
+    expect(names).toContain('maplibre-gl')
+    expect(names).toContain('@thatopen/components')
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)))
+  })
+
+  // The case an intersection of the kit's per-surface aliases cannot express: the second
+  // viewer's component would be checked against a registration bound to `unknown`.
+  it('binds one context slot per viewer rather than intersecting aliases', async () => {
+    const { directory } = await scaffold(spanning(['map.tools', 'bim.tools']), temp())
+
+    expect(read(directory, 'src/index.ts'))
+      .toContain('type Ctx = PluginContext<MapToolProps, BimToolProps>')
+  })
+
+  it('stops the context declaration at the last bound slot', async () => {
+    const { directory } = await scaffold(spanning(['map.tools', 'viewer.tabs']), temp())
+
+    expect(read(directory, 'src/index.ts')).toContain('type Ctx = PluginContext<MapToolProps>')
+  })
+
+  it('leaves unused slots unknown so a later one can still be bound', async () => {
+    const { directory } = await scaffold(spanning(['bim.tools', 'viewer.legends']), temp())
+
+    expect(read(directory, 'src/index.ts'))
+      .toContain('type Ctx = PluginContext<unknown, BimToolProps, unknown, LegendRegistration>')
+  })
+
+  it('targets a tab at the viewers the plugin actually contributes tools to', async () => {
+    const { directory } = await scaffold(spanning(['bim.tools', 'viewer.tabs']), temp())
+
+    expect(read(directory, 'src/index.ts')).toContain("viewers: ['bim']")
+  })
+
+  it('targets a legend the same way, from the same surfaces', async () => {
+    const { directory } = await scaffold(spanning(['map.tools', 'viewer.legends']), temp())
+
+    expect(read(directory, 'src/index.ts')).toContain("viewers: ['map']")
+  })
+
+  it('leaves no unrendered token anywhere it writes', async () => {
+    const { directory, files } = await scaffold(
+      spanning(['map.tools', 'bim.tools', 'viewer.tabs', 'viewer.legends', 'ui.dialogs']),
+      temp(),
+    )
+
+    for (const file of files) {
+      expect(read(directory, file)).not.toMatch(/\{\{[A-Z_]+\}\}/)
+    }
+  })
+
+  it('refuses to write anything when no surface was chosen', async () => {
+    await expect(scaffold(spanning([]), temp())).rejects.toThrow(/at least one surface/)
+  })
+
+  it('names core\'s own bound context in built-in mode, with ViewerNames imported', async () => {
+    const root = temp()
+    mkdirSync(join(root, 'src/core/plugins'), { recursive: true })
+    writeFileSync(join(root, 'package.json'), JSON.stringify({ name: '@collabdt/core' }))
+
+    const { directory } = await scaffold(
+      { ...spanning(['bim.tools', 'viewer.tabs']), mode: 'builtin' },
+      root,
+    )
+    const entry = read(directory, 'index.ts')
+
+    expect(entry).toContain("import { ViewerNames } from '../sdk/types'")
+    expect(entry).toContain('activate(ctx: PluginContext)')
+    expect(entry).toContain('viewers: [ViewerNames.bim]')
+    expect(entry).not.toContain('plugin-kit')
+  })
+})
+
+describe('the scaffolded manifest icon', () => {
+  for (const surface of SURFACES) {
+    it(`carries the icon this surface implies for ${surface}`, async () => {
+      const { directory } = await scaffold(optionsFor(surface, 'example'), temp())
+      const manifest = JSON.parse(
+        readFileSync(join(directory, 'manifest.json'), 'utf8'),
+      ) as { icon: string }
+
+      expect(manifest.icon).toBe(factsFor(surface).icon)
+    })
+  }
+
+  // The Plugins page resolves the name against lucide and shows a puzzle piece on a miss, so
+  // a name that is not an icon degrades quietly rather than visibly.
+  it('names a lucide icon rather than an arbitrary string', async () => {
+    const { directory } = await scaffold(optionsFor('viewer.legends', 'example'), temp())
+    const manifest = JSON.parse(
+      readFileSync(join(directory, 'manifest.json'), 'utf8'),
+    ) as { icon: string }
+
+    expect(manifest.icon).toMatch(/^[A-Z][A-Za-z]+$/)
+  })
+
+  it('takes the first surface when the plugin spans several', async () => {
+    const { directory } = await scaffold(
+      { ...optionsFor('bim.tools', 'example'), surfaces: ['bim.tools', 'viewer.tabs'] },
+      temp(),
+    )
+    const manifest = JSON.parse(
+      readFileSync(join(directory, 'manifest.json'), 'utf8'),
+    ) as { icon: string }
+
+    expect(manifest.icon).toBe(factsFor('bim.tools').icon)
   })
 })

@@ -6,32 +6,30 @@
    where console output reaches nobody. */
 
 import { execFileSync } from 'node:child_process'
-import { relative } from 'node:path'
+import { dirname, relative, resolve } from 'node:path'
 
 import prompts from 'prompts'
 
+import { SURFACE_LABELS } from './labels'
+import { externalNextSteps, forwardSlashes } from './nextSteps'
 import { DEFAULT_KIT_SPEC, parseFlags, slugFromName, SURFACES } from './options'
 import { scaffold } from './scaffold'
+import { ALL_VIEWERS, viewersFor } from './viewers'
 
 import type { Options, Surface } from './options'
-
-const SURFACE_LABELS: Record<Surface, string> = {
-  'map.tools': 'Map toolbar',
-  'bim.tools': 'BIM toolbar',
-  'pointcloud.tools': 'Point cloud toolbar',
-  'viewer.legends': 'Viewer legend',
-}
 
 const USAGE = `
 Usage: create-cdt-plugin [options]
 
 Scaffolds a CDT platform plugin. Run with no options to be prompted.
 
-  --mode <external|builtin>   external: dropped into a running deployment.
-                              builtin: compiled into @collabdt/core.
+  --mode <external|builtin>   external: for a self-hosted deployment or a third party.
+                              builtin: compiled into @collabdt/core, for the core team.
   --name <string>             Plugin name, e.g. "Room Inventory".
   --slug <string>             Folder name. Defaults to the name, hyphenated.
   --surface <capability>      ${SURFACES.join(' | ')}
+                              Repeatable, and takes a comma-separated list, so one
+                              plugin can span several surfaces.
   --body <example|empty>      example: reads the viewer. empty: renders its name.
   --author <string>           Defaults to git config user.name.
   --description <string>
@@ -52,6 +50,22 @@ function gitAuthor(): string {
   }
 }
 
+// The one location nobody chose: no viewer surface to tie a tab or legend to means all three.
+function warnOnEveryViewer(surfaces: Surface[]): void {
+  const shared = surfaces.filter(
+    surface => surface === 'viewer.tabs' || surface === 'viewer.legends',
+  )
+
+  if (shared.length === 0) return
+  if (viewersFor(surfaces).length < ALL_VIEWERS.length) return
+
+  console.warn(
+    `\nHeads up: ${shared.join(' and ')} will appear in every viewer, because you picked no `
+    + 'map, BIM or point cloud surface to tie it to. Narrow the `viewers` line in the generated '
+    + 'entry if it belongs in only one.',
+  )
+}
+
 async function main(): Promise<void> {
   if (process.argv.includes('--help') || process.argv.includes('-h')) {
     console.log(USAGE)
@@ -60,7 +74,7 @@ async function main(): Promise<void> {
 
   const flags = parseFlags(process.argv.slice(2))
 
-  const missing = !flags.mode || !flags.name || !flags.surface || !flags.body
+  const missing = !flags.mode || !flags.name || !flags.surfaces || !flags.body
 
   // A prompt with no TTY resolves immediately to undefined, which would scaffold a plugin
   // named "undefined" rather than failing. Refuse instead.
@@ -78,8 +92,19 @@ async function main(): Promise<void> {
         name: 'mode',
         message: 'What kind of plugin?',
         choices: [
-          { title: "One I'll drop into a running CDT platform", value: 'external' },
-          { title: 'One built into the CDT platform itself', value: 'builtin' },
+          {
+            title: 'Self-hosted / external',
+            value: 'external',
+            description: 'For self-hosters and third-party authors. Builds to dist/index.js and '
+              + 'drops into a running CDT deployment: add PLUGINS_ENABLED=true and PLUGINS_DIR='
+              + '<a local folder on your machine> to your .env, then enable it per organization.',
+          },
+          {
+            title: 'Built into CDT core',
+            value: 'builtin',
+            description: 'For the CDT core dev team. Compiled into @collabdt/core and ships with '
+              + 'the platform. Only runs from inside the core repo — no .env, no mounting.',
+          },
         ],
       },
       { type: flags.name ? null : 'text', name: 'name', message: 'Plugin name:' },
@@ -91,10 +116,17 @@ async function main(): Promise<void> {
           slugFromName(values.name ?? flags.name ?? ''),
       },
       {
-        type: flags.surface ? null : 'select',
-        name: 'surface',
-        message: 'Where should it appear?',
-        choices: SURFACES.map(surface => ({ title: SURFACE_LABELS[surface], value: surface })),
+        type: flags.surfaces ? null : 'multiselect',
+        name: 'surfaces',
+        message: 'Where should it appear? Pick as many as you need.',
+        hint: 'space to select, a to toggle all, enter to confirm',
+        instructions: false,
+        min: 1,
+        choices: SURFACES.map(surface => ({
+          title: SURFACE_LABELS[surface].label,
+          value: surface,
+          description: SURFACE_LABELS[surface].description,
+        })),
       },
       {
         type: flags.body ? null : 'select',
@@ -119,7 +151,7 @@ async function main(): Promise<void> {
     mode: merged.mode ?? 'external',
     name,
     slug: merged.slug ?? slugFromName(name),
-    surface: merged.surface ?? 'map.tools',
+    surfaces: merged.surfaces?.length ? merged.surfaces : ['map.tools'],
     body: merged.body ?? 'example',
     author: merged.author ?? gitAuthor(),
     description: merged.description ?? '',
@@ -131,7 +163,8 @@ async function main(): Promise<void> {
     const { confirmed } = await prompts({
       type: 'confirm',
       name: 'confirmed',
-      message: `Create ${options.surface} plugin "${options.name}" in ./${options.slug}?`,
+      message: `Create ${options.surfaces.join(' + ')} plugin "${options.name}" `
+        + `in ./${options.slug}?`,
       initial: false,
     }, { onCancel: () => { throw new Error('Cancelled.') } })
 
@@ -142,13 +175,18 @@ async function main(): Promise<void> {
   }
 
   const { directory, files, edited, snippets } = await scaffold(options, process.cwd())
-  const where = relative(process.cwd(), directory) || '.'
+  const where = forwardSlashes(relative(process.cwd(), directory)) || '.'
 
   console.log(`\nCreated ${files.length} files in ${where}\n`)
 
+  warnOnEveryViewer(options.surfaces)
+
   if (options.mode === 'external') {
-    console.log(`Next:\n  cd ${where}\n  npm install\n  npm run build\n`)
-    console.log('Then mount the folder and enable the plugin. See the generated README.md.')
+    console.log(externalNextSteps({
+      where,
+      pluginsDir: resolve(dirname(directory)),
+      surfaces: options.surfaces,
+    }))
     return
   }
 

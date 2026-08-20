@@ -6,7 +6,7 @@ import { render, screen } from '@testing-library/react'
 import * as LR from 'lucide-react'
 import * as React from 'react'
 
-import { resolvePluginIcon, usePluginToolbarTools } from './usePluginToolbarTools'
+import { usePluginToolbarTools } from './usePluginToolbarTools'
 
 import type { PluginContribution } from './provider'
 import type { Tool } from '../../types/tools'
@@ -105,18 +105,4 @@ test('wraps the plugin component rather than letting it replace the toolbar butt
   expect(tool.component).not.toBe(contributions.current[0].component)
   expect((tool.component as { displayName?: string }).displayName)
     .toBe('PluginTool(space-planning/spaces)')
-})
-
-describe('icon resolution', () => {
-  it('resolves a lucide icon named as a string', () => {
-    expect(resolvePluginIcon('Ruler')).toBe(LR.Ruler)
-  })
-
-  it('passes a component through unchanged', () => {
-    expect(resolvePluginIcon(LR.Wrench)).toBe(LR.Wrench)
-  })
-
-  it('falls back to a placeholder rather than crashing on an unknown name', () => {
-    expect(resolvePluginIcon('NotAnIcon')).toBe(LR.Puzzle)
-  })
 })

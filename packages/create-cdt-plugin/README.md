@@ -87,7 +87,7 @@ room-inventory/
   .gitignore
 ```
 
-`npm install && npm run build` produces exactly what the platform's scanner expects.
+`npm install` then `npm run build` produces exactly what the platform's scanner expects.
 
 The French and Spanish message blocks start as copies of the English ones. Every translation call in the generated source passes an inline English fallback, so an untranslated plugin still reads correctly; having the shape present makes translating it later an edit rather than a research task.
 
@@ -108,7 +108,16 @@ Eight capabilities, which is every one the platform renders:
 | `viewer.tabs` | Viewer sidebar, as a tab | Nothing: the platform owns the tab strip and panel frame |
 | `ui.dialogs` | Anywhere, opened by id | `close`, plus whatever `open(id, props)` passed |
 
-The scaffolder picks one, because a first plugin that registers five surfaces teaches nothing. Adding more later is a second `ctx.register` call and a second entry in `manifest.capabilities`.
+The questionnaire multi-selects, so pick every surface the plugin needs. Choosing one writes the
+single-file entry; choosing several writes one `activate` that registers each of them, one body
+file per surface, and a `manifest.capabilities` declaring all of them. Adding another later is a
+second `ctx.register` call and a second entry in `manifest.capabilities`.
+
+**Picking a viewer surface also decides where your tabs and legends appear.** A `viewer.tabs` or
+`viewer.legends` contribution is written with an explicit `viewers` list, taken from the viewer
+surfaces you chose — pick `bim.tools` and a tab, and the tab is `viewers: ['bim']` rather than
+appearing in all three viewers. Choose no viewer surface and it targets all of them, which is what
+omitting the field means; the CLI says so when that happens.
 
 **One plugin can span several.** A map tool, a sidebar tab and a dialog from the same plugin share state through `usePluginState`, which is in memory and scoped to your plugin — so the tool sets a selection and the tab re-renders with it, with no round trip and no shared parent. `ui.dialogs` is what makes that composable: register the dialog once, open it by id from whichever surface needs it, and it stays on screen when the surface that opened it unmounts.
 
@@ -154,7 +163,7 @@ You never need `three`, `@thatopen/components`, `maplibre-gl` or `lucide-react` 
 | `--mode` | `external`, `builtin` | `external` is dropped into a running deployment. `builtin` is compiled into `@collabdt/core` and only runs inside that package. |
 | `--name` | string | e.g. `"Room Inventory"` |
 | `--slug` | string | Folder name. Defaults to the name, lowercased and hyphenated. |
-| `--surface` | see above | The capability to contribute to. |
+| `--surface` | see above | The capability to contribute to. Repeatable, and takes a comma-separated list. |
 | `--body` | `example`, `empty` | `example` reads the viewer. `empty` renders its own name. |
 | `--author` | string | Defaults to `git config user.name`. |
 | `--description` | string | |

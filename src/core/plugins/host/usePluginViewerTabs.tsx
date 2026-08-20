@@ -7,9 +7,9 @@ import * as React from 'react'
 
 import { usePluginMessageLookup } from '../sdk/messages'
 
+import { resolvePluginIcon } from './pluginIcon'
 import { usePluginConfigs, usePluginContributions } from './provider'
 import { PluginScopeProvider } from './scope'
-import { resolvePluginIcon } from './usePluginToolbarTools'
 
 import type { ViewerSidebarTab } from '../../components/ui/ViewerSidebar/sidebarTabs'
 import type { SidebarTabKey } from '../../store/Menus/reducer'

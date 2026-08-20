@@ -6,13 +6,13 @@
 // checks what came out.
 
 import { execFile } from 'node:child_process'
-import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 
-import { describe, expect, it } from 'vitest'
+import { afterAll, describe, expect, it } from 'vitest'
 
 import { PLUGIN_EXTERNALS } from '../../plugin-kit/src/externals'
 
@@ -30,7 +30,7 @@ const options: Options = {
   mode: 'external',
   name: 'Room Inventory',
   slug: 'room-inventory',
-  surface: 'map.tools',
+  surfaces: ['map.tools'],
   body: 'example',
   author: 'Nico',
   description: 'Counts rooms.',
@@ -53,12 +53,21 @@ interface Built {
  * fails on module resolution before the guard ever runs, the build fails for the wrong
  * reason, and the test passes while proving nothing.
  */
+// Each case installs a full node_modules, so leaving them behind fills the disk and the next
+// run fails with ENOSPC somewhere unrelated.
+const roots: string[] = []
+
+afterAll(() => {
+  for (const root of roots) rmSync(root, { recursive: true, force: true })
+})
+
 async function build(
   overrides: Partial<Options> = {},
   extraSource = '',
   extraDeps: Record<string, string> = {},
 ): Promise<Built> {
   const root = mkdtempSync(join(tmpdir(), 'cdt-golden-'))
+  roots.push(root)
   const { directory } = await scaffold({ ...options, ...overrides }, root)
 
   if (extraSource) {
@@ -125,10 +134,29 @@ describe('a scaffolded plugin', () => {
 
   it('builds every surface, not just the map', async () => {
     for (const surface of ['bim.tools', 'pointcloud.tools', 'viewer.legends'] as const) {
-      const { directory } = await build({ surface })
+      const { directory } = await build({ surfaces: [surface] })
 
       expect(readdirSync(join(directory, 'dist')).filter(f => f.endsWith('.js'))).toEqual(['index.js'])
     }
+  }, 900_000)
+
+  it('builds and typechecks a plugin spanning several surfaces', async () => {
+    const { directory } = await build({ surfaces: ['bim.tools', 'viewer.tabs', 'viewer.legends'] })
+
+    expect(readdirSync(join(directory, 'dist')).filter(f => f.endsWith('.js'))).toEqual(['index.js'])
+
+    await run('npx', ['tsc', '--noEmit'], { cwd: directory, shell: true })
+  }, 900_000)
+
+  // Two viewers is the case an intersection of the kit's per-surface context aliases cannot
+  // express: the second viewer's component would be checked against ToolbarRegistration<unknown>.
+  it('binds one context slot per viewer, so each component keeps its own props', async () => {
+    const { directory } = await build({ surfaces: ['map.tools', 'bim.tools'] })
+
+    expect(readFileSync(join(directory, 'src/index.ts'), 'utf8'))
+      .toContain('PluginContext<MapToolProps, BimToolProps>')
+
+    await run('npx', ['tsc', '--noEmit'], { cwd: directory, shell: true })
   }, 900_000)
 
   it('fails the build when the plugin bundles three, naming it', async () => {

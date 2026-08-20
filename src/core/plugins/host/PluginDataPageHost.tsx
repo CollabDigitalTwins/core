@@ -15,10 +15,10 @@ import {
 import { Input } from '../../components/ui/Input'
 import { usePluginMessageLookup } from '../sdk/messages'
 
+import { resolvePluginIcon } from './pluginIcon'
 import { parsePluginViewerKey } from './pluginViewerKey'
 import { usePluginConfigs, usePluginContributions } from './provider'
 import { PluginScopeProvider } from './scope'
-import { resolvePluginIcon } from './usePluginToolbarTools'
 
 import type { ViewerKey } from '../../types/dbTypes'
 import type { DataPageRegistration } from '../sdk/types'

@@ -19,6 +19,8 @@ export interface SurfaceFacts {
   icon: string
   /** Entry template basename under each mode's tree. Registration shapes differ per surface. */
   indexTemplate: string
+  /** What the entry imports from the body file. A legend exports a hook, a page two values. */
+  entryImports: string
   /** Example body component template basename. */
   example: string
   /** Whether Empty.tsx fits: it interpolates a toolbar props type not every surface has. */
@@ -43,6 +45,7 @@ const FACTS: Record<Surface, SurfaceFacts> = {
     typeDependency: ['maplibre-gl', '^5.24.0'],
     icon: 'MapPin',
     indexTemplate: 'index',
+    entryImports: '{{COMPONENT}}',
     example: 'ExampleMap',
     allowsEmpty: true,
     usesReadoutRow: true,
@@ -55,6 +58,7 @@ const FACTS: Record<Surface, SurfaceFacts> = {
     typeDependency: ['@thatopen/components', '~3.4.0'],
     icon: 'Boxes',
     indexTemplate: 'index',
+    entryImports: '{{COMPONENT}}',
     example: 'ExampleBim',
     allowsEmpty: true,
     usesReadoutRow: true,
@@ -67,6 +71,7 @@ const FACTS: Record<Surface, SurfaceFacts> = {
     typeDependency: null,
     icon: 'Cloud',
     indexTemplate: 'index',
+    entryImports: '{{COMPONENT}}',
     example: 'ExamplePointcloud',
     allowsEmpty: true,
     usesReadoutRow: true,
@@ -79,8 +84,9 @@ const FACTS: Record<Surface, SurfaceFacts> = {
     propsType: '',
     contextType: 'LegendPluginContext',
     typeDependency: null,
-    icon: 'List',
+    icon: 'SquareMenu',
     indexTemplate: 'indexLegend',
+    entryImports: 'useLegend',
     example: 'ExampleLegend',
     allowsEmpty: false,
     usesReadoutRow: false,
@@ -93,6 +99,7 @@ const FACTS: Record<Surface, SurfaceFacts> = {
     typeDependency: ['maplibre-gl', '^5.24.0'],
     icon: 'Layers',
     indexTemplate: 'indexLayer',
+    entryImports: '{{COMPONENT}}',
     example: 'ExampleLayer',
     allowsEmpty: false,
     usesReadoutRow: false,
@@ -106,6 +113,7 @@ const FACTS: Record<Surface, SurfaceFacts> = {
     typeDependency: null,
     icon: 'Table',
     indexTemplate: 'indexPage',
+    entryImports: 'columns, useRows',
     example: 'ExamplePage',
     allowsEmpty: false,
     usesReadoutRow: false,
@@ -118,6 +126,7 @@ const FACTS: Record<Surface, SurfaceFacts> = {
     typeDependency: null,
     icon: 'PanelRight',
     indexTemplate: 'indexTab',
+    entryImports: '{{COMPONENT}}',
     example: 'ExampleTab',
     allowsEmpty: false,
     usesReadoutRow: false,
@@ -130,6 +139,7 @@ const FACTS: Record<Surface, SurfaceFacts> = {
     typeDependency: null,
     icon: 'SquareStack',
     indexTemplate: 'indexDialog',
+    entryImports: '{{COMPONENT}}',
     example: 'ExampleDialog',
     allowsEmpty: false,
     usesReadoutRow: false,

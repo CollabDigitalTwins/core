@@ -8,13 +8,13 @@ import { describe, expect, it } from 'vitest'
 import { DEFAULT_KIT_SPEC } from './options'
 import { render, templatePath, tokensFor } from './render'
 
-import type { Options } from './options'
+import type { Options, Surface } from './options'
 
 const options: Options = {
   mode: 'external',
   name: 'Room Inventory',
   slug: 'room-inventory',
-  surface: 'map.tools',
+  surfaces: ['map.tools'],
   body: 'example',
   author: 'Nico',
   description: 'Counts rooms.',
@@ -177,10 +177,10 @@ describe('the external README template', () => {
 })
 
 describe('the empty body template', () => {
-  const forSurface = (surface: Options['surface']) =>
+  const forSurface = (surface: Surface) =>
     render(
       readFileSync(templatePath('external', 'src/components', 'Empty.tsx'), 'utf8'),
-      tokensFor({ ...options, surface, body: 'empty' }),
+      tokensFor({ ...options, surfaces: [surface], body: 'empty' }),
     )
 
   it('renders a props intersection for each toolbar surface', () => {
@@ -198,10 +198,10 @@ describe('the empty body template', () => {
 })
 
 describe('the empty entry point template', () => {
-  const entry = (surface: Options['surface']) =>
+  const entry = (surface: Surface) =>
     render(
       readFileSync(templatePath('external', 'src', 'index.ts'), 'utf8'),
-      tokensFor({ ...options, surface, body: 'empty' }),
+      tokensFor({ ...options, surfaces: [surface], body: 'empty' }),
     )
 
   it('registers under the chosen capability with the surface-bound context type', () => {

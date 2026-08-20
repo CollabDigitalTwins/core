@@ -56,7 +56,7 @@ describe('parseFlags', () => {
       mode: 'builtin',
       name: 'Room Inventory',
       slug: 'room-inventory',
-      surface: 'bim.tools',
+      surfaces: ['bim.tools'],
       body: 'empty',
       author: 'Nico',
       description: 'Counts rooms.',

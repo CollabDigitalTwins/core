@@ -14,7 +14,7 @@ export function activate(ctx: {{CONTEXT_TYPE}}): void {
     // A name, not a component, so a plugin never imports the icon library.
     icon: '{{ICON}}',
     component: {{COMPONENT}},
-    // Which viewers show this tab. Drop the line to appear in all of them.
-    viewers: ['bim'],
+    // Explicit on purpose: the field is optional, and omitting it means every viewer.
+    viewers: {{VIEWERS}},
   })
 }

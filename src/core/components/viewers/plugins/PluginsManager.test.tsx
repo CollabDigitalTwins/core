@@ -295,3 +295,32 @@ describe('toasts', () => {
     consoleSpy.mockRestore()
   })
 })
+
+describe('the plugin icon', () => {
+  function icon(manifestOverrides: Partial<PluginListing['manifest']> = {}) {
+    const base = listing()
+    render(<PluginsManager listings={[
+      listing({ manifest: { ...base.manifest, ...manifestOverrides } }),
+    ]} />)
+
+    return screen.getByTestId('plugin-icon-space-planning')
+  }
+
+  it('shows the icon the manifest names', () => {
+    expect(icon({ icon: 'Boxes' })).toHaveClass('lucide-boxes')
+  })
+
+  // The field is optional, so most already-published plugins reach this path.
+  it('falls back to a puzzle piece when the manifest names none', () => {
+    expect(icon()).toHaveClass('lucide-puzzle')
+  })
+
+  // An icon set changes between versions, so a name that once resolved may stop.
+  it('falls back to a puzzle piece for a name that is not an icon', () => {
+    expect(icon({ icon: 'NotAnIcon' })).toHaveClass('lucide-puzzle')
+  })
+
+  it('hides the icon from assistive tech, since the name is beside it', () => {
+    expect(icon({ icon: 'Boxes' })).toHaveAttribute('aria-hidden')
+  })
+})

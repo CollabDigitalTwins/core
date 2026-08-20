@@ -5,6 +5,7 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { factsFor } from './surfaces'
+import { viewersFor } from './viewers'
 
 import type { Options, Surface } from './options'
 
@@ -63,8 +64,29 @@ export function render(source: string, tokens: TOKENS): string {
 // Slicing off the quotes JSON.stringify adds lets the template keep its own and stay readable.
 const jsonSafe = (value: string) => JSON.stringify(value).slice(1, -1)
 
-export function tokensFor(options: Options): TOKENS {
-  const facts = factsFor(options.surface)
+// Explicit even when it lists all three: omitting the field means every viewer, chosen by none.
+function viewersToken(options: Options): string {
+  const viewers = viewersFor(options.surfaces)
+  const items = options.mode === 'builtin'
+    ? viewers.map(viewer => `ViewerNames.${viewer}`)
+    : viewers.map(viewer => `'${viewer}'`)
+
+  return `[${items.join(', ')}]`
+}
+
+/** The body-file name for one surface, suffixed only when a plugin spans several. */
+export function componentNameFor(options: Options, surface: Surface): string {
+  const root = componentName(options.name)
+
+  if (options.surfaces.length === 1) return root
+
+  return `${root.replace(/Tool$/, '')}${factsFor(surface).example.replace(/^Example/, '')}`
+}
+
+// Pass `surface`/`component` for one surface of a multi-surface plugin; omitted, the first wins.
+export function tokensFor(options: Options, surface?: Surface, component?: string): TOKENS {
+  const primary = surface ?? options.surfaces[0]
+  const facts = factsFor(primary)
 
   return {
     SLUG: options.slug,
@@ -74,9 +96,13 @@ export function tokensFor(options: Options): TOKENS {
     DESCRIPTION_JSON: jsonSafe(options.description),
     AUTHOR: options.author,
     AUTHOR_JSON: jsonSafe(options.author),
-    CAPABILITY: options.surface,
-    SURFACE: capabilityConstant(options.surface),
-    COMPONENT: componentName(options.name),
+    CAPABILITY: primary,
+    // A readable list for prose; the JSON variant is the manifest's own array body.
+    CAPABILITIES: options.surfaces.join('`, `'),
+    CAPABILITIES_JSON: options.surfaces.map(surface => `"${surface}"`).join(', '),
+    VIEWERS: viewersToken(options),
+    SURFACE: capabilityConstant(primary),
+    COMPONENT: component ?? componentName(options.name),
     // Matches PLUGIN_HOST_API in core. A drift test there keeps the two equal.
     HOST_API: '1',
     // Escaped because its only use is inside a JSON string in package.json, and a `file:`

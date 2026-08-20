@@ -15,7 +15,7 @@ const base: Options = {
   mode: 'external',
   name: 'Room Inventory',
   slug: 'room-inventory',
-  surface: 'map.tools',
+  surfaces: ['map.tools'],
   body: 'example',
   author: 'Nico',
   description: 'Counts rooms.',
@@ -29,7 +29,7 @@ const body = (surface: Surface) =>
       templatePath('external', 'src/components', `${factsFor(surface).example}.tsx`),
       'utf8',
     ),
-    tokensFor({ ...base, surface }),
+    tokensFor({ ...base, surfaces: [surface] }),
   )
 
 const entry = (surface: Surface) =>
@@ -38,7 +38,7 @@ const entry = (surface: Surface) =>
       templatePath('external', 'src', `${factsFor(surface).indexTemplate}.ts`),
       'utf8',
     ),
-    tokensFor({ ...base, surface }),
+    tokensFor({ ...base, surfaces: [surface] }),
   )
 
 const TOOLBAR_SURFACES = SURFACES.filter(candidate => factsFor(candidate).usesReadoutRow)
@@ -173,7 +173,7 @@ describe('the legend entry point', () => {
   const source = () =>
     render(
       readFileSync(templatePath('external', 'src/indexLegend.ts'), 'utf8'),
-      tokensFor({ ...base, surface: 'viewer.legends' }),
+      tokensFor({ ...base, surfaces: ['viewer.legends'] }),
     )
 
   it('registers the legend registration object, not a toolbar component', () => {

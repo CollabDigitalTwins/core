@@ -2,7 +2,7 @@
 
 {{DESCRIPTION}}
 
-A plugin for the CDT platform, contributing to `{{CAPABILITY}}`.
+A plugin for the CDT platform, contributing to `{{CAPABILITIES}}`.
 
 ## Build it
 
@@ -37,7 +37,7 @@ you several toolbar buttons, each with its own component, and a plugin can contr
 more than one surface at a time:
 
 ```ts
-// manifest.json: "capabilities": ["map.tools", "viewer.legends"]
+// manifest.json: "capabilities": ["map.tools"]
 export function activate(ctx: MapPluginContext): void {
   ctx.register('map.tools', {
     id: '{{SLUG}}-inspect', label: 'Inspect', icon: 'Search', component: InspectTool,
@@ -48,7 +48,7 @@ export function activate(ctx: MapPluginContext): void {
 }
 ```
 
-Two rules apply once you do this:
+Three rules apply once you do this:
 
 - **Every capability you register must be listed in `manifest.capabilities`.** Registering
   an undeclared one throws, and the platform then rolls back every registration this plugin
@@ -56,6 +56,36 @@ Two rules apply once you do this:
   half-registered plugin.
 - **Each entry needs a distinct `id`.** Entries are de-duplicated by plugin and id, so a
   second registration reusing an id is dropped without an error.
+- **Bind a context slot for each viewer you touch.** The per-surface aliases —
+  `MapPluginContext`, `BimPluginContext` — each bind one viewer, so a second viewer's
+  component would be checked against `unknown`. Name the slots you need instead:
+
+  ```ts
+  import type { PluginContext } from '@collabdt/plugin-kit/types/ui'
+  import type { MapToolProps } from '@collabdt/plugin-kit/types/map'
+  import type { BimToolProps } from '@collabdt/plugin-kit/types/bim'
+
+  type Ctx = PluginContext<MapToolProps, BimToolProps>
+  ```
+
+  The order is map, BIM, point cloud, legend; trailing ones you do not use can be left off.
+
+### Where a tab or a legend appears
+
+`viewer.tabs` and `viewer.legends` are shared between viewers, so each one carries a
+`viewers` list saying which. Omitting it means **all three**, which is rarely what you want:
+
+```ts
+ctx.register('viewer.tabs', {
+  id: '{{SLUG}}', labelKey: '{{NAME}}', icon: 'PanelRight', component: Panel,
+  viewers: ['bim'],
+})
+```
+
+Your generated entry already names the viewers matching the surfaces you scaffolded with.
+Widen it only for a tab that genuinely belongs in another viewer — a panel that reads what
+you recorded on the map and shows it in BIM is the case this exists for. A name outside
+`'map'`, `'bim'` and `'pointcloud'` renders nowhere, and the platform logs it.
 
 What you cannot do is lazy-load part of your own plugin. The platform serves exactly one
 file, so a code-split chunk would not resolve. Everything in the bundle loads when the

@@ -118,6 +118,7 @@
   },
   "dependencies": {
     "@casl/ability": "^6.7.5",
+    "@collabdt/plugin-kit": "^0.5.0",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",

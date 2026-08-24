@@ -11,7 +11,6 @@ import { render, templatePath, tokensFor } from './render'
 import type { Options, Surface } from './options'
 
 const options: Options = {
-  mode: 'external',
   name: 'Room Inventory',
   slug: 'room-inventory',
   surfaces: ['map.tools'],

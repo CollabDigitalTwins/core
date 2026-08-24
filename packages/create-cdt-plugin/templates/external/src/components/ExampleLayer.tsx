@@ -3,8 +3,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { stringToColour } from '@collabdt/core/plugins-sdk'
 import * as React from 'react'
+
+import { stringToColour } from '@collabdt/core/plugins-sdk'
 
 import type { MapToolProps } from '{{SURFACE_ENTRY}}'
 

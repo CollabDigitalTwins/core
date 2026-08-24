@@ -29,6 +29,6 @@ function manifestFor(slug: string): PluginManifest {
  * surface stops them compiling.
  */
 export const INSTALLED_PLUGINS: PluginSource[] = [
-  { manifest: manifestFor('hello-map'), entry: () => import('./hello-map') },
-  { manifest: manifestFor('hello-bim'), entry: () => import('./hello-bim') },
+  { manifest: manifestFor('hello-map'), entry: () => import('./hello-map/src') },
+  { manifest: manifestFor('hello-bim'), entry: () => import('./hello-bim/src') },
 ]

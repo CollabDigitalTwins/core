@@ -7,7 +7,7 @@ import { join } from 'node:path'
 
 import { describe, expect, it } from 'vitest'
 
-import { checkSlug, checkTarget, COMPILED_IN_SLUGS, isCorePackage, resolveTarget } from './target'
+import { checkSlug, checkTarget, COMPILED_IN_SLUGS, resolveTarget } from './target'
 
 const temp = () => mkdtempSync(join(tmpdir(), 'cdt-target-'))
 
@@ -48,7 +48,7 @@ describe('resolveTarget', () => {
     const root = temp()
     mkdirSync(join(root, 'plugins'))
 
-    expect(resolveTarget('external', 'room-inventory', root)).toBe(
+    expect(resolveTarget('room-inventory', root)).toBe(
       join(root, 'plugins', 'room-inventory'),
     )
   })
@@ -56,32 +56,16 @@ describe('resolveTarget', () => {
   it('writes into ./<slug> when there is no plugins folder', () => {
     const root = temp()
 
-    expect(resolveTarget('external', 'room-inventory', root)).toBe(join(root, 'room-inventory'))
+    expect(resolveTarget('room-inventory', root)).toBe(join(root, 'room-inventory'))
   })
 
   it('ignores a plugins file that is not a directory', () => {
     const root = temp()
     writeFileSync(join(root, 'plugins'), 'not a directory')
 
-    expect(resolveTarget('external', 'room-inventory', root)).toBe(join(root, 'room-inventory'))
+    expect(resolveTarget('room-inventory', root)).toBe(join(root, 'room-inventory'))
   })
 
-  it('writes built-in plugins beside the others in core', () => {
-    const root = temp()
-
-    expect(resolveTarget('builtin', 'room-inventory', root)).toBe(
-      join(root, 'src/core/plugins', 'room-inventory'),
-    )
-  })
-
-  it('ignores a plugins folder in built-in mode, which has a fixed location', () => {
-    const root = temp()
-    mkdirSync(join(root, 'plugins'))
-
-    expect(resolveTarget('builtin', 'room-inventory', root)).toBe(
-      join(root, 'src/core/plugins', 'room-inventory'),
-    )
-  })
 })
 
 describe('checkTarget', () => {
@@ -112,26 +96,3 @@ describe('checkTarget', () => {
   })
 })
 
-describe('isCorePackage', () => {
-  it('is true for a directory whose package.json is @collabdt/core', () => {
-    const root = temp()
-    writeFileSync(join(root, 'package.json'), JSON.stringify({ name: '@collabdt/core' }))
-
-    expect(isCorePackage(root)).toBe(true)
-  })
-
-  it('is false for another package, and for no package.json at all', () => {
-    const other = temp()
-    writeFileSync(join(other, 'package.json'), JSON.stringify({ name: 'cdt-na' }))
-
-    expect(isCorePackage(other)).toBe(false)
-    expect(isCorePackage(temp())).toBe(false)
-  })
-
-  it('is false rather than throwing on an unparseable package.json', () => {
-    const root = temp()
-    writeFileSync(join(root, 'package.json'), '{ not json')
-
-    expect(isCorePackage(root)).toBe(false)
-  })
-})

@@ -3,10 +3,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { useEffect, useState } from 'react'
+
 import { Separator } from '@collabdt/core/plugins-sdk/components'
 import { usePluginConfig } from '@collabdt/core/plugins-sdk/config'
 import { usePluginTranslations } from '@collabdt/core/plugins-sdk/messages'
-import { useEffect, useState } from 'react'
 
 // Your own modules import relatively, like any other TypeScript project. Everything under
 // src/ ends up in the one bundle the platform serves.

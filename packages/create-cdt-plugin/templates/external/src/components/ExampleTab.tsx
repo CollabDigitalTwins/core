@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { usePluginState } from '@collabdt/core/plugins-sdk/state'
 import { usePluginTranslations } from '@collabdt/core/plugins-sdk/messages'
+import { usePluginState } from '@collabdt/core/plugins-sdk/state'
 
 // Rendered in the sidebar panel. `usePluginState` is per-plugin, so a map tool can set it.
 export function {{COMPONENT}}() {

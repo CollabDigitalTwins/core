@@ -56,7 +56,6 @@ describe('a scaffolded manifest', () => {
       const root = mkdtempSync(join(tmpdir(), 'cdt-drift-'))
 
       const { directory } = await scaffold({
-        mode: 'external',
         name: 'Room Inventory',
         slug: 'room-inventory',
         surfaces: [surface],
@@ -79,7 +78,6 @@ describe('a scaffolded manifest', () => {
     const root = mkdtempSync(join(tmpdir(), 'cdt-drift-'))
 
     const { directory } = await scaffold({
-      mode: 'external',
       name: 'Room Inventory',
       slug: 'room-inventory',
       surfaces: ['map.tools'],

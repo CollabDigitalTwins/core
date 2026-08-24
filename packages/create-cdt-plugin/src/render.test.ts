@@ -11,7 +11,6 @@ import { capabilityConstant, componentName, render, TEMPLATE_ROOT, tokensFor } f
 import type { Options } from './options'
 
 const options: Options = {
-  mode: 'external',
   name: 'Room Inventory',
   slug: 'room-inventory',
   surfaces: ['map.tools'],

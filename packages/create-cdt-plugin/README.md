@@ -64,7 +64,7 @@ npm run build
 That writes `dist/index.js`. Mount the folder, enable the plugin, and it renders. Every prompt has a flag equivalent, so the whole thing is scriptable:
 
 ```bash
-npx create-cdt-plugin --mode external --name "Room Inventory" \
+npx create-cdt-plugin --name "Room Inventory" \
   --surface map.tools --body example --yes
 ```
 
@@ -160,7 +160,6 @@ You never need `three`, `@thatopen/components`, `maplibre-gl` or `lucide-react` 
 
 | Flag | Values | Notes |
 |---|---|---|
-| `--mode` | `external`, `builtin` | `external` is dropped into a running deployment. `builtin` is compiled into `@collabdt/core` and only runs inside that package. |
 | `--name` | string | e.g. `"Room Inventory"` |
 | `--slug` | string | Folder name. Defaults to the name, lowercased and hyphenated. |
 | `--surface` | see above | The capability to contribute to. Repeatable, and takes a comma-separated list. |

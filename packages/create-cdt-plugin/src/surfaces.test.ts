@@ -61,21 +61,6 @@ describe('factsFor', () => {
     }
   })
 
-  it('gives every surface a core-relative entry for the built-in templates', () => {
-    expect(factsFor('map.tools').coreEntry).toBe('../../sdk/mapViewer')
-    expect(factsFor('bim.tools').coreEntry).toBe('../../sdk/bimViewer')
-    expect(factsFor('pointcloud.tools').coreEntry).toBe('../../sdk/pointCloudViewer')
-    expect(factsFor('viewer.legends').coreEntry).toBe('../../sdk/types')
-  })
-
-  it('keeps the core entry inside sdk/, which is all core lets a plugin import', () => {
-    // Core's ESLint isolation rule allows `../sdk/*` and the plugin's own files. A path
-    // reaching anywhere else would make every scaffolded built-in plugin fail lint.
-    for (const surface of SURFACES) {
-      expect(factsFor(surface).coreEntry).toMatch(/^\.\.\/\.\.\/sdk\//)
-    }
-  })
-
   it('gives the legend surface no toolbar props, since it registers a hook not a component', () => {
     expect(factsFor('viewer.legends').propsType).toBe('')
   })

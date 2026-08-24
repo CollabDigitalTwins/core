@@ -4,10 +4,9 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 
-import { registerBuiltin } from './registration'
 import { componentNameFor, render, templatePath, tokensFor } from './render'
 import { factsFor } from './surfaces'
-import { checkSlug, checkTarget, isCorePackage, resolveTarget } from './target'
+import { checkSlug, checkTarget, resolveTarget } from './target'
 
 import type { Options, Surface } from './options'
 
@@ -21,15 +20,11 @@ interface PlannedFile {
 
 const spansSurfaces = (options: Options) => options.surfaces.length > 1
 
-const bodyRoot = (options: Options) => options.mode === 'builtin' ? 'components' : 'src/components'
+const BODY_ROOT = 'src/components'
 
-const templateTree = (options: Options) => options.mode === 'builtin' ? 'builtin' : 'external/src'
+const TEMPLATE_TREE = 'external/src'
 
-function shellFiles(options: Options): PlannedFile[] {
-  if (options.mode === 'builtin') {
-    return [{ destination: 'manifest.json', template: 'builtin/manifest.json' }]
-  }
-
+function shellFiles(): PlannedFile[] {
   return [
     { destination: 'manifest.json', template: 'external/manifest.json' },
     { destination: 'package.json', template: 'external/package.json' },
@@ -42,7 +37,7 @@ function shellFiles(options: Options): PlannedFile[] {
 
 // No template can hold an entry for several surfaces, so `composeEntry` assembles that one.
 function entryFile(options: Options): PlannedFile[] {
-  const destination = options.mode === 'builtin' ? 'index.ts' : 'src/index.ts'
+  const destination = 'src/index.ts'
 
   if (spansSurfaces(options)) return [{ destination }]
 
@@ -50,14 +45,14 @@ function entryFile(options: Options): PlannedFile[] {
 
   return [{
     destination,
-    template: `${templateTree(options)}/${factsFor(surface).indexTemplate}.ts`,
+    template: `${TEMPLATE_TREE}/${factsFor(surface).indexTemplate}.ts`,
   }]
 }
 
 // Two files at minimum, so a reader does not infer that a plugin is one component.
 function bodyFiles(options: Options): PlannedFile[] {
-  const templates = `${templateTree(options)}/components`
-  const destination = bodyRoot(options)
+  const templates = `${TEMPLATE_TREE}/components`
+  const destination = BODY_ROOT
 
   const bodies = options.surfaces.map((surface): PlannedFile => {
     const facts = factsFor(surface)
@@ -82,12 +77,16 @@ function bodyFiles(options: Options): PlannedFile[] {
 }
 
 function planFor(options: Options): PlannedFile[] {
-  return [...shellFiles(options), ...entryFile(options), ...bodyFiles(options)]
+  return [...shellFiles(), ...entryFile(options), ...bodyFiles(options)]
 }
 
 export function plannedFiles(options: Options): string[] {
   return planFor(options).map(file => file.destination)
 }
+
+// Sorts import lines by the specifier they end with, which is what `import/order` compares.
+const bySpecifier = (a: string, b: string) =>
+  (a.split(" from ")[1] ?? '').localeCompare(b.split(" from ")[1] ?? '')
 
 /** Which `PluginContext` slot each surface binds, in the order the type parameters appear. */
 const SLOT_TYPES: Array<{ surfaces: Surface[]; type: string; entry: string }> = [
@@ -99,10 +98,6 @@ const SLOT_TYPES: Array<{ surfaces: Surface[]; type: string; entry: string }> = 
 
 // The kit binds one viewer slot per alias, so a plugin spanning viewers binds its own.
 function contextType(options: Options): { declaration: string; imports: string[] } {
-  if (options.mode === 'builtin') {
-    return { declaration: '', imports: ["import type { PluginContext } from '../sdk/types'"] }
-  }
-
   const used = SLOT_TYPES.map(slot =>
     slot.surfaces.some(surface => options.surfaces.includes(surface)))
 
@@ -115,7 +110,7 @@ function contextType(options: Options): { declaration: string; imports: string[]
     ...SLOT_TYPES
       .filter((_slot, index) => used[index])
       .map(slot => `import type { ${slot.type} } from '@collabdt/plugin-kit/types/${slot.entry}'`),
-  ]
+  ].sort(bySpecifier)
 
   return { declaration: `type Ctx = PluginContext<${bound.join(', ')}>`, imports }
 }
@@ -128,7 +123,6 @@ async function fragmentFor(options: Options, surface: Surface): Promise<string> 
 }
 
 async function composeEntry(options: Options): Promise<string> {
-  const builtin = options.mode === 'builtin'
   const { declaration, imports } = contextType(options)
 
   const bodyImports = options.surfaces.map((surface) => {
@@ -136,14 +130,7 @@ async function composeEntry(options: Options): Promise<string> {
     const bindings = render(factsFor(surface).entryImports, { COMPONENT: component })
 
     return `import { ${bindings} } from './components/${component}'`
-  })
-
-  // Only the built-in tree names viewers as enum members; the kit spells them as strings.
-  const namesViewers = options.surfaces.some(surface =>
-    surface === 'viewer.tabs' || surface === 'viewer.legends')
-  const valueImports = builtin && namesViewers
-    ? ["import { ViewerNames } from '../sdk/types'", '']
-    : []
+  }).sort(bySpecifier)
 
   const fragments = await Promise.all(
     options.surfaces.map(surface => fragmentFor(options, surface)),
@@ -155,13 +142,12 @@ async function composeEntry(options: Options): Promise<string> {
     '',
     ...bodyImports,
     '',
-    ...valueImports,
     ...imports,
     '',
     ...declaration ? [declaration, ''] : [],
     '// One plugin, several surfaces. They share state through `usePluginState`, so a selection',
     '// made in one is already there in the next, with no shared parent and no round trip.',
-    `export function activate(ctx: ${builtin ? 'PluginContext' : 'Ctx'}): void {`,
+    'export function activate(ctx: Ctx): void {',
     fragments.join('\n\n'),
     '}',
     '',
@@ -191,20 +177,13 @@ function withTypeDependencies(packageJson: string, options: Options): string {
 export async function scaffold(
   options: Options,
   cwd: string,
-): Promise<{ directory: string; files: string[]; edited: string[]; snippets: string[] }> {
+): Promise<{ directory: string; files: string[] }> {
   if (options.surfaces.length === 0) throw new Error('Pick at least one surface.')
 
   const slugProblem = checkSlug(options.slug)
   if (slugProblem) throw new Error(slugProblem)
 
-  if (options.mode === 'builtin' && !isCorePackage(cwd)) {
-    throw new Error(
-      'Built-in mode writes into src/core/plugins/ and only makes sense inside the '
-      + '@collabdt/core package. Run this from core, or use --mode external.',
-    )
-  }
-
-  const directory = resolveTarget(options.mode, options.slug, cwd)
+  const directory = resolveTarget(options.slug, cwd)
 
   const targetProblem = checkTarget(directory)
   if (targetProblem) throw new Error(targetProblem)
@@ -230,12 +209,5 @@ export async function scaffold(
     written.push(file.destination)
   }
 
-  // A built-in plugin does not load unless it is in both manifests.ts and installed.ts.
-  // Registering it here rather than leaving it to the author is the difference between a
-  // working plugin and one where everything appears to have succeeded and nothing happens.
-  const { edited, snippets } = options.mode === 'builtin'
-    ? await registerBuiltin(cwd, options)
-    : { edited: [], snippets: [] }
-
-  return { directory, files: written, edited, snippets }
+  return { directory, files: written }
 }

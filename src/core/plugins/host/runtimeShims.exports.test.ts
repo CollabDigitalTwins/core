@@ -3,19 +3,29 @@
 
 import { describe, expect, it } from 'vitest'
 
+// Static, not `import()` in a test: transforming these graphs can outlast testTimeout.
+import * as sdkComponents from '../sdk/components'
+import * as sdkConfig from '../sdk/config'
+import * as sdkData from '../sdk/data'
+import * as sdkIndex from '../sdk/index'
+import * as sdkMessages from '../sdk/messages'
+import * as sdkState from '../sdk/state'
+import * as sdkStore from '../sdk/store'
+import * as sdkUi from '../sdk/ui'
+
 import { PLUGIN_RUNTIME_SHIMS } from './runtimeShims'
 
 // The real module behind each SDK specifier. React's own shims are left out: they track
 // the installed React, which is a separate concern that moves on upgrade.
-const SDK_MODULES: Record<string, () => Promise<Record<string, unknown>>> = {
-  '@collabdt/core/plugins-sdk': () => import('../sdk/index'),
-  '@collabdt/core/plugins-sdk/config': () => import('../sdk/config'),
-  '@collabdt/core/plugins-sdk/messages': () => import('../sdk/messages'),
-  '@collabdt/core/plugins-sdk/store': () => import('../sdk/store'),
-  '@collabdt/core/plugins-sdk/data': () => import('../sdk/data'),
-  '@collabdt/core/plugins-sdk/state': () => import('../sdk/state'),
-  '@collabdt/core/plugins-sdk/ui': () => import('../sdk/ui'),
-  '@collabdt/core/plugins-sdk/components': () => import('../sdk/components'),
+const SDK_MODULES: Record<string, Record<string, unknown>> = {
+  '@collabdt/core/plugins-sdk': sdkIndex,
+  '@collabdt/core/plugins-sdk/config': sdkConfig,
+  '@collabdt/core/plugins-sdk/messages': sdkMessages,
+  '@collabdt/core/plugins-sdk/store': sdkStore,
+  '@collabdt/core/plugins-sdk/data': sdkData,
+  '@collabdt/core/plugins-sdk/state': sdkState,
+  '@collabdt/core/plugins-sdk/ui': sdkUi,
+  '@collabdt/core/plugins-sdk/components': sdkComponents,
 }
 
 // Exports a module has on purpose without a shim of its own, and why.
@@ -56,24 +66,22 @@ describe('shim export lists', () => {
     expect(sdkShims.sort()).toEqual(Object.keys(SDK_MODULES).sort())
   })
 
-  for (const [specifier, load] of Object.entries(SDK_MODULES)) {
-    it(`only re-exports names that "${specifier}" actually provides`, async () => {
+  for (const [specifier, actual] of Object.entries(SDK_MODULES)) {
+    it(`only re-exports names that "${specifier}" actually provides`, () => {
       const shim = PLUGIN_RUNTIME_SHIMS.find(entry => entry.specifier === specifier)
-      const actual = await load()
 
       const missing = shim!.exports.filter(name => !(name in actual))
 
       expect(missing).toEqual([])
     })
 
-    it(`re-exports everything "${specifier}" provides, or says why not`, async () => {
+    it(`re-exports everything "${specifier}" provides, or says why not`, () => {
       const shim = PLUGIN_RUNTIME_SHIMS.find(entry => entry.specifier === specifier)
-      const actual = await load()
 
       // The barrel re-exports every component; a plugin gets them through
       // `plugins-sdk/components`. Read from that module, so a new component needs no edit.
       const servedElsewhere = specifier === '@collabdt/core/plugins-sdk'
-        ? Object.keys(await import('../sdk/components'))
+        ? Object.keys(sdkComponents)
         : []
 
       const explained = DELIBERATELY_UNSHIMMED[specifier] ?? {}

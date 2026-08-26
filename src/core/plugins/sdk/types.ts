@@ -10,6 +10,12 @@ import type { PointCloudToolProps } from './pointCloudViewer'
 export { ViewerNames } from '../../types/dbTypes'
 
 import type { ViewerNames } from '../../types/dbTypes'
+
+/**
+ * The viewers that can host a tab or a legend, spelled as plain strings. Derived from
+ * `ViewerNames` so the two cannot drift, and the form `@collabdt/plugin-kit` publishes.
+ */
+export type PluginViewerTarget = `${ViewerNames.map | ViewerNames.bim | ViewerNames.pointcloud}`
 import type { LucideProps } from 'lucide-react'
 
 // --- Capability definitions ---
@@ -138,7 +144,7 @@ export interface ViewerTabRegistration {
   icon: string | React.ComponentType<LucideProps>
   component: React.ComponentType
   /** Which viewers this tab appears in. Omit for all of them. */
-  viewers?: ViewerNames[]
+  viewers?: Array<PluginViewerTarget | ViewerNames>
 }
 
 /**
@@ -171,7 +177,7 @@ export interface LegendRegistration {
   id: string
   title: string
   /** Which viewers this legend appears in. Omit for all of them. */
-  viewers?: ViewerNames[]
+  viewers?: Array<PluginViewerTarget | ViewerNames>
   // Called by <MapLegendHost> on each render; active:false omits the section.
   useLegend: () => {
     active: boolean
@@ -218,8 +224,9 @@ export interface PluginContext {
 // --- Plugin entry point type ---
 
 export interface PluginEntry {
-  activate(ctx: PluginContext): void | Promise<void>
-  deactivate?(ctx: PluginContext): void | Promise<void>
+  // `any`: each plugin binds only the slots it uses, so no one context type fits them all.
+  activate(ctx: any): void | Promise<void>
+  deactivate?(ctx: any): void | Promise<void>
 }
 
 /**

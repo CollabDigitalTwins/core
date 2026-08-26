@@ -6,9 +6,6 @@ import type { Surface } from './options'
 export interface SurfaceFacts {
   /** The kit type entry to import from. Split per surface so a plugin resolves only what it uses. */
   entry: string
-  // Where a built-in plugin's component gets the same types from. It cannot import the kit:
-  // core's ESLint isolation rule allows `../sdk/*` and the plugin's own files, nothing else.
-  coreEntry: string
   /** The viewer props the hosting toolbar passes, intersected with `ToolbarToolProps`. */
   propsType: string
   /** The `activate()` context alias with this surface's registry bound. */
@@ -17,7 +14,7 @@ export interface SurfaceFacts {
   typeDependency: [string, string] | null
   /** A lucide icon name. A string, never a component: that is why a plugin needs no icon package. */
   icon: string
-  /** Entry template basename under each mode's tree. Registration shapes differ per surface. */
+  /** Entry template basename. Registration shapes differ per surface. */
   indexTemplate: string
   /** What the entry imports from the body file. A legend exports a hook, a page two values. */
   entryImports: string
@@ -39,11 +36,10 @@ export interface SurfaceFacts {
 const FACTS: Record<Surface, SurfaceFacts> = {
   'map.tools': {
     entry: '@collabdt/plugin-kit/types/map',
-    coreEntry: '../../sdk/mapViewer',
     propsType: 'MapToolProps',
     contextType: 'MapPluginContext',
     typeDependency: ['maplibre-gl', '^5.24.0'],
-    icon: 'MapPin',
+    icon: 'Map',
     indexTemplate: 'index',
     entryImports: '{{COMPONENT}}',
     example: 'ExampleMap',
@@ -52,11 +48,10 @@ const FACTS: Record<Surface, SurfaceFacts> = {
   },
   'bim.tools': {
     entry: '@collabdt/plugin-kit/types/bim',
-    coreEntry: '../../sdk/bimViewer',
     propsType: 'BimToolProps',
     contextType: 'BimPluginContext',
     typeDependency: ['@thatopen/components', '~3.4.0'],
-    icon: 'Boxes',
+    icon: 'Box',
     indexTemplate: 'index',
     entryImports: '{{COMPONENT}}',
     example: 'ExampleBim',
@@ -65,11 +60,10 @@ const FACTS: Record<Surface, SurfaceFacts> = {
   },
   'pointcloud.tools': {
     entry: '@collabdt/plugin-kit/types/pointcloud',
-    coreEntry: '../../sdk/pointCloudViewer',
     propsType: 'PointCloudToolProps',
     contextType: 'PointCloudPluginContext',
     typeDependency: null,
-    icon: 'Cloud',
+    icon: 'Grip',
     indexTemplate: 'index',
     entryImports: '{{COMPONENT}}',
     example: 'ExamplePointcloud',
@@ -79,8 +73,6 @@ const FACTS: Record<Surface, SurfaceFacts> = {
   'viewer.legends': {
     // A legend registers a hook rather than a component, so it takes no toolbar props.
     entry: '@collabdt/plugin-kit/types/legend',
-    // A legend names no viewer type, so its shapes live in the SDK's own types module.
-    coreEntry: '../../sdk/types',
     propsType: '',
     contextType: 'LegendPluginContext',
     typeDependency: null,
@@ -93,7 +85,6 @@ const FACTS: Record<Surface, SurfaceFacts> = {
   },
   'map.layers': {
     entry: '@collabdt/plugin-kit/types/map',
-    coreEntry: '../../sdk/mapViewer',
     propsType: 'MapToolProps',
     contextType: 'MapPluginContext',
     typeDependency: ['maplibre-gl', '^5.24.0'],
@@ -107,11 +98,10 @@ const FACTS: Record<Surface, SurfaceFacts> = {
   // These name no viewer library, so they share one kit entry.
   'data.pages': {
     entry: '@collabdt/plugin-kit/types/ui',
-    coreEntry: '../../sdk/types',
     propsType: '',
     contextType: 'UiPluginContext',
     typeDependency: null,
-    icon: 'Table',
+    icon: 'Table2',
     indexTemplate: 'indexPage',
     entryImports: 'columns, useRows',
     example: 'ExamplePage',
@@ -120,11 +110,10 @@ const FACTS: Record<Surface, SurfaceFacts> = {
   },
   'viewer.tabs': {
     entry: '@collabdt/plugin-kit/types/ui',
-    coreEntry: '../../sdk/types',
     propsType: '',
     contextType: 'UiPluginContext',
     typeDependency: null,
-    icon: 'PanelRight',
+    icon: 'PanelLeft',
     indexTemplate: 'indexTab',
     entryImports: '{{COMPONENT}}',
     example: 'ExampleTab',
@@ -133,7 +122,6 @@ const FACTS: Record<Surface, SurfaceFacts> = {
   },
   'ui.dialogs': {
     entry: '@collabdt/plugin-kit/types/ui',
-    coreEntry: '../../sdk/types',
     propsType: '',
     contextType: 'UiPluginContext',
     typeDependency: null,

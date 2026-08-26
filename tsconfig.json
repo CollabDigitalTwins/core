@@ -7,7 +7,10 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@collabdt/core/plugins-sdk": ["./src/core/plugins/sdk/index"],
+      "@collabdt/core/plugins-sdk/*": ["./src/core/plugins/sdk/*"],
+      "@collabdt/plugin-kit/types/*": ["./packages/plugin-kit/dist/types/*"]
     },
     "resolveJsonModule": true,
     "allowJs": true,
@@ -31,5 +34,10 @@
     "src"
   ],
 
-  "exclude": ["node_modules", "datasets/reference from prev version/**", "dist"]
+  "exclude": [
+    "node_modules",
+    "datasets/reference from prev version/**",
+    "dist",
+    "packages/*/templates/**"
+  ]
 }

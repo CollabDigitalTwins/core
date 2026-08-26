@@ -23,8 +23,6 @@ Usage: create-cdt-plugin [options]
 
 Scaffolds a CDT platform plugin. Run with no options to be prompted.
 
-  --mode <external|builtin>   external: for a self-hosted deployment or a third party.
-                              builtin: compiled into @collabdt/core, for the core team.
   --name <string>             Plugin name, e.g. "Room Inventory".
   --slug <string>             Folder name. Defaults to the name, hyphenated.
   --surface <capability>      ${SURFACES.join(' | ')}
@@ -74,39 +72,19 @@ async function main(): Promise<void> {
 
   const flags = parseFlags(process.argv.slice(2))
 
-  const missing = !flags.mode || !flags.name || !flags.surfaces || !flags.body
+  const missing = !flags.name || !flags.surfaces || !flags.body
 
   // A prompt with no TTY resolves immediately to undefined, which would scaffold a plugin
   // named "undefined" rather than failing. Refuse instead.
   if ((missing || !flags.yes) && !process.stdin.isTTY) {
     throw new Error(
-      'No interactive terminal available. Pass --mode, --name, --surface, --body and --yes '
+      'No interactive terminal available. Pass --name, --surface, --body and --yes '
       + 'to run without prompts.',
     )
   }
 
   const answers = missing
     ? await prompts([
-      {
-        type: flags.mode ? null : 'select',
-        name: 'mode',
-        message: 'What kind of plugin?',
-        choices: [
-          {
-            title: 'Self-hosted / external',
-            value: 'external',
-            description: 'For self-hosters and third-party authors. Builds to dist/index.js and '
-              + 'drops into a running CDT deployment: add PLUGINS_ENABLED=true and PLUGINS_DIR='
-              + '<a local folder on your machine> to your .env, then enable it per organization.',
-          },
-          {
-            title: 'Built into CDT core',
-            value: 'builtin',
-            description: 'For the CDT core dev team. Compiled into @collabdt/core and ships with '
-              + 'the platform. Only runs from inside the core repo — no .env, no mounting.',
-          },
-        ],
-      },
       { type: flags.name ? null : 'text', name: 'name', message: 'Plugin name:' },
       {
         type: flags.slug ? null : 'text',
@@ -148,7 +126,6 @@ async function main(): Promise<void> {
   const name = merged.name ?? ''
 
   const options: Options = {
-    mode: merged.mode ?? 'external',
     name,
     slug: merged.slug ?? slugFromName(name),
     surfaces: merged.surfaces?.length ? merged.surfaces : ['map.tools'],
@@ -174,45 +151,18 @@ async function main(): Promise<void> {
     }
   }
 
-  const { directory, files, edited, snippets } = await scaffold(options, process.cwd())
+  const { directory, files } = await scaffold(options, process.cwd())
   const where = forwardSlashes(relative(process.cwd(), directory)) || '.'
 
   console.log(`\nCreated ${files.length} files in ${where}\n`)
 
   warnOnEveryViewer(options.surfaces)
 
-  if (options.mode === 'external') {
-    console.log(externalNextSteps({
-      where,
-      pluginsDir: resolve(dirname(directory)),
-      surfaces: options.surfaces,
-    }))
-    return
-  }
-
-  if (edited.length > 0) console.log(`Registered it in:\n${edited.map(f => `  ${f}`).join('\n')}\n`)
-
-  // Loud, because the alternative failure is silent: an unregistered built-in plugin loads
-  // nothing and reports nothing, so everything looks like it worked.
-  if (snippets.length > 0) {
-    console.warn(
-      'Could not edit the following automatically. The plugin will NOT load until these are\n'
-      + 'added by hand:\n',
-    )
-    for (const snippet of snippets) console.warn(`${snippet}\n`)
-  }
-
-  console.log(`Then implement the component in ${where}/components/ and run the tests.`)
-
-  // The scaffolder cannot import core, so it keeps a checked copy of the compiled-in slugs
-  // and a drift test in core fails until the two agree. Without the slug there, this
-  // scaffolder would later let someone create a *mounted* plugin of the same name, which
-  // would load and then be ignored forever.
-  console.log(
-    `\nOne more: add '${options.slug}' to COMPILED_IN_SLUGS in\n`
-    + '  packages/create-cdt-plugin/src/target.ts\n'
-    + 'createCdtPluginDrift.test.ts in core fails until you do.',
-  )
+  console.log(externalNextSteps({
+    where,
+    pluginsDir: resolve(dirname(directory)),
+    surfaces: options.surfaces,
+  }))
 }
 
 main().catch((error: unknown) => {

@@ -28,6 +28,7 @@ import { AppConfigContext, MapContext, useMenusContext } from '../store'
 import { ViewerNames } from '../types/'
 import { resolveAppContent } from '../utils/appContent'
 
+
 // Shadcn Components
 
 import LanguageSwitch from './LanguageSwitch'
@@ -39,6 +40,7 @@ import { Button } from './ui/Button'
 // Icons
 
 import { Separator } from './ui/Separator'
+import { isViewerAllowed } from './viewers/viewerAccess'
 
 
 import type { Organization, Language, ViewerKey } from '../types/dbTypes'
@@ -260,8 +262,10 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
     return item.accessibleTo.some(role => normalizedUserRoles.has(role.toLowerCase()))
   }, [normalizedUserRoles])
 
+  // Through `isViewerAllowed`, not `appContent` directly: a plugin page's key can never be a
+  // member of a Prisma enum array, so filtering on it hides every plugin page from the nav.
   const visibleDatasetItems = datasetItems
-    .filter(item => !appContent || appContent.includes(item.id as ViewerNames))
+    .filter(item => isViewerAllowed(item.id as ViewerKey, appContent))
     .filter(canRenderItem)
 
   // BugReportDialog/FeatureRequestDialog are rendered by AppSidebar, outside
@@ -297,7 +301,7 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
             <SidebarGroupLabel>{t('3dViewer')}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {viewerItems.filter(item => !appContent || appContent.includes(item.id as ViewerNames))
+                {viewerItems.filter(item => isViewerAllowed(item.id as ViewerKey, appContent))
                   .filter(canRenderItem)
                   .map(item => {
                     const active = item.id === currentViewer;

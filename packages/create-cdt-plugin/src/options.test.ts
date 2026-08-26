@@ -42,7 +42,6 @@ describe('slugFromName', () => {
 describe('parseFlags', () => {
   it('reads every documented flag', () => {
     const options = parseFlags([
-      '--mode', 'builtin',
       '--name', 'Room Inventory',
       '--slug', 'room-inventory',
       '--surface', 'bim.tools',
@@ -53,7 +52,6 @@ describe('parseFlags', () => {
     ])
 
     expect(options).toEqual({
-      mode: 'builtin',
       name: 'Room Inventory',
       slug: 'room-inventory',
       surfaces: ['bim.tools'],
@@ -87,8 +85,7 @@ describe('parseFlags', () => {
     expect(() => parseFlags(['--surface', 'jobs'])).toThrow(/map\.tools/)
   })
 
-  it('rejects an invalid mode and an invalid body', () => {
-    expect(() => parseFlags(['--mode', 'sideways'])).toThrow(/external/)
+  it('rejects an invalid body', () => {
     expect(() => parseFlags(['--body', 'fancy'])).toThrow(/example/)
   })
 

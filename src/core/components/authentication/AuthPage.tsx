@@ -8,7 +8,7 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import React, { useState, useEffect, createContext, useContext } from 'react'
+import React, { useState, useEffect, useMemo, createContext, useContext } from 'react'
 
 import LanguageSwitch from '../LanguageSwitch'
 import { CdtIcon } from '../ui/Icons/CdtIcon'
@@ -22,6 +22,8 @@ const AnimatedBackground = dynamic(() => import('../ui/AnimatedBackground'), {
 export const AuthThemeContext = createContext<'light' | 'dark'>('dark')
 export const useAuthTheme = () => useContext(AuthThemeContext)
 
+const LOGO_EXTENSIONS = ['png', 'jpg', 'jpeg', 'svg']
+
 
 interface AuthPageProps {
   children: React.ReactNode
@@ -31,9 +33,13 @@ interface AuthPageProps {
 export function AuthPage({ children, minioBaseUrl, }: AuthPageProps) {
   const params = useParams<{ instance: string }>()
   const orgName = params.instance ?? 'cdt'
-  const logo = minioBaseUrl
-    ? `${minioBaseUrl}/org-logos/${orgName}-logo.png`
-    : `/images/cdt-logo-stroke.svg`
+  const logoCandidates = useMemo(
+    () =>
+      minioBaseUrl && orgName !== 'cdt'
+        ? LOGO_EXTENSIONS.map(ext => `${minioBaseUrl}/org-logos/${orgName}-logo.${ext}`)
+        : [],
+    [minioBaseUrl, orgName],
+  )
   const brandName = 'cdt' // terracotta accent
   const brandSuffix = 'platform'
   const orgLabel = orgName === 'cdt' ? '' : orgName
@@ -43,29 +49,44 @@ export function AuthPage({ children, minioBaseUrl, }: AuthPageProps) {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark')
   const [isMobile, setIsMobile] = useState(false)
   const [globePadding, setGlobePadding] = useState({ top: 0, bottom: 0, left: 0, right: 0 })
-  const [logoError, setLogoError] = useState(false)
+  const [logo, setLogo] = useState<string | null>(null)
 
   useEffect(() => {
     setTheme('dark')
   }, [])
 
-  // Probe the org logo with a detached Image() so a missing file falls back to
-  // the CdtIcon. Doing the check here (rather than via the rendered <img>'s
-  // onError) avoids the SSR/hydration race where the image errors before React
-  // can attach a handler — and keeps reset + detection in one effect so they
-  // can't clobber each other.
+  // Probing with a detached Image() rather than the rendered <img>'s onError avoids the SSR/hydration race where the image errors before React can attach a handler.
   useEffect(() => {
-    if (orgName === 'cdt') return
-    setLogoError(false)
-    const probe = new window.Image()
-    probe.onload = () => setLogoError(probe.naturalWidth === 0)
-    probe.onerror = () => setLogoError(true)
-    probe.src = logo
-    return () => {
-      probe.onload = null
-      probe.onerror = null
+    setLogo(null)
+    let cancelled = false
+    let probe: HTMLImageElement | null = null
+
+    const probeFrom = (index: number) => {
+      if (cancelled || index >= logoCandidates.length) return
+      const src = logoCandidates[index]
+      const image = new window.Image()
+      probe = image
+      // An SVG with no intrinsic size can report naturalWidth 0, so only raster candidates are size-checked.
+      image.onload = () => {
+        if (cancelled) return
+        if (image.naturalWidth === 0 && !src.endsWith('.svg')) probeFrom(index + 1)
+        else setLogo(src)
+      }
+      image.onerror = () => {
+        if (!cancelled) probeFrom(index + 1)
+      }
+      image.src = src
     }
-  }, [logo, orgName])
+
+    probeFrom(0)
+    return () => {
+      cancelled = true
+      if (probe) {
+        probe.onload = null
+        probe.onerror = null
+      }
+    }
+  }, [logoCandidates])
 
   useEffect(() => {
     const update = () => {
@@ -109,7 +130,7 @@ export function AuthPage({ children, minioBaseUrl, }: AuthPageProps) {
           {/* Top bar: logo + language */}
           <div className="flex items-center justify-between px-8 pt-8 pb-4">
             <div className="flex items-center gap-3" style={{ color: 'var(--hp-on-surface)' }}>
-              {orgName === 'cdt' || logoError ? (
+              {logo === null ? (
                 <CdtIcon className="w-8 h-8" />
               ) : (
                 <img

@@ -217,19 +217,24 @@ export default [
         patterns: [
           {
             group: [
-              '../../../*',      // escapes plugins/ entirely
-              '../../components/*', '../../store/*', '../../hooks/*',
-              '../../utils/*', '../../types/*', '../../i18n/*',
-              // The host in particular: `installed.ts` imports plugin components,
-              // so a plugin importing the host closes an import cycle and the
-              // bindings are undefined by the time it renders. It also is not
-              // part of the public surface. Everything a plugin needs is re-
-              // exported through sdk/.
-              '../../host/*', '../../installed', '../../manifests',
-              '@collabdt/core', '@collabdt/core/*',
+              // Anything two levels up has left the plugin folder. One depth-agnostic
+              // pattern rather than a list of core's folder names: that list had to grow
+              // every time core gained a directory, and until it did, the new directory
+              // was reachable from a plugin. The host in particular closes an import
+              // cycle — `installed.ts` imports plugin components, so its bindings are
+              // undefined by the time the plugin renders.
+              '../../**',
             ],
             message:
-              'Plugins may only import from ../sdk/* and their own files. Reaching into core breaks isolation: it works in-repo and fails as a standalone bundle, and importing the host creates a module cycle. If the SDK is missing something, add it there.',
+              'Plugins may only import from @collabdt/core/plugins-sdk/* and their own files. Reaching into core breaks isolation: it works in-repo and fails as a standalone bundle, and importing the host creates a module cycle. If the SDK is missing something, add it there.',
+          },
+          {
+            // A lookahead rather than a group with a '!' negation: group patterns are
+            // gitignore-style, and gitignore cannot re-include a path whose parent is
+            // already excluded, so '@collabdt/core/*' swallowed the exception.
+            regex: '^@collabdt/core(?!/plugins-sdk(?:/|$))',
+            message:
+              'Plugins may import @collabdt/core/plugins-sdk/* and nothing else from core. That subpath is the one specifier that resolves the same way in-repo and in a standalone bundle, which is what lets a plugin move into core unchanged. If the SDK is missing something, add it there.',
           },
         ],
       }],

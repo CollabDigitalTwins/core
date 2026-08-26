@@ -3,24 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import {
-  AlertTriangle,
-  Box,
-  CheckCircle2,
-  CircleSlash,
-  Eye,
-  Lock,
-  MapPin,
-  Layers,
-  Minus,
-  PackagePlus,
-  PanelLeft,
-  PanelRight,
-  Puzzle,
-  Scan,
-  SquareMenu,
-  SquareStack,
-} from 'lucide-react'
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
@@ -40,33 +23,33 @@ import type { LucideIcon } from 'lucide-react'
 // Icon and colour both, so status survives a quick scan and colour-blindness.
 const STATUS_STYLE: Record<PluginListing['status'], { icon: LucideIcon; className: string }> = {
   running: {
-    icon: CheckCircle2,
+    icon: LR.CheckCircle2,
     className: 'border-green-600/40 bg-green-600/10 text-green-700 dark:text-green-400',
   },
   off: {
-    icon: CircleSlash,
+    icon: LR.CircleSlash,
     className: 'border-muted-foreground/40 bg-muted text-muted-foreground',
   },
   error: {
-    icon: AlertTriangle,
+    icon: LR.AlertTriangle,
     className: 'border-destructive/40 bg-destructive/10 text-destructive',
   },
   available: {
-    icon: PackagePlus,
+    icon: LR.PackagePlus,
     className: 'border-sky-600/40 bg-sky-600/10 text-sky-700 dark:text-sky-400',
   },
 }
 
 // Which surface a capability contributes to: an icon reads faster than the dotted key.
 const CAPABILITY_ICON: Record<string, LucideIcon> = {
-  'map.tools': MapPin,
-  'viewer.legends': SquareMenu,
-  'map.layers': Layers,
-  'bim.tools': Box,
-  'pointcloud.tools': Scan,
-  'data.pages': PanelLeft,
-  'viewer.tabs': PanelRight,
-  'ui.dialogs': SquareStack,
+  'map.tools': LR.Map,
+  'viewer.legends': LR.SquareMenu,
+  'map.layers': LR.Layers,
+  'bim.tools': LR.Box,
+  'pointcloud.tools': LR.Grip,
+  'data.pages': LR.Table2,
+  'viewer.tabs': LR.PanelLeft,
+  'ui.dialogs': LR.SquareStack,
 }
 
 interface Props {
@@ -146,7 +129,7 @@ export function PluginCard({
         {status === 'error' && listing.error && (
           <div className="mt-3 rounded-xl border border-destructive/50 bg-destructive/5 p-3">
             <p className="flex items-center gap-1.5 text-sm font-medium text-destructive">
-              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <LR.AlertTriangle className="h-4 w-4 shrink-0" />
               {t('errorHeading')}
             </p>
             <p className="mt-1.5 overflow-x-auto text-xs"><code>{listing.error}</code></p>
@@ -174,7 +157,7 @@ export function PluginCard({
         {status === 'available' ? (
           ability.canInstall && (
             <Button size="sm" onClick={() => onSetInstalled(true)}>
-              <PackagePlus className="mr-1.5 h-4 w-4" />
+              <LR.PackagePlus className="mr-1.5 h-4 w-4" />
               {t('addToOrg')}
             </Button>
           )
@@ -223,7 +206,7 @@ export function PluginCard({
 
             <ControlGroup label={t('userGroup')}>
               {status === 'error' ? (
-                <Note icon={Minus} text={t('userNothingToRun')} />
+                <Note icon={LR.Minus} text={t('userNothingToRun')} />
               ) : userMayChoose ? (
                 <ControlRow label={t('userRun')}>
                   <Switch
@@ -235,9 +218,9 @@ export function PluginCard({
               ) : !ability.canChooseForSelf ? (
                 // Not the admin lock below: nothing is locked, this reader just may
                 // not change what runs.
-                <Note icon={Eye} text={t('userReadOnly')} />
+                <Note icon={LR.Eye} text={t('userReadOnly')} />
               ) : (
-                <Note icon={Lock} text={listing.orgEnabled ? t('userLockedOn') : t('userLockedOff')} />
+                <Note icon={LR.Lock} text={listing.orgEnabled ? t('userLockedOn') : t('userLockedOff')} />
               )}
             </ControlGroup>
 
@@ -273,7 +256,7 @@ function StatusBadge({ status }: { status: PluginListing['status'] }) {
 }
 
 function CapabilityBadge({ capability }: { capability: string }) {
-  const Icon = CAPABILITY_ICON[capability] ?? Puzzle
+  const Icon = CAPABILITY_ICON[capability] ?? LR.Puzzle
 
   return (
     <Badge variant="secondary" className="gap-1 font-normal">

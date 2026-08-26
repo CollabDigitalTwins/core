@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-export type Mode = 'external' | 'builtin'
 export type Body = 'example' | 'empty'
 
 // Every capability core renders. A scaffold may pick several: one plugin spans surfaces and
@@ -19,7 +18,6 @@ export const SURFACES = [
 
 export type Surface = typeof SURFACES[number]
 
-const MODES: readonly Mode[] = ['external', 'builtin']
 const BODIES: readonly Body[] = ['example', 'empty']
 
 // Overridable with `--kit-spec` so the build tests can point at a local kit. Otherwise the
@@ -27,7 +25,6 @@ const BODIES: readonly Body[] = ['example', 'empty']
 export const DEFAULT_KIT_SPEC = '^0.5.0'
 
 export interface Options {
-  mode: Mode
   name: string
   slug: string
   surfaces: Surface[]
@@ -50,8 +47,7 @@ export function slugFromName(name: string): string {
 type StringOption = 'name' | 'slug' | 'author' | 'description' | 'kitSpec'
 
 /** Flag name as written on the command line, paired with the `Options` key it sets. */
-const VALUE_FLAGS: Record<string, StringOption | 'mode' | 'surfaces' | 'body'> = {
-  mode: 'mode',
+const VALUE_FLAGS: Record<string, StringOption | 'surfaces' | 'body'> = {
   name: 'name',
   slug: 'slug',
   surface: 'surfaces',
@@ -126,7 +122,6 @@ export function parseFlags(argv: string[]): Partial<Options> {
     }
 
     switch (key) {
-      case 'mode': options.mode = oneOf('mode', value, MODES); break
       case 'surfaces': options.surfaces = withSurfaces(options.surfaces, value); break
       case 'body': options.body = oneOf('body', value, BODIES); break
       // Narrowed to the string-valued keys by the switch above, so no cast is needed.

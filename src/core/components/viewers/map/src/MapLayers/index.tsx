@@ -36,7 +36,7 @@ export const MapLayers = ({ organization, maptilerKey }: { organization?: Organi
       <SiteLayer />
       <CountryLayer organization={organization} maptilerKey={maptilerKey} />
       <OpenDataLayers />
-      <BuildingLayer />
+      <BuildingLayer maptilerKey={maptilerKey} />
       <CommentLayer />
       <SensorLayers />
       <FileLayers />

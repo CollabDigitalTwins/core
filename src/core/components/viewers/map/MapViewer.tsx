@@ -22,6 +22,8 @@ import DatasetManagerMenu from './datasets/DatasetManager'
 import { MapLayers } from './src/MapLayers'
 import { MapClickManager } from './utils/MapEventManager/MapClickManager'
 import { MapHoverManager } from './utils/MapEventManager/MapHoverManager'
+import { DEFAULT_MAP_STYLE } from './utils/mapStyleCatalog'
+import { resolveStyleSpec } from './utils/mapStyleSpec'
 import { resolveBounds } from './utils/validateBounds'
 
 
@@ -37,7 +39,6 @@ const CANADA_DEFAULTS = {
   long: -98.74,
 } as const
 
-const DEFAULT_MAP_STYLE = { name: 'Satellite', url: 'mapStyles/satellite.json' } as const
 const MAX_GLOBE_ZOOM = 5
 
 interface Props {
@@ -189,12 +190,13 @@ export function MapViewer({ width = '100%', height = '100%', organization, mapti
   }, [])
 
   const mapStyle = mapState?.map.mapStyle ?? DEFAULT_MAP_STYLE;
+  const mapStyleSpec = React.useMemo(() => resolveStyleSpec(mapStyle, maptilerKey), [mapStyle, maptilerKey]);
 
   return (
     <>
       <Map
         id="map-component"
-        mapStyle={mapStyle.url}
+        mapStyle={mapStyleSpec}
         mapLib={maplibregl}
         onLoad={handleMapLoad}
         ref={mapRef}

@@ -3,10 +3,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { useState } from 'react'
+
 import { Button, Separator } from '@collabdt/core/plugins-sdk/components'
 import { usePluginConfig } from '@collabdt/core/plugins-sdk/config'
 import { usePluginTranslations } from '@collabdt/core/plugins-sdk/messages'
-import { useState } from 'react'
 
 import { ReadoutRow } from './ReadoutRow'
 

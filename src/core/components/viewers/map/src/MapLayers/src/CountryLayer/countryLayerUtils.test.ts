@@ -3,7 +3,7 @@
 
 import { describe, it, expect } from 'vitest'
 
-import { hexToRgba, buildSubdivisionUrl, ARCGIS_BASE } from './countryLayerUtils'
+import { hexToRgba, buildSubdivisionUrl, subdivisionCodeFromFeature, ARCGIS_BASE } from './countryLayerUtils'
 
 describe('hexToRgba', () => {
   it('converts a 6-digit hex (with or without #)', () => {
@@ -36,5 +36,24 @@ describe('buildSubdivisionUrl', () => {
 
   it('accepts a custom base URL', () => {
     expect(buildSubdivisionUrl('US', 'https://x/q').startsWith('https://x/q?')).toBe(true)
+  })
+})
+
+describe('subdivisionCodeFromFeature', () => {
+  it('builds an ISO 3166-2 code from the country code and the prefixed subdivision code', () => {
+    expect(subdivisionCodeFromFeature({ ISO_CC: 'CA', ISO_CODE: 'CAON', NAME: 'Ontario' })).toBe('CA-ON')
+  })
+
+  it('passes an unprefixed subdivision code through unchanged', () => {
+    expect(subdivisionCodeFromFeature({ ISO_CC: 'CA', ISO_CODE: 'ON' })).toBe('ON')
+  })
+
+  it('falls back to the name when there is no subdivision code', () => {
+    expect(subdivisionCodeFromFeature({ ISO_CC: 'CA', NAME: 'Ontario' })).toBe('Ontario')
+  })
+
+  it('returns null when neither is present', () => {
+    expect(subdivisionCodeFromFeature({})).toBeNull()
+    expect(subdivisionCodeFromFeature(undefined)).toBeNull()
   })
 })

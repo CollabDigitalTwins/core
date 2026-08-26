@@ -66,12 +66,7 @@ const jsonSafe = (value: string) => JSON.stringify(value).slice(1, -1)
 
 // Explicit even when it lists all three: omitting the field means every viewer, chosen by none.
 function viewersToken(options: Options): string {
-  const viewers = viewersFor(options.surfaces)
-  const items = options.mode === 'builtin'
-    ? viewers.map(viewer => `ViewerNames.${viewer}`)
-    : viewers.map(viewer => `'${viewer}'`)
-
-  return `[${items.join(', ')}]`
+  return `[${viewersFor(options.surfaces).map(viewer => `'${viewer}'`).join(', ')}]`
 }
 
 /** The body-file name for one surface, suffixed only when a plugin spans several. */
@@ -114,9 +109,6 @@ export function tokensFor(options: Options, surface?: Surface, component?: strin
     // states the surface once and the table in surfaces.ts owns what that implies.
     CONTEXT_TYPE: facts.contextType,
     SURFACE_ENTRY: facts.entry,
-    // The built-in templates' equivalent of SURFACE_ENTRY. Both are always supplied; each
-    // template tree uses the one that resolves where its output lives.
-    CORE_ENTRY: facts.coreEntry,
     PROPS_TYPE: facts.propsType,
     ICON: facts.icon,
   }

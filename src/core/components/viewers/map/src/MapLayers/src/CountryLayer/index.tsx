@@ -9,13 +9,28 @@ import { Source, Layer } from 'react-map-gl/maplibre'
 
 import { MapContext } from '../../../../../../../store/Map/context'
 
+import { maptilerKeyOrPlaceholder } from '../../../../utils/mapStyleSpec'
+
 import { hexToRgba, buildSubdivisionUrl } from './countryLayerUtils'
+import { useCameraSubdivision } from './useCameraSubdivision'
+import { useSubdivisionHover } from './useSubdivisionHover'
 
 import type { Organization } from '../../../../../../../types/dbTypes'
-import type { MapMouseEvent } from 'maplibre-gl'
 
 const DEFAULT_BORDER_COLOR = '#73cee2'
 const BOUNDARIES_SOURCE_ID = 'openmaptiles-boundaries'
+const SUBDIVISION_SOURCE_ID = 'admin-subdivisions-source'
+const SUBDIVISION_FILL_ID = 'admin-subdivisions-fill'
+const SUBDIVISION_LINE_ID = 'admin-subdivisions-line'
+const SUBDIVISION_LINE_MAX_ZOOM = 15
+const SUBDIVISION_HOVER_MIN_ZOOM = 10
+
+const SUBDIVISION_LINE_WIDTH = [
+  'case',
+  ['all', ['boolean', ['feature-state', 'hover'], false], ['>', ['zoom'], SUBDIVISION_HOVER_MIN_ZOOM]],
+  ['interpolate', ['linear'], ['zoom'], 10, 3, 15, 5],
+  ['interpolate', ['linear'], ['zoom'], 4, 0.5, 8, 1.4, 14, 2.4],
+] as const
 const GLOBAL_LAYER_IDS = [
   'global-borders-country',
   'global-borders-region',
@@ -25,12 +40,11 @@ const GLOBAL_LAYER_IDS = [
 ] as const
 
 function addGlobalBorderLayer(map: any, color: string, maptilerKey?: string) {
-  if (!maptilerKey) return
   try {
     if (!map.getSource(BOUNDARIES_SOURCE_ID)) {
       map.addSource(BOUNDARIES_SOURCE_ID, {
         type: 'vector',
-        url: `https://api.maptiler.com/tiles/v3/tiles.json?key=${maptilerKey}`,
+        url: `https://api.maptiler.com/tiles/v3/tiles.json?key=${maptilerKeyOrPlaceholder(maptilerKey)}`,
       })
     }
 
@@ -154,13 +168,12 @@ export const CountryLayer = ({ organization, maptilerKey }: { organization?: Org
   const { map, currentLocation } = mapState.map
   const searchParams = useSearchParams()
   const router = useRouter()
-  const debounceRef = React.useRef<NodeJS.Timeout | null>(null)
 
   const countryCode = (organization?.country || 'CA').toUpperCase()
   const borderColor = hexToRgba((organization?.mainColor as string) || DEFAULT_BORDER_COLOR, 0.7)
   const subdivisionUrl = buildSubdivisionUrl(countryCode)
 
-  // Add the global boundary line layer imperatively (vector-tile lines from the style's openmaptiles source). Re-adds on style swap so it survives basemap changes.
+  // Re-added on every style swap: setStyle drops imperatively added layers.
   React.useEffect(() => {
     if (!map) return
     const addNow = () => addGlobalBorderLayer(map, borderColor, maptilerKey)
@@ -178,7 +191,7 @@ export const CountryLayer = ({ organization, maptilerKey }: { organization?: Org
     }
   }, [map, borderColor, maptilerKey])
 
-  // If the org already has a fixed subdivision or municipality, lock them in and skip hover
+  // If the org already has a fixed subdivision or municipality, lock them in and skip camera tracking
   const orgHasLocation = !!(organization?.countrySubdivision || organization?.municipality)
 
   // When org has fixed location values, push them into currentLocation once
@@ -197,93 +210,60 @@ export const CountryLayer = ({ organization, maptilerKey }: { organization?: Org
 
   }, [orgHasLocation])
 
-  React.useEffect(() => {
-    if (orgHasLocation) return
-    if (!(map && currentLocation)) return
+  const commitSubdivision = React.useCallback((code: string) => {
+    if (code === (currentLocation?.countrySubdivision || null)) return
 
-    const currentCountrySubdivision = currentLocation.countrySubdivision || null
-    const currentMunicipality = currentLocation.municipality || null
+    mapDispatch({
+      type: 'UPDATE_LOCATION',
+      payload: {
+        currentLocation: { ...(currentLocation ?? {}), countrySubdivision: code } as any,
+      },
+    })
 
-    function onMouseMove(e: MapMouseEvent) {
-      if (!map.isStyleLoaded()) return
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('countrySubdivision', code)
+    router.replace(`?${params.toString()}`, { scroll: false })
+  }, [currentLocation, mapDispatch, router, searchParams])
 
-      if (debounceRef.current) clearTimeout(debounceRef.current)
+  useCameraSubdivision({
+    map,
+    layerId: SUBDIVISION_FILL_ID,
+    sourceId: SUBDIVISION_SOURCE_ID,
+    enabled: !orgHasLocation,
+    onResolve: commitSubdivision,
+  })
 
-      const eventPoint = e.point
-
-      debounceRef.current = setTimeout(() => {
-        const features = map.queryRenderedFeatures(eventPoint, {
-          layers: ['admin-subdivisions-fill'],
-        })
-
-        // if (features.length > 0) {
-        //   console.group('[CountryLayer] hover')
-        //   features.forEach(f => console.log(f.properties))
-        //   console.groupEnd()
-        // }
-
-        let newCountrySubdivision = null
-
-        if (features.length > 0) {
-          const f = features[0]
-          const isoCC = f.properties?.ISO_CC
-          const isoCode = f.properties?.ISO_CODE
-          // Build "CA-ON" from ISO_CC "CA" + ISO_CODE "CAON" → strip prefix to get "ON"
-          if (isoCC && isoCode && isoCode.startsWith(isoCC)) {
-            newCountrySubdivision = `${isoCC}-${isoCode.slice(isoCC.length)}`
-          } else {
-            newCountrySubdivision = (isoCode || f.properties?.NAME || null) as string | null
-          }
-        }
-
-        const finalCountrySubdivision = newCountrySubdivision || currentCountrySubdivision
-
-        if (finalCountrySubdivision !== currentCountrySubdivision) {
-          mapDispatch({
-            type: 'UPDATE_LOCATION',
-            payload: {
-              currentLocation: {
-                ...currentLocation,
-                countrySubdivision: finalCountrySubdivision,
-                municipality: currentMunicipality,
-              },
-            },
-          })
-
-          const params = new URLSearchParams(searchParams.toString())
-          params.set('countrySubdivision', finalCountrySubdivision || '')
-          router.replace(`?${params.toString()}`, { scroll: false })
-        }
-      }, 300)
-    }
-
-    if (map.isStyleLoaded()) {
-      map.on('mousemove', onMouseMove)
-    } else {
-      void map.once('styledata', () => {
-        map.on('mousemove', onMouseMove)
-      })
-    }
-
-    return () => {
-      map.off('mousemove', onMouseMove)
-      if (debounceRef.current) clearTimeout(debounceRef.current)
-    }
-  }, [map, mapDispatch, currentLocation, searchParams, router])
+  useSubdivisionHover({
+    map,
+    layerId: SUBDIVISION_FILL_ID,
+    sourceId: SUBDIVISION_SOURCE_ID,
+    enabled: !orgHasLocation,
+  })
 
   if (orgHasLocation) return null
 
-  // Invisible ArcGIS subdivision polygons for hover hit-detection (only mounted when the org hasn't locked a subdivision). The visible borders come from the imperative openmaptiles layer above.
   return (
     <Source
-      id="admin-subdivisions-source"
+      id={SUBDIVISION_SOURCE_ID}
       type="geojson"
       data={subdivisionUrl}
+      generateId
     >
+      {/* Zero opacity, never visible: this is what hit-tests the camera target and the pointer. */}
       <Layer
-        id="admin-subdivisions-fill"
+        id={SUBDIVISION_FILL_ID}
         type="fill"
-        paint={{ 'fill-color': 'transparent', 'fill-opacity': 0 }}
+        paint={{ 'fill-color': borderColor, 'fill-opacity': 0 }}
+      />
+      <Layer
+        id={SUBDIVISION_LINE_ID}
+        type="line"
+        maxzoom={SUBDIVISION_LINE_MAX_ZOOM}
+        layout={{ 'line-cap': 'round', 'line-join': 'round' }}
+        paint={{
+          'line-color': borderColor,
+          'line-width': SUBDIVISION_LINE_WIDTH as never,
+        }}
       />
     </Source>
   )

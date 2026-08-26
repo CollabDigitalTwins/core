@@ -27,7 +27,6 @@ const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const kitPath = join(packageRoot, '../plugin-kit').replace(/\\/g, '/')
 
 const options: Options = {
-  mode: 'external',
   name: 'Room Inventory',
   slug: 'room-inventory',
   surfaces: ['map.tools'],

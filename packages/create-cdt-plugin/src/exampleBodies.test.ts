@@ -12,7 +12,6 @@ import { factsFor } from './surfaces'
 import type { Options, Surface } from './options'
 
 const base: Options = {
-  mode: 'external',
   name: 'Room Inventory',
   slug: 'room-inventory',
   surfaces: ['map.tools'],

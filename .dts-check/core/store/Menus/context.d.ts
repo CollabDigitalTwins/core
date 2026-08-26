@@ -1,0 +1,52 @@
+import * as React from "react";
+import type { MenusActions, MenusState } from './reducer';
+import type { Building, Site, User, Infrastructure } from '../../types/dbTypes';
+import type { FileRow } from '../../types/files';
+type InitialStateType = {
+    menus: MenusState;
+};
+export declare const MenusContext: React.Context<{
+    state: InitialStateType;
+    dispatch: React.Dispatch<MenusActions>;
+    isSidebarOpen: boolean;
+    setIsSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    view: "table" | "detail";
+    setView: React.Dispatch<React.SetStateAction<"table" | "detail">>;
+    selectedItem: Building | null;
+    setSelectedItem: React.Dispatch<React.SetStateAction<Building | null>>;
+    selectedSite: Site | null;
+    setSelectedSite: React.Dispatch<React.SetStateAction<Site | null>>;
+    selectedInfrastructure: Infrastructure | null;
+    setSelectedInfrastructure: React.Dispatch<React.SetStateAction<Infrastructure | null>>;
+    selectedFile: FileRow | null;
+    setSelectedFile: React.Dispatch<React.SetStateAction<FileRow | null>>;
+    selectedUser: Partial<User> | null;
+    setSelectedUser: React.Dispatch<React.SetStateAction<Partial<User> | null>>;
+    isDatasetMenuOpen: boolean;
+    setIsDatasetMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    isAuthPage?: boolean;
+}>;
+export declare const MenusProvider: React.FC<React.PropsWithChildren>;
+export declare const useMenusContext: () => {
+    state: InitialStateType;
+    dispatch: React.Dispatch<MenusActions>;
+    isSidebarOpen: boolean;
+    setIsSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    view: "table" | "detail";
+    setView: React.Dispatch<React.SetStateAction<"table" | "detail">>;
+    selectedItem: Building | null;
+    setSelectedItem: React.Dispatch<React.SetStateAction<Building | null>>;
+    selectedSite: Site | null;
+    setSelectedSite: React.Dispatch<React.SetStateAction<Site | null>>;
+    selectedInfrastructure: Infrastructure | null;
+    setSelectedInfrastructure: React.Dispatch<React.SetStateAction<Infrastructure | null>>;
+    selectedFile: FileRow | null;
+    setSelectedFile: React.Dispatch<React.SetStateAction<FileRow | null>>;
+    selectedUser: Partial<User> | null;
+    setSelectedUser: React.Dispatch<React.SetStateAction<Partial<User> | null>>;
+    isDatasetMenuOpen: boolean;
+    setIsDatasetMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    isAuthPage?: boolean;
+};
+export {};
+//# sourceMappingURL=context.d.ts.map

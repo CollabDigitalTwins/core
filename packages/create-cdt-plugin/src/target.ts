@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-
-import type { Mode } from './options'
 
 // A checked copy rather than an import: this package is a bin run by plain Node, which cannot
 // resolve core's extensionless dist imports, and depending on core would pull three.js into a
@@ -32,11 +30,9 @@ export function checkSlug(slug: string): string | null {
   return null
 }
 
-// External mode prefers an existing `plugins/` directory, so running this in a deployment root
-// puts the folder where `PLUGINS_DIR` already points. Built-in mode has one correct location.
-export function resolveTarget(mode: Mode, slug: string, cwd: string): string {
-  if (mode === 'builtin') return join(cwd, 'src/core/plugins', slug)
-
+// Prefers an existing `plugins/` directory, so running this in a deployment root puts the
+// folder where `PLUGINS_DIR` already points.
+export function resolveTarget(slug: string, cwd: string): string {
   const plugins = join(cwd, 'plugins')
   const hasPluginsDirectory = existsSync(plugins) && statSync(plugins).isDirectory()
 
@@ -52,15 +48,3 @@ export function checkTarget(directory: string): string | null {
   return null
 }
 
-/** Built-in mode's template is worthless outside core, so the CLI refuses to run there. */
-export function isCorePackage(cwd: string): boolean {
-  try {
-    const manifest = JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf8')) as { name?: string }
-
-    return manifest.name === '@collabdt/core'
-  } catch {
-    // No package.json, or an unparseable one. Either way this is not core, and guessing
-    // would put a plugin somewhere the caller did not expect.
-    return false
-  }
-}

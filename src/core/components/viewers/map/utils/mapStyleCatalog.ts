@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { SATELLITE_STYLE_URL, STREETS_STYLE_URL } from './mapStyleSpec'
+
 import type { MapStyle } from '../../../../types/map'
 
 /**
  * Built-in map style catalog that is always available.
- * These are the default base styles available to all organizations.
+ * The two `cdt:` entries are sentinels resolved by `resolveStyleSpec` against the
+ * deployment's own MapTiler key, so no key ever reaches React state or the URL.
  */
 export const BUILT_IN_MAP_STYLES: MapStyle[]  = [
-  { name: 'Satellite', url: '/mapStyles/satellite.json' },
-//   { name: 'Streets', url: '/mapStyles/streets.json' },
+  { name: 'Satellite', url: SATELLITE_STYLE_URL },
+  { name: 'Streets', url: STREETS_STYLE_URL },
   { name: 'Dark', url: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json' },
   { name: 'Positron', url: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json' },
   { name: 'Maplibre', url: 'https://demotiles.maplibre.org/style.json' },

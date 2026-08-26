@@ -14,6 +14,7 @@ import { MapContext } from "../../../../../../../store/Map/context";
 import { ViewerNames } from "../../../../../../../types/dbTypes";
 import { useBuildingSensorColours } from "../../../../../../ui/Sensors/useBuildingSensorColours";
 import { MapLayerClickPriority } from "../../../../utils/MapEventManager/MapClickManager";
+import { maptilerKeyOrPlaceholder } from "../../../../utils/mapStyleSpec";
 import MapFeaturePopoverMenu from "../../../MapFeaturePopoverMenu";
 
 import {
@@ -27,6 +28,8 @@ import { BuildingSensorMarkers } from "./src/BuildingSensorMarkers";
 import type { MapMouseEvent } from "maplibre-gl";
 
 const LAYER_ID = "maptiler-3d-buildings";
+const OWN_SOURCE_ID = "cdt-buildings";
+const REUSABLE_SOURCE_IDS = ["openmaptiles", "maptiler_planet", "carto"] as const;
 
 function buildLayerFilter() {
   return [
@@ -49,10 +52,28 @@ function buildHeightExpression(hiddenBimOsmIds: string[]) {
   ];
 }
 
-function addBuildingLayer(map: any, hiddenBimOsmIds: string[], colourExpr: PaintExpression) {
+function resolveBuildingSource(map: any, maptilerKey?: string): string {
+  if (maptilerKey?.trim()) return addOwnBuildingSource(map, maptilerKey);
+
+  const reusable = REUSABLE_SOURCE_IDS.find((id) => map.getSource(id));
+  return reusable ?? addOwnBuildingSource(map, maptilerKeyOrPlaceholder(maptilerKey));
+}
+
+function addOwnBuildingSource(map: any, key: string): string {
+  if (!map.getSource(OWN_SOURCE_ID)) {
+    map.addSource(OWN_SOURCE_ID, {
+      type: "vector",
+      url: `https://api.maptiler.com/tiles/buildings/tiles.json?key=${key}`,
+    });
+  }
+  return OWN_SOURCE_ID;
+}
+
+function addBuildingLayer(map: any, hiddenBimOsmIds: string[], colourExpr: PaintExpression, maptilerKey?: string) {
   try {
-    if (!map.getSource("openmaptiles")) return;
     if (map.getLayer(LAYER_ID)) return;
+
+    const sourceId = resolveBuildingSource(map, maptilerKey);
 
     // Insert below road labels so buildings don't cover text
     const beforeId = map.getLayer("road_label") ? "road_label" : undefined;
@@ -60,7 +81,7 @@ function addBuildingLayer(map: any, hiddenBimOsmIds: string[], colourExpr: Paint
     map.addLayer({
       id: LAYER_ID,
       type: "fill-extrusion",
-      source: "openmaptiles",
+      source: sourceId,
       "source-layer": "building",
       minzoom: 14,
       filter: buildLayerFilter(),
@@ -82,7 +103,7 @@ function addBuildingLayer(map: any, hiddenBimOsmIds: string[], colourExpr: Paint
   }
 }
 
-export function BuildingLayer() {
+export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
   const { state: mapState } = React.useContext(MapContext);
   const { map, mapClickManager } = mapState.map;
   const { setCompareItems } = useBuildingsContext();
@@ -158,10 +179,10 @@ export function BuildingLayer() {
     if (!map) return;
 
     if (map.isStyleLoaded()) {
-      addBuildingLayer(map, hiddenBimOsmIds, colourExprRef.current);
+      addBuildingLayer(map, hiddenBimOsmIds, colourExprRef.current, maptilerKey);
     }
 
-    const onStyleLoad = () => addBuildingLayer(map, hiddenBimOsmIds, colourExprRef.current);
+    const onStyleLoad = () => addBuildingLayer(map, hiddenBimOsmIds, colourExprRef.current, maptilerKey);
     map.on("styledata", onStyleLoad);
 
     return () => {
@@ -170,11 +191,14 @@ export function BuildingLayer() {
         if (map.getLayer(LAYER_ID)) {
           map.removeLayer(LAYER_ID);
         }
+        if (map.getSource(OWN_SOURCE_ID)) {
+          map.removeSource(OWN_SOURCE_ID);
+        }
       } catch {
         // Map may have been destroyed before cleanup runs
       }
     };
-  }, [map, hiddenBimOsmIds]);
+  }, [map, hiddenBimOsmIds, maptilerKey]);
 
   React.useEffect(() => {
     if (!map || !map.getLayer(LAYER_ID)) return;

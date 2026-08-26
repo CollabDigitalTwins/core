@@ -22,6 +22,22 @@ export function hexToRgba(hex: string, opacity: number): string {
   return `rgba(${r}, ${g}, ${b}, ${opacity})`
 }
 
+/**
+ * Derive an ISO 3166-2 code from an ArcGIS admin-division feature's properties.
+ * `ISO_CODE` arrives as the country code concatenated with the subdivision
+ * (`CAON`), so the prefix is stripped and re-joined with a hyphen (`CA-ON`).
+ */
+export function subdivisionCodeFromFeature(
+  properties?: Record<string, unknown> | null
+): string | null {
+  const isoCC = properties?.ISO_CC as string | undefined
+  const isoCode = properties?.ISO_CODE as string | undefined
+  if (isoCC && isoCode && isoCode.startsWith(isoCC)) {
+    return `${isoCC}-${isoCode.slice(isoCC.length)}`
+  }
+  return (isoCode || (properties?.NAME as string | undefined) || null)
+}
+
 export const buildSubdivisionUrl = (countryCode: string, base: string = ARCGIS_BASE): string => {
   const params = new URLSearchParams({
     outFields: 'NAME,ISO_CC,ISO_CODE,ADMINTYPE',

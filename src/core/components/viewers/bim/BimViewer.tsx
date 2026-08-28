@@ -26,13 +26,15 @@ import { Highlighter } from "./src/Highlighter";
 import { IfcClasses } from "./src/IfcClasses";
 import { ViewModeCoordinator } from "./src/lib/ViewModeCoordinator";
 import { ModelsSync } from "./src/ModelsSync";
+import { BimPointClouds } from "./src/PointClouds";
+import { BimPointCloudSync } from "./src/PointClouds/BimPointCloudSync";
 import { PropertiesMenu } from "./src/propertiesMenu";
 import { SelectionSync } from "./src/SelectionSync";
 import { ClippingPlanes } from "./src/tools/ClippingTool/ClippingPlanes";
 import { ViewportGizmo } from "./src/ViewportGizmo";
 
 
-export function BimViewer() {
+export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
 
     const t = useTranslations('ViewportGizmo');
     const locale = useLocale();
@@ -181,6 +183,7 @@ export function BimViewer() {
             components.get(ElementAppearance);
             components.get(FloorplanTool);
             components.get(ElevationsTool);
+            components.get(BimPointClouds);
 
             // Grid injection is safe here — fragments.core is initialized.
             if (grid) {
@@ -331,6 +334,7 @@ export function BimViewer() {
         >
             <BimLoadingState />
             <ModelsSync />
+            <BimPointCloudSync pointcloudApiUrl={pointcloudApiUrl} />
             <SelectionSync />
             <div
                 className="bim-container"

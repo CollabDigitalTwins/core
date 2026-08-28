@@ -15,6 +15,7 @@ const base = {
   editingBimModel: null, bimModelName: null,
   bcfTopic: null, bcfTopics: [], bcfTopicId: null,
   modelUIState: {},
+  pointCloudIds: [], activePointCloudId: null,
 } as unknown as BimState
 
 describe('BimReducer', () => {
@@ -30,6 +31,27 @@ describe('BimReducer', () => {
     const start = { ...base, bimComponents: 'C', world: 'W', fragments: 'F', modelId: 'm' } as never
     const s = BimReducer(start, { type: 'DISPOSE-BIM' } as never)
     expect([s.bimComponents, s.world, s.fragments, s.modelId]).toEqual([null, null, null, null])
+  })
+
+  it('TOGGLE_POINT_CLOUD adds an id, then a second toggle removes it', () => {
+    let s = BimReducer(base, { type: 'TOGGLE_POINT_CLOUD', payload: { pointCloudId: '669' } } as never)
+    expect(s.pointCloudIds).toEqual(['669'])
+    s = BimReducer(s, { type: 'TOGGLE_POINT_CLOUD', payload: { pointCloudId: '670' } } as never)
+    expect(s.pointCloudIds).toEqual(['669', '670'])
+    s = BimReducer(s, { type: 'TOGGLE_POINT_CLOUD', payload: { pointCloudId: '669' } } as never)
+    expect(s.pointCloudIds).toEqual(['670'])
+  })
+
+  it('TOGGLE_POINT_CLOUD clears the active id when that cloud is switched off', () => {
+    const start = { ...base, pointCloudIds: ['669'], activePointCloudId: '669' } as never
+    const s = BimReducer(start, { type: 'TOGGLE_POINT_CLOUD', payload: { pointCloudId: '669' } } as never)
+    expect(s.activePointCloudId).toBeNull()
+  })
+
+  it('DISPOSE-BIM clears the point cloud slice', () => {
+    const start = { ...base, pointCloudIds: ['669'], activePointCloudId: '669' } as never
+    const s = BimReducer(start, { type: 'DISPOSE-BIM' } as never)
+    expect([s.pointCloudIds, s.activePointCloudId]).toEqual([[], null])
   })
 
   it('TOGGLE_BIM_TO_MAP adds, then a second toggle removes it (dedup by bimFile.id)', () => {

@@ -192,7 +192,7 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
         <div style={{ display: builtInViewer === ViewerNames.map ? 'block' : 'none', width: '100%', height: '100%' }}>
           <MapViewer organization={organization} maptilerKey={maptilerKey} />
         </div>
-        {builtInViewer === ViewerNames.bim && <BimViewer />}
+        {builtInViewer === ViewerNames.bim && <BimViewer pointcloudApiUrl={pointcloudApiUrl} />}
         {builtInViewer === ViewerNames.pointcloud && <PointCloudViewer pointcloudApiUrl={pointcloudApiUrl} />}
         {builtInViewer !== null
           && [ViewerNames.buildings, ViewerNames.sites, ViewerNames.files, ViewerNames.land, ViewerNames.infrastructure, ViewerNames.users].includes(builtInViewer) && (

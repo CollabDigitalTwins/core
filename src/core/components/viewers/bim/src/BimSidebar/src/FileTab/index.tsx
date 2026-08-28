@@ -10,8 +10,11 @@ import { useFilesByBuildingId } from '../../../../../../../hooks/files/files'
 import { BuildingsContext } from '../../../../../../../store'
 import { ViewerSidebarPanel } from '../../../../../../ui/ViewerSidebar/Panel'
 
+import { isRenderablePointCloud } from '../../../PointClouds/pointCloudFiles'
+
 import { FilesSection } from './src/FilesSection'
 import { ModelsSection } from './src/ModelsSection'
+import { PointCloudsSection } from './src/PointCloudsSection'
 
 import type { DbFile } from '../../../../../../../types/dbTypes'
 
@@ -28,9 +31,10 @@ export function FileTab() {
   const filesData: DbFile[] = useFilesByBuildingId(buildingId).files || []
 
   const bimFiles: DbFile[] = []
+  const pointCloudFiles: DbFile[] = []
   const nonBimFiles: DbFile[] = []
 
-  // single pass to populate both arrays
+  // single pass to populate the arrays
   filesData.forEach((file) => {
     const { extension } = file
     if (!extension) return
@@ -38,6 +42,8 @@ export function FileTab() {
 
     if (isBim) {
       bimFiles.push(file)
+    } else if (isRenderablePointCloud(file)) {
+      pointCloudFiles.push(file)
     } else {
       nonBimFiles.push(file)
     }
@@ -46,6 +52,7 @@ export function FileTab() {
   return (
     <ViewerSidebarPanel search={{ value: searchQuery, onChange: setSearchQuery }}>
       <ModelsSection files={bimFiles} query={searchQuery} />
+      <PointCloudsSection files={pointCloudFiles} query={searchQuery} />
       <FilesSection files={nonBimFiles} query={searchQuery} />
     </ViewerSidebarPanel>
   )

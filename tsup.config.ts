@@ -146,6 +146,7 @@ export default defineConfig((opts) => ({
         'dxf-viewer',
         'potree',
         'potree-cdt',
+        'potree-core',
         'three-viewport-gizmo',
         '@dnd-kit/core',
         '@dnd-kit/sortable',

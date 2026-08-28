@@ -20,6 +20,8 @@ const initialState = {
     fragments: null,
     modelId: null,
     modelIds: [],
+    pointCloudIds: [],
+    activePointCloudId: null,
     floorplans: [],
     grid: null  ,
     buildingModel: {

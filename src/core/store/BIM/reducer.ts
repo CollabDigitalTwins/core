@@ -45,6 +45,13 @@ interface BimTypes {
     bcfTopics: OBC.Topic[] | Partial<OBC.Topic>[];
     bcfTopicId: string | null;
     modelUIState: Record<number, { isVisible?: boolean; isGhost?: boolean }>;
+    /**
+     * File ids the user has switched on for the BIM scene. The desired set;
+     * `BimPointCloudSync` reconciles `BimPointClouds` against it.
+     */
+    pointCloudIds: string[];
+    /** The cloud the alignment tools act on. */
+    activePointCloudId: string | null;
 }
 
 export type BimState = BimTypes;
@@ -66,6 +73,8 @@ export type BimPayload = {
     ["SET_MODEL_UI_STATE"]: { fileId: number; isVisible?: boolean; isGhost?: boolean };
     ["SET_BIM_SELECTION"]: Pick<BimTypes, "selection">;
     ["SET_MODEL_IDS"]: Pick<BimTypes, "modelIds">;
+    ["TOGGLE_POINT_CLOUD"]: { pointCloudId: string };
+    ["SET_ACTIVE_POINT_CLOUD"]: Pick<BimTypes, "activePointCloudId">;
 };
 
 export type BimActions = ActionMap<BimPayload>[keyof ActionMap<BimPayload>];
@@ -120,6 +129,26 @@ export const BimReducer = (state: BimState, action: BimActions) => {
                 "modelId": null,
                 "modelIds": [],
                 "selection": {},
+                "pointCloudIds": [],
+                "activePointCloudId": null,
+            };
+        case "TOGGLE_POINT_CLOUD": {
+            const { pointCloudId } = action.payload;
+            const isOn = state.pointCloudIds.includes(pointCloudId);
+            return {
+                ...state,
+                "pointCloudIds": isOn
+                    ? state.pointCloudIds.filter((id) => id !== pointCloudId)
+                    : [...state.pointCloudIds, pointCloudId],
+                "activePointCloudId": isOn && state.activePointCloudId === pointCloudId
+                    ? null
+                    : state.activePointCloudId,
+            };
+        }
+        case "SET_ACTIVE_POINT_CLOUD":
+            return {
+                ...state,
+                "activePointCloudId": action.payload.activePointCloudId,
             };
         case "TOGGLE_BIM_TO_MAP": {
 

@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { BimContext } from '../../../../../store/BIM/context'
 
 import { BimPointCloudSync } from './BimPointCloudSync'
+import { PointCloudAlignment } from './PointCloudAlignment'
 
 const { clouds } = vi.hoisted(() => {
   const loaded = new Map<string, unknown>()
@@ -30,8 +31,10 @@ const { clouds } = vi.hoisted(() => {
 })
 
 vi.mock('./index', () => ({ BimPointClouds: class {} }))
+vi.mock('./PointCloudAlignment', () => ({ PointCloudAlignment: class {} }))
 
-const bimComponents = { get: () => clouds }
+const alignment = { setups: [] as unknown[], setup: (config: unknown) => { alignment.setups.push(config) } }
+const bimComponents = { get: (Ctor: unknown) => (Ctor === PointCloudAlignment ? alignment : clouds) }
 const world = { scene: {}, camera: {}, renderer: {} }
 
 function renderSync(pointCloudIds: string[], pointcloudApiUrl?: string) {
@@ -48,6 +51,7 @@ function renderSync(pointCloudIds: string[], pointcloudApiUrl?: string) {
 afterEach(() => {
   clouds.loaded.clear()
   clouds.setups.length = 0
+  alignment.setups.length = 0
   clouds.failing.clear()
 })
 

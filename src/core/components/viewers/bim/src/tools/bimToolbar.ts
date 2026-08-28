@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl'
 
 import { usePluginToolbarTools } from '../../../../../plugins/host/usePluginToolbarTools'
 import { useBimViewer } from '../../../../../plugins/sdk/bimViewer'
+import { useBimPointClouds } from '../PointClouds/useBimPointClouds'
 
 import AddToBim from './AddToBim'
 import { ClippingTool } from './ClippingTool/ClippingTool';
@@ -15,6 +16,7 @@ import { ExplodeByLevelTool } from './ExplodeByLevelTool'
 import { FitCameraTool } from './FitCameraTool'
 import { InspectBimTool } from './InspectBimTool'
 import { MeasureBimTool } from './measureBimTool'
+import { AlignPointCloudTool } from './PointCloudTools/AlignPointCloudTool'
 import { SelectionBimTool } from './selectionBimTool'
 import { ShareBimTool } from './shareBimTool'
 
@@ -24,7 +26,8 @@ export type BimToolbarToolsType =
 'bim-add' |
 'bim-add-comment' | 'bim-add-file' | 'bim-add-ids' | 'bim-add-ifc' | 'bim-add-bcf' | 'bim-add-cad' | 'bim-add-sensor' | 'bim-add-h2k' |
  'bim-clipping' |
- 'bim-camera-fit' | 'bim-selection' | 'bim-camera' | 'bim-dimensions' | 'bim-inspect' | 'bim-share' | 'bim-explode'
+ 'bim-camera-fit' | 'bim-selection' | 'bim-camera' | 'bim-dimensions' | 'bim-inspect' | 'bim-share' | 'bim-explode' |
+ 'bim-pointcloud-align'
 
 /**
  * BIM toolbar tool definitions.
@@ -43,6 +46,9 @@ export function useBimToolbarTools(): Tool[] {
   // route's eager bundle.
   const viewer = useBimViewer()
   const pluginTools = usePluginToolbarTools('bim.tools', viewer as unknown as Record<string, unknown>)
+
+  // Called unconditionally; only the toolbar entry is conditional.
+  const pointClouds = useBimPointClouds()
 
   return [
     // {
@@ -81,6 +87,14 @@ export function useBimToolbarTools(): Tool[] {
       icon: LR.Ruler,
       component: MeasureBimTool,
     },
+    ...(pointClouds.length > 0
+      ? [{
+          id: 'bim-pointcloud-align' as const,
+          title: t('pointCloudAlign'),
+          icon: LR.Boxes,
+          component: AlignPointCloudTool,
+        }]
+      : []),
     {
       id: 'bim-share',
       title: t('share'),

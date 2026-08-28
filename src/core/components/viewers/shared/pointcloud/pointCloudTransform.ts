@@ -42,3 +42,13 @@ export function matrixToPlacement(matrix: THREE.Matrix4, sourceUp: PointCloudSou
     sourceUp,
   }
 }
+
+/** Reads a cloud root's live transform back out, e.g. after the gizmo has dragged it. */
+export function objectToPlacement(object: THREE.Object3D, sourceUp: PointCloudSourceUp): PointCloudPlacement {
+  return {
+    position: [object.position.x, object.position.y, object.position.z],
+    rotation: [object.rotation.x, object.rotation.y, object.rotation.z],
+    scale: object.scale.x,
+    sourceUp,
+  }
+}

@@ -5,7 +5,10 @@ import * as THREE from 'three'
 import { describe, expect, it } from 'vitest'
 
 import { DEFAULT_PLACEMENT } from './pointCloudPlacement'
-import { applyObjectUpAxis, matrixToPlacement, placementToMatrix, upAxisQuaternion } from './pointCloudTransform'
+
+import { applyObjectUpAxis, matrixToPlacement, objectToPlacement, placementToMatrix, upAxisQuaternion } from './pointCloudTransform'
+
+import type { PointCloudPlacement } from './pointCloudPlacement'
 
 const near = (v: THREE.Vector3) => [v.x, v.y, v.z].map((n) => Math.round(n * 1e6) / 1e6)
 
@@ -60,5 +63,27 @@ describe('applyObjectUpAxis', () => {
     const yUp = new THREE.Object3D()
     applyObjectUpAxis(yUp, 'y')
     expect(near(new THREE.Vector3(0, 1, 0).applyQuaternion(yUp.quaternion))).toEqual([0, 1, 0])
+  })
+})
+
+describe('objectToPlacement', () => {
+  it('round-trips a placement applied to an object', () => {
+    const placement: PointCloudPlacement = { position: [1, 2, 3], rotation: [0.1, 0.2, 0.3], scale: 2, sourceUp: 'z' }
+    const object = new THREE.Object3D()
+    placementToMatrix(placement).decompose(object.position, object.quaternion, object.scale)
+
+    const read = objectToPlacement(object, placement.sourceUp)
+
+    expect(read.position.map((n) => Math.round(n * 1e6) / 1e6)).toEqual([1, 2, 3])
+    expect(read.rotation.map((n) => Math.round(n * 1e6) / 1e6)).toEqual([0.1, 0.2, 0.3])
+    expect(read.scale).toBeCloseTo(2)
+    expect(read.sourceUp).toBe('z')
+  })
+
+  it('reads the live transform, not the cached matrix', () => {
+    const object = new THREE.Object3D()
+    object.position.set(4, 5, 6)
+
+    expect(objectToPlacement(object, DEFAULT_PLACEMENT.sourceUp).position).toEqual([4, 5, 6])
   })
 })

@@ -17,6 +17,7 @@ export class GizmoController {
   private _originalScale = new THREE.Vector3()
   onAccept?: () => void
   onCancel?: () => void
+  onChange?: () => void
 
   constructor(world: OBC.World) {
     this._world = world
@@ -49,6 +50,8 @@ export class GizmoController {
         this._world.camera.controls.enabled = !event.value
       }
     })
+
+    controls.addEventListener('objectChange', () => { this.onChange?.() })
 
     // In Three.js r169+, TransformControls is no longer an Object3D.
     // Only the helper returned by getHelper() goes into the scene.

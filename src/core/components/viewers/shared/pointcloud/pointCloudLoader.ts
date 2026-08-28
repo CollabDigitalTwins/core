@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { applyAppearance, DEFAULT_APPEARANCE } from './pointCloudAppearance'
+
+import type { PointCloudAppearance } from './pointCloudAppearance'
 import type { PointCloudEngine, PointCloudOctreeLike } from './pointCloudRegistry'
 import type * as THREE from 'three'
-
-export const DEFAULT_POINT_BUDGET = 1_000_000
 
 type PotreeLike = {
   pointBudget: number
@@ -13,16 +14,21 @@ type PotreeLike = {
     clouds: PointCloudOctreeLike[],
     camera: THREE.Camera,
     renderer: unknown,
-  ): { numVisiblePoints: number; exceededMaxLoadsToGPU: boolean }
+  ): { numVisiblePoints: number; exceededMaxLoadsToGPU: boolean; nodeLoadPromises: unknown[] }
 }
 
 // three ships no declarations here, so potree-core's classes extend `any` and lose their members.
 export interface PointCloudMaterialLike {
   size: number
+  minSize: number
+  maxSize: number
   pointSizeType: number
   pointColorType: number
   shape: number
-  clippingPlanes: unknown
+  inputColorEncoding: number
+  outputColorEncoding: number
+  clippingPlanes: readonly THREE.Plane[]
+  clipMode: number
   needsUpdate: boolean
 }
 
@@ -30,25 +36,15 @@ export function pointCloudMaterial(octree: PointCloudOctreeLike): PointCloudMate
   return (octree as unknown as { material: PointCloudMaterialLike }).material
 }
 
-/** Adaptive size, circular points, RGB colour — the v1 look agreed in the plan. */
-function applyDefaultStyle(octree: PointCloudOctreeLike) {
-  const material = pointCloudMaterial(octree)
-  material.pointColorType = 0
-  material.pointSizeType = 2
-  material.shape = 1
-  material.size = 1
-  material.needsUpdate = true
-}
-
 /**
  * potree-core behind the framework-free `PointCloudEngine` port. The only module in
  * the codebase that imports it, so every other layer stays testable without WebGL.
  */
-export function createPotreeEngine(pointBudget = DEFAULT_POINT_BUDGET): PointCloudEngine {
+export function createPotreeEngine(appearance: PointCloudAppearance = DEFAULT_APPEARANCE): PointCloudEngine {
   let potree: PotreeLike | null = null
 
   const engine: PointCloudEngine = {
-    pointBudget,
+    pointBudget: appearance.pointBudget,
 
     async load(fileName, baseUrl) {
       if (!potree) {
@@ -58,17 +54,17 @@ export function createPotreeEngine(pointBudget = DEFAULT_POINT_BUDGET): PointClo
       potree.pointBudget = engine.pointBudget
 
       const octree = await potree.loadPointCloud(fileName, baseUrl)
-      applyDefaultStyle(octree)
+      applyAppearance(pointCloudMaterial(octree), appearance)
       return octree
     },
 
     update(clouds, camera, renderer) {
-      if (!potree || clouds.length === 0) return { numVisiblePoints: 0, pendingGpuLoads: false }
+      if (!potree || clouds.length === 0) return { numVisiblePoints: 0, streaming: false }
       potree.pointBudget = engine.pointBudget
       const result = potree.updatePointClouds(clouds, camera, renderer)
       return {
         numVisiblePoints: result?.numVisiblePoints ?? 0,
-        pendingGpuLoads: result?.exceededMaxLoadsToGPU ?? false,
+        streaming: (result?.exceededMaxLoadsToGPU ?? false) || (result?.nodeLoadPromises?.length ?? 0) > 0,
       }
     },
 

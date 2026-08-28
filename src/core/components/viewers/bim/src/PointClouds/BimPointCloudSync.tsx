@@ -9,6 +9,8 @@ import { BimContext } from '../../../../../store/BIM/context'
 import { resolvePointCloudApiBase } from '../../../shared/pointcloud/pointCloudApi'
 import { createHttpPointCloudSource } from '../../../shared/pointcloud/pointCloudSource'
 
+import { PointCloudAlignment } from './PointCloudAlignment'
+
 import { BimPointClouds } from './index'
 
 /**
@@ -26,6 +28,7 @@ export function BimPointCloudSync({ pointcloudApiUrl }: { pointcloudApiUrl?: str
       world,
       source: createHttpPointCloudSource(resolvePointCloudApiBase(pointcloudApiUrl)),
     })
+    bimComponents.get(PointCloudAlignment).setup({ world })
   }, [bimComponents, world, pointcloudApiUrl])
 
   React.useEffect(() => {

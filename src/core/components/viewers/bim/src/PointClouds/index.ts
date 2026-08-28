@@ -3,10 +3,14 @@
 
 import * as OBC from '@thatopen/components'
 
-import { createPotreeEngine } from '../../../shared/pointcloud/pointCloudLoader'
+import { applyAppearance, DEFAULT_APPEARANCE, normalizeAppearance } from '../../../shared/pointcloud/pointCloudAppearance'
+import { createPotreeEngine, pointCloudMaterial } from '../../../shared/pointcloud/pointCloudLoader'
 import { DEFAULT_PLACEMENT } from '../../../shared/pointcloud/pointCloudPlacement'
 import { PointCloudRegistry } from '../../../shared/pointcloud/pointCloudRegistry'
 
+import { applyClippingPlanes } from './pointCloudClipping'
+
+import type { PointCloudAppearance } from '../../../shared/pointcloud/pointCloudAppearance'
 import type { PointCloudPlacement } from '../../../shared/pointcloud/pointCloudPlacement'
 import type {
   LoadedPointCloud,
@@ -38,10 +42,12 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable {
   enabled = true
 
   readonly onChanged = new OBC.Event<string[]>()
+  readonly onAppearanceChanged = new OBC.Event<PointCloudAppearance>()
   readonly onDisposed = new OBC.Event()
 
   visiblePoints = 0
 
+  private currentAppearance: PointCloudAppearance = { ...DEFAULT_APPEARANCE }
   private world: OBC.World | null = null
   private registry: PointCloudRegistry | null = null
   private engine: PointCloudEngine | null = null
@@ -50,8 +56,7 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable {
 
   private frameHandle = 0
   private settled = SETTLE_FRAMES
-  private pendingGpuLoads = false
-  private updatedThisFrame = false
+  private streaming = false
 
   constructor(components: OBC.Components) {
     super(components)
@@ -62,7 +67,7 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable {
     this.teardownWorld()
 
     this.world = config.world
-    this.engine = config.engine ?? createPotreeEngine()
+    this.engine = config.engine ?? createPotreeEngine(this.currentAppearance)
     this.registry = new PointCloudRegistry({
       scene: config.world.scene.three,
       engine: this.engine,
@@ -75,16 +80,20 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable {
     if (renderer) {
       renderer.three.localClippingEnabled = true
       renderer.onBeforeUpdate.add(this.onBeforeUpdate)
+      renderer.onClippingPlanesUpdated.add(this.onClippingPlanesUpdated)
     }
   }
 
-  get pointBudget(): number {
-    return this.engine?.pointBudget ?? 0
+  get appearance(): PointCloudAppearance {
+    return { ...this.currentAppearance }
   }
 
-  set pointBudget(budget: number) {
-    if (this.engine) this.engine.pointBudget = budget
+  setAppearance(patch: Partial<PointCloudAppearance>) {
+    this.currentAppearance = normalizeAppearance(this.currentAppearance, patch)
+    if (this.engine) this.engine.pointBudget = this.currentAppearance.pointBudget
+    for (const cloud of this.list()) applyAppearance(pointCloudMaterial(cloud.octree), this.currentAppearance)
     this.refresh()
+    this.onAppearanceChanged.trigger(this.appearance)
   }
 
   async add(id: string, placement: PointCloudPlacement = DEFAULT_PLACEMENT): Promise<LoadedPointCloud | null> {
@@ -94,6 +103,8 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable {
     if (known) return cloud
 
     this.excludeFromShadows(cloud)
+    applyAppearance(pointCloudMaterial(cloud.octree), this.currentAppearance)
+    this.syncClipping(cloud)
     this.refresh()
     this.onChanged.trigger(this.ids())
     return cloud
@@ -139,6 +150,7 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable {
   dispose() {
     this.teardownWorld()
     this.onChanged.reset()
+    this.onAppearanceChanged.reset()
     this.onDisposed.trigger()
     this.onDisposed.reset()
   }
@@ -146,7 +158,10 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable {
   private teardownWorld() {
     this.stopPump()
     const renderer = this.world?.renderer
-    if (renderer) renderer.onBeforeUpdate.remove(this.onBeforeUpdate)
+    if (renderer) {
+      renderer.onBeforeUpdate.remove(this.onBeforeUpdate)
+      renderer.onClippingPlanesUpdated.remove(this.onClippingPlanesUpdated)
+    }
     this.registry?.dispose()
     this.registry = null
     this.engine = null
@@ -163,9 +178,18 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable {
     this.shadowExclusions()?.add(cloud.root)
   }
 
+  private readonly onClippingPlanesUpdated = () => {
+    for (const cloud of this.list()) this.syncClipping(cloud)
+    this.refresh()
+  }
+
+  private syncClipping(cloud: LoadedPointCloud) {
+    const planes = this.world?.renderer?.clippingPlanes
+    if (!planes) return
+    applyClippingPlanes(pointCloudMaterial(cloud.octree), planes)
+  }
+
   private readonly onBeforeUpdate = () => {
-    // The postproduction composer renders twice per renderer update; potree-core must see one.
-    if (this.updatedThisFrame) return
     const clouds = this.list()
     if (!this.world || !this.engine || clouds.length === 0) return
 
@@ -177,16 +201,14 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable {
       this.world.camera.three,
       renderer.three,
     )
-    this.updatedThisFrame = true
     this.visiblePoints = result.numVisiblePoints
-    if (this.pendingGpuLoads !== result.pendingGpuLoads) this.settled = 0
-    this.pendingGpuLoads = result.pendingGpuLoads
+    this.streaming = result.streaming
+    if (result.streaming) this.refresh()
   }
 
-  // The BIM renderer draws on demand; pendingGpuLoads is the only signal that keeps LOD alive.
+  // The BIM renderer draws on demand; nothing else asks it to paint a node that just streamed in.
   private readonly pump = () => {
-    this.updatedThisFrame = false
-    if (this.pendingGpuLoads || this.settled < SETTLE_FRAMES) {
+    if (this.streaming || this.settled < SETTLE_FRAMES) {
       this.settled++
       const renderer = this.world?.renderer as OnDemandRenderer | undefined
       if (renderer) renderer.needsUpdate = true
@@ -205,6 +227,6 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable {
     if (this.frameHandle !== 0) this.cancelFrame(this.frameHandle)
     this.frameHandle = 0
     this.settled = SETTLE_FRAMES
-    this.pendingGpuLoads = false
+    this.streaming = false
   }
 }

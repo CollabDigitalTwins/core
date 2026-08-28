@@ -21,7 +21,7 @@ export interface PointCloudEngine {
     clouds: PointCloudOctreeLike[],
     camera: THREE.Camera,
     renderer: unknown,
-  ): { numVisiblePoints: number; pendingGpuLoads: boolean }
+  ): { numVisiblePoints: number; streaming: boolean }
   dispose(): void
 }
 

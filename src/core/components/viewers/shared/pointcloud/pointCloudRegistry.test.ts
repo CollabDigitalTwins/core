@@ -27,7 +27,7 @@ function stubEngine() {
       octree.dispose = () => { disposed.push(octree.name) }
       return octree
     },
-    update: () => ({ numVisiblePoints: 0, pendingGpuLoads: false }),
+    update: () => ({ numVisiblePoints: 0, streaming: false }),
     dispose: () => {},
   }
 }

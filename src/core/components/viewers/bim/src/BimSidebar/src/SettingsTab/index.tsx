@@ -9,6 +9,7 @@ import { ViewerSidebarPanel } from '../../../../../../ui/ViewerSidebar/Panel'
 
 import { GridManagement } from './src/GridManagement'
 import { MeasurementSettings } from './src/MeasurementSettings'
+import { PointCloudSettings } from './src/PointCloudSettings'
 import { RenderMode } from './src/RenderMode'
 import { ToggleProjection } from './src/ToggleProjection'
 
@@ -19,6 +20,7 @@ export function SettingsTab() {
       <RenderMode />
       <GridManagement />
       <MeasurementSettings />
+      <PointCloudSettings />
       {/* LightingManagement (./src/LightingManagement) is built but not wired up yet. */}
     </ViewerSidebarPanel>
   )

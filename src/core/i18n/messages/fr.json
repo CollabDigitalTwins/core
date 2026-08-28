@@ -1485,7 +1485,8 @@
     "clipping": "Outil de découpage",
     "fit": "Ajuster",
     "add": "Ajouter",
-    "share": "Partager la vue"
+    "share": "Partager la vue",
+    "pointCloudAlign": "Nuage de points"
   },
   "forgotPassword": {
     "h1": "Mot de passe oublié",
@@ -2055,5 +2056,30 @@
     "toastFailed": "Impossible de modifier {name}. Veuillez réessayer.",
     "userReadOnly": "Vous pouvez voir les plugins disponibles, mais pas modifier ce qui s’exécute.",
     "loading": "Chargement des plugins…"
+  },
+  "PointCloudAlignment": {
+    "title": "Aligner le nuage de points",
+    "position": "Position (m)",
+    "rotation": "Rotation (°)",
+    "scale": "Échelle",
+    "modeTranslate": "Déplacer",
+    "modeRotate": "Pivoter",
+    "reset": "Réinitialiser",
+    "done": "Terminé",
+    "noClouds": "Aucun nuage de points activé"
+  },
+  "PointCloudSettings": {
+    "title": "Nuages de points",
+    "pointBudget": "Budget de points",
+    "pointSize": "Taille des points",
+    "maxSize": "Taille maximale",
+    "sizeType": "Mode de taille",
+    "shape": "Forme des points",
+    "sizeType_fixed": "Fixe",
+    "sizeType_attenuated": "Atténuée",
+    "sizeType_adaptive": "Adaptative",
+    "shape_square": "Carré",
+    "shape_circle": "Cercle",
+    "shape_paraboloid": "Paraboloïde"
   }
 }

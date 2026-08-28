@@ -1485,7 +1485,8 @@
     "clipping": "Herramienta de recorte",
     "fit": "Ajustar",
     "add": "Añadir",
-    "share": "Compartir vista"
+    "share": "Compartir vista",
+    "pointCloudAlign": "Nube de puntos"
   },
   "forgotPassword": {
     "h1": "Olvidé mi contraseña",
@@ -2055,5 +2056,30 @@
     "toastFailed": "No se pudo cambiar {name}. Inténtelo de nuevo.",
     "userReadOnly": "Puede ver qué plugins están disponibles, pero no cambiar lo que se ejecuta.",
     "loading": "Cargando los plugins…"
+  },
+  "PointCloudAlignment": {
+    "title": "Alinear nube de puntos",
+    "position": "Posición (m)",
+    "rotation": "Rotación (°)",
+    "scale": "Escala",
+    "modeTranslate": "Mover",
+    "modeRotate": "Rotar",
+    "reset": "Restablecer",
+    "done": "Listo",
+    "noClouds": "No hay nubes de puntos activadas"
+  },
+  "PointCloudSettings": {
+    "title": "Nubes de puntos",
+    "pointBudget": "Presupuesto de puntos",
+    "pointSize": "Tamaño de punto",
+    "maxSize": "Tamaño máximo",
+    "sizeType": "Modo de tamaño",
+    "shape": "Forma del punto",
+    "sizeType_fixed": "Fijo",
+    "sizeType_attenuated": "Atenuado",
+    "sizeType_adaptive": "Adaptativo",
+    "shape_square": "Cuadrado",
+    "shape_circle": "Círculo",
+    "shape_paraboloid": "Paraboloide"
   }
 }

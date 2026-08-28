@@ -1486,7 +1486,8 @@
     "clipping": "Clipping Tool",
     "fit": "Fit",
     "add": "Add",
-    "share": "Share view"
+    "share": "Share view",
+    "pointCloudAlign": "Point cloud"
   },
   "forgotPassword": {
     "h1": "Forgot Password",
@@ -2058,5 +2059,30 @@
     "toastFailed": "Could not change {name}. Please try again.",
     "userReadOnly": "You can see which plugins are available, but not change what runs.",
     "loading": "Loading plugins…"
+  },
+  "PointCloudAlignment": {
+    "title": "Align point cloud",
+    "position": "Position (m)",
+    "rotation": "Rotation (°)",
+    "scale": "Scale",
+    "modeTranslate": "Move",
+    "modeRotate": "Rotate",
+    "reset": "Reset",
+    "done": "Done",
+    "noClouds": "No point clouds are switched on"
+  },
+  "PointCloudSettings": {
+    "title": "Point clouds",
+    "pointBudget": "Point budget",
+    "pointSize": "Point size",
+    "maxSize": "Max point size",
+    "sizeType": "Size mode",
+    "shape": "Point shape",
+    "sizeType_fixed": "Fixed",
+    "sizeType_attenuated": "Attenuated",
+    "sizeType_adaptive": "Adaptive",
+    "shape_square": "Square",
+    "shape_circle": "Circle",
+    "shape_paraboloid": "Paraboloid"
   }
 }

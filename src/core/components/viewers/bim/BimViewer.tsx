@@ -28,6 +28,7 @@ import { ViewModeCoordinator } from "./src/lib/ViewModeCoordinator";
 import { ModelsSync } from "./src/ModelsSync";
 import { BimPointClouds } from "./src/PointClouds";
 import { BimPointCloudSync } from "./src/PointClouds/BimPointCloudSync";
+import { PointCloudAlignment } from "./src/PointClouds/PointCloudAlignment";
 import { PropertiesMenu } from "./src/propertiesMenu";
 import { SelectionSync } from "./src/SelectionSync";
 import { ClippingPlanes } from "./src/tools/ClippingTool/ClippingPlanes";
@@ -184,6 +185,7 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
             components.get(FloorplanTool);
             components.get(ElevationsTool);
             components.get(BimPointClouds);
+            components.get(PointCloudAlignment);
 
             // Grid injection is safe here — fragments.core is initialized.
             if (grid) {

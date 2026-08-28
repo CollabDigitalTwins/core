@@ -42,8 +42,7 @@ export function useBimPointCloudOpacity(): BimPointCloudOpacity {
     }
   }, [component])
 
-  // `version` is in the deps on purpose: the readers must get a fresh identity after a change,
-  // or a caller memoising on them keeps showing the old opacity.
+  // `version` is in the deps so a memoising caller cannot keep reading a stale opacity.
   return React.useMemo(() => ({
     opacityOf: (id: string) => component?.opacityOf(id) ?? 1,
     isGhosted: (id: string) => component?.isGhosted(id) ?? false,

@@ -66,11 +66,15 @@ function stubEngine() {
     disposedCount: () => number
     updates: number
     streaming: boolean
+    picks: Record<string, unknown>[]
+    hit: THREE.Vector3 | null
   } = {
     pointBudget: 1_000,
     loaded,
     updates: 0,
     streaming: false,
+    picks: [],
+    hit: null,
     disposedCount: () => disposed,
     load: async (fileName) => {
       loaded.push(fileName)
@@ -81,7 +85,10 @@ function stubEngine() {
       engine.updates++
       return { numVisiblePoints: 7, streaming: engine.streaming }
     },
-    pick: () => null,
+    pick: (clouds, camera, renderer, ray, pickWindowSize) => {
+      engine.picks.push({ count: clouds.length, camera, renderer, ray, pickWindowSize })
+      return engine.hit
+    },
     dispose: () => { disposed++ },
   }
   return engine
@@ -318,5 +325,52 @@ describe('BimPointClouds', () => {
     world.renderer.onBeforeUpdate.trigger()
 
     expect(clouds.visiblePoints).toBe(7)
+  })
+})
+
+describe('BimPointClouds as a pick source', () => {
+  const ray = new THREE.Ray(new THREE.Vector3(), new THREE.Vector3(0, 0, -1))
+
+  it('reports nothing when no cloud is loaded', () => {
+    const { clouds, world } = setUp()
+
+    expect(clouds.pick(ray, world.camera.three, 17)).toBeNull()
+  })
+
+  it('reports nothing before setup, so the tools can register early', () => {
+    const components = new OBC.Components()
+    const clouds = components.get(BimPointClouds)
+
+    expect(clouds.pick(ray, new THREE.PerspectiveCamera(), 17)).toBeNull()
+  })
+
+  it('hands the engine the ray, camera, renderer and pick window', async () => {
+    const { clouds, world, engine } = setUp()
+    await clouds.add('669')
+    engine.hit = new THREE.Vector3(1, 2, 3)
+
+    const pick = clouds.pick(ray, world.camera.three, 23)
+
+    expect(pick?.point.toArray()).toEqual([1, 2, 3])
+    expect(engine.picks).toEqual([
+      { count: 1, camera: world.camera.three, renderer: world.renderer.three, ray, pickWindowSize: 23 },
+    ])
+  })
+
+  it('reports nothing when the engine misses', async () => {
+    const { clouds, world } = setUp()
+    await clouds.add('669')
+
+    expect(clouds.pick(ray, world.camera.three, 17)).toBeNull()
+  })
+
+  it('leaves a hidden cloud out of the pick', async () => {
+    const { clouds, world, engine } = setUp()
+    await clouds.add('669')
+    engine.hit = new THREE.Vector3(1, 2, 3)
+    clouds.setVisible('669', false)
+
+    expect(clouds.pick(ray, world.camera.three, 17)).toBeNull()
+    expect(engine.picks).toEqual([])
   })
 })

@@ -22,6 +22,8 @@ import type {
   PointCloudEngine,
 } from '../../../shared/pointcloud/pointCloudRegistry'
 import type { PointCloudSource } from '../../../shared/pointcloud/pointCloudSource'
+import type { ScenePickSource } from '../lib/scenePicker'
+import type * as THREE from 'three'
 
 /** Frames to keep drawing after the octree settles, so a finished refinement is painted. */
 const SETTLE_FRAMES = 20
@@ -38,7 +40,7 @@ type OnDemandRenderer = OBC.BaseRenderer & { needsUpdate: boolean }
 
 /** Owns the clouds in the BIM scene so they outlive every React panel and die with
  *  `components.dispose()`. React mirrors this; it never owns a cloud. */
-export class BimPointClouds extends OBC.Component implements OBC.Disposable {
+export class BimPointClouds extends OBC.Component implements OBC.Disposable, ScenePickSource {
   static uuid = '4cadfb31-e3a6-4962-b5be-c6b03a6523c3' as const
 
   enabled = true
@@ -129,6 +131,19 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable {
   setPlacement(id: string, placement: PointCloudPlacement) {
     this.registry?.setPlacement(id, placement)
     this.refresh()
+  }
+
+  /** {@link ScenePickSource} — lets the measurement tools hit a scan surface without knowing
+   *  what a point cloud is. */
+  pick(ray: THREE.Ray, camera: THREE.Camera, thresholdPx: number): { point: THREE.Vector3 } | null {
+    const renderer = this.world?.renderer
+    if (!this.engine || !renderer) return null
+
+    const octrees = this.list().filter((cloud) => cloud.root.visible).map((cloud) => cloud.octree)
+    if (octrees.length === 0) return null
+
+    const point = this.engine.pick(octrees, camera, renderer.three, ray, thresholdPx)
+    return point ? { point } : null
   }
 
   get(id: string): LoadedPointCloud | undefined {

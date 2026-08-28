@@ -4,37 +4,95 @@
 // @vitest-environment jsdom
 import { render, waitFor } from '@testing-library/react'
 import * as React from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { BimContext } from '../../../../../store/BIM/context'
 
-import { BimPointCloudSync } from './BimPointCloudSync'
-import { PointCloudAlignment } from './PointCloudAlignment'
+import { BimMeasurementManager } from '../BimMeasurements/BimMeasurementManager'
 
-const { clouds } = vi.hoisted(() => {
+import { BimPointCloudSync } from './BimPointCloudSync'
+
+import { PointCloudAlignment } from './PointCloudAlignment'
+import { PLACEMENT_VERSION } from './pointCloudPlacementStore'
+
+import type { AlignmentState } from './PointCloudAlignment'
+import type { PointCloudPlacement } from '../../../shared/pointcloud/pointCloudPlacement'
+
+const { clouds, fileHooks } = vi.hoisted(() => {
   const loaded = new Map<string, unknown>()
   return {
     clouds: {
       loaded,
       setups: [] as unknown[],
       failing: new Set<string>(),
+      placements: [] as unknown[],
       setup: (config: unknown) => { clouds.setups.push(config) },
       ids: () => [...loaded.keys()],
       get: (id: string) => loaded.get(id),
-      add: async (id: string) => {
+      add: async (id: string, placement: unknown) => {
+        clouds.placements.push({ id, placement })
         if (clouds.failing.has(id)) throw new Error('boom')
         loaded.set(id, { id })
       },
       remove: (id: string) => { loaded.delete(id) },
+    },
+    fileHooks: {
+      files: [] as unknown[],
+      isLoading: false,
+      keyedTo: [] as (number | null)[],
+      updateFile: vi.fn(() => Promise.resolve({})),
     },
   }
 })
 
 vi.mock('./index', () => ({ BimPointClouds: class {} }))
 vi.mock('./PointCloudAlignment', () => ({ PointCloudAlignment: class {} }))
+vi.mock('../BimMeasurements/BimMeasurementManager', () => ({ BimMeasurementManager: class {} }))
+vi.mock('../../../../../hooks/files/files', () => ({
+  useFilesByBuildingId: () => ({ files: fileHooks.files, isLoading: fileHooks.isLoading }),
+  useFile: (id: number | null) => {
+    fileHooks.keyedTo.push(id)
+    return { updateFile: fileHooks.updateFile }
+  },
+}))
 
-const alignment = { setups: [] as unknown[], setup: (config: unknown) => { alignment.setups.push(config) } }
-const bimComponents = { get: (Ctor: unknown) => (Ctor === PointCloudAlignment ? alignment : clouds) }
+function makeEvent<T>() {
+  const listeners = new Set<(value: T) => void>()
+  return {
+    add: (fn: (value: T) => void) => listeners.add(fn),
+    remove: (fn: (value: T) => void) => listeners.delete(fn),
+    trigger: (value: T) => { for (const fn of [...listeners]) fn(value) },
+    size: () => listeners.size,
+  }
+}
+
+function newMeasurements() {
+  return {
+    sources: new Set<unknown>(),
+    registerPickSource(source: unknown) { this.sources.add(source) },
+    unregisterPickSource(source: unknown) { this.sources.delete(source) },
+  }
+}
+
+function newAlignment() {
+  return {
+    setups: [] as unknown[],
+    setup(config: unknown) { this.setups.push(config) },
+    onChanged: makeEvent<AlignmentState | null>(),
+    onCommitted: makeEvent<AlignmentState>(),
+  }
+}
+
+let alignment = newAlignment()
+let measurements = newMeasurements()
+
+const bimComponents = {
+  get: (Ctor: unknown) => {
+    if (Ctor === PointCloudAlignment) return alignment
+    if (Ctor === BimMeasurementManager) return measurements
+    return clouds
+  },
+}
 const world = { scene: {}, camera: {}, renderer: {} }
 
 function renderSync(pointCloudIds: string[], pointcloudApiUrl?: string) {
@@ -48,11 +106,21 @@ function renderSync(pointCloudIds: string[], pointcloudApiUrl?: string) {
   return { dispatch, view }
 }
 
+beforeEach(() => {
+  alignment = newAlignment()
+  measurements = newMeasurements()
+})
+
 afterEach(() => {
   clouds.loaded.clear()
   clouds.setups.length = 0
-  alignment.setups.length = 0
+  clouds.placements.length = 0
   clouds.failing.clear()
+  fileHooks.files = []
+  fileHooks.isLoading = false
+  fileHooks.keyedTo.length = 0
+  fileHooks.updateFile.mockReset()
+  fileHooks.updateFile.mockResolvedValue({})
 })
 
 describe('BimPointCloudSync', () => {
@@ -100,5 +168,99 @@ describe('BimPointCloudSync', () => {
     )
     expect(clouds.setups).toHaveLength(0)
     expect(clouds.ids()).toEqual([])
+  })
+})
+
+describe('BimPointCloudSync placement', () => {
+  const PLACED: PointCloudPlacement = { position: [1, 2, 3], rotation: [0, 0.5, 0], scale: 2, sourceUp: 'z' }
+  const stored = { id: 669, pointCloudTransform: { version: PLACEMENT_VERSION, ...PLACED } }
+
+  it('loads a cloud at its stored placement', async () => {
+    fileHooks.files = [stored]
+
+    renderSync(['669'])
+
+    await waitFor(() => expect(clouds.placements).toEqual([{ id: '669', placement: PLACED }]))
+  })
+
+  it('holds a cloud back until the file records arrive, so it never lands at the default first', async () => {
+    fileHooks.isLoading = true
+    const { view, dispatch } = renderSync(['669'])
+    expect(clouds.placements).toEqual([])
+
+    fileHooks.isLoading = false
+    fileHooks.files = [stored]
+    view.rerender(
+      <BimContext.Provider value={{ state: { bim: { bimComponents, world, pointCloudIds: ['669'] } }, dispatch } as never}>
+        <BimPointCloudSync />
+      </BimContext.Provider>,
+    )
+
+    await waitFor(() => expect(clouds.placements).toEqual([{ id: '669', placement: PLACED }]))
+  })
+
+  it('keys the mutation to the cloud being aligned', async () => {
+    renderSync(['669'])
+
+    alignment.onChanged.trigger({ id: '669', placement: { ...PLACED } })
+
+    await waitFor(() => expect(fileHooks.keyedTo.at(-1)).toBe(669))
+  })
+
+  it('writes the committed placement to the file', async () => {
+    renderSync(['669'])
+
+    alignment.onCommitted.trigger({ id: '669', placement: { ...PLACED } })
+
+    await waitFor(() => expect(fileHooks.updateFile).toHaveBeenCalledWith({
+      pointCloudTransform: { version: PLACEMENT_VERSION, ...PLACED },
+    }))
+  })
+
+  it('writes nothing when the committed placement matches what is stored', async () => {
+    fileHooks.files = [stored]
+    renderSync(['669'])
+    await waitFor(() => expect(clouds.placements).toHaveLength(1))
+
+    alignment.onCommitted.trigger({ id: '669', placement: { ...PLACED } })
+
+    expect(fileHooks.updateFile).not.toHaveBeenCalled()
+  })
+
+  it('survives a rejected write', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => { })
+    fileHooks.updateFile.mockRejectedValueOnce(new Error('offline'))
+    renderSync(['669'])
+
+    alignment.onCommitted.trigger({ id: '669', placement: { ...PLACED } })
+
+    await waitFor(() => expect(warn).toHaveBeenCalled())
+    warn.mockRestore()
+  })
+
+  it('unsubscribes on unmount', () => {
+    const { view } = renderSync(['669'])
+    expect(alignment.onCommitted.size()).toBe(1)
+
+    view.unmount()
+
+    expect(alignment.onCommitted.size()).toBe(0)
+    expect(alignment.onChanged.size()).toBe(0)
+  })
+})
+
+describe('BimPointCloudSync measurement', () => {
+  it('offers the clouds to the measurement tools as a pick source', () => {
+    renderSync([])
+
+    expect(measurements.sources.has(clouds)).toBe(true)
+  })
+
+  it('withdraws the pick source on unmount, so a torn-down scene is never picked', () => {
+    const { view } = renderSync([])
+
+    view.unmount()
+
+    expect(measurements.sources.size).toBe(0)
   })
 })

@@ -56,6 +56,7 @@ export class PointCloudAlignment extends OBC.Component implements OBC.Disposable
   enabled = true
 
   readonly onChanged = new OBC.Event<AlignmentState | null>()
+  readonly onCommitted = new OBC.Event<AlignmentState>()
   readonly onDisposed = new OBC.Event()
 
   private clouds: AlignablePointClouds | null = null
@@ -118,9 +119,11 @@ export class PointCloudAlignment extends OBC.Component implements OBC.Disposable
 
   accept() {
     if (this.id === null) return
+    const committed = { id: this.id, placement: this.placement() }
     const coordinator = this.coordinator
     this.end()
     coordinator?.release(this)
+    if (committed.placement) this.onCommitted.trigger(committed as AlignmentState)
     this.onChanged.trigger(null)
   }
 
@@ -141,6 +144,7 @@ export class PointCloudAlignment extends OBC.Component implements OBC.Disposable
   dispose() {
     this.end()
     this.onChanged.reset()
+    this.onCommitted.reset()
     this.onDisposed.trigger()
     this.onDisposed.reset()
   }

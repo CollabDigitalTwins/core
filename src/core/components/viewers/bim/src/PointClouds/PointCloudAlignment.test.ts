@@ -149,6 +149,30 @@ describe('PointCloudAlignment', () => {
     expect(alignment.activeId).toBeNull()
   })
 
+  it('announces the committed placement on accept, so it can be persisted', async () => {
+    const { alignment } = setUp()
+    const committed = vi.fn()
+    alignment.onCommitted.add(committed)
+    await alignment.begin('669')
+    alignment.setPlacement({ ...DEFAULT_PLACEMENT, position: [7, 0, 0] })
+
+    alignment.accept()
+
+    expect(committed).toHaveBeenCalledWith({ id: '669', placement: expect.objectContaining({ position: [7, 0, 0] }) })
+  })
+
+  it('commits the reverted placement on cancel, so a revert is saved too', async () => {
+    const { alignment } = setUp()
+    const committed = vi.fn()
+    await alignment.begin('669')
+    alignment.setPlacement({ ...DEFAULT_PLACEMENT, position: [7, 0, 0] })
+    alignment.onCommitted.add(committed)
+
+    alignment.cancel()
+
+    expect(committed).toHaveBeenCalledWith({ id: '669', placement: expect.objectContaining({ position: [0, 0, 0] }) })
+  })
+
   it('announces the end of a session with a null change', async () => {
     const { alignment } = setUp()
     const changed = vi.fn()

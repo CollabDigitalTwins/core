@@ -7,6 +7,7 @@ import * as FRAGS from '@thatopen/fragments'
 import * as THREE from 'three'
 
 import { CurrentWorld } from '../CurrentWorld'
+import { betterPick, ndcFromPointer, pickNearest, SCENE_PICK_WINDOW_PX } from '../lib/scenePicker'
 
 import {
   DEFAULT_MEASUREMENT_SETTINGS,
@@ -22,6 +23,7 @@ import type {
   BimMeasurementSettings,
   SnapClassName,
 } from './measurementSettings'
+import type { ScenePick, ScenePickSource } from '../lib/scenePicker'
 
 /** Single place the named snap classes cross over into the FRAGS enum. */
 const SNAP_CLASS_BY_NAME: Record<SnapClassName, FRAGS.SnappingClass> = {
@@ -99,6 +101,16 @@ export class BimMeasurementManager extends OBC.Component {
    */
   private readonly _built = new Set<BimMeasureKind>()
 
+  /** Renderers that are not fragments — point clouds today — offering their own hits. */
+  private readonly _pickSources = new Set<ScenePickSource>()
+
+  private readonly _raycaster = new THREE.Raycaster()
+
+  private _pointerNdc: THREE.Vector2 | null = null
+
+  /** The live measurer's `onPointerMove` handler, kept so it can be detached. */
+  private _scenePickHandler: (() => void) | null = null
+
   constructor(components: OBC.Components) {
     super(components)
     components.add(BimMeasurementManager.uuid, this)
@@ -110,6 +122,18 @@ export class BimMeasurementManager extends OBC.Component {
 
   get activeKind() {
     return this._activeKind
+  }
+
+  /**
+   * Offers non-fragment geometry to every measurement tool. A registered source's hit replaces
+   * the library's fragment snap whenever it is the nearer of the two.
+   */
+  registerPickSource(source: ScenePickSource) {
+    this._pickSources.add(source)
+  }
+
+  unregisterPickSource(source: ScenePickSource) {
+    this._pickSources.delete(source)
   }
 
   get settings(): BimMeasurementSettings {
@@ -155,12 +179,15 @@ export class BimMeasurementManager extends OBC.Component {
     this._activeKind = kind
     this.suspendHoverer(kind)
     this.attachListeners(world)
+    this.attachScenePicking(measurer)
 
     return true
   }
 
   /** Cancels any in-progress creation and disables every built measurer. */
   deactivate() {
+    this.detachScenePicking()
+
     for (const { measurer } of this.builtMeasurers()) {
       measurer.cancelCreation()
       this.setMeasurerEnabled(measurer, false)
@@ -253,6 +280,7 @@ export class BimMeasurementManager extends OBC.Component {
       console.warn('BimMeasurementManager: measurement teardown was incomplete', error)
     }
 
+    this._pickSources.clear()
     this._activeKind = null
     this._previousHovererEnabled = null
     this.enabled = false
@@ -460,13 +488,56 @@ export class BimMeasurementManager extends OBC.Component {
 
     this._listenerTarget = target
     target.addEventListener('dblclick', this.handleDoubleClick)
+    target.addEventListener('pointermove', this.handlePointerMove)
     window.addEventListener('keydown', this.handleKeyDown)
   }
 
   private detachListeners() {
     this._listenerTarget?.removeEventListener('dblclick', this.handleDoubleClick)
+    this._listenerTarget?.removeEventListener('pointermove', this.handlePointerMove)
     this._listenerTarget = null
+    this._pointerNdc = null
     window.removeEventListener('keydown', this.handleKeyDown)
+  }
+
+  private handlePointerMove = (event: PointerEvent) => {
+    const target = this._listenerTarget
+    if (!target) return
+    this._pointerNdc = ndcFromPointer(event.clientX, event.clientY, target.getBoundingClientRect())
+  }
+
+  /**
+   * The library assigns `lastPick` before firing `onPointerMove`, and both the preview and the
+   * committed measurement read it back, so overwriting it here is the whole integration.
+   */
+  private attachScenePicking(measurer: OBF.Measurement) {
+    this._scenePickHandler = () => this.overrideLastPick(measurer)
+    measurer.onPointerMove.add(this._scenePickHandler)
+  }
+
+  private detachScenePicking() {
+    const handler = this._scenePickHandler
+    if (!handler) return
+    for (const { measurer } of this.builtMeasurers()) measurer.onPointerMove.remove(handler)
+    this._scenePickHandler = null
+  }
+
+  private overrideLastPick(measurer: OBF.Measurement) {
+    if (this._pickSources.size === 0 || !this._pointerNdc) return
+
+    const camera = this.resolveWorld()?.camera.three
+    if (!camera) return
+
+    this._raycaster.setFromCamera(this._pointerNdc, camera)
+    const ray = this._raycaster.ray
+
+    const holder = measurer as unknown as { lastPick: ScenePick | null }
+    const winner = betterPick(
+      holder.lastPick,
+      pickNearest(this._pickSources, ray, camera, SCENE_PICK_WINDOW_PX),
+      ray,
+    )
+    if (winner) holder.lastPick = winner
   }
 
   private handleDoubleClick = () => {

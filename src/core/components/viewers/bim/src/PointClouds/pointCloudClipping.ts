@@ -18,4 +18,8 @@ export function applyClippingPlanes(material: PointCloudMaterialLike, planes: re
   const active = planes.slice(0, MAX_CLIP_PLANES)
   material.clippingPlanes = active
   material.clipMode = active.length === 0 ? CLIP_MODE_DISABLED : CLIP_MODE_OUTSIDE
+
+  // syncClippingPlanes rebuilds before storing the new count, so the define lags one change.
+  material.syncClippingPlanes()
+  material.updateShaderSource()
 }

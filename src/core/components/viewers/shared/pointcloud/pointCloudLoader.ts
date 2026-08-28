@@ -27,9 +27,15 @@ export interface PointCloudMaterialLike {
   shape: number
   inputColorEncoding: number
   outputColorEncoding: number
+  opacity: number
+  transparent: boolean
+  blending: number
+  depthTest: boolean
   clippingPlanes: readonly THREE.Plane[]
   clipMode: number
   needsUpdate: boolean
+  syncClippingPlanes: () => void
+  updateShaderSource: () => void
 }
 
 export function pointCloudMaterial(octree: PointCloudOctreeLike): PointCloudMaterialLike {

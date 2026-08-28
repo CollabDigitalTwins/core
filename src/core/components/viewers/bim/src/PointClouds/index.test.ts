@@ -48,7 +48,13 @@ function stubMaterial() {
     shape: 0,
     inputColorEncoding: 1,
     outputColorEncoding: 0,
+    opacity: 1,
+    transparent: false,
+    blending: 0,
+    depthTest: true,
     needsUpdate: false,
+    syncClippingPlanes: () => {},
+    updateShaderSource: () => {},
   }
 }
 
@@ -260,6 +266,19 @@ describe('BimPointClouds', () => {
 
     expect(clouds.appearance.pointBudget).toBe(20_000_000)
     expect(clouds.appearance.shape).toBe('circle')
+  })
+
+  it('re-asserts blending every frame, since any shader rebuild reverts it', async () => {
+    const { clouds, world } = setUp()
+    clouds.setAppearance({ opacity: 0.4 })
+    const cloud = await clouds.add('669')
+    materialOf(cloud).blending = 2
+    materialOf(cloud).depthTest = false
+
+    world.renderer.onBeforeUpdate.trigger()
+
+    expect(materialOf(cloud).blending).toBe(THREE.NormalBlending)
+    expect(materialOf(cloud).depthTest).toBe(true)
   })
 
   it('excludes cloud roots from the shadow distance renderer', async () => {

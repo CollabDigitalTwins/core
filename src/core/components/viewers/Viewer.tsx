@@ -13,8 +13,7 @@ import { parsePluginViewerKey } from '../../plugins/host/pluginViewerKey'
 import { BuildingsContext, MenusContext } from '../../store'
 import { ViewerNames } from '../../types'
 
-// Deep file import (not the ui barrel): the barrel re-exports heavy modules
-// (ViewerSidebar, useFileUploadHandler, …) that would land in the eager map-route bundle.
+// Deep import, not the ui barrel: the barrel drags heavy modules into the eager map bundle.
 import { switchLanguage } from '../../utils/utils'
 import { UserSettings } from '../settings'
 import { Toolbar } from '../Toolbar'
@@ -25,10 +24,7 @@ import { isViewerAllowed } from './viewerAccess'
 
 import type { Organization, ViewerKey } from '../../types/dbTypes'
 
-// Code-split the heavy viewers: BimViewer pulls in ~456 KB gzipped of
-// @thatopen/*, PointCloudViewer the Potree loader stack — loaded only when
-// selected, so map-only sessions never pay their cost. MapViewer stays static
-// because every user lands on it.
+// Code-split: map-only sessions must not pay for @thatopen or the Potree stack.
 const BimViewer = dynamic(
   () => import('./bim/BimViewer').then(m => ({ default: m.BimViewer })),
   { ssr: false, loading: () => <ViewerLoadingFallback label="Loading BIM viewer…" /> },
@@ -38,11 +34,7 @@ const PointCloudViewer = dynamic(
   { ssr: false, loading: () => <ViewerLoadingFallback label="Loading point cloud viewer…" /> },
 )
 
-// DataMenu transitively imports BimViewer (via FilePreview), so keep it lazy
-// too — a static import would pull @thatopen + three/webgpu back into the eager
-// bundle. Only rendered for the data viewers, so map-only sessions skip it.
-// Lazy for the same reason as DataMenu: the plugins page is not on the map
-// route's critical path, and only an admin visits it often.
+// DataMenu reaches BimViewer through FilePreview, so a static import undoes the split above.
 const PluginsManager = dynamic(
   () => import('./plugins/PluginsManager').then(m => ({ default: m.PluginsManager })),
   { ssr: false, loading: () => <ViewerLoadingFallback label="Loading plugins…" /> },
@@ -59,10 +51,7 @@ const PluginDataPageHost = dynamic(
   { ssr: false, loading: () => <ViewerLoadingFallback label="Loading page…" /> },
 )
 
-// Styled to match the in-viewer loading card (see BimLoadingState): a soft
-// backdrop-blurred overlay with a bordered card, spinner + label. Uses only
-// Tailwind tokens + one lucide icon, so it adds no meaningful weight to the
-// eager map-route bundle (Viewer.tsx is statically imported).
+// Matches BimLoadingState using only Tailwind tokens, so the eager bundle stays light.
 function ViewerLoadingFallback({ label }: { label: string }) {
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50 backdrop-blur-[1px]">

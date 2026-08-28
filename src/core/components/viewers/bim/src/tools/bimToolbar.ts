@@ -23,27 +23,19 @@ import { ShareBimTool } from './shareBimTool'
 import type { Tool } from '../../../../../types/tools'
 
 export type BimToolbarToolsType =
-'bim-add' |
-'bim-add-comment' | 'bim-add-file' | 'bim-add-ids' | 'bim-add-ifc' | 'bim-add-bcf' | 'bim-add-cad' | 'bim-add-sensor' | 'bim-add-h2k' |
- 'bim-clipping' |
- 'bim-camera-fit' | 'bim-selection' | 'bim-camera' | 'bim-dimensions' | 'bim-inspect' | 'bim-share' | 'bim-explode' |
- 'bim-pointcloud-align'
+  'bim-add' |
+  'bim-add-comment' | 'bim-add-file' | 'bim-add-ids' | 'bim-add-ifc' | 'bim-add-bcf' | 'bim-add-cad' | 'bim-add-sensor' | 'bim-add-h2k' |
+  'bim-clipping' |
+  'bim-camera-fit' | 'bim-selection' | 'bim-camera' | 'bim-dimensions' | 'bim-inspect' | 'bim-share' | 'bim-explode' |
+  'bim-pointcloud-align'
 
-/**
- * BIM toolbar tool definitions.
- *
- * Named as a hook because it calls useTranslations, so it has to run during a
- * component render like any other hook.
- */
+/** BIM toolbar tool definitions. A hook because it calls useTranslations, so it has to
+ *  run during a render. */
 export function useBimToolbarTools(): Tool[] {
   // Translation
   const t = useTranslations('bimToolbarTools')
 
-  // BIM plugin tools receive the viewer handles, the live selection and the
-  // element queries — spread as props, so a tool's props are `BimToolProps &
-  // { tool }`, matching how map tools receive `MapToolProps`. Reading them here
-  // rather than inside the shared toolbar host keeps `@thatopen` out of the map
-  // route's eager bundle.
+  // Read here, not in the shared toolbar host, to keep `@thatopen` out of the map route's bundle.
   const viewer = useBimViewer()
   const pluginTools = usePluginToolbarTools('bim.tools', viewer as unknown as Record<string, unknown>)
 
@@ -58,8 +50,8 @@ export function useBimToolbarTools(): Tool[] {
     //   component: SelectionBimTool,
     // },
     // {
-      //   id: 'bim-explode',
-      //   title: t('explode'),
+    //   id: 'bim-explode',
+    //   title: t('explode'),
     //   icon: LR.Layers3,
     //   component: ExplodeByLevelTool,
     // },
@@ -89,11 +81,11 @@ export function useBimToolbarTools(): Tool[] {
     },
     ...(pointClouds.length > 0
       ? [{
-          id: 'bim-pointcloud-align' as const,
-          title: t('pointCloudAlign'),
-          icon: LR.Boxes,
-          component: AlignPointCloudTool,
-        }]
+        id: 'bim-pointcloud-align' as const,
+        title: t('pointCloudAlign'),
+        icon: LR.Grip,
+        component: AlignPointCloudTool,
+      }]
       : []),
     {
       id: 'bim-share',
@@ -101,7 +93,6 @@ export function useBimToolbarTools(): Tool[] {
       icon: LR.Share2,
       component: ShareBimTool
     },
-    // Add more tools here if needed
     // Plugin-contributed tools come last, after everything core ships.
     ...pluginTools,
   ]

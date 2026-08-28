@@ -43,7 +43,7 @@ export function PointCloudsSection({ files, query = '' }: PointCloudsSectionProp
   if (clouds.length === 0) return null
 
   return (
-    <CollapsibleSection title={t('title')} icon={LR.Boxes} itemCount={clouds.length}>
+    <CollapsibleSection title={t('title')} icon={LR.Grip} itemCount={clouds.length}>
       {clouds.map((file) => (
         <FileItemComponent
           key={file.id}

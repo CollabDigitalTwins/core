@@ -2080,6 +2080,7 @@
     "sizeType_adaptive": "Adaptativo",
     "shape_square": "Cuadrado",
     "shape_circle": "Círculo",
-    "shape_paraboloid": "Paraboloide"
+    "shape_paraboloid": "Paraboloide",
+    "opacity": "Opacidad"
   }
 }

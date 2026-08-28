@@ -26,8 +26,15 @@ function stubOctree() {
       shape: 0,
       inputColorEncoding: 1,
       outputColorEncoding: 0,
-      clippingPlanes: null,
+      opacity: 1,
+      transparent: false,
+      blending: 0,
+      depthTest: true,
+      clippingPlanes: [],
+      clipMode: 0,
       needsUpdate: false,
+      syncClippingPlanes: () => {},
+      updateShaderSource: () => {},
     },
   }
 }

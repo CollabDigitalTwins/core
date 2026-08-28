@@ -53,8 +53,7 @@ export class GizmoController {
 
     controls.addEventListener('objectChange', () => { this.onChange?.() })
 
-    // In Three.js r169+, TransformControls is no longer an Object3D.
-    // Only the helper returned by getHelper() goes into the scene.
+    // r169+: TransformControls is not an Object3D; only getHelper() goes into the scene.
     const helper = controls.getHelper()
     this._world.scene.three.add(helper)
 

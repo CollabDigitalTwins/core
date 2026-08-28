@@ -3,7 +3,12 @@
 
 import * as OBC from '@thatopen/components'
 
-import { applyAppearance, DEFAULT_APPEARANCE, normalizeAppearance } from '../../../shared/pointcloud/pointCloudAppearance'
+import {
+  applyAppearance,
+  applyRenderState,
+  DEFAULT_APPEARANCE,
+  normalizeAppearance,
+} from '../../../shared/pointcloud/pointCloudAppearance'
 import { createPotreeEngine, pointCloudMaterial } from '../../../shared/pointcloud/pointCloudLoader'
 import { DEFAULT_PLACEMENT } from '../../../shared/pointcloud/pointCloudPlacement'
 import { PointCloudRegistry } from '../../../shared/pointcloud/pointCloudRegistry'
@@ -31,11 +36,8 @@ export interface BimPointCloudsSetup {
 
 type OnDemandRenderer = OBC.BaseRenderer & { needsUpdate: boolean }
 
-/**
- * Owns the point clouds living in the BIM world's own scene, so they outlive every
- * React panel and are torn down by `components.dispose()`. React mirrors this; it
- * never owns a cloud.
- */
+/** Owns the clouds in the BIM scene so they outlive every React panel and die with
+ *  `components.dispose()`. React mirrors this; it never owns a cloud. */
 export class BimPointClouds extends OBC.Component implements OBC.Disposable {
   static uuid = '4cadfb31-e3a6-4962-b5be-c6b03a6523c3' as const
 
@@ -201,6 +203,7 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable {
       this.world.camera.three,
       renderer.three,
     )
+    for (const cloud of clouds) applyRenderState(pointCloudMaterial(cloud.octree), this.currentAppearance)
     this.visiblePoints = result.numVisiblePoints
     this.streaming = result.streaming
     if (result.streaming) this.refresh()

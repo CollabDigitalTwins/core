@@ -13,11 +13,8 @@ import { PointCloudAlignment } from './PointCloudAlignment'
 
 import { BimPointClouds } from './index'
 
-/**
- * Reconciles `BimState.pointCloudIds` — the set the user switched on — into the
- * `BimPointClouds` component. Mounted for the viewer's lifetime beside `ModelsSync`,
- * so a cloud cannot vanish when a toolbar panel closes. Renders nothing.
- */
+/** Reconciles `pointCloudIds` into `BimPointClouds`. Viewer-lifetime, so a panel closing cannot
+ *  drop a cloud. Renders nothing. */
 export function BimPointCloudSync({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
   const { state, dispatch } = React.useContext(BimContext)
   const { bimComponents, world, pointCloudIds } = state.bim

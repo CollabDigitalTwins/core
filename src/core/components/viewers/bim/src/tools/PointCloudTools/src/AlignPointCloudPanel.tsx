@@ -95,7 +95,7 @@ export function AlignPointCloudPanel({
         <CardHeader className="p-3 pb-2 space-y-1.5">
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-1.5">
-              <LR.Boxes size={15} className="shrink-0 text-muted-foreground" />
+              <LR.Grip size={15} className="shrink-0 text-muted-foreground" />
               <span className="truncate text-sm font-medium">{labels.title}</span>
             </div>
             <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={onDone}>

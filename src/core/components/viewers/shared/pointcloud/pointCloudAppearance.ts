@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as THREE from 'three'
+
 import type { PointCloudMaterialLike } from './pointCloudLoader'
 
 export const POINT_SIZE_TYPES = ['fixed', 'attenuated', 'adaptive'] as const
@@ -15,6 +17,7 @@ export interface PointCloudAppearance {
   size: number
   minSize: number
   maxSize: number
+  opacity: number
   sizeType: PointSizeType
   shape: PointShape
 }
@@ -24,6 +27,7 @@ export const DEFAULT_APPEARANCE: PointCloudAppearance = {
   size: 1,
   minSize: 2,
   maxSize: 12,
+  opacity: 1,
   sizeType: 'adaptive',
   shape: 'circle',
 }
@@ -41,6 +45,7 @@ export function normalizeAppearance(
   return {
     pointBudget: Math.round(clamp(Number.isFinite(next.pointBudget) ? next.pointBudget : current.pointBudget, 100_000, 20_000_000)),
     size: clamp(Number.isFinite(next.size) ? next.size : current.size, 0.01, 20),
+    opacity: clamp(Number.isFinite(next.opacity) ? next.opacity : current.opacity, 0.05, 1),
     minSize,
     maxSize: clamp(Number.isFinite(next.maxSize) ? next.maxSize : current.maxSize, minSize, 100),
     sizeType: POINT_SIZE_TYPES.includes(next.sizeType) ? next.sizeType : current.sizeType,
@@ -55,7 +60,17 @@ export function applyAppearance(material: PointCloudMaterialLike, appearance: Po
   material.size = appearance.size
   material.minSize = appearance.minSize
   material.maxSize = appearance.maxSize
+  material.opacity = appearance.opacity
   // potree-core's linear output path multiplies every channel by 12.92, so keep encodings matched.
   material.outputColorEncoding = material.inputColorEncoding
+  applyRenderState(material, appearance)
   material.needsUpdate = true
+}
+
+/** Undoes the additive, depth-test-off splat mode potree re-derives from opacity on every
+ *  shader rebuild. Re-assert after anything that can rebuild. */
+export function applyRenderState(material: PointCloudMaterialLike, appearance: PointCloudAppearance) {
+  material.transparent = appearance.opacity < 1
+  material.blending = THREE.NormalBlending
+  material.depthTest = true
 }

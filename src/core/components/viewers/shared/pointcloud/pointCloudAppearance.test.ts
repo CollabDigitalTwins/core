@@ -21,9 +21,15 @@ function stubMaterial(): PointCloudMaterialLike {
     shape: 9,
     inputColorEncoding: 1,
     outputColorEncoding: 0,
+    opacity: 1,
+    transparent: false,
+    blending: 0,
+    depthTest: true,
     clippingPlanes: [],
     clipMode: 0,
     needsUpdate: false,
+    syncClippingPlanes: () => {},
+    updateShaderSource: () => {},
   }
 }
 
@@ -45,6 +51,16 @@ describe('applyAppearance', () => {
     applyAppearance(material, DEFAULT_APPEARANCE)
 
     expect(material.outputColorEncoding).toBe(material.inputColorEncoding)
+  })
+})
+
+describe('applyAppearance opacity', () => {
+  it('writes the opacity through to the material', () => {
+    const material = stubMaterial()
+
+    applyAppearance(material, { ...DEFAULT_APPEARANCE, opacity: 0.4 })
+
+    expect(material.opacity).toBe(0.4)
   })
 })
 
@@ -72,6 +88,11 @@ describe('normalizeAppearance', () => {
 
     expect(next.sizeType).toBe(DEFAULT_APPEARANCE.sizeType)
     expect(next.shape).toBe(DEFAULT_APPEARANCE.shape)
+  })
+
+  it('never lets opacity reach zero, which would look like a failed load', () => {
+    expect(normalizeAppearance(DEFAULT_APPEARANCE, { opacity: 0 }).opacity).toBe(0.05)
+    expect(normalizeAppearance(DEFAULT_APPEARANCE, { opacity: 5 }).opacity).toBe(1)
   })
 
   it('falls back to the current value for a non-finite number', () => {

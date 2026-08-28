@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-// Types-only import. Every reference to OBC in this file is in a type
-// position (OBC.Components | null, OBC.World, etc.) so the import never
-// reaches the runtime. With `import type` TypeScript erases it at compile
-// time and webpack stops bundling @thatopen on behalf of the global
-// BimProvider. Critical: this reducer is loaded on every route via
-// CombineProviders, so without this @thatopen leaks into the initial bundle.
+// `import type` only: this reducer loads on every route, so a value import leaks @thatopen.
 import type { Plan } from "../../types/bim";
 import type { Building, DbFile } from '../../types/dbTypes';
 import type { ActionMap } from "../ActionMap";
@@ -35,11 +30,7 @@ interface BimTypes {
     }[];
     editingBimModel: string | null;
     bimModelName: string | null;
-    /**
-     * The current element selection, mirrored out of the Highlighter component so
-     * React can read it. The Highlighter owns the truth; SelectionSync is the only
-     * thing that dispatches SET_BIM_SELECTION.
-     */
+    /** Mirror of the Highlighter's selection; only SelectionSync dispatches SET_BIM_SELECTION. */
     selection: OBC.ModelIdMap;
     bcfTopic: OBC.Topic | Partial<OBC.Topic> | null;
     bcfTopics: OBC.Topic[] | Partial<OBC.Topic>[];

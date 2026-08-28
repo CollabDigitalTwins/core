@@ -13,8 +13,11 @@ import {
 
 import type { PointCloudMaterialLike } from '../../../shared/pointcloud/pointCloudLoader'
 
-function stubMaterial(): PointCloudMaterialLike {
-  return {
+type TestMaterial = PointCloudMaterialLike & { rebuilds: { synced: number; rebuilt: number } }
+
+function stubMaterial(): TestMaterial {
+  const material: TestMaterial = {
+    rebuilds: { synced: 0, rebuilt: 0 },
     size: 1,
     minSize: 2,
     maxSize: 12,
@@ -23,10 +26,17 @@ function stubMaterial(): PointCloudMaterialLike {
     shape: 1,
     inputColorEncoding: 1,
     outputColorEncoding: 1,
+    opacity: 1,
+    transparent: false,
+    blending: 0,
+    depthTest: true,
     clippingPlanes: [new THREE.Plane()],
     clipMode: CLIP_MODE_OUTSIDE,
     needsUpdate: false,
+    syncClippingPlanes: () => { material.rebuilds.synced++ },
+    updateShaderSource: () => { material.rebuilds.rebuilt++ },
   }
+  return material
 }
 
 function planes(count: number) {
@@ -59,6 +69,15 @@ describe('applyClippingPlanes', () => {
     applyClippingPlanes(material, planes(MAX_CLIP_PLANES + 5))
 
     expect(material.clippingPlanes).toHaveLength(MAX_CLIP_PLANES)
+  })
+
+  it('rebuilds the shader after the plane count lands, not before', () => {
+    const material = stubMaterial()
+
+    applyClippingPlanes(material, planes(1))
+
+    expect(material.rebuilds.synced).toBe(1)
+    expect(material.rebuilds.rebuilt).toBe(1)
   })
 
   it('copies the list so a later renderer mutation cannot reach the shader', () => {

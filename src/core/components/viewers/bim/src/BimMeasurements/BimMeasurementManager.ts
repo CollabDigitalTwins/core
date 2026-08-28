@@ -7,7 +7,7 @@ import * as FRAGS from '@thatopen/fragments'
 import * as THREE from 'three'
 
 import { CurrentWorld } from '../CurrentWorld'
-import { betterPick, ndcFromPointer, pickNearest, SCENE_PICK_WINDOW_PX } from '../lib/scenePicker'
+import { betterPick, interceptLastPick, ndcFromPointer, pickNearest, SCENE_PICK_WINDOW_PX } from '../lib/scenePicker'
 
 import {
   DEFAULT_MEASUREMENT_SETTINGS,
@@ -23,7 +23,7 @@ import type {
   BimMeasurementSettings,
   SnapClassName,
 } from './measurementSettings'
-import type { ScenePick, ScenePickSource } from '../lib/scenePicker'
+import type { LastPickLike, ScenePick, ScenePickSource } from '../lib/scenePicker'
 
 /** Single place the named snap classes cross over into the FRAGS enum. */
 const SNAP_CLASS_BY_NAME: Record<SnapClassName, FRAGS.SnappingClass> = {
@@ -108,8 +108,8 @@ export class BimMeasurementManager extends OBC.Component {
 
   private _pointerNdc: THREE.Vector2 | null = null
 
-  /** The live measurer's `onPointerMove` handler, kept so it can be detached. */
-  private _scenePickHandler: (() => void) | null = null
+  /** Undoes the live measurer's `lastPick` interception. */
+  private _releaseScenePick: (() => void) | null = null
 
   constructor(components: OBC.Components) {
     super(components)
@@ -501,43 +501,32 @@ export class BimMeasurementManager extends OBC.Component {
   }
 
   private handlePointerMove = (event: PointerEvent) => {
-    const target = this._listenerTarget
-    if (!target) return
-    this._pointerNdc = ndcFromPointer(event.clientX, event.clientY, target.getBoundingClientRect())
+    // The canvas, not the listener target: NDC is only meaningful against the drawing buffer.
+    const canvas = this.resolveWorld()?.renderer?.three.domElement
+    if (!canvas) return
+    this._pointerNdc = ndcFromPointer(event.clientX, event.clientY, canvas.getBoundingClientRect())
   }
 
-  /**
-   * The library assigns `lastPick` before firing `onPointerMove`, and both the preview and the
-   * committed measurement read it back, so overwriting it here is the whole integration.
-   */
   private attachScenePicking(measurer: OBF.Measurement) {
-    this._scenePickHandler = () => this.overrideLastPick(measurer)
-    measurer.onPointerMove.add(this._scenePickHandler)
+    this._releaseScenePick = interceptLastPick(measurer, (current) => this.nearerScenePick(current))
   }
 
   private detachScenePicking() {
-    const handler = this._scenePickHandler
-    if (!handler) return
-    for (const { measurer } of this.builtMeasurers()) measurer.onPointerMove.remove(handler)
-    this._scenePickHandler = null
+    this._releaseScenePick?.()
+    this._releaseScenePick = null
   }
 
-  private overrideLastPick(measurer: OBF.Measurement) {
-    if (this._pickSources.size === 0 || !this._pointerNdc) return
+  /** A registered source's hit when it beats the fragment snap the library just took. */
+  private nearerScenePick(current: LastPickLike | null): ScenePick | null {
+    if (this._pickSources.size === 0 || !this._pointerNdc) return null
 
     const camera = this.resolveWorld()?.camera.three
-    if (!camera) return
+    if (!camera) return null
 
     this._raycaster.setFromCamera(this._pointerNdc, camera)
     const ray = this._raycaster.ray
 
-    const holder = measurer as unknown as { lastPick: ScenePick | null }
-    const winner = betterPick(
-      holder.lastPick,
-      pickNearest(this._pickSources, ray, camera, SCENE_PICK_WINDOW_PX),
-      ray,
-    )
-    if (winner) holder.lastPick = winner
+    return betterPick(current, pickNearest(this._pickSources, ray, camera, SCENE_PICK_WINDOW_PX), ray)
   }
 
   private handleDoubleClick = () => {

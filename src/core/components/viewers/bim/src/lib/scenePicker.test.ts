@@ -4,7 +4,7 @@
 import * as THREE from 'three'
 import { describe, expect, it, vi } from 'vitest'
 
-import { betterPick, ndcFromPointer, pickNearest, SCENE_PICK_WINDOW_PX } from './scenePicker'
+import { betterPick, interceptLastPick, ndcFromPointer, pickNearest, SCENE_PICK_WINDOW_PX } from './scenePicker'
 
 import type { ScenePickSource } from './scenePicker'
 
@@ -105,5 +105,122 @@ describe('ndcFromPointer', () => {
   it('reports nothing for a collapsed viewport rather than dividing by zero', () => {
     expect(ndcFromPointer(0, 0, { left: 0, top: 0, width: 0, height: 400 })).toBeNull()
     expect(ndcFromPointer(0, 0, { left: 0, top: 0, width: 800, height: 0 })).toBeNull()
+  })
+})
+
+describe('interceptLastPick', () => {
+  const pickAt = (x: number) => ({ point: new THREE.Vector3(x, 0, 0), distance: Math.abs(x) })
+
+  it('hands every reader the merged pick, whatever the write was', () => {
+    const measurer = { lastPick: null as unknown }
+
+    interceptLastPick(measurer, () => pickAt(5))
+    measurer.lastPick = null
+
+    expect((measurer.lastPick as { point: THREE.Vector3 }).point.x).toBe(5)
+  })
+
+  it('keeps the incoming pick when there is nothing nearer', () => {
+    const measurer = { lastPick: null as unknown }
+    const fragment = pickAt(2)
+
+    interceptLastPick(measurer, () => null)
+    measurer.lastPick = fragment
+
+    expect(measurer.lastPick).toBe(fragment)
+  })
+
+  it('sees the value the library is writing, so it can compare depths', () => {
+    const measurer = { lastPick: null as unknown }
+    const seen: unknown[] = []
+
+    interceptLastPick(measurer, (current) => { seen.push(current); return null })
+    measurer.lastPick = pickAt(3)
+    measurer.lastPick = null
+
+    expect(seen).toEqual([expect.objectContaining({ distance: 3 }), null])
+  })
+
+  it('keeps the incoming pick when the merge throws', () => {
+    const measurer = { lastPick: null as unknown }
+    const fragment = pickAt(2)
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => { })
+
+    interceptLastPick(measurer, () => { throw new Error('no gl') })
+    measurer.lastPick = fragment
+
+    expect(measurer.lastPick).toBe(fragment)
+    warn.mockRestore()
+  })
+
+  it('stops merging once released, leaving an ordinary property behind', () => {
+    const measurer = { lastPick: null as unknown }
+
+    const release = interceptLastPick(measurer, () => pickAt(5))
+    measurer.lastPick = null
+    release()
+
+    expect((measurer.lastPick as { point: THREE.Vector3 }).point.x).toBe(5)
+
+    measurer.lastPick = null
+    expect(measurer.lastPick).toBeNull()
+    expect(Object.getOwnPropertyDescriptor(measurer, 'lastPick')?.value).toBeNull()
+  })
+})
+
+/**
+ * Mirrors components-front's real sequence: the preview handler is subscribed in the constructor
+ * and reads `lastPick` before anything added later can change it.
+ */
+class FakeLengthMeasurement {
+  lastPick: { point?: THREE.Vector3; distance?: number } | null = null
+  line: { start: THREE.Vector3; end: THREE.Vector3 } | null = null
+  committed: { start: THREE.Vector3; end: THREE.Vector3 } | null = null
+  private isDragging = false
+  private readonly onPointerMove: (() => void)[] = []
+
+  constructor() {
+    this.onPointerMove.push(() => this.updatePreviewLine())
+  }
+
+  pointerMove(fragmentPick: { point: THREE.Vector3; distance: number } | null) {
+    this.lastPick = fragmentPick
+    for (const handler of [...this.onPointerMove]) handler()
+  }
+
+  create() {
+    if (!this.isDragging) {
+      const pick = this.lastPick
+      if (!pick?.point) return
+      this.line = { start: pick.point.clone(), end: pick.point.clone() }
+      this.isDragging = true
+      return
+    }
+    if (this.line) this.committed = { start: this.line.start.clone(), end: this.line.end.clone() }
+    this.isDragging = false
+  }
+
+  private updatePreviewLine() {
+    const pick = this.lastPick
+    if (!pick?.point || !this.line) return
+    this.line.end = pick.point.clone()
+  }
+}
+
+describe('measuring over geometry the fragment picker cannot see', () => {
+  it('commits both points the user clicked rather than collapsing to zero length', () => {
+    const measurer = new FakeLengthMeasurement()
+    let cloudHit = { point: new THREE.Vector3(1, 0, 0), distance: 1 }
+    interceptLastPick(measurer, () => cloudHit)
+
+    measurer.pointerMove(null)
+    measurer.create()
+
+    cloudHit = { point: new THREE.Vector3(5, 0, 0), distance: 5 }
+    measurer.pointerMove(null)
+    measurer.create()
+
+    expect(measurer.committed?.start.x).toBe(1)
+    expect(measurer.committed?.end.x).toBe(5)
   })
 })

@@ -3,7 +3,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { useTranslations } from 'next-intl'
 import * as React from 'react'
+import { toast } from 'sonner'
 
 import { useFile, useFilesByBuildingId } from '../../../../../hooks/files/files'
 import { BimContext } from '../../../../../store/BIM/context'
@@ -18,10 +20,12 @@ import { placementPatch, readPlacement, samePlacement } from './pointCloudPlacem
 import { BimPointClouds } from './index'
 
 import type { AlignmentState } from './PointCloudAlignment'
+import type { DbFile } from '../../../../../types/dbTypes'
 
 /** Reconciles `pointCloudIds` into `BimPointClouds` and carries placement to and from the file
  *  record. Viewer-lifetime, so a panel closing cannot drop a cloud. Renders nothing. */
 export function BimPointCloudSync({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
+  const t = useTranslations('PointCloudAlignment')
   const { state, dispatch } = React.useContext(BimContext)
   const { bimComponents, world, pointCloudIds } = state.bim
 
@@ -34,10 +38,14 @@ export function BimPointCloudSync({ pointcloudApiUrl }: { pointcloudApiUrl?: str
   const updateFileRef = React.useRef(updateFile)
   React.useEffect(() => { updateFileRef.current = updateFile }, [updateFile])
 
-  const placementOfRef = React.useRef((_id: string) => readPlacement(undefined))
+  // Read through a ref so the alignment subscription below survives every file refetch.
+  const fileOfRef = React.useRef((_id: string): DbFile | undefined => undefined)
   React.useEffect(() => {
-    placementOfRef.current = (id: string) => readPlacement(files?.find((file) => String(file.id) === id))
+    fileOfRef.current = (id: string) => files?.find((file) => String(file.id) === id)
   }, [files])
+
+  const announceRef = React.useRef(t)
+  React.useEffect(() => { announceRef.current = t }, [t])
 
   React.useEffect(() => {
     if (!bimComponents || !world) return
@@ -64,7 +72,7 @@ export function BimPointCloudSync({ pointcloudApiUrl }: { pointcloudApiUrl?: str
 
     for (const id of pointCloudIds) {
       if (clouds.get(id)) continue
-      void clouds.add(id, placementOfRef.current(id)).catch((error) => {
+      void clouds.add(id, readPlacement(fileOfRef.current(id))).catch((error) => {
         console.warn(`[point cloud ${id}] could not be loaded:`, error)
         dispatch({ type: 'TOGGLE_POINT_CLOUD', payload: { pointCloudId: id } })
       })
@@ -77,9 +85,17 @@ export function BimPointCloudSync({ pointcloudApiUrl }: { pointcloudApiUrl?: str
 
     const track = (session: AlignmentState | null) => setAligningId(session ? Number(session.id) : null)
     const persist = ({ id, placement }: AlignmentState) => {
-      if (samePlacement(placement, placementOfRef.current(id))) return
+      const file = fileOfRef.current(id)
+      if (samePlacement(placement, readPlacement(file))) return
+
+      const name = file?.name ?? id
+      const announce = announceRef.current
       void Promise.resolve(updateFileRef.current(placementPatch(placement)))
-        .catch((error: unknown) => console.warn(`[point cloud ${id}] placement was not saved:`, error))
+        .then(() => toast.success(announce('saved', { name })))
+        .catch((error: unknown) => {
+          console.warn(`[point cloud ${id}] placement was not saved:`, error)
+          toast.error(announce('saveFailed', { name }))
+        })
     }
 
     alignment.onChanged.add(track)

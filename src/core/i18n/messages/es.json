@@ -236,7 +236,10 @@
     "add": "Añadir plano de recorte",
     "cancelAdd": "Cancelar añadir plano de recorte",
     "deleteAll": "Eliminar todos los planos de recorte",
-    "hint": "Haz doble clic en el modelo para añadir un plano de recorte. Retroceso elimina el plano bajo el cursor. Enter finaliza. Escape elimina todos los planos."
+    "hint": "Haz doble clic en el modelo para añadir un plano de recorte. Retroceso elimina el plano bajo el cursor. Enter finaliza. Escape elimina todos los planos.",
+    "sectionBox": "Caja de sección",
+    "clearSectionBox": "Quitar caja de sección",
+    "sectionBoxHint": "Arrastra el tirador de una cara para redimensionar la caja de sección. Los planos de corte siguen aplicándose."
   },
   "CommentInput": {
     "title": "Añadir comentario",
@@ -2066,7 +2069,10 @@
     "modeRotate": "Rotar",
     "reset": "Restablecer",
     "done": "Listo",
-    "noClouds": "No hay nubes de puntos activadas"
+    "noClouds": "No hay nubes de puntos activadas",
+    "editHint": "Arrastra el gizmo para colocar la nube de puntos. La posición se guarda al pulsar Listo.",
+    "saved": "Se guardó la posición de «{name}»",
+    "saveFailed": "No se pudo guardar la posición de «{name}»"
   },
   "PointCloudSettings": {
     "title": "Nubes de puntos",

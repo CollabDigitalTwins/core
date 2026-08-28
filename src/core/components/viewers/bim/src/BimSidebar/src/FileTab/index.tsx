@@ -52,7 +52,7 @@ export function FileTab() {
   return (
     <ViewerSidebarPanel search={{ value: searchQuery, onChange: setSearchQuery }}>
       <ModelsSection files={bimFiles} query={searchQuery} />
-      <PointCloudsSection files={pointCloudFiles} query={searchQuery} />
+      <PointCloudsSection files={pointCloudFiles} query={searchQuery} buildingId={buildingId ?? 0} />
       <FilesSection files={nonBimFiles} query={searchQuery} />
     </ViewerSidebarPanel>
   )

@@ -11,6 +11,12 @@ export interface ScenePick {
   distance: number
 }
 
+/** As much of a `THREE.Intersection` as the measurement tools rely on. */
+export interface LastPickLike {
+  point?: THREE.Vector3
+  distance?: number
+}
+
 /** How a non-fragment renderer offers itself to the BIM tools without them knowing what it is. */
 export interface ScenePickSource {
   pick(ray: THREE.Ray, camera: THREE.Camera, thresholdPx: number): { point: THREE.Vector3 } | null
@@ -80,4 +86,44 @@ export function ndcFromPointer(
     ((clientX - rect.left) / rect.width) * 2 - 1,
     -((clientY - rect.top) / rect.height) * 2 + 1,
   )
+}
+
+/**
+ * Merges a nearer scene hit into a measurer's `lastPick` at assignment time.
+ *
+ * Subscribing to `onPointerMove` is too late: the library's own preview handler is registered in
+ * the constructor, so it reads `lastPick` first — and it reads `null` whenever the cursor is over
+ * geometry the fragment picker cannot see. Intercepting the write puts every reader in agreement
+ * regardless of subscription order. Returns the undo.
+ */
+export function interceptLastPick(
+  measurer: object,
+  nearer: (current: LastPickLike | null) => ScenePick | null,
+): () => void {
+  const holder = measurer as Record<string, unknown>
+  let value = (holder.lastPick ?? null) as LastPickLike | null
+
+  Object.defineProperty(measurer, 'lastPick', {
+    configurable: true,
+    enumerable: true,
+    get: () => value,
+    set: (incoming: LastPickLike | null) => { value = merged(incoming, nearer) },
+  })
+
+  return () => {
+    delete holder.lastPick
+    holder.lastPick = value
+  }
+}
+
+function merged(
+  incoming: LastPickLike | null,
+  nearer: (current: LastPickLike | null) => ScenePick | null,
+): LastPickLike | null {
+  try {
+    return nearer(incoming) ?? incoming
+  } catch (error) {
+    console.warn('scenePicker: could not merge a scene pick', error)
+    return incoming
+  }
 }

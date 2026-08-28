@@ -374,3 +374,87 @@ describe('BimPointClouds as a pick source', () => {
     expect(engine.picks).toEqual([])
   })
 })
+
+describe('BimPointClouds ghosting', () => {
+  it('halves one cloud opacity and leaves the others alone', async () => {
+    const { clouds } = setUp()
+    const ghosted = await clouds.add('669')
+    const solid = await clouds.add('670')
+
+    clouds.setGhosted('669', true)
+
+    expect(clouds.isGhosted('669')).toBe(true)
+    expect(materialOf(ghosted).opacity).toBe(0.5)
+    expect(materialOf(solid).opacity).toBe(1)
+  })
+
+  it('makes a ghosted cloud transparent, otherwise the halved opacity would not show', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669')
+
+    clouds.setGhosted('669', true)
+
+    expect(materialOf(cloud).transparent).toBe(true)
+  })
+
+  it('holds the ghost through the per-frame render state, which reasserts the splat mode', async () => {
+    const { clouds, world } = setUp()
+    const cloud = await clouds.add('669')
+    clouds.setGhosted('669', true)
+
+    world.renderer.onBeforeUpdate.trigger()
+
+    expect(materialOf(cloud).transparent).toBe(true)
+  })
+
+  it('holds the ghost across a viewer-wide appearance change', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669')
+    clouds.setGhosted('669', true)
+
+    clouds.setAppearance({ size: 3 })
+
+    expect(materialOf(cloud).opacity).toBe(0.5)
+    expect(materialOf(cloud).size).toBe(3)
+  })
+
+  it('restores full opacity when the ghost is switched off', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669')
+
+    clouds.setGhosted('669', true)
+    clouds.setGhosted('669', false)
+
+    expect(clouds.isGhosted('669')).toBe(false)
+    expect(materialOf(cloud).opacity).toBe(1)
+    expect(materialOf(cloud).transparent).toBe(false)
+  })
+
+  it('ghosts relative to the viewer opacity rather than overriding it', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669')
+    clouds.setAppearance({ opacity: 0.8 })
+
+    clouds.setGhosted('669', true)
+
+    expect(materialOf(cloud).opacity).toBeCloseTo(0.4)
+  })
+
+  it('forgets the ghost when the cloud is removed, so a reload comes back solid', async () => {
+    const { clouds } = setUp()
+    await clouds.add('669')
+    clouds.setGhosted('669', true)
+
+    clouds.remove('669')
+    const reloaded = await clouds.add('669')
+
+    expect(clouds.isGhosted('669')).toBe(false)
+    expect(materialOf(reloaded).opacity).toBe(1)
+  })
+
+  it('tolerates ghosting an id it has not loaded', () => {
+    const { clouds } = setUp()
+
+    expect(() => clouds.setGhosted('nope', true)).not.toThrow()
+  })
+})

@@ -4,9 +4,11 @@
 // @vitest-environment jsdom
 import { render, waitFor } from '@testing-library/react'
 import * as React from 'react'
+import { toast } from 'sonner'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { BimContext } from '../../../../../store/BIM/context'
+
 
 import { BimMeasurementManager } from '../BimMeasurements/BimMeasurementManager'
 
@@ -48,6 +50,8 @@ const { clouds, fileHooks } = vi.hoisted(() => {
 vi.mock('./index', () => ({ BimPointClouds: class {} }))
 vi.mock('./PointCloudAlignment', () => ({ PointCloudAlignment: class {} }))
 vi.mock('../BimMeasurements/BimMeasurementManager', () => ({ BimMeasurementManager: class {} }))
+vi.mock('next-intl', () => ({ useTranslations: () => (key: string, values?: { name?: string }) => `${key}:${values?.name ?? ''}` }))
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 vi.mock('../../../../../hooks/files/files', () => ({
   useFilesByBuildingId: () => ({ files: fileHooks.files, isLoading: fileHooks.isLoading }),
   useFile: (id: number | null) => {
@@ -121,6 +125,8 @@ afterEach(() => {
   fileHooks.keyedTo.length = 0
   fileHooks.updateFile.mockReset()
   fileHooks.updateFile.mockResolvedValue({})
+  vi.mocked(toast.success).mockClear()
+  vi.mocked(toast.error).mockClear()
 })
 
 describe('BimPointCloudSync', () => {
@@ -173,7 +179,7 @@ describe('BimPointCloudSync', () => {
 
 describe('BimPointCloudSync placement', () => {
   const PLACED: PointCloudPlacement = { position: [1, 2, 3], rotation: [0, 0.5, 0], scale: 2, sourceUp: 'z' }
-  const stored = { id: 669, pointCloudTransform: { version: PLACEMENT_VERSION, ...PLACED } }
+  const stored = { id: 669, name: 'basement scan', pointCloudTransform: { version: PLACEMENT_VERSION, ...PLACED } }
 
   it('loads a cloud at its stored placement', async () => {
     fileHooks.files = [stored]
@@ -236,6 +242,38 @@ describe('BimPointCloudSync placement', () => {
 
     await waitFor(() => expect(warn).toHaveBeenCalled())
     warn.mockRestore()
+  })
+
+  it('tells the user the placement was saved, naming the cloud', async () => {
+    fileHooks.files = [{ id: 669, name: 'basement scan' }]
+    renderSync(['669'])
+
+    alignment.onCommitted.trigger({ id: '669', placement: { ...PLACED } })
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('saved:basement scan'))
+  })
+
+  it('tells the user when the placement could not be saved', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => { })
+    fileHooks.files = [{ id: 669, name: 'basement scan' }]
+    fileHooks.updateFile.mockRejectedValueOnce(new Error('offline'))
+    renderSync(['669'])
+
+    alignment.onCommitted.trigger({ id: '669', placement: { ...PLACED } })
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('saveFailed:basement scan'))
+    warn.mockRestore()
+  })
+
+  it('stays quiet when the placement did not actually change', async () => {
+    fileHooks.files = [stored]
+    renderSync(['669'])
+    await waitFor(() => expect(clouds.placements).toHaveLength(1))
+
+    alignment.onCommitted.trigger({ id: '669', placement: { ...PLACED } })
+
+    expect(toast.success).not.toHaveBeenCalled()
+    expect(toast.error).not.toHaveBeenCalled()
   })
 
   it('unsubscribes on unmount', () => {

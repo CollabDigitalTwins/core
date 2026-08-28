@@ -236,7 +236,10 @@
     "add": "Add clipping plane",
     "cancelAdd": "Cancel add clipping plane",
     "deleteAll": "Delete all clipping planes",
-    "hint": "Double-click the model to add a clipping plane. Backspace removes the plane under the cursor. Enter finishes. Escape removes every plane."
+    "hint": "Double-click the model to add a clipping plane. Backspace removes the plane under the cursor. Enter finishes. Escape removes every plane.",
+    "sectionBox": "Section box",
+    "clearSectionBox": "Clear section box",
+    "sectionBoxHint": "Drag a face handle to resize the section box. Clipping planes still apply."
   },
   "CommentInput": {
     "title": "Add Comment",
@@ -2069,7 +2072,10 @@
     "modeRotate": "Rotate",
     "reset": "Reset",
     "done": "Done",
-    "noClouds": "No point clouds are switched on"
+    "noClouds": "No point clouds are switched on",
+    "editHint": "Drag the gizmo to place the point cloud. The position is saved when you press Done.",
+    "saved": "Saved the position of \"{name}\"",
+    "saveFailed": "Could not save the position of \"{name}\""
   },
   "PointCloudSettings": {
     "title": "Point clouds",

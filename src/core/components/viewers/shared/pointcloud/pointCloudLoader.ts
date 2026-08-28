@@ -7,6 +7,17 @@ import type { PointCloudAppearance } from './pointCloudAppearance'
 import type { PointCloudEngine, PointCloudOctreeLike } from './pointCloudRegistry'
 import type * as THREE from 'three'
 
+type PotreeCtor = {
+  new (): PotreeLike
+  pick(
+    clouds: PointCloudOctreeLike[],
+    renderer: unknown,
+    camera: THREE.Camera,
+    ray: THREE.Ray,
+    params?: { pickWindowSize?: number },
+  ): { position?: THREE.Vector3 } | null
+}
+
 type PotreeLike = {
   pointBudget: number
   loadPointCloud(fileName: string, baseUrl: string): Promise<PointCloudOctreeLike>
@@ -48,14 +59,15 @@ export function pointCloudMaterial(octree: PointCloudOctreeLike): PointCloudMate
  */
 export function createPotreeEngine(appearance: PointCloudAppearance = DEFAULT_APPEARANCE): PointCloudEngine {
   let potree: PotreeLike | null = null
+  let Potree: PotreeCtor | null = null
 
   const engine: PointCloudEngine = {
     pointBudget: appearance.pointBudget,
 
     async load(fileName, baseUrl) {
       if (!potree) {
-        const { Potree } = await import('potree-core')
-        potree = new Potree() as unknown as PotreeLike
+        Potree = (await import('potree-core')).Potree as unknown as PotreeCtor
+        potree = new Potree()
       }
       potree.pointBudget = engine.pointBudget
 
@@ -74,8 +86,14 @@ export function createPotreeEngine(appearance: PointCloudAppearance = DEFAULT_AP
       }
     },
 
+    pick(clouds, camera, renderer, ray, pickWindowSize) {
+      if (!Potree || clouds.length === 0) return null
+      return Potree.pick(clouds, renderer, camera, ray, { pickWindowSize })?.position ?? null
+    },
+
     dispose() {
       potree = null
+      Potree = null
     },
   }
 

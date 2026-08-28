@@ -28,6 +28,7 @@ function stubEngine() {
       return octree
     },
     update: () => ({ numVisiblePoints: 0, streaming: false }),
+    pick: () => null,
     dispose: () => {},
   }
 }

@@ -22,6 +22,13 @@ export interface PointCloudEngine {
     camera: THREE.Camera,
     renderer: unknown,
   ): { numVisiblePoints: number; streaming: boolean }
+  pick(
+    clouds: PointCloudOctreeLike[],
+    camera: THREE.Camera,
+    renderer: unknown,
+    ray: THREE.Ray,
+    pickWindowSize: number,
+  ): THREE.Vector3 | null
   dispose(): void
 }
 

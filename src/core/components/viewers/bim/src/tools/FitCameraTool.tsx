@@ -16,6 +16,7 @@ import * as React from "react";
 import { BimContext } from '../../../../../store/BIM/context'
 import { Button } from '../../../../ui/Button'
 import { FitCamera } from '../FitCamera'
+import { isModelIdMapEmpty } from '../lib/bimTree'
 
 import type { Tool } from '../../../../../types/tools'
 
@@ -25,7 +26,7 @@ interface FitCameraProps {
 
 export const FitCameraTool: React.FC<FitCameraProps> = ({ tool }) => {
   const { state: bimState } = React.useContext(BimContext)
-  const { bimComponents } = bimState.bim
+  const { bimComponents, selection } = bimState.bim
 
   const handleFitCamera = async () => {
     if (!bimComponents) return
@@ -33,6 +34,10 @@ export const FitCameraTool: React.FC<FitCameraProps> = ({ tool }) => {
     try {
       const fitCamera = bimComponents.get(FitCamera)
       if (!fitCamera) throw new Error('FitCamera component not found')
+
+      if (selection && !isModelIdMapEmpty(selection)) {
+        if (await fitCamera.fitToItems(selection)) return
+      }
       await fitCamera.fit()
     }
     catch (error) {

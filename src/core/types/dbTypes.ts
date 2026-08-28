@@ -395,6 +395,8 @@ export interface DbFile {
   lng?: number | null
   elevation?: number | null
   rotation?: number | null
+  bimRotation?: number | null
+  pointCloudTransform?: unknown
   isVisible?: boolean
   lazFileKey?: string | null
   potreeFolderKey?: string | null

@@ -17,6 +17,9 @@ import type { AlignmentMode } from '../../../PointClouds/PointCloudAlignment'
 
 const AXES = ['X', 'Y', 'Z'] as const
 
+// The card is Z-up like the BIM authoring tools; the scene is Y-up. Index by display axis.
+const WORLD_AXIS = [0, 2, 1] as const
+
 const MODES: { mode: AlignmentMode; icon: React.ComponentType<{ size?: number }>; key: string }[] = [
   { mode: 'translate', icon: LR.Move3d, key: 'G' },
   { mode: 'rotate', icon: LR.Rotate3d, key: 'R' },
@@ -61,9 +64,9 @@ function NumberRow({
             <Input
               type="number"
               aria-label={`${label} ${axis}`}
-              value={values[index]}
+              value={values[WORLD_AXIS[index]]}
               step={step}
-              onChange={(event) => onChange(index, Number.parseFloat(event.target.value) || 0)}
+              onChange={(event) => onChange(WORLD_AXIS[index], Number.parseFloat(event.target.value) || 0)}
               className="h-7 pl-5 text-xs"
             />
           </div>
@@ -90,7 +93,7 @@ export function AlignPointCloudPanel({
   }
 
   return (
-    <div className="absolute bottom-10 right-4 z-50 w-72 pointer-events-auto">
+    <div className="fixed left-1/2 -translate-x-1/2 bottom-12 z-50 w-72 pointer-events-auto">
       <Card className="shadow-lg border bg-background/95 backdrop-blur-sm">
         <CardHeader className="p-3 pb-2 space-y-1.5">
           <div className="flex items-center justify-between gap-2">

@@ -221,12 +221,12 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
         if (savePosition) {
           const { x, y, z } = fragModel.object.position
           const rotation = fragModel.object.rotation.y
-          updateFileRef.current({ x, y, z, rotation } as any)
+          updateFileRef.current({ x, y, z, bimRotation: rotation } as any)
             .catch((err: unknown) => console.error(`[BimMove] Failed to save position for "${file.name}":`, err))
           file.x = x
           file.y = y
           file.z = z
-          file.rotation = rotation
+          file.bimRotation = rotation
         }
         gizmoControllersRef.current.delete(file.name)
         if (gizmoControllersRef.current.size === 0 && highlighter) highlighter.enabled = true

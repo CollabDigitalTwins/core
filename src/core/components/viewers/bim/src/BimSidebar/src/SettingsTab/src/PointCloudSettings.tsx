@@ -82,7 +82,7 @@ export function PointCloudSettings() {
           unit="%"
           value={[Math.round(appearance.opacity * 100)]}
           onValueChange={([percent]) => update({ opacity: percent / 100 })}
-          min={5}
+          min={0}
           max={100}
           step={5}
         />

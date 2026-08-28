@@ -90,8 +90,8 @@ describe('normalizeAppearance', () => {
     expect(next.shape).toBe(DEFAULT_APPEARANCE.shape)
   })
 
-  it('never lets opacity reach zero, which would look like a failed load', () => {
-    expect(normalizeAppearance(DEFAULT_APPEARANCE, { opacity: 0 }).opacity).toBe(0.05)
+  it('allows a fully hidden cloud and rejects anything past fully opaque', () => {
+    expect(normalizeAppearance(DEFAULT_APPEARANCE, { opacity: 0 }).opacity).toBe(0)
     expect(normalizeAppearance(DEFAULT_APPEARANCE, { opacity: 5 }).opacity).toBe(1)
   })
 

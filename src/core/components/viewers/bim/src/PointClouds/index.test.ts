@@ -81,6 +81,7 @@ function stubEngine() {
       engine.updates++
       return { numVisiblePoints: 7, streaming: engine.streaming }
     },
+    pick: () => null,
     dispose: () => { disposed++ },
   }
   return engine

@@ -45,7 +45,7 @@ export function normalizeAppearance(
   return {
     pointBudget: Math.round(clamp(Number.isFinite(next.pointBudget) ? next.pointBudget : current.pointBudget, 100_000, 20_000_000)),
     size: clamp(Number.isFinite(next.size) ? next.size : current.size, 0.01, 20),
-    opacity: clamp(Number.isFinite(next.opacity) ? next.opacity : current.opacity, 0.05, 1),
+    opacity: clamp(Number.isFinite(next.opacity) ? next.opacity : current.opacity, 0, 1),
     minSize,
     maxSize: clamp(Number.isFinite(next.maxSize) ? next.maxSize : current.maxSize, minSize, 100),
     sizeType: POINT_SIZE_TYPES.includes(next.sizeType) ? next.sizeType : current.sizeType,

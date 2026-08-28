@@ -11,27 +11,29 @@ import { DEFAULT_PLACEMENT } from '../../../../../shared/pointcloud/pointCloudPl
 import { AlignPointCloudPanel } from './AlignPointCloudPanel'
 
 import type { PointCloudPlacement } from '../../../../../shared/pointcloud/pointCloudPlacement'
+import type { AlignmentMode } from '../../../PointClouds/PointCloudAlignment'
 
 const LABELS = {
   title: 'Align', position: 'Position', rotation: 'Rotation', scale: 'Scale',
   translate: 'Move', rotate: 'Rotate', reset: 'Reset', done: 'Done',
 }
 
-function renderPanel(placement: PointCloudPlacement) {
+function renderPanel(placement: PointCloudPlacement, mode: AlignmentMode = 'translate') {
   const onPlacementChange = vi.fn()
+  const onModeChange = vi.fn()
   render(
     <AlignPointCloudPanel
       name="scan"
       placement={placement}
-      mode="translate"
+      mode={mode}
       labels={LABELS}
-      onModeChange={vi.fn()}
+      onModeChange={onModeChange}
       onPlacementChange={onPlacementChange}
       onDone={vi.fn()}
       onReset={vi.fn()}
     />,
   )
-  return { onPlacementChange }
+  return { onPlacementChange, onModeChange }
 }
 
 describe('AlignPointCloudPanel axes', () => {
@@ -52,12 +54,54 @@ describe('AlignPointCloudPanel axes', () => {
   })
 
   it('uses the same axis order for rotation', () => {
-    const { onPlacementChange } = renderPanel({ ...DEFAULT_PLACEMENT, rotation: [0, 0, 0] })
+    const { onPlacementChange } = renderPanel({ ...DEFAULT_PLACEMENT, rotation: [0, 0, 0] }, 'rotate')
 
     fireEvent.change(screen.getByLabelText('Rotation Z'), { target: { value: '90' } })
 
     const next = onPlacementChange.mock.calls[0][0] as PointCloudPlacement
     expect(next.rotation[1]).toBeCloseTo(Math.PI / 2)
     expect(next.rotation[2]).toBe(0)
+  })
+})
+
+describe('AlignPointCloudPanel modes', () => {
+  it('shows only the position inputs while moving', () => {
+    renderPanel(DEFAULT_PLACEMENT, 'translate')
+
+    expect(screen.getByLabelText('Position X')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Rotation X')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Scale')).not.toBeInTheDocument()
+  })
+
+  it('shows only the rotation inputs while rotating', () => {
+    renderPanel(DEFAULT_PLACEMENT, 'rotate')
+
+    expect(screen.getByLabelText('Rotation X')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Position X')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Scale')).not.toBeInTheDocument()
+  })
+
+  it('shows only the scale input while scaling', () => {
+    renderPanel(DEFAULT_PLACEMENT, 'scale')
+
+    expect(screen.getByLabelText('Scale')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Position X')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Rotation X')).not.toBeInTheDocument()
+  })
+
+  it('keeps every mode reachable, so switching is one click from anywhere', () => {
+    const { onModeChange } = renderPanel(DEFAULT_PLACEMENT, 'scale')
+
+    fireEvent.click(screen.getByTitle('Move (G)'))
+
+    expect(onModeChange).toHaveBeenCalledWith('translate')
+  })
+
+  it('still edits scale when that is the live mode', () => {
+    const { onPlacementChange } = renderPanel({ ...DEFAULT_PLACEMENT, scale: 1 }, 'scale')
+
+    fireEvent.change(screen.getByLabelText('Scale'), { target: { value: '2.5' } })
+
+    expect(onPlacementChange).toHaveBeenCalledWith(expect.objectContaining({ scale: 2.5 }))
   })
 })

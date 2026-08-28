@@ -55,6 +55,10 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
   const isGhost = !!(file as any).isGhost
   const hasPlaceOption = options.includes('view') || options.includes('move')
 
+  const isHidden = file.isVisible === false
+  // A PDF is never in the scene, so its download must not hang on a visibility it cannot have.
+  const isSceneContent = options.includes('ghost') || options.includes('move')
+
   const handleDeleteClick = React.useCallback(() => {
     if (confirmDelete) {
       setIsDeleteDialogOpen(true)
@@ -78,7 +82,7 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
 
   return (
     <>
-      {options.includes('download') && (
+      {options.includes('download') && !(isSceneContent && isHidden) && (
         <DropdownMenuItem
           onClick={() => { void onAction('download', file) }}
           disabled={!canReadFile}
@@ -107,7 +111,7 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
           {file.isVisible !== false ? t('hideTitle') : t('showTitle')}
         </DropdownMenuItem>
       )}
-      {options.includes('ghost') && (
+      {options.includes('ghost') && !isHidden && (
         <DropdownMenuItem
           onClick={() => { void onAction('ghost', file) }}
           disabled={!canReadFile || !canUpdateFile}
@@ -116,7 +120,7 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
           {isGhost ? t('unghostTitle') : t('ghostTitle')}
         </DropdownMenuItem>
       )}
-      {options.includes('move') && isPlaced && (
+      {options.includes('move') && isPlaced && !isHidden && (
         <DropdownMenuItem
           onClick={() => { void onAction('move', file) }}
           disabled={!canReadFile || !canUpdateFile}

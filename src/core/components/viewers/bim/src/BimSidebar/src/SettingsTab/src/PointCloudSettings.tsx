@@ -17,6 +17,7 @@ import {
   POINT_SIZE_TYPES,
 } from '../../../../../../shared/pointcloud/pointCloudAppearance'
 import { BimPointClouds } from '../../../../PointClouds'
+import { useBimPointCloudOpacity } from '../../../../PointClouds/useBimPointCloudOpacity'
 import { useBimPointClouds } from '../../../../PointClouds/useBimPointClouds'
 
 
@@ -24,13 +25,15 @@ import type { PointCloudAppearance } from '../../../../../../shared/pointcloud/p
 
 const BUDGET_STEP = 100_000
 
-/** Point budget, size and splat shape for every cloud in the BIM scene. Hidden until one is on. */
+/** Point budget, size and splat shape for every cloud in the BIM scene, and opacity per cloud.
+ *  Hidden until one is on. */
 export function PointCloudSettings() {
   const t = useTranslations('PointCloudSettings')
 
   const { state } = React.useContext(BimContext)
   const { bimComponents } = state.bim
   const clouds = useBimPointClouds()
+  const { opacityOf, setOpacity } = useBimPointCloudOpacity()
 
   const component = React.useMemo(
     () => bimComponents?.get(BimPointClouds) ?? null,
@@ -77,15 +80,18 @@ export function PointCloudSettings() {
           step={0.1}
         />
 
-        <SliderWithInput
-          label={t('opacity')}
-          unit="%"
-          value={[Math.round(appearance.opacity * 100)]}
-          onValueChange={([percent]) => update({ opacity: percent / 100 })}
-          min={0}
-          max={100}
-          step={5}
-        />
+        {clouds.map((cloud) => (
+          <SliderWithInput
+            key={cloud.id}
+            label={clouds.length > 1 ? t('opacityOf', { name: cloud.name ?? cloud.id }) : t('opacity')}
+            unit="%"
+            value={[Math.round(opacityOf(cloud.id) * 100)]}
+            onValueChange={([percent]) => setOpacity(cloud.id, percent / 100)}
+            min={0}
+            max={100}
+            step={5}
+          />
+        ))}
 
         <SliderWithInput
           label={t('maxSize')}

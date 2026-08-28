@@ -2087,6 +2087,7 @@
     "shape_square": "Cuadrado",
     "shape_circle": "Círculo",
     "shape_paraboloid": "Paraboloide",
-    "opacity": "Opacidad"
+    "opacity": "Opacidad",
+    "opacityOf": "Opacidad — {name}"
   }
 }

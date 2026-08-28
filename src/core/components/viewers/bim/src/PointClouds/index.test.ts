@@ -31,7 +31,7 @@ import { pointCloudRootName } from '../../../shared/pointcloud/pointCloudRegistr
 
 import { CLIP_MODE_DISABLED, CLIP_MODE_OUTSIDE } from './pointCloudClipping'
 
-import { BimPointClouds } from './index'
+import { BimPointClouds, GHOST_OPACITY } from './index'
 
 import type { LoadedPointCloud, PointCloudEngine } from '../../../shared/pointcloud/pointCloudRegistry'
 import type { PointCloudSource } from '../../../shared/pointcloud/pointCloudSource'
@@ -375,50 +375,123 @@ describe('BimPointClouds as a pick source', () => {
   })
 })
 
-describe('BimPointClouds ghosting', () => {
-  it('halves one cloud opacity and leaves the others alone', async () => {
+describe('BimPointClouds per-cloud opacity', () => {
+  it('sets one cloud opacity and leaves the others alone', async () => {
     const { clouds } = setUp()
-    const ghosted = await clouds.add('669')
+    const dimmed = await clouds.add('669')
     const solid = await clouds.add('670')
 
-    clouds.setGhosted('669', true)
+    clouds.setOpacity('669', 0.25)
 
-    expect(clouds.isGhosted('669')).toBe(true)
-    expect(materialOf(ghosted).opacity).toBe(0.5)
+    expect(clouds.opacityOf('669')).toBe(0.25)
+    expect(materialOf(dimmed).opacity).toBe(0.25)
     expect(materialOf(solid).opacity).toBe(1)
   })
 
-  it('makes a ghosted cloud transparent, otherwise the halved opacity would not show', async () => {
+  it('clamps a value the shader could not render', async () => {
+    const { clouds } = setUp()
+    await clouds.add('669')
+
+    clouds.setOpacity('669', 4)
+    expect(clouds.opacityOf('669')).toBe(1)
+
+    clouds.setOpacity('669', -1)
+    expect(clouds.opacityOf('669')).toBe(0)
+  })
+
+  it('announces the change, so both the sidebar and the settings can follow it', async () => {
+    const { clouds } = setUp()
+    await clouds.add('669')
+    const changed = vi.fn()
+    clouds.onOpacityChanged.add(changed)
+
+    clouds.setOpacity('669', 0.4)
+
+    expect(changed).toHaveBeenCalledWith({ id: '669', opacity: 0.4 })
+  })
+
+  it('falls back to the viewer-wide opacity until a cloud is given its own', async () => {
     const { clouds } = setUp()
     const cloud = await clouds.add('669')
 
-    clouds.setGhosted('669', true)
+    clouds.setAppearance({ opacity: 0.6 })
+
+    expect(clouds.opacityOf('669')).toBe(0.6)
+    expect(materialOf(cloud).opacity).toBe(0.6)
+  })
+
+  it('keeps a cloud own opacity when the viewer-wide one changes', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669')
+    clouds.setOpacity('669', 0.25)
+
+    clouds.setAppearance({ opacity: 0.6, size: 3 })
+
+    expect(clouds.opacityOf('669')).toBe(0.25)
+    expect(materialOf(cloud).opacity).toBe(0.25)
+    expect(materialOf(cloud).size).toBe(3)
+  })
+
+  it('makes a dimmed cloud transparent, otherwise the opacity would not show', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669')
+
+    clouds.setOpacity('669', 0.5)
 
     expect(materialOf(cloud).transparent).toBe(true)
   })
 
-  it('holds the ghost through the per-frame render state, which reasserts the splat mode', async () => {
+  it('holds the opacity through the per-frame render state, which reasserts the splat mode', async () => {
     const { clouds, world } = setUp()
     const cloud = await clouds.add('669')
-    clouds.setGhosted('669', true)
+    clouds.setOpacity('669', 0.5)
 
     world.renderer.onBeforeUpdate.trigger()
 
     expect(materialOf(cloud).transparent).toBe(true)
   })
 
-  it('holds the ghost across a viewer-wide appearance change', async () => {
+  it('forgets the opacity when the cloud is removed, so a reload comes back solid', async () => {
     const { clouds } = setUp()
-    const cloud = await clouds.add('669')
-    clouds.setGhosted('669', true)
+    await clouds.add('669')
+    clouds.setOpacity('669', 0.25)
 
-    clouds.setAppearance({ size: 3 })
+    clouds.remove('669')
+    const reloaded = await clouds.add('669')
 
-    expect(materialOf(cloud).opacity).toBe(0.5)
-    expect(materialOf(cloud).size).toBe(3)
+    expect(clouds.opacityOf('669')).toBe(1)
+    expect(materialOf(reloaded).opacity).toBe(1)
   })
 
-  it('restores full opacity when the ghost is switched off', async () => {
+  it('tolerates an id it has not loaded', () => {
+    const { clouds } = setUp()
+
+    expect(() => clouds.setOpacity('nope', 0.5)).not.toThrow()
+  })
+})
+
+describe('BimPointClouds ghosting', () => {
+  it('is the same value the opacity control reads, so the two cannot disagree', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669')
+
+    clouds.setGhosted('669', true)
+
+    expect(clouds.isGhosted('669')).toBe(true)
+    expect(clouds.opacityOf('669')).toBe(GHOST_OPACITY)
+    expect(materialOf(cloud).opacity).toBe(GHOST_OPACITY)
+  })
+
+  it('reads as ghosted when the opacity slider alone dimmed the cloud', async () => {
+    const { clouds } = setUp()
+    await clouds.add('669')
+
+    clouds.setOpacity('669', 0.3)
+
+    expect(clouds.isGhosted('669')).toBe(true)
+  })
+
+  it('restores full opacity when switched off', async () => {
     const { clouds } = setUp()
     const cloud = await clouds.add('669')
 
@@ -428,33 +501,5 @@ describe('BimPointClouds ghosting', () => {
     expect(clouds.isGhosted('669')).toBe(false)
     expect(materialOf(cloud).opacity).toBe(1)
     expect(materialOf(cloud).transparent).toBe(false)
-  })
-
-  it('ghosts relative to the viewer opacity rather than overriding it', async () => {
-    const { clouds } = setUp()
-    const cloud = await clouds.add('669')
-    clouds.setAppearance({ opacity: 0.8 })
-
-    clouds.setGhosted('669', true)
-
-    expect(materialOf(cloud).opacity).toBeCloseTo(0.4)
-  })
-
-  it('forgets the ghost when the cloud is removed, so a reload comes back solid', async () => {
-    const { clouds } = setUp()
-    await clouds.add('669')
-    clouds.setGhosted('669', true)
-
-    clouds.remove('669')
-    const reloaded = await clouds.add('669')
-
-    expect(clouds.isGhosted('669')).toBe(false)
-    expect(materialOf(reloaded).opacity).toBe(1)
-  })
-
-  it('tolerates ghosting an id it has not loaded', () => {
-    const { clouds } = setUp()
-
-    expect(() => clouds.setGhosted('nope', true)).not.toThrow()
   })
 })

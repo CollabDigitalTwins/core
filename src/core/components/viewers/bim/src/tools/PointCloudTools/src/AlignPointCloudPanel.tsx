@@ -125,33 +125,39 @@ export function AlignPointCloudPanel({
         <Separator />
 
         <CardContent className="space-y-3 p-3">
-          <NumberRow
-            label={labels.position}
-            values={placement.position.map(round) as [number, number, number]}
-            step={0.1}
-            onChange={(index, value) => setAxis('position', index, value)}
-          />
-          <NumberRow
-            label={labels.rotation}
-            values={placement.rotation.map(toDegrees) as [number, number, number]}
-            step={1}
-            onChange={(index, value) => setAxis('rotation', index, value)}
-          />
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">{labels.scale}</Label>
-            <Input
-              type="number"
-              aria-label={labels.scale}
-              value={round(placement.scale)}
-              step={0.01}
-              min={0.001}
-              onChange={(event) => {
-                const scale = Number.parseFloat(event.target.value)
-                if (Number.isFinite(scale) && scale > 0) onPlacementChange({ ...placement, scale })
-              }}
-              className="h-7 text-xs"
+          {mode === 'translate' && (
+            <NumberRow
+              label={labels.position}
+              values={placement.position.map(round) as [number, number, number]}
+              step={0.1}
+              onChange={(index, value) => setAxis('position', index, value)}
             />
-          </div>
+          )}
+          {mode === 'rotate' && (
+            <NumberRow
+              label={labels.rotation}
+              values={placement.rotation.map(toDegrees) as [number, number, number]}
+              step={1}
+              onChange={(index, value) => setAxis('rotation', index, value)}
+            />
+          )}
+          {mode === 'scale' && (
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">{labels.scale}</Label>
+              <Input
+                type="number"
+                aria-label={labels.scale}
+                value={round(placement.scale)}
+                step={0.01}
+                min={0.001}
+                onChange={(event) => {
+                  const scale = Number.parseFloat(event.target.value)
+                  if (Number.isFinite(scale) && scale > 0) onPlacementChange({ ...placement, scale })
+                }}
+                className="h-7 text-xs"
+              />
+            </div>
+          )}
 
           <div className="flex gap-1.5">
             <Button variant="outline" size="sm" className="h-8 flex-1 text-xs" onClick={onReset}>

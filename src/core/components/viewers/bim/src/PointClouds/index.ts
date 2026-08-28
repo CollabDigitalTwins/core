@@ -28,8 +28,8 @@ import type * as THREE from 'three'
 /** Frames to keep drawing after the octree settles, so a finished refinement is painted. */
 const SETTLE_FRAMES = 20
 
-/** What "ghost" multiplies a cloud's opacity by, matching the BIM models' own ghost. */
-const GHOST_OPACITY = 0.5
+/** The opacity "ghost" sets a cloud to, matching the BIM models' own ghost. */
+export const GHOST_OPACITY = 0.5
 
 export interface BimPointCloudsSetup {
   world: OBC.World
@@ -50,12 +50,14 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable, Sce
 
   readonly onChanged = new OBC.Event<string[]>()
   readonly onAppearanceChanged = new OBC.Event<PointCloudAppearance>()
+  readonly onOpacityChanged = new OBC.Event<{ id: string; opacity: number }>()
   readonly onDisposed = new OBC.Event()
 
   visiblePoints = 0
 
   private currentAppearance: PointCloudAppearance = { ...DEFAULT_APPEARANCE }
-  private readonly ghosted = new Set<string>()
+  /** Per-cloud opacity. Ghosting and the settings slider are the same value, so they cannot disagree. */
+  private readonly opacities = new Map<string, number>()
   private world: OBC.World | null = null
   private registry: PointCloudRegistry | null = null
   private engine: PointCloudEngine | null = null
@@ -104,24 +106,33 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable, Sce
     this.onAppearanceChanged.trigger(this.appearance)
   }
 
-  isGhosted(id: string): boolean {
-    return this.ghosted.has(id)
+  opacityOf(id: string): number {
+    return this.opacities.get(id) ?? this.currentAppearance.opacity
   }
 
-  /** Halves one cloud's opacity without touching the viewer-wide appearance. */
-  setGhosted(id: string, ghosted: boolean) {
-    if (ghosted) this.ghosted.add(id)
-    else this.ghosted.delete(id)
+  setOpacity(id: string, opacity: number) {
+    const next = Math.min(Math.max(Number.isFinite(opacity) ? opacity : 1, 0), 1)
+    this.opacities.set(id, next)
 
     const cloud = this.get(id)
     if (cloud) applyAppearance(pointCloudMaterial(cloud.octree), this.appearanceFor(id))
     this.refresh()
+    this.onOpacityChanged.trigger({ id, opacity: next })
   }
 
-  /** The viewer-wide appearance with this cloud's ghost folded in. */
+  /** Ghosting is just an opacity, so the sidebar toggle and the settings slider agree. */
+  isGhosted(id: string): boolean {
+    return this.opacityOf(id) < 1
+  }
+
+  setGhosted(id: string, ghosted: boolean) {
+    this.setOpacity(id, ghosted ? GHOST_OPACITY : 1)
+  }
+
   private appearanceFor(id: string): PointCloudAppearance {
-    if (!this.ghosted.has(id)) return this.currentAppearance
-    return { ...this.currentAppearance, opacity: this.currentAppearance.opacity * GHOST_OPACITY }
+    const opacity = this.opacityOf(id)
+    if (opacity === this.currentAppearance.opacity) return this.currentAppearance
+    return { ...this.currentAppearance, opacity }
   }
 
   async add(id: string, placement: PointCloudPlacement = DEFAULT_PLACEMENT): Promise<LoadedPointCloud | null> {
@@ -142,7 +153,7 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable, Sce
     const cloud = this.registry?.get(id)
     if (!this.registry || !cloud) return
     this.shadowExclusions()?.delete(cloud.root)
-    this.ghosted.delete(id)
+    this.opacities.delete(id)
     this.registry.remove(id)
     this.refresh()
     this.onChanged.trigger(this.ids())
@@ -193,6 +204,7 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable, Sce
     this.teardownWorld()
     this.onChanged.reset()
     this.onAppearanceChanged.reset()
+    this.onOpacityChanged.reset()
     this.onDisposed.trigger()
     this.onDisposed.reset()
   }

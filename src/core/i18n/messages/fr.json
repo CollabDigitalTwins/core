@@ -2087,6 +2087,7 @@
     "shape_square": "Carré",
     "shape_circle": "Cercle",
     "shape_paraboloid": "Paraboloïde",
-    "opacity": "Opacité"
+    "opacity": "Opacité",
+    "opacityOf": "Opacité — {name}"
   }
 }

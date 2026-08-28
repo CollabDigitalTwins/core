@@ -2090,6 +2090,7 @@
     "shape_square": "Square",
     "shape_circle": "Circle",
     "shape_paraboloid": "Paraboloid",
-    "opacity": "Opacity"
+    "opacity": "Opacity",
+    "opacityOf": "Opacity — {name}"
   }
 }

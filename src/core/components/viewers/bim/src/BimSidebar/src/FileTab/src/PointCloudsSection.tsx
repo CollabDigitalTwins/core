@@ -16,6 +16,7 @@ import { FileItemComponent, useFileActions, useFileDeleteHandler } from '../../.
 import { BimPointClouds } from '../../../../PointClouds'
 import { PointCloudAlignment } from '../../../../PointClouds/PointCloudAlignment'
 import { selectPointCloudFiles } from '../../../../PointClouds/pointCloudFiles'
+import { useBimPointCloudOpacity } from '../../../../PointClouds/useBimPointCloudOpacity'
 
 import type { DbFile } from '../../../../../../../../types/dbTypes'
 import type { FileAction } from '../../../../../../../../types/global'
@@ -38,6 +39,7 @@ export function PointCloudsSection({ files, query = '', buildingId }: PointCloud
   const { state, dispatch } = React.useContext(BimContext)
   const { bimComponents, pointCloudIds } = state.bim
 
+  const { isGhosted, setGhosted } = useBimPointCloudOpacity()
   const { deleteFile } = useDeleteFile(buildingId)
   const { handleDeleteFile } = useFileDeleteHandler({ deleteFile })
 
@@ -53,13 +55,19 @@ export function PointCloudsSection({ files, query = '', buildingId }: PointCloud
     setItems(clouds.map((file) => ({ ...file, isVisible: pointCloudIds.includes(String(file.id)) })))
   }, [clouds, pointCloudIds])
 
+  // Ghost is read back from the component, so the row and the settings slider cannot drift apart.
+  const rows = React.useMemo(
+    () => items.map((file) => ({ ...file, isGhost: isGhosted(String(file.id)) })),
+    [items, isGhosted],
+  )
+
   const toggle = React.useCallback((file: DbFile) => {
     dispatch({ type: 'TOGGLE_POINT_CLOUD', payload: { pointCloudId: String(file.id) } })
   }, [dispatch])
 
   const ghost = React.useCallback((file: DbFile, ghosted: boolean) => {
-    bimComponents?.get(BimPointClouds).setGhosted(String(file.id), ghosted)
-  }, [bimComponents])
+    setGhosted(String(file.id), ghosted)
+  }, [setGhosted])
 
   // Switching a cloud on is async, so alignment waits for it rather than failing silently.
   const editPosition = React.useCallback(async (file: DbFile) => {
@@ -108,8 +116,8 @@ export function PointCloudsSection({ files, query = '', buildingId }: PointCloud
 
   return (
     <>
-      <CollapsibleSection title={t('title')} icon={LR.Grip} itemCount={items.length}>
-        {items.map((file) => (
+      <CollapsibleSection title={t('title')} icon={LR.Grip} itemCount={rows.length}>
+        {rows.map((file) => (
           <FileItemComponent
             key={file.id}
             file={file}

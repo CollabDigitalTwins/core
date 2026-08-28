@@ -6,10 +6,13 @@
 import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
+import { toast } from 'sonner'
 
 import { BimContext } from '../../../../../../store'
 import { ToolbarSubmenu } from '../../../../../ToolbarSubmenu'
 import { DropdownMenuItem } from '../../../../../ui/DropdownMenu'
+import { placementCentredOn } from '../../../../shared/pointcloud/pointCloudCentroid'
+import { BimPointClouds } from '../../PointClouds'
 import { PointCloudAlignment } from '../../PointClouds/PointCloudAlignment'
 import { useBimPointCloudAlignment } from '../../PointClouds/useBimPointCloudAlignment'
 import { useBimPointClouds } from '../../PointClouds/useBimPointClouds'
@@ -43,6 +46,7 @@ export const AlignPointCloudTool: React.FC<{ tool: Tool }> = ({ tool }) => {
     rotate: t('modeRotate'),
     reset: t('reset'),
     done: t('done'),
+    centre: t('centre'),
   }), [t])
 
   const begin = React.useCallback((id: string) => {
@@ -54,6 +58,19 @@ export const AlignPointCloudTool: React.FC<{ tool: Tool }> = ({ tool }) => {
     setMode(next)
     alignment?.setMode(next)
   }, [alignment])
+
+  // A georeferenced scan can land kilometres from the origin, where the user cannot find it.
+  const centre = React.useCallback(() => {
+    if (!session || !bimComponents) return
+
+    const worldCentre = bimComponents.get(BimPointClouds).worldCentroid(session.id)
+    if (!worldCentre) {
+      toast.error(t('centreFailed'))
+      return
+    }
+
+    alignment?.setPlacement(placementCentredOn(session.placement, worldCentre))
+  }, [session, bimComponents, alignment, t])
 
   const active = session ? clouds.find((cloud) => cloud.id === session.id) : undefined
 
@@ -79,6 +96,7 @@ export const AlignPointCloudTool: React.FC<{ tool: Tool }> = ({ tool }) => {
           labels={labels}
           onModeChange={changeMode}
           onPlacementChange={(placement) => alignment?.setPlacement(placement)}
+          onCentre={centre}
           onDone={() => alignment?.accept()}
           onReset={() => alignment?.cancel()}
         />

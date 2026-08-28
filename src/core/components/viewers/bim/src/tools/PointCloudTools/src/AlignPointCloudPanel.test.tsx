@@ -15,12 +15,13 @@ import type { AlignmentMode } from '../../../PointClouds/PointCloudAlignment'
 
 const LABELS = {
   title: 'Align', position: 'Position', rotation: 'Rotation', scale: 'Scale',
-  translate: 'Move', rotate: 'Rotate', reset: 'Reset', done: 'Done',
+  translate: 'Move', rotate: 'Rotate', reset: 'Reset', done: 'Done', centre: 'Centre on scene origin',
 }
 
 function renderPanel(placement: PointCloudPlacement, mode: AlignmentMode = 'translate') {
   const onPlacementChange = vi.fn()
   const onModeChange = vi.fn()
+  const onCentre = vi.fn()
   render(
     <AlignPointCloudPanel
       name="scan"
@@ -29,11 +30,12 @@ function renderPanel(placement: PointCloudPlacement, mode: AlignmentMode = 'tran
       labels={LABELS}
       onModeChange={onModeChange}
       onPlacementChange={onPlacementChange}
+      onCentre={onCentre}
       onDone={vi.fn()}
       onReset={vi.fn()}
     />,
   )
-  return { onPlacementChange, onModeChange }
+  return { onPlacementChange, onModeChange, onCentre }
 }
 
 describe('AlignPointCloudPanel axes', () => {
@@ -103,5 +105,21 @@ describe('AlignPointCloudPanel modes', () => {
     fireEvent.change(screen.getByLabelText('Scale'), { target: { value: '2.5' } })
 
     expect(onPlacementChange).toHaveBeenCalledWith(expect.objectContaining({ scale: 2.5 }))
+  })
+})
+
+describe('AlignPointCloudPanel centring', () => {
+  it('offers centring beside the position inputs, where a lost cloud is dealt with', () => {
+    const { onCentre } = renderPanel(DEFAULT_PLACEMENT, 'translate')
+
+    fireEvent.click(screen.getByRole('button', { name: /Centre on scene origin/ }))
+
+    expect(onCentre).toHaveBeenCalledTimes(1)
+  })
+
+  it('is absent in the other modes, which are not about position', () => {
+    renderPanel(DEFAULT_PLACEMENT, 'rotate')
+
+    expect(screen.queryByRole('button', { name: /Centre on scene origin/ })).not.toBeInTheDocument()
   })
 })

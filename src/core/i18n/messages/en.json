@@ -2075,7 +2075,9 @@
     "noClouds": "No point clouds are switched on",
     "editHint": "Drag the gizmo to place the point cloud. The position is saved when you press Done.",
     "saved": "Saved the position of \"{name}\"",
-    "saveFailed": "Could not save the position of \"{name}\""
+    "saveFailed": "Could not save the position of \"{name}\"",
+    "centre": "Centre on scene origin",
+    "centreFailed": "The point cloud has not loaded enough to find its centre yet"
   },
   "PointCloudSettings": {
     "title": "Point clouds",

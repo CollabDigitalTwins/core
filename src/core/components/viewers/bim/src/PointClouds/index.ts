@@ -9,6 +9,7 @@ import {
   DEFAULT_APPEARANCE,
   normalizeAppearance,
 } from '../../../shared/pointcloud/pointCloudAppearance'
+import { centroidOrBoxCentre } from '../../../shared/pointcloud/pointCloudCentroid'
 import { createPotreeEngine, pointCloudMaterial } from '../../../shared/pointcloud/pointCloudLoader'
 import { DEFAULT_PLACEMENT } from '../../../shared/pointcloud/pointCloudPlacement'
 import { PointCloudRegistry } from '../../../shared/pointcloud/pointCloudRegistry'
@@ -180,6 +181,31 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable, Sce
 
     const point = this.engine.pick(octrees, camera, renderer.three, ray, thresholdPx)
     return point ? { point } : null
+  }
+
+  /**
+   * Where the cloud's points actually sit, in world space. Weighted by point count, so a scan with
+   * a few stray returns still centres on the building rather than halfway to them.
+   */
+  worldCentroid(id: string): THREE.Vector3 | null {
+    const cloud = this.get(id)
+    if (!cloud) return null
+
+    // three ships no declarations here, so the octree's inherited Object3D members need naming.
+    const octree = cloud.octree as unknown as {
+      visibleNodes?: { numPoints?: number; boundingBox?: THREE.Box3 }[]
+      pcoGeometry?: { tightBoundingBox?: THREE.Box3; boundingBox?: THREE.Box3 }
+      boundingBox?: THREE.Box3
+      matrixWorld: THREE.Matrix4
+    }
+
+    const fallback = octree.pcoGeometry?.tightBoundingBox ?? octree.pcoGeometry?.boundingBox ?? octree.boundingBox
+    const local = centroidOrBoxCentre(octree.visibleNodes ?? [], fallback)
+    if (!local) return null
+
+    // Node boxes are in the octree's own space; potree converts them the same way.
+    cloud.root.updateMatrixWorld(true)
+    return local.applyMatrix4(octree.matrixWorld)
   }
 
   get(id: string): LoadedPointCloud | undefined {

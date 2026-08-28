@@ -33,6 +33,7 @@ export interface AlignPointCloudPanelProps {
   labels: Record<string, string>
   onModeChange: (mode: AlignmentMode) => void
   onPlacementChange: (placement: PointCloudPlacement) => void
+  onCentre: () => void
   onDone: () => void
   onReset: () => void
 }
@@ -83,6 +84,7 @@ export function AlignPointCloudPanel({
   labels,
   onModeChange,
   onPlacementChange,
+  onCentre,
   onDone,
   onReset,
 }: AlignPointCloudPanelProps) {
@@ -126,12 +128,18 @@ export function AlignPointCloudPanel({
 
         <CardContent className="space-y-3 p-3">
           {mode === 'translate' && (
-            <NumberRow
-              label={labels.position}
-              values={placement.position.map(round) as [number, number, number]}
-              step={0.1}
-              onChange={(index, value) => setAxis('position', index, value)}
-            />
+            <div className="space-y-1.5">
+              <NumberRow
+                label={labels.position}
+                values={placement.position.map(round) as [number, number, number]}
+                step={0.1}
+                onChange={(index, value) => setAxis('position', index, value)}
+              />
+              <Button variant="outline" size="sm" className="h-7 w-full text-xs" onClick={onCentre}>
+                <LR.Crosshair size={13} className="mr-1" />
+                {labels.centre}
+              </Button>
+            </div>
           )}
           {mode === 'rotate' && (
             <NumberRow

@@ -27,6 +27,8 @@ vi.mock('@thatopen/components', () => {
   return { Component, Components, Event }
 })
 
+import { placementCentredOn } from '../../../shared/pointcloud/pointCloudCentroid'
+import { DEFAULT_PLACEMENT } from '../../../shared/pointcloud/pointCloudPlacement'
 import { pointCloudRootName } from '../../../shared/pointcloud/pointCloudRegistry'
 
 import { CLIP_MODE_DISABLED, CLIP_MODE_OUTSIDE } from './pointCloudClipping'
@@ -501,5 +503,76 @@ describe('BimPointClouds ghosting', () => {
     expect(clouds.isGhosted('669')).toBe(false)
     expect(materialOf(cloud).opacity).toBe(1)
     expect(materialOf(cloud).transparent).toBe(false)
+  })
+})
+
+describe('BimPointClouds world centroid', () => {
+  const nodes = (...boxes: { numPoints: number; min: number; max: number }[]) =>
+    boxes.map(({ numPoints, min, max }) => ({
+      numPoints,
+      boundingBox: new THREE.Box3(new THREE.Vector3(min, min, min), new THREE.Vector3(max, max, max)),
+    }))
+
+  const octreeOf = (cloud: LoadedPointCloud | null) =>
+    cloud?.octree as unknown as Record<string, unknown>
+
+  it('reports nothing for a cloud it does not hold', () => {
+    const { clouds } = setUp()
+
+    expect(clouds.worldCentroid('nope')).toBeNull()
+  })
+
+  it('weights the streamed nodes by point count', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669', { ...DEFAULT_PLACEMENT, sourceUp: 'y' })
+    octreeOf(cloud).visibleNodes = nodes({ numPoints: 1000, min: 0, max: 10 }, { numPoints: 1, min: 900, max: 1000 })
+
+    const centre = clouds.worldCentroid('669') as THREE.Vector3
+
+    expect(centre.x).toBeLessThan(10)
+  })
+
+  it('falls back to the tight bounding box before anything has streamed', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669', { ...DEFAULT_PLACEMENT, sourceUp: 'y' })
+    octreeOf(cloud).visibleNodes = []
+    octreeOf(cloud).pcoGeometry = {
+      tightBoundingBox: new THREE.Box3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(4, 4, 4)),
+    }
+
+    expect((clouds.worldCentroid('669') as THREE.Vector3).toArray()).toEqual([2, 2, 2])
+  })
+
+  it('reports nothing when the cloud offers no bounds at all', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669')
+    octreeOf(cloud).visibleNodes = []
+    octreeOf(cloud).pcoGeometry = {}
+
+    expect(clouds.worldCentroid('669')).toBeNull()
+  })
+
+  it('answers in world space, so the placement is what moves it', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669', { ...DEFAULT_PLACEMENT, position: [100, 0, 0], sourceUp: 'y' })
+    octreeOf(cloud).visibleNodes = nodes({ numPoints: 10, min: 0, max: 4 })
+
+    const centre = clouds.worldCentroid('669') as THREE.Vector3
+
+    expect(centre.x).toBeCloseTo(102)
+  })
+
+  it('centres the cloud on the origin when the placement it implies is applied', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669', { ...DEFAULT_PLACEMENT, position: [100, 0, 0], sourceUp: 'y' })
+    octreeOf(cloud).visibleNodes = nodes({ numPoints: 10, min: 0, max: 4 })
+    const before = clouds.worldCentroid('669') as THREE.Vector3
+
+    clouds.setPlacement('669', placementCentredOn(cloud?.placement as never, before))
+
+    const after = clouds.worldCentroid('669') as THREE.Vector3
+    expect(after.x).toBeCloseTo(0)
+    expect(after.y).toBeCloseTo(0)
+    expect(after.z).toBeCloseTo(0)
   })
 })

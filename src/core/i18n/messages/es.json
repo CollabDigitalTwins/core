@@ -2072,7 +2072,9 @@
     "noClouds": "No hay nubes de puntos activadas",
     "editHint": "Arrastra el gizmo para colocar la nube de puntos. La posición se guarda al pulsar Listo.",
     "saved": "Se guardó la posición de «{name}»",
-    "saveFailed": "No se pudo guardar la posición de «{name}»"
+    "saveFailed": "No se pudo guardar la posición de «{name}»",
+    "centre": "Centrar en el origen",
+    "centreFailed": "La nube de puntos aún no ha cargado lo suficiente para hallar su centro"
   },
   "PointCloudSettings": {
     "title": "Nubes de puntos",

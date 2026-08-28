@@ -9,6 +9,8 @@ import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 import { createUndoHistory } from '../../../../../../utils/undoHistory'
 import { CurrentWorld } from '../../CurrentWorld'
 
+import { CUT_STYLE, ensureCutStyle } from './cutStyle'
+
 import type { UndoHistory } from '../../../../../../utils/undoHistory'
 
 /**
@@ -111,17 +113,7 @@ export class ClippingPlanes extends OBC.Component implements OBC.Disposable {
 
     const styler = this.styler
     styler.world = world
-    styler.styles.set('Black', {
-      linesMaterial: new LineMaterial({
-        color: 'black',
-        linewidth: 2,
-      }),
-      fillsMaterial: new THREE.MeshBasicMaterial({
-        color: 0x000000,
-        // See the cap from both sides.
-        side: THREE.DoubleSide,
-      }),
-    })
+    ensureCutStyle(styler)
 
     // Nothing reads these groups yet: the style applied in `spawn` has no
     // classifier input, so it covers every item the plane cuts. They stay
@@ -320,7 +312,7 @@ export class ClippingPlanes extends OBC.Component implements OBC.Disposable {
     // Once per plane. `link` defaults to true, which refreshes the cut when a
     // drag ends and disposes it with the plane, so nothing here has to track it.
     record.edges = this.styler.createFromClipping(id, {
-      items: { All: { style: 'Black' } },
+      items: { All: { style: CUT_STYLE } },
     })
 
     this._records.set(record.key, record)

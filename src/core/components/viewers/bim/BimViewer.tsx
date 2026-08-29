@@ -26,13 +26,16 @@ import { Highlighter } from "./src/Highlighter";
 import { IfcClasses } from "./src/IfcClasses";
 import { ViewModeCoordinator } from "./src/lib/ViewModeCoordinator";
 import { ModelsSync } from "./src/ModelsSync";
+import { BimPointClouds } from "./src/PointClouds";
+import { BimPointCloudSync } from "./src/PointClouds/BimPointCloudSync";
+import { PointCloudAlignment } from "./src/PointClouds/PointCloudAlignment";
 import { PropertiesMenu } from "./src/propertiesMenu";
 import { SelectionSync } from "./src/SelectionSync";
 import { ClippingPlanes } from "./src/tools/ClippingTool/ClippingPlanes";
 import { ViewportGizmo } from "./src/ViewportGizmo";
 
 
-export function BimViewer() {
+export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
 
     const t = useTranslations('ViewportGizmo');
     const locale = useLocale();
@@ -46,16 +49,7 @@ export function BimViewer() {
     const { state: menusState } = React.useContext(MenusContext);
     const { currentViewer } = menusState.menus;
 
-    // Steps appearance overrides (Layers tab) and clipping planes back and
-    // forward. Bound at the viewer rather than in the tab or the toolbar so the
-    // shortcuts survive switching tabs, and so neither the sidebar nor the
-    // toolbar unmounting takes the history with it.
-    //
-    // Each feature keeps its own stack, so one keystroke has to pick a target:
-    // whichever stack changed most recently wins, falling back to the other when
-    // it has nothing left. `onChanged` also fires while a stack is being
-    // replayed, which is what keeps CTRL+Z walking down the stack the user
-    // started on.
+    // Appearance and clipping keep separate undo stacks; the most recently changed one wins.
     const lastTouchedHistory = React.useRef<'appearance' | 'clipping'>('appearance');
 
     React.useEffect(() => {
@@ -97,21 +91,12 @@ export function BimViewer() {
     const containerRef = React.useRef<HTMLDivElement>(null);
     const workerUrlRef = React.useRef<string | null>(null);
     const resizeObserverRef = React.useRef<ResizeObserver | null>(null);
-    // Tracks the Components instance THIS mount created, so cleanup disposes the
-    // real one and the create-guard can't be defeated by a stale [] closure.
+    // This mount's own instance, so cleanup and the create-guard cannot read a stale [] closure.
     const componentsRef = React.useRef<OBC.Components | null>(null);
 
     const createViewer = React.useCallback(
         async (isCancelled: () => boolean) => {
-            // Re-entrancy guard keyed to the ref we actually set — NOT the stale
-            // `bimComponents` from this useCallback's [] closure (always null on
-            // first run, so it could never stop a second init). Without this,
-            // React StrictMode (dev) and rapid viewer remounts (prod) build a
-            // second Components + PostproductionRenderer — a second <canvas> —
-            // and whichever instance wins the SET_COMPONENTS race may be the one
-            // whose canvas was detached on remount. Models then load into a scene
-            // that is never painted: the spatial tree builds (metadata) but no
-            // geometry shows and floorplan nav drives the dead world's camera.
+            // Keyed to the ref, not the [] closure: a second init builds a second detached canvas.
             if (!containerRef.current || componentsRef.current) return;
 
             const container = containerRef.current;
@@ -171,16 +156,15 @@ export function BimViewer() {
             components.get(CurrentWorld).world = world;
             components.get(CurrentCamera).camera = world.camera;
             components.get(Highlighter);
-            // Registered up front so it subscribes to model loads before any
-            // model arrives, rather than when the sidebar first opens.
+            // Up front so it subscribes to model loads before any model arrives.
             components.get(IfcClasses);
             components.get(ViewModeCoordinator);
-            // Same reason: it has to hear about model loads and about drawing
-            // modes releasing the viewer, both of which need its overrides
-            // repainted, whether or not the Layers tab has ever been opened.
+            // Same reason, plus drawing modes releasing the viewer both need its overrides repainted.
             components.get(ElementAppearance);
             components.get(FloorplanTool);
             components.get(ElevationsTool);
+            components.get(BimPointClouds);
+            components.get(PointCloudAlignment);
 
             // Grid injection is safe here — fragments.core is initialized.
             if (grid) {
@@ -208,11 +192,7 @@ export function BimViewer() {
 
             world.scene.three.background = null;
 
-            // If this init was superseded (StrictMode re-run) or the viewer
-            // unmounted while we awaited the worker fetch / shadow update, throw
-            // this instance away instead of publishing it. Prevents an orphaned
-            // world (whose canvas is detached) from winning the store and starving
-            // the visible canvas of geometry.
+            // Superseded or unmounted while awaiting: drop it rather than let it win the store.
             if (isCancelled()) {
                 components.dispose();
                 return;
@@ -243,19 +223,13 @@ export function BimViewer() {
             // Initial resize
             handleResize();
 
-            // Watch for container size changes using ResizeObserver. This
-            // already covers the window-resize case: when the window resizes,
-            // the flex layout reshapes this container, and ResizeObserver
-            // fires.
+            // Covers window resize too: the flex layout reshapes this container, which fires it.
             const resizeObserver = new ResizeObserver(() => {
                 handleResize();
             });
             resizeObserver.observe(container);
             resizeObserverRef.current = resizeObserver;
 
-            // The ResizeObserver above is sufficient for redraws. A window
-            // 'resize' listener here previously leaked on every mount (no matching
-            // removeEventListener), so it was removed.
         }, []
     );
 
@@ -263,20 +237,13 @@ export function BimViewer() {
         let cancelled = false;
         void createViewer(() => cancelled);
 
-        // Cleanup: mark this init cancelled (so an in-flight createViewer disposes
-        // itself instead of publishing), and dispose the instance we actually
-        // created (componentsRef). The old `if (bimComponents)` read the stale []
-        // closure value (null at mount), so the real Components was never disposed
-        // — leaking its renderer/canvas and letting orphans race the store.
+        // Cancels an in-flight createViewer and disposes the instance this mount created.
         return () => {
             cancelled = true;
             if (resizeObserverRef.current) {
                 resizeObserverRef.current.disconnect();
             }
-            // OBC walks components in insertion order and does not guard the loop, so one
-            // component throwing during teardown aborts every disposal after it — including
-            // FragmentsManager, which it deliberately leaves for last. The store must be cleared
-            // either way, or it keeps handing out a dead Components/world to whatever mounts next.
+            // OBC's disposal loop is unguarded, so one throw skips every component after it.
             try {
                 componentsRef.current?.dispose();
             } catch (error) {
@@ -290,8 +257,7 @@ export function BimViewer() {
         };
     }, []);
 
-    // Enforce Y-up coordinate system for Three.js / camera-controls.
-    // Runs whenever the world (and its controls) becomes available, and resets on unmount.
+    // Enforces Y-up for three / camera-controls whenever the world's controls appear.
     useBimCoordinateSystem(bimState.bim.world?.camera?.controls ?? null);
 
     // Control ViewportGizmo based on current viewer
@@ -331,6 +297,7 @@ export function BimViewer() {
         >
             <BimLoadingState />
             <ModelsSync />
+            <BimPointCloudSync pointcloudApiUrl={pointcloudApiUrl} />
             <SelectionSync />
             <div
                 className="bim-container"

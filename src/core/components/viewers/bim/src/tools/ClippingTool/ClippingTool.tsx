@@ -20,6 +20,7 @@ import { DropdownMenuItem } from '../../../../../ui/DropdownMenu'
 // Icons
 import { Cursor } from '../../Cursor'
 
+import { ClippingBoxes } from './ClippingBoxes'
 import { ClippingPlanes } from './ClippingPlanes'
 
 import type { CursorType } from '../../../../../../types/global'
@@ -27,6 +28,8 @@ import type { Tool, ToolbarToolType } from '../../../../../../types/tools'
 
 /** Shared id so re-entering the mode replaces the instruction rather than stacking one. */
 const TOAST_ID = 'bim-clipping-toast'
+
+const BOX_TOAST_ID = 'bim-clip-box-toast'
 
 interface ClippingToolProps {
   tool: Tool
@@ -41,9 +44,15 @@ export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
   const { currentToolId } = toolsState.tools
 
   const [active, setActive] = React.useState(false)
+  const [boxActive, setBoxActive] = React.useState(false)
 
   const planes = React.useMemo(
     () => bimComponents?.get(ClippingPlanes) ?? null,
+    [bimComponents],
+  )
+
+  const boxes = React.useMemo(
+    () => bimComponents?.get(ClippingBoxes) ?? null,
     [bimComponents],
   )
 
@@ -67,7 +76,26 @@ export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
   React.useEffect(() => {
     if (!world) return
     planes?.setup()
-  }, [planes, world])
+    boxes?.setup()
+  }, [planes, boxes, world])
+
+  // The box outlives this menu, so reopening the toolbar reads its state rather than assuming.
+  React.useEffect(() => {
+    if (!boxes) return
+    setBoxActive(boxes.active)
+    const track = (bounds: unknown) => setBoxActive(bounds !== null)
+    boxes.onChanged.add(track)
+    return () => boxes.onChanged.remove(track)
+  }, [boxes])
+
+  const toggleBox = React.useCallback(() => {
+    if (!boxes) return
+    if (boxes.toggle()) {
+      toast.info(t('sectionBoxHint'), { id: BOX_TOAST_ID, duration: Infinity })
+    } else {
+      toast.dismiss(BOX_TOAST_ID)
+    }
+  }, [boxes, t])
 
   const startCreating = React.useCallback(() => {
     if (!planes) return
@@ -98,6 +126,7 @@ export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
   // An Infinity toast has no other way out if the viewer unmounts mid-mode.
   React.useEffect(() => () => {
     toast.dismiss(TOAST_ID)
+    toast.dismiss(BOX_TOAST_ID)
   }, [])
 
   // Another tool taking over has to stop plane creation. Without this, `active`
@@ -166,6 +195,11 @@ export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
         <DropdownMenuItem onClick={() => planes?.deleteAll()}>
           <LR.Trash2 />
           <span>{t('deleteAll')}</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem onClick={toggleBox}>
+          <LR.Box />
+          <span>{boxActive ? t('clearSectionBox') : t('sectionBox')}</span>
         </DropdownMenuItem>
       </ToolbarSubmenu>
     </div>

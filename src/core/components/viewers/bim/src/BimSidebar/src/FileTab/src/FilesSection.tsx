@@ -169,7 +169,7 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
           ? new THREE.Vector3(file.x as number, file.y as number, file.z as number)
           : new THREE.Vector3())
         group.scale.setScalar(0.001)
-        if (file.rotation != null) group.rotation.y = file.rotation as number
+        if (file.bimRotation != null) group.rotation.y = file.bimRotation as number
         world.scene.three.add(group)
         dxfGroupsRef.current.set(key, group)
         setLoadedTick(t => t + 1)
@@ -261,8 +261,8 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
             const position = (file.x != null && file.y != null && file.z != null)
               ? new THREE.Vector3(file.x as number, file.y as number, file.z as number)
               : new THREE.Vector3(0, 0, 0)
-            const rotation = file.rotation != null
-              ? new THREE.Euler(0, file.rotation, 0)
+            const rotation = file.bimRotation != null
+              ? new THREE.Euler(0, file.bimRotation, 0)
               : undefined
             await modelManager.load(presignedUrl, file.id.toString(), file.name, {
               position,
@@ -421,9 +421,9 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
       if (save) {
         const { x, y, z } = obj.position
         const rotation = obj.rotation.y
-        updateFileRef.current({ x, y, z, rotation } as any)
+        updateFileRef.current({ x, y, z, bimRotation: rotation } as any)
           .catch((err: unknown) => console.error(`Failed to save position for "${file.name}":`, err))
-        file.x = x; file.y = y; file.z = z; file.rotation = rotation
+        file.x = x; file.y = y; file.z = z; file.bimRotation = rotation
       }
       gizmoControllersRef.current.delete(key)
       setMoveFileId(null)

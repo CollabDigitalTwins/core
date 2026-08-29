@@ -38,7 +38,7 @@ function renderWithComponents(bimComponents: unknown) {
   const state = { bim: { bimComponents, selection: {} } }
 
   render(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- only the two fields SelectionSync reads are needed
+     
     <BimContext.Provider value={{ state, dispatch } as any}>
       <SelectionSync />
     </BimContext.Provider>,

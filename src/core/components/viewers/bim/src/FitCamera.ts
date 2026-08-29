@@ -38,7 +38,7 @@ export class FitCamera extends OBC.Component {
     if (this.fragments) {
       const boundingBox = this.getFragmentsBoundingBox()
       if (boundingBox && !boundingBox.isEmpty()) {
-        await this.fitToBox(boundingBox, true)
+        await this.frameBox(boundingBox, true)
         return
       }
     }
@@ -49,6 +49,19 @@ export class FitCamera extends OBC.Component {
     else {
       await this.fitToScene()
     }
+  }
+
+  /** Frames only the given items. False when they carry no geometry, so the caller can fall back. */
+  async fitToItems(items: OBC.ModelIdMap): Promise<boolean> {
+    const boxer = this.components.get(OBC.BoundingBoxer)
+    boxer.list.clear()
+    await boxer.addFromModelIdMap(items)
+    const box = boxer.get().clone()
+    boxer.list.clear()
+
+    if (box.isEmpty()) return false
+    await this.frameBox(box, true)
+    return true
   }
 
   private getFragmentsBoundingBox(): THREE.Box3 | null {
@@ -92,6 +105,16 @@ export class FitCamera extends OBC.Component {
     }
   }
 
+  /** Frames a box without turning the camera. `fitToBox` snaps to the nearest axis; this does not. */
+  async frameBox(box: THREE.Box3, animated: boolean = true) {
+    if (!this.world?.camera?.controls) {
+      throw new Error('Camera controls not available.')
+    }
+
+    const sphere = box.getBoundingSphere(new THREE.Sphere())
+    await this.world.camera.controls.fitToSphere(sphere, animated)
+  }
+
   async fitToBox(box: THREE.Box3, animated: boolean = true) {
     if (!this.world?.camera?.controls) {
       throw new Error('Camera controls not available.')
@@ -112,7 +135,7 @@ export class FitCamera extends OBC.Component {
     }
 
     if (!boundingBox.isEmpty()) {
-      await this.fitToBox(boundingBox, true)
+      await this.frameBox(boundingBox, true)
     }
   }
 }

@@ -7,12 +7,12 @@
 import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from "react";
+import { toast } from 'sonner'
 
 import { ToolsContext } from '../../../../../store'
 import { BimContext } from '../../../../../store/BIM/context'
 import { type ToolbarToolType } from '../../../../../types/tools'
 import { ToolbarSubmenu } from '../../../../ToolbarSubmenu'
-import { Card } from '../../../../ui/Card'
 import {
   DropdownMenuItem,
 } from '../../../../ui/DropdownMenu'
@@ -22,6 +22,9 @@ import { Cursor } from '../Cursor'
 import type { CursorType } from '../../../../../types/global'
 import type { Tool } from '../../../../../types/tools';
 import type { BimMeasureKind, BimMeasureMode } from '../BimMeasurements/measurementSettings'
+
+/** Shared id so switching measurement kind replaces the instruction rather than stacking one. */
+const TOAST_ID = 'bim-measure-toast'
 
 interface MeasureToolProps {
   tool: Tool
@@ -51,9 +54,6 @@ export const MeasureBimTool: React.FC<MeasureToolProps> = ({ tool }) => {
 
   const { dispatch: toolsDispatch, state: toolsState } = React.useContext(ToolsContext)
   const { state: bimState } = React.useContext(BimContext)
-
-  /** Which submenu entry is live, so the hint card can describe it. */
-  const [activeOptionId, setActiveOptionId] = React.useState<string | null>(null)
 
   const { bimComponents } = bimState.bim
   const measurements = bimComponents?.get(BimMeasurementManager)
@@ -86,9 +86,14 @@ export const MeasureBimTool: React.FC<MeasureToolProps> = ({ tool }) => {
   React.useEffect(() => {
     if (isActive || !measurements?.activeKind) return
     measurements.deactivate()
-    setActiveOptionId(null)
     setCursor('')
+    toast.dismiss(TOAST_ID)
   }, [isActive, measurements, setCursor])
+
+  // An Infinity toast has no other way out if the viewer unmounts mid-mode.
+  React.useEffect(() => () => {
+    toast.dismiss(TOAST_ID)
+  }, [])
 
   // Escape leaves measurement mode entirely. The library already cancels the
   // in-progress shape on Escape; this deselects the tool on top of that.
@@ -116,20 +121,18 @@ export const MeasureBimTool: React.FC<MeasureToolProps> = ({ tool }) => {
     if (!measurements.activate(option.kind, option.mode)) return
 
     setTools(toolId)
-    setActiveOptionId(option.id)
     setCursor('crosshair')
+    toast.info(t(option.hintKey), { id: TOAST_ID, duration: Infinity })
   }
 
   const clearMeasurements = () => {
     if (!measurements) return
     measurements.clearAll()
     measurements.deactivate()
-    setActiveOptionId(null)
     setTools(null)
     setCursor('')
+    toast.dismiss(TOAST_ID)
   }
-
-  const activeOption = MEASURE_OPTIONS.find(option => option.id === activeOptionId)
 
   return (
     <div>
@@ -148,14 +151,6 @@ export const MeasureBimTool: React.FC<MeasureToolProps> = ({ tool }) => {
           <span>{t('clear')}</span>
         </DropdownMenuItem>
       </ToolbarSubmenu>
-
-      {isActive && activeOption && (
-        <Card className="p-3 absolute bottom-10 left-0 bg-background shadow-md z-10 w-full">
-          <span className="text-muted-foreground text-xs">
-            {t(activeOption.hintKey)}
-          </span>
-        </Card>
-      )}
     </div>
   )
 }

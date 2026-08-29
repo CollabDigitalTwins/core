@@ -1,0 +1,578 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2025 Collab Digital Twins
+
+import * as OBC from '@thatopen/components'
+import * as THREE from 'three'
+import { describe, expect, it, vi } from 'vitest'
+
+vi.mock('@thatopen/components', () => {
+  class Event<T> {
+    handlers = new Set<(arg: T) => void>()
+    add(handler: (arg: T) => void) { this.handlers.add(handler) }
+    remove(handler: (arg: T) => void) { this.handlers.delete(handler) }
+    trigger(arg?: T) { for (const handler of [...this.handlers]) handler(arg as T) }
+    reset() { this.handlers.clear() }
+  }
+  class Component {
+    constructor(public components: unknown) { }
+  }
+  class Components {
+    private instances = new Map<string, unknown>()
+    add(uuid: string, instance: unknown) { this.instances.set(uuid, instance) }
+    get<T>(Ctor: { uuid: string; new(components: Components): T }): T {
+      const existing = this.instances.get(Ctor.uuid)
+      return (existing as T) ?? new Ctor(this)
+    }
+  }
+  return { Component, Components, Event }
+})
+
+import { placementCentredOn } from '../../../shared/pointcloud/pointCloudCentroid'
+import { DEFAULT_PLACEMENT } from '../../../shared/pointcloud/pointCloudPlacement'
+import { pointCloudRootName } from '../../../shared/pointcloud/pointCloudRegistry'
+
+import { CLIP_MODE_DISABLED, CLIP_MODE_OUTSIDE } from './pointCloudClipping'
+
+import { BimPointClouds, GHOST_OPACITY } from './index'
+
+import type { LoadedPointCloud, PointCloudEngine } from '../../../shared/pointcloud/pointCloudRegistry'
+import type { PointCloudSource } from '../../../shared/pointcloud/pointCloudSource'
+
+function stubMaterial() {
+  return {
+    clippingPlanes: [] as readonly THREE.Plane[],
+    clipMode: 0,
+    size: 0,
+    minSize: 0,
+    maxSize: 0,
+    pointSizeType: 0,
+    pointColorType: 9,
+    shape: 0,
+    inputColorEncoding: 1,
+    outputColorEncoding: 0,
+    opacity: 1,
+    transparent: false,
+    blending: 0,
+    depthTest: true,
+    needsUpdate: false,
+    syncClippingPlanes: () => {},
+    updateShaderSource: () => {},
+  }
+}
+
+function stubEngine() {
+  const loaded: string[] = []
+  let disposed = 0
+  const engine: PointCloudEngine & {
+    loaded: string[]
+    disposedCount: () => number
+    updates: number
+    streaming: boolean
+    picks: Record<string, unknown>[]
+    hit: THREE.Vector3 | null
+  } = {
+    pointBudget: 1_000,
+    loaded,
+    updates: 0,
+    streaming: false,
+    picks: [],
+    hit: null,
+    disposedCount: () => disposed,
+    load: async (fileName) => {
+      loaded.push(fileName)
+      const octree = new THREE.Object3D()
+      return Object.assign(octree, { dispose: vi.fn(), material: stubMaterial() })
+    },
+    update: () => {
+      engine.updates++
+      return { numVisiblePoints: 7, streaming: engine.streaming }
+    },
+    pick: (clouds, camera, renderer, ray, pickWindowSize) => {
+      engine.picks.push({ count: clouds.length, camera, renderer, ray, pickWindowSize })
+      return engine.hit
+    },
+    dispose: () => { disposed++ },
+  }
+  return engine
+}
+
+function stubSource(): PointCloudSource {
+  return { resolve: async (fileId) => ({ fileName: `${fileId}.json`, baseUrl: 'https://pc.test/', name: `cloud ${fileId}` }) }
+}
+
+function fakeWorld() {
+  const scene = new THREE.Scene()
+  const excludedObjects = new Set<unknown>()
+  return {
+    scene: { three: scene, distanceRenderer: { excludedObjects } },
+    camera: { three: new THREE.PerspectiveCamera() },
+    renderer: {
+      three: { localClippingEnabled: false },
+      needsUpdate: false,
+      onBeforeUpdate: new OBC.Event<void>(),
+      clippingPlanes: [],
+      onClippingPlanesUpdated: new OBC.Event<void>(),
+    },
+  }
+}
+
+function handlersOf(event: unknown) {
+  return (event as { handlers: Set<unknown> }).handlers
+}
+
+function materialOf(cloud: LoadedPointCloud | null) {
+  return (cloud as unknown as { octree: { material: ReturnType<typeof stubMaterial> } }).octree.material
+}
+
+function setUp(requestFrame: (callback: () => void) => number = () => 0) {
+  const components = new OBC.Components()
+  const clouds = components.get(BimPointClouds)
+  const world = fakeWorld()
+  const engine = stubEngine()
+  clouds.setup({
+    world: world as never,
+    source: stubSource(),
+    engine,
+    requestFrame,
+    cancelFrame: () => undefined,
+  })
+  return { components, clouds, world, engine }
+}
+
+describe('BimPointClouds', () => {
+  it('adds a cloud to the world scene under its id-derived root', async () => {
+    const { clouds, world } = setUp()
+
+    await clouds.add('669')
+
+    expect(world.scene.three.getObjectByName(pointCloudRootName('669'))).toBeDefined()
+    expect(clouds.ids()).toEqual(['669'])
+  })
+
+  it('is idempotent and collapses concurrent adds of the same id', async () => {
+    const { clouds, engine } = setUp()
+
+    await Promise.all([clouds.add('669'), clouds.add('669')])
+    await clouds.add('669')
+
+    expect(engine.loaded).toEqual(['669.json'])
+    expect(clouds.ids()).toEqual(['669'])
+  })
+
+  it('fires onChanged once per add and once per remove', async () => {
+    const { clouds } = setUp()
+    const changed = vi.fn()
+    clouds.onChanged.add(changed)
+
+    await clouds.add('669')
+    expect(changed).toHaveBeenCalledTimes(1)
+
+    clouds.remove('669')
+    expect(changed).toHaveBeenCalledTimes(2)
+    expect(clouds.ids()).toEqual([])
+  })
+
+  it('ignores removing an id it never loaded', async () => {
+    const { clouds } = setUp()
+    const changed = vi.fn()
+    clouds.onChanged.add(changed)
+
+    clouds.remove('nope')
+
+    expect(changed).not.toHaveBeenCalled()
+  })
+
+  it('gives a cloud the planes already on the renderer when it loads', async () => {
+    const { clouds, world } = setUp()
+    world.renderer.clippingPlanes = [new THREE.Plane(new THREE.Vector3(0, 1, 0), 2)]
+
+    const cloud = await clouds.add('669')
+
+    expect(materialOf(cloud)).toMatchObject({ clipMode: CLIP_MODE_OUTSIDE })
+    expect(materialOf(cloud).clippingPlanes).toHaveLength(1)
+  })
+
+  it('re-syncs every cloud when the renderer announces new planes', async () => {
+    const { clouds, world } = setUp()
+    const cloud = await clouds.add('669')
+
+    world.renderer.clippingPlanes = [new THREE.Plane(), new THREE.Plane()]
+    world.renderer.onClippingPlanesUpdated.trigger()
+
+    expect(materialOf(cloud).clippingPlanes).toHaveLength(2)
+  })
+
+  it('drops clipping back to disabled when the last plane goes', async () => {
+    const { clouds, world } = setUp()
+    world.renderer.clippingPlanes = [new THREE.Plane()]
+    const cloud = await clouds.add('669')
+    expect(materialOf(cloud).clipMode).toBe(CLIP_MODE_OUTSIDE)
+
+    world.renderer.clippingPlanes = []
+    world.renderer.onClippingPlanesUpdated.trigger()
+
+    expect(materialOf(cloud).clipMode).toBe(CLIP_MODE_DISABLED)
+  })
+
+  it('leaves no plane listener on the renderer once disposed', async () => {
+    const { clouds, world } = setUp()
+    await clouds.add('669')
+    expect(handlersOf(world.renderer.onClippingPlanesUpdated).size).toBe(1)
+
+    clouds.dispose()
+
+    expect(handlersOf(world.renderer.onClippingPlanesUpdated).size).toBe(0)
+  })
+
+  it('updates the octree on every rendered frame, not only the first', async () => {
+    const { clouds, world, engine } = setUp()
+    await clouds.add('669')
+    const before = engine.updates
+
+    world.renderer.onBeforeUpdate.trigger()
+    world.renderer.onBeforeUpdate.trigger()
+    world.renderer.onBeforeUpdate.trigger()
+
+    expect(engine.updates - before).toBe(3)
+  })
+
+  it('keeps drawing while the engine reports it is still streaming', async () => {
+    const frames: Array<() => void> = []
+    const { clouds, world, engine } = setUp((callback) => { frames.push(callback); return frames.length })
+    await clouds.add('669')
+    engine.streaming = true
+    world.renderer.onBeforeUpdate.trigger()
+
+    world.renderer.needsUpdate = false
+    frames.pop()?.()
+
+    expect(world.renderer.needsUpdate).toBe(true)
+  })
+
+  it('gives a newly loaded cloud the appearance already in force', async () => {
+    const { clouds } = setUp()
+    clouds.setAppearance({ shape: 'square', size: 3 })
+
+    const cloud = await clouds.add('669')
+
+    expect(materialOf(cloud).shape).toBe(0)
+    expect(materialOf(cloud).size).toBe(3)
+  })
+
+  it('repaints every loaded cloud when the appearance changes', async () => {
+    const { clouds, engine } = setUp()
+    const cloud = await clouds.add('669')
+
+    clouds.setAppearance({ sizeType: 'fixed', pointBudget: 2_000_000 })
+
+    expect(materialOf(cloud).pointSizeType).toBe(0)
+    expect(engine.pointBudget).toBe(2_000_000)
+  })
+
+  it('clamps an appearance the shader could not render', async () => {
+    const { clouds } = setUp()
+
+    clouds.setAppearance({ pointBudget: 1e12, shape: 'blob' as never })
+
+    expect(clouds.appearance.pointBudget).toBe(20_000_000)
+    expect(clouds.appearance.shape).toBe('circle')
+  })
+
+  it('re-asserts blending every frame, since any shader rebuild reverts it', async () => {
+    const { clouds, world } = setUp()
+    clouds.setAppearance({ opacity: 0.4 })
+    const cloud = await clouds.add('669')
+    materialOf(cloud).blending = 2
+    materialOf(cloud).depthTest = false
+
+    world.renderer.onBeforeUpdate.trigger()
+
+    expect(materialOf(cloud).blending).toBe(THREE.NormalBlending)
+    expect(materialOf(cloud).depthTest).toBe(true)
+  })
+
+  it('excludes cloud roots from the shadow distance renderer', async () => {
+    const { clouds, world } = setUp()
+
+    await clouds.add('669')
+
+    expect(world.scene.distanceRenderer.excludedObjects.size).toBe(1)
+  })
+
+  it('empties the scene and disposes the engine on dispose', async () => {
+    const { clouds, world, engine } = setUp()
+    await clouds.add('669')
+
+    clouds.dispose()
+
+    expect(world.scene.three.getObjectByName(pointCloudRootName('669'))).toBeUndefined()
+    expect(engine.disposedCount()).toBe(1)
+    expect(clouds.ids()).toEqual([])
+  })
+
+  it('fires onDisposed and survives a dispose with no world configured', () => {
+    const components = new OBC.Components()
+    const clouds = components.get(BimPointClouds)
+    const disposed = vi.fn()
+    clouds.onDisposed.add(disposed)
+
+    expect(() => clouds.dispose()).not.toThrow()
+    expect(disposed).toHaveBeenCalledTimes(1)
+  })
+
+  it('drives the engine from the renderer frame hook', async () => {
+    const { clouds, world } = setUp()
+    await clouds.add('669')
+
+    world.renderer.onBeforeUpdate.trigger()
+
+    expect(clouds.visiblePoints).toBe(7)
+  })
+})
+
+describe('BimPointClouds as a pick source', () => {
+  const ray = new THREE.Ray(new THREE.Vector3(), new THREE.Vector3(0, 0, -1))
+
+  it('reports nothing when no cloud is loaded', () => {
+    const { clouds, world } = setUp()
+
+    expect(clouds.pick(ray, world.camera.three, 17)).toBeNull()
+  })
+
+  it('reports nothing before setup, so the tools can register early', () => {
+    const components = new OBC.Components()
+    const clouds = components.get(BimPointClouds)
+
+    expect(clouds.pick(ray, new THREE.PerspectiveCamera(), 17)).toBeNull()
+  })
+
+  it('hands the engine the ray, camera, renderer and pick window', async () => {
+    const { clouds, world, engine } = setUp()
+    await clouds.add('669')
+    engine.hit = new THREE.Vector3(1, 2, 3)
+
+    const pick = clouds.pick(ray, world.camera.three, 23)
+
+    expect(pick?.point.toArray()).toEqual([1, 2, 3])
+    expect(engine.picks).toEqual([
+      { count: 1, camera: world.camera.three, renderer: world.renderer.three, ray, pickWindowSize: 23 },
+    ])
+  })
+
+  it('reports nothing when the engine misses', async () => {
+    const { clouds, world } = setUp()
+    await clouds.add('669')
+
+    expect(clouds.pick(ray, world.camera.three, 17)).toBeNull()
+  })
+
+  it('leaves a hidden cloud out of the pick', async () => {
+    const { clouds, world, engine } = setUp()
+    await clouds.add('669')
+    engine.hit = new THREE.Vector3(1, 2, 3)
+    clouds.setVisible('669', false)
+
+    expect(clouds.pick(ray, world.camera.three, 17)).toBeNull()
+    expect(engine.picks).toEqual([])
+  })
+})
+
+describe('BimPointClouds per-cloud opacity', () => {
+  it('sets one cloud opacity and leaves the others alone', async () => {
+    const { clouds } = setUp()
+    const dimmed = await clouds.add('669')
+    const solid = await clouds.add('670')
+
+    clouds.setOpacity('669', 0.25)
+
+    expect(clouds.opacityOf('669')).toBe(0.25)
+    expect(materialOf(dimmed).opacity).toBe(0.25)
+    expect(materialOf(solid).opacity).toBe(1)
+  })
+
+  it('clamps a value the shader could not render', async () => {
+    const { clouds } = setUp()
+    await clouds.add('669')
+
+    clouds.setOpacity('669', 4)
+    expect(clouds.opacityOf('669')).toBe(1)
+
+    clouds.setOpacity('669', -1)
+    expect(clouds.opacityOf('669')).toBe(0)
+  })
+
+  it('announces the change, so both the sidebar and the settings can follow it', async () => {
+    const { clouds } = setUp()
+    await clouds.add('669')
+    const changed = vi.fn()
+    clouds.onOpacityChanged.add(changed)
+
+    clouds.setOpacity('669', 0.4)
+
+    expect(changed).toHaveBeenCalledWith({ id: '669', opacity: 0.4 })
+  })
+
+  it('falls back to the viewer-wide opacity until a cloud is given its own', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669')
+
+    clouds.setAppearance({ opacity: 0.6 })
+
+    expect(clouds.opacityOf('669')).toBe(0.6)
+    expect(materialOf(cloud).opacity).toBe(0.6)
+  })
+
+  it('keeps a cloud own opacity when the viewer-wide one changes', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669')
+    clouds.setOpacity('669', 0.25)
+
+    clouds.setAppearance({ opacity: 0.6, size: 3 })
+
+    expect(clouds.opacityOf('669')).toBe(0.25)
+    expect(materialOf(cloud).opacity).toBe(0.25)
+    expect(materialOf(cloud).size).toBe(3)
+  })
+
+  it('makes a dimmed cloud transparent, otherwise the opacity would not show', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669')
+
+    clouds.setOpacity('669', 0.5)
+
+    expect(materialOf(cloud).transparent).toBe(true)
+  })
+
+  it('holds the opacity through the per-frame render state, which reasserts the splat mode', async () => {
+    const { clouds, world } = setUp()
+    const cloud = await clouds.add('669')
+    clouds.setOpacity('669', 0.5)
+
+    world.renderer.onBeforeUpdate.trigger()
+
+    expect(materialOf(cloud).transparent).toBe(true)
+  })
+
+  it('forgets the opacity when the cloud is removed, so a reload comes back solid', async () => {
+    const { clouds } = setUp()
+    await clouds.add('669')
+    clouds.setOpacity('669', 0.25)
+
+    clouds.remove('669')
+    const reloaded = await clouds.add('669')
+
+    expect(clouds.opacityOf('669')).toBe(1)
+    expect(materialOf(reloaded).opacity).toBe(1)
+  })
+
+  it('tolerates an id it has not loaded', () => {
+    const { clouds } = setUp()
+
+    expect(() => clouds.setOpacity('nope', 0.5)).not.toThrow()
+  })
+})
+
+describe('BimPointClouds ghosting', () => {
+  it('is the same value the opacity control reads, so the two cannot disagree', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669')
+
+    clouds.setGhosted('669', true)
+
+    expect(clouds.isGhosted('669')).toBe(true)
+    expect(clouds.opacityOf('669')).toBe(GHOST_OPACITY)
+    expect(materialOf(cloud).opacity).toBe(GHOST_OPACITY)
+  })
+
+  it('reads as ghosted when the opacity slider alone dimmed the cloud', async () => {
+    const { clouds } = setUp()
+    await clouds.add('669')
+
+    clouds.setOpacity('669', 0.3)
+
+    expect(clouds.isGhosted('669')).toBe(true)
+  })
+
+  it('restores full opacity when switched off', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669')
+
+    clouds.setGhosted('669', true)
+    clouds.setGhosted('669', false)
+
+    expect(clouds.isGhosted('669')).toBe(false)
+    expect(materialOf(cloud).opacity).toBe(1)
+    expect(materialOf(cloud).transparent).toBe(false)
+  })
+})
+
+describe('BimPointClouds world centroid', () => {
+  const nodes = (...boxes: { numPoints: number; min: number; max: number }[]) =>
+    boxes.map(({ numPoints, min, max }) => ({
+      numPoints,
+      boundingBox: new THREE.Box3(new THREE.Vector3(min, min, min), new THREE.Vector3(max, max, max)),
+    }))
+
+  const octreeOf = (cloud: LoadedPointCloud | null) =>
+    cloud?.octree as unknown as Record<string, unknown>
+
+  it('reports nothing for a cloud it does not hold', () => {
+    const { clouds } = setUp()
+
+    expect(clouds.worldCentroid('nope')).toBeNull()
+  })
+
+  it('weights the streamed nodes by point count', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669', { ...DEFAULT_PLACEMENT, sourceUp: 'y' })
+    octreeOf(cloud).visibleNodes = nodes({ numPoints: 1000, min: 0, max: 10 }, { numPoints: 1, min: 900, max: 1000 })
+
+    const centre = clouds.worldCentroid('669') as THREE.Vector3
+
+    expect(centre.x).toBeLessThan(10)
+  })
+
+  it('falls back to the tight bounding box before anything has streamed', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669', { ...DEFAULT_PLACEMENT, sourceUp: 'y' })
+    octreeOf(cloud).visibleNodes = []
+    octreeOf(cloud).pcoGeometry = {
+      tightBoundingBox: new THREE.Box3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(4, 4, 4)),
+    }
+
+    expect((clouds.worldCentroid('669') as THREE.Vector3).toArray()).toEqual([2, 2, 2])
+  })
+
+  it('reports nothing when the cloud offers no bounds at all', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669')
+    octreeOf(cloud).visibleNodes = []
+    octreeOf(cloud).pcoGeometry = {}
+
+    expect(clouds.worldCentroid('669')).toBeNull()
+  })
+
+  it('answers in world space, so the placement is what moves it', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669', { ...DEFAULT_PLACEMENT, position: [100, 0, 0], sourceUp: 'y' })
+    octreeOf(cloud).visibleNodes = nodes({ numPoints: 10, min: 0, max: 4 })
+
+    const centre = clouds.worldCentroid('669') as THREE.Vector3
+
+    expect(centre.x).toBeCloseTo(102)
+  })
+
+  it('centres the cloud on the origin when the placement it implies is applied', async () => {
+    const { clouds } = setUp()
+    const cloud = await clouds.add('669', { ...DEFAULT_PLACEMENT, position: [100, 0, 0], sourceUp: 'y' })
+    octreeOf(cloud).visibleNodes = nodes({ numPoints: 10, min: 0, max: 4 })
+    const before = clouds.worldCentroid('669') as THREE.Vector3
+
+    clouds.setPlacement('669', placementCentredOn(cloud?.placement as never, before))
+
+    const after = clouds.worldCentroid('669') as THREE.Vector3
+    expect(after.x).toBeCloseTo(0)
+    expect(after.y).toBeCloseTo(0)
+    expect(after.z).toBeCloseTo(0)
+  })
+})

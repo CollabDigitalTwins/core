@@ -236,7 +236,10 @@
     "add": "Ajouter un plan de découpe",
     "cancelAdd": "Annuler l'ajout du plan de découpe",
     "deleteAll": "Supprimer tous les plans de découpe",
-    "hint": "Double-cliquez sur le modèle pour ajouter un plan de découpe. Retour arrière supprime le plan sous le curseur. Entrée termine. Échap supprime tous les plans."
+    "hint": "Double-cliquez sur le modèle pour ajouter un plan de découpe. Retour arrière supprime le plan sous le curseur. Entrée termine. Échap supprime tous les plans.",
+    "sectionBox": "Boîte de coupe",
+    "clearSectionBox": "Supprimer la boîte de coupe",
+    "sectionBoxHint": "Faites glisser la poignée d'une face pour redimensionner la boîte de coupe. Les plans de coupe restent actifs."
   },
   "CommentInput": {
     "title": "Ajouter un commentaire",
@@ -1485,7 +1488,8 @@
     "clipping": "Outil de découpage",
     "fit": "Ajuster",
     "add": "Ajouter",
-    "share": "Partager la vue"
+    "share": "Partager la vue",
+    "pointCloudAlign": "Nuage de points"
   },
   "forgotPassword": {
     "h1": "Mot de passe oublié",
@@ -2055,5 +2059,42 @@
     "toastFailed": "Impossible de modifier {name}. Veuillez réessayer.",
     "userReadOnly": "Vous pouvez voir les plugins disponibles, mais pas modifier ce qui s’exécute.",
     "loading": "Chargement des plugins…"
+  },
+  "PointCloudAlignment": {
+    "title": "Aligner le nuage de points",
+    "position": "Position (m)",
+    "rotation": "Rotation (°)",
+    "scale": "Échelle",
+    "modeTranslate": "Déplacer",
+    "modeRotate": "Pivoter",
+    "reset": "Réinitialiser",
+    "done": "Terminé",
+    "noClouds": "Aucun nuage de points activé",
+    "editHint": "Faites glisser le gizmo pour placer le nuage de points. La position est enregistrée en appuyant sur Terminé.",
+    "saved": "Position de « {name} » enregistrée",
+    "saveFailed": "Impossible d'enregistrer la position de « {name} »",
+    "centre": "Centrer sur l'origine",
+    "centreFailed": "Le nuage de points n'est pas assez chargé pour trouver son centre",
+    "pickPivot": "Choisir le point central",
+    "pivotSet": "Rotation autour du point choisi",
+    "pivotOrigin": "Revenir à l'origine du nuage",
+    "pickPivotHint": "Double-cliquez pour créer le point de pivot",
+    "pickPivotFailed": "Rien sous le curseur"
+  },
+  "PointCloudSettings": {
+    "title": "Nuages de points",
+    "pointBudget": "Budget de points",
+    "pointSize": "Taille des points",
+    "maxSize": "Taille maximale",
+    "sizeType": "Mode de taille",
+    "shape": "Forme des points",
+    "sizeType_fixed": "Fixe",
+    "sizeType_attenuated": "Atténuée",
+    "sizeType_adaptive": "Adaptative",
+    "shape_square": "Carré",
+    "shape_circle": "Cercle",
+    "shape_paraboloid": "Paraboloïde",
+    "opacity": "Opacité",
+    "opacityOf": "Opacité — {name}"
   }
 }

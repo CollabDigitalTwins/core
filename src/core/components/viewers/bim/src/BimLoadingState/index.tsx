@@ -182,7 +182,7 @@ export function BimLoadingState() {
             const fragModel = fragments.core.models.list.get(bimFile.name)
             if (fragModel) {
               fragModel.object.position.set(bimFile.x ?? 0, bimFile.y ?? 0, bimFile.z ?? 0)
-              if (bimFile.rotation != null) fragModel.object.rotation.y = bimFile.rotation
+              if (bimFile.bimRotation != null) fragModel.object.rotation.y = bimFile.bimRotation
               fragModel.object.updateMatrixWorld(true)
             }
           }

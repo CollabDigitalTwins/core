@@ -236,7 +236,10 @@
     "add": "Add clipping plane",
     "cancelAdd": "Cancel add clipping plane",
     "deleteAll": "Delete all clipping planes",
-    "hint": "Double-click the model to add a clipping plane. Backspace removes the plane under the cursor. Enter finishes. Escape removes every plane."
+    "hint": "Double-click the model to add a clipping plane. Backspace removes the plane under the cursor. Enter finishes. Escape removes every plane.",
+    "sectionBox": "Section box",
+    "clearSectionBox": "Clear section box",
+    "sectionBoxHint": "Drag a face handle to resize the section box. Clipping planes still apply."
   },
   "CommentInput": {
     "title": "Add Comment",
@@ -1486,7 +1489,8 @@
     "clipping": "Clipping Tool",
     "fit": "Fit",
     "add": "Add",
-    "share": "Share view"
+    "share": "Share view",
+    "pointCloudAlign": "Point cloud"
   },
   "forgotPassword": {
     "h1": "Forgot Password",
@@ -2058,5 +2062,42 @@
     "toastFailed": "Could not change {name}. Please try again.",
     "userReadOnly": "You can see which plugins are available, but not change what runs.",
     "loading": "Loading plugins…"
+  },
+  "PointCloudAlignment": {
+    "title": "Align point cloud",
+    "position": "Position (m)",
+    "rotation": "Rotation (°)",
+    "scale": "Scale",
+    "modeTranslate": "Move",
+    "modeRotate": "Rotate",
+    "reset": "Reset",
+    "done": "Done",
+    "noClouds": "No point clouds are switched on",
+    "editHint": "Drag the gizmo to place the point cloud. The position is saved when you press Done.",
+    "saved": "Saved the position of \"{name}\"",
+    "saveFailed": "Could not save the position of \"{name}\"",
+    "centre": "Centre on scene origin",
+    "centreFailed": "The point cloud has not loaded enough to find its centre yet",
+    "pickPivot": "Pick centre point",
+    "pivotSet": "Turning about the picked point",
+    "pivotOrigin": "Reset to cloud origin",
+    "pickPivotHint": "Double-click to create the pivot point",
+    "pickPivotFailed": "Nothing under the cursor to pick"
+  },
+  "PointCloudSettings": {
+    "title": "Point clouds",
+    "pointBudget": "Point budget",
+    "pointSize": "Point size",
+    "maxSize": "Max point size",
+    "sizeType": "Size mode",
+    "shape": "Point shape",
+    "sizeType_fixed": "Fixed",
+    "sizeType_attenuated": "Attenuated",
+    "sizeType_adaptive": "Adaptive",
+    "shape_square": "Square",
+    "shape_circle": "Circle",
+    "shape_paraboloid": "Paraboloid",
+    "opacity": "Opacity",
+    "opacityOf": "Opacity — {name}"
   }
 }

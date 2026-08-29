@@ -22,6 +22,8 @@ import { AlignPointCloudPanel } from './src/AlignPointCloudPanel'
 import type { Tool } from '../../../../../../types/tools'
 import type { AlignmentMode } from '../../PointClouds/PointCloudAlignment'
 
+const PIVOT_TOAST_ID = 'bim-pointcloud-pivot-toast'
+
 export const AlignPointCloudTool: React.FC<{ tool: Tool }> = ({ tool }) => {
   const t = useTranslations('PointCloudAlignment')
 
@@ -47,6 +49,9 @@ export const AlignPointCloudTool: React.FC<{ tool: Tool }> = ({ tool }) => {
     reset: t('reset'),
     done: t('done'),
     centre: t('centre'),
+    pickPivot: t('pickPivot'),
+    pivotSet: t('pivotSet'),
+    pivotOrigin: t('pivotOrigin'),
   }), [t])
 
   const begin = React.useCallback((id: string) => {
@@ -60,6 +65,16 @@ export const AlignPointCloudTool: React.FC<{ tool: Tool }> = ({ tool }) => {
   }, [alignment])
 
   // A georeferenced scan can land kilometres from the origin, where the user cannot find it.
+  const pickPivot = React.useCallback(() => {
+    if (!alignment) return
+    toast.info(t('pickPivotHint'), { id: PIVOT_TOAST_ID, duration: Infinity })
+
+    void alignment.pickPivot().then((picked) => {
+      toast.dismiss(PIVOT_TOAST_ID)
+      if (!picked) toast.error(t('pickPivotFailed'))
+    })
+  }, [alignment, t])
+
   const centre = React.useCallback(() => {
     if (!session || !bimComponents) return
 
@@ -97,6 +112,9 @@ export const AlignPointCloudTool: React.FC<{ tool: Tool }> = ({ tool }) => {
           onModeChange={changeMode}
           onPlacementChange={(placement) => alignment?.setPlacement(placement)}
           onCentre={centre}
+          onPickPivot={pickPivot}
+          onClearPivot={() => alignment?.setPivot(null)}
+          hasPivot={session.pivot !== null}
           onDone={() => alignment?.accept()}
           onReset={() => alignment?.cancel()}
         />

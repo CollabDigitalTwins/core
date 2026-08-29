@@ -2074,7 +2074,12 @@
     "saved": "Se guardó la posición de «{name}»",
     "saveFailed": "No se pudo guardar la posición de «{name}»",
     "centre": "Centrar en el origen",
-    "centreFailed": "La nube de puntos aún no ha cargado lo suficiente para hallar su centro"
+    "centreFailed": "La nube de puntos aún no ha cargado lo suficiente para hallar su centro",
+    "pickPivot": "Elegir punto central",
+    "pivotSet": "Girando sobre el punto elegido",
+    "pivotOrigin": "Volver al origen de la nube",
+    "pickPivotHint": "Haz doble clic para crear el punto de pivote",
+    "pickPivotFailed": "No hay nada bajo el cursor"
   },
   "PointCloudSettings": {
     "title": "Nubes de puntos",

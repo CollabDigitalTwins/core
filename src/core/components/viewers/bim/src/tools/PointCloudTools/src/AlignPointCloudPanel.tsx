@@ -34,6 +34,9 @@ export interface AlignPointCloudPanelProps {
   onModeChange: (mode: AlignmentMode) => void
   onPlacementChange: (placement: PointCloudPlacement) => void
   onCentre: () => void
+  onPickPivot: () => void
+  onClearPivot: () => void
+  hasPivot: boolean
   onDone: () => void
   onReset: () => void
 }
@@ -77,6 +80,39 @@ function NumberRow({
   )
 }
 
+/** Rotation and scale otherwise turn about the cloud's own origin, which on a georeferenced scan
+ *  sits far outside the points. */
+function PivotControl({
+  hasPivot,
+  labels,
+  onPick,
+  onClear,
+}: {
+  hasPivot: boolean
+  labels: Record<string, string>
+  onPick: () => void
+  onClear: () => void
+}) {
+  return (
+    <div className="space-y-1">
+      <Button variant="outline" size="sm" className="h-7 w-full text-xs" onClick={onPick}>
+        <LR.Crosshair size={13} className="mr-1" />
+        {labels.pickPivot}
+      </Button>
+      {hasPivot && (
+        <div className="flex items-center gap-1">
+          <span className="min-w-0 flex-1 truncate text-[10px] text-muted-foreground">
+            {labels.pivotSet}
+          </span>
+          <Button variant="ghost" size="sm" className="h-6 px-1.5 text-[10px]" onClick={onClear}>
+            {labels.pivotOrigin}
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function AlignPointCloudPanel({
   name,
   placement,
@@ -85,6 +121,9 @@ export function AlignPointCloudPanel({
   onModeChange,
   onPlacementChange,
   onCentre,
+  onPickPivot,
+  onClearPivot,
+  hasPivot,
   onDone,
   onReset,
 }: AlignPointCloudPanelProps) {
@@ -136,18 +175,32 @@ export function AlignPointCloudPanel({
                 onChange={(index, value) => setAxis('position', index, value)}
               />
               <Button variant="outline" size="sm" className="h-7 w-full text-xs" onClick={onCentre}>
-                <LR.Crosshair size={13} className="mr-1" />
+                <LR.LocateFixed size={13} className="mr-1" />
                 {labels.centre}
               </Button>
+              <PivotControl
+                hasPivot={hasPivot}
+                labels={labels}
+                onPick={onPickPivot}
+                onClear={onClearPivot}
+              />
             </div>
           )}
           {mode === 'rotate' && (
-            <NumberRow
-              label={labels.rotation}
-              values={placement.rotation.map(toDegrees) as [number, number, number]}
-              step={1}
-              onChange={(index, value) => setAxis('rotation', index, value)}
-            />
+            <div className="space-y-1.5">
+              <NumberRow
+                label={labels.rotation}
+                values={placement.rotation.map(toDegrees) as [number, number, number]}
+                step={1}
+                onChange={(index, value) => setAxis('rotation', index, value)}
+              />
+              <PivotControl
+                hasPivot={hasPivot}
+                labels={labels}
+                onPick={onPickPivot}
+                onClear={onClearPivot}
+              />
+            </div>
           )}
           {mode === 'scale' && (
             <div className="space-y-1.5">
@@ -163,6 +216,12 @@ export function AlignPointCloudPanel({
                   if (Number.isFinite(scale) && scale > 0) onPlacementChange({ ...placement, scale })
                 }}
                 className="h-7 text-xs"
+              />
+              <PivotControl
+                hasPivot={hasPivot}
+                labels={labels}
+                onPick={onPickPivot}
+                onClear={onClearPivot}
               />
             </div>
           )}

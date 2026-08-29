@@ -88,14 +88,8 @@ export function ndcFromPointer(
   )
 }
 
-/**
- * Merges a nearer scene hit into a measurer's `lastPick` at assignment time.
- *
- * Subscribing to `onPointerMove` is too late: the library's own preview handler is registered in
- * the constructor, so it reads `lastPick` first — and it reads `null` whenever the cursor is over
- * geometry the fragment picker cannot see. Intercepting the write puts every reader in agreement
- * regardless of subscription order. Returns the undo.
- */
+/** Merges a nearer scene hit into a measurer's `lastPick` on write, because the library's own
+ *  preview handler is subscribed in its constructor and reads it first. Returns the undo. */
 export function interceptLastPick(
   measurer: object,
   nearer: (current: LastPickLike | null) => ScenePick | null,

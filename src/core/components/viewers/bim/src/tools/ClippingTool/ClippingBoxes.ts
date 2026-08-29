@@ -29,15 +29,9 @@ interface BoxVisual {
   handles: Map<THREE.Object3D, ClipBoxFace>
 }
 
-/**
- * A six-plane section box over the whole BIM scene. Independent of
- * {@link ClippingPlanes} — both write to the renderer's plane list and all active cuts apply
- * together.
- *
- * The box is expressed as six inward planes rather than a shader box because three's clipping
- * is already an intersection: fragments clip through `renderer.three.clippingPlanes` and point
- * clouds through the `onClippingPlanesUpdated` subscription they already have.
- */
+/** A six-plane section box over the BIM scene, independent of {@link ClippingPlanes} — both write
+ *  to the renderer's plane list and every active cut applies. Six inward planes rather than a
+ *  shader box because three's clipping is already an intersection. */
 export class ClippingBoxes extends OBC.Component implements OBC.Disposable {
   static readonly uuid = 'c02f7a95-8b41-4de3-9a6c-24f1b8e07d3a' as const
 

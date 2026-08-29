@@ -208,7 +208,7 @@ describe('BimPointCloudSync placement', () => {
   it('keys the mutation to the cloud being aligned', async () => {
     renderSync(['669'])
 
-    alignment.onChanged.trigger({ id: '669', placement: { ...PLACED } })
+    alignment.onChanged.trigger({ id: '669', placement: { ...PLACED }, pivot: null })
 
     await waitFor(() => expect(fileHooks.keyedTo.at(-1)).toBe(669))
   })
@@ -216,7 +216,7 @@ describe('BimPointCloudSync placement', () => {
   it('writes the committed placement to the file', async () => {
     renderSync(['669'])
 
-    alignment.onCommitted.trigger({ id: '669', placement: { ...PLACED } })
+    alignment.onCommitted.trigger({ id: '669', placement: { ...PLACED }, pivot: null })
 
     await waitFor(() => expect(fileHooks.updateFile).toHaveBeenCalledWith({
       pointCloudTransform: { version: PLACEMENT_VERSION, ...PLACED },
@@ -228,7 +228,7 @@ describe('BimPointCloudSync placement', () => {
     renderSync(['669'])
     await waitFor(() => expect(clouds.placements).toHaveLength(1))
 
-    alignment.onCommitted.trigger({ id: '669', placement: { ...PLACED } })
+    alignment.onCommitted.trigger({ id: '669', placement: { ...PLACED }, pivot: null })
 
     expect(fileHooks.updateFile).not.toHaveBeenCalled()
   })
@@ -238,7 +238,7 @@ describe('BimPointCloudSync placement', () => {
     fileHooks.updateFile.mockRejectedValueOnce(new Error('offline'))
     renderSync(['669'])
 
-    alignment.onCommitted.trigger({ id: '669', placement: { ...PLACED } })
+    alignment.onCommitted.trigger({ id: '669', placement: { ...PLACED }, pivot: null })
 
     await waitFor(() => expect(warn).toHaveBeenCalled())
     warn.mockRestore()
@@ -248,7 +248,7 @@ describe('BimPointCloudSync placement', () => {
     fileHooks.files = [{ id: 669, name: 'basement scan' }]
     renderSync(['669'])
 
-    alignment.onCommitted.trigger({ id: '669', placement: { ...PLACED } })
+    alignment.onCommitted.trigger({ id: '669', placement: { ...PLACED }, pivot: null })
 
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith('saved:basement scan'))
   })
@@ -259,7 +259,7 @@ describe('BimPointCloudSync placement', () => {
     fileHooks.updateFile.mockRejectedValueOnce(new Error('offline'))
     renderSync(['669'])
 
-    alignment.onCommitted.trigger({ id: '669', placement: { ...PLACED } })
+    alignment.onCommitted.trigger({ id: '669', placement: { ...PLACED }, pivot: null })
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('saveFailed:basement scan'))
     warn.mockRestore()
@@ -270,7 +270,7 @@ describe('BimPointCloudSync placement', () => {
     renderSync(['669'])
     await waitFor(() => expect(clouds.placements).toHaveLength(1))
 
-    alignment.onCommitted.trigger({ id: '669', placement: { ...PLACED } })
+    alignment.onCommitted.trigger({ id: '669', placement: { ...PLACED }, pivot: null })
 
     expect(toast.success).not.toHaveBeenCalled()
     expect(toast.error).not.toHaveBeenCalled()

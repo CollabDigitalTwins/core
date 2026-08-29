@@ -73,14 +73,21 @@ function stubClouds() {
   }
 }
 
-function setUp() {
+function setUp(picked: THREE.Vector3 | null = null) {
   const gizmo = stubGizmo()
   const clouds = stubClouds()
   const components = new OBC.Components()
   const coordinator = components.get(ViewModeCoordinator)
   const alignment = components.get(PointCloudAlignment)
-  alignment.setup({ world: {} as never, clouds, coordinator, createGizmo: () => gizmo })
-  return { alignment, gizmo, clouds, coordinator }
+  const picks = { count: 0 }
+  alignment.setup({
+    world: {} as never,
+    clouds,
+    coordinator,
+    createGizmo: () => gizmo,
+    pickPoint: async () => { picks.count++; return picked },
+  })
+  return { alignment, gizmo, clouds, coordinator, picks }
 }
 
 describe('PointCloudAlignment', () => {
@@ -158,7 +165,7 @@ describe('PointCloudAlignment', () => {
 
     alignment.accept()
 
-    expect(committed).toHaveBeenCalledWith({ id: '669', placement: expect.objectContaining({ position: [7, 0, 0] }) })
+    expect(committed).toHaveBeenCalledWith(expect.objectContaining({ id: '669', placement: expect.objectContaining({ position: [7, 0, 0] }) }))
   })
 
   it('commits the reverted placement on cancel, so a revert is saved too', async () => {
@@ -170,7 +177,7 @@ describe('PointCloudAlignment', () => {
 
     alignment.cancel()
 
-    expect(committed).toHaveBeenCalledWith({ id: '669', placement: expect.objectContaining({ position: [0, 0, 0] }) })
+    expect(committed).toHaveBeenCalledWith(expect.objectContaining({ id: '669', placement: expect.objectContaining({ position: [0, 0, 0] }) }))
   })
 
   it('announces the end of a session with a null change', async () => {
@@ -223,5 +230,245 @@ describe('PointCloudAlignment', () => {
 
     expect(gizmo.disposed).toBe(1)
     expect(alignment.activeId).toBeNull()
+  })
+})
+
+describe('PointCloudAlignment pivot', () => {
+  const FAR = new THREE.Vector3(500_000, 4_000_000, 100)
+  const yaw = (radians: number): PointCloudPlacement => ({
+    ...DEFAULT_PLACEMENT,
+    sourceUp: 'y',
+    rotation: [0, radians, 0],
+  })
+
+  it('turns about the cloud origin until a pivot is chosen', async () => {
+    const { alignment, clouds } = setUp()
+    await alignment.begin('669')
+
+    alignment.setPlacement(yaw(Math.PI / 4))
+
+    expect(clouds.get('669')?.placement.position).toEqual([0, 0, 0])
+  })
+
+  it('holds a chosen pivot still through a rotation', async () => {
+    const { alignment, clouds } = setUp()
+    await alignment.begin('669')
+    alignment.setPivot(FAR)
+
+    alignment.setPlacement(yaw(Math.PI / 4))
+
+    const placement = clouds.get('669')?.placement as PointCloudPlacement
+    const where = FAR.clone().applyMatrix4(placementToMatrix(placement))
+    expect(where.distanceTo(FAR)).toBeLessThan(1e-6)
+  })
+
+  it('holds it still through a scale change', async () => {
+    const { alignment, clouds } = setUp()
+    await alignment.begin('669')
+    alignment.setPivot(FAR)
+
+    alignment.setPlacement({ ...DEFAULT_PLACEMENT, sourceUp: 'y', scale: 3 })
+
+    const placement = clouds.get('669')?.placement as PointCloudPlacement
+    const where = FAR.clone().applyMatrix4(placementToMatrix(placement))
+    expect(where.distanceTo(FAR)).toBeLessThan(1e-6)
+  })
+
+  it('still moves the cloud plainly when the user drags position', async () => {
+    const { alignment, clouds } = setUp()
+    await alignment.begin('669')
+    alignment.setPivot(FAR)
+
+    alignment.setPlacement({ ...DEFAULT_PLACEMENT, sourceUp: 'y', position: [5, 6, 7] })
+
+    expect(clouds.get('669')?.placement.position).toEqual([5, 6, 7])
+  })
+
+  it('goes back to the cloud origin when the pivot is cleared', async () => {
+    const { alignment, clouds } = setUp()
+    await alignment.begin('669')
+    alignment.setPivot(FAR)
+    alignment.setPivot(null)
+
+    alignment.setPlacement(yaw(Math.PI / 4))
+
+    expect(alignment.pivot).toBeNull()
+    expect(clouds.get('669')?.placement.position).toEqual([0, 0, 0])
+  })
+
+  it('publishes the pivot, so the card can show one is set', async () => {
+    const { alignment } = setUp()
+    const changed = vi.fn()
+    await alignment.begin('669')
+    alignment.onChanged.add(changed)
+
+    alignment.setPivot(FAR)
+
+    expect(changed).toHaveBeenCalledWith(expect.objectContaining({ pivot: expect.anything() }))
+    expect(alignment.pivot?.toArray()).toEqual(FAR.toArray())
+  })
+
+  it('hands out a copy, so a caller cannot move the pivot behind its back', async () => {
+    const { alignment } = setUp()
+    await alignment.begin('669')
+    alignment.setPivot(FAR)
+
+    alignment.pivot?.setScalar(0)
+
+    expect(alignment.pivot?.toArray()).toEqual(FAR.toArray())
+  })
+
+  it('takes the point under the cursor', async () => {
+    const { alignment, picks } = setUp(FAR)
+    await alignment.begin('669')
+
+    expect(await alignment.pickPivot()).toBe(true)
+    expect(picks.count).toBe(1)
+    expect(alignment.pivot?.toArray()).toEqual(FAR.toArray())
+  })
+
+  it('keeps the pivot it had when the cursor is over nothing', async () => {
+    const { alignment } = setUp(null)
+    await alignment.begin('669')
+    alignment.setPivot(FAR)
+
+    expect(await alignment.pickPivot()).toBe(false)
+    expect(alignment.pivot?.toArray()).toEqual(FAR.toArray())
+  })
+
+  it('does not pick outside a session', async () => {
+    const { alignment, picks } = setUp(FAR)
+
+    expect(await alignment.pickPivot()).toBe(false)
+    expect(picks.count).toBe(0)
+  })
+
+  it('forgets the pivot when the session ends, so the next cloud starts clean', async () => {
+    const { alignment } = setUp()
+    await alignment.begin('669')
+    alignment.setPivot(FAR)
+
+    alignment.accept()
+    await alignment.begin('669')
+
+    expect(alignment.pivot).toBeNull()
+  })
+})
+
+describe('PointCloudAlignment pivot gizmo', () => {
+  const FAR = new THREE.Vector3(500_000, 4_000_000, 100)
+
+  it('keeps the handles on the cloud root until a pivot is chosen', async () => {
+    const { alignment, gizmo, clouds } = setUp()
+
+    await alignment.begin('669')
+
+    expect(gizmo.attached).toBe(clouds.get('669')?.root)
+  })
+
+  it('moves the handles onto the picked point', async () => {
+    const { alignment, gizmo } = setUp()
+    await alignment.begin('669')
+
+    alignment.setPivot(FAR)
+
+    expect(gizmo.attached).not.toBe(null)
+    expect(gizmo.attached?.position.toArray()).toEqual(FAR.toArray())
+  })
+
+  it('puts the handles back on the cloud when the pivot is cleared', async () => {
+    const { alignment, gizmo, clouds } = setUp()
+    await alignment.begin('669')
+    alignment.setPivot(FAR)
+
+    alignment.setPivot(null)
+
+    expect(gizmo.attached).toBe(clouds.get('669')?.root)
+  })
+
+  it('turns the cloud about the picked point when the handles are dragged', async () => {
+    const { alignment, gizmo, clouds } = setUp()
+    await alignment.begin('669')
+    alignment.setPivot(FAR)
+
+    const proxy = gizmo.attached as THREE.Object3D
+    proxy.quaternion.setFromEuler(new THREE.Euler(0, Math.PI / 4, 0))
+    gizmo.onChange?.()
+
+    const placement = clouds.get('669')?.placement as PointCloudPlacement
+    const where = FAR.clone().applyMatrix4(placementToMatrix(placement))
+    expect(where.distanceTo(FAR)).toBeLessThan(1e-6)
+    expect(placement.rotation[1]).toBeCloseTo(Math.PI / 4)
+  })
+
+  it('takes the proxy out of the scene when the session ends', async () => {
+    const { alignment, gizmo } = setUp()
+    await alignment.begin('669')
+    alignment.setPivot(FAR)
+    const proxy = gizmo.attached as THREE.Object3D
+
+    alignment.accept()
+
+    expect(proxy.parent).toBeNull()
+  })
+
+  it('re-bases the proxy after a panel edit, so the next drag does not double-apply it', async () => {
+    const { alignment, gizmo, clouds } = setUp()
+    await alignment.begin('669')
+    alignment.setPivot(FAR)
+
+    alignment.setPlacement({ ...DEFAULT_PLACEMENT, sourceUp: 'y', rotation: [0, Math.PI / 4, 0] })
+    const proxy = gizmo.attached as THREE.Object3D
+    expect(proxy.quaternion.angleTo(new THREE.Quaternion())).toBeCloseTo(0)
+
+    proxy.quaternion.setFromEuler(new THREE.Euler(0, Math.PI / 4, 0))
+    gizmo.onChange?.()
+
+    const placement = clouds.get('669')?.placement as PointCloudPlacement
+    expect(placement.rotation[1]).toBeCloseTo(Math.PI / 2)
+  })
+})
+
+describe('PointCloudAlignment gizmo mode', () => {
+  const FAR = new THREE.Vector3(500_000, 4_000_000, 100)
+
+  it('starts a session in move mode', async () => {
+    const { alignment, gizmo } = setUp()
+
+    await alignment.begin('669')
+
+    expect(gizmo.mode).toBe('translate')
+  })
+
+  it('keeps the chosen mode when a pivot rebuilds the gizmo', async () => {
+    const { alignment, gizmo } = setUp()
+    await alignment.begin('669')
+    alignment.setMode('rotate')
+
+    alignment.setPivot(FAR)
+
+    expect(gizmo.mode).toBe('rotate')
+  })
+
+  it('keeps it when the pivot is cleared again', async () => {
+    const { alignment, gizmo } = setUp()
+    await alignment.begin('669')
+    alignment.setMode('scale')
+    alignment.setPivot(FAR)
+
+    alignment.setPivot(null)
+
+    expect(gizmo.mode).toBe('scale')
+  })
+
+  it('goes back to move for the next cloud, matching the card', async () => {
+    const { alignment, gizmo } = setUp()
+    await alignment.begin('669')
+    alignment.setMode('rotate')
+    alignment.accept()
+
+    await alignment.begin('669')
+
+    expect(gizmo.mode).toBe('translate')
   })
 })

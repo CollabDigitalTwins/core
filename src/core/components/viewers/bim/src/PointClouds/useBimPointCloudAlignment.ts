@@ -26,7 +26,9 @@ export function useBimPointCloudAlignment(): AlignmentState | null {
     const alignment = bimComponents.get(PointCloudAlignment)
     const publish = (next: AlignmentState | null) => setSession(next)
     const current = alignment.placement()
-    setSession(alignment.activeId && current ? { id: alignment.activeId, placement: current } : null)
+    setSession(alignment.activeId && current
+      ? { id: alignment.activeId, placement: current, pivot: alignment.pivot }
+      : null)
 
     alignment.onChanged.add(publish)
     return () => alignment.onChanged.remove(publish)

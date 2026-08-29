@@ -43,11 +43,8 @@ export function centroidOrBoxCentre(
   return box.getCenter(new THREE.Vector3())
 }
 
-/**
- * The placement that puts `worldCentre` on the scene origin. Only the translation moves: the
- * placement matrix is T·R·S, so a shift in T moves the cloud by exactly that much in world space
- * whatever its rotation and scale.
- */
+/** The placement that puts `worldCentre` on the scene origin. Only T moves: the matrix is T·R·S,
+ *  so a shift in T moves the cloud by exactly that much whatever its rotation and scale. */
 export function placementCentredOn(
   placement: PointCloudPlacement,
   worldCentre: THREE.Vector3,

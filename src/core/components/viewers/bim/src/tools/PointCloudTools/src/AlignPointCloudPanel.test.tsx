@@ -16,12 +16,20 @@ import type { AlignmentMode } from '../../../PointClouds/PointCloudAlignment'
 const LABELS = {
   title: 'Align', position: 'Position', rotation: 'Rotation', scale: 'Scale',
   translate: 'Move', rotate: 'Rotate', reset: 'Reset', done: 'Done', centre: 'Centre on scene origin',
+  pickPivot: 'Pick centre point', pivotSet: 'Turning about the picked point',
+  pivotOrigin: 'Reset to cloud origin',
 }
 
-function renderPanel(placement: PointCloudPlacement, mode: AlignmentMode = 'translate') {
+function renderPanel(
+  placement: PointCloudPlacement,
+  mode: AlignmentMode = 'translate',
+  hasPivot = false,
+) {
   const onPlacementChange = vi.fn()
   const onModeChange = vi.fn()
   const onCentre = vi.fn()
+  const onPickPivot = vi.fn()
+  const onClearPivot = vi.fn()
   render(
     <AlignPointCloudPanel
       name="scan"
@@ -31,11 +39,14 @@ function renderPanel(placement: PointCloudPlacement, mode: AlignmentMode = 'tran
       onModeChange={onModeChange}
       onPlacementChange={onPlacementChange}
       onCentre={onCentre}
+      onPickPivot={onPickPivot}
+      onClearPivot={onClearPivot}
+      hasPivot={hasPivot}
       onDone={vi.fn()}
       onReset={vi.fn()}
     />,
   )
-  return { onPlacementChange, onModeChange, onCentre }
+  return { onPlacementChange, onModeChange, onCentre, onPickPivot, onClearPivot }
 }
 
 describe('AlignPointCloudPanel axes', () => {
@@ -121,5 +132,56 @@ describe('AlignPointCloudPanel centring', () => {
     renderPanel(DEFAULT_PLACEMENT, 'rotate')
 
     expect(screen.queryByRole('button', { name: /Centre on scene origin/ })).not.toBeInTheDocument()
+  })
+})
+
+describe('AlignPointCloudPanel pivot', () => {
+  const pickButton = () => screen.queryByRole('button', { name: /Pick centre point/ })
+
+  it('offers a centre point in rotate mode, where turning about the wrong point hurts', () => {
+    const { onPickPivot } = renderPanel(DEFAULT_PLACEMENT, 'rotate')
+
+    fireEvent.click(pickButton() as HTMLElement)
+
+    expect(onPickPivot).toHaveBeenCalledTimes(1)
+  })
+
+  it('offers it in scale mode too', () => {
+    renderPanel(DEFAULT_PLACEMENT, 'scale')
+
+    expect(pickButton()).toBeInTheDocument()
+  })
+
+  it('offers it in move mode too, so the pivot can be set from any mode', () => {
+    const { onPickPivot } = renderPanel(DEFAULT_PLACEMENT, 'translate')
+
+    fireEvent.click(pickButton() as HTMLElement)
+
+    expect(onPickPivot).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps centring and picking apart in move mode, where both are offered', () => {
+    const { onCentre, onPickPivot } = renderPanel(DEFAULT_PLACEMENT, 'translate')
+
+    fireEvent.click(screen.getByRole('button', { name: /Centre on scene origin/ }))
+
+    expect(onCentre).toHaveBeenCalledTimes(1)
+    expect(onPickPivot).not.toHaveBeenCalled()
+  })
+
+  it('says nothing about a pivot until one is picked', () => {
+    renderPanel(DEFAULT_PLACEMENT, 'rotate', false)
+
+    expect(screen.queryByText('Turning about the picked point')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Reset to cloud origin/ })).not.toBeInTheDocument()
+  })
+
+  it('shows a picked pivot and offers the way back to the cloud origin', () => {
+    const { onClearPivot } = renderPanel(DEFAULT_PLACEMENT, 'rotate', true)
+
+    expect(screen.getByText('Turning about the picked point')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Reset to cloud origin/ }))
+
+    expect(onClearPivot).toHaveBeenCalledTimes(1)
   })
 })

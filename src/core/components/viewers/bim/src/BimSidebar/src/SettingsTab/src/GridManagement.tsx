@@ -3,14 +3,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import * as THREE from 'three'
 
 import { BimContext } from '../../../../../../../../store'
-import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { ColorInput } from '../../../../../../../ui/Input'
 import { SliderWithInput } from '../../../../../../../ui/Slider'
+import { SettingsSection } from '../../../../../../../ui/ViewerSidebar/SettingsSection'
 
 
 export function GridManagement() {
@@ -156,15 +157,13 @@ export function GridManagement() {
   }, [rotationY, grid, initialized, bimDispatch])
 
   return (
-    <CollapsibleSection
+    <SettingsSection
+      icon={LR.Grid3x3}
       title={t('gridTitle')}
-      chevronPosition="left"
       switchVariant={{
         checked: gridVisible,
         onCheckedChange: setGridVisible,
-        disabled: false,
       }}
-      defaultOpen={false}
     >
       <div className="space-y-4">
         {/* Grid Color */}
@@ -226,6 +225,6 @@ export function GridManagement() {
           disabled={!gridVisible}
         />
       </div>
-    </CollapsibleSection>
+    </SettingsSection>
   )
 }

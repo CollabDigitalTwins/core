@@ -11,6 +11,7 @@ import { AppConfigContext, MapContext } from '../../../../../../../../store'
 import { ColorInput } from '../../../../../../../ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../../../ui/Select'
 import { Tabs, TabsList, TabsTrigger } from '../../../../../../../ui/Tabs'
+import { SettingsSection } from '../../../../../../../ui/ViewerSidebar/SettingsSection'
 import { buildMapStylesCatalog, resolveMapStyle } from '../../../../../utils/mapStyleCatalog'
 
 import { MapProjection } from './MapProjection'
@@ -20,6 +21,7 @@ import { TerrainLevel } from './TerrainLevel'
 
 export function MapCustomization() {
   // Translation
+  const tMeasurements = useTranslations('MeasurementSettings')
   const tSettings = useTranslations('SettingsTab')
   const tMap = useTranslations('MapCustomization')
 
@@ -43,49 +45,49 @@ export function MapCustomization() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Map Style Selector */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium">{tSettings('mapStyle')}</label>
-        <Select
-          value={resolvedMapStyle.url}
-          onValueChange={(value: string) => {
-            const selectedStyle = mapStylesArray.find(style => style.url === value)
-            if (selectedStyle) {
-              mapDispatch({ type: 'UPDATE_MAP_STYLE', payload: { mapStyle: selectedStyle } })
-            }
-          }}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {mapStylesArray.map((mapStyle, index) => (
-              <SelectItem key={index} value={mapStyle.url}>
-                {mapStyle.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+    <>
+      <SettingsSection icon={LR.Map} title={tSettings('mapStyle')} defaultOpen={true}>
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <Select
+              value={resolvedMapStyle.url}
+              onValueChange={(value: string) => {
+                const selectedStyle = mapStylesArray.find(style => style.url === value)
+                if (selectedStyle) {
+                  mapDispatch({ type: 'UPDATE_MAP_STYLE', payload: { mapStyle: selectedStyle } })
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {mapStylesArray.map((mapStyle, index) => (
+                  <SelectItem key={index} value={mapStyle.url}>
+                    {mapStyle.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      {/* Terrain */}
-      <TerrainLevel />
-
-      {/* Map Projection */}
-      <MapProjection />
-
-      {/* Dimensions Colour */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium">{tMap('dimensionsColour')}</label>
-        <div className="p-2 border rounded-md bg-white">
-          <ColorInput
-            value={dimensionsColour}
-            onInput={e => handleDimensionsColour(e.currentTarget.value)}
-            defaultColor={dimensionsColour}
-          />
+          <TerrainLevel />
+          <MapProjection />
         </div>
-      </div>
-    </div>
+      </SettingsSection>
+
+      <SettingsSection icon={LR.Ruler} title={tMeasurements('title')}>
+        <div className="space-y-2">
+          <label className="text-sm font-medium">{tMeasurements('lineColour')}</label>
+          <div className="p-2 border rounded-md bg-white">
+            <ColorInput
+              value={dimensionsColour}
+              onInput={e => handleDimensionsColour(e.currentTarget.value)}
+              defaultColor={dimensionsColour}
+            />
+          </div>
+        </div>
+      </SettingsSection>
+    </>
   )
 }

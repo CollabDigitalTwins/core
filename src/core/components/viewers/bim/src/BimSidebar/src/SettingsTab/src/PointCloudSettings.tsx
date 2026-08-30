@@ -3,14 +3,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
 import { BimContext } from '../../../../../../../../store'
-import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { Label } from '../../../../../../../ui/Label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../../../ui/Select'
 import { SliderWithInput } from '../../../../../../../ui/Slider'
+import { SettingsSection } from '../../../../../../../ui/ViewerSidebar/SettingsSection'
 import {
   DEFAULT_APPEARANCE,
   POINT_SHAPES,
@@ -59,7 +60,10 @@ export function PointCloudSettings() {
   if (clouds.length === 0) return null
 
   return (
-    <CollapsibleSection title={t('title')}>
+    <SettingsSection
+      icon={LR.Grip}
+      title={t('title')}
+    >
       <div className="space-y-3 px-1 pb-2">
         <SliderWithInput
           label={t('pointBudget')}
@@ -127,6 +131,6 @@ export function PointCloudSettings() {
           </Select>
         </div>
       </div>
-    </CollapsibleSection>
+    </SettingsSection>
   )
 }

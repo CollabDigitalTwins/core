@@ -18,6 +18,7 @@ import { useFileUploadHandler } from '../../../../ui/FilesManager/src/useFileUpl
 import { Input } from '../../../../ui/Input'
 import { LoadingSpinner } from '../../../../ui/LoadingSpinner'
 import { setCameraLookAt } from '../../utils/setCameraLookAt'
+import { withBuildingLocation } from '../lib/buildingLocationParams'
 import { LoadModels } from '../LoadModels'
 
 import type { DbFile as DbFile } from '../../../../../types/dbTypes'
@@ -275,13 +276,12 @@ export function BimLoadingState() {
   }
 
   const handleBuildingSelect = (building: any) => {
-    const url = new URL(window.location.href)
-    url.searchParams.set('buildingId', building.id.toString())
     buildingDispatch({ type: 'SET-CURRENT-BUILDING', payload: { building } })
     setSelectedBuilding(building)
     setSearchTerm('')
     setSearchResults([])
-    router.push(url.toString())
+    const params = withBuildingLocation(new URLSearchParams(searchParams?.toString() ?? ''), building)
+    router.replace(`?${params.toString()}`, { scroll: false })
   }
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {

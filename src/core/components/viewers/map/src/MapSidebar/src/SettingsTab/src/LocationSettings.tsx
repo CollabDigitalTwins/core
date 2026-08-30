@@ -3,13 +3,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from "react";
 import { useState } from 'react';
 
 import { MapContext } from '../../../../../../../../store';
-import { Input, CollapsibleSection } from '../../../../../../../ui/';
+import { Input } from '../../../../../../../ui/';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../../../ui/Select'
+import { SettingsSection } from '../../../../../../../ui/ViewerSidebar/SettingsSection';
 
 
 export function LocationSettings({ countryCode }: { countryCode?: string }) {
@@ -239,11 +241,7 @@ export function LocationSettings({ countryCode }: { countryCode?: string }) {
   const handleZoomKeyDown = (e) => { if (e.key === 'Enter') commitZoom(); };
 
   return (
-    <CollapsibleSection
-          title={t('location')}
-          chevronPosition="right"
-          defaultOpen={true}
-        >
+    <SettingsSection icon={LR.MapPin} title={t('location')} defaultOpen={true}>
 
       {/* Latitude & Longitude Inputs in 2 columns */}
       <div className="flex gap-4">
@@ -331,6 +329,6 @@ export function LocationSettings({ countryCode }: { countryCode?: string }) {
           </ul>
         )}
       </div>
-    </CollapsibleSection>
+    </SettingsSection>
   )
 }

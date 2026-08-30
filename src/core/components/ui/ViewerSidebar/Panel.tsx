@@ -11,8 +11,8 @@ import { SearchInput } from '../SearchInput'
 interface ViewerSidebarPanelProps {
   children: React.ReactNode
   /**
-   * 'sections' — the panel does not scroll; its sections manage their own overflow.
-   * 'scroll'   — the panel is a single padded, scrolling stack (settings-style).
+   * 'sections' — the panel does not scroll; each section manages its own overflow.
+   * 'scroll'   — the panel is the scrollport; children keep their natural height.
    */
   variant?: 'sections' | 'scroll'
   /** Renders a search field above the content. */
@@ -38,7 +38,7 @@ export function ViewerSidebarPanel({
     <div
       className={cn(
         variant === 'scroll'
-          ? 'w-full flex-1 min-h-0 flex flex-col gap-6 p-4 overflow-y-auto'
+          ? 'w-full flex-1 min-h-0 flex flex-col gap-6 p-4 overflow-y-auto [&>*]:shrink-0'
           : 'flex-1 min-h-0 flex flex-col space-y-6 py-4 overflow-hidden',
         className,
       )}

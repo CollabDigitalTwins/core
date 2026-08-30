@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as OBC from "@thatopen/components";
-import * as OBF from "@thatopen/components-front"
 import { useTranslations, useLocale } from 'next-intl';
 import * as React from "react";
 import * as THREE from "three";
@@ -17,13 +15,13 @@ import { ViewerLegendHost } from "../shared/legends/ViewerLegendHost";
 import { useBimCoordinateSystem } from "../useCoordinateSystem";
 
 import { BimLoadingState } from "./src/BimLoadingState";
-import { CurrentCamera } from './src/CurrentCamera';
-import { CurrentWorld } from "./src/CurrentWorld";
+import { BuildingLocationSync } from "./src/BuildingLocationSync";
 import { ElementAppearance } from "./src/ElementAppearance";
 import { ElevationsTool } from "./src/ElevationsTool";
 import { FloorplanTool } from "./src/FloorplanTool";
 import { Highlighter } from "./src/Highlighter";
 import { IfcClasses } from "./src/IfcClasses";
+import { createBimWorld } from "./src/lib/createBimWorld";
 import { ViewModeCoordinator } from "./src/lib/ViewModeCoordinator";
 import { ModelsSync } from "./src/ModelsSync";
 import { BimPointClouds } from "./src/PointClouds";
@@ -33,6 +31,8 @@ import { PropertiesMenu } from "./src/propertiesMenu";
 import { SelectionSync } from "./src/SelectionSync";
 import { ClippingPlanes } from "./src/tools/ClippingTool/ClippingPlanes";
 import { ViewportGizmo } from "./src/ViewportGizmo";
+
+import type * as OBC from "@thatopen/components";
 
 
 export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
@@ -100,26 +100,8 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
             if (!containerRef.current || componentsRef.current) return;
 
             const container = containerRef.current;
-            const components = new OBC.Components();
-            const worlds = components.get(OBC.Worlds);
-            const world = worlds.create<
-                OBC.ShadowedScene,
-                OBC.OrthoPerspectiveCamera,
-                OBF.PostproductionRenderer
-            >();
-
-            world.scene = new OBC.ShadowedScene(components);
-
-            world.renderer = new OBF.PostproductionRenderer(components, container);
-            world.camera = new OBC.OrthoPerspectiveCamera(components);
-
-            components.init();
-
-            world.scene.setup();
-            world.scene.three.background = null;
-
-            const grids = components.get(OBC.Grids);
-            const grid = grids.create(world);
+            const { components, world, fragments, grid, workerUrl } = await createBimWorld(container);
+            workerUrlRef.current = workerUrl;
 
             if (grid) {
                 bimDispatch({
@@ -128,33 +110,6 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
                 });
             }
 
-            const axesHelper = new THREE.AxesHelper(5);
-            world.scene.three.add(axesHelper);
-
-            const fragments = components.get(OBC.FragmentsManager);
-
-            const githubUrl =
-                "https://thatopen.github.io/engine_fragment/resources/worker.mjs";
-            const fetchedUrl = await fetch(githubUrl);
-            const workerBlob = await fetchedUrl.blob();
-            const workerFile = new File([workerBlob], "worker.mjs", {
-                type: "text/javascript",
-            });
-            const workerUrl = URL.createObjectURL(workerFile);
-            workerUrlRef.current = workerUrl; // Store reference for cleanup
-            fragments.init(workerUrl);
-
-            world.camera.controls.addEventListener("control", () =>
-                fragments.core.update(),
-            );
-
-            world.camera.controls.restThreshold = 0.005;
-            world.camera.controls.addEventListener("rest", () =>
-                fragments.core.update(true)
-            );
-
-            components.get(CurrentWorld).world = world;
-            components.get(CurrentCamera).camera = world.camera;
             components.get(Highlighter);
             // Up front so it subscribes to model loads before any model arrives.
             components.get(IfcClasses);
@@ -171,26 +126,6 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
                 components.get(FloorplanTool).setGrid(grid);
                 components.get(ElevationsTool).setGrid(grid);
             }
-
-            // Enable shadows
-            world.renderer.three.shadowMap.enabled = true;
-            world.renderer.three.shadowMap.type = THREE.PCFSoftShadowMap;
-            world.scene.setup({
-                shadows: {
-                    cascade: 1,
-                    resolution: 1024,
-                },
-            });
-
-            world.scene.distanceRenderer.excludedObjects.add(grid.three);
-
-            await world.scene.updateShadows();
-
-            world.camera.controls.addEventListener("rest", async () => {
-                await world.scene.updateShadows();
-            });
-
-            world.scene.three.background = null;
 
             // Superseded or unmounted while awaiting: drop it rather than let it win the store.
             if (isCancelled()) {
@@ -297,6 +232,7 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
         >
             <BimLoadingState />
             <ModelsSync />
+            <BuildingLocationSync />
             <BimPointCloudSync pointcloudApiUrl={pointcloudApiUrl} />
             <SelectionSync />
             <div

@@ -4,7 +4,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { Upload, Box, Building2, Search, X, SquareArrowOutUpRight } from 'lucide-react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import React from 'react'
 
@@ -18,7 +18,9 @@ import { useFileUploadHandler } from '../../../../ui/FilesManager/src/useFileUpl
 import { Input } from '../../../../ui/Input'
 import { LoadingSpinner } from '../../../../ui/LoadingSpinner'
 import { setCameraLookAt } from '../../utils/setCameraLookAt'
-import { withBuildingLocation } from '../lib/buildingLocationParams'
+import { searchBuildings } from '../lib/searchBuildings'
+import { useOptionListKeys } from '../lib/useOptionListKeys'
+import { useSelectBuilding } from '../lib/useSelectBuilding'
 import { LoadModels } from '../LoadModels'
 
 import type { DbFile as DbFile } from '../../../../../types/dbTypes'
@@ -50,8 +52,25 @@ export function BimLoadingState() {
     }
   }, [urlBuilding, storeBuilding, buildingDispatch])
 
-  const router = useRouter()
+  const selectBuilding = useSelectBuilding()
   const fileInputRef = React.useRef<HTMLInputElement>(null)
+  const loadedBuildingRef = React.useRef<number | null>(null)
+
+  // Switching buildings has to drop the previous models, or the guard below keeps the old ones.
+  React.useEffect(() => {
+    const id = building?.id ?? null
+    if (loadedBuildingRef.current === id) return
+
+    const previous = loadedBuildingRef.current
+    loadedBuildingRef.current = id
+    if (previous === null) return
+
+    for (const [modelId] of fragments?.list ?? []) {
+      void fragments?.core.disposeModel(modelId).catch(() => undefined)
+    }
+    setHasLoadedModels(false)
+    setCurrentState('opening')
+  }, [building?.id, fragments])
 
   // Upload file hooks
   const { uploadFile } = useUploadFileToBuilding(building?.id)
@@ -70,6 +89,7 @@ export function BimLoadingState() {
   const isLoadingModelsRef = React.useRef(false)
   const [searchTerm, setSearchTerm] = React.useState('')
   const [searchResults, setSearchResults] = React.useState<any[]>([])
+  const optionKeys = useOptionListKeys(searchResults.length)
   const [selectedBuilding, setSelectedBuilding] = React.useState<any>(null)
 
   const { files, isLoading: filesLoading } = useFilesByBuildingId(building?.id)
@@ -80,50 +100,13 @@ export function BimLoadingState() {
     })
   ), [files])
 
-  // Fuzzy search function for buildings
-  const fuzzySearchBuildings = React.useCallback((buildings: any[], searchTerm: string) => {
-    if (!searchTerm.trim()) return buildings.slice(0, 10)
-
-    const fuzzySearchScore = (search: string, text: string): number => {
-      if (!search || !text) return 0
-      const searchLower = search.toLowerCase()
-      const textLower = text.toLowerCase()
-
-      // Exact match gets highest score
-      if (textLower === searchLower) return 1000
-      // Starts with search term gets high score
-      if (textLower.startsWith(searchLower)) return 800
-      // Contains search term gets medium score
-      if (textLower.includes(searchLower)) return 600
-
-      return 0
-    }
-
-    return buildings
-      .map((building) => {
-        const address = building.buildingAddress || ''
-        const name = building.buildingName || ''
-        const id = building.id.toString()
-
-        const addressScore = fuzzySearchScore(searchTerm, address)
-        const nameScore = fuzzySearchScore(searchTerm, name)
-        const idScore = fuzzySearchScore(searchTerm, id)
-
-        const maxScore = Math.max(addressScore, nameScore, idScore)
-        return { ...building, searchScore: maxScore }
-      })
-      .filter(building => building.searchScore > 0)
-      .sort((a, b) => b.searchScore - a.searchScore)
-      .slice(0, 10)
-  }, [])
-
   // Handle search
   const handleSearch = React.useCallback((term: string) => {
     setSearchTerm(term)
     if (buildings) {
-      setSearchResults(fuzzySearchBuildings(buildings, term))
+      setSearchResults(searchBuildings(buildings, term))
     }
-  }, [buildings, fuzzySearchBuildings])
+  }, [buildings])
 
   const shouldShow = (currentState === 'opening' || currentState === 'noBimFiles' || currentState === 'loading' || currentState === 'noBuilding') && !cameraHasMoved
 
@@ -276,12 +259,10 @@ export function BimLoadingState() {
   }
 
   const handleBuildingSelect = (building: any) => {
-    buildingDispatch({ type: 'SET-CURRENT-BUILDING', payload: { building } })
+    selectBuilding(building)
     setSelectedBuilding(building)
     setSearchTerm('')
     setSearchResults([])
-    const params = withBuildingLocation(new URLSearchParams(searchParams?.toString() ?? ''), building)
-    router.replace(`?${params.toString()}`, { scroll: false })
   }
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -385,9 +366,11 @@ export function BimLoadingState() {
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                         <Input
+                          ref={optionKeys.inputRef}
                           placeholder={t('searchBuildings') || 'Search buildings...'}
                           value={searchTerm}
                           onChange={(e) => handleSearch(e.target.value)}
+                          onKeyDown={optionKeys.onInputKeyDown}
                           className="w-full pl-10"
                           disabled={!ability.can('read', 'Building')}
                         />
@@ -397,17 +380,20 @@ export function BimLoadingState() {
                     {/* Search results dropdown */}
                     {searchResults.length > 0 && searchTerm !== '' && !selectedBuilding && (
                       <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto z-20">
-                        {searchResults.map(building => (
-                          <div
+                        {searchResults.map((building, index) => (
+                          <button
                             key={building.id}
-                            className="px-3 py-2 text-sm cursor-pointer hover:bg-muted transition-colors flex gap-2 items-center"
+                            type="button"
+                            ref={optionKeys.optionRef(index)}
+                            className="w-full px-3 py-2 text-sm text-left cursor-pointer hover:bg-muted focus:bg-muted focus:outline-none transition-colors flex gap-2 items-center"
+                            onKeyDown={optionKeys.onOptionKeyDown(index)}
                             onClick={() => handleBuildingSelect(building)}
                           >
-                            <SquareArrowOutUpRight className="w-3 h-3" />
+                            <SquareArrowOutUpRight className="w-3 h-3 shrink-0" />
                             {building.buildingName
                               ? `${building.buildingName}, ${building.buildingAddress}`
                               : building.buildingAddress || `Building ${building.id}`}
-                          </div>
+                          </button>
                         ))}
                       </div>
                     )}

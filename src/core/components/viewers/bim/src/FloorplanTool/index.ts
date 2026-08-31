@@ -125,6 +125,12 @@ export class FloorplanTool extends OBC.Component {
     fragments.core.onModelLoaded.add((model) => {
       void this.generate(model.modelId)
     })
+    fragments.list.onItemDeleted.add(this.onModelRemoved)
+  }
+
+  // Unloading a model has to take its drawings with it, or they outlive the building they describe.
+  private readonly onModelRemoved = (modelId: string) => {
+    this.disposeEntriesForModel(modelId)
   }
 
   get drawings(): FloorplanEntry[] {
@@ -905,6 +911,10 @@ export class FloorplanTool extends OBC.Component {
 
   dispose() {
     void this.deactivate()
+    safeRun(
+      () => this.components.get(OBC.FragmentsManager).list.onItemDeleted.remove(this.onModelRemoved),
+      'unsubscribeModelRemoved',
+    )
     for (const entry of this._entries.values()) {
       safeRun(() => entry.spaces?.dispose(), 'disposeSpaces')
       disposeDrawing(this.components, entry.drawing)

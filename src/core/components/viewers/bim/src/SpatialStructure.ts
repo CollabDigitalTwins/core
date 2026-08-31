@@ -50,6 +50,12 @@ export class SpatialStructure extends OBC.Component {
     super(components)
     components.add(SpatialStructure.uuid, this)
     this.fragments = components.get(OBC.FragmentsManager)
+    // No unsubscribe: this component and the manager are disposed together with the world.
+    this.fragments.list.onItemDeleted.add(this.onModelRemoved)
+  }
+
+  private readonly onModelRemoved = (modelId: string) => {
+    this.clearForModel(modelId)
   }
 
   /** The merged tree across every model that has been built, in insertion order. */

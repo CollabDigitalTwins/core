@@ -11,8 +11,8 @@ import { BuildingsContext } from '../../../../store'
 import { withBuildingLocation } from './lib/buildingLocationParams'
 
 /**
- * Keeps the URL's location params describing the building on screen. Selection handlers only
- * cover the case where the user picks one here; most arrivals already carry a `buildingId`.
+ * Fills in the location params for a building that arrived by URL. Selection writes them itself,
+ * so this only covers the case where a `buildingId` is present without the rest.
  */
 export function BuildingLocationSync() {
   const { state } = React.useContext(BuildingsContext)
@@ -23,7 +23,10 @@ export function BuildingLocationSync() {
   React.useEffect(() => {
     if (!building) return
 
+    // Mid-switch these still name the previous building, and writing would queue a second nav.
     const current = new URLSearchParams(searchParams?.toString() ?? '')
+    if (current.get('buildingId') !== String(building.id)) return
+
     const next = withBuildingLocation(current, building)
     if (next.toString() === current.toString()) return
 

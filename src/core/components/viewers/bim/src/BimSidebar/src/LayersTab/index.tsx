@@ -8,7 +8,7 @@ import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
 import { FloorplanIcon } from '../../../../../../ui/Icons/FloorPlanIcon'
-import { SearchInput } from '../../../../../../ui/SearchInput'
+import { ViewerSidebarPanel } from '../../../../../../ui/ViewerSidebar/Panel'
 
 import { AppearanceProvider } from './src/AppearanceProvider'
 import { ElevationSection } from './src/ElevationsSection'
@@ -125,16 +125,15 @@ export function LayersTab() {
 
   return (
     <AppearanceProvider>
-      <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-        {/* Shared search bar — filters every view below. */}
-        <div className="px-4 py-3 border-b flex-shrink-0">
-          <SearchInput
-            placeholder={t('searchPlaceholder')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
+      <ViewerSidebarPanel
+        variant="sections"
+        className="space-y-0 gap-0 py-3"
+        search={{
+          value: searchQuery,
+          onChange: setSearchQuery,
+          placeholder: t('searchPlaceholder'),
+        }}
+      >
         <div ref={layoutRef} className="grid flex-1 min-h-0" style={{ gridTemplateRows }}>
           <div className="min-h-0 overflow-hidden">
             <LayerGroupSection
@@ -198,7 +197,7 @@ export function LayersTab() {
             />
           </div>
         </div>
-      </div>
+      </ViewerSidebarPanel>
     </AppearanceProvider>
   )
 }

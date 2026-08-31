@@ -11,11 +11,9 @@ import type * as OBC from '@thatopen/components'
 const DISTANCE_FACTOR = 3
 const CLEARANCE_FACTOR = 0.25
 const MIN_VERTICAL = 0.05
+const NORMAL_BIAS_FRACTION = 0.002
+const BIAS = -0.0005
 
-/**
- * Puts the sun outside the model and aims it at the centre, then frames the shadow camera on the
- * same box. `ShadowedScene` otherwise parks the light near the viewer, which lands it indoors.
- */
 export function placeSun(
     world: OBC.World | null | undefined,
     bounds: THREE.Box3 | null | undefined,
@@ -46,6 +44,10 @@ export function placeSun(
         camera.near = Math.max(distance - radius * 2, 0.1)
         camera.far = distance + radius * 2
         camera.updateProjectionMatrix()
+
+        // Without a normal offset, faces turned away from the sun self-shadow into stripes.
+        light.shadow.normalBias = radius * NORMAL_BIAS_FRACTION
+        light.shadow.bias = BIAS
 
         if (light.shadow.mapSize.width !== lighting.shadowResolution) {
             light.shadow.mapSize.setScalar(lighting.shadowResolution)

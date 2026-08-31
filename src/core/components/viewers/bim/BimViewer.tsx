@@ -22,6 +22,7 @@ import { FloorplanTool } from "./src/FloorplanTool";
 import { Highlighter } from "./src/Highlighter";
 import { IfcClasses } from "./src/IfcClasses";
 import { createBimWorld } from "./src/lib/createBimWorld";
+
 import { ViewModeCoordinator } from "./src/lib/ViewModeCoordinator";
 import { ModelsSync } from "./src/ModelsSync";
 import { BimPointClouds } from "./src/PointClouds";
@@ -31,6 +32,8 @@ import { PropertiesMenu } from "./src/propertiesMenu";
 import { SelectionSync } from "./src/SelectionSync";
 import { ClippingPlanes } from "./src/tools/ClippingTool/ClippingPlanes";
 import { ViewportGizmo } from "./src/ViewportGizmo";
+
+import type { PivotIndicator } from "./src/lib/PivotIndicator";
 
 import type * as OBC from "@thatopen/components";
 
@@ -93,6 +96,7 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
     const resizeObserverRef = React.useRef<ResizeObserver | null>(null);
     // This mount's own instance, so cleanup and the create-guard cannot read a stale [] closure.
     const componentsRef = React.useRef<OBC.Components | null>(null);
+    const pivotRef = React.useRef<PivotIndicator | null>(null);
 
     const createViewer = React.useCallback(
         async (isCancelled: () => boolean) => {
@@ -100,8 +104,9 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
             if (!containerRef.current || componentsRef.current) return;
 
             const container = containerRef.current;
-            const { components, world, fragments, grid, workerUrl } = await createBimWorld(container);
+            const { components, world, fragments, grid, workerUrl, pivot } = await createBimWorld(container);
             workerUrlRef.current = workerUrl;
+            pivotRef.current = pivot;
 
             if (grid) {
                 bimDispatch({
@@ -178,6 +183,8 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
             if (resizeObserverRef.current) {
                 resizeObserverRef.current.disconnect();
             }
+            pivotRef.current?.dispose();
+            pivotRef.current = null;
             // OBC's disposal loop is unguarded, so one throw skips every component after it.
             try {
                 componentsRef.current?.dispose();

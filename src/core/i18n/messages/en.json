@@ -148,6 +148,8 @@
     "helpText": "Drag and drop or select an IFC or Fragment file to load",
     "uploadButton": "Upload File",
     "noBIMLoaded": "No BIM file loaded",
+    "filesUnavailable": "Building files unavailable",
+    "filesUnavailableHelpText": "The file list could not be loaded, so any BIM models are still there but cannot be opened. Try again shortly.",
     "loadingBimModel": "Loading BIM models...",
     "noBuilding": "No building selected",
     "selectBuilding": "Select a building from database",

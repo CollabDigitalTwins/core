@@ -779,8 +779,20 @@
   },
   "LightingManagement": {
     "lightingTitle": "Lighting",
-    "colorLabel": "Colour",
-    "distanceLabel": "Distance"
+    "manualMode": "Manual",
+    "sunMode": "Sun position",
+    "locationLabel": "Location",
+    "dateLabel": "Date",
+    "timeOfDayLabel": "Time of day",
+    "belowHorizon": "The sun is below the horizon at this time.",
+    "colorLabel": "Sun Colour",
+    "sunIntensityLabel": "Sun Intensity",
+    "ambientIntensityLabel": "Ambient Intensity",
+    "azimuthLabel": "Sun Direction",
+    "elevationLabel": "Sun Height",
+    "resetLabel": "Reset to default",
+    "showSunPath": "Show sun path",
+    "shadowResolutionLabel": "Shadow Resolution"
   },
   "Logo": {
     "altText": "Logo"

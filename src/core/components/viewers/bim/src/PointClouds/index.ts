@@ -102,7 +102,7 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable, Sce
   setAppearance(patch: Partial<PointCloudAppearance>) {
     this.currentAppearance = normalizeAppearance(this.currentAppearance, patch)
     if (this.engine) this.engine.pointBudget = this.currentAppearance.pointBudget
-    for (const cloud of this.list()) applyAppearance(pointCloudMaterial(cloud.octree), this.appearanceFor(cloud.id))
+    for (const cloud of this.list()) this.applyLook(cloud)
     this.refresh()
     this.onAppearanceChanged.trigger(this.appearance)
   }
@@ -116,7 +116,7 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable, Sce
     this.opacities.set(id, next)
 
     const cloud = this.get(id)
-    if (cloud) applyAppearance(pointCloudMaterial(cloud.octree), this.appearanceFor(id))
+    if (cloud) this.applyLook(cloud)
     this.refresh()
     this.onOpacityChanged.trigger({ id, opacity: next })
   }
@@ -140,10 +140,14 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable, Sce
     if (!this.registry) return null
     const known = this.registry.get(id)
     const cloud = await this.registry.add(id, placement)
-    if (known) return cloud
+    // The loader re-applies appearance, which leaves the tone at potree's default.
+    if (known) {
+      this.applyLook(cloud)
+      return cloud
+    }
 
     this.excludeFromShadows(cloud)
-    applyAppearance(pointCloudMaterial(cloud.octree), this.appearanceFor(id))
+    this.applyLook(cloud)
     this.syncClipping(cloud)
     this.refresh()
     this.onChanged.trigger(this.ids())
@@ -256,6 +260,35 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable, Sce
 
   private excludeFromShadows(cloud: LoadedPointCloud) {
     this.shadowExclusions()?.add(cloud.root)
+    this.excludeFromPostproduction(cloud)
+  }
+
+  /** Appearance and render state together, so no load path can leave a cloud half-configured. */
+  private applyLook(cloud: LoadedPointCloud) {
+    const material = pointCloudMaterial(cloud.octree)
+    const appearance = this.appearanceFor(cloud.id)
+    applyAppearance(material, appearance)
+    applyRenderState(material, appearance)
+  }
+
+  // Points carry their own colour and are not lit; letting the AO pass touch them only greys them.
+  private excludeFromPostproduction(cloud: LoadedPointCloud) {
+    const renderer = this.world?.renderer as unknown as {
+      postproduction?: { excludedObjectsPass?: { addExcludedMaterial(material: THREE.Material): void } }
+    }
+    let pass
+    try {
+      pass = renderer?.postproduction?.excludedObjectsPass
+    } catch {
+      return
+    }
+    if (!pass) return
+
+    cloud.root.traverse((child) => {
+      const material = (child as THREE.Mesh).material
+      if (!material) return
+      for (const entry of Array.isArray(material) ? material : [material]) pass.addExcludedMaterial(entry)
+    })
   }
 
   private readonly onClippingPlanesUpdated = () => {

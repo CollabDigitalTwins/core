@@ -5,6 +5,7 @@
 
 import * as React from 'react'
 
+import { ViewerSidebarPanel } from '../../components/ui/ViewerSidebar/Panel'
 import { usePluginMessageLookup } from '../sdk/messages'
 
 import { resolvePluginIcon } from './pluginIcon'
@@ -46,7 +47,10 @@ export function usePluginViewerTabs(viewer: ViewerNames): ViewerSidebarTab[] {
               pluginId={registration.pluginId}
               config={configs[registration.pluginId]}
             >
-              <Panel />
+              {/* The host owns the scrollport; plugins cannot reach ViewerSidebarPanel themselves. */}
+              <ViewerSidebarPanel variant="scroll">
+                <Panel />
+              </ViewerSidebarPanel>
             </PluginScopeProvider>
           ),
         }

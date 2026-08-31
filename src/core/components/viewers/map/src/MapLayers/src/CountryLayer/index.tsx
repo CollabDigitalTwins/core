@@ -194,6 +194,9 @@ export const CountryLayer = ({ organization, maptilerKey }: { organization?: Org
   // If the org already has a fixed subdivision or municipality, lock them in and skip camera tracking
   const orgHasLocation = !!(organization?.countrySubdivision || organization?.municipality)
 
+  // A selected building owns the location params; camera tracking would overwrite them on the first pan.
+  const buildingOwnsLocation = !!searchParams.get('buildingId')
+
   // When org has fixed location values, push them into currentLocation once
   React.useEffect(() => {
     if (!orgHasLocation) return
@@ -229,7 +232,7 @@ export const CountryLayer = ({ organization, maptilerKey }: { organization?: Org
     map,
     layerId: SUBDIVISION_FILL_ID,
     sourceId: SUBDIVISION_SOURCE_ID,
-    enabled: !orgHasLocation,
+    enabled: !orgHasLocation && !buildingOwnsLocation,
     onResolve: commitSubdivision,
   })
 

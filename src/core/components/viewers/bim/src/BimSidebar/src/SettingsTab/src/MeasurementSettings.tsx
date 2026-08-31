@@ -3,14 +3,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
 import { BimContext } from '../../../../../../../../store'
-import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { ColorInput } from '../../../../../../../ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../../../ui/Select'
 import { SliderWithInput } from '../../../../../../../ui/Slider'
+import { SettingsSection } from '../../../../../../../ui/ViewerSidebar/SettingsSection'
 import { BimMeasurementManager } from '../../../../BimMeasurements/BimMeasurementManager'
 import { DEFAULT_MEASUREMENT_SETTINGS } from '../../../../BimMeasurements/measurementSettings'
 
@@ -79,7 +80,10 @@ export function MeasurementSettings() {
   )
 
   return (
-    <CollapsibleSection title={t('title')} chevronPosition="left" defaultOpen={false}>
+    <SettingsSection
+      icon={LR.Ruler}
+      title={t('title')}
+    >
       <div className="space-y-4">
         {/* Line colour */}
         <div className="space-y-2">
@@ -190,6 +194,6 @@ export function MeasurementSettings() {
           unit="px"
         />
       </div>
-    </CollapsibleSection>
+    </SettingsSection>
   )
 }

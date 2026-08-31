@@ -3,11 +3,7 @@
 
 import { describe, expect, it } from 'vitest'
 
-import {
-  applyAppearance,
-  DEFAULT_APPEARANCE,
-  normalizeAppearance,
-} from './pointCloudAppearance'
+import { DEFAULT_APPEARANCE, applyAppearance, normalizeAppearance } from './pointCloudAppearance'
 
 import type { PointCloudMaterialLike } from './pointCloudLoader'
 

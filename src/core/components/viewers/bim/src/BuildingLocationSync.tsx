@@ -10,10 +10,6 @@ import { BuildingsContext } from '../../../../store'
 
 import { withBuildingLocation } from './lib/buildingLocationParams'
 
-/**
- * Fills in the location params for a building that arrived by URL. Selection writes them itself,
- * so this only covers the case where a `buildingId` is present without the rest.
- */
 export function BuildingLocationSync() {
   const { state } = React.useContext(BuildingsContext)
   const building = state.buildings.building

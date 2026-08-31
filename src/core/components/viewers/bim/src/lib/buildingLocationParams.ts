@@ -24,10 +24,6 @@ function locationOf(building: Building) {
     }
 }
 
-/**
- * Rewrites the location params to describe `building`, not wherever the map camera sat. The
- * address is left out: `buildingId` already names it, and it made the URL unreadable.
- */
 export function withBuildingLocation(params: URLSearchParams, building: Building) {
     const next = new URLSearchParams(params.toString())
     next.set('buildingId', String(building.id))

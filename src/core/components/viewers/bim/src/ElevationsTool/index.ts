@@ -96,6 +96,7 @@ export class ElevationsTool extends OBC.Component {
     })
 
     const fragments = components.get(OBC.FragmentsManager)
+    fragments.list.onItemDeleted.add(this.onModelRemoved)
     fragments.core.onModelLoaded.add((model) => {
       void this.generate(model.modelId)
     })
@@ -299,6 +300,11 @@ export class ElevationsTool extends OBC.Component {
     safeRun(() => this._releaseCoordinator(), 'releaseCoordinator')
   }
 
+  // Unloading a model has to take its elevations with it, or they outlive the building.
+  private readonly onModelRemoved = (modelId: string) => {
+    this.disposeEntriesForModel(modelId)
+  }
+
   disposeEntriesForModel(modelId: string) {
     let touched = false
     for (const [id, entry] of this._entries) {
@@ -315,6 +321,10 @@ export class ElevationsTool extends OBC.Component {
 
   dispose() {
     void this.deactivate()
+    safeRun(
+      () => this.components.get(OBC.FragmentsManager).list.onItemDeleted.remove(this.onModelRemoved),
+      'unsubscribeModelRemoved',
+    )
     for (const entry of this._entries.values()) {
       disposeDrawing(this.components, entry.drawing)
     }

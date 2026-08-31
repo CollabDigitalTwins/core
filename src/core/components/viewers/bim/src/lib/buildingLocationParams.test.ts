@@ -34,11 +34,20 @@ describe('withBuildingLocation', () => {
     })
 
     it('deletes a param the building has no value for, so the org fallback still applies', () => {
-        const params = new URLSearchParams({ municipality: 'Toronto', address: 'somewhere' })
+        const params = new URLSearchParams({ municipality: 'Toronto', countrySubdivision: 'QC' })
 
-        const next = withBuildingLocation(params, building({ buildingMunicipality: undefined, buildingAddress: '' }))
+        const next = withBuildingLocation(params, building({
+            buildingMunicipality: undefined,
+            buildingCountrySubdivision: '',
+        }))
 
         expect(next.has('municipality')).toBe(false)
+        expect(next.has('countrySubdivision')).toBe(false)
+    })
+
+    it('keeps the address out of the URL, since buildingId already names the building', () => {
+        const next = withBuildingLocation(new URLSearchParams({ address: 'stale' }), building())
+
         expect(next.has('address')).toBe(false)
     })
 

@@ -17,16 +17,13 @@ function locationOf(building: Building) {
     return {
         municipality: building.buildingMunicipality,
         countrySubdivision: building.buildingCountrySubdivision,
-        address: building.buildingAddress,
+        // Deliberately never written: it made the URL unreadable and buildingId already names it.
+        address: undefined,
         lat: typeof lat === 'number' ? String(lat) : undefined,
         lng: typeof lng === 'number' ? String(lng) : undefined,
     }
 }
 
-/**
- * Rewrites the location params to describe `building` rather than wherever the map camera
- * happened to sit. Deleting empties matters: a blank param shadows the organization fallback.
- */
 export function withBuildingLocation(params: URLSearchParams, building: Building) {
     const next = new URLSearchParams(params.toString())
     next.set('buildingId', String(building.id))

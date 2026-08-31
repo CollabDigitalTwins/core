@@ -2108,5 +2108,11 @@
     "shape_paraboloid": "Paraboloide",
     "opacity": "Opacidad",
     "opacityOf": "Opacidad — {name}"
+  },
+  "BIMSearchTool": {
+    "placeholder": "Buscar...",
+    "placeholderExpanded": "Buscar edificios por nombre, dirección o id...",
+    "noResults": "No hay edificios coincidentes",
+    "unnamed": "Edificio sin nombre"
   }
 }

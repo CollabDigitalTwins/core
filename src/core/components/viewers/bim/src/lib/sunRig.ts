@@ -14,10 +14,6 @@ const MIN_VERTICAL = 0.05
 const NORMAL_BIAS_FRACTION = 0.002
 const BIAS = -0.0005
 
-/**
- * Puts the sun outside the model and aims it at the centre, then frames the shadow camera on the
- * same box. `ShadowedScene` otherwise parks the light near the viewer, which lands it indoors.
- */
 export function placeSun(
     world: OBC.World | null | undefined,
     bounds: THREE.Box3 | null | undefined,

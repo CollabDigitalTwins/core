@@ -43,10 +43,6 @@ async function createFragmentsWorkerUrl() {
     return URL.createObjectURL(file);
 }
 
-/**
- * Builds the shadowed BIM world both viewers share: scene, postproduction renderer, camera,
- * grid, fragments worker and the shadow setup. Callers register their own components after.
- */
 export async function createBimWorld(container: HTMLElement): Promise<BimWorldBootstrap> {
     const components = new OBC.Components();
     const worlds = components.get(OBC.Worlds);

@@ -5,6 +5,7 @@ import * as OBC from "@thatopen/components";
 import * as OBF from "@thatopen/components-front";
 import * as THREE from "three";
 
+import { CameraLimits } from "../CameraLimits";
 import { CurrentCamera } from "../CurrentCamera";
 import { CurrentWorld } from "../CurrentWorld";
 import { ShadowEnroller } from "../ShadowEnroller";
@@ -12,6 +13,7 @@ import { SunPath } from "../SunPath";
 
 import { applyBimLighting, DEFAULT_BIM_LIGHTING } from "./bimLighting";
 import { modelBounds } from "./modelBounds";
+import { PivotIndicator } from "./PivotIndicator";
 import { applyRenderMode, enablePostproduction, excludeFromPostproduction } from "./renderMode";
 
 const FRAGMENTS_WORKER_URL =
@@ -24,6 +26,8 @@ export type ShadowedBimWorld = OBC.SimpleWorld<
 >;
 
 export interface BimWorldBootstrap {
+    /** Orbit-target indicator; the caller disposes it with the world. */
+    pivot: PivotIndicator;
     components: OBC.Components;
     world: ShadowedBimWorld;
     fragments: OBC.FragmentsManager;
@@ -53,6 +57,8 @@ export async function createBimWorld(container: HTMLElement): Promise<BimWorldBo
     >();
 
     world.scene = new OBC.ShadowedScene(components);
+    // The scene starts on its config colour, which would show through the whole worker fetch below.
+    world.scene.three.background = null;
     world.renderer = new OBF.PostproductionRenderer(components, container);
     world.camera = new OBC.OrthoPerspectiveCamera(components);
 
@@ -77,8 +83,13 @@ export async function createBimWorld(container: HTMLElement): Promise<BimWorldBo
 
     world.renderer.three.shadowMap.type = THREE.PCFSoftShadowMap;
     world.scene.setup({ shadows: { cascade: 1, resolution: 1024 } });
+    // setup() re-applies the config colour, so clear it again.
+    world.scene.three.background = null;
 
     const shadows = components.get(ShadowEnroller);
+    components.get(CameraLimits).apply();
+    const pivot = new PivotIndicator(components);
+    pivot.attach();
     components.get(SunPath);
 
     enablePostproduction(world);
@@ -96,7 +107,5 @@ export async function createBimWorld(container: HTMLElement): Promise<BimWorldBo
     applyBimLighting(world, DEFAULT_BIM_LIGHTING, modelBounds(components));
     applyRenderMode(world, "Shadowed");
 
-    world.scene.three.background = null;
-
-    return { components, world, fragments, grid, workerUrl };
+    return { components, world, fragments, grid, workerUrl, pivot };
 }

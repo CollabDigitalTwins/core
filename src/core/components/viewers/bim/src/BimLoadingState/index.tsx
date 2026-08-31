@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { Upload, Box, Building2, Search, X, SquareArrowOutUpRight } from 'lucide-react'
+import { Upload, Box, Building2, Search, X, SquareArrowOutUpRight, TriangleAlert } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import React from 'react'
@@ -18,15 +18,17 @@ import { useFileUploadHandler } from '../../../../ui/FilesManager/src/useFileUpl
 import { Input } from '../../../../ui/Input'
 import { LoadingSpinner } from '../../../../ui/LoadingSpinner'
 import { setCameraLookAt } from '../../utils/setCameraLookAt'
+import { nextBimViewerState } from '../lib/bimViewerState'
 import { searchBuildings } from '../lib/searchBuildings'
 import { useOptionListKeys } from '../lib/useOptionListKeys'
 import { useSelectBuilding } from '../lib/useSelectBuilding'
 import { LoadModels } from '../LoadModels'
 
 import type { DbFile as DbFile } from '../../../../../types/dbTypes'
+import type { BimViewerState } from '../lib/bimViewerState'
 
 
-export type bimViewerState = 'opening' | 'loading' | 'ready' | 'error' | 'noBimFiles' | 'noBuilding'
+export type bimViewerState = BimViewerState
 
 export function BimLoadingState() {
   const t = useTranslations('BimLoadingState')
@@ -83,7 +85,7 @@ export function BimLoadingState() {
     uploadFile,
   })
 
-  const [currentState, setCurrentState] = React.useState<bimViewerState>('opening')
+  const [currentState, setCurrentState] = React.useState<BimViewerState>('opening')
   const [hasLoadedModels, setHasLoadedModels] = React.useState(false)
   const [cameraHasMoved, setCameraHasMoved] = React.useState(false)
   const isLoadingModelsRef = React.useRef(false)
@@ -92,7 +94,7 @@ export function BimLoadingState() {
   const optionKeys = useOptionListKeys(searchResults.length)
   const [selectedBuilding, setSelectedBuilding] = React.useState<any>(null)
 
-  const { files, isLoading: filesLoading } = useFilesByBuildingId(building?.id)
+  const { files, isLoading: filesLoading, isError: filesError } = useFilesByBuildingId(building?.id)
   const bimFiles: DbFile[] = React.useMemo(() => (
     files.filter(file => {
       const ext = file?.extension?.toLowerCase()
@@ -108,7 +110,9 @@ export function BimLoadingState() {
     }
   }, [buildings])
 
-  const shouldShow = (currentState === 'opening' || currentState === 'noBimFiles' || currentState === 'loading' || currentState === 'noBuilding') && !cameraHasMoved
+  const shouldShow = (currentState === 'opening' || currentState === 'noBimFiles' || currentState === 'loading' || currentState === 'noBuilding' || currentState === 'filesUnavailable') && !cameraHasMoved
+  // The scrim is there to focus a card the user must act on; while merely loading it just greys the viewer.
+  const dimBackdrop = currentState === 'noBuilding' || currentState === 'noBimFiles' || currentState === 'filesUnavailable'
 
   // Once models have loaded, start a fallback timer to dismiss the card if camera doesn't move
   React.useEffect(() => {
@@ -204,50 +208,26 @@ export function BimLoadingState() {
 
   // Handle initial state transitions
   React.useEffect(() => {
-    // If no bimComponents available, stay in opening state
-    if (!bimComponents) {
-      setCurrentState('opening')
-      setHasLoadedModels(false)
-      return
-    }
+    const transition = nextBimViewerState({
+      hasComponents: !!bimComponents,
+      hasBuildingId: !!buildingId,
+      hasBuilding: !!building,
+      buildingLoading,
+      buildingError: !!buildingError,
+      filesLoading,
+      filesError: !!filesError,
+      bimFileCount: bimFiles.length,
+      hasLoadedModels,
+    })
+    if (!transition) return
 
-    // If building is loading, stay in opening state
-    if (buildingLoading) {
-      setCurrentState('opening')
-      return
-    }
-
-    // If building failed to load or no buildingId provided, show noBuilding state
-    if (buildingError || (!buildingId && !building)) {
-      setCurrentState('noBuilding')
-      setHasLoadedModels(false)
-      return
-    }
-
-    // If we have a building but files are still loading, stay in opening state
-    if (building && filesLoading) {
-      setCurrentState('opening')
-      return
-    }
-
-    // If we've already loaded models (or are currently loading), don't reload
-    if (hasLoadedModels) {
-      return
-    }
-
-    // If we have a building but no BIM files, show noBimFiles state
-    if (building && bimFiles.length === 0) {
-      setCurrentState('noBimFiles')
-      return
-    }
-
-    // We have BIM files, set to loading and start loading them
-    if (building && bimFiles.length > 0) {
-      setCurrentState('loading')
-      setCameraHasMoved(false) // Reset camera moved state for new model
+    setCurrentState(transition.state)
+    if (transition.resetLoadedModels) setHasLoadedModels(false)
+    if (transition.loadModels) {
+      setCameraHasMoved(false)
       void loadBimModels()
     }
-  }, [bimComponents, building, buildingLoading, buildingError, buildingId, filesLoading, bimFiles.length, loadBimModels, hasLoadedModels])
+  }, [bimComponents, building, buildingLoading, buildingError, buildingId, filesLoading, filesError, bimFiles.length, loadBimModels, hasLoadedModels])
 
   // Don't render if not visible
   if (!shouldShow) {
@@ -291,12 +271,19 @@ export function BimLoadingState() {
 
   return (
     <>
-      <div className="absolute z-10 inset-0 bg-background/50 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+      <div
+        className={cn(
+          'absolute z-10 inset-0 flex items-center justify-center pointer-events-none',
+          dimBackdrop && 'bg-background/50 backdrop-blur-[1px]',
+        )}
+      >
         <Card className={cn("w-[536px] pointer-events-auto flex flex-col justify-start items-center gap-2")}>
           <CardHeader className="flex justify-center items-center">
             <div className="w-12 h-12 p-2 bg-card rounded-md shadow-sm border border-border flex justify-center items-center">
               {currentState === 'noBuilding' ? (
                 <Building2 className={cn("w-4 h-5 text-foreground", buildingsLoading && "animate-pulse")} strokeWidth={2} />
+              ) : currentState === 'filesUnavailable' ? (
+                <TriangleAlert className="w-4 h-5 text-foreground" strokeWidth={2} />
               ) : (
                 <Box className={cn("w-4 h-5 text-foreground", currentState === 'opening' && "animate-pulse")} strokeWidth={2} />
               )}
@@ -320,13 +307,19 @@ export function BimLoadingState() {
                   <>
                     {t('noBuilding')}
                   </>
+                ) : currentState === 'filesUnavailable' ? (
+                  <>
+                    {t('filesUnavailable')}
+                  </>
                 ) : (
                   t('noBIMLoaded')
                 )}
               </div>
-              {(currentState === 'noBimFiles' || currentState === 'noBuilding') && (
+              {(currentState === 'noBimFiles' || currentState === 'noBuilding' || currentState === 'filesUnavailable') && (
                 <div className="self-stretch text-center text-muted-foreground text-sm font-normal font-['Inter'] leading-tight">
-                  {currentState === 'noBuilding' ? t('selectBuildingHelpText') : t('helpText')}
+                  {currentState === 'noBuilding'
+                    ? t('selectBuildingHelpText')
+                    : currentState === 'filesUnavailable' ? t('filesUnavailableHelpText') : t('helpText')}
                 </div>
               )}
             </div>

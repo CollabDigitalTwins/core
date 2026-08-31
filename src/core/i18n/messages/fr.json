@@ -148,6 +148,8 @@
     "helpText": "Glissez-déposez ou sélectionnez un fichier IFC ou Fragment à charger",
     "uploadButton": "Télécharger un fichier",
     "noBIMLoaded": "Aucun fichier BIM chargé",
+    "filesUnavailable": "Fichiers du bâtiment indisponibles",
+    "filesUnavailableHelpText": "La liste des fichiers n'a pas pu être chargée ; les modèles BIM sont toujours présents mais ne peuvent pas être ouverts. Réessayez dans un instant.",
     "loadingBimModel": "Chargement des modèles BIM...",
     "noBuilding": "Aucun bâtiment sélectionné",
     "selectBuilding": "Sélectionnez un bâtiment dans la base de données",

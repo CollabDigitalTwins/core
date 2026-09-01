@@ -4,28 +4,33 @@
 import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
+import { toast } from 'sonner'
 import * as THREE from 'three'
 
-import { useUploadFileToBuilding, useDeleteFile, useFile } from '../../../../../../../../hooks/files/files'
-import { BimContext, BuildingsContext, MenusContext } from '../../../../../../../../store'
+import { useDeleteFile, useFile } from '../../../../../../../../hooks/files/files'
+import { BimContext, BuildingsContext, MenusContext, ToolsContext } from '../../../../../../../../store'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
-import { useFileUploadHandler, useFileDeleteHandler, FileItemComponent, useFileActions, useCommonFileUpload } from '../../../../../../../ui/FilesManager'
+import { useFileDeleteHandler, FileItemComponent, useFileActions } from '../../../../../../../ui/FilesManager'
 import { BCFTopicsManager } from '../../../../BCFTopicsManager'
 import { CurrentWorld } from '../../../../CurrentWorld'
 import { Cursor } from '../../../../Cursor'
 import { DXFManager } from '../../../../DXFLoader'
 import { Highlighter } from '../../../../Highlighter'
 import { IDSManager } from '../../../../IDSManager'
+import { disposeObject3D } from '../../../../lib/disposeObject3D'
+import { needsMarker } from '../../../../lib/needsMarker'
+import { isFileInScene, sceneObjectForFile } from '../../../../lib/sceneContent'
 import { ModelManager } from '../../../../ModelManager'
 import { markerActionsFor } from '../../../../Placement/markerActions'
+import { capabilitiesForFile } from '../../../../Placement/placementCapabilities'
 import { PlacementEditor } from '../../../../Placement/PlacementEditor'
-import { YAW_ONLY_PLACEMENT } from '../../../../Placement/placementTarget'
 import { objectTarget } from '../../../../Placement/targets/objectTarget'
 import { usePlacementSession } from '../../../../Placement/usePlacementSession'
 import { createFileMarker, removeMarker, type AddedFile } from '../../../../tools/AddToBim/src/FileMarkerUtils'
 
 import type { DbFile as IFile } from '../../../../../../../../types/dbTypes'
+import type { SceneContentSources } from '../../../../lib/sceneContent'
 import type { PlacementMode } from '../../../../Placement/PlacementEditor'
 import type { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
 
@@ -48,6 +53,8 @@ const is3DFile = (ext?: string | null): boolean => {
 // Files that live in the 3D scene and can be moved/scaled (3D models + DXF drawings).
 const isPlaceable = (ext?: string | null): boolean => is3DFile(ext) || ext?.toLowerCase() === 'dxf'
 
+const PLACE_TOAST_ID = 'bim-file-place-toast'
+
 export function FilesSection({ files, query = '' }: FilesSectionProps) {
   const t = useTranslations('FileSelection')
 
@@ -57,15 +64,9 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
   const { building } = buildingsState.buildings
   const buildingId = building?.id || -1
   const { dispatch: menusDispatch } = React.useContext(MenusContext)
+  const { dispatch: toolsDispatch } = React.useContext(ToolsContext)
 
-  const { uploadFile } = useUploadFileToBuilding(buildingId)
   const { deleteFile } = useDeleteFile(buildingId)
-
-  const { handleFileUpload } = useFileUploadHandler({
-    buildingId,
-    tag: 'file',
-    uploadFile,
-  })
 
   const { handleDeleteFile } = useFileDeleteHandler({
     deleteFile,
@@ -86,16 +87,12 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
       // viewer, which derives visibility from on-scene state (mapFileIds) rather than
       // from the persisted `file.isVisible` flag — so nothing shows as visible on open
       // unless it has been toggled on or just placed/added into the scene.
-      const isFileInScene = (file: IFile): boolean => {
+      const inScene = (file: IFile): boolean => {
         if (file.extension === 'ids') return activeIDSFileId === file.id
-        if (file.extension === 'dxf') {
-          return dxfGroupsRef.current.get(file.id.toString())?.visible === true
-        }
-        if (is3DFile(file.extension)) {
-          const info = modelManagerRef.current?.getModelByName(file.name)
-          return info ? info.model.visible !== false : false
-        }
-        return false
+        if (!isPlaceable(file.extension)) return false
+
+        const sources = sceneSourcesRef.current
+        return sources ? isFileInScene(file, sources) : false
       }
       return files
         .filter(file => file.tag !== 'user')
@@ -103,7 +100,7 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
         .map(file => {
           // Preserve the user's in-session toggle for already-tracked files; for files
           // seen for the first time, derive visibility from the actual scene state.
-          let isVisible = visibilityMap.has(file.id) ? visibilityMap.get(file.id)! : isFileInScene(file)
+          let isVisible = visibilityMap.has(file.id) ? visibilityMap.get(file.id)! : inScene(file)
           if (file.extension === 'ids' && activeIDSFileId === file.id) {
             isVisible = true
           } else if (file.extension === 'ids' && activeIDSFileId !== null && activeIDSFileId !== file.id) {
@@ -149,6 +146,14 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
   // Loaded DXF groups keyed by file id, so visibility toggles can show/hide them.
   const dxfGroupsRef = React.useRef<Map<string, THREE.Group>>(new Map())
 
+  const sceneSourcesRef = React.useRef<SceneContentSources | null>(null)
+  React.useEffect(() => {
+    const scene = bimComponents?.get(CurrentWorld).world?.scene?.three
+    sceneSourcesRef.current = scene
+      ? { scene, modelByName: (name) => modelManagerRef.current?.getModelByName(name)?.model ?? null }
+      : null
+  }, [bimComponents])
+
   // Floating scene markers (pin + actions card) for visible placeable files.
   const markersRef = React.useRef<Map<string, { marker: CSS2DObject; file: IFile }>>(new Map())
   // Bumped after an object finishes loading so the marker reconcile effect re-runs.
@@ -185,6 +190,22 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
       existing.visible = false
     }
   }, [dxfManager, bimComponents])
+
+  // Keyed on the building id, not unmount: closing the sidebar tab must not empty the scene.
+  const loadedBuildingRef = React.useRef<number | null>(null)
+  React.useEffect(() => {
+    if (loadedBuildingRef.current === buildingId) return
+    const previous = loadedBuildingRef.current
+    loadedBuildingRef.current = buildingId
+    if (previous === null) return
+
+    for (const group of dxfGroupsRef.current.values()) disposeObject3D(group)
+    dxfGroupsRef.current.clear()
+
+    for (const model of modelManager?.getAllModels() ?? []) modelManager?.remove(model.id)
+
+    setLoadedTick(t => t + 1)
+  }, [buildingId, modelManager])
 
   // Read by the marker rAF loop, so it hides the marker of whatever is being placed.
   const placingIdRef = React.useRef<string | null>(null)
@@ -338,6 +359,7 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
 
     const cursor = bimComponents.get(Cursor)
     if (cursor) cursor.cursor = 'crosshair'
+    toast.info(t('placeHint', { name: placingFile.name }), { id: PLACE_TOAST_ID, duration: Infinity })
 
     const mouse = new THREE.Vector2()
 
@@ -405,14 +427,15 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
       document.removeEventListener('dblclick', onDblClick)
       document.removeEventListener('keydown', handleKeyDown)
       if (cursor) cursor.cursor = ''
+      toast.dismiss(PLACE_TOAST_ID)
     }
-  }, [placingFile, bimComponents, raycast])
+  }, [placingFile, bimComponents, raycast, t])
 
   // Resolve the scene object for a file (loaded 3D model or DXF group), if present.
   const getSceneObject = React.useCallback((file: IFile): THREE.Object3D | null => {
-    if (file.extension === 'dxf') return dxfGroupsRef.current.get(file.id.toString()) ?? null
-    return modelManager?.getModelByName(file.name)?.model ?? null
-  }, [modelManager])
+    const sources = sceneSourcesRef.current
+    return sources ? sceneObjectForFile(file, sources) : null
+  }, [])
 
   const editObject = React.useCallback((file: IFile, mode: PlacementMode = 'translate') => {
     if (!bimComponents) return
@@ -427,6 +450,7 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
         Object.assign(file, patch)
         await updateFileRef.current(patch as never)
       },
+      capabilities: capabilitiesForFile(file),
     }), mode)
   }, [bimComponents, getSceneObject])
 
@@ -454,16 +478,10 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
     onMove: handleBimMove,
   })
 
-  const { handleAddFile } = useCommonFileUpload({
-    buildingId,
-    acceptedFileTypes: '*',
-    handleFileUpload: async (domFile: globalThis.File) => {
-      await handleFileUpload(domFile)
-    },
-    onUploadError: (error) => {
-      console.error('Error uploading file:', error)
-    },
-  })
+  // AddToBim owns adding: crosshair on file choice, and the upload carries the placement.
+  const addFile = React.useCallback(() => {
+    toolsDispatch({ type: 'SET-TOOL', payload: { currentToolId: 'bim-add-file' } })
+  }, [toolsDispatch])
 
   const filteredFiles = React.useMemo(() => {
     if (!query.trim()) return localFiles
@@ -546,23 +564,29 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
       const marker = createFileMarker(makeMarkerInput(file, obj.position.clone()), obj, world, (action) => {
         if (action === 'delete') { void handleAction('delete', file); return }
         editObject(file, action === 'move' ? 'translate' : action)
-      }, markerActionsFor(YAW_ONLY_PLACEMENT))
+      }, markerActionsFor(capabilitiesForFile(file)))
       if (marker) markersRef.current.set(key, { marker, file })
     }
   }, [localFiles, loadedTick, bimComponents, getSceneObject, editObject, handleAction, makeMarkerInput])
 
-  // Markers follow their object each frame and hide while that object's gizmo is active.
+  // Markers follow their object; one only earns its place when the geometry is too small to hit.
   React.useEffect(() => {
     if (!bimComponents) return
     let raf = 0
     const worldPos = new THREE.Vector3()
     const tick = () => {
+      const world = bimComponents.get(CurrentWorld).world
+      const camera = world?.camera?.three
+      const viewportHeight = world?.renderer?.three.domElement.clientHeight ?? 0
+
       markersRef.current.forEach(({ marker, file }, key) => {
         const obj = getSceneObject(file)
         if (!obj) { marker.visible = false; return }
         obj.getWorldPosition(worldPos)
         marker.position.set(worldPos.x, worldPos.y + 0.2, worldPos.z)
         marker.visible = placingIdRef.current !== key
+          && !!camera
+          && needsMarker(obj, camera, viewportHeight)
       })
       raf = requestAnimationFrame(tick)
     }
@@ -588,7 +612,7 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
         className="max-h-40 overflow-y-auto"
         itemCount={filteredFiles.length}
         switchVariant={handleSwitchVariant()}
-        onAddItem={handleAddFile}
+        onAddItem={addFile}
         addItemTitle={t('addFileTitle')}
       >
         <div className="space-y-1">

@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { FULL_PLACEMENT, YAW_ONLY_PLACEMENT, narrowPlacement } from './placementTarget'
+import { FULL_PLACEMENT, SCALABLE_OBJECT_PLACEMENT, YAW_ONLY_PLACEMENT, narrowPlacement } from './placementTarget'
 
 import type { PointCloudPlacement } from '../../../shared/pointcloud/pointCloudPlacement'
 
@@ -50,5 +50,15 @@ describe('narrowPlacement', () => {
 
     expect(original.rotation).toEqual([0.4, 0.5, 0.6])
     expect(original.scale).toBe(2.5)
+  })
+})
+
+describe('narrowPlacement for a scalable object', () => {
+  it('keeps the scale a GLB is allowed to set', () => {
+    expect(narrowPlacement(placement, SCALABLE_OBJECT_PLACEMENT).scale).toBe(2.5)
+  })
+
+  it('still drops pitch and roll, which have no column', () => {
+    expect(narrowPlacement(placement, SCALABLE_OBJECT_PLACEMENT).rotation).toEqual([0, 0.5, 0])
   })
 })

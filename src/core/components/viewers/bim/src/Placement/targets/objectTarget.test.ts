@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { describe, expect, it, vi } from 'vitest'
 
 import { DEFAULT_PLACEMENT } from '../../../../shared/pointcloud/pointCloudPlacement'
+import { SCALABLE_OBJECT_PLACEMENT } from '../placementTarget'
 
 import { objectTarget } from './objectTarget'
 
@@ -80,5 +81,47 @@ describe('objectTarget', () => {
     await target.commit({ ...DEFAULT_PLACEMENT, scale: 3 })
 
     expect(updateFile.mock.calls[0][0]).not.toHaveProperty('scale')
+  })
+})
+
+describe('objectTarget for a scalable object', () => {
+  const setUpScalable = () => {
+    const object = stubModel()
+    const updateFile = vi.fn().mockResolvedValue(undefined)
+    const target = objectTarget({
+      id: '3', name: 'panel.glb', object: () => object, updateFile,
+      capabilities: SCALABLE_OBJECT_PLACEMENT,
+    })
+    return { target, object, updateFile }
+  }
+
+  it('advertises that it can be scaled', () => {
+    expect(setUpScalable().target.capabilities).toEqual({ rotation: 'yaw', scale: true })
+  })
+
+  it('scales the object on apply', () => {
+    const { target, object } = setUpScalable()
+
+    target.apply({ ...DEFAULT_PLACEMENT, scale: 3 })
+
+    expect(object.scale.x).toBe(3)
+    expect(object.scale.y).toBe(3)
+    expect(object.scale.z).toBe(3)
+  })
+
+  it('reads the scale back off the object', () => {
+    const { target, object } = setUpScalable()
+    object.scale.setScalar(4)
+
+    expect(target.read().scale).toBe(4)
+  })
+
+  it('leaves a yaw-only target at scale 1, so nothing shifts under it', () => {
+    const object = stubModel()
+    const target = objectTarget({ id: '1', name: 'tower.frag', object: () => object, updateFile: vi.fn() })
+
+    target.apply({ ...DEFAULT_PLACEMENT, scale: 3 })
+
+    expect(object.scale.x).toBe(1)
   })
 })

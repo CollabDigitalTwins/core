@@ -10,7 +10,7 @@ import { useFile } from '../../../../../../hooks/files/files'
 import { objectTarget } from './objectTarget'
 
 import type { DbFile } from '../../../../../../types/dbTypes'
-import type { PlacementTarget } from '../placementTarget'
+import type { PlacementCapabilities, PlacementTarget } from '../placementTarget'
 import type * as THREE from 'three'
 
 /**
@@ -24,13 +24,18 @@ export function useModelTarget() {
   React.useEffect(() => { updateFileRef.current = updateFile }, [updateFile])
 
   const targetFor = React.useCallback(
-    (file: DbFile, object: () => THREE.Object3D | null): PlacementTarget => {
+    (
+      file: DbFile,
+      object: () => THREE.Object3D | null,
+      capabilities?: PlacementCapabilities,
+    ): PlacementTarget => {
       setMovingId(file.id)
 
       return objectTarget({
         id: String(file.id),
         name: file.name,
         object,
+        capabilities,
         updateFile: async (patch) => {
           // Keeps the row in step, so it does not flicker back before the refetch lands.
           Object.assign(file, patch)

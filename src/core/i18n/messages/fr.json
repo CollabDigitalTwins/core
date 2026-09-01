@@ -624,6 +624,7 @@
     "hideTitle": "Masquer de la vue",
     "showTitle": "Afficher dans la vue",
     "placeFile": "Placer le fichier",
+    "placeHint": "Double-cliquez dans le modèle pour placer « {name} ». Appuyez sur Échap pour annuler.",
     "toastErrNoID": "Aucun ID de bâtiment disponible",
     "toastSuccessUpFile": "fichier(s) téléchargé(s) avec succès",
     "toastErrUpFile1": "Erreur lors du téléchargement du fichier :",
@@ -2074,6 +2075,13 @@
     "loading": "Chargement des plugins…"
   },
   "Placement": {
+    "cancel": "Annuler",
+    "confirmPlacement": "Confirmer le placement",
+    "placeAndAdjustHint": "Double-cliquez dans la scène pour placer. Faites glisser le gizmo ou appuyez sur G / R / S pour déplacer, pivoter ou redimensionner.",
+    "unit_mm": "Millimètres → mètres",
+    "unit_cm": "Centimètres → mètres",
+    "unit_m": "Mètres",
+    "unit_in": "Pouces → mètres",
     "title": "Placer l'objet",
     "position": "Position (m)",
     "rotation": "Rotation (°)",

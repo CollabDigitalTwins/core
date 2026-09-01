@@ -187,7 +187,7 @@ export function useFilePlacement(
         headers: { "Content-Type": file.type },
       })
       if (!putResponse.ok) throw new Error(`Upload failed: ${putResponse.status}`)
-      await uploadFileToDB({
+      const created = await uploadFileToDB({
         fileData: {
           name: file.name,
           type: "bim-file",
@@ -204,10 +204,14 @@ export function useFilePlacement(
           x: point.x,
           y: point.y,
           z: point.z,
-          rotation,
+          bimRotation: THREE.MathUtils.degToRad(rotation),
         },
         buildingId,
       })
+
+      // The route answers with an envelope, though the adapter types it as the file itself.
+      const envelope = created as { newFile?: { id?: number } } | { id?: number } | undefined
+      return (envelope as { newFile?: { id?: number } })?.newFile ?? (envelope as { id?: number })
     } catch (err) {
       console.error("Error uploading placed file:", err)
       toast.error(`Failed to save "${file.name}"`)
@@ -305,7 +309,14 @@ export function useFilePlacement(
       }
       modelManager.toggleGizmo(current3DFileId, false)
     }
-    if (selectedFile && finalPos) void uploadPlacedFile(selectedFile, finalPos, finalRot)
+    // The record has to exist before the scene content can be keyed by its file id.
+    if (selectedFile && finalPos) {
+      const placedId = current3DFileId
+      const kind = current3DFileType
+      void uploadPlacedFile(selectedFile, finalPos, finalRot).then((created) => {
+        if (created?.id && kind === 'dxf') addDxf?.rekey(placedId, String(created.id))
+      })
+    }
 
     setShow3DScaleCard(false)
     setCurrent3DFileId(null)

@@ -15,7 +15,9 @@ import { PlacementActionsCard } from '../../../../ui/FilesManager/src/PlacementA
 
 import { Highlighter } from '../Highlighter'
 
+import { ModelManager } from '../ModelManager'
 import { BimPointClouds } from '../PointClouds'
+
 
 import { markerActionsFor } from './markerActions'
 import { PlacementEditor } from './PlacementEditor'
@@ -26,11 +28,16 @@ import { usePlacementSession } from './usePlacementSession'
 import { useViewportContextMenu } from './useViewportContextMenu'
 
 import type { PlacementMode } from './PlacementEditor'
+import type { ViewportTarget } from './resolveViewportTarget'
 
 const PIVOT_TOAST_ID = 'bim-placement-pivot-toast'
 
-const fragmentObject = (components: OBC.Components, name: string) => {
-  try { return components.get(OBC.FragmentsManager).core.models.list.get(name)?.object ?? null }
+const sceneObject = (components: OBC.Components, kind: ViewportTarget['kind'], name: string) => {
+  try {
+    return kind === 'model'
+      ? components.get(OBC.FragmentsManager).core.models.list.get(name)?.object ?? null
+      : components.get(ModelManager).getModelByName(name)?.model ?? null
+  }
   catch { return null }
 }
 
@@ -84,6 +91,10 @@ export function PlacementEditorHost() {
     pickPivot: t('pickPivot'),
     pivotSet: t('pivotSet'),
     pivotOrigin: t('pivotOrigin'),
+    unit_mm: t('unit_mm'),
+    unit_cm: t('unit_cm'),
+    unit_m: t('unit_m'),
+    unit_in: t('unit_in'),
   }), [t])
 
   const changeMode = React.useCallback((next: PlacementMode) => {
@@ -116,7 +127,11 @@ export function PlacementEditorHost() {
     const mode = action === 'move' ? 'translate' : action
     const target = menu.kind === 'cloud'
       ? cloudTarget.targetFor(menu.file, bimComponents.get(BimPointClouds))
-      : modelTarget.targetFor(menu.file, () => fragmentObject(bimComponents, menu.file.name))
+      : modelTarget.targetFor(
+        menu.file,
+        () => sceneObject(bimComponents, menu.kind, menu.file.name),
+        menu.capabilities,
+      )
 
     void editor?.begin(target, mode)
   }

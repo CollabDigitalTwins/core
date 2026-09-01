@@ -12,6 +12,8 @@ export interface PlacementCapabilities {
 
 export const FULL_PLACEMENT: PlacementCapabilities = { rotation: 'full', scale: true }
 export const YAW_ONLY_PLACEMENT: PlacementCapabilities = { rotation: 'yaw', scale: false }
+// A loaded 3D object may be scaled, but yaw is still the only rotation with a column.
+export const SCALABLE_OBJECT_PLACEMENT: PlacementCapabilities = { rotation: 'yaw', scale: true }
 
 /**
  * One thing the placement editor can move. Adapters are the only code that knows how a given

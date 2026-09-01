@@ -624,6 +624,7 @@
     "hideTitle": "Hide from view",
     "showTitle": "Show in view",
     "placeFile": "Place File",
+    "placeHint": "Double-click in the model to place \"{name}\". Press Escape to cancel.",
     "toastErrNoID": "No building ID available",
     "toastSuccessUpFile": "file(s) uploaded successfully",
     "toastErrUpFile1": "Error uploading file:",
@@ -2077,6 +2078,13 @@
     "loading": "Loading plugins…"
   },
   "Placement": {
+    "cancel": "Cancel",
+    "confirmPlacement": "Confirm placement",
+    "placeAndAdjustHint": "Double-click in the scene to place. Drag the gizmo or press G / R / S to move, rotate or scale.",
+    "unit_mm": "Millimetres → metres",
+    "unit_cm": "Centimetres → metres",
+    "unit_m": "Metres",
+    "unit_in": "Inches → metres",
     "title": "Place object",
     "position": "Position (m)",
     "rotation": "Rotation (°)",

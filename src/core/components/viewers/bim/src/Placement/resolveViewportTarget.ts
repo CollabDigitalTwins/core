@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { FULL_PLACEMENT, YAW_ONLY_PLACEMENT } from './placementTarget'
+import { capabilitiesForFile } from './placementCapabilities'
 
 import type { PlacementCapabilities } from './placementTarget'
 import type { DbFile } from '../../../../../types/dbTypes'
@@ -16,9 +16,14 @@ export interface CloudHit {
   id: string
 }
 
+export interface ObjectHit {
+  distance: number
+  name: string
+}
+
 export interface ViewportTarget {
   file: DbFile
-  kind: 'model' | 'cloud'
+  kind: 'model' | 'cloud' | 'object'
   capabilities: PlacementCapabilities
 }
 
@@ -26,22 +31,30 @@ export interface ResolveViewportTargetInput {
   files: DbFile[]
   fragment: FragmentHit | null
   cloud: CloudHit | null
+  object: ObjectHit | null
 }
 
 /** What sits under the cursor, or null when nothing placeable does. */
-export function resolveViewportTarget({ files, fragment, cloud }: ResolveViewportTargetInput): ViewportTarget | null {
-  // Ties go to the fragment, which draws a snap marker the user is already aiming at.
-  const fragmentWins = fragment && (!cloud || fragment.distance <= cloud.distance)
+export function resolveViewportTarget(
+  { files, fragment, cloud, object }: ResolveViewportTargetInput,
+): ViewportTarget | null {
+  const byName = (name?: string) => files.find((candidate) => candidate.name === name)
 
-  if (fragmentWins && fragment.modelId) {
-    const file = files.find((candidate) => candidate.name === fragment.modelId)
-    if (file) return { file, kind: 'model', capabilities: YAW_ONLY_PLACEMENT }
+  const candidates = [
+    // Ties go to the fragment, which draws a snap marker the user is already aiming at.
+    fragment && { distance: fragment.distance, kind: 'model' as const, file: byName(fragment.modelId) },
+    object && { distance: object.distance, kind: 'object' as const, file: byName(object.name) },
+    cloud && { distance: cloud.distance, kind: 'cloud' as const, file: files.find((c) => String(c.id) === cloud.id) },
+  ].filter((candidate): candidate is { distance: number; kind: ViewportTarget['kind']; file: DbFile | undefined } => Boolean(candidate))
+
+  let nearest: { kind: ViewportTarget['kind']; file: DbFile } | null = null
+  let nearestDistance = Infinity
+  for (const candidate of candidates) {
+    if (!candidate.file || candidate.distance >= nearestDistance) continue
+    nearest = { kind: candidate.kind, file: candidate.file }
+    nearestDistance = candidate.distance
   }
 
-  if (cloud) {
-    const file = files.find((candidate) => String(candidate.id) === cloud.id)
-    if (file) return { file, kind: 'cloud', capabilities: FULL_PLACEMENT }
-  }
-
-  return null
+  if (!nearest) return null
+  return { ...nearest, capabilities: capabilitiesForFile(nearest.file) }
 }

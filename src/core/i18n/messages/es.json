@@ -624,6 +624,7 @@
     "hideTitle": "Ocultar de la vista",
     "showTitle": "Mostrar en la vista",
     "placeFile": "Colocar archivo",
+    "placeHint": "Haz doble clic en el modelo para colocar «{name}». Pulsa Escape para cancelar.",
     "toastErrNoID": "No hay ID de edificio disponible",
     "toastSuccessUpFile": "archivo(s) subido(s) con éxito",
     "toastErrUpFile1": "Error al subir el archivo:",
@@ -2074,6 +2075,13 @@
     "loading": "Cargando los plugins…"
   },
   "Placement": {
+    "cancel": "Cancelar",
+    "confirmPlacement": "Confirmar colocación",
+    "placeAndAdjustHint": "Haz doble clic en la escena para colocar. Arrastra el gizmo o pulsa G / R / S para mover, rotar o escalar.",
+    "unit_mm": "Milímetros → metros",
+    "unit_cm": "Centímetros → metros",
+    "unit_m": "Metros",
+    "unit_in": "Pulgadas → metros",
     "title": "Colocar objeto",
     "position": "Posición (m)",
     "rotation": "Rotación (°)",

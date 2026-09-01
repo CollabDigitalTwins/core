@@ -11,6 +11,7 @@ import { pickNearest, SCENE_PICK_WINDOW_PX } from '../lib/scenePicker'
 import { ViewModeCoordinator } from '../lib/ViewModeCoordinator'
 
 import { narrowPlacement } from './placementTarget'
+import { uniformScale } from './uniformScale'
 
 import type { PlacementCapabilities, PlacementTarget } from './placementTarget'
 import type { PointCloudPlacement } from '../../../shared/pointcloud/pointCloudPlacement'
@@ -296,13 +297,16 @@ export class PlacementEditor extends OBC.Component implements OBC.Disposable, Ex
       const dragged = placementFromPivotDrag(this.proxyBase, this.pivotPoint, {
         position: this.proxy.position.clone(),
         quaternion: this.proxy.quaternion.clone(),
-        scale: this.proxy.scale.x,
+        scale: uniformScale(this.proxy.scale.x, this.proxy.scale.y, this.proxy.scale.z),
       })
       this.draggingProxy = true
       this.setPlacement(dragged)
       this.draggingProxy = false
       return
     }
+
+    // The gizmo writes only the dragged axis; scaling is proportional, so resolve it to one number.
+    root.scale.setScalar(uniformScale(root.scale.x, root.scale.y, root.scale.z))
 
     const read = objectToPlacement(root, target.read().sourceUp)
     target.apply(narrowPlacement(read, target.capabilities))

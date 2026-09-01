@@ -9,7 +9,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { DEFAULT_PLACEMENT } from '../../../shared/pointcloud/pointCloudPlacement'
 
 import { PlacementPanel } from './PlacementPanel'
-import { FULL_PLACEMENT, YAW_ONLY_PLACEMENT } from './placementTarget'
+import { FULL_PLACEMENT, SCALABLE_OBJECT_PLACEMENT, YAW_ONLY_PLACEMENT } from './placementTarget'
 
 import type { PlacementMode } from './PlacementEditor'
 import type { PlacementCapabilities } from './placementTarget'
@@ -132,5 +132,85 @@ describe('PlacementPanel shared controls', () => {
     renderPanel(YAW_ONLY_PLACEMENT)
 
     expect(screen.getByText('tower.frag')).toBeTruthy()
+  })
+})
+
+describe('PlacementPanel scale field', () => {
+  it('offers one number, never a value per axis', () => {
+    renderPanel(FULL_PLACEMENT, { ...DEFAULT_PLACEMENT }, 'scale')
+
+    expect(screen.getByLabelText('Scale')).toBeTruthy()
+    expect(screen.queryByLabelText('Scale X')).toBeNull()
+    expect(screen.queryByLabelText('Scale Y')).toBeNull()
+  })
+
+  it('steps finely enough to edit a DXF sitting at its millimetre conversion', () => {
+    const dxf = { ...DEFAULT_PLACEMENT, scale: 0.001 }
+    renderPanel(SCALABLE_OBJECT_PLACEMENT, dxf, 'scale')
+
+    expect(screen.getByLabelText('Scale')).toHaveAttribute('step', '0.001')
+  })
+
+  it('steps normally at everyday scales', () => {
+    renderPanel(SCALABLE_OBJECT_PLACEMENT, { ...DEFAULT_PLACEMENT }, 'scale')
+
+    expect(screen.getByLabelText('Scale')).toHaveAttribute('step', '0.01')
+  })
+})
+
+describe('PlacementPanel while placing a new file', () => {
+  function renderPlacing() {
+    const handlers = { onPickPivot: vi.fn(), onCentre: vi.fn() }
+    render(
+      <PlacementPanel
+        name="plan.dxf"
+        capabilities={SCALABLE_OBJECT_PLACEMENT}
+        availableModes={['rotate', 'scale']}
+        allowPivot={false}
+        placement={{ ...DEFAULT_PLACEMENT }}
+        mode="scale"
+        labels={LABELS}
+        hint="Double-click in the scene to place."
+        hasPivot={false}
+        onModeChange={vi.fn()}
+        onPlacementChange={vi.fn()}
+        onClearPivot={vi.fn()}
+        onDone={vi.fn()}
+        onReset={vi.fn()}
+        {...handlers}
+      />,
+    )
+    return handlers
+  }
+
+  it('shows the instruction it was given', () => {
+    renderPlacing()
+
+    expect(screen.getByText('Double-click in the scene to place.')).toBeTruthy()
+  })
+
+  it('offers no move mode, because the double-click sets the position', () => {
+    renderPlacing()
+
+    expect(modeButtons().some((title) => title.startsWith('Move'))).toBe(false)
+  })
+
+  it('hides the pivot control, which has nothing to turn about yet', () => {
+    renderPlacing()
+
+    expect(screen.queryByText('Pick centre point')).toBeNull()
+  })
+
+  it('hides centre-on-origin too', () => {
+    renderPlacing()
+
+    expect(screen.queryByText('Centre on scene origin')).toBeNull()
+  })
+
+  it('still offers the unit presets, which is the point of the card', () => {
+    renderPlacing()
+
+    expect(screen.getByText('mm')).toBeTruthy()
+    expect(screen.getByText('in')).toBeTruthy()
   })
 })

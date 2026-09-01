@@ -650,3 +650,41 @@ describe('PlacementEditor opening mode', () => {
     expect(gizmo.mode).toBe('rotate')
   })
 })
+
+describe('PlacementEditor proportional scaling', () => {
+  it('follows a Y-handle drag, which the gizmo writes to that axis alone', async () => {
+    const { editor, gizmo, targets, begin } = setUp()
+    await begin('669')
+    editor.setMode('scale')
+
+    const root = gizmo.attached as THREE.Object3D
+    root.scale.set(1, 3, 1)
+    gizmo.onChange?.()
+
+    expect(targets.get('669')?.placement.scale).toBe(3)
+  })
+
+  it('follows a Z-handle drag too', async () => {
+    const { editor, gizmo, targets, begin } = setUp()
+    await begin('669')
+    editor.setMode('scale')
+
+    const root = gizmo.attached as THREE.Object3D
+    root.scale.set(1, 1, 0.5)
+    gizmo.onChange?.()
+
+    expect(targets.get('669')?.placement.scale).toBe(0.5)
+  })
+
+  it('leaves the object uniformly scaled, never stretched on one axis', async () => {
+    const { gizmo, targets, begin } = setUp()
+    await begin('669')
+
+    const root = gizmo.attached as THREE.Object3D
+    root.scale.set(1, 4, 1)
+    gizmo.onChange?.()
+
+    const scaled = targets.get('669')!.root.scale
+    expect([scaled.x, scaled.y, scaled.z]).toEqual([4, 4, 4])
+  })
+})

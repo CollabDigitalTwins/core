@@ -7,8 +7,12 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
-Tagged locally as 0.9.0 through 0.11.1; none of it is published to npm, where 0.8.2 is
-still the latest version.
+## [0.9.0] - 2026-09-02
+
+Consolidates the work previously tagged locally as 0.9.0 through 0.11.1. Those tags were
+never pushed and never published, so they were collapsed into this single release.
+A minor bump rather than a patch: the removals below are breaking, and under 0.x a caret
+range keeps a consumer on 0.8.x until they opt in.
 
 ### Added
 - **Point clouds render inside the BIM viewer.** A BIM scene can now load Potree point
@@ -50,13 +54,20 @@ still the latest version.
   was inline in the viewer.
 - Point cloud defaults changed for use inside a BIM scene.
 
+### Fixed
+- **Restored the whole of 0.8.2, which no release since had carried.** 0.9.0 was tagged on a
+  branch that forked before 0.8.2, so the production tile fix was silently reverted: MapTiler
+  requests were signed with the shared demo key again, which is honoured on localhost only and
+  earns a 403 anywhere else. `maptilerKeyForRequest` and `isLocalhostOrigin` are back, the
+  country and building layers skip the request instead of making one that cannot succeed,
+  `MapTilerKeyNotice` explains the degraded state on screen, and `SUBDIVISION_LINE_WIDTH` is
+  again a single zoom ramp branching on hover in its outputs rather than a nested zoom curve
+  MapLibre rejects.
+
 ### Removed
 - The standalone point cloud alignment tool — `AlignPointCloudTool`,
   `AlignPointCloudPanel`, `PointCloudAlignment`, `useBimPointCloudAlignment` — and
   `Position3DCard`. Both are superseded by the placement editor.
-- `MapTilerKeyNotice` and the subdivision line-width test, which shipped in 0.8.2 and are
-  absent here. This was not deliberate: 0.9.0 was tagged on a branch that forked before
-  0.8.2, so 0.8.2 is not an ancestor of anything released since.
 
 ## [0.8.2] - 2026-08-26
 

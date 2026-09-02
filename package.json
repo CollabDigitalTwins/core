@@ -1,6 +1,6 @@
 {
   "name": "@collabdt/core",
-  "version": "0.11.1",
+  "version": "0.9.0",
   "description": "CDT Core contains all the core technology for your CDT platform",
   "type": "module",
   "main": "dist/index.js",
@@ -56,9 +56,10 @@
     "test": "jest",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
-    "patch": "git add . && git commit -m \"$npm_config_m\" && npm version patch && git push --follow-tags",
-    "minor": "git add . && git commit -m \"$npm_config_m\" && npm version minor && git push --follow-tags",
-    "major": "git add . && git commit -m \"$npm_config_m\" && npm version major && git push --follow-tags"
+    "changelog:check": "node scripts/check-changelog.mjs",
+    "version:patch": "npm version patch --no-git-tag-version",
+    "version:minor": "npm version minor --no-git-tag-version",
+    "version:major": "npm version major --no-git-tag-version"
   },
   "repository": {
     "type": "git",

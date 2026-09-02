@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { DRAG_SLOP_PX, beginPress, opensMenu, trackPress } from './contextMenuGesture'
+import { DRAG_SLOP_PX, beginPress, opensMenu, trackPress, withinViewport } from './contextMenuGesture'
 
 const drag = (from: { x: number; y: number }, ...points: [number, number][]) =>
   points.reduce((press, [x, y]) => trackPress(press, x, y), beginPress(from.x, from.y))
@@ -48,5 +48,24 @@ describe('right-press gesture', () => {
     const press = beginPress(10, 10)
 
     expect(trackPress(press, 11, 11)).toBe(press)
+  })
+})
+
+describe('withinViewport', () => {
+  const rect = { left: 100, top: 50, right: 500, bottom: 400 }
+
+  it('claims a point over the viewport, wherever the event was targeted', () => {
+    expect(withinViewport(rect, 300, 200)).toBe(true)
+  })
+
+  it('claims the edges, so a click on the very border is not handed to the browser', () => {
+    expect(withinViewport(rect, 100, 50)).toBe(true)
+    expect(withinViewport(rect, 500, 400)).toBe(true)
+  })
+
+  it('leaves the surrounding page alone', () => {
+    expect(withinViewport(rect, 99, 200)).toBe(false)
+    expect(withinViewport(rect, 300, 401)).toBe(false)
+    expect(withinViewport(rect, 0, 0)).toBe(false)
   })
 })

@@ -13,7 +13,7 @@ import { ModelManager } from '../ModelManager'
 import { BimPointClouds } from '../PointClouds'
 import { BimSceneObjects } from '../SceneObjects'
 
-import { RIGHT_BUTTON, beginPress, opensMenu, trackPress } from './contextMenuGesture'
+import { RIGHT_BUTTON, beginPress, opensMenu, trackPress, withinViewport } from './contextMenuGesture'
 import { pickSceneObject } from './pickSceneObject'
 import { resolveViewportTarget } from './resolveViewportTarget'
 
@@ -75,16 +75,22 @@ export function useViewportContextMenu(
     }
 
     const onPointerCancel = () => { press = null }
-    const suppressNativeMenu = (event: MouseEvent) => event.preventDefault()
+
+    // Marker overlays sit above the canvas and are not its descendants, so a canvas listener misses them.
+    const suppressNativeMenu = (event: MouseEvent) => {
+      if (withinViewport(canvas.getBoundingClientRect(), event.clientX, event.clientY)) {
+        event.preventDefault()
+      }
+    }
 
     canvas.addEventListener('pointerdown', onPointerDown)
-    canvas.addEventListener('contextmenu', suppressNativeMenu)
+    window.addEventListener('contextmenu', suppressNativeMenu, true)
     window.addEventListener('pointermove', onPointerMove)
     window.addEventListener('pointerup', onPointerUp)
     window.addEventListener('pointercancel', onPointerCancel)
     return () => {
       canvas.removeEventListener('pointerdown', onPointerDown)
-      canvas.removeEventListener('contextmenu', suppressNativeMenu)
+      window.removeEventListener('contextmenu', suppressNativeMenu, true)
       window.removeEventListener('pointermove', onPointerMove)
       window.removeEventListener('pointerup', onPointerUp)
       window.removeEventListener('pointercancel', onPointerCancel)

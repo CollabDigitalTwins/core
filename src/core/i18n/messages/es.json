@@ -2133,5 +2133,13 @@
     "pause": "Pausar",
     "speed": "Velocidad",
     "notSaved": "La reproducción no se guarda con el archivo."
+  },
+  "MapTilerKeyNotice": {
+    "title": "Clave del mapa base no configurada",
+    "devTitle": "Usando la clave de demostración compartida de MapTiler",
+    "body": "Los edificios 3D, las fronteras globales y el terreno no están disponibles hasta que esta instalación añada su propia clave de MapTiler.",
+    "devBody": "La clave de demostración solo funciona en localhost. Las instalaciones en producción necesitan su propia clave de MapTiler.",
+    "cta": "Obtén tu clave gratuita",
+    "dismiss": "Descartar"
   }
 }

@@ -29,3 +29,18 @@ export function trackPress(press: RightPress, x: number, y: number): RightPress 
 export function opensMenu(press: RightPress | null): boolean {
   return press !== null && !press.moved
 }
+
+export interface ViewportRect {
+  left: number
+  top: number
+  right: number
+  bottom: number
+}
+
+/**
+ * The viewport owns the right button outright, so the native menu is unwanted anywhere inside it.
+ * Testing the point rather than the event target catches the marker overlays too.
+ */
+export function withinViewport(rect: ViewportRect, x: number, y: number): boolean {
+  return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
+}

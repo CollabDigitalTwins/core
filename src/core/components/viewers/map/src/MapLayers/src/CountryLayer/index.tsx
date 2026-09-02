@@ -9,7 +9,7 @@ import { Source, Layer } from 'react-map-gl/maplibre'
 
 import { MapContext } from '../../../../../../../store/Map/context'
 
-import { maptilerKeyOrPlaceholder } from '../../../../utils/mapStyleSpec'
+import { maptilerKeyForRequest } from '../../../../utils/mapStyleSpec'
 
 import { hexToRgba, buildSubdivisionUrl } from './countryLayerUtils'
 import { useCameraSubdivision } from './useCameraSubdivision'
@@ -23,13 +23,16 @@ const SUBDIVISION_SOURCE_ID = 'admin-subdivisions-source'
 const SUBDIVISION_FILL_ID = 'admin-subdivisions-fill'
 const SUBDIVISION_LINE_ID = 'admin-subdivisions-line'
 const SUBDIVISION_LINE_MAX_ZOOM = 15
-const SUBDIVISION_HOVER_MIN_ZOOM = 10
 
-const SUBDIVISION_LINE_WIDTH = [
-  'case',
-  ['all', ['boolean', ['feature-state', 'hover'], false], ['>', ['zoom'], SUBDIVISION_HOVER_MIN_ZOOM]],
-  ['interpolate', ['linear'], ['zoom'], 10, 3, 15, 5],
-  ['interpolate', ['linear'], ['zoom'], 4, 0.5, 8, 1.4, 14, 2.4],
+const HOVERED = ['boolean', ['feature-state', 'hover'], false] as const
+
+export const SUBDIVISION_LINE_WIDTH = [
+  'interpolate', ['linear'], ['zoom'],
+  4, ['case', HOVERED, 0.5, 0.5],
+  8, ['case', HOVERED, 1.4, 1.4],
+  10, ['case', HOVERED, 3, 1.7],
+  14, ['case', HOVERED, 4.6, 2.4],
+  15, ['case', HOVERED, 5, 2.4],
 ] as const
 const GLOBAL_LAYER_IDS = [
   'global-borders-country',
@@ -40,11 +43,14 @@ const GLOBAL_LAYER_IDS = [
 ] as const
 
 function addGlobalBorderLayer(map: any, color: string, maptilerKey?: string) {
+  const key = maptilerKeyForRequest(maptilerKey)
+  if (!key) return
+
   try {
     if (!map.getSource(BOUNDARIES_SOURCE_ID)) {
       map.addSource(BOUNDARIES_SOURCE_ID, {
         type: 'vector',
-        url: `https://api.maptiler.com/tiles/v3/tiles.json?key=${maptilerKeyOrPlaceholder(maptilerKey)}`,
+        url: `https://api.maptiler.com/tiles/v3/tiles.json?key=${key}`,
       })
     }
 

@@ -2136,5 +2136,13 @@
     "pause": "Pause",
     "speed": "Speed",
     "notSaved": "Playback is not saved with the file."
+  },
+  "MapTilerKeyNotice": {
+    "title": "Map basemap key not configured",
+    "devTitle": "Using MapTiler's shared demo key",
+    "body": "3D buildings, global borders and terrain are unavailable until this deployment adds its own MapTiler key.",
+    "devBody": "The demo key works on localhost only. Production deployments need their own MapTiler key.",
+    "cta": "Get your free key",
+    "dismiss": "Dismiss"
   }
 }

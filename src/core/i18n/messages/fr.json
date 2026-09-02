@@ -2133,5 +2133,13 @@
     "pause": "Pause",
     "speed": "Vitesse",
     "notSaved": "La lecture n'est pas enregistrée avec le fichier."
+  },
+  "MapTilerKeyNotice": {
+    "title": "Clé du fond de carte non configurée",
+    "devTitle": "Utilisation de la clé de démonstration partagée de MapTiler",
+    "body": "Les bâtiments 3D, les frontières mondiales et le relief sont indisponibles jusqu'à ce que ce déploiement ajoute sa propre clé MapTiler.",
+    "devBody": "La clé de démonstration ne fonctionne que sur localhost. Les déploiements en production nécessitent leur propre clé MapTiler.",
+    "cta": "Obtenez votre clé gratuite",
+    "dismiss": "Fermer"
   }
 }

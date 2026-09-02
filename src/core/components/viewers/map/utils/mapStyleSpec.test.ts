@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 
 import { BUILT_IN_MAP_STYLES } from './mapStyleCatalog'
 import {
   MAPTILER_PLACEHOLDER_KEY,
   buildSatelliteStyle,
+  isLocalhostOrigin,
+  maptilerKeyForRequest,
   maptilerKeyOrPlaceholder,
   resolveStyleSpec,
 } from './mapStyleSpec'
@@ -20,6 +22,39 @@ describe('maptilerKeyOrPlaceholder', () => {
     expect(maptilerKeyOrPlaceholder(undefined)).toBe(MAPTILER_PLACEHOLDER_KEY)
     expect(maptilerKeyOrPlaceholder('')).toBe(MAPTILER_PLACEHOLDER_KEY)
     expect(maptilerKeyOrPlaceholder('   ')).toBe(MAPTILER_PLACEHOLDER_KEY)
+  })
+})
+
+describe('maptilerKeyForRequest', () => {
+  const atHostname = (hostname: string) => vi.stubGlobal('window', { location: { hostname } })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('returns a real key trimmed, wherever it is served from', () => {
+    expect(maptilerKeyForRequest('  REALKEY  ')).toBe('REALKEY')
+    atHostname('app.collabdt.org')
+    expect(maptilerKeyForRequest('REALKEY')).toBe('REALKEY')
+  })
+
+  it('lends the placeholder to localhost so dev needs no account', () => {
+    for (const hostname of ['localhost', '127.0.0.1', '::1', '[::1]']) {
+      atHostname(hostname)
+      expect(maptilerKeyForRequest(undefined)).toBe(MAPTILER_PLACEHOLDER_KEY)
+    }
+  })
+
+  it('refuses the placeholder off localhost, where MapTiler answers 403', () => {
+    atHostname('cdtstage.collabdt.org')
+    expect(maptilerKeyForRequest(undefined)).toBeNull()
+    expect(maptilerKeyForRequest('')).toBeNull()
+    expect(maptilerKeyForRequest('   ')).toBeNull()
+  })
+
+  it('refuses the placeholder during SSR, where there is no hostname to trust', () => {
+    expect(isLocalhostOrigin()).toBe(false)
+    expect(maptilerKeyForRequest(undefined)).toBeNull()
   })
 })
 

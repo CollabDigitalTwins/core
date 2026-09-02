@@ -31,6 +31,24 @@ describe('withBuildingLocation', () => {
         expect(next.get('countrySubdivision')).toBe('ON')
         expect(next.get('lat')).toBe('45.3839')
         expect(next.get('lng')).toBe('-75.6966')
+        expect(next.get('zoom')).toBe('18')
+    })
+
+    it('overwrites a wider zoom so the map opens at building scale', () => {
+        const next = withBuildingLocation(new URLSearchParams({ zoom: '4' }), building())
+
+        expect(next.get('zoom')).toBe('18')
+    })
+
+    it('drops the zoom when the building has no coordinates to frame', () => {
+        const next = withBuildingLocation(new URLSearchParams({ zoom: '18' }), building({
+            buildingLatitude: undefined,
+            buildingLongitude: undefined,
+        }))
+
+        expect(next.has('zoom')).toBe(false)
+        expect(next.has('lat')).toBe(false)
+        expect(next.has('lng')).toBe(false)
     })
 
     it('deletes a param the building has no value for, so the org fallback still applies', () => {
@@ -52,12 +70,12 @@ describe('withBuildingLocation', () => {
     })
 
     it('leaves unrelated params alone', () => {
-        const params = new URLSearchParams({ viewer: 'bim', zoom: '18' })
+        const params = new URLSearchParams({ viewer: 'bim', tab: 'files' })
 
         const next = withBuildingLocation(params, building())
 
         expect(next.get('viewer')).toBe('bim')
-        expect(next.get('zoom')).toBe('18')
+        expect(next.get('tab')).toBe('files')
     })
 
     it('does not mutate the params it was given', () => {

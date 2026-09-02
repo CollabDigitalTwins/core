@@ -7,6 +7,11 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Changed
+- Selecting a building now writes `zoom=18` alongside `lat`/`lng` in the URL, so switching
+  to the map viewer opens framed on that building instead of at the organization's default
+  zoom. The zoom is cleared, like the coordinates, for a building with no location.
+
 ## [0.9.0] - 2026-09-02
 
 Consolidates the work previously tagged locally as 0.9.0 through 0.11.1. Those tags were

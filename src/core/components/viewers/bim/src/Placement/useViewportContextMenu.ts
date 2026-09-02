@@ -11,7 +11,9 @@ import { CurrentWorld } from '../CurrentWorld'
 import { ndcFromPointer, SCENE_PICK_WINDOW_PX } from '../lib/scenePicker'
 import { ModelManager } from '../ModelManager'
 import { BimPointClouds } from '../PointClouds'
+import { BimSceneObjects } from '../SceneObjects'
 
+import { pickSceneObject } from './pickSceneObject'
 import { resolveViewportTarget } from './resolveViewportTarget'
 
 import type { FragmentHit, ObjectHit, ViewportTarget } from './resolveViewportTarget'
@@ -20,6 +22,8 @@ import type { DbFile } from '../../../../../types/dbTypes'
 export interface ViewportMenuState extends ViewportTarget {
   x: number
   y: number
+  /** Only a loaded object knows whether it animates; no extension can say. */
+  animated: boolean
 }
 
 /**
@@ -47,7 +51,9 @@ export function useViewportContextMenu(
       const { clientX, clientY } = event
 
       void resolveAtPointer(components, world, canvas, clientX, clientY, filesRef.current)
-        .then((target) => setMenu(target ? { ...target, x: clientX, y: clientY } : null))
+        .then((target) => setMenu(target
+          ? { ...target, x: clientX, y: clientY, animated: isAnimated(components, target) }
+          : null))
     }
 
     canvas.addEventListener('contextmenu', onContextMenu)
@@ -79,32 +85,24 @@ async function resolveAtPointer(
   return resolveViewportTarget({ files, fragment, cloud, object })
 }
 
-// Loaded 3D objects are plain scene meshes, invisible to both the fragment and the cloud pick.
+// Loaded objects are plain scene meshes, invisible to both the fragment and the cloud pick.
 function pickObject(components: OBC.Components, raycaster: THREE.Raycaster): ObjectHit | null {
   try {
-    let nearest: ObjectHit | null = null
-
-    const consider = (name: string, object: THREE.Object3D) => {
-      const hit = raycaster.intersectObject(object, true)[0]
-      if (!hit) return
-      if (!nearest || hit.distance < nearest.distance) nearest = { name, distance: hit.distance }
-    }
-
-    for (const { name, model } of components.get(ModelManager).getAllModels()) consider(name, model)
-    for (const group of dxfGroups(components)) consider(group.name, group)
-
-    return nearest
+    return pickSceneObject(components.get(BimSceneObjects).registry?.list() ?? [], raycaster)
   }
   catch {
     return null
   }
 }
 
-// A DXF is a named group parented straight to the scene; its name is the file id.
-function dxfGroups(components: OBC.Components): THREE.Object3D[] {
-  const scene = components.get(CurrentWorld).world?.scene?.three
-  if (!scene) return []
-  return scene.children.filter((child) => /^\d+$/.test(child.name))
+function isAnimated(components: OBC.Components, target: ViewportTarget): boolean {
+  if (target.kind !== 'object') return false
+  try {
+    return components.get(ModelManager).getClips(String(target.file.id)).length > 0
+  }
+  catch {
+    return false
+  }
 }
 
 function pickCloud(components: OBC.Components, ray: THREE.Ray, camera: THREE.Camera) {

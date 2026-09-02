@@ -18,20 +18,21 @@ import { Cursor } from '../../../../Cursor'
 import { DXFManager } from '../../../../DXFLoader'
 import { Highlighter } from '../../../../Highlighter'
 import { IDSManager } from '../../../../IDSManager'
-import { disposeObject3D } from '../../../../lib/disposeObject3D'
 import { needsMarker } from '../../../../lib/needsMarker'
 import { isFileInScene, sceneObjectForFile } from '../../../../lib/sceneContent'
 import { ModelManager } from '../../../../ModelManager'
+import { AnimationSession } from '../../../../Placement/AnimationSession'
 import { markerActionsFor } from '../../../../Placement/markerActions'
 import { capabilitiesForFile } from '../../../../Placement/placementCapabilities'
 import { PlacementEditor } from '../../../../Placement/PlacementEditor'
 import { objectTarget } from '../../../../Placement/targets/objectTarget'
 import { usePlacementSession } from '../../../../Placement/usePlacementSession'
+import { BimSceneObjects } from '../../../../SceneObjects'
 import { createFileMarker, removeMarker, type AddedFile } from '../../../../tools/AddToBim/src/FileMarkerUtils'
 
 import type { DbFile as IFile } from '../../../../../../../../types/dbTypes'
-import type { SceneContentSources } from '../../../../lib/sceneContent'
 import type { PlacementMode } from '../../../../Placement/PlacementEditor'
+import type { SceneObject } from '../../../../SceneObjects'
 import type { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
 
 // Hoist options arrays so the array identity is stable across renders.
@@ -55,11 +56,16 @@ const isPlaceable = (ext?: string | null): boolean => is3DFile(ext) || ext?.toLo
 
 const PLACE_TOAST_ID = 'bim-file-place-toast'
 
+const placedPosition = (file: IFile): THREE.Vector3 =>
+  file.x != null && file.y != null && file.z != null
+    ? new THREE.Vector3(file.x as number, file.y as number, file.z as number)
+    : new THREE.Vector3()
+
 export function FilesSection({ files, query = '' }: FilesSectionProps) {
   const t = useTranslations('FileSelection')
 
   const { state: bimState, dispatch: bimDispatch } = React.useContext(BimContext)
-  const { bimComponents, fragments } = bimState.bim
+  const { bimComponents, fragments, world } = bimState.bim
   const { state: buildingsState } = React.useContext(BuildingsContext)
   const { building } = buildingsState.buildings
   const buildingId = building?.id || -1
@@ -82,24 +88,18 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
       const visibilityMap = new Map(
         prevFiles.map(f => [f.id, f.isVisible ?? false])
       )
-      // A file is "visible" only if it's actually present and shown in the 3D scene
-      // (a loaded model, a loaded DXF group, or the active IDS). This mirrors the Map
-      // viewer, which derives visibility from on-scene state (mapFileIds) rather than
-      // from the persisted `file.isVisible` flag — so nothing shows as visible on open
-      // unless it has been toggled on or just placed/added into the scene.
+      // Visibility comes from the scene, never from the persisted `file.isVisible` flag.
       const inScene = (file: IFile): boolean => {
         if (file.extension === 'ids') return activeIDSFileId === file.id
         if (!isPlaceable(file.extension)) return false
 
-        const sources = sceneSourcesRef.current
-        return sources ? isFileInScene(file, sources) : false
+        return isFileInScene(file, registryRef.current)
       }
       return files
         .filter(file => file.tag !== 'user')
         .filter(file => (file as any).type !== 'map-file')
         .map(file => {
-          // Preserve the user's in-session toggle for already-tracked files; for files
-          // seen for the first time, derive visibility from the actual scene state.
+          // A tracked file keeps the user's toggle; a first-seen one asks the scene.
           let isVisible = visibilityMap.has(file.id) ? visibilityMap.get(file.id)! : inScene(file)
           if (file.extension === 'ids' && activeIDSFileId === file.id) {
             isVisible = true
@@ -136,60 +136,96 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
     if (!bimComponents) return null
     try { return bimComponents.get(ModelManager) } catch { return null }
   }, [bimComponents])
-  const modelManagerRef = React.useRef(modelManager)
-  React.useEffect(() => { modelManagerRef.current = modelManager }, [modelManager])
 
   const dxfManager = React.useMemo(() => {
     if (!bimComponents) return null
     try { return bimComponents.get(DXFManager) } catch { return null }
   }, [bimComponents])
-  // Loaded DXF groups keyed by file id, so visibility toggles can show/hide them.
-  const dxfGroupsRef = React.useRef<Map<string, THREE.Group>>(new Map())
 
-  const sceneSourcesRef = React.useRef<SceneContentSources | null>(null)
-  React.useEffect(() => {
-    const scene = bimComponents?.get(CurrentWorld).world?.scene?.three
-    sceneSourcesRef.current = scene
-      ? { scene, modelByName: (name) => modelManagerRef.current?.getModelByName(name)?.model ?? null }
-      : null
-  }, [bimComponents])
+  const registry = React.useMemo(() => {
+    if (!bimComponents) return null
+    try { return bimComponents.get(BimSceneObjects).registry } catch { return null }
+  }, [bimComponents, world])
+  const registryRef = React.useRef(registry)
+  React.useEffect(() => { registryRef.current = registry }, [registry])
 
   // Floating scene markers (pin + actions card) for visible placeable files.
   const markersRef = React.useRef<Map<string, { marker: CSS2DObject; file: IFile }>>(new Map())
   // Bumped after an object finishes loading so the marker reconcile effect re-runs.
   const [loadedTick, setLoadedTick] = React.useState(0)
 
-  const toggleDxfVisibility = React.useCallback(async (file: IFile, visible: boolean) => {
-    if (!dxfManager || !bimComponents) return
-    const world = bimComponents.get(CurrentWorld).world
-    if (!world) return
+  // Anyone may put an object in the scene; the list follows it rather than being told twice.
+  React.useEffect(() => {
+    if (!registry) return
+    const track = (visible: boolean) => (entry: SceneObject) => {
+      setLoadedTick(tick => tick + 1)
+      // A pin standing in for a PDF is in the scene, but the list has no visibility to report.
+      if (!entry.fileId || entry.kind === 'marker') return
+      setLocalFiles(prev => prev.map(f =>
+        f.id.toString() === entry.fileId ? { ...f, isVisible: visible } : f))
+    }
+    const stopAdded = registry.onAdded(track(true))
+    const stopRemoved = registry.onRemoved(track(false))
+    return () => { stopAdded(); stopRemoved() }
+  }, [registry])
+
+  const toggleModelVisibility = React.useCallback(async (
+    file: IFile,
+    visible: boolean,
+    position?: THREE.Vector3,
+  ) => {
+    if (!modelManager || !registry) return
 
     const key = file.id.toString()
-    const existing = dxfGroupsRef.current.get(key)
-    if (visible) {
-      if (existing) { existing.visible = true; return }
-      try {
-        const res = await fetch(`/api/presignedUrlDownload/${file.id}`)
-        if (!res.ok) throw new Error(`Failed to get download URL: ${res.status}`)
-        const { presignedUrl } = await res.json()
-        const group = await dxfManager.parse(presignedUrl)
-        group.name = key
-        const placed = file.x != null && file.y != null && file.z != null
-        group.position.copy(placed
-          ? new THREE.Vector3(file.x as number, file.y as number, file.z as number)
-          : new THREE.Vector3())
-        group.scale.setScalar(0.001)
-        if (file.bimRotation != null) group.rotation.y = file.bimRotation as number
-        world.scene.three.add(group)
-        dxfGroupsRef.current.set(key, group)
-        setLoadedTick(t => t + 1)
-      } catch (err) {
-        console.error(`[FilesSection] Failed to load DXF "${file.name}":`, err)
-      }
-    } else if (existing) {
-      existing.visible = false
+    if (!visible) { registry.setVisible(key, false); return }
+
+    const existing = registry.get(key)
+    if (existing) {
+      registry.setVisible(key, true)
+      if (position) existing.root.position.copy(position)
+      return
     }
-  }, [dxfManager, bimComponents])
+
+    try {
+      const res = await fetch(`/api/presignedUrlDownload/${file.id}`)
+      if (!res.ok) throw new Error(`Failed to get download URL: ${res.status}`)
+      const { presignedUrl } = await res.json()
+      const info = await modelManager.load(presignedUrl, key, file.name, {
+        position: position ?? placedPosition(file),
+        rotation: file.bimRotation != null ? new THREE.Euler(0, file.bimRotation, 0) : undefined,
+        extension: file.extension ?? undefined,
+      })
+      if (info) {
+        registry.add({ key, fileId: key, kind: 'model', root: info.model, dispose: () => { modelManager.remove(key) } })
+      }
+    } catch (err) {
+      console.error(`[FilesSection] Failed to load model "${file.name}":`, err)
+    }
+  }, [modelManager, registry])
+
+  const toggleDxfVisibility = React.useCallback(async (file: IFile, visible: boolean) => {
+    if (!dxfManager || !registry) return
+
+    const key = file.id.toString()
+    if (!visible) { registry.setVisible(key, false); return }
+    if (registry.has(key)) { registry.setVisible(key, true); return }
+
+    try {
+      const res = await fetch(`/api/presignedUrlDownload/${file.id}`)
+      if (!res.ok) throw new Error(`Failed to get download URL: ${res.status}`)
+      const { presignedUrl } = await res.json()
+      const group = await dxfManager.parse(presignedUrl)
+      const placed = file.x != null && file.y != null && file.z != null
+      group.position.copy(placed
+        ? new THREE.Vector3(file.x as number, file.y as number, file.z as number)
+        : new THREE.Vector3())
+      group.scale.setScalar(0.001)
+      if (file.bimRotation != null) group.rotation.y = file.bimRotation as number
+      registry.add({ key, fileId: key, kind: 'dxf', root: group })
+    } catch (err) {
+      console.error(`[FilesSection] Failed to load DXF "${file.name}":`, err)
+    }
+  }, [dxfManager, registry])
 
   // Keyed on the building id, not unmount: closing the sidebar tab must not empty the scene.
   const loadedBuildingRef = React.useRef<number | null>(null)
@@ -199,13 +235,8 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
     loadedBuildingRef.current = buildingId
     if (previous === null) return
 
-    for (const group of dxfGroupsRef.current.values()) disposeObject3D(group)
-    dxfGroupsRef.current.clear()
-
-    for (const model of modelManager?.getAllModels() ?? []) modelManager?.remove(model.id)
-
-    setLoadedTick(t => t + 1)
-  }, [buildingId, modelManager])
+    registry?.clear()
+  }, [buildingId, registry])
 
   // Read by the marker rAF loop, so it hides the marker of whatever is being placed.
   const placingIdRef = React.useRef<string | null>(null)
@@ -276,39 +307,8 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
       }
     }
 
-    // 3D model files (GLB/GLTF/FBX/OBJ) managed by ModelManager
-    if (is3DFile(file.extension) && modelManager) {
-      const existingModel = modelManager.getModelByName(file.name)
-      if (newVisibility) {
-        if (existingModel) {
-          // Already in scene — just show it
-          existingModel.model.visible = true
-        } else {
-          // Not yet loaded — get a fresh presigned download URL then load
-          try {
-            const res = await fetch(`/api/presignedUrlDownload/${file.id}`)
-            if (!res.ok) throw new Error(`Failed to get download URL: ${res.status}`)
-            const { presignedUrl } = await res.json()
-            const position = (file.x != null && file.y != null && file.z != null)
-              ? new THREE.Vector3(file.x as number, file.y as number, file.z as number)
-              : new THREE.Vector3(0, 0, 0)
-            const rotation = file.bimRotation != null
-              ? new THREE.Euler(0, file.bimRotation, 0)
-              : undefined
-            await modelManager.load(presignedUrl, file.id.toString(), file.name, {
-              position,
-              rotation,
-              extension: file.extension ?? undefined,
-            })
-          } catch (err) {
-            console.error(`[FilesSection] Failed to load model "${file.name}":`, err)
-          }
-        }
-      } else {
-        if (existingModel) {
-          existingModel.model.visible = false
-        }
-      }
+    if (is3DFile(file.extension)) {
+      await toggleModelVisibility(file, newVisibility)
       if (fragments) void fragments.core.update(true)
     }
 
@@ -317,8 +317,7 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
       await toggleDxfVisibility(file, newVisibility)
       if (fragments) void fragments.core.update(true)
     }
-    setLoadedTick(t => t + 1)
-  }, [bimComponents, menusDispatch, bimState, bimDispatch, modelManager, fragments, toggleDxfVisibility])
+  }, [bimComponents, menusDispatch, bimState, bimDispatch, fragments, toggleModelVisibility, toggleDxfVisibility])
 
   const highlighter = React.useMemo(() => {
     if (!bimComponents) return null
@@ -381,25 +380,8 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
           updateFileRef.current({ x, y, z } as any)
             .catch((err: unknown) => console.error(`Failed to save placement for "${placingFile.name}":`, err))
         }, 50)
-        // Load model into scene at the placed position (for 3D files)
-        if (is3DFile(placingFile.extension) && modelManagerRef.current) {
-          const existing = modelManagerRef.current.getModelByName(placingFile.name)
-          if (!existing) {
-            fetch(`/api/presignedUrlDownload/${placingFile.id}`)
-              .then(res => res.ok ? res.json() : Promise.reject(new Error(`Presigned URL request failed with status ${res.status}`)))
-              .then(({ presignedUrl }) =>
-                modelManagerRef.current!.load(
-                  presignedUrl,
-                  placingFile.id.toString(),
-                  placingFile.name,
-                  { position: new THREE.Vector3(x, y, z), extension: placingFile.extension ?? undefined },
-                )
-              )
-              .catch((err: unknown) => console.error(`Failed to load model "${placingFile.name}":`, err))
-          } else {
-            existing.model.position.set(x, y, z)
-            existing.model.visible = true
-          }
+        if (is3DFile(placingFile.extension)) {
+          void toggleModelVisibility(placingFile, true, new THREE.Vector3(x, y, z))
         }
         // Update local state so it shows as placed and visible
         placingFile.x = x
@@ -429,12 +411,10 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
       if (cursor) cursor.cursor = ''
       toast.dismiss(PLACE_TOAST_ID)
     }
-  }, [placingFile, bimComponents, raycast, t])
+  }, [placingFile, bimComponents, raycast, t, toggleModelVisibility])
 
-  // Resolve the scene object for a file (loaded 3D model or DXF group), if present.
   const getSceneObject = React.useCallback((file: IFile): THREE.Object3D | null => {
-    const sources = sceneSourcesRef.current
-    return sources ? sceneObjectForFile(file, sources) : null
+    return sceneObjectForFile(file, registryRef.current)
   }, [])
 
   const editObject = React.useCallback((file: IFile, mode: PlacementMode = 'translate') => {
@@ -462,12 +442,15 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
       setMoveFileId(file.id)
       return
     }
-    if (file.extension === 'dxf' && !dxfGroupsRef.current.has(file.id.toString())) {
-      void toggleDxfVisibility(file, true).then(() => editObject(file, 'translate'))
+    if (!registry?.has(file.id.toString())) {
+      const load = file.extension === 'dxf'
+        ? toggleDxfVisibility(file, true)
+        : toggleModelVisibility(file, true)
+      void load.then(() => editObject(file, 'translate'))
       return
     }
     editObject(file, 'translate')
-  }, [editObject, toggleDxfVisibility])
+  }, [editObject, registry, toggleDxfVisibility, toggleModelVisibility])
 
   const { handleAction, deleteDialog } = useFileActions({
     files: localFiles,
@@ -476,6 +459,7 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
     handleDeleteFile,
     onView: handleBimView,
     onMove: handleBimMove,
+    onDelete: (file) => { registry?.remove(file.id.toString()) },
   })
 
   // AddToBim owns adding: crosshair on file choice, and the upload carries the placement.
@@ -497,37 +481,10 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
     onCheckedChange: async (checked: boolean) => {
       setLocalFiles(prev => prev.map(f => ({ ...f, isVisible: checked })))
       for (const f of localFiles) {
-        if (is3DFile(f.extension) && modelManager) {
-          const existingModel = modelManager.getModelByName(f.name)
-          if (checked) {
-            if (existingModel) {
-              existingModel.model.visible = true
-            } else {
-              try {
-                const res = await fetch(`/api/presignedUrlDownload/${f.id}`)
-                if (res.ok) {
-                  const { presignedUrl } = await res.json()
-                  const position = (f.x != null && f.y != null && f.z != null)
-                    ? new THREE.Vector3(f.x as number, f.y as number, f.z as number)
-                    : new THREE.Vector3(0, 0, 0)
-                  await modelManager.load(presignedUrl, f.id.toString(), f.name, {
-                    position,
-                    extension: f.extension ?? undefined,
-                  })
-                }
-              } catch (err) {
-                console.error(`[FilesSection] Failed to load model "${f.name}":`, err)
-              }
-            }
-          } else if (existingModel) {
-            existingModel.model.visible = false
-          }
-        } else if (f.extension === 'dxf') {
-          await toggleDxfVisibility(f, checked)
-        }
+        if (is3DFile(f.extension)) await toggleModelVisibility(f, checked)
+        else if (f.extension === 'dxf') await toggleDxfVisibility(f, checked)
       }
       if (fragments) void fragments.core.update(true)
-      setLoadedTick(t => t + 1)
     },
   })
 
@@ -561,13 +518,18 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
       if (markersRef.current.has(key)) continue
       const obj = getSceneObject(file)
       if (!obj) continue // not loaded yet — picked up once loadedTick bumps
+      const clips = modelManager?.getClips(file.id.toString()) ?? []
       const marker = createFileMarker(makeMarkerInput(file, obj.position.clone()), obj, world, (action) => {
         if (action === 'delete') { void handleAction('delete', file); return }
+        if (action === 'animate') {
+          bimComponents.get(AnimationSession).begin({ fileId: file.id.toString(), name: file.name })
+          return
+        }
         editObject(file, action === 'move' ? 'translate' : action)
-      }, markerActionsFor(capabilitiesForFile(file)))
+      }, markerActionsFor(capabilitiesForFile(file), { animated: clips.length > 0 }))
       if (marker) markersRef.current.set(key, { marker, file })
     }
-  }, [localFiles, loadedTick, bimComponents, getSceneObject, editObject, handleAction, makeMarkerInput])
+  }, [localFiles, loadedTick, bimComponents, getSceneObject, editObject, handleAction, makeMarkerInput, modelManager])
 
   // Markers follow their object; one only earns its place when the geometry is too small to hit.
   React.useEffect(() => {

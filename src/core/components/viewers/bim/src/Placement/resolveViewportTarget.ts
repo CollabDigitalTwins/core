@@ -18,7 +18,8 @@ export interface CloudHit {
 
 export interface ObjectHit {
   distance: number
-  name: string
+  /** The scene registry key, which is the file id for anything that finished uploading. */
+  fileId: string
 }
 
 export interface ViewportTarget {
@@ -39,12 +40,13 @@ export function resolveViewportTarget(
   { files, fragment, cloud, object }: ResolveViewportTargetInput,
 ): ViewportTarget | null {
   const byName = (name?: string) => files.find((candidate) => candidate.name === name)
+  const byId = (id: string) => files.find((candidate) => String(candidate.id) === id)
 
   const candidates = [
     // Ties go to the fragment, which draws a snap marker the user is already aiming at.
     fragment && { distance: fragment.distance, kind: 'model' as const, file: byName(fragment.modelId) },
-    object && { distance: object.distance, kind: 'object' as const, file: byName(object.name) },
-    cloud && { distance: cloud.distance, kind: 'cloud' as const, file: files.find((c) => String(c.id) === cloud.id) },
+    object && { distance: object.distance, kind: 'object' as const, file: byId(object.fileId) },
+    cloud && { distance: cloud.distance, kind: 'cloud' as const, file: byId(cloud.id) },
   ].filter((candidate): candidate is { distance: number; kind: ViewportTarget['kind']; file: DbFile | undefined } => Boolean(candidate))
 
   let nearest: { kind: ViewportTarget['kind']; file: DbFile } | null = null

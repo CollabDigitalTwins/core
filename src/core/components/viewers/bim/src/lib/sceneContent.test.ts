@@ -4,87 +4,49 @@
 import * as THREE from 'three'
 import { describe, expect, it } from 'vitest'
 
+import { SceneObjectRegistry } from '../SceneObjects/sceneObjectRegistry'
+
 import { isFileInScene, sceneObjectForFile } from './sceneContent'
 
-import type { DbFile } from '../../../../../types/dbTypes'
+const file = { id: 12 }
 
-const file = (id: number, name: string) => ({ id, name } as DbFile)
-
-function sources(scene: THREE.Object3D, models: Record<string, THREE.Object3D> = {}) {
-  return { scene, modelByName: (name: string) => models[name] ?? null }
+function makeRegistry() {
+  const scene = new THREE.Scene()
+  return { scene, registry: new SceneObjectRegistry({ scene }) }
 }
 
 describe('sceneObjectForFile', () => {
-  it('finds a loaded 3D model by file name, which is how ModelManager keys it', () => {
-    const model = new THREE.Group()
+  it('finds a model and a drawing under the same key', () => {
+    const { registry } = makeRegistry()
+    const model = registry.add({ key: '12', fileId: '12', kind: 'model', root: new THREE.Group() })
+    const drawing = registry.add({ key: '13', fileId: '13', kind: 'dxf', root: new THREE.Group() })
 
-    const found = sceneObjectForFile(file(3, 'panel.glb'), sources(new THREE.Scene(), { 'panel.glb': model }))
-
-    expect(found).toBe(model)
+    expect(sceneObjectForFile(file, registry)).toBe(model.root)
+    expect(sceneObjectForFile({ id: 13 }, registry)).toBe(drawing.root)
   })
 
-  it('finds a DXF group by file id, which is how it is named in the scene', () => {
-    const scene = new THREE.Scene()
-    const group = new THREE.Group()
-    group.name = '7'
-    scene.add(group)
-
-    expect(sceneObjectForFile(file(7, 'plan.dxf'), sources(scene))).toBe(group)
-  })
-
-  it('finds a DXF group nested below the scene root', () => {
-    const scene = new THREE.Scene()
-    const branch = new THREE.Group()
-    const group = new THREE.Group()
-    group.name = '7'
-    branch.add(group)
-    scene.add(branch)
-
-    expect(sceneObjectForFile(file(7, 'plan.dxf'), sources(scene))).toBe(group)
-  })
-
-  it('finds nothing for a file that is not in the scene', () => {
-    expect(sceneObjectForFile(file(9, 'ghost.glb'), sources(new THREE.Scene()))).toBeNull()
-  })
-
-  it('prefers the model registry over a same-named group', () => {
-    const scene = new THREE.Scene()
-    const stray = new THREE.Group()
-    stray.name = '3'
-    scene.add(stray)
-    const model = new THREE.Group()
-
-    expect(sceneObjectForFile(file(3, 'panel.glb'), sources(scene, { 'panel.glb': model }))).toBe(model)
+  it('is null for an absent file and for a registry that has no world yet', () => {
+    expect(sceneObjectForFile(file, makeRegistry().registry)).toBeNull()
+    expect(sceneObjectForFile(file, null)).toBeNull()
   })
 })
 
 describe('isFileInScene', () => {
-  it('reports a visible object as present', () => {
-    const model = new THREE.Group()
+  it('is true only while the object and every ancestor is visible', () => {
+    const { scene, registry } = makeRegistry()
+    const { root } = registry.add({ key: '12', fileId: '12', kind: 'model', root: new THREE.Group() })
 
-    expect(isFileInScene(file(3, 'panel.glb'), sources(new THREE.Scene(), { 'panel.glb': model }))).toBe(true)
+    expect(isFileInScene(file, registry)).toBe(true)
+
+    root.visible = false
+    expect(isFileInScene(file, registry)).toBe(false)
+
+    root.visible = true
+    scene.visible = false
+    expect(isFileInScene(file, registry)).toBe(false)
   })
 
-  it('reports a hidden object as absent, matching what the user sees', () => {
-    const model = new THREE.Group()
-    model.visible = false
-
-    expect(isFileInScene(file(3, 'panel.glb'), sources(new THREE.Scene(), { 'panel.glb': model }))).toBe(false)
-  })
-
-  it('reports an object whose parent is hidden as absent', () => {
-    const scene = new THREE.Scene()
-    const branch = new THREE.Group()
-    branch.visible = false
-    const group = new THREE.Group()
-    group.name = '7'
-    branch.add(group)
-    scene.add(branch)
-
-    expect(isFileInScene(file(7, 'plan.dxf'), sources(scene))).toBe(false)
-  })
-
-  it('reports a file that is not loaded as absent', () => {
-    expect(isFileInScene(file(9, 'ghost.glb'), sources(new THREE.Scene()))).toBe(false)
+  it('is false for a file that never loaded', () => {
+    expect(isFileInScene(file, makeRegistry().registry)).toBe(false)
   })
 })

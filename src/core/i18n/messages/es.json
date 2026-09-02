@@ -2101,7 +2101,8 @@
     "pickPivotFailed": "No hay nada bajo el cursor para seleccionar",
     "editHint": "Arrastra el gizmo para colocarlo. La posición se guarda al pulsar Hecho.",
     "saved": "Se guardó la posición de \"{name}\"",
-    "saveFailed": "No se pudo guardar la posición de \"{name}\""
+    "saveFailed": "No se pudo guardar la posición de \"{name}\"",
+    "deleteFailed": "No se pudo eliminar \"{name}\""
   },
   "PointCloudSettings": {
     "title": "Nubes de puntos",
@@ -2124,5 +2125,13 @@
     "placeholderExpanded": "Buscar edificios por nombre, dirección o id...",
     "noResults": "No hay edificios coincidentes",
     "unnamed": "Edificio sin nombre"
+  },
+  "Animation": {
+    "title": "Animación",
+    "clip": "Clip",
+    "play": "Reproducir",
+    "pause": "Pausar",
+    "speed": "Velocidad",
+    "notSaved": "La reproducción no se guarda con el archivo."
   }
 }

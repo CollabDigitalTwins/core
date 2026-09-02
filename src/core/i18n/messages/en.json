@@ -2104,7 +2104,8 @@
     "pickPivotFailed": "Nothing under the cursor to pick",
     "editHint": "Drag the gizmo to place it. The position is saved when you press Done.",
     "saved": "Saved the position of \"{name}\"",
-    "saveFailed": "Could not save the position of \"{name}\""
+    "saveFailed": "Could not save the position of \"{name}\"",
+    "deleteFailed": "Could not delete \"{name}\""
   },
   "PointCloudSettings": {
     "title": "Point clouds",
@@ -2127,5 +2128,13 @@
     "placeholderExpanded": "Search buildings by name, address or id...",
     "noResults": "No matching buildings",
     "unnamed": "Unnamed building"
+  },
+  "Animation": {
+    "title": "Animation",
+    "clip": "Clip",
+    "play": "Play",
+    "pause": "Pause",
+    "speed": "Speed",
+    "notSaved": "Playback is not saved with the file."
   }
 }

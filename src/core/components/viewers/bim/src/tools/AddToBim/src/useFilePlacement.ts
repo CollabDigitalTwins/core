@@ -11,6 +11,7 @@ import { getFileExtension } from "../../../../../../../utils/utils"
 import { Cursor } from "../../../Cursor"
 import { Highlighter } from "../../../Highlighter"
 import { ModelManager } from "../../../ModelManager"
+import { BimSceneObjects } from "../../../SceneObjects"
 
 
 import { AddDxf } from "./AddDxf"
@@ -76,7 +77,11 @@ export function useFilePlacement(
   const [addDxf, setAddDxf] = React.useState<AddDxf | null>(null)
 
   const placedFilesRef = React.useRef<Map<string, PlacedFile>>(new Map())
-  const [markerCount, setMarkerCount] = React.useState(0)
+
+  const registry = React.useMemo(() => {
+    if (!bimComponents) return null
+    try { return bimComponents.get(BimSceneObjects).registry } catch { return null }
+  }, [bimComponents, world])
 
   const highlighter = React.useMemo(() => {
     if (!bimComponents) return null
@@ -174,6 +179,14 @@ export function useFilePlacement(
     toolsDispatch({ type: "CLEAR-TOOLS" })
   }, [setCursor, toolsDispatch])
 
+  // A save that failed created no record, so the scene must not keep an object nothing can address.
+  const discardPlacement = React.useCallback((key: string) => {
+    const placed = placedFilesRef.current.get(key)
+    registry?.remove(key)
+    removeMarker(placed?.marker ?? null, world)
+    placedFilesRef.current.delete(key)
+  }, [registry, world])
+
   const uploadPlacedFile = React.useCallback(async (file: File, point: THREE.Vector3, rotation = 0) => {
     if (!uploadFileToDB || buildingId <= 0) return
     try {
@@ -214,7 +227,8 @@ export function useFilePlacement(
       return (envelope as { newFile?: { id?: number } })?.newFile ?? (envelope as { id?: number })
     } catch (err) {
       console.error("Error uploading placed file:", err)
-      toast.error(`Failed to save "${file.name}"`)
+      const reason = err instanceof Error ? err.message : String(err)
+      toast.error(`Failed to save "${file.name}"`, { description: reason })
     }
   }, [uploadFileToDB, buildingId])
 
@@ -263,7 +277,12 @@ export function useFilePlacement(
           marker: placed.marker,
           object3D: placed.object3D,
         })
-        setMarkerCount(c => c + 1)
+        registry?.add({
+          key: addedFile.id,
+          kind: placed.kind === 'generic' ? 'marker' : placed.kind,
+          root: placed.object3D,
+          dispose: placed.dispose,
+        })
       }
 
       const fileName = selectedFile.name.toLowerCase()
@@ -273,7 +292,11 @@ export function useFilePlacement(
         setIsPlacingFile(false)
         setCursor("")
       } else {
-        void uploadPlacedFile(selectedFile, point)
+        void uploadPlacedFile(selectedFile, point).then((created) => {
+          if (!created?.id) { discardPlacement(addedFile.id); return }
+          registry?.rekey(addedFile.id, String(created.id))
+          placedFilesRef.current.delete(addedFile.id)
+        })
         cancelPlacement()
       }
     }
@@ -286,7 +309,7 @@ export function useFilePlacement(
       document.removeEventListener("mousemove", handleMouseMove)
       document.removeEventListener("dblclick", onDblClick)
     }
-  }, [selectedFile, bimComponents, world, isPlacingFile, fileScale, fileRotation, modelManager, addDxf, toolsDispatch, raycast, cancelPlacement, setCursor, uploadPlacedFile, onMarkerAction])
+  }, [selectedFile, bimComponents, world, isPlacingFile, fileScale, fileRotation, modelManager, addDxf, toolsDispatch, raycast, cancelPlacement, setCursor, uploadPlacedFile, onMarkerAction, registry, discardPlacement])
 
   const confirmPlacement = React.useCallback(() => {
     if (!current3DFileId) return
@@ -314,7 +337,11 @@ export function useFilePlacement(
       const placedId = current3DFileId
       const kind = current3DFileType
       void uploadPlacedFile(selectedFile, finalPos, finalRot).then((created) => {
-        if (created?.id && kind === 'dxf') addDxf?.rekey(placedId, String(created.id))
+        if (!created?.id) { discardPlacement(placedId); return }
+        // The sidebar owns the object from here; until it is keyed by file id it cannot.
+        if (kind === 'dxf') addDxf?.rekey(placedId, String(created.id))
+        registry?.rekey(placedId, String(created.id))
+        placedFilesRef.current.delete(placedId)
       })
     }
 
@@ -328,7 +355,7 @@ export function useFilePlacement(
     setCursor("")
     toast.dismiss('place-bim-file-toast')
     toolsDispatch({ type: "CLEAR-TOOLS" })
-  }, [current3DFileId, current3DFileType, addDxf, modelManager, selectedFile, fileRotation, uploadPlacedFile, setCursor, toolsDispatch])
+  }, [current3DFileId, current3DFileType, addDxf, modelManager, selectedFile, fileRotation, uploadPlacedFile, setCursor, toolsDispatch, registry, discardPlacement])
 
   // Real-time scale/rotation updates while the placement card is open.
   React.useEffect(() => {
@@ -341,29 +368,6 @@ export function useFilePlacement(
       modelManager.setRotation(current3DFileId, new THREE.Euler(0, THREE.MathUtils.degToRad(fileRotation), 0))
     }
   }, [fileScale, fileRotation, current3DFileId, show3DScaleCard, current3DFileType, addDxf, modelManager])
-
-  // Markers follow their object every frame and hide while that object's gizmo is active.
-  React.useEffect(() => {
-    if (!world || markerCount === 0) return
-    let raf = 0
-    const worldPos = new THREE.Vector3()
-    const tick = () => {
-      placedFilesRef.current.forEach((placed) => {
-        if (!placed.marker) return
-        placed.object3D.getWorldPosition(worldPos)
-        placed.marker.position.set(worldPos.x, worldPos.y + 0.2, worldPos.z)
-        const editing = placed.kind === "dxf"
-          ? !!addDxf?.getDxf(placed.id)?.gizmoController
-          : placed.kind === "model"
-            ? !!modelManager?.getModel(placed.id)?.gizmoController
-            : false
-        placed.marker.visible = !editing
-      })
-      raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [world, addDxf, modelManager, markerCount])
 
   const getPlacedFile = React.useCallback((id: string): PlacedFile | undefined => {
     return placedFilesRef.current.get(id)
@@ -384,13 +388,10 @@ export function useFilePlacement(
   const removePlacedFile = React.useCallback((id: string) => {
     const placed = placedFilesRef.current.get(id)
     if (!placed) return
-    if (placed.kind === "dxf") addDxf?.removeDxf(id)
-    else if (placed.kind === "model") modelManager?.remove(id)
-    else if (world) world.scene.three.remove(placed.object3D)
+    registry?.remove(id)
     removeMarker(placed.marker, world)
     placedFilesRef.current.delete(id)
-    setMarkerCount(c => Math.max(0, c - 1))
-  }, [addDxf, modelManager, world])
+  }, [registry, world])
 
   return {
     selectedFile,

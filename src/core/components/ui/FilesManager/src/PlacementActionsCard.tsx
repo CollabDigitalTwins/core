@@ -9,12 +9,17 @@ import * as React from 'react'
 import { Button } from '../../Button'
 import { Card } from '../../Card'
 
-export type FileMarkerAction = 'move' | 'rotate' | 'scale' | 'delete'
+export type FileMarkerAction = 'move' | 'rotate' | 'scale' | 'animate' | 'delete'
 
 const ACTIONS: { action: FileMarkerAction; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
   { action: 'move', label: 'Move', Icon: LR.Move },
   { action: 'rotate', label: 'Rotate', Icon: LR.RotateCw },
   { action: 'scale', label: 'Scale', Icon: LR.Scaling },
+]
+
+// Opt-in only: nothing but a loaded model with clips can offer it.
+const OPTIONAL_ACTIONS = [
+  { action: 'animate' as const, label: 'Animation', Icon: LR.Play },
 ]
 
 export interface PlacementActionsCardProps {
@@ -29,7 +34,9 @@ export interface PlacementActionsCardProps {
 /** The placement menu, shared by the floating marker and the viewport right-click. */
 export function PlacementActionsCard({ name, Icon, onAction, onClose, actions }: PlacementActionsCardProps) {
   const stop = (event: React.SyntheticEvent) => event.stopPropagation()
-  const offered = actions ? ACTIONS.filter(({ action }) => actions.includes(action)) : ACTIONS
+  const offered = actions
+    ? [...ACTIONS, ...OPTIONAL_ACTIONS].filter(({ action }) => actions.includes(action))
+    : ACTIONS
 
   return (
     <div className="pointer-events-auto" onPointerDown={stop}>

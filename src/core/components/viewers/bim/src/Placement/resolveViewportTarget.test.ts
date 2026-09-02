@@ -13,6 +13,7 @@ const files = [
   { id: 1, name: 'tower.frag', extension: 'frag' },
   { id: 2, name: 'basement.laz', extension: 'laz' },
   { id: 3, name: 'panel.glb', extension: 'glb' },
+  { id: 4, name: 'site-plan.dxf', extension: 'dxf' },
 ] as DbFile[]
 
 const near = { point: new THREE.Vector3(0, 0, 1), distance: 1 }
@@ -90,15 +91,23 @@ describe('resolveViewportTarget', () => {
 })
 
 describe('resolveViewportTarget for a loaded object', () => {
-  it('resolves an object hit to its file by name', () => {
-    const resolved = resolveViewportTarget({ files, fragment: null, cloud: null, object: { ...near, name: 'panel.glb' } })
+  it('resolves an object hit to its file by id', () => {
+    const resolved = resolveViewportTarget({ files, fragment: null, cloud: null, object: { ...near, fileId: '3' } })
 
     expect(resolved?.file.id).toBe(3)
     expect(resolved?.kind).toBe('object')
   })
 
+  it('resolves a DXF drawing, whose scene object is keyed the same way a model is', () => {
+    const resolved = resolveViewportTarget({ files, fragment: null, cloud: null, object: { ...near, fileId: '4' } })
+
+    expect(resolved?.file.id).toBe(4)
+    expect(resolved?.kind).toBe('object')
+    expect(resolved?.capabilities).toEqual({ rotation: 'yaw', scale: true })
+  })
+
   it('lets a GLB be scaled but not pitched', () => {
-    const resolved = resolveViewportTarget({ files, fragment: null, cloud: null, object: { ...near, name: 'panel.glb' } })
+    const resolved = resolveViewportTarget({ files, fragment: null, cloud: null, object: { ...near, fileId: '3' } })
 
     expect(resolved?.capabilities).toEqual({ rotation: 'yaw', scale: true })
   })
@@ -108,7 +117,7 @@ describe('resolveViewportTarget for a loaded object', () => {
       files,
       fragment: { ...far, modelId: 'tower.frag' },
       cloud: { ...far, id: '2' },
-      object: { ...near, name: 'panel.glb' },
+      object: { ...near, fileId: '3' },
     })
 
     expect(resolved?.kind).toBe('object')
@@ -119,14 +128,14 @@ describe('resolveViewportTarget for a loaded object', () => {
       files,
       fragment: { ...near, modelId: 'tower.frag' },
       cloud: null,
-      object: { ...near, name: 'panel.glb' },
+      object: { ...near, fileId: '3' },
     })
 
     expect(resolved?.kind).toBe('model')
   })
 
   it('finds nothing when the object belongs to no known file', () => {
-    const resolved = resolveViewportTarget({ files, fragment: null, cloud: null, object: { ...near, name: 'ghost.glb' } })
+    const resolved = resolveViewportTarget({ files, fragment: null, cloud: null, object: { ...near, fileId: '999' } })
 
     expect(resolved).toBeNull()
   })

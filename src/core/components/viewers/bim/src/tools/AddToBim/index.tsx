@@ -138,6 +138,7 @@ export default function AddToBim({ tool }: AddToBimProps) {
       if (dbFile?.id) deleteFile(dbFile.id).catch(() => { })
       return
     }
+    if (action === "animate") return
     api.editPlacedFile(id, action === "move" ? "translate" : action)
   }, [deleteFile])
 
@@ -152,7 +153,6 @@ export default function AddToBim({ tool }: AddToBimProps) {
     if (world) initializeCSS2DRenderer(world)
   }, [world])
 
-  // Canvas-level right-click: raycast to detect hit, show context menu
   // Allow other UI to trigger AddToBim modes via currentToolId
   const { currentToolId } = toolsState.tools
   React.useEffect(() => {

@@ -2,31 +2,26 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import type { DbFile } from '../../../../../types/dbTypes'
+import type { SceneObjectRegistry } from '../SceneObjects/sceneObjectRegistry'
 import type * as THREE from 'three'
-
-export interface SceneContentSources {
-  scene: THREE.Object3D
-  /** A loaded 3D model, which `ModelManager` keys by file name. */
-  modelByName: (name: string) => THREE.Object3D | null
-}
 
 /**
  * The one answer to "what in the scene is this file?", so the sidebar, the viewport menu and the
- * placement editor cannot disagree. A DXF group is named with the file id; a model by its name.
+ * placement editor cannot disagree. Everything is keyed by file id, models and drawings alike.
  */
 export function sceneObjectForFile(
-  file: Pick<DbFile, 'id' | 'name'>,
-  { scene, modelByName }: SceneContentSources,
+  file: Pick<DbFile, 'id'>,
+  registry: SceneObjectRegistry | null,
 ): THREE.Object3D | null {
-  return modelByName(file.name) ?? scene.getObjectByName(String(file.id)) ?? null
+  return registry?.get(String(file.id))?.root ?? null
 }
 
 /** Whether the file is in the scene and actually on screen, ancestors included. */
 export function isFileInScene(
-  file: Pick<DbFile, 'id' | 'name'>,
-  sources: SceneContentSources,
+  file: Pick<DbFile, 'id'>,
+  registry: SceneObjectRegistry | null,
 ): boolean {
-  const object = sceneObjectForFile(file, sources)
+  const object = sceneObjectForFile(file, registry)
   if (!object) return false
 
   for (let node: THREE.Object3D | null = object; node; node = node.parent) {

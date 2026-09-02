@@ -9,34 +9,41 @@ import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { toast } from 'sonner'
 
-import { useFilesByBuildingId } from '../../../../../hooks/files/files'
+import { useDeleteFile, useFilesByBuildingId } from '../../../../../hooks/files/files'
 import { BimContext, BuildingsContext } from '../../../../../store'
+import ConfirmDialog from '../../../../ConfirmDialog'
 import { PlacementActionsCard } from '../../../../ui/FilesManager/src/PlacementActionsCard'
 
 import { Highlighter } from '../Highlighter'
 
 import { ModelManager } from '../ModelManager'
 import { BimPointClouds } from '../PointClouds'
+import { BimSceneObjects } from '../SceneObjects'
 
 
+import { AnimationPanel } from './AnimationPanel'
+import { AnimationSession } from './AnimationSession'
 import { markerActionsFor } from './markerActions'
 import { PlacementEditor } from './PlacementEditor'
 import { PlacementPanel } from './PlacementPanel'
 import { useModelTarget } from './targets/useModelTarget'
 import { usePointCloudTarget } from './targets/usePointCloudTarget'
+import { useAnimationSession } from './useAnimationSession'
 import { usePlacementSession } from './usePlacementSession'
 import { useViewportContextMenu } from './useViewportContextMenu'
 
 import type { PlacementMode } from './PlacementEditor'
 import type { ViewportTarget } from './resolveViewportTarget'
+import type { DbFile } from '../../../../../types/dbTypes'
+import type { AnimationState } from '../ModelManager/modelAnimation'
 
 const PIVOT_TOAST_ID = 'bim-placement-pivot-toast'
 
-const sceneObject = (components: OBC.Components, kind: ViewportTarget['kind'], name: string) => {
+const sceneObject = (components: OBC.Components, kind: ViewportTarget['kind'], file: DbFile) => {
   try {
     return kind === 'model'
-      ? components.get(OBC.FragmentsManager).core.models.list.get(name)?.object ?? null
-      : components.get(ModelManager).getModelByName(name)?.model ?? null
+      ? components.get(OBC.FragmentsManager).core.models.list.get(file.name)?.object ?? null
+      : components.get(BimSceneObjects).registry?.get(String(file.id))?.root ?? null
   }
   catch { return null }
 }
@@ -49,6 +56,7 @@ const safeHighlighter = (components: OBC.Components) => {
 /** Renderless owner of the placement card. Sessions are started by whoever resolves the target. */
 export function PlacementEditorHost() {
   const t = useTranslations('Placement')
+  const tAnimation = useTranslations('Animation')
 
   const { state } = React.useContext(BimContext)
   const { bimComponents } = state.bim
@@ -56,15 +64,27 @@ export function PlacementEditorHost() {
   const session = usePlacementSession()
 
   const { state: buildingState } = React.useContext(BuildingsContext)
-  const { files } = useFilesByBuildingId(buildingState.buildings.building?.id ?? 0)
+  const buildingId = buildingState.buildings.building?.id ?? 0
+  const { files } = useFilesByBuildingId(buildingId)
+  const { deleteFile } = useDeleteFile(buildingId)
   const { menu, close } = useViewportContextMenu(bimComponents ?? null, files ?? [])
   const cloudTarget = usePointCloudTarget()
   const modelTarget = useModelTarget()
+
+  const animation = useAnimationSession()
+  const [animationState, setAnimationState] = React.useState<AnimationState | null>(null)
+  const [pendingDelete, setPendingDelete] = React.useState<DbFile | null>(null)
+  const [isDeleting, setIsDeleting] = React.useState(false)
 
   const editor = React.useMemo(
     () => bimComponents?.get(PlacementEditor) ?? null,
     [bimComponents],
   )
+
+  const modelManager = React.useMemo(() => {
+    if (!bimComponents) return null
+    try { return bimComponents.get(ModelManager) } catch { return null }
+  }, [bimComponents])
 
   // A click meant for the gizmo would otherwise select the element behind it.
   React.useEffect(() => {
@@ -97,6 +117,15 @@ export function PlacementEditorHost() {
     unit_in: t('unit_in'),
   }), [t])
 
+  const animationLabels = React.useMemo(() => ({
+    title: tAnimation('title'),
+    clip: tAnimation('clip'),
+    play: tAnimation('play'),
+    pause: tAnimation('pause'),
+    speed: tAnimation('speed'),
+    notSaved: tAnimation('notSaved'),
+  }), [tAnimation])
+
   const changeMode = React.useCallback((next: PlacementMode) => {
     editor?.setMode(next)
   }, [editor])
@@ -121,52 +150,113 @@ export function PlacementEditorHost() {
     editor.centreOnOrigin()
   }, [editor, t])
 
-  const beginFromMenu = (action: 'move' | 'rotate' | 'scale' | 'delete') => {
-    if (!menu || !bimComponents || action === 'delete') return
+  React.useEffect(() => {
+    setAnimationState(animation ? modelManager?.getAnimation(animation.fileId) ?? null : null)
+  }, [animation, modelManager])
+
+  const updateAnimation = (change: (id: string) => void) => {
+    if (!animation || !modelManager) return
+    change(animation.fileId)
+    setAnimationState(modelManager.getAnimation(animation.fileId))
+  }
+
+  const endAnimation = () => bimComponents?.get(AnimationSession).end()
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return
+    setIsDeleting(true)
+    try {
+      await deleteFile(pendingDelete.id)
+      bimComponents?.get(BimSceneObjects).registry?.remove(String(pendingDelete.id))
+      setPendingDelete(null)
+    }
+    catch {
+      toast.error(t('deleteFailed', { name: pendingDelete.name }))
+    }
+    finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const beginFromMenu = (action: 'move' | 'rotate' | 'scale' | 'animate' | 'delete') => {
+    if (!menu || !bimComponents) return
+    if (action === 'delete') { setPendingDelete(menu.file); return }
+    if (action === 'animate') {
+      bimComponents.get(AnimationSession).begin({ fileId: String(menu.file.id), name: menu.file.name })
+      return
+    }
 
     const mode = action === 'move' ? 'translate' : action
     const target = menu.kind === 'cloud'
       ? cloudTarget.targetFor(menu.file, bimComponents.get(BimPointClouds))
       : modelTarget.targetFor(
         menu.file,
-        () => sceneObject(bimComponents, menu.kind, menu.file.name),
+        () => sceneObject(bimComponents, menu.kind, menu.file),
         menu.capabilities,
       )
 
     void editor?.begin(target, mode)
   }
 
-  if (!session) {
-    if (!menu) return null
+  const deleteDialog = (
+    <ConfirmDialog
+      isOpen={pendingDelete !== null}
+      isDeleting={isDeleting}
+      onOpenChange={(open: boolean) => { if (!open) setPendingDelete(null) }}
+      handleConfirm={() => { void confirmDelete() }}
+      itemName={pendingDelete?.name ?? ''}
+    />
+  )
 
+  if (!session) {
     return (
-      <div className="fixed z-50" style={{ left: menu.x, top: menu.y }}>
-        <PlacementActionsCard
-          name={menu.file.name}
-          Icon={menu.kind === 'cloud' ? LR.Grip : LR.Box}
-          actions={markerActionsFor(menu.capabilities)}
-          onAction={beginFromMenu}
-          onClose={close}
-        />
-      </div>
+      <>
+        {menu && !animation && (
+          <div className="fixed z-50" style={{ left: menu.x, top: menu.y }}>
+            <PlacementActionsCard
+              name={menu.file.name}
+              Icon={menu.kind === 'cloud' ? LR.Grip : LR.Box}
+              actions={markerActionsFor(menu.capabilities, { animated: menu.animated })}
+              onAction={beginFromMenu}
+              onClose={close}
+            />
+          </div>
+        )}
+        {animation && animationState && (
+          <AnimationPanel
+            name={animation.name}
+            clips={modelManager?.getClips(animation.fileId) ?? []}
+            state={animationState}
+            labels={animationLabels}
+            onClipChange={(index) => updateAnimation((id) => modelManager?.setClip(id, index))}
+            onPlayingChange={(playing) => updateAnimation((id) => modelManager?.setPlaying(id, playing))}
+            onSpeedChange={(speed) => updateAnimation((id) => modelManager?.setSpeed(id, speed))}
+            onClose={endAnimation}
+          />
+        )}
+        {deleteDialog}
+      </>
     )
   }
 
   return (
-    <PlacementPanel
-      name={session.name}
-      capabilities={session.capabilities}
-      placement={session.placement}
-      mode={session.mode}
-      labels={labels}
-      onModeChange={changeMode}
-      onPlacementChange={(placement) => editor?.setPlacement(placement)}
-      onCentre={centre}
-      onPickPivot={pickPivot}
-      onClearPivot={() => editor?.setPivot(null)}
-      hasPivot={session.pivot !== null}
-      onDone={() => editor?.accept()}
-      onReset={() => editor?.cancel()}
-    />
+    <>
+      <PlacementPanel
+        name={session.name}
+        capabilities={session.capabilities}
+        placement={session.placement}
+        mode={session.mode}
+        labels={labels}
+        onModeChange={changeMode}
+        onPlacementChange={(placement) => editor?.setPlacement(placement)}
+        onCentre={centre}
+        onPickPivot={pickPivot}
+        onClearPivot={() => editor?.setPivot(null)}
+        hasPivot={session.pivot !== null}
+        onDone={() => editor?.accept()}
+        onReset={() => editor?.cancel()}
+      />
+      {deleteDialog}
+    </>
   )
 }

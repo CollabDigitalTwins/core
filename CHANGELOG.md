@@ -1,9 +1,208 @@
 
-Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog, and this project adheres to Semantic Versioning.
+
+## [Unreleased]
+
+Tagged locally as 0.9.0 through 0.11.1; none of it is published to npm, where 0.8.2 is
+still the latest version.
+
+### Added
+- **Point clouds render inside the BIM viewer.** A BIM scene can now load Potree point
+  clouds alongside its IFC models, through `potree-core` rather than the vendored Potree
+  build the standalone viewer uses. New `components/viewers/shared/pointcloud/` holds what
+  both viewers need — `pointCloudApi`, `pointCloudLoader`, `pointCloudSource`,
+  `pointCloudRegistry`, `pointCloudAppearance`, `pointCloudCentroid`, `pointCloudPivot`,
+  `pointCloudPlacement` and `pointCloudTransform`. The BIM side lives in
+  `viewers/bim/src/PointClouds/`.
+- The BIM sidebar gained a Point Clouds section in the File tab and a point cloud block in
+  the Settings tab, with opacity wired to the same setting the standalone viewer reads.
+- Measurements and clipping work against point cloud geometry in the BIM viewer.
+  `ClippingBoxes`, `clipBox` and `cutStyle` add box clipping next to the existing planes,
+  and `scenePicker` picks across model and point cloud content in one pass.
+- A control to centre a point cloud's centroid on the scene origin, and pivot handling
+  through `pointCloudPivot`.
+- **Render modes with sun and shadows.** `renderMode`, `bimLighting`, `solarPosition`,
+  `sunPath`, `sunRig`, `SunPath` and `ShadowEnroller` drive a shadowed render mode from a
+  real solar position; `createBimWorld` and `modelBounds` centralize world setup.
+- **The viewer derives its location from the building it is showing.**
+  `BuildingLocationSync`, `buildingLocationParams` and `useViewerLocation` replace an
+  assumed location, so the sun path is correct for the model on screen.
+- The BIM search bar selects a building rather than only filtering: `searchBuildings`,
+  `useSelectBuilding` and `useOptionListKeys`. Switching building clears the spatial
+  structure and floorplans belonging to the previous one.
+- A pivot indicator (`PivotIndicator`) and camera limits (`CameraLimits`, `cameraLimits`),
+  with viewer state pulled out into `bimViewerState`.
+- **One placement editor for everything placed in a BIM scene.**
+  `viewers/bim/src/Placement/` — `PlacementEditor`, `PlacementEditorHost`,
+  `PlacementPanel`, `NumberField`, `placementTarget`, `resolveViewportTarget`,
+  `placementCapabilities`, `uniformScale`, `markerActions`, `usePlacementSession`,
+  `useViewportContextMenu` and per-kind targets under `targets/` — replaces the separate
+  per-kind placement UIs. `PlacementActionsCard` is its entry point in the files manager.
+- `DbFile` gained `bimRotation`, `pointCloudTransform` and `scale`.
+
+### Changed
+- The DXF loader restores depth state after drawing (`restoreDepthState`), and
+  `disposeObject3D`, `needsMarker` and `sceneContent` factor out scene bookkeeping that
+  was inline in the viewer.
+- Point cloud defaults changed for use inside a BIM scene.
+
+### Removed
+- The standalone point cloud alignment tool — `AlignPointCloudTool`,
+  `AlignPointCloudPanel`, `PointCloudAlignment`, `useBimPointCloudAlignment` — and
+  `Position3DCard`. Both are superseded by the placement editor.
+- `MapTilerKeyNotice` and the subdivision line-width test, which shipped in 0.8.2 and are
+  absent here. This was not deliberate: 0.9.0 was tagged on a branch that forked before
+  0.8.2, so 0.8.2 is not an ancestor of anything released since.
+
+## [0.8.2] - 2026-08-26
+
+### Added
+- `MapTilerKeyNotice`, an on-screen notice when the deployment has no MapTiler key of its
+  own and the map is running on the shared demo key.
+
+### Fixed
+- Map tiles did not appear in production. Subdivision line width is now pinned by a test.
+
+## [0.8.1] - 2026-08-26
+
+### Fixed
+- The map falls back to MapTiler's public demo token when no key is configured, instead of
+  requesting tiles with an empty key.
+- The runtime shim registry listed SDK modules that no longer matched the real SDK surface.
+
+## [0.8.0] - 2026-08-26
+
+### Added
+- **A deployment can supply its own MapTiler key.** `mapStyleSpec` builds the satellite and
+  streets styles programmatically instead of fetching a hosted style URL, so a deployment
+  without a key degrades to Esri World Imagery and Terrarium terrain rather than failing to
+  draw. `MAPTILER_PLACEHOLDER_KEY` keeps localhost working with no account.
+- Country layer subdivisions respond to the camera and to hover, through
+  `useCameraSubdivision` and `useSubdivisionHover`.
+
+### Changed
+- The authentication page renders the deployment's logo.
+
+## [0.7.0] - 2026-08-24
+
+### Changed
+- **The built-in example plugins now use the same layout as an external one.** `hello-bim`
+  and `hello-map` moved their sources under `src/`, matching what `create-cdt-plugin`
+  scaffolds, so an author porting a built-in plugin out of core moves files rather than
+  rearranging them.
+- `@collabdt/plugin-kit` is now a dependency of core, so the host and the kit share one
+  copy of the externals list rather than two that can drift.
+
+### Removed
+- The scaffolder's `registration` module. Registering a built-in plugin is handled by the
+  scaffold step directly.
+
+## [0.6.0] - 2026-08-20
+
+### Added
+- `create-cdt-plugin` gained `labels`, `viewers` and `nextSteps`: the CLI names the viewer
+  a surface belongs to and prints the remaining manual steps after scaffolding.
+- `pluginIcon` resolves a manifest's icon string to a rendered icon in one place, for
+  toolbar tools, viewer tabs and data pages alike.
+
+## [0.5.4] - 2026-08-19
+
+### Added
+- **A data surface for plugins.** `plugins/sdk/data` and the kit's `types/data.ts` let a
+  plugin read platform data through the SDK, reachable as
+  `@collabdt/core/plugins-sdk/data`.
+
+## [0.5.3] - 2026-08-17
+
+Includes 0.5.2, which was tagged but not published.
+
+### Added
+- **Example plugin bodies for all four surfaces.** `create-cdt-plugin` scaffolds dialog,
+  page, tab and layer examples for both built-in and external plugins, not just a toolbar
+  tool. `hello-map` and `hello-bim` were rewritten against the same surfaces.
+- `plugin-kit` ships `types/ui.ts` so a plugin can type against core's UI components
+  without installing Radix.
+- An AI-attribution guard: `scripts/check-ai-attribution.mjs`, a `commit-msg` hook and a CI
+  workflow reject `Co-Authored-By` trailers naming an AI assistant. `yarn hooks:install`
+  points git at `.githooks`.
+
+### Changed
+- `Organization.suspended` appeared twice in `dbTypes` — once optional and once required.
+  The optional one is gone; the required `suspended: boolean` added in 0.5.1 stands.
+
+## [0.5.1] - 2026-08-14
+
+Includes 0.5.0, which was tagged but not published.
+
+### Added
+- **Plugins are a supported boundary, not an internal folder.** `@collabdt/core/plugins-sdk`
+  and `@collabdt/core/plugins-sdk/*` are new package exports. Core owns the runtime shim
+  registry (`PLUGIN_RUNTIME_SHIMS`, `PLUGIN_EXTERNALS`), so a host generates import maps
+  from core rather than from its own copy of the list.
+- Two new packages under `packages/`: `@collabdt/plugin-kit`, a tsup preset plus per-surface
+  types with a build-time guard that fails a plugin bundling `three`, `react` or any other
+  host library; and `create-cdt-plugin`, which scaffolds a built-in or external plugin for
+  any of the four surfaces.
+- Plugin-owned storage, so a plugin persists its own state without the host knowing its
+  shape.
+
+### Changed
+- **`extensions` is now `plugins` throughout.** `ExtensionsManager` → `PluginsManager`,
+  `ExtensionCard` → `PluginCard`, `useExtensionsData` → `usePluginsData`; the folder
+  `components/viewers/extensions/` → `components/viewers/plugins/`; the i18n namespace
+  `Extensions` → `PluginsPage`. `useExtensionListings` is gone, replaced by
+  `usePluginsData` and `pluginStatus`. There are no deprecated aliases.
+- `Organization` gained a required `suspended: boolean`.
+
+### Fixed
+- **A GeoJSON dataset mixing geometry types only drew one of them.** The open-data layer
+  chose how to draw a whole collection from the geometry type of its first feature, so a
+  file starting with a polygon drew its polygons and silently dropped its points. Features
+  are grouped by geometry type and each group gets its own source and layer set; layer ids
+  are unchanged, and points keep their own source so clustering still works.
+- **Organizations could not see their own datasets.** The lookup that mapped a URL path to
+  an organization knew only five of them, so any organization added later fell through to a
+  shared default; it now takes the instance organization directly. Uploaded datasets were
+  also never stamped with their organization, and the visibility filter drops anything with
+  none recorded.
+- **An organizational dataset would list but not draw.** Uploads store under the owning
+  organization while the read side rebuilt the storage path from the organization in the
+  web address, so viewing another instance asked storage for a file never written there.
+  `useOrganizationalDatasets` keeps the two apart: the owning organization builds the path,
+  the address-derived one decides what the viewer may see.
+- Enabling an organization database takes effect immediately instead of after a refresh.
+
+### Migration
+- `import { ExtensionsManager } from '@collabdt/core/components/viewers/extensions'` →
+  `import { PluginsManager } from '@collabdt/core/components/viewers/plugins'`. Rename the
+  `Extensions` message namespace to `PluginsPage`.
+- Anything constructing an `Organization` must now supply `suspended`.
+
+## [0.4.8] - 2026-08-01
+
+Includes 0.4.6 and 0.4.7, which were tagged but not published.
+
+### Added
+- **A classification visibility tab in BIM Layers.** IFC classes can be shown, hidden and
+  recoloured individually, from the class list or from the spatial tree.
+- IFC spaces are included in generated floorplans.
+
+### Changed
+- The viewer sidebar architecture is centralized: tab composition lives in one place rather
+  than being rebuilt per viewer.
+- Topography and rooms are hidden on load. Both are volumetric and hid everything behind
+  them; they can be turned back on from the layers tab.
+
+### Fixed
+- The clipping plane is sized to the model instead of an arbitrary constant, and carries
+  on-screen instructions.
+
+### Removed
+- Dead point cloud code left behind by the viewer rewrite.
 
 ## [0.4.5] - 2026-07-31
 

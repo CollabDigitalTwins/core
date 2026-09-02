@@ -13,9 +13,11 @@ import { ModelManager } from '../ModelManager'
 import { BimPointClouds } from '../PointClouds'
 import { BimSceneObjects } from '../SceneObjects'
 
+import { RIGHT_BUTTON, beginPress, opensMenu, trackPress } from './contextMenuGesture'
 import { pickSceneObject } from './pickSceneObject'
 import { resolveViewportTarget } from './resolveViewportTarget'
 
+import type { RightPress } from './contextMenuGesture'
 import type { FragmentHit, ObjectHit, ViewportTarget } from './resolveViewportTarget'
 import type { DbFile } from '../../../../../types/dbTypes'
 
@@ -27,7 +29,7 @@ export interface ViewportMenuState extends ViewportTarget {
 }
 
 /**
- * One `contextmenu` owner for the canvas: picks whatever placeable thing is under the cursor and
+ * One right-button owner for the canvas: picks whatever placeable thing is under the cursor and
  * says where to draw its menu. There can only be one owner, or two menus open at once.
  */
 export function useViewportContextMenu(
@@ -46,18 +48,47 @@ export function useViewportContextMenu(
     const canvas = world?.renderer?.three.domElement
     if (!world || !canvas) return
 
-    const onContextMenu = (event: MouseEvent) => {
-      event.preventDefault()
-      const { clientX, clientY } = event
+    // The right button also trucks the camera, so the menu waits for a press that never moved.
+    let press: RightPress | null = null
 
-      void resolveAtPointer(components, world, canvas, clientX, clientY, filesRef.current)
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.button !== RIGHT_BUTTON) return
+      press = beginPress(event.clientX, event.clientY)
+      setMenu(null)
+    }
+
+    const onPointerMove = (event: PointerEvent) => {
+      if (press) press = trackPress(press, event.clientX, event.clientY)
+    }
+
+    const onPointerUp = (event: PointerEvent) => {
+      if (event.button !== RIGHT_BUTTON) return
+      const finished = press
+      press = null
+      if (!opensMenu(finished)) return
+
+      const { x, y } = finished as RightPress
+      void resolveAtPointer(components, world, canvas, x, y, filesRef.current)
         .then((target) => setMenu(target
-          ? { ...target, x: clientX, y: clientY, animated: isAnimated(components, target) }
+          ? { ...target, x, y, animated: isAnimated(components, target) }
           : null))
     }
 
-    canvas.addEventListener('contextmenu', onContextMenu)
-    return () => canvas.removeEventListener('contextmenu', onContextMenu)
+    const onPointerCancel = () => { press = null }
+    const suppressNativeMenu = (event: MouseEvent) => event.preventDefault()
+
+    canvas.addEventListener('pointerdown', onPointerDown)
+    canvas.addEventListener('contextmenu', suppressNativeMenu)
+    window.addEventListener('pointermove', onPointerMove)
+    window.addEventListener('pointerup', onPointerUp)
+    window.addEventListener('pointercancel', onPointerCancel)
+    return () => {
+      canvas.removeEventListener('pointerdown', onPointerDown)
+      canvas.removeEventListener('contextmenu', suppressNativeMenu)
+      window.removeEventListener('pointermove', onPointerMove)
+      window.removeEventListener('pointerup', onPointerUp)
+      window.removeEventListener('pointercancel', onPointerCancel)
+    }
   }, [components])
 
   return { menu, close }

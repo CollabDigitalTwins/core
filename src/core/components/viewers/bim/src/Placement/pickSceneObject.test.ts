@@ -4,8 +4,9 @@
 import * as THREE from 'three'
 import { describe, expect, it } from 'vitest'
 
-import { pickSceneObject } from './pickSceneObject'
 import { SceneObjectRegistry } from '../SceneObjects/sceneObjectRegistry'
+
+import { pickSceneObject } from './pickSceneObject'
 
 // A GLB arrives as meshes; a DXF as line segments in a group scaled to metres.
 function modelRoot(): THREE.Object3D {

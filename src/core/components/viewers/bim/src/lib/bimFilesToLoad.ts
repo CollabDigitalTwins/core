@@ -13,8 +13,7 @@ export function isBimFile(file: DbFile): boolean {
 
 /**
  * The models a scene should hold: opted in on the record, and not switched off this
- * session. The session clause is what stops a just-hidden model being reloaded before
- * the server confirms the write.
+ * session — which stops a just-hidden model reloading before the write confirms.
  */
 export function selectLoadableBimFiles(files: DbFile[], modelUIState: ModelUIState = {}): DbFile[] {
   return files.filter(file =>

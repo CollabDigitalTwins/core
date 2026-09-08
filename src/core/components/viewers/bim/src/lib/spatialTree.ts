@@ -116,9 +116,12 @@ export function buildSpatialTree(
   names: Map<number, string> = new Map(),
 ): BimTreeNode[] {
   if (!root) return []
-  return findBuildings(root).map((buildingItem, index) =>
-    toNode(buildingItem, modelId, names, modelId, index),
-  )
+  return findBuildings(root).flatMap((buildingItem, index) => {
+    const node = toNode(buildingItem, modelId, names, modelId, index)
+    // A nameless building wrapping a single child just repeats `IFCBUILDING` above the real name.
+    const addsNothing = node.label === node.category && node.children.length === 1
+    return addsNothing ? node.children : [node]
+  })
 }
 
 /**

@@ -25,6 +25,7 @@ import { searchBuildings } from '../lib/searchBuildings'
 import { useOptionListKeys } from '../lib/useOptionListKeys'
 import { useSelectBuilding } from '../lib/useSelectBuilding'
 import { LoadModels } from '../LoadModels'
+import { BimSceneObjects } from '../SceneObjects'
 
 import type { DbFile as DbFile } from '../../../../../types/dbTypes'
 import type { BimViewerState } from '../lib/bimViewerState'
@@ -72,9 +73,18 @@ export function BimLoadingState() {
     for (const [modelId] of fragments?.list ?? []) {
       void fragments?.core.disposeModel(modelId).catch(() => undefined)
     }
+
+    // Models, placed objects and clouds all belong to the building that was open.
+    try {
+      bimComponents?.get(BimSceneObjects).registry?.clear()
+    } catch {
+      // The world may not be built yet, in which case there is nothing placed.
+    }
+    bimDispatch({ type: 'SET_POINT_CLOUD_IDS', payload: { pointCloudIds: [] } })
+
     setHasLoadedModels(false)
     setCurrentState('opening')
-  }, [building?.id, fragments])
+  }, [building?.id, fragments, bimComponents, bimDispatch])
 
   // Upload file hooks
   const { uploadFile } = useUploadFileToBuilding(building?.id)

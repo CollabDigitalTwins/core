@@ -1442,6 +1442,7 @@
     "resizeHandleLabel": "Redimensionar la barra lateral"
   },
   "ViewSection": {
+    "allIfcFiles": "Todos los archivos IFC",
     "floorplanTitle": "Planos de planta",
     "elevationTitle": "Elevaciones",
     "north": "Norte",

@@ -111,8 +111,35 @@ describe('buildSpatialTree', () => {
     expect(str.id).toBe('str:3')
   })
 
+  it('drops a nameless building that only wraps one child, so the real name leads', () => {
+    const root = item('IFCPROJECT', 1, [
+      item('IFCSITE', 2, [item('IFCBUILDING', 3, [item('IFCBUILDINGSTOREY', 4, [item('IFCWALL', 10)])])]),
+    ])
+
+    const nodes = buildSpatialTree(root, 'arq', new Map([[4, 'PATERSON HALL']]))
+
+    expect(nodes.map(node => node.label)).toEqual(['PATERSON HALL'])
+  })
+
+  it('keeps a building that carries its own name', () => {
+    const root = item('IFCPROJECT', 1, [
+      item('IFCSITE', 2, [item('IFCBUILDING', 3, [item('IFCBUILDINGSTOREY', 4)])]),
+    ])
+
+    const nodes = buildSpatialTree(root, 'arq', new Map([[3, 'Building A']]))
+
+    expect(nodes.map(node => node.label)).toEqual(['Building A'])
+  })
+
+  it('keeps a nameless building that groups several children', () => {
+    const [building] = buildSpatialTree(project(), 'arq')
+
+    expect(building.label).toBe('IFCBUILDING')
+    expect(building.children).toHaveLength(2)
+  })
+
   it('keeps localId 0 selectable', () => {
-    const root = item('IFCBUILDING', 0, [item('IFCWALL', 10)])
+    const root = item('IFCBUILDING', 0, [item('IFCWALL', 10), item('IFCSLAB', 11)])
     const [building] = buildSpatialTree(root, 'arq')
 
     expect(building.id).toBe('arq:0')

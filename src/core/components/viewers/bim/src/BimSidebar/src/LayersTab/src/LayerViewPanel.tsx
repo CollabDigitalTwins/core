@@ -10,6 +10,8 @@ interface Props {
   actions?: React.ReactNode
   /** Item count shown at the left of the action row. */
   count?: number
+  /** Narrows the list, shown beside the count. */
+  filter?: React.ReactNode
   children: React.ReactNode
 }
 
@@ -20,8 +22,8 @@ interface Props {
  * it — so their per-view controls live in a compact toolbar above the scrolling
  * content instead.
  */
-export function LayerViewPanel({ actions, count, children }: Props) {
-  const hasToolbar = actions !== undefined || count !== undefined
+export function LayerViewPanel({ actions, count, filter, children }: Props) {
+  const hasToolbar = actions !== undefined || count !== undefined || filter !== undefined
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -30,6 +32,7 @@ export function LayerViewPanel({ actions, count, children }: Props) {
           {count !== undefined && (
             <span className="text-xs text-muted-foreground tabular-nums">{count}</span>
           )}
+          {filter}
           <div className="flex items-center gap-1 ml-auto">{actions}</div>
         </div>
       )}

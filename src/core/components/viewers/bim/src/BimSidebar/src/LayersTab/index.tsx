@@ -11,6 +11,7 @@ import { FloorplanIcon } from '../../../../../../ui/Icons/FloorPlanIcon'
 import { ViewerSidebarPanel } from '../../../../../../ui/ViewerSidebar/Panel'
 
 import { AppearanceProvider } from './src/AppearanceProvider'
+import { ALL_MODELS } from './src/DrawingModelFilter'
 import { ElevationSection } from './src/ElevationsSection'
 import { FloorplanSection } from './src/FloorplanSection'
 import { IfcClassesSection } from './src/IfcClassesSection'
@@ -42,6 +43,7 @@ export function LayersTab() {
   const t = useTranslations('LayersTab')
 
   const [searchQuery, setSearchQuery] = React.useState('')
+  const [drawingModelFilter, setDrawingModelFilter] = React.useState(ALL_MODELS)
   const [openGroups, setOpenGroups] = React.useState<Record<GroupId, boolean>>({
     drawings: true,
     classifier: true,
@@ -148,13 +150,25 @@ export function LayersTab() {
                   id: 'floorplans',
                   label: t('floorplansTab'),
                   icon: FloorplanIcon,
-                  content: <FloorplanSection query={searchQuery} />,
+                  content: (
+                    <FloorplanSection
+                      query={searchQuery}
+                      modelFilter={drawingModelFilter}
+                      onModelFilterChange={setDrawingModelFilter}
+                    />
+                  ),
                 },
                 {
                   id: 'elevations',
                   label: t('elevationsTab'),
                   icon: LR.House,
-                  content: <ElevationSection query={searchQuery} />,
+                  content: (
+                    <ElevationSection
+                      query={searchQuery}
+                      modelFilter={drawingModelFilter}
+                      onModelFilterChange={setDrawingModelFilter}
+                    />
+                  ),
                 },
               ]}
             />

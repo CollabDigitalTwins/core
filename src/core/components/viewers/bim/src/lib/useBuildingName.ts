@@ -30,7 +30,8 @@ export function useBuildingName(): (modelId: string) => string {
       if (single && String(single.id) === idStr) {
         return stripExtension(single.name)
       }
-      return idStr
+      // Fragments key models by file name, so the fallback is a filename too.
+      return stripExtension(idStr)
     },
     [buildingModel, bimModelsAddedToMap],
   )

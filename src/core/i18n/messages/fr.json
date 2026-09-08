@@ -1442,6 +1442,7 @@
     "resizeHandleLabel": "Redimensionner la barre latérale"
   },
   "ViewSection": {
+    "allIfcFiles": "Tous les fichiers IFC",
     "floorplanTitle": "Plans d’étage",
     "elevationTitle": "Élévations",
     "north": "Nord",

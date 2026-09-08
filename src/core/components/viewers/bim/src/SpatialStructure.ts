@@ -24,8 +24,8 @@ import {
  */
 export class SpatialStructure extends OBC.Component {
   static readonly uuid = '8f7e4d2c-1a9b-4e6f-8c3d-5b2a9f7e4d2c' as const
-  /** v2: v1 cached a different node shape (and IFC categories in place of names). */
-  private static readonly cacheKeyPrefix = 'bim:spatial-structure:v2'
+  /** v3: v2 kept the nameless IFCBUILDING wrapper these trees now drop. */
+  private static readonly cacheKeyPrefix = 'bim:spatial-structure:v3'
   /** Trees past this size are rebuilt rather than cached; they blow the quota anyway. */
   private static readonly maxCachedNodes = 20_000
 

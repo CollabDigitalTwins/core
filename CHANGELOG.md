@@ -40,6 +40,19 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   `LoadModels` cannot read, so the file uploaded but never appeared.
 
 ### Changed
+- The spatial structure no longer opens on a bare `IFCBUILDING`. A building that carries no name
+  and wraps a single child is dropped from the tree, so the level with the real building name
+  leads. A named building, or a nameless one grouping several storeys, is kept — that level still
+  says something.
+- Floorplans and Elevations take an IFC-file filter, shown next to the drawing count, so the levels
+  of several files loaded for the same building no longer read as one list. The two views share the
+  selection, and the control appears only once more than one file is loaded. New
+  `ViewSection.allIfcFiles` i18n key.
+- Switching building now clears placed objects and point clouds along with the models. Only the
+  fragments were disposed before, so a GLB or DXF from the previous building stayed in the scene,
+  and the sidebar's own cleanup could not be relied on because it unmounts with the panel.
+- The spatial-tree cache key moved to `v3`, since `v2` entries hold the wrapper level that is now
+  dropped.
 - A BIM scene loads only the files whose `isVisible` is `true`. `false` and `null` do not load, and
   a building whose models are all switched off now opens as an empty scene rather than showing the
   "no BIM files" upload prompt.

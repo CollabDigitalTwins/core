@@ -48,7 +48,7 @@ export function BimPointCloudSync({ pointcloudApiUrl }: { pointcloudApiUrl?: str
     const visible = files
       .filter(file => isRenderablePointCloud(file) && file.isVisible === true)
       .map(file => String(file.id))
-    if (visible.length > 0) dispatch({ type: 'SET_POINT_CLOUD_IDS', payload: { pointCloudIds: visible } })
+    dispatch({ type: 'SET_POINT_CLOUD_IDS', payload: { pointCloudIds: visible } })
   }, [buildingId, files, filesLoading, dispatch])
 
   React.useEffect(() => {

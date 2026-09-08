@@ -1443,6 +1443,7 @@
     "resizeHandleLabel": "Resize sidebar"
   },
   "ViewSection": {
+    "allIfcFiles": "All IFC files",
     "floorplanTitle": "Floorplans",
     "elevationTitle": "Elevations",
     "north": "North",

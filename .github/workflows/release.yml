@@ -45,6 +45,11 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
+    # Only the publish needs this, but yarn 1.x expands every env placeholder in the .npmrc
+    # setup-node writes for `registry-url` and dies when one is undefined -- on `install`,
+    # `build` and `test:unit` alike. Empty is fine: reading a public package needs no auth.
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -123,7 +128,6 @@ jobs:
       - name: Publish to npm
         if: steps.gate.outputs.release == 'true'
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           VERSION: ${{ steps.gate.outputs.version }}
         run: |
           if npm view "@collabdt/core@$VERSION" version >/dev/null 2>&1; then

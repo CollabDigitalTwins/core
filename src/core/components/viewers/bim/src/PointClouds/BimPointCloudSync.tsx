@@ -14,6 +14,7 @@ import { BimMeasurementManager } from '../BimMeasurements/BimMeasurementManager'
 
 import { PlacementEditor } from '../Placement/PlacementEditor'
 
+import { isRenderablePointCloud } from './pointCloudFiles'
 import { readPlacement } from './pointCloudPlacementStore'
 
 import { BimPointClouds } from './index'
@@ -27,7 +28,8 @@ export function BimPointCloudSync({ pointcloudApiUrl }: { pointcloudApiUrl?: str
   const { bimComponents, world, pointCloudIds } = state.bim
 
   const { state: buildingState } = React.useContext(BuildingsContext)
-  const { files, isLoading: filesLoading } = useFilesByBuildingId(buildingState.buildings.building?.id ?? 0)
+  const buildingId = buildingState.buildings.building?.id ?? 0
+  const { files, isLoading: filesLoading } = useFilesByBuildingId(buildingId)
 
   // Read through a ref so a file refetch cannot re-run the reconcile effect below.
   const fileOfRef = React.useRef((_id: string): DbFile | undefined => undefined)
@@ -35,6 +37,19 @@ export function BimPointCloudSync({ pointcloudApiUrl }: { pointcloudApiUrl?: str
     fileOfRef.current = (id: string) => files?.find((file) => String(file.id) === id)
   }, [files])
 
+
+  // Claimed per building so a file refetch cannot re-add a cloud the user just switched off.
+  const seededBuildingRef = React.useRef<number | null>(null)
+  React.useEffect(() => {
+    if (filesLoading || !files || files.length === 0) return
+    if (seededBuildingRef.current === buildingId) return
+    seededBuildingRef.current = buildingId
+
+    const visible = files
+      .filter(file => isRenderablePointCloud(file) && file.isVisible === true)
+      .map(file => String(file.id))
+    if (visible.length > 0) dispatch({ type: 'SET_POINT_CLOUD_IDS', payload: { pointCloudIds: visible } })
+  }, [buildingId, files, filesLoading, dispatch])
 
   React.useEffect(() => {
     if (!bimComponents || !world) return

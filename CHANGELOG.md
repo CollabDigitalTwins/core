@@ -8,6 +8,24 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ## [Unreleased]
 
 ### Added
+- **Files carry their own scene membership.** `isVisible` on a file record now decides whether the
+  BIM viewer loads it, and the sidebar's Hide/Show entry persists the choice. A building with ten
+  models can keep the architectural and structural ones in the scene and leave the eight
+  superseded versions listed but unloaded, and the choice survives a reload.
+- `useUpdateFile` in the file hooks: `updateFileById(id, patch)` for lists where any row can
+  mutate, which `useFile`'s single-id mutation key cannot express.
+- `useFileVisibility(buildingId)` — `setVisible` and `setVisibleMany`, which write the
+  `filesByBuilding` cache optimistically so the viewer's load effects see the new value in the
+  same tick, and roll back if the request fails.
+- `shouldPersistVisibility` on `useFileActions`, a predicate so a section can opt its rows in. It
+  is off by default: for an IDS run or a BCF import `view` means "apply", not "in the scene".
+- `LoadModels.unload(modelId)`, and `load` now returns the model it loaded. Both go through a
+  per-model queue, so a load that follows a dispose waits for it instead of seeing the outgoing
+  model and skipping its own work.
+- `SET_POINT_CLOUD_IDS` on the BIM store, to seed the list from the file records. `TOGGLE_POINT_CLOUD`
+  is not idempotent, so a seed that ran twice would have switched every cloud back off.
+- `SpatialStructure.forgetModel`, which drops a model's tree but keeps its cached copy, so a model
+  switched back on does not rebuild one it already has.
 - `dropsAtOrigin` in `Placement/placementCapabilities`, naming the files whose coordinates
   are already surveyed — IFC, fragments and point clouds. Adding one of these no longer arms
   the crosshair: it uploads at the model origin, since asking where to put a survey of the
@@ -22,6 +40,12 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   `LoadModels` cannot read, so the file uploaded but never appeared.
 
 ### Changed
+- A BIM scene loads only the files whose `isVisible` is `true`. `false` and `null` do not load, and
+  a building whose models are all switched off now opens as an empty scene rather than showing the
+  "no BIM files" upload prompt.
+- Hiding a BIM model unloads it rather than making it invisible, so its spatial tree, IFC classes,
+  floorplans and elevations go with it, and its bounds stop inflating the shadow framing and camera
+  fit. Switching it back on reloads it at its stored placement without reframing the camera.
 - A double-click that hits no geometry now places the file at the world origin rather than
   doing nothing. In the add-to-BIM flow the ground-plane fallback still applies whenever
   there is a model to miss; with an empty scene the click carries no position at all.
@@ -30,6 +54,11 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   zoom. The zoom is cleared, like the coordinates, for a building with no location.
 
 ### Fixed
+- Removing a 3D model no longer leaks GPU memory. `ModelManager.remove` detached the model and
+  freed nothing, and `disposeObject3D` freed geometry and materials but not the textures they
+  reference, which `Material.dispose` does not cascade to. Both now free geometry, materials and
+  every texture, and the animation mixer's root is uncached. `disposeThreeScene` shares the one
+  implementation instead of keeping a second copy.
 - The viewport menu now opens on an animated model. `SkinnedMesh.raycast` tests a bounding
   sphere three computes once and never refreshes, so a playing model drifted out of the sphere
   cached at its first pick and every later right-click missed it. `pickSceneObject` recomputes
@@ -44,6 +73,14 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   gained the `rekey` that `AddDxf` already had, so a model uploaded through add-to-BIM moves
   from its temporary id to its file id. Without it `getClips` looked up the file id, found
   nothing, and the menu offered no animate action until the page was reloaded.
+
+### Migration
+- `isVisible` defaults to `false`, and no backfill ships with this release, so a database written
+  before it has every file at `false` or `null` and those BIM scenes will open empty. Switch the
+  models on from the sidebar, or set the flag for the records that should load:
+  `UPDATE "File" SET "isVisible" = true WHERE extension IN ('ifc', 'frag');`
+- A consumer reading `file.isVisible` should compare with `=== true`. `!== false` now reads a
+  never-set flag as visible, which no longer matches what the viewer loads.
 
 ## [0.9.0] - 2026-09-02
 

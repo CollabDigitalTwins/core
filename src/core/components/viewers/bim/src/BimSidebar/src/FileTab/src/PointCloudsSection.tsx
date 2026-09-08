@@ -99,6 +99,7 @@ export function PointCloudsSection({ files, query = '', buildingId }: PointCloud
     buildingId,
     handleDeleteFile,
     onView: toggle,
+    shouldPersistVisibility: () => true,
     onGhost: ghost,
     onMove: (file) => { void editPosition(file) },
     onDelete: forget,

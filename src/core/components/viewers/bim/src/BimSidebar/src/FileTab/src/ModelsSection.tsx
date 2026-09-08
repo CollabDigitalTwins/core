@@ -11,11 +11,13 @@ import { useUploadFileToBuilding, useDeleteFile } from '../../../../../../../../
 import { BimContext, BuildingsContext } from '../../../../../../../../store'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
-import { useFileUploadHandler, useFileDeleteHandler, FileItemComponent, useFileActions, useCommonFileUpload } from '../../../../../../../ui/FilesManager'
+import { useFileUploadHandler, useFileDeleteHandler, FileItemComponent, useFileActions, useCommonFileUpload, useFileVisibility } from '../../../../../../../ui/FilesManager'
 import { BIMManager } from '../../../../BIMManager'
 import { CurrentWorld } from '../../../../CurrentWorld'
 import { GhostMode } from '../../../../GhostMode'
 import { Highlighter } from '../../../../Highlighter'
+import { applyModelPlacement } from '../../../../lib/applyModelPlacement'
+import { LoadModels } from '../../../../LoadModels'
 import { ModelManager } from '../../../../ModelManager'
 import { PlacementEditor } from '../../../../Placement/PlacementEditor'
 import { useModelTarget } from '../../../../Placement/targets/useModelTarget'
@@ -47,6 +49,7 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
   // Upload file hook and session
   const { uploadFile } = useUploadFileToBuilding(buildingId)
   const { deleteFile } = useDeleteFile(buildingId)
+  const { setVisibleMany } = useFileVisibility(buildingId)
 
   // Use the reusable upload handler
   const { handleFileUpload } = useFileUploadHandler({
@@ -66,7 +69,7 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
   const [loadedModels, setLoadedModels] = React.useState<(DbFile & { isVisible?: boolean })[]>(
     files.map(file => ({
       ...file,
-      isVisible: modelUIState[file.id]?.isVisible ?? (file as any).isVisible,
+      isVisible: modelUIState[file.id]?.isVisible ?? (file as any).isVisible ?? false,
       isGhost: modelUIState[file.id]?.isGhost ?? false,
     }))
   )
@@ -77,7 +80,7 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
       const prevMap = new Map(prev.map(f => [f.id, f as any]))
       return files.map(file => ({
         ...file,
-        isVisible: modelUIState[file.id]?.isVisible ?? (file as any).isVisible,
+        isVisible: modelUIState[file.id]?.isVisible ?? (file as any).isVisible ?? false,
         isGhost: modelUIState[file.id]?.isGhost ?? prevMap.get(file.id)?.isGhost ?? false,
       }))
     })
@@ -133,17 +136,12 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
   }, [bimComponents])
 
   // Custom handlers for BIM-specific actions (view and delete only - download uses default)
-  const handleBimView = React.useCallback((file: DbFile, newVisibility: boolean) => {
-    bimDispatch({ type: 'SET_MODEL_UI_STATE', payload: { fileId: file.id, isVisible: newVisibility } })
+  const handleBimView = React.useCallback(async (file: DbFile, newVisibility: boolean) => {
+    const isGhosted = modelUIState[file.id]?.isGhost ?? false
 
-    // Disable highlighting for hidden models; re-enable only when visible and not ghosted
     if (highlighter) {
-      const isGhosted = modelUIState[file.id]?.isGhost ?? false
-      if (!newVisibility || isGhosted) {
-        highlighter.disableModel(file.name)
-      } else {
-        highlighter.enableModel(file.name)
-      }
+      if (!newVisibility || isGhosted) highlighter.disableModel(file.name)
+      else highlighter.enableModel(file.name)
     }
 
     // Non-fragment models (gltf/obj/fbx) managed by ModelManager
@@ -151,21 +149,46 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
       const modelInfo = modelManager.getModel(file.id.toString())
       if (modelInfo) {
         modelInfo.model.visible = newVisibility
+        bimDispatch({ type: 'SET_MODEL_UI_STATE', payload: { fileId: file.id, isVisible: newVisibility } })
         if (fragments) void fragments.core.update(true)
         return
       }
     }
 
-    // Fragment (IFC/FRAG) models — look up directly from fragments list by file.name
-    if (fragments) {
-      const fragModel = fragments.core.models.list.get(file.name)
-      if (fragModel) {
-        fragModel.object.visible = newVisibility
-        void fragments.core.update(true)
-      } else {
+    if (!bimComponents || !fragments) return
+    const loadModels = bimComponents.get(LoadModels)
+
+    if (!newVisibility) {
+      bimDispatch({ type: 'SET_MODEL_UI_STATE', payload: { fileId: file.id, isVisible: false, isGhost: false } })
+      const ghosted = isGhosted ? fragments.core.models.list.get(file.name) : undefined
+      if (ghosted) ghostMode?.setModelGhost(ghosted, false)
+      bimManager?.remove(file.name)
+      try {
+        bimComponents.get(SpatialStructure).forgetModel(file.name)
+      } catch {
+        // The viewer may already be tearing down; nothing to forget then.
       }
+      await loadModels.unload(file.name)
+      void fragments.core.update(true)
+      return
     }
-  }, [modelManager, fragments, highlighter, modelUIState])
+
+    try {
+      // A toggle must not reframe the scene the way a first load does.
+      loadModels.sharing = true
+      const model = fragments.core.models.list.get(file.name) ?? await loadModels.load(file.url, file.name)
+      if (!model) throw new Error('the model could not be loaded')
+
+      applyModelPlacement(model.object, file)
+      model.object.visible = true
+      void fragments.core.update(true)
+      bimDispatch({ type: 'SET_MODEL_UI_STATE', payload: { fileId: file.id, isVisible: true } })
+      if (!isGhosted) highlighter?.enableModel(file.name)
+    } catch (error) {
+      console.error(`Could not show model "${file.name}":`, error)
+      bimDispatch({ type: 'SET_MODEL_UI_STATE', payload: { fileId: file.id, isVisible: false } })
+    }
+  }, [bimComponents, modelManager, fragments, highlighter, ghostMode, bimManager, bimDispatch, modelUIState])
 
   const handleBimDelete = React.useCallback((file: DbFile) => {
     // Remove from ModelManager if it exists (gltf/obj/fbx models)
@@ -241,6 +264,7 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
     buildingId,
     handleDeleteFile,
     onView: handleBimView,
+    shouldPersistVisibility: () => true,
     onDelete: handleBimDelete,
     onMove: handleBimMove,
     onGhost: handleBimGhost
@@ -269,11 +293,17 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
   const handleSwitchVariant = () => ({
     checked: !areAllHidden,
     onCheckedChange: (checked: boolean) => {
-      setLoadedModels(prev => prev.map(f => ({ ...f, isVisible: checked })))
-      // Toggle visibility in 3D scene for all models
-      for (const file of loadedModels) {
-        handleBimView(file, checked)
-      }
+      const changing = loadedModels.filter(file => (file.isVisible ?? false) !== checked)
+      if (changing.length === 0) return
+
+      void (async () => {
+        for (const file of changing) await handleBimView(file, checked)
+        try {
+          await setVisibleMany(changing, checked)
+        } catch (error) {
+          console.error('Could not save model visibility:', error)
+        }
+      })()
     },
   })
 

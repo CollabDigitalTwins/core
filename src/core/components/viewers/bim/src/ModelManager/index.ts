@@ -10,6 +10,7 @@ import { OBJLoader } from 'three/addons/loaders/OBJLoader.js'
 
 import { GizmoController } from '../../utils/GizmoController'
 import { CurrentWorld } from '../CurrentWorld'
+import { disposeObject3D } from '../lib/disposeObject3D'
 import { ViewportGizmo } from '../ViewportGizmo'
 
 import { initialState, needsFrames, withClip, withPlaying, withSpeed } from './modelAnimation'
@@ -153,29 +154,28 @@ export class ModelManager extends OBC.Component {
    */
   remove(id: string): boolean {
     const modelInfo = this._models.get(id)
-    if (!modelInfo || !this._world) return false
+    if (!modelInfo) return false
 
-    this._world.scene.three.remove(modelInfo.model)
+    this.releaseModel(modelInfo)
+    this._models.delete(id)
 
+    return true
+  }
 
-    if (modelInfo.gizmoController) {
-      modelInfo.gizmoController.dispose()
-    }
+  // Detaching a model frees nothing on its own, and these are the app's most textured assets.
+  private releaseModel(modelInfo: ModelInfo) {
+    modelInfo.gizmoController?.dispose()
 
-    // Cleanup mixer
     if (modelInfo.mixer) {
       modelInfo.mixer.stopAllAction()
+      modelInfo.mixer.uncacheRoot(modelInfo.model)
     }
 
-    // Cleanup file URL if it exists
     if (modelInfo.fileUrl) {
       URL.revokeObjectURL(modelInfo.fileUrl)
     }
 
-    // Remove from storage
-    this._models.delete(id)
-
-    return true
+    disposeObject3D(modelInfo.model)
   }
 
   /**
@@ -480,23 +480,7 @@ export class ModelManager extends OBC.Component {
   dispose(): void {
     this.stopAnimationLoop()
 
-    for (const modelInfo of this._models.values()) {
-      if (this._world) {
-        this._world.scene.three.remove(modelInfo.model)
-      }
-
-      if (modelInfo.gizmoController) {
-        modelInfo.gizmoController.dispose()
-      }
-
-      if (modelInfo.mixer) {
-        modelInfo.mixer.stopAllAction()
-      }
-
-      if (modelInfo.fileUrl) {
-        URL.revokeObjectURL(modelInfo.fileUrl)
-      }
-    }
+    for (const modelInfo of this._models.values()) this.releaseModel(modelInfo)
 
     this._models.clear()
   }

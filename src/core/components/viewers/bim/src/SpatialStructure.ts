@@ -55,7 +55,7 @@ export class SpatialStructure extends OBC.Component {
   }
 
   private readonly onModelRemoved = (modelId: string) => {
-    this.clearForModel(modelId)
+    this.forgetModel(modelId)
   }
 
   /** The merged tree across every model that has been built, in insertion order. */
@@ -175,14 +175,19 @@ export class SpatialStructure extends OBC.Component {
     return nodes
   }
 
-  /** Drops one model's tree, e.g. when the model is removed from the scene. */
+  /** Drops one model's tree and its cache, for a model that is gone for good. */
   clearForModel(modelId: string): void {
+    this.clearCache(modelId)
+    this.forgetModel(modelId)
+  }
+
+  /** Drops the tree but keeps the cache, so a model switched back on does not rebuild it. */
+  forgetModel(modelId: string): void {
     if (!this._treesByModelId.has(modelId) && !this._loadingPromises.has(modelId)) {
       return
     }
     this._treesByModelId.delete(modelId)
     this._loadingPromises.delete(modelId)
-    this.clearCache(modelId)
     this.emit(modelId)
   }
 

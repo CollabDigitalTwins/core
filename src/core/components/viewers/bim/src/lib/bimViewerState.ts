@@ -12,6 +12,7 @@ export interface BimViewerStateInputs {
   filesLoading: boolean
   filesError: boolean
   bimFileCount: number
+  hiddenBimFileCount: number
   hasLoadedModels: boolean
 }
 
@@ -37,5 +38,7 @@ export function nextBimViewerState(inputs: BimViewerStateInputs): BimViewerTrans
   if (bimFileCount > 0) return { state: 'loading', loadModels: true }
   // An empty list after a failed fetch means the request died, not that the building is empty.
   if (inputs.filesError) return { state: 'filesUnavailable' }
+  // The building has models, all switched off: an empty scene is the answer, not an upload prompt.
+  if (inputs.hiddenBimFileCount > 0) return { state: 'ready' }
   return { state: 'noBimFiles' }
 }

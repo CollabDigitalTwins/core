@@ -15,6 +15,8 @@ export const useFiles = () => useCoreHooks().file.useFiles();
 
 export const useFile = (id: number | null) => useCoreHooks().file.useFile(id);
 
+export const useUpdateFile = () => useCoreHooks().file.useUpdateFile();
+
 export const useFilesByBuildingId = (buildingId: number, tag?: string) =>
   useCoreHooks().file.useFilesByBuildingId(buildingId, tag);
 

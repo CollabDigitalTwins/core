@@ -20,6 +20,7 @@ import { Highlighter } from '../../../../Highlighter'
 import { IDSManager } from '../../../../IDSManager'
 import { needsMarker } from '../../../../lib/needsMarker'
 import { isFileInScene, sceneObjectForFile } from '../../../../lib/sceneContent'
+import { selectSceneSeedFiles } from '../../../../lib/sceneSeed'
 import { ModelManager } from '../../../../ModelManager'
 import { AnimationSession } from '../../../../Placement/AnimationSession'
 import { markerActionsFor } from '../../../../Placement/markerActions'
@@ -88,12 +89,12 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
       const visibilityMap = new Map(
         prevFiles.map(f => [f.id, f.isVisible ?? false])
       )
-      // Visibility comes from the scene, never from the persisted `file.isVisible` flag.
+      // The record seeds a placeable file; after that the scene is the truth.
       const inScene = (file: IFile): boolean => {
         if (file.extension === 'ids') return activeIDSFileId === file.id
         if (!isPlaceable(file.extension)) return false
 
-        return isFileInScene(file, registryRef.current)
+        return isFileInScene(file, registryRef.current) || (file as any).isVisible === true
       }
       return files
         .filter(file => file.tag !== 'user')
@@ -237,6 +238,20 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
 
     registry?.clear()
   }, [buildingId, registry])
+
+  // Claimed per building so a revalidation cannot re-add what the user just switched off.
+  const seededBuildingRef = React.useRef<number | null>(null)
+  React.useEffect(() => {
+    if (!registry || !modelManager || files.length === 0) return
+    if (seededBuildingRef.current === buildingId) return
+    seededBuildingRef.current = buildingId
+
+    for (const file of selectSceneSeedFiles(files as IFile[], isPlaceable, key => registry.has(key))) {
+      void (file.extension?.toLowerCase() === 'dxf'
+        ? toggleDxfVisibility(file, true)
+        : toggleModelVisibility(file, true))
+    }
+  }, [buildingId, files, registry, modelManager, toggleModelVisibility, toggleDxfVisibility])
 
   // Read by the marker rAF loop, so it hides the marker of whatever is being placed.
   const placingIdRef = React.useRef<string | null>(null)
@@ -457,6 +472,7 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
     buildingId,
     handleDeleteFile,
     onView: handleBimView,
+    shouldPersistVisibility: (file) => isPlaceable(file.extension),
     onMove: handleBimMove,
     onDelete: (file) => { registry?.remove(file.id.toString()) },
   })

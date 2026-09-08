@@ -60,6 +60,30 @@ describe('disposeObject3D', () => {
     expect(second.dispose).toHaveBeenCalled()
   })
 
+  it('frees every texture the material references, not just the material', () => {
+    const map = new THREE.Texture()
+    const normalMap = new THREE.Texture()
+    vi.spyOn(map, 'dispose')
+    vi.spyOn(normalMap, 'dispose')
+    const material = new THREE.MeshStandardMaterial({ map, normalMap })
+    vi.spyOn(material, 'dispose')
+
+    disposeObject3D(new THREE.Mesh(new THREE.BufferGeometry(), material))
+
+    expect(map.dispose).toHaveBeenCalled()
+    expect(normalMap.dispose).toHaveBeenCalled()
+    expect(material.dispose).toHaveBeenCalled()
+  })
+
+  it('detaches the children so the graph holds no references', () => {
+    const root = new THREE.Group()
+    root.add(stubMesh().mesh)
+
+    disposeObject3D(root)
+
+    expect(root.children).toHaveLength(0)
+  })
+
   it('copes with an object that has neither geometry nor material', () => {
     expect(() => disposeObject3D(new THREE.Group())).not.toThrow()
   })

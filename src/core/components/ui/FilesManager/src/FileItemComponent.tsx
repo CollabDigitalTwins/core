@@ -105,10 +105,10 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
           onClick={() => { void onAction('view', file) }}
           disabled={!canReadFile}
         >
-          {file.isVisible !== false
+          {file.isVisible === true
             ? <LR.EyeOff className="h-4 w-4" />
             : <LR.Eye className="h-4 w-4" />}
-          {file.isVisible !== false ? t('hideTitle') : t('showTitle')}
+          {file.isVisible === true ? t('hideTitle') : t('showTitle')}
         </DropdownMenuItem>
       )}
       {options.includes('ghost') && !isHidden && (

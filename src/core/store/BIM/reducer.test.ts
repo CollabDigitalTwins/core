@@ -33,6 +33,31 @@ describe('BimReducer', () => {
     expect([s.bimComponents, s.world, s.fragments, s.modelId]).toEqual([null, null, null, null])
   })
 
+  it('SET_POINT_CLOUD_IDS replaces the list rather than toggling each id', () => {
+    let s = BimReducer(base, { type: 'SET_POINT_CLOUD_IDS', payload: { pointCloudIds: ['669', '670'] } } as never)
+    expect(s.pointCloudIds).toEqual(['669', '670'])
+
+    s = BimReducer(s, { type: 'SET_POINT_CLOUD_IDS', payload: { pointCloudIds: ['669', '670'] } } as never)
+    expect(s.pointCloudIds).toEqual(['669', '670'])
+  })
+
+  it('SET_POINT_CLOUD_IDS drops an active id that is no longer in the list', () => {
+    let s = BimReducer(base, { type: 'SET_POINT_CLOUD_IDS', payload: { pointCloudIds: ['669'] } } as never)
+    s = BimReducer(s, { type: 'SET_ACTIVE_POINT_CLOUD', payload: { activePointCloudId: '669' } } as never)
+    expect(s.activePointCloudId).toBe('669')
+
+    s = BimReducer(s, { type: 'SET_POINT_CLOUD_IDS', payload: { pointCloudIds: ['670'] } } as never)
+    expect(s.activePointCloudId).toBeNull()
+  })
+
+  it('SET_POINT_CLOUD_IDS keeps an active id that survives the replacement', () => {
+    let s = BimReducer(base, { type: 'SET_POINT_CLOUD_IDS', payload: { pointCloudIds: ['669', '670'] } } as never)
+    s = BimReducer(s, { type: 'SET_ACTIVE_POINT_CLOUD', payload: { activePointCloudId: '670' } } as never)
+
+    s = BimReducer(s, { type: 'SET_POINT_CLOUD_IDS', payload: { pointCloudIds: ['670'] } } as never)
+    expect(s.activePointCloudId).toBe('670')
+  })
+
   it('TOGGLE_POINT_CLOUD adds an id, then a second toggle removes it', () => {
     let s = BimReducer(base, { type: 'TOGGLE_POINT_CLOUD', payload: { pointCloudId: '669' } } as never)
     expect(s.pointCloudIds).toEqual(['669'])

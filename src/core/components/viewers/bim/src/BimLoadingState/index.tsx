@@ -18,6 +18,8 @@ import { useFileUploadHandler } from '../../../../ui/FilesManager/src/useFileUpl
 import { Input } from '../../../../ui/Input'
 import { LoadingSpinner } from '../../../../ui/LoadingSpinner'
 import { setCameraLookAt } from '../../utils/setCameraLookAt'
+import { applyModelPlacement } from '../lib/applyModelPlacement'
+import { isBimFile, selectLoadableBimFiles } from '../lib/bimFilesToLoad'
 import { nextBimViewerState } from '../lib/bimViewerState'
 import { searchBuildings } from '../lib/searchBuildings'
 import { useOptionListKeys } from '../lib/useOptionListKeys'
@@ -36,7 +38,7 @@ export function BimLoadingState() {
   const { ability } = usePermissions()
 
   const { state: bimState, dispatch: bimDispatch } = React.useContext(BimContext)
-  const { bimComponents, world, fragments } = bimState.bim
+  const { bimComponents, world, fragments, modelUIState } = bimState.bim
   const { state: buildingState, dispatch: buildingDispatch } = React.useContext(BuildingsContext)
   const { building: storeBuilding } = buildingState.buildings
 
@@ -95,12 +97,11 @@ export function BimLoadingState() {
   const [selectedBuilding, setSelectedBuilding] = React.useState<any>(null)
 
   const { files, isLoading: filesLoading, isError: filesError } = useFilesByBuildingId(building?.id)
-  const bimFiles: DbFile[] = React.useMemo(() => (
-    files.filter(file => {
-      const ext = file?.extension?.toLowerCase()
-      return ext === 'frag' || ext === 'ifc'
-    })
-  ), [files])
+  const allBimFiles: DbFile[] = React.useMemo(() => files.filter(isBimFile), [files])
+  const bimFiles: DbFile[] = React.useMemo(
+    () => selectLoadableBimFiles(files, modelUIState),
+    [files, modelUIState],
+  )
 
   // Handle search
   const handleSearch = React.useCallback((term: string) => {
@@ -151,19 +152,14 @@ export function BimLoadingState() {
     if (!bimComponents || toLoad.length === 0) return 0
     const loadModels = bimComponents.get(LoadModels)
 
-    let loadedCount = 0
+    const loaded: DbFile[] = []
     for (const bimFile of toLoad) {
       try {
         await loadModels.load(bimFile.url, bimFile.name)
-        loadedCount++
-        // Apply saved 3D position after load (setupModel resets to origin)
+        loaded.push(bimFile)
         if ((bimFile.x != null || bimFile.y != null || bimFile.z != null) && fragments) {
           const fragModel = fragments.core.models.list.get(bimFile.name)
-          if (fragModel) {
-            fragModel.object.position.set(bimFile.x ?? 0, bimFile.y ?? 0, bimFile.z ?? 0)
-            if (bimFile.bimRotation != null) fragModel.object.rotation.y = bimFile.bimRotation
-            fragModel.object.updateMatrixWorld(true)
-          }
+          if (fragModel) applyModelPlacement(fragModel.object, bimFile)
         }
       } catch (e) {
         console.error("Error loading BIM file", bimFile.name, e)
@@ -175,12 +171,12 @@ export function BimLoadingState() {
       void fragments.core.update(true)
     }
 
-    // Mark each loaded file as visible in the BIM store so ModelsSection reflects it
-    for (const bimFile of toLoad) {
+    // Only the files that actually arrived, so a failed one reads as hidden and can be retried.
+    for (const bimFile of loaded) {
       bimDispatch({ type: 'SET_MODEL_UI_STATE', payload: { fileId: bimFile.id, isVisible: true } })
     }
 
-    return loadedCount
+    return loaded.length
   }, [bimComponents, fragments, bimDispatch])
 
   const loadBimModels = React.useCallback(async () => {
@@ -234,6 +230,7 @@ export function BimLoadingState() {
       filesLoading,
       filesError: !!filesError,
       bimFileCount: bimFiles.length,
+      hiddenBimFileCount: allBimFiles.length - bimFiles.length,
       hasLoadedModels,
     })
     if (!transition) return
@@ -244,7 +241,7 @@ export function BimLoadingState() {
       setCameraHasMoved(false)
       void loadBimModels()
     }
-  }, [bimComponents, building, buildingLoading, buildingError, buildingId, filesLoading, filesError, bimFiles.length, loadBimModels, hasLoadedModels])
+  }, [bimComponents, building, buildingLoading, buildingError, buildingId, filesLoading, filesError, bimFiles.length, allBimFiles.length, loadBimModels, hasLoadedModels])
 
   // Don't render if not visible
   if (!shouldShow) {

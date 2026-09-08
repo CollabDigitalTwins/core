@@ -624,6 +624,7 @@
     "hideTitle": "Hide from view",
     "showTitle": "Show in view",
     "placeFile": "Place File",
+    "placeHint": "Double-click in the model to place \"{name}\". Press Escape to cancel.",
     "toastErrNoID": "No building ID available",
     "toastSuccessUpFile": "file(s) uploaded successfully",
     "toastErrUpFile1": "Error uploading file:",
@@ -1442,6 +1443,7 @@
     "resizeHandleLabel": "Resize sidebar"
   },
   "ViewSection": {
+    "allIfcFiles": "All IFC files",
     "floorplanTitle": "Floorplans",
     "elevationTitle": "Elevations",
     "north": "North",
@@ -1503,8 +1505,7 @@
     "clipping": "Clipping Tool",
     "fit": "Fit",
     "add": "Add",
-    "share": "Share view",
-    "pointCloudAlign": "Point cloud"
+    "share": "Share view"
   },
   "forgotPassword": {
     "h1": "Forgot Password",
@@ -1967,7 +1968,9 @@
     "noBuildingId": "No building ID available",
     "uploadSuccess": "{count, plural, one {# file uploaded successfully} other {# files uploaded successfully}}",
     "uploadError": "Error uploading file:",
-    "unknownError": "Unknown error occurred"
+    "unknownError": "Unknown error occurred",
+    "convertingIfc": "Converting \"{name}\" to fragments… {percent}%",
+    "uploadingConverted": "Uploading \"{name}\"…"
   },
   "BuildingSensors": {
     "average": "average",
@@ -2077,26 +2080,35 @@
     "userReadOnly": "You can see which plugins are available, but not change what runs.",
     "loading": "Loading plugins…"
   },
-  "PointCloudAlignment": {
-    "title": "Align point cloud",
+  "Placement": {
+    "cancel": "Cancel",
+    "confirmPlacement": "Confirm placement",
+    "placeAndAdjustHint": "Double-click in the scene to place. Drag the gizmo or press G / R / S to move, rotate or scale.",
+    "unit_mm": "Millimetres → metres",
+    "unit_cm": "Centimetres → metres",
+    "unit_m": "Metres",
+    "unit_in": "Inches → metres",
+    "title": "Place object",
     "position": "Position (m)",
     "rotation": "Rotation (°)",
+    "yaw": "Rotation (°)",
     "scale": "Scale",
     "modeTranslate": "Move",
     "modeRotate": "Rotate",
+    "modeScale": "Scale",
     "reset": "Reset",
     "done": "Done",
-    "noClouds": "No point clouds are switched on",
-    "editHint": "Drag the gizmo to place the point cloud. The position is saved when you press Done.",
-    "saved": "Saved the position of \"{name}\"",
-    "saveFailed": "Could not save the position of \"{name}\"",
     "centre": "Centre on scene origin",
-    "centreFailed": "The point cloud has not loaded enough to find its centre yet",
+    "centreFailed": "This has not loaded enough to find its centre yet",
     "pickPivot": "Pick centre point",
     "pivotSet": "Turning about the picked point",
-    "pivotOrigin": "Reset to cloud origin",
+    "pivotOrigin": "Reset to its own origin",
     "pickPivotHint": "Double-click to create the pivot point",
-    "pickPivotFailed": "Nothing under the cursor to pick"
+    "pickPivotFailed": "Nothing under the cursor to pick",
+    "editHint": "Drag the gizmo to place it. The position is saved when you press Done.",
+    "saved": "Saved the position of \"{name}\"",
+    "saveFailed": "Could not save the position of \"{name}\"",
+    "deleteFailed": "Could not delete \"{name}\""
   },
   "PointCloudSettings": {
     "title": "Point clouds",
@@ -2119,5 +2131,21 @@
     "placeholderExpanded": "Search buildings by name, address or id...",
     "noResults": "No matching buildings",
     "unnamed": "Unnamed building"
+  },
+  "Animation": {
+    "title": "Animation",
+    "clip": "Clip",
+    "play": "Play",
+    "pause": "Pause",
+    "speed": "Speed",
+    "notSaved": "Playback is not saved with the file."
+  },
+  "MapTilerKeyNotice": {
+    "title": "Map basemap key not configured",
+    "devTitle": "Using MapTiler's shared demo key",
+    "body": "3D buildings, global borders and terrain are unavailable until this deployment adds its own MapTiler key.",
+    "devBody": "The demo key works on localhost only. Production deployments need their own MapTiler key.",
+    "cta": "Get your free key",
+    "dismiss": "Dismiss"
   }
 }

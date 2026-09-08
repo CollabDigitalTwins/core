@@ -20,6 +20,7 @@ import { StatsOverlay } from '../../ui/stats'
 import DatasetManagerMenu from './datasets/DatasetManager'
 
 import { MapLayers } from './src/MapLayers'
+import { MapTilerKeyNotice } from './src/MapTilerKeyNotice'
 import { MapClickManager } from './utils/MapEventManager/MapClickManager'
 import { MapHoverManager } from './utils/MapEventManager/MapHoverManager'
 import { DEFAULT_MAP_STYLE } from './utils/mapStyleCatalog'
@@ -224,6 +225,7 @@ export function MapViewer({ width = '100%', height = '100%', organization, mapti
                     empty slot adds no flex item / gap, but a mounted control stacks
                     above the legend + dataset-manager cards. */}
                 <div id="wms-time-slot" style={{ display: 'contents' }} />
+                <MapTilerKeyNotice maptilerKey={maptilerKey} />
                 <SensorLegend />
                 <ViewerLegendHost viewer={ViewerNames.map} />
                 <DatasetManagerMenu />

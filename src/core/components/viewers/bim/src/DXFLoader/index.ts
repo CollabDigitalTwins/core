@@ -5,6 +5,8 @@ import * as OBC from '@thatopen/components'
 import { DxfViewer } from 'dxf-viewer'
 import * as THREE from 'three'
 
+import { restoreDepthState } from './restoreDepthState'
+
 /**
  * Parses DXF files into THREE.Groups for the BIM world. This is a pure parser:
  * it owns no scene placement, transforms or gizmos — the caller (AddDxf) decides
@@ -57,6 +59,7 @@ export class DXFManager extends OBC.Component {
 
     const group = new THREE.Group()
     group.add(inner)
+    restoreDepthState(group)
     return group
   }
 

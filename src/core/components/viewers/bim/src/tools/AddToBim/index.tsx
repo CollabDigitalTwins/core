@@ -7,6 +7,7 @@ import * as LR from "lucide-react"
 import Image from "next/image"
 import { useTranslations } from 'next-intl'
 import * as React from "react"
+import * as THREE from "three"
 
 
 import { useFilesByBuildingId, useUploadFileToBuilding, useDeleteFile } from "../../../../../../hooks/files/files"
@@ -15,22 +16,24 @@ import { BimContext } from "../../../../../../store/BIM/context"
 import { ViewerNames } from "../../../../../../types/dbTypes"
 import { Button, useSidebar } from "../../../../../ui"
 import { CommentInput } from "../../../../../ui/Comments/CommentInput"
-import { ViewerContextMenu } from "../../../../../ui/FilesManager"
 import { SensorDetailDialog } from "../../../../../ui/Sensors/SensorDetailDialog"
 import { SensorInput } from "../../../../../ui/Sensors/SensorInput"
 import { FileAdderDialog } from "../../../../map/src/tools/AddTools/AddFile/FileAdder"
 
+import { DEFAULT_PLACEMENT } from "../../../../shared/pointcloud/pointCloudPlacement"
+import { PlacementPanel } from "../../Placement/PlacementPanel"
+import { SCALABLE_OBJECT_PLACEMENT } from "../../Placement/placementTarget"
+
 import { AddToBimToolbar } from "./src/AddToBimToolbar"
 import { initializeCSS2DRenderer } from "./src/FileMarkerUtils"
-import Position3DCard from "./src/Position3DCard"
 import { useCommentMarkers } from "./src/useCommentMarkers"
 import { useFilePlacement } from "./src/useFilePlacement"
 import { useSensorMarkers } from "./src/useSensorMarkers"
 
 import type { DbFile } from "../../../../../../types/dbTypes"
-import type { FileAction } from "../../../../../../types/global"
 import type { Tool, ToolbarToolType } from "../../../../../../types/tools"
 import type { FileMarkerAction } from "../../../../../ui/FilesManager/src/FileMarker"
+import type { PlacementMode } from "../../Placement/PlacementEditor"
 import type { BimToolbarToolsType } from "../bimToolbar"
 
 interface AddToBimProps {
@@ -72,6 +75,28 @@ const FilePreview: React.FC<{
 
 export default function AddToBim({ tool }: AddToBimProps) {
   const t = useTranslations('AddToBim')
+  const tPlacement = useTranslations('Placement')
+
+  const [placementMode, setPlacementMode] = React.useState<PlacementMode>('rotate')
+  const placementLabels = React.useMemo(() => ({
+    title: tPlacement('title'),
+    position: tPlacement('position'),
+    rotation: tPlacement('rotation'),
+    yaw: tPlacement('yaw'),
+    scale: tPlacement('scale'),
+    translate: tPlacement('modeTranslate'),
+    rotate: tPlacement('modeRotate'),
+    reset: tPlacement('cancel'),
+    done: tPlacement('confirmPlacement'),
+    centre: tPlacement('centre'),
+    pickPivot: tPlacement('pickPivot'),
+    pivotSet: tPlacement('pivotSet'),
+    pivotOrigin: tPlacement('pivotOrigin'),
+    unit_mm: tPlacement('unit_mm'),
+    unit_cm: tPlacement('unit_cm'),
+    unit_m: tPlacement('unit_m'),
+    unit_in: tPlacement('unit_in'),
+  }), [tPlacement])
   const { dispatch: toolsDispatch, state: toolsState } = React.useContext(ToolsContext)
   const { state: bimState } = React.useContext(BimContext)
   const { bimComponents, world, fragments } = bimState.bim
@@ -83,7 +108,6 @@ export default function AddToBim({ tool }: AddToBimProps) {
   const [addingMode, setAddingMode] = React.useState<BimToolbarToolsType>(null)
 
   // Context menu state for right-click on BIM scene objects
-  const [contextMenu, setContextMenu] = React.useState<{ x: number; y: number; file: DbFile } | null>(null)
 
   // Extracted hooks
   const { addPendingComment, removePendingComment, commentCount } = useCommentMarkers(world, buildingId)
@@ -114,6 +138,7 @@ export default function AddToBim({ tool }: AddToBimProps) {
       if (dbFile?.id) deleteFile(dbFile.id).catch(() => { })
       return
     }
+    if (action === "animate") return
     api.editPlacedFile(id, action === "move" ? "translate" : action)
   }, [deleteFile])
 
@@ -127,40 +152,6 @@ export default function AddToBim({ tool }: AddToBimProps) {
   React.useEffect(() => {
     if (world) initializeCSS2DRenderer(world)
   }, [world])
-
-  // Canvas-level right-click: raycast to detect hit, show context menu
-  React.useEffect(() => {
-    if (!world || !fragments) return
-    const canvas = world.renderer?.three?.domElement
-    if (!canvas) return
-
-    const handleContextMenu = async (e: MouseEvent) => {
-      // Prevent the browser default menu immediately, regardless of what we hit
-      e.preventDefault()
-
-      const mouse = new (await import("three")).Vector2(e.clientX, e.clientY)
-      const result = await filePlacement.raycast({
-        camera: world.camera.three,
-        mouse,
-        dom: canvas,
-      })
-
-      // Try to identify which file was hit by matching model names in fragments
-      const hitModelId = (result as any)?.modelId ?? (result as any)?.fragments?.modelId
-      const matchedFile = hitModelId
-        ? filesDataRef.current.find(f => f.name === hitModelId)
-        : null
-
-      setContextMenu({
-        x: e.clientX,
-        y: e.clientY,
-        file: matchedFile ?? { id: 0, name: t('bimObject'), url: "", type: "bim-file" } as DbFile,
-      })
-    }
-
-    canvas.addEventListener("contextmenu", handleContextMenu)
-    return () => canvas.removeEventListener("contextmenu", handleContextMenu)
-  }, [world, fragments, filePlacement.raycast])
 
   // Allow other UI to trigger AddToBim modes via currentToolId
   const { currentToolId } = toolsState.tools
@@ -202,10 +193,6 @@ export default function AddToBim({ tool }: AddToBimProps) {
     menusDispatch({ type: "SET_SIDEBAR_SELECTED_TAB", payload: { selectedTab: "sensors" } })
   }, [setOpenInfo, menusDispatch])
 
-  const handleContextMenuAction = React.useCallback((_action: FileAction, _file: DbFile) => {
-    openFileTab()
-  }, [openFileTab])
-
   return (
     <>
       {/* File preview tooltip following cursor during placement */}
@@ -230,18 +217,33 @@ export default function AddToBim({ tool }: AddToBimProps) {
 
       {/* 3D position/scale card for DXF/GLB placement */}
       {filePlacement.show3DScaleCard && filePlacement.selectedFile && filePlacement.current3DFileType && (
-        <Position3DCard
-          fileType={filePlacement.current3DFileType}
-          fileName={filePlacement.selectedFile.name}
-          scale={filePlacement.fileScale}
-          rotation={filePlacement.fileRotation}
-          onScaleChange={filePlacement.setFileScale}
-          onRotationChange={filePlacement.setFileRotation}
-          onConfirm={() => {
+        <PlacementPanel
+          name={filePlacement.selectedFile.name}
+          capabilities={SCALABLE_OBJECT_PLACEMENT}
+          availableModes={['rotate', 'scale']}
+          allowPivot={false}
+          placement={{
+            ...DEFAULT_PLACEMENT,
+            rotation: [0, THREE.MathUtils.degToRad(filePlacement.fileRotation), 0],
+            scale: filePlacement.fileScale,
+          }}
+          mode={placementMode}
+          labels={placementLabels}
+          hint={tPlacement('placeAndAdjustHint')}
+          hasPivot={false}
+          onModeChange={setPlacementMode}
+          onPlacementChange={(next) => {
+            filePlacement.setFileScale(next.scale)
+            filePlacement.setFileRotation(THREE.MathUtils.radToDeg(next.rotation[1]))
+          }}
+          onCentre={() => undefined}
+          onPickPivot={() => undefined}
+          onClearPivot={() => undefined}
+          onDone={() => {
             filePlacement.confirmPlacement()
             setAddingMode(null)
           }}
-          onCancel={cancelAdding}
+          onReset={cancelAdding}
         />
       )}
 
@@ -328,17 +330,6 @@ export default function AddToBim({ tool }: AddToBimProps) {
         />
       )}
 
-      {/* Right-click context menu on BIM scene objects */}
-      {contextMenu && (
-        <ViewerContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          file={contextMenu.file}
-          options={['view', 'move', 'delete']}
-          onAction={handleContextMenuAction}
-          onClose={() => setContextMenu(null)}
-        />
-      )}
     </>
   )
 }

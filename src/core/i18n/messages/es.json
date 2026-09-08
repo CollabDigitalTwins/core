@@ -624,6 +624,7 @@
     "hideTitle": "Ocultar de la vista",
     "showTitle": "Mostrar en la vista",
     "placeFile": "Colocar archivo",
+    "placeHint": "Haz doble clic en el modelo para colocar «{name}». Pulsa Escape para cancelar.",
     "toastErrNoID": "No hay ID de edificio disponible",
     "toastSuccessUpFile": "archivo(s) subido(s) con éxito",
     "toastErrUpFile1": "Error al subir el archivo:",
@@ -1441,6 +1442,7 @@
     "resizeHandleLabel": "Redimensionar la barra lateral"
   },
   "ViewSection": {
+    "allIfcFiles": "Todos los archivos IFC",
     "floorplanTitle": "Planos de planta",
     "elevationTitle": "Elevaciones",
     "north": "Norte",
@@ -1502,8 +1504,7 @@
     "clipping": "Herramienta de recorte",
     "fit": "Ajustar",
     "add": "Añadir",
-    "share": "Compartir vista",
-    "pointCloudAlign": "Nube de puntos"
+    "share": "Compartir vista"
   },
   "forgotPassword": {
     "h1": "Olvidé mi contraseña",
@@ -1964,7 +1965,9 @@
     "noBuildingId": "No hay ID de edificio disponible",
     "uploadSuccess": "{count, plural, one {# archivo subido con éxito} other {# archivos subidos con éxito}}",
     "uploadError": "Error al subir el archivo:",
-    "unknownError": "Ocurrió un error desconocido"
+    "unknownError": "Ocurrió un error desconocido",
+    "convertingIfc": "Convirtiendo \"{name}\" a fragmentos… {percent}%",
+    "uploadingConverted": "Subiendo \"{name}\"…"
   },
   "BuildingSensors": {
     "average": "promedio",
@@ -2074,26 +2077,35 @@
     "userReadOnly": "Puede ver qué plugins están disponibles, pero no cambiar lo que se ejecuta.",
     "loading": "Cargando los plugins…"
   },
-  "PointCloudAlignment": {
-    "title": "Alinear nube de puntos",
+  "Placement": {
+    "cancel": "Cancelar",
+    "confirmPlacement": "Confirmar colocación",
+    "placeAndAdjustHint": "Haz doble clic en la escena para colocar. Arrastra el gizmo o pulsa G / R / S para mover, rotar o escalar.",
+    "unit_mm": "Milímetros → metros",
+    "unit_cm": "Centímetros → metros",
+    "unit_m": "Metros",
+    "unit_in": "Pulgadas → metros",
+    "title": "Colocar objeto",
     "position": "Posición (m)",
     "rotation": "Rotación (°)",
+    "yaw": "Rotación (°)",
     "scale": "Escala",
     "modeTranslate": "Mover",
     "modeRotate": "Rotar",
+    "modeScale": "Escalar",
     "reset": "Restablecer",
-    "done": "Listo",
-    "noClouds": "No hay nubes de puntos activadas",
-    "editHint": "Arrastra el gizmo para colocar la nube de puntos. La posición se guarda al pulsar Listo.",
-    "saved": "Se guardó la posición de «{name}»",
-    "saveFailed": "No se pudo guardar la posición de «{name}»",
-    "centre": "Centrar en el origen",
-    "centreFailed": "La nube de puntos aún no ha cargado lo suficiente para hallar su centro",
+    "done": "Hecho",
+    "centre": "Centrar en el origen de la escena",
+    "centreFailed": "Todavía no se ha cargado lo suficiente para encontrar su centro",
     "pickPivot": "Elegir punto central",
     "pivotSet": "Girando sobre el punto elegido",
-    "pivotOrigin": "Volver al origen de la nube",
+    "pivotOrigin": "Volver a su propio origen",
     "pickPivotHint": "Haz doble clic para crear el punto de pivote",
-    "pickPivotFailed": "No hay nada bajo el cursor"
+    "pickPivotFailed": "No hay nada bajo el cursor para seleccionar",
+    "editHint": "Arrastra el gizmo para colocarlo. La posición se guarda al pulsar Hecho.",
+    "saved": "Se guardó la posición de \"{name}\"",
+    "saveFailed": "No se pudo guardar la posición de \"{name}\"",
+    "deleteFailed": "No se pudo eliminar \"{name}\""
   },
   "PointCloudSettings": {
     "title": "Nubes de puntos",
@@ -2116,5 +2128,21 @@
     "placeholderExpanded": "Buscar edificios por nombre, dirección o id...",
     "noResults": "No hay edificios coincidentes",
     "unnamed": "Edificio sin nombre"
+  },
+  "Animation": {
+    "title": "Animación",
+    "clip": "Clip",
+    "play": "Reproducir",
+    "pause": "Pausar",
+    "speed": "Velocidad",
+    "notSaved": "La reproducción no se guarda con el archivo."
+  },
+  "MapTilerKeyNotice": {
+    "title": "Clave del mapa base no configurada",
+    "devTitle": "Usando la clave de demostración compartida de MapTiler",
+    "body": "Los edificios 3D, las fronteras globales y el terreno no están disponibles hasta que esta instalación añada su propia clave de MapTiler.",
+    "devBody": "La clave de demostración solo funciona en localhost. Las instalaciones en producción necesitan su propia clave de MapTiler.",
+    "cta": "Obtén tu clave gratuita",
+    "dismiss": "Descartar"
   }
 }

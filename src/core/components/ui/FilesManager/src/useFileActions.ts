@@ -11,6 +11,7 @@ import { ViewerNames } from '../../../../types'
 import { useSidebar } from '../../Sidebar'
 
 import { downloadFile } from './downloadUtils'
+import { useFileVisibility } from './useFileVisibility'
 
 import type { DbFile } from '../../../../types/dbTypes'
 import type { FileAction } from '../../../../types/global'
@@ -28,6 +29,8 @@ export interface UseFileActionsProps {
   onMove?: (file: DbFile) => void
   onGhost?: (file: DbFile, ghostState: boolean) => void
   onInfo?: (file: DbFile) => void
+  // Files whose `view` means "in the scene"; an IDS run or a BCF import is session state.
+  shouldPersistVisibility?: (file: DbFile) => boolean
 }
 
 export function useFileActions({
@@ -40,7 +43,8 @@ export function useFileActions({
   onDelete,
   onMove,
   onGhost,
-  onInfo
+  onInfo,
+  shouldPersistVisibility
 }: UseFileActionsProps) {
   const [deleteTarget, setDeleteTarget] = React.useState<DbFile | null>(null)
   const [isDeleting, setIsDeleting] = React.useState(false)
@@ -50,6 +54,7 @@ export function useFileActions({
   } = useMenusContext()
   const { dispatch: filesDispatch } = useFilesContext()
   const { setOpenInfo } = useSidebar()
+  const { setVisible } = useFileVisibility(buildingId)
 
   const handleInfo = React.useCallback((file: DbFile) => {
     if (onInfo) {
@@ -83,6 +88,10 @@ export function useFileActions({
     }).filter(Boolean) as (DbFile & { isVisible?: boolean })[]
   }, [])
 
+  const setLocalVisibility = React.useCallback((file: DbFile, isVisible: boolean) => {
+    setFiles(prev => prev.map(f => (f.id === file.id ? { ...f, isVisible } : f)))
+  }, [setFiles])
+
   const confirmDelete = React.useCallback(async () => {
     if (!deleteTarget) return
 
@@ -109,8 +118,17 @@ export function useFileActions({
     else if (action === 'view') {
       const newVisibility = file.isVisible === false
       setFiles(prev => updateItems(prev, file, action))
-      // Call custom onView handler
       void onView?.(file, newVisibility)
+
+      if (shouldPersistVisibility?.(file)) {
+        try {
+          await setVisible(file, newVisibility)
+        } catch (error) {
+          console.error(`Could not save visibility for "${file.name}":`, error)
+          setLocalVisibility(file, !newVisibility)
+          void onView?.(file, !newVisibility)
+        }
+      }
     }
     else if (action === 'move') {
         // Call custom handlers for move and place actions
@@ -134,7 +152,7 @@ export function useFileActions({
     else if (action === 'info') {
       handleInfo(file)
     }
-  }, [setFiles, updateItems, onDownload, onView, onMove, onGhost, handleInfo])
+  }, [setFiles, updateItems, onDownload, onView, onMove, onGhost, handleInfo, shouldPersistVisibility, setVisible, setLocalVisibility])
 
   const onDeleteDialogOpenChange = React.useCallback((open: boolean) => {
     if (!open) setDeleteTarget(null)

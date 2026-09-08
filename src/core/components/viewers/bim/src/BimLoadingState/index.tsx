@@ -18,11 +18,14 @@ import { useFileUploadHandler } from '../../../../ui/FilesManager/src/useFileUpl
 import { Input } from '../../../../ui/Input'
 import { LoadingSpinner } from '../../../../ui/LoadingSpinner'
 import { setCameraLookAt } from '../../utils/setCameraLookAt'
+import { applyModelPlacement } from '../lib/applyModelPlacement'
+import { isBimFile, selectLoadableBimFiles } from '../lib/bimFilesToLoad'
 import { nextBimViewerState } from '../lib/bimViewerState'
 import { searchBuildings } from '../lib/searchBuildings'
 import { useOptionListKeys } from '../lib/useOptionListKeys'
 import { useSelectBuilding } from '../lib/useSelectBuilding'
 import { LoadModels } from '../LoadModels'
+import { BimSceneObjects } from '../SceneObjects'
 
 import type { DbFile as DbFile } from '../../../../../types/dbTypes'
 import type { BimViewerState } from '../lib/bimViewerState'
@@ -36,7 +39,7 @@ export function BimLoadingState() {
   const { ability } = usePermissions()
 
   const { state: bimState, dispatch: bimDispatch } = React.useContext(BimContext)
-  const { bimComponents, world, fragments } = bimState.bim
+  const { bimComponents, world, fragments, modelUIState } = bimState.bim
   const { state: buildingState, dispatch: buildingDispatch } = React.useContext(BuildingsContext)
   const { building: storeBuilding } = buildingState.buildings
 
@@ -70,9 +73,18 @@ export function BimLoadingState() {
     for (const [modelId] of fragments?.list ?? []) {
       void fragments?.core.disposeModel(modelId).catch(() => undefined)
     }
+
+    // Models, placed objects and clouds all belong to the building that was open.
+    try {
+      bimComponents?.get(BimSceneObjects).registry?.clear()
+    } catch {
+      // The world may not be built yet, in which case there is nothing placed.
+    }
+    bimDispatch({ type: 'SET_POINT_CLOUD_IDS', payload: { pointCloudIds: [] } })
+
     setHasLoadedModels(false)
     setCurrentState('opening')
-  }, [building?.id, fragments])
+  }, [building?.id, fragments, bimComponents, bimDispatch])
 
   // Upload file hooks
   const { uploadFile } = useUploadFileToBuilding(building?.id)
@@ -95,12 +107,11 @@ export function BimLoadingState() {
   const [selectedBuilding, setSelectedBuilding] = React.useState<any>(null)
 
   const { files, isLoading: filesLoading, isError: filesError } = useFilesByBuildingId(building?.id)
-  const bimFiles: DbFile[] = React.useMemo(() => (
-    files.filter(file => {
-      const ext = file?.extension?.toLowerCase()
-      return ext === 'frag' || ext === 'ifc'
-    })
-  ), [files])
+  const allBimFiles: DbFile[] = React.useMemo(() => files.filter(isBimFile), [files])
+  const bimFiles: DbFile[] = React.useMemo(
+    () => selectLoadableBimFiles(files, modelUIState),
+    [files, modelUIState],
+  )
 
   // Handle search
   const handleSearch = React.useCallback((term: string) => {
@@ -147,6 +158,37 @@ export function BimLoadingState() {
     }
   }, [bimState.bim.world, hasLoadedModels])
 
+  const loadBimFiles = React.useCallback(async (toLoad: DbFile[]) => {
+    if (!bimComponents || toLoad.length === 0) return 0
+    const loadModels = bimComponents.get(LoadModels)
+
+    const loaded: DbFile[] = []
+    for (const bimFile of toLoad) {
+      try {
+        await loadModels.load(bimFile.url, bimFile.name)
+        loaded.push(bimFile)
+        if ((bimFile.x != null || bimFile.y != null || bimFile.z != null) && fragments) {
+          const fragModel = fragments.core.models.list.get(bimFile.name)
+          if (fragModel) applyModelPlacement(fragModel.object, bimFile)
+        }
+      } catch (e) {
+        console.error("Error loading BIM file", bimFile.name, e)
+      }
+    }
+
+    // Force update the fragments to render geometry immediately
+    if (fragments) {
+      void fragments.core.update(true)
+    }
+
+    // Only the files that actually arrived, so a failed one reads as hidden and can be retried.
+    for (const bimFile of loaded) {
+      bimDispatch({ type: 'SET_MODEL_UI_STATE', payload: { fileId: bimFile.id, isVisible: true } })
+    }
+
+    return loaded.length
+  }, [bimComponents, fragments, bimDispatch])
+
   const loadBimModels = React.useCallback(async () => {
     if (!bimComponents || bimFiles.length === 0) return
     if (isLoadingModelsRef.current) return
@@ -160,40 +202,10 @@ export function BimLoadingState() {
       const {sharing} = setCameraLookAt(world, searchParams)
       loadModels.sharing = sharing
 
-      let loadedCount = 0
-      for (const bimFile of bimFiles) {
-        try {
-          await loadModels.load(bimFile.url, bimFile.name)
-          loadedCount++
-          // Apply saved 3D position after load (setupModel resets to origin)
-          if ((bimFile.x != null || bimFile.y != null || bimFile.z != null) && fragments) {
-            const fragModel = fragments.core.models.list.get(bimFile.name)
-            if (fragModel) {
-              fragModel.object.position.set(bimFile.x ?? 0, bimFile.y ?? 0, bimFile.z ?? 0)
-              if (bimFile.bimRotation != null) fragModel.object.rotation.y = bimFile.bimRotation
-              fragModel.object.updateMatrixWorld(true)
-            }
-          }
-        } catch (e) {
-          console.error("Error loading BIM file", bimFile.name, e)
-        }
-      }
-
-      // Force update the fragments to render geometry immediately
-      if (fragments) {
-        void fragments.core.update(true)
-      }
-
-      // If every file failed to load, surface an error instead of silently
-      // dismissing the card as though the models were there.
-      if (loadedCount === 0) {
+      // An empty count means every file failed, which must not dismiss the card as though loaded.
+      if (await loadBimFiles(bimFiles) === 0) {
         setCurrentState('error')
         return
-      }
-
-      // Mark each loaded file as visible in the BIM store so ModelsSection reflects it
-      for (const bimFile of bimFiles) {
-        bimDispatch({ type: 'SET_MODEL_UI_STATE', payload: { fileId: bimFile.id, isVisible: true } })
       }
 
       // Signal that models have loaded — the fallback timer will dismiss the card
@@ -204,7 +216,18 @@ export function BimLoadingState() {
     } finally {
       isLoadingModelsRef.current = false
     }
-  }, [bimComponents, bimFiles, fragments])
+  }, [bimComponents, bimFiles, loadBimFiles])
+
+  // The state machine stops after the first batch, so a later upload needs its own pass.
+  React.useEffect(() => {
+    if (!hasLoadedModels || isLoadingModelsRef.current) return
+    const loaded = fragments?.core.models.list
+    const pending = bimFiles.filter(bimFile => !loaded?.has(bimFile.name))
+    if (pending.length === 0) return
+
+    isLoadingModelsRef.current = true
+    void loadBimFiles(pending).finally(() => { isLoadingModelsRef.current = false })
+  }, [bimFiles, hasLoadedModels, fragments, loadBimFiles])
 
   // Handle initial state transitions
   React.useEffect(() => {
@@ -217,6 +240,7 @@ export function BimLoadingState() {
       filesLoading,
       filesError: !!filesError,
       bimFileCount: bimFiles.length,
+      hiddenBimFileCount: allBimFiles.length - bimFiles.length,
       hasLoadedModels,
     })
     if (!transition) return
@@ -227,7 +251,7 @@ export function BimLoadingState() {
       setCameraHasMoved(false)
       void loadBimModels()
     }
-  }, [bimComponents, building, buildingLoading, buildingError, buildingId, filesLoading, filesError, bimFiles.length, loadBimModels, hasLoadedModels])
+  }, [bimComponents, building, buildingLoading, buildingError, buildingId, filesLoading, filesError, bimFiles.length, allBimFiles.length, loadBimModels, hasLoadedModels])
 
   // Don't render if not visible
   if (!shouldShow) {

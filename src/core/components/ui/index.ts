@@ -76,6 +76,7 @@ export { openPopupWindow as openPopupWindowLCA } from './openPopupWindowLCA';
 export { FileItemComponent } from './FilesManager';
 export type { FileItemComponentProps } from './FilesManager';
 export { useFileActions } from './FilesManager';
+export { useFileVisibility } from './FilesManager';
 export type { UseFileActionsProps } from './FilesManager';
 export { useCommonFileUpload } from './FilesManager';
 export type { UseCommonFileUploadProps } from './FilesManager';

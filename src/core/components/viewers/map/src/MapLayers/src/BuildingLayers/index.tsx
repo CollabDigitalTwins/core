@@ -14,7 +14,7 @@ import { MapContext } from "../../../../../../../store/Map/context";
 import { ViewerNames } from "../../../../../../../types/dbTypes";
 import { useBuildingSensorColours } from "../../../../../../ui/Sensors/useBuildingSensorColours";
 import { MapLayerClickPriority } from "../../../../utils/MapEventManager/MapClickManager";
-import { maptilerKeyOrPlaceholder } from "../../../../utils/mapStyleSpec";
+import { maptilerKeyForRequest } from "../../../../utils/mapStyleSpec";
 import MapFeaturePopoverMenu from "../../../MapFeaturePopoverMenu";
 
 import {
@@ -52,11 +52,15 @@ function buildHeightExpression(hiddenBimOsmIds: string[]) {
   ];
 }
 
-function resolveBuildingSource(map: any, maptilerKey?: string): string {
+// Null when there is nothing to draw buildings from so the layer is skipped rather than 403ing.
+function resolveBuildingSource(map: any, maptilerKey?: string): string | null {
   if (maptilerKey?.trim()) return addOwnBuildingSource(map, maptilerKey);
 
   const reusable = REUSABLE_SOURCE_IDS.find((id) => map.getSource(id));
-  return reusable ?? addOwnBuildingSource(map, maptilerKeyOrPlaceholder(maptilerKey));
+  if (reusable) return reusable;
+
+  const key = maptilerKeyForRequest(maptilerKey);
+  return key ? addOwnBuildingSource(map, key) : null;
 }
 
 function addOwnBuildingSource(map: any, key: string): string {
@@ -74,6 +78,7 @@ function addBuildingLayer(map: any, hiddenBimOsmIds: string[], colourExpr: Paint
     if (map.getLayer(LAYER_ID)) return;
 
     const sourceId = resolveBuildingSource(map, maptilerKey);
+    if (!sourceId) return;
 
     // Insert below road labels so buildings don't cover text
     const beforeId = map.getLayer("road_label") ? "road_label" : undefined;

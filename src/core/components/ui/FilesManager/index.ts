@@ -7,6 +7,7 @@ export type { FileItemComponentProps, FileMenuContentProps } from './src/FileIte
 
 // Common hooks for file management
 export { useFileActions } from './src/useFileActions'
+export { useFileVisibility } from './src/useFileVisibility'
 export type { UseFileActionsProps } from './src/useFileActions'
 
 export { useCommonFileUpload } from './src/useCommonFileUpload'

@@ -10,12 +10,21 @@ import { OBJLoader } from 'three/addons/loaders/OBJLoader.js'
 
 import { GizmoController } from '../../utils/GizmoController'
 import { CurrentWorld } from '../CurrentWorld'
+import { disposeObject3D } from '../lib/disposeObject3D'
 import { ViewportGizmo } from '../ViewportGizmo'
+
+import { initialState, needsFrames, withClip, withPlaying, withSpeed } from './modelAnimation'
+
+import type { AnimationState } from './modelAnimation'
+
+type OnDemandRenderer = OBC.BaseRenderer & { needsUpdate: boolean }
 
 export interface ModelInfo {
   id: string
   name: string
   model: THREE.Group
+  clips: THREE.AnimationClip[]
+  animation: AnimationState | null
   mixer?: THREE.AnimationMixer
   gizmoController?: GizmoController
   fileUrl?: string
@@ -26,7 +35,6 @@ export interface LoadModelOptions {
   scale?: number | THREE.Vector3
   rotation?: THREE.Euler
   enableGizmo?: boolean
-  enableAnimations?: boolean
   extension?: string
 }
 
@@ -102,10 +110,8 @@ export class ModelManager extends OBC.Component {
       this._world.scene.three.add(model)
 
 
-      let mixer: THREE.AnimationMixer | undefined
-      if (options.enableAnimations && result.animations && result.animations.length > 0) {
-        mixer = this.setupAnimations(model, result.animations)
-      }
+      const clips: THREE.AnimationClip[] = result.animations ?? []
+      const mixer = clips.length > 0 ? new THREE.AnimationMixer(model) : undefined
 
       let gizmoController: GizmoController | undefined
       if (options.enableGizmo) {
@@ -116,11 +122,14 @@ export class ModelManager extends OBC.Component {
         id,
         name,
         model,
+        clips,
+        animation: initialState(clips.length),
         mixer,
         gizmoController,
         fileUrl: fileOrUrl instanceof File ? fileUrl : undefined,
       }
 
+      this.applyAnimation(modelInfo)
       this._models.set(id, modelInfo);
 
       (model as any).modelId = id
@@ -145,29 +154,28 @@ export class ModelManager extends OBC.Component {
    */
   remove(id: string): boolean {
     const modelInfo = this._models.get(id)
-    if (!modelInfo || !this._world) return false
+    if (!modelInfo) return false
 
-    this._world.scene.three.remove(modelInfo.model)
+    this.releaseModel(modelInfo)
+    this._models.delete(id)
 
+    return true
+  }
 
-    if (modelInfo.gizmoController) {
-      modelInfo.gizmoController.dispose()
-    }
+  // Detaching a model frees nothing on its own, and these are the app's most textured assets.
+  private releaseModel(modelInfo: ModelInfo) {
+    modelInfo.gizmoController?.dispose()
 
-    // Cleanup mixer
     if (modelInfo.mixer) {
       modelInfo.mixer.stopAllAction()
+      modelInfo.mixer.uncacheRoot(modelInfo.model)
     }
 
-    // Cleanup file URL if it exists
     if (modelInfo.fileUrl) {
       URL.revokeObjectURL(modelInfo.fileUrl)
     }
 
-    // Remove from storage
-    this._models.delete(id)
-
-    return true
+    disposeObject3D(modelInfo.model)
   }
 
   /**
@@ -343,18 +351,69 @@ export class ModelManager extends OBC.Component {
     })
   }
 
-  /**
-   * Setup animations for a model
-   */
-  private setupAnimations(model: THREE.Group, animations: THREE.AnimationClip[]): THREE.AnimationMixer {
-    const mixer = new THREE.AnimationMixer(model)
+  /** Clip names in the order the file declares them, empty for a model with no animation. */
+  /** Re-keys a model once its file record exists, so clips and animation resolve by file id. */
+  rekey(id: string, fileId: string): boolean {
+    const modelInfo = this._models.get(id)
+    if (!modelInfo || id === fileId) return false
 
-    for (const clip of animations) {
-      const action = mixer.clipAction(clip)
-      action.play()
-    }
+    this._models.delete(id)
+    modelInfo.id = fileId;
+    (modelInfo.model as any).modelId = fileId
+    this._models.set(fileId, modelInfo)
+    return true
+  }
 
-    return mixer
+  getClips(id: string): string[] {
+    return this._models.get(id)?.clips.map((clip, index) => clip.name || `Clip ${index + 1}`) ?? []
+  }
+
+  getAnimation(id: string): AnimationState | null {
+    return this._models.get(id)?.animation ?? null
+  }
+
+  setClip(id: string, clipIndex: number): void {
+    this.updateAnimation(id, (state, info) => withClip(state, clipIndex, info.clips.length))
+  }
+
+  setPlaying(id: string, playing: boolean): void {
+    this.updateAnimation(id, (state) => withPlaying(state, playing))
+  }
+
+  setSpeed(id: string, speed: number): void {
+    this.updateAnimation(id, (state) => withSpeed(state, speed))
+  }
+
+  private updateAnimation(
+    id: string,
+    next: (state: AnimationState, info: ModelInfo) => AnimationState,
+  ): void {
+    const modelInfo = this._models.get(id)
+    if (!modelInfo?.animation) return
+
+    modelInfo.animation = next(modelInfo.animation, modelInfo)
+    this.applyAnimation(modelInfo)
+  }
+
+  // One clip runs at a time: a file offering alternatives would otherwise blend them together.
+  private applyAnimation(modelInfo: ModelInfo): void {
+    const { mixer, animation, clips } = modelInfo
+    if (!mixer || !animation) return
+
+    mixer.stopAllAction()
+    const clip = clips[animation.clipIndex]
+    if (!clip) return
+
+    const action = mixer.clipAction(clip)
+    action.timeScale = animation.speed
+    action.paused = !animation.playing
+    action.play()
+    this.requestFrame()
+  }
+
+  private requestFrame(): void {
+    const renderer = this._world?.renderer as OnDemandRenderer | undefined
+    if (renderer) renderer.needsUpdate = true
   }
 
   /**
@@ -390,11 +449,14 @@ export class ModelManager extends OBC.Component {
     const animate = () => {
       const delta = this._animationClock.getDelta()
 
+      const states: (AnimationState | null)[] = []
       for (const [, modelInfo] of this._models) {
-        if (modelInfo.mixer) {
-          modelInfo.mixer.update(delta)
-        }
+        states.push(modelInfo.animation)
+        if (modelInfo.mixer) modelInfo.mixer.update(delta)
       }
+
+      // An on-demand renderer draws nothing unless asked, and an idle scene must stay idle.
+      if (needsFrames(states)) this.requestFrame()
 
       this._animationId = requestAnimationFrame(animate)
     }
@@ -418,23 +480,7 @@ export class ModelManager extends OBC.Component {
   dispose(): void {
     this.stopAnimationLoop()
 
-    for (const modelInfo of this._models.values()) {
-      if (this._world) {
-        this._world.scene.three.remove(modelInfo.model)
-      }
-
-      if (modelInfo.gizmoController) {
-        modelInfo.gizmoController.dispose()
-      }
-
-      if (modelInfo.mixer) {
-        modelInfo.mixer.stopAllAction()
-      }
-
-      if (modelInfo.fileUrl) {
-        URL.revokeObjectURL(modelInfo.fileUrl)
-      }
-    }
+    for (const modelInfo of this._models.values()) this.releaseModel(modelInfo)
 
     this._models.clear()
   }

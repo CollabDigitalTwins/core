@@ -26,6 +26,17 @@ export function maptilerKeyOrPlaceholder(key?: string | null): string {
 
 const hasOwnKey = (key?: string | null): boolean => Boolean((key ?? '').trim())
 
+const LOCALHOST_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1', '[::1]'])
+export function isLocalhostOrigin(): boolean {
+  if (typeof window === 'undefined') return false
+  return LOCALHOST_HOSTNAMES.has(window.location.hostname)
+}
+export function maptilerKeyForRequest(key?: string | null): string | null {
+  const trimmed = (key ?? '').trim()
+  if (trimmed) return trimmed
+  return isLocalhostOrigin() ? MAPTILER_PLACEHOLDER_KEY : null
+}
+
 function satelliteImagerySource(key?: string | null) {
   if (!hasOwnKey(key)) {
     return {

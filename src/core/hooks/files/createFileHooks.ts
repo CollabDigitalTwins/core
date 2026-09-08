@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as React from "react";
 import useSWR, { mutate } from "swr";
 import useSWRMutation from "swr/mutation";
 
@@ -141,9 +142,25 @@ export function createFileHooks(adapter: ApiAdapter) {
     return { deleteFile, isMutating, deleteError: error, deletedData };
   };
 
+  /** Updates any file by id, for lists where every row can mutate and `useFile`'s single key cannot. */
+  const useUpdateFile = () =>
+    React.useCallback(async (id: number, patch: Partial<DbFile>) => {
+      const updated = await adapter.updateFile(id, patch);
+      void mutate(["file", id]);
+      void mutate(["files"]);
+      if (updated.attachedFilesBuildingId) {
+        void mutate(["filesByBuilding", updated.attachedFilesBuildingId, ""]);
+      }
+      if (updated.attachedFilesSiteId) {
+        void mutate(["filesBySite", updated.attachedFilesSiteId, ""]);
+      }
+      return updated;
+    }, []);
+
   return {
     useFiles,
     useFile,
+    useUpdateFile,
     useFilesByBuildingId,
     useFilesBySiteId,
     useUploadFileToBuilding,

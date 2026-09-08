@@ -10,7 +10,7 @@ export class IfcToFragments extends OBC.Component {
   enabled = true
 
   // Events for loading states
-  onLoadingStateChanged = new OBC.Event<{ isLoading: boolean, message: string }>()
+  onLoadingStateChanged = new OBC.Event<{ isLoading: boolean, message: string, progress?: number }>()
 
   private serializer: FRAGS.IfcImporter | null = null
 
@@ -32,17 +32,22 @@ export class IfcToFragments extends OBC.Component {
     }
   }
 
-  async loadFromFile(file: File): Promise<Uint8Array> {
+  /** `onProgress` reports the conversion as a 0-1 fraction; a large IFC takes minutes. */
+  async loadFromFile(file: File, onProgress?: (progress: number) => void): Promise<Uint8Array> {
 
     try {
       const fileBuffer = await file.arrayBuffer()
 
       // Handle only IFC files - convert to fragments first
-      this.onLoadingStateChanged.trigger({ isLoading: true, message: 'Converting IFC to fragments...' })
+      this.onLoadingStateChanged.trigger({ isLoading: true, message: 'Converting IFC to fragments...', progress: 0 })
 
       if (this.serializer) {
         const ifcBytes = new Uint8Array(fileBuffer)
-        const fragmentBytes = await this.serializer.process({ bytes: ifcBytes })
+        const report = (progress: number) => {
+          onProgress?.(progress)
+          this.onLoadingStateChanged.trigger({ isLoading: true, message: 'Converting IFC to fragments...', progress })
+        }
+        const fragmentBytes = await this.serializer.process({ bytes: ifcBytes, progressCallback: report })
 
         if (fragmentBytes) {
           // Update loading message

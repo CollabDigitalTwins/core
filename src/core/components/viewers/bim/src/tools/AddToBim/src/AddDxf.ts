@@ -132,6 +132,18 @@ export class AddDxf {
     this._loadedDxfs.get(id)?.gizmoController?.setMode(mode)
   }
 
+  /** Re-keys a drawing once its file record exists, so the sidebar can find it in the scene. */
+  rekey(id: string, fileId: string): boolean {
+    const dxfInfo = this._loadedDxfs.get(id)
+    if (!dxfInfo || id === fileId) return false
+
+    this._loadedDxfs.delete(id)
+    dxfInfo.id = fileId
+    dxfInfo.group.name = fileId
+    this._loadedDxfs.set(fileId, dxfInfo)
+    return true
+  }
+
   confirmPlacement(id: string): boolean {
     const dxfInfo = this._loadedDxfs.get(id)
     if (!dxfInfo) return false

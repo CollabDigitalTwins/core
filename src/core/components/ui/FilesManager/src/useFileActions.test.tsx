@@ -12,6 +12,7 @@ const {
   filesDispatchMock,
   menusDispatchMock,
   setViewMock,
+  setVisibleMock,
 } = vi.hoisted(() => ({
   mutateMock: vi.fn(),
   downloadFileMock: vi.fn(),
@@ -19,6 +20,7 @@ const {
   filesDispatchMock: vi.fn(),
   menusDispatchMock: vi.fn(),
   setViewMock: vi.fn(),
+  setVisibleMock: vi.fn(async () => {}),
 }))
 
 vi.mock('swr', () => ({ mutate: (...a: unknown[]) => mutateMock(...a) }))
@@ -34,6 +36,12 @@ vi.mock('../../Sidebar', () => ({
 }))
 vi.mock('../../../../types', () => ({
   ViewerNames: { files: 'files' },
+}))
+vi.mock('./useFileVisibility', () => ({
+  useFileVisibility: () => ({
+    setVisible: (...a: unknown[]) => setVisibleMock(...a),
+    setVisibleMany: vi.fn(),
+  }),
 }))
 
 import { useFileActions } from './useFileActions'
@@ -83,6 +91,8 @@ beforeEach(() => {
   filesDispatchMock.mockReset()
   menusDispatchMock.mockReset()
   setViewMock.mockReset()
+  setVisibleMock.mockReset()
+  setVisibleMock.mockResolvedValue(undefined)
 })
 
 describe('useFileActions', () => {
@@ -113,6 +123,35 @@ describe('useFileActions', () => {
 
     expect(onView).toHaveBeenCalledWith(file, true)
     expect(setFiles).toHaveBeenCalled()
+  })
+
+  it('persists the new visibility when the predicate opts the file in', async () => {
+    const { hook } = setup({ shouldPersistVisibility: () => true })
+    const file = makeFile({ isVisible: false })
+
+    await act(async () => { await hook.result.current.handleAction('view', file as any) })
+
+    expect(setVisibleMock).toHaveBeenCalledWith(file, true)
+  })
+
+  it('leaves the database alone when the predicate opts the file out', async () => {
+    const { hook } = setup({ shouldPersistVisibility: () => false })
+
+    await act(async () => { await hook.result.current.handleAction('view', makeFile() as any) })
+
+    expect(setVisibleMock).not.toHaveBeenCalled()
+  })
+
+  it('puts the row and the scene back when the write fails', async () => {
+    setVisibleMock.mockRejectedValueOnce(new Error('offline'))
+    const { hook, onView, files } = setup({ shouldPersistVisibility: () => true })
+    const file = makeFile({ isVisible: false })
+
+    await act(async () => { await hook.result.current.handleAction('view', file as any) })
+
+    expect(onView).toHaveBeenNthCalledWith(1, file, true)
+    expect(onView).toHaveBeenNthCalledWith(2, file, false)
+    expect(files[0].isVisible).toBe(false)
   })
 
   it('download falls back to downloadFile when no custom handler is given', async () => {

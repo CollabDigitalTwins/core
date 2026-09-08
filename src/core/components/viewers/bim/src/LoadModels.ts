@@ -38,6 +38,8 @@ export class LoadModels extends OBC.Component {
 
     private _sharing: boolean = false;
 
+    private queues = new Map<string, Promise<unknown>>();
+
     set sharing(value: boolean) {
         this._sharing = value;
     }
@@ -57,6 +59,35 @@ export class LoadModels extends OBC.Component {
 
     }
 
+    // `disposeModel` is async, so a load racing it would see the old model and skip its own work.
+    private enqueue<T>(modelId: string, task: () => Promise<T>): Promise<T> {
+        const previous = this.queues.get(modelId) ?? Promise.resolve();
+        const next = previous.then(task, task);
+        const settled = next.catch(() => undefined);
+        this.queues.set(modelId, settled);
+        void settled.then(() => {
+            if (this.queues.get(modelId) === settled) this.queues.delete(modelId);
+        });
+        return next;
+    }
+
+    private modelFromList(modelId: string): FRAGS.FragmentsModel | null {
+        try {
+            const list = this.fragments?.core.models.list as Map<string, FRAGS.FragmentsModel> | undefined;
+            return list?.get(modelId) ?? null;
+        } catch {
+            return null;
+        }
+    }
+
+    /** Takes a model out of the scene, freeing it and everything derived from it. */
+    async unload(modelId: string): Promise<void> {
+        await this.enqueue(modelId, async () => {
+            if (!this.isModelLoaded(modelId)) return;
+            await this.fragments?.core.disposeModel(modelId);
+        });
+    }
+
     private isModelLoaded(modelId: string): boolean {
         try {
             const list = this.fragments?.core.models.list as Map<string, FRAGS.FragmentsModel> | undefined;
@@ -67,7 +98,11 @@ export class LoadModels extends OBC.Component {
     }
 
     // Load a single fragment file (kept for backwards compatibility)
-    async load(url: string, modelId: string) {
+    async load(url: string, modelId: string): Promise<FRAGS.FragmentsModel | null> {
+        return this.enqueue(modelId, () => this.loadNow(url, modelId));
+    }
+
+    private async loadNow(url: string, modelId: string): Promise<FRAGS.FragmentsModel | null> {
 
         if (!(this.fragments && this.world)) {
             throw new Error("Missing required fragments or world.");
@@ -76,7 +111,7 @@ export class LoadModels extends OBC.Component {
         // Skip if already loaded to avoid duplicate component registration
         if (this.isModelLoaded(modelId)) {
             console.warn(`Model ${modelId} already loaded. Skipping.`);
-            return;
+            return this.modelFromList(modelId);
         }
 
         try {
@@ -116,6 +151,8 @@ export class LoadModels extends OBC.Component {
                 isLoading: false,
                 message: ""
             });
+
+            return model;
 
         } catch (error) {
             this.onLoadingStateChanged.trigger({

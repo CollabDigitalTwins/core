@@ -60,6 +60,20 @@ describe('applyAppearance opacity', () => {
   })
 })
 
+describe('DEFAULT_APPEARANCE', () => {
+  it('starts at the smallest point size the settings slider offers', () => {
+    expect(DEFAULT_APPEARANCE.size).toBe(0.1)
+  })
+
+  it('budgets more points than one million', () => {
+    expect(DEFAULT_APPEARANCE.pointBudget).toBe(4_000_000)
+  })
+
+  it('is already inside every clamp, so nothing is silently corrected on first use', () => {
+    expect(normalizeAppearance(DEFAULT_APPEARANCE, {})).toEqual(DEFAULT_APPEARANCE)
+  })
+})
+
 describe('normalizeAppearance', () => {
   it('applies a partial patch on top of the current appearance', () => {
     const next = normalizeAppearance(DEFAULT_APPEARANCE, { shape: 'square' })

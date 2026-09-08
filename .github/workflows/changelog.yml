@@ -1,0 +1,40 @@
+name: Changelog
+
+# Blocks a pull request that changes the public surface of the package without adding a
+# changelog entry. Every path under src/core/ is reachable through a `./*` subpath export,
+# so a consumer can import it and a silent change there is a silent break.
+#
+# The rule used to be documentation only, and it lapsed: the changelog stopped after 0.4.5
+# and nine releases shipped undocumented.
+#
+# ONE-TIME SETUP
+#   In branch protection for `dev`, require the "entry" status check to pass.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+
+jobs:
+  entry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Both ends of the range have to be present locally to walk it.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Values arrive as env rather than inline ${{ }} so a crafted title cannot break
+      # out of the shell command.
+      - name: Require a changelog entry
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: node scripts/check-changelog.mjs --range "$BASE_SHA..$HEAD_SHA"

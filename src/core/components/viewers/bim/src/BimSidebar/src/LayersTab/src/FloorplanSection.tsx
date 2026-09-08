@@ -18,6 +18,7 @@ import { useBuildingName } from '../../../../lib/useBuildingName'
 import { useFriendlyIfcClassName } from '../../../../lib/useFriendlyIfcClassName'
 import { ViewSectionList } from '../../../../lib/ViewSectionList'
 
+import { ALL_MODELS, DrawingModelFilter } from './DrawingModelFilter'
 import { LayerViewPanel } from './LayerViewPanel'
 
 import type {
@@ -28,11 +29,17 @@ import type { ViewListEntry } from '../../../../lib/viewSection'
 
 interface FloorplanSectionProps {
   query?: string
+  modelFilter?: string
+  onModelFilterChange?: (value: string) => void
 }
 
 const IDLE_LOADING: FloorplanLoadingState = { isLoading: false }
 
-export function FloorplanSection({ query = '' }: FloorplanSectionProps) {
+export function FloorplanSection({
+  query = '',
+  modelFilter = ALL_MODELS,
+  onModelFilterChange,
+}: FloorplanSectionProps) {
   const t = useTranslations('ViewSection')
   const friendlyClassName = useFriendlyIfcClassName()
   const buildingName = useBuildingName()
@@ -88,12 +95,18 @@ export function FloorplanSection({ query = '' }: FloorplanSectionProps) {
     }
   }, [bimComponents])
 
+  const models = React.useMemo(() => {
+    const ids = [...new Set(entries.map((entry) => entry.modelId))]
+    return ids.map((id) => ({ id, label: buildingName(id) }))
+  }, [entries, buildingName])
+
   const filteredEntries: ViewListEntry[] = React.useMemo(() => {
     const q = query.trim().toLowerCase()
     return entries
+      .filter((entry) => modelFilter === ALL_MODELS || entry.modelId === modelFilter)
       .filter((entry) => !q || entry.name.toLowerCase().includes(q))
       .map((entry) => ({ id: entry.id, label: entry.name }))
-  }, [entries, query])
+  }, [entries, query, modelFilter])
 
   const activeEntry = React.useMemo(
     () => entries.find((entry) => entry.id === activeId) ?? null,
@@ -172,6 +185,14 @@ export function FloorplanSection({ query = '' }: FloorplanSectionProps) {
   return (
     <LayerViewPanel
       count={filteredEntries.length}
+      filter={
+        <DrawingModelFilter
+          models={models}
+          value={modelFilter}
+          onChange={onModelFilterChange ?? (() => undefined)}
+          allLabel={t('allIfcFiles')}
+        />
+      }
       actions={
         <TrueNorthPopover
           northAngle={northAngle}

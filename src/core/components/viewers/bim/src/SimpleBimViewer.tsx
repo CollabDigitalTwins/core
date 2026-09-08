@@ -144,7 +144,6 @@ export function SimpleBimViewer({file, width = "100%", height = "100%"}: Props) 
                         String(file.id),
                         file.name,
                         {
-                            enableAnimations: true,
                             enableGizmo: false
                         }
                     );

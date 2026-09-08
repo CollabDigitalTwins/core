@@ -3,10 +3,10 @@
 
 import * as THREE from 'three'
 
-import {
-  createFileMarker,
-  createGenericFileMarker,
-} from './FileMarkerUtils'
+import { disposeObject3D } from '../../../lib/disposeObject3D'
+
+import { createGenericFileMarker, removeMarker } from './FileMarkerUtils'
+
 
 import type { AddDxf } from './AddDxf'
 import type {
@@ -24,6 +24,7 @@ export interface PlacedResult {
   kind: PlacedKind
   marker: CSS2DObject | null
   object3D: THREE.Object3D
+  dispose?: () => void
 }
 
 export const addFileToScene = async (
@@ -46,13 +47,16 @@ export const addFileToScene = async (
       scale: fileScale,
       rotation: new THREE.Euler(0, THREE.MathUtils.degToRad(fileRotation), 0),
       enableGizmo: true,
-      enableAnimations: true,
     })
     if (!modelInfo) return null
 
     setCurrent3DFileId(addedFile.id)
-    const marker = createFileMarker(addedFile, modelInfo.model, world, onAction)
-    return { kind: 'model', marker, object3D: modelInfo.model }
+    return {
+      kind: 'model',
+      marker: null,
+      object3D: modelInfo.model,
+      dispose: () => { modelManager.remove(addedFile.id) },
+    }
   }
 
   if (fileName.endsWith('.dxf')) {
@@ -65,10 +69,19 @@ export const addFileToScene = async (
     if (!dxfInfo) return null
 
     setCurrent3DFileId(addedFile.id)
-    const marker = createFileMarker(addedFile, dxfInfo.group, world, onAction)
-    return { kind: 'dxf', marker, object3D: dxfInfo.group }
+    return {
+      kind: 'dxf',
+      marker: null,
+      object3D: dxfInfo.group,
+      dispose: () => { addDxf.removeDxf(addedFile.id) },
+    }
   }
 
   const { marker, object3D } = createGenericFileMarker(addedFile, world, onAction)
-  return { kind: 'generic', marker, object3D }
+  return {
+    kind: 'generic',
+    marker,
+    object3D,
+    dispose: () => { removeMarker(marker, world); disposeObject3D(object3D) },
+  }
 }

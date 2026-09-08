@@ -3,49 +3,53 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { useTranslations } from 'next-intl'
 import * as React from 'react'
-import { toast } from 'sonner'
 
-import { useFile, useFilesByBuildingId } from '../../../../../hooks/files/files'
+import { useFilesByBuildingId } from '../../../../../hooks/files/files'
 import { BimContext } from '../../../../../store/BIM/context'
 import { BuildingsContext } from '../../../../../store/Buildings/context'
 import { resolvePointCloudApiBase } from '../../../shared/pointcloud/pointCloudApi'
 import { createHttpPointCloudSource } from '../../../shared/pointcloud/pointCloudSource'
 import { BimMeasurementManager } from '../BimMeasurements/BimMeasurementManager'
 
-import { PointCloudAlignment } from './PointCloudAlignment'
-import { placementPatch, readPlacement, samePlacement } from './pointCloudPlacementStore'
+import { PlacementEditor } from '../Placement/PlacementEditor'
+
+import { isRenderablePointCloud } from './pointCloudFiles'
+import { readPlacement } from './pointCloudPlacementStore'
 
 import { BimPointClouds } from './index'
 
-import type { AlignmentState } from './PointCloudAlignment'
 import type { DbFile } from '../../../../../types/dbTypes'
 
-/** Reconciles `pointCloudIds` into `BimPointClouds` and carries placement to and from the file
- *  record. Viewer-lifetime, so a panel closing cannot drop a cloud. Renders nothing. */
+/** Reconciles `pointCloudIds` into `BimPointClouds`, loading each cloud at its stored placement.
+ *  Viewer-lifetime, so a panel closing cannot drop a cloud. Renders nothing. */
 export function BimPointCloudSync({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
-  const t = useTranslations('PointCloudAlignment')
   const { state, dispatch } = React.useContext(BimContext)
   const { bimComponents, world, pointCloudIds } = state.bim
 
   const { state: buildingState } = React.useContext(BuildingsContext)
-  const { files, isLoading: filesLoading } = useFilesByBuildingId(buildingState.buildings.building?.id ?? 0)
+  const buildingId = buildingState.buildings.building?.id ?? 0
+  const { files, isLoading: filesLoading } = useFilesByBuildingId(buildingId)
 
-  // Bound while a cloud is being aligned, so `updateFile` is already keyed to it on commit.
-  const [aligningId, setAligningId] = React.useState<number | null>(null)
-  const { updateFile } = useFile(aligningId)
-  const updateFileRef = React.useRef(updateFile)
-  React.useEffect(() => { updateFileRef.current = updateFile }, [updateFile])
-
-  // Read through a ref so the alignment subscription below survives every file refetch.
+  // Read through a ref so a file refetch cannot re-run the reconcile effect below.
   const fileOfRef = React.useRef((_id: string): DbFile | undefined => undefined)
   React.useEffect(() => {
     fileOfRef.current = (id: string) => files?.find((file) => String(file.id) === id)
   }, [files])
 
-  const announceRef = React.useRef(t)
-  React.useEffect(() => { announceRef.current = t }, [t])
+
+  // Claimed per building so a file refetch cannot re-add a cloud the user just switched off.
+  const seededBuildingRef = React.useRef<number | null>(null)
+  React.useEffect(() => {
+    if (filesLoading || !files || files.length === 0) return
+    if (seededBuildingRef.current === buildingId) return
+    seededBuildingRef.current = buildingId
+
+    const visible = files
+      .filter(file => isRenderablePointCloud(file) && file.isVisible === true)
+      .map(file => String(file.id))
+    dispatch({ type: 'SET_POINT_CLOUD_IDS', payload: { pointCloudIds: visible } })
+  }, [buildingId, files, filesLoading, dispatch])
 
   React.useEffect(() => {
     if (!bimComponents || !world) return
@@ -54,7 +58,8 @@ export function BimPointCloudSync({ pointcloudApiUrl }: { pointcloudApiUrl?: str
       world,
       source: createHttpPointCloudSource(resolvePointCloudApiBase(pointcloudApiUrl)),
     })
-    bimComponents.get(PointCloudAlignment).setup({ world })
+    // Clouds are invisible to the fragment raycaster, so the pivot pick needs them offered.
+    bimComponents.get(PlacementEditor).setup({ world, pickSources: () => [clouds] })
 
     const measurements = bimComponents.get(BimMeasurementManager)
     measurements.registerPickSource(clouds)
@@ -78,33 +83,6 @@ export function BimPointCloudSync({ pointcloudApiUrl }: { pointcloudApiUrl?: str
       })
     }
   }, [bimComponents, world, pointCloudIds, pointcloudApiUrl, filesLoading, dispatch])
-
-  React.useEffect(() => {
-    if (!bimComponents || !world) return
-    const alignment = bimComponents.get(PointCloudAlignment)
-
-    const track = (session: AlignmentState | null) => setAligningId(session ? Number(session.id) : null)
-    const persist = ({ id, placement }: AlignmentState) => {
-      const file = fileOfRef.current(id)
-      if (samePlacement(placement, readPlacement(file))) return
-
-      const name = file?.name ?? id
-      const announce = announceRef.current
-      void Promise.resolve(updateFileRef.current(placementPatch(placement)))
-        .then(() => toast.success(announce('saved', { name })))
-        .catch((error: unknown) => {
-          console.warn(`[point cloud ${id}] placement was not saved:`, error)
-          toast.error(announce('saveFailed', { name }))
-        })
-    }
-
-    alignment.onChanged.add(track)
-    alignment.onCommitted.add(persist)
-    return () => {
-      alignment.onChanged.remove(track)
-      alignment.onCommitted.remove(persist)
-    }
-  }, [bimComponents, world])
 
   return null
 }

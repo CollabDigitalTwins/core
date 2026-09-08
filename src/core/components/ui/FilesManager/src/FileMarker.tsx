@@ -7,29 +7,23 @@ import * as LR from 'lucide-react'
 import Image from 'next/image'
 import * as React from 'react'
 
-import { Button } from '../../Button'
-import { Card } from '../../Card'
+import { PlacementActionsCard } from './PlacementActionsCard'
 
+import type { FileMarkerAction } from './PlacementActionsCard'
 import type { DbFile } from '../../../../types/dbTypes'
 
-export type FileMarkerAction = 'move' | 'rotate' | 'scale' | 'delete'
+export type { FileMarkerAction }
 
 interface FileMarkerProps {
   file: DbFile
   onAction?: (action: FileMarkerAction) => void
   highlight?: boolean
+  /** Which placement actions this file can actually save. Omit to offer them all. */
+  actions?: FileMarkerAction[]
 }
 
-const ACTIONS: { action: FileMarkerAction; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
-  { action: 'move', label: 'Move', Icon: LR.Move },
-  { action: 'rotate', label: 'Rotate', Icon: LR.RotateCw },
-  { action: 'scale', label: 'Scale', Icon: LR.Scaling },
-]
-
-// Floating marker shown above a placed file (mirrors the comment/sensor markers):
-// a light icon pin that opens a small actions card. Interaction is on pointer-down so
-// the camera controls underneath don't swallow it.
-export default function FileMarker({ file, onAction, highlight = false }: FileMarkerProps) {
+// An icon pin above a placed file that opens the placement card; pointer-down so the camera controls cannot swallow it.
+export default function FileMarker({ file, onAction, highlight = false, actions }: FileMarkerProps) {
   const [open, setOpen] = React.useState(false)
 
   const isImage = file.type.startsWith('image/') && !!file.url
@@ -38,8 +32,6 @@ export default function FileMarker({ file, onAction, highlight = false }: FileMa
   const isDxf = file.name.toLowerCase().endsWith('.dxf')
   const Icon = isVideo ? LR.Video : isModel ? LR.Box : isDxf ? LR.DraftingCompass : LR.FileText
 
-  const stop = (e: React.SyntheticEvent) => e.stopPropagation()
-
   if (!open) {
     return (
       <div
@@ -47,7 +39,7 @@ export default function FileMarker({ file, onAction, highlight = false }: FileMa
           highlight ? 'ring-2 ring-primary' : ''
         }`}
         title={file.name}
-        onPointerDown={(e) => { stop(e); setOpen(true) }}
+        onPointerDown={(event) => { event.stopPropagation(); setOpen(true) }}
       >
         {isImage
           ? <Image width={36} height={36} src={file.url} alt={file.name} className="h-full w-full object-cover" />
@@ -57,42 +49,12 @@ export default function FileMarker({ file, onAction, highlight = false }: FileMa
   }
 
   return (
-    <div className="pointer-events-auto" onPointerDown={stop}>
-      <Card className="w-44 p-1.5 shadow-lg">
-        <div className="flex items-center gap-1.5 px-1 pb-1">
-          <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          <span className="flex-1 truncate text-xs font-medium" title={file.name}>{file.name}</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-5 w-5 shrink-0"
-            onPointerDown={(e) => { stop(e); setOpen(false) }}
-          >
-            <LR.X className="h-3 w-3" />
-          </Button>
-        </div>
-        <div className="border-t pt-1">
-          {ACTIONS.map(({ action, label, Icon: ActionIcon }) => (
-            <button
-              key={action}
-              type="button"
-              onPointerDown={(e) => { stop(e); setOpen(false); onAction?.(action) }}
-              className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-foreground hover:bg-accent"
-            >
-              <ActionIcon className="h-3.5 w-3.5" />
-              {label}
-            </button>
-          ))}
-          <button
-            type="button"
-            onPointerDown={(e) => { stop(e); setOpen(false); onAction?.('delete') }}
-            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-destructive hover:bg-destructive/10"
-          >
-            <LR.Trash2 className="h-3.5 w-3.5" />
-            Delete
-          </button>
-        </div>
-      </Card>
-    </div>
+    <PlacementActionsCard
+      name={file.name}
+      Icon={Icon}
+      actions={actions}
+      onAction={onAction}
+      onClose={() => setOpen(false)}
+    />
   )
 }

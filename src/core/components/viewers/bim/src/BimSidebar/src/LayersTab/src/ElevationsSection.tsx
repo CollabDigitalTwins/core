@@ -17,6 +17,7 @@ import { useBuildingName } from '../../../../lib/useBuildingName'
 import { useFriendlyIfcClassName } from '../../../../lib/useFriendlyIfcClassName'
 import { ViewSectionList } from '../../../../lib/ViewSectionList'
 
+import { ALL_MODELS, DrawingModelFilter } from './DrawingModelFilter'
 import { LayerViewPanel } from './LayerViewPanel'
 
 import type {
@@ -27,11 +28,17 @@ import type { ViewListEntry } from '../../../../lib/viewSection'
 
 interface ElevationSectionProps {
   query?: string
+  modelFilter?: string
+  onModelFilterChange?: (value: string) => void
 }
 
 const IDLE_LOADING: ElevationLoadingState = { isLoading: false }
 
-export function ElevationSection({ query = '' }: ElevationSectionProps) {
+export function ElevationSection({
+  query = '',
+  modelFilter = ALL_MODELS,
+  onModelFilterChange,
+}: ElevationSectionProps) {
   const t = useTranslations('ViewSection')
   const friendlyClassName = useFriendlyIfcClassName()
   const buildingName = useBuildingName()
@@ -75,12 +82,18 @@ export function ElevationSection({ query = '' }: ElevationSectionProps) {
     }
   }, [bimComponents])
 
+  const models = React.useMemo(() => {
+    const ids = [...new Set(entries.map((entry) => entry.modelId))]
+    return ids.map((id) => ({ id, label: buildingName(id) }))
+  }, [entries, buildingName])
+
   const filteredEntries: ViewListEntry[] = React.useMemo(() => {
     const q = query.trim().toLowerCase()
     return entries
+      .filter((entry) => modelFilter === ALL_MODELS || entry.modelId === modelFilter)
       .map((entry) => ({ id: entry.id, label: t(entry.direction) }))
       .filter((row) => !q || row.label.toLowerCase().includes(q))
-  }, [entries, query, t])
+  }, [entries, query, t, modelFilter])
 
   const activeEntry = React.useMemo(
     () => entries.find((entry) => entry.id === activeId) ?? null,
@@ -128,7 +141,17 @@ export function ElevationSection({ query = '' }: ElevationSectionProps) {
     stage && stage !== 'done' ? t(`stage.${stage}`) : t('loading')
 
   return (
-    <LayerViewPanel count={filteredEntries.length}>
+    <LayerViewPanel
+      count={filteredEntries.length}
+      filter={
+        <DrawingModelFilter
+          models={models}
+          value={modelFilter}
+          onChange={onModelFilterChange ?? (() => undefined)}
+          allLabel={t('allIfcFiles')}
+        />
+      }
+    >
       <ViewSectionList
         entries={filteredEntries}
         activeId={activeId}

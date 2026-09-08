@@ -5,47 +5,47 @@ import { CountrySubdivision } from './datasetTypes';
 
 import type { Position } from './global'
 
-export enum BuildingOccupantType  {Adults = 'Adults', Families = 'Families', Seniors = 'Seniors', Seniors_50_Plus = 'Seniors_50_Plus', Seniors_55_Plus = 'Seniors_55_Plus', Seniors_65_Plus = 'Seniors_65_Plus', Seniors_60_Plus = 'Seniors_60_Plus', Indigenous_Families = 'Indigenous_Families', Youth = 'Youth', Adults_16_Plus = 'Adults_16_Plus', Adults_16_To_24 = 'Adults_16_To_24', Singles = 'Singles', Families_Single_Parents = 'Families_Single_Parents', Indigenous = 'Indigenous'}
-export enum BuildingGeometryStyle  {Complex = 'Complex', Simple = 'Simple', Apartment = 'Apartment'}
-export enum BuildingAssessmentConditions  {Excellent = 'Excellent', Good = 'Good', Fair = 'Fair', Poor = 'Poor'}
-export enum BuildingProjectPhase  {Inception_Phase = 'Inception_Phase', Conceptualization_Phase = 'Conceptualization_Phase', Criteria_Definition_Phase = 'Criteria_Definition_Phase', Design_Phase = 'Design_Phase', Coordination_Phase = 'Coordination_Phase', Implementation_Phase = 'Implementation_Phase', Handover_Phase = 'Handover_Phase', Operations_Phase = 'Operations_Phase'}
-export enum BuildingProjectType  {Modification = 'Modification', New_Build = 'New_Build', Renovation = 'Renovation', Repair = 'Repair', Operation_Maintenance = 'Operation_Maintenance', Retrofit = 'Retrofit'}
-export enum BuildingManagementType  {Internal = 'Internal', External = 'External', Municipal = 'Municipal', Private = 'Private'}
-export enum BuildingEnergySource  {Gas = 'Gas', Propane = 'Propane', Electric_BB = 'Electric_BB', Oil = 'Oil', Electric = 'Electric', Natural_Gas = 'Natural_Gas', Solar = 'Solar', Wind = 'Wind', Geothermal = 'Geothermal', District_Heating = 'District_Heating'}
-export enum BuildingHeatingEnergySource  {Gas = 'Gas', Propane = 'Propane', Electric_BB = 'Electric_BB', Oil = 'Oil', Electric = 'Electric', Natural_Gas = 'Natural_Gas', Solar = 'Solar', Wind = 'Wind', Geothermal = 'Geothermal', District_Heating = 'District_Heating'}
-export enum BuildingCoolingEnergySource  {Electric = 'Electric', Wind = 'Wind', Geothermal = 'Geothermal', District_Cooling = 'District_Cooling', Solar = 'Solar'}
-export enum BuildingHotWaterEnergySource  {Electric = 'Electric', Natural_Gas = 'Natural_Gas', Propane = 'Propane', Oil = 'Oil', Solar = 'Solar', Wind = 'Wind'}
-export enum BuildingElectricityServiceSize  {Size_60 = 'Size_60', Size_100 = 'Size_100', Size_200 = 'Size_200'}
-export enum BuildingElectricityServiceLocation  {Overhead = 'Overhead', Underhead = 'Underhead'}
+export enum BuildingOccupantType { Adults = 'Adults', Families = 'Families', Seniors = 'Seniors', Seniors_50_Plus = 'Seniors_50_Plus', Seniors_55_Plus = 'Seniors_55_Plus', Seniors_65_Plus = 'Seniors_65_Plus', Seniors_60_Plus = 'Seniors_60_Plus', Indigenous_Families = 'Indigenous_Families', Youth = 'Youth', Adults_16_Plus = 'Adults_16_Plus', Adults_16_To_24 = 'Adults_16_To_24', Singles = 'Singles', Families_Single_Parents = 'Families_Single_Parents', Indigenous = 'Indigenous' }
+export enum BuildingGeometryStyle { Complex = 'Complex', Simple = 'Simple', Apartment = 'Apartment' }
+export enum BuildingAssessmentConditions { Excellent = 'Excellent', Good = 'Good', Fair = 'Fair', Poor = 'Poor' }
+export enum BuildingProjectPhase { Inception_Phase = 'Inception_Phase', Conceptualization_Phase = 'Conceptualization_Phase', Criteria_Definition_Phase = 'Criteria_Definition_Phase', Design_Phase = 'Design_Phase', Coordination_Phase = 'Coordination_Phase', Implementation_Phase = 'Implementation_Phase', Handover_Phase = 'Handover_Phase', Operations_Phase = 'Operations_Phase' }
+export enum BuildingProjectType { Modification = 'Modification', New_Build = 'New_Build', Renovation = 'Renovation', Repair = 'Repair', Operation_Maintenance = 'Operation_Maintenance', Retrofit = 'Retrofit' }
+export enum BuildingManagementType { Internal = 'Internal', External = 'External', Municipal = 'Municipal', Private = 'Private' }
+export enum BuildingEnergySource { Gas = 'Gas', Propane = 'Propane', Electric_BB = 'Electric_BB', Oil = 'Oil', Electric = 'Electric', Natural_Gas = 'Natural_Gas', Solar = 'Solar', Wind = 'Wind', Geothermal = 'Geothermal', District_Heating = 'District_Heating' }
+export enum BuildingHeatingEnergySource { Gas = 'Gas', Propane = 'Propane', Electric_BB = 'Electric_BB', Oil = 'Oil', Electric = 'Electric', Natural_Gas = 'Natural_Gas', Solar = 'Solar', Wind = 'Wind', Geothermal = 'Geothermal', District_Heating = 'District_Heating' }
+export enum BuildingCoolingEnergySource { Electric = 'Electric', Wind = 'Wind', Geothermal = 'Geothermal', District_Cooling = 'District_Cooling', Solar = 'Solar' }
+export enum BuildingHotWaterEnergySource { Electric = 'Electric', Natural_Gas = 'Natural_Gas', Propane = 'Propane', Oil = 'Oil', Solar = 'Solar', Wind = 'Wind' }
+export enum BuildingElectricityServiceSize { Size_60 = 'Size_60', Size_100 = 'Size_100', Size_200 = 'Size_200' }
+export enum BuildingElectricityServiceLocation { Overhead = 'Overhead', Underhead = 'Underhead' }
 
-export enum SiteEnergySource  {Gas = 'Gas', Propane = 'Propane', Electric_BB = 'Electric_BB', Oil = 'Oil', Electric = 'Electric', Natural_Gas = 'Natural_Gas', Solar = 'Solar', Wind = 'Wind', Geothermal = 'Geothermal', District_Heating = 'District_Heating'}
-export enum SiteAssessmentConditions  {Excellent = 'Excellent', Good = 'Good', Fair = 'Fair', Poor = 'Poor'}
-export enum SiteLandUse  {Residential = 'Residential', Industry_And_Business = 'Industry_And_Business', Mixed_Use = 'Mixed_Use', Special_Function_Area = 'Special_Function_Area', Monument = 'Monument', Dump = 'Dump', Mining = 'Mining', Park = 'Park', Cemetery = 'Cemetery', Sports_Leisure_and_Recreation = 'Sports_Leisure_and_Recreation', Open_Pit_Quarry = 'Open_Pit_Quarry', Road = 'Road', Railway = 'Railway', Airfield = 'Airfield', Shipping = 'Shipping', Track = 'Track', Square = 'Square', Grassland = 'Grassland', Agriculture = 'Agriculture', Forest = 'Forest', Grove = 'Grove', Heath = 'Heath', Moor = 'Moor', Marsh = 'Marsh', Untilled_Land = 'Untilled_Land', River = 'River', Standing_Waterbody = 'Standing_Waterbody', Harbour = 'Harbour', Sea = 'Sea'}
-export enum SiteProjectPhase  {Inception_Phase = 'Inception_Phase', Conceptualization_Phase = 'Conceptualization_Phase', Criteria_Definition_Phase = 'Criteria_Definition_Phase', Design_Phase = 'Design_Phase', Coordination_Phase = 'Coordination_Phase', Implementation_Phase = 'Implementation_Phase', Handover_Phase = 'Handover_Phase', Operations_Phase = 'Operations_Phase'}
-export enum SiteProjectType  {Modification = 'Modification', New_Build = 'New_Build', Renovation = 'Renovation', Repair = 'Repair', Operation_Maintenance = 'Operation_Maintenance', Retrofit = 'Retrofit'}
-export enum DatasetGroup { Organizational = 'Organizational', Municipal = 'Municipal', National = 'National', Provincial = 'Provincial'}
-export enum DataManagementSystem  {Ckan = 'Ckan', Arcgis = 'Arcgis', Opendatasoft = 'Opendatasoft', Socrata = 'Socrata', Other = 'Other'}
-export enum ViewerNames  {auth = 'auth', map = 'map', bim = 'bim', pointcloud = 'pointcloud', buildings = 'buildings', sites = 'sites', files = 'files', land = 'land', infrastructure = 'infrastructure', extensions = 'extensions', settings = 'settings', users= 'users'}
+export enum SiteEnergySource { Gas = 'Gas', Propane = 'Propane', Electric_BB = 'Electric_BB', Oil = 'Oil', Electric = 'Electric', Natural_Gas = 'Natural_Gas', Solar = 'Solar', Wind = 'Wind', Geothermal = 'Geothermal', District_Heating = 'District_Heating' }
+export enum SiteAssessmentConditions { Excellent = 'Excellent', Good = 'Good', Fair = 'Fair', Poor = 'Poor' }
+export enum SiteLandUse { Residential = 'Residential', Industry_And_Business = 'Industry_And_Business', Mixed_Use = 'Mixed_Use', Special_Function_Area = 'Special_Function_Area', Monument = 'Monument', Dump = 'Dump', Mining = 'Mining', Park = 'Park', Cemetery = 'Cemetery', Sports_Leisure_and_Recreation = 'Sports_Leisure_and_Recreation', Open_Pit_Quarry = 'Open_Pit_Quarry', Road = 'Road', Railway = 'Railway', Airfield = 'Airfield', Shipping = 'Shipping', Track = 'Track', Square = 'Square', Grassland = 'Grassland', Agriculture = 'Agriculture', Forest = 'Forest', Grove = 'Grove', Heath = 'Heath', Moor = 'Moor', Marsh = 'Marsh', Untilled_Land = 'Untilled_Land', River = 'River', Standing_Waterbody = 'Standing_Waterbody', Harbour = 'Harbour', Sea = 'Sea' }
+export enum SiteProjectPhase { Inception_Phase = 'Inception_Phase', Conceptualization_Phase = 'Conceptualization_Phase', Criteria_Definition_Phase = 'Criteria_Definition_Phase', Design_Phase = 'Design_Phase', Coordination_Phase = 'Coordination_Phase', Implementation_Phase = 'Implementation_Phase', Handover_Phase = 'Handover_Phase', Operations_Phase = 'Operations_Phase' }
+export enum SiteProjectType { Modification = 'Modification', New_Build = 'New_Build', Renovation = 'Renovation', Repair = 'Repair', Operation_Maintenance = 'Operation_Maintenance', Retrofit = 'Retrofit' }
+export enum DatasetGroup { Organizational = 'Organizational', Municipal = 'Municipal', National = 'National', Provincial = 'Provincial' }
+export enum DataManagementSystem { Ckan = 'Ckan', Arcgis = 'Arcgis', Opendatasoft = 'Opendatasoft', Socrata = 'Socrata', Other = 'Other' }
+export enum ViewerNames { auth = 'auth', map = 'map', bim = 'bim', pointcloud = 'pointcloud', buildings = 'buildings', sites = 'sites', files = 'files', land = 'land', infrastructure = 'infrastructure', extensions = 'extensions', settings = 'settings', users = 'users' }
 /**
  * A built-in viewer or a plugin page, as `plugin:<pluginId>:<pageId>`. Widened rather than
  * adding enum members: `ViewerNames` mirrors the Prisma `appContent` enum.
  */
 export type ViewerKey = ViewerNames | `plugin:${string}`
 
-export enum SensorTypes  {Temperature = 'Temperature', Light = 'Light', Humidity = 'Humidity', Energy_Consumption = 'Energy_Consumption', Movement = 'Movement', Air_Quality = 'Air_Quality', Atmospheric_Pressure = 'Atmospheric_Pressure', Irradiance = 'Irradiance', Flow = 'Flow', State = 'State', Noise_Level = 'Noise_Level'}
-export enum SensorDataFormat  {Csv = 'Csv', Json = 'Json'}
+export enum SensorTypes { Temperature = 'Temperature', Light = 'Light', Humidity = 'Humidity', Energy_Consumption = 'Energy_Consumption', Movement = 'Movement', Air_Quality = 'Air_Quality', Atmospheric_Pressure = 'Atmospheric_Pressure', Irradiance = 'Irradiance', Flow = 'Flow', State = 'State', Noise_Level = 'Noise_Level' }
+export enum SensorDataFormat { Csv = 'Csv', Json = 'Json' }
 
-export enum InfrastructureType {LandFeature = 'LandFeature', Facility = 'Facility', Project = 'Project', Alignment = 'Alignment', Road = 'Road', Railway = 'Railway', Survey = 'Survey', LandDivision = 'LandDivision', Condominium = 'Condominium', Other = 'Other'}
-export enum InfrastructureState {Existing = 'Existing', Proposed = 'Proposed', Planned = 'Planned', UnderConstruction = 'UnderConstruction', Abandoned = 'Abandoned', Demolished = 'Demolished'}
-export enum LinearSide {Left = 'Left', Right = 'Right', Center = 'Center', Both = 'Both', Neither = 'Neither', Unspecified = 'Unspecified'}
-export enum LinearReferencingType {Absolute = 'Absolute', Relative = 'Relative', Interpolative = 'Interpolative'}
-export enum GeometryType {Point = 'Point', LineString = 'LineString', PolyfaceMesh = 'PolyfaceMesh', Curve = 'Curve'}
-export enum SurfaceType {TIN = 'TIN', Grid = 'Grid', Breaklines = 'Breaklines'}
-export enum IfcInfrastructureDomain {IfcRoad = 'IfcRoad', IfcRailway = 'IfcRailway', IfcBridge = 'IfcBridge', IfcMarineFacility = 'IfcMarineFacility', IfcWaterway = 'IfcWaterway', IfcGeotechnicalAssembly = 'IfcGeotechnicalAssembly',}
-export enum IfcRoadType {Highway = 'Highway', Street = 'Street', Interchange = 'Interchange', BicycleWay = 'BicycleWay', Footway = 'Footway', NotDefined = 'NotDefined'}
-export enum IfcRailType {HeavyRail = 'HeavyRail', LightRail = 'LightRail', Subway = 'Subway', Tram = 'Tram', Monorail = 'Monorail', RackRail = 'RackRail'}
-export enum IfcTrackComponentType {Track = 'Track', Sleeper = 'Sleeper', Ballast = 'Ballast', Frog = 'Frog', Sleepers = 'Sleepers', Block = 'Block'}
-export enum IfcBridgePartType {Abutment = 'Abutment', Deck = 'Deck', Pier = 'Pier', Pylon = 'Pylon', Superstructure = 'Superstructure', Substructure = 'Substructure'}
+export enum InfrastructureType { LandFeature = 'LandFeature', Facility = 'Facility', Project = 'Project', Alignment = 'Alignment', Road = 'Road', Railway = 'Railway', Survey = 'Survey', LandDivision = 'LandDivision', Condominium = 'Condominium', Other = 'Other' }
+export enum InfrastructureState { Existing = 'Existing', Proposed = 'Proposed', Planned = 'Planned', UnderConstruction = 'UnderConstruction', Abandoned = 'Abandoned', Demolished = 'Demolished' }
+export enum LinearSide { Left = 'Left', Right = 'Right', Center = 'Center', Both = 'Both', Neither = 'Neither', Unspecified = 'Unspecified' }
+export enum LinearReferencingType { Absolute = 'Absolute', Relative = 'Relative', Interpolative = 'Interpolative' }
+export enum GeometryType { Point = 'Point', LineString = 'LineString', PolyfaceMesh = 'PolyfaceMesh', Curve = 'Curve' }
+export enum SurfaceType { TIN = 'TIN', Grid = 'Grid', Breaklines = 'Breaklines' }
+export enum IfcInfrastructureDomain { IfcRoad = 'IfcRoad', IfcRailway = 'IfcRailway', IfcBridge = 'IfcBridge', IfcMarineFacility = 'IfcMarineFacility', IfcWaterway = 'IfcWaterway', IfcGeotechnicalAssembly = 'IfcGeotechnicalAssembly', }
+export enum IfcRoadType { Highway = 'Highway', Street = 'Street', Interchange = 'Interchange', BicycleWay = 'BicycleWay', Footway = 'Footway', NotDefined = 'NotDefined' }
+export enum IfcRailType { HeavyRail = 'HeavyRail', LightRail = 'LightRail', Subway = 'Subway', Tram = 'Tram', Monorail = 'Monorail', RackRail = 'RackRail' }
+export enum IfcTrackComponentType { Track = 'Track', Sleeper = 'Sleeper', Ballast = 'Ballast', Frog = 'Frog', Sleepers = 'Sleepers', Block = 'Block' }
+export enum IfcBridgePartType { Abutment = 'Abutment', Deck = 'Deck', Pier = 'Pier', Pylon = 'Pylon', Superstructure = 'Superstructure', Substructure = 'Substructure' }
 export enum IfcGeotechType { Borehole = 'Borehole', Earthwork = 'Earthwork', RockTunnel = 'RockTunnel' }
 export enum IfcSignalType { TrafficLight = 'TrafficLight', RailSignal = 'RailSignal', Sign = 'Sign', Panel = 'Panel' }
 export enum IfcSensorType { TrafficSensor = 'TrafficSensor', WeatherSensor = 'WeatherSensor', SecurityCamera = 'SecurityCamera' }
@@ -85,9 +85,9 @@ export interface Role {
 }
 
 export type Permission = {
-  action: string;
-  subject: string;
-  description?: string;
+    action: string;
+    subject: string;
+    description?: string;
 };
 
 export interface Account {
@@ -376,67 +376,68 @@ export interface Building {
 }
 
 export interface DbFile {
-  id: number
-  name: string
-  type: string
-  url?: string | null
-  assetId: string
-  mimeType?: string | null
-  extension?: string | null
-  sizeBytes?: number | null
-  uploadedAt: string
-  description?: string | null
-  tag?: string | null
-  position?: Position
-  x?: number | null
-  y?: number | null
-  z?: number | null
-  lat?: number | null
-  lng?: number | null
-  elevation?: number | null
-  rotation?: number | null
-  bimRotation?: number | null
-  pointCloudTransform?: unknown
-  isVisible?: boolean
-  lazFileKey?: string | null
-  potreeFolderKey?: string | null
-  potreeMetadataFileKey?: string | null
-  pointCloudUploaded?: boolean | null
-  pointCloudPotreeConverted?: boolean | null
-  bucket?: string | null
-  fileCommentId?: number | null
-  fileOrganizationId: number
-  attachedFilesBuildingId?: number | null
-  buildingCodeComplianceBuildingId?: number | null
-  environmentalComplianceBuildingId?: number | null
-  occupancyCertificateBuildingId?: number | null
-  permitsIssuedBuildingId?: number | null
-  systemAssessmentsBuildingId?: number | null
-  zoningComplianceBuildingId?: number | null
-  certificationsFileBuildingId?: number | null
-  energyCodeComplianceBuildingId?: number | null
-  fireSafetyBuildingId?: number | null
-  maintenanceRecordsBuildingId?: number | null
-  proximityToServicesBuildingId?: number | null
-  regionalEnergyTrendsBuildingId?: number | null
-  BCABuildingId?: number | null
-  contractorReportsBuildingId?: number | null
-  engineeringAssessmentsBuildingId?: number | null
-  airQualityReportsBuildingId?: number | null
-  waterQualityReportsBuildingId?: number | null
-  DSRsBuildingId?: number | null
-  energyAssessmentReportsBuildingId?: number | null
-  attachedFilesSiteId?: number | null
-  energyCodeComplianceSiteId?: number | null
-  certificationCertificatesSiteId?: number | null
-  environmentalComplianceSiteId?: number | null
-  maintenanceRecordsSiteId?: number | null
-  fireSafetySiteId?: number | null
-  fireCertSiteId?: number | null
-  zoningComplianceSiteId?: number | null
-  buildingPermitSiteId?: number | null
-  insuranceClaimsSiteId?: number | null
-  buildingPermitsIssuedSiteId?: number | null
+    id: number
+    name: string
+    type: string
+    url?: string | null
+    assetId: string
+    mimeType?: string | null
+    extension?: string | null
+    sizeBytes?: number | null
+    uploadedAt: string
+    description?: string | null
+    tag?: string | null
+    position?: Position
+    x?: number | null
+    y?: number | null
+    z?: number | null
+    lat?: number | null
+    lng?: number | null
+    elevation?: number | null
+    rotation?: number | null
+    bimRotation?: number | null
+    pointCloudTransform?: unknown
+    scale?: number | null
+    isVisible?: boolean
+    lazFileKey?: string | null
+    potreeFolderKey?: string | null
+    potreeMetadataFileKey?: string | null
+    pointCloudUploaded?: boolean | null
+    pointCloudPotreeConverted?: boolean | null
+    bucket?: string | null
+    fileCommentId?: number | null
+    fileOrganizationId: number
+    attachedFilesBuildingId?: number | null
+    buildingCodeComplianceBuildingId?: number | null
+    environmentalComplianceBuildingId?: number | null
+    occupancyCertificateBuildingId?: number | null
+    permitsIssuedBuildingId?: number | null
+    systemAssessmentsBuildingId?: number | null
+    zoningComplianceBuildingId?: number | null
+    certificationsFileBuildingId?: number | null
+    energyCodeComplianceBuildingId?: number | null
+    fireSafetyBuildingId?: number | null
+    maintenanceRecordsBuildingId?: number | null
+    proximityToServicesBuildingId?: number | null
+    regionalEnergyTrendsBuildingId?: number | null
+    BCABuildingId?: number | null
+    contractorReportsBuildingId?: number | null
+    engineeringAssessmentsBuildingId?: number | null
+    airQualityReportsBuildingId?: number | null
+    waterQualityReportsBuildingId?: number | null
+    DSRsBuildingId?: number | null
+    energyAssessmentReportsBuildingId?: number | null
+    attachedFilesSiteId?: number | null
+    energyCodeComplianceSiteId?: number | null
+    certificationCertificatesSiteId?: number | null
+    environmentalComplianceSiteId?: number | null
+    maintenanceRecordsSiteId?: number | null
+    fireSafetySiteId?: number | null
+    fireCertSiteId?: number | null
+    zoningComplianceSiteId?: number | null
+    buildingPermitSiteId?: number | null
+    insuranceClaimsSiteId?: number | null
+    buildingPermitsIssuedSiteId?: number | null
 }
 
 export interface Site {

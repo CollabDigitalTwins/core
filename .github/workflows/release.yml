@@ -1,0 +1,133 @@
+name: Release
+
+# Tags, publishes and announces @collabdt/core when a version bump lands on dev.
+#
+# One job does all four artefacts -- npm version, git tag, GitHub release, changelog
+# section -- because the failure this repository actually had was those four disagreeing:
+# 0.8.2 reached npm while its source sat on no branch, and 28 tags were never pushed at
+# all, so the Releases page was empty for the whole life of the project.
+#
+# The trigger is the version in package.json changing, not a tag being pushed. A human
+# bumps the version in a reviewed release PR (see CLAUDE.md "Releasing core"); everything
+# after the merge is mechanical and happens here.
+#
+# Idempotent: re-running on a commit whose tag already exists is a no-op, so a failed run
+# can be retried safely.
+#
+# ONE-TIME SETUP
+#   1. Authenticate to npm, preferring trusted publishing so no long-lived credential
+#      exists to be stolen: on npmjs.com, package Settings > Trusted publisher >
+#      GitHub Actions, naming this repo and `release.yml`. Nothing to add here.
+#      Fallback only if that is unavailable: a GRANULAR npm token limited to read and
+#      write on @collabdt/core, with an expiry, as the NPM_TOKEN repository secret.
+#      Never a classic Automation token -- those carry every package on the account.
+#   2. Allow Actions to create releases: Settings > Actions > General > Workflow
+#      permissions > Read and write.
+#
+# packages/plugin-kit and packages/create-cdt-plugin version independently and are not
+# published here.
+
+on:
+  push:
+    branches: [dev]
+
+permissions:
+  contents: write
+  # Required for npm trusted publishing. With a trusted publisher configured on the
+  # package, npm verifies this workflow's identity and no NPM_TOKEN is needed at all.
+  id-token: write
+
+concurrency:
+  # Never let two releases race; a second push waits rather than publishing over the first.
+  group: release-core
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Resolve the version and decide whether to release
+        id: gate
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+          if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+            echo "v$VERSION is already tagged; nothing to release."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Extracted before the build so a missing section fails in seconds rather than
+      # after a full tsup run. A release with no changelog section is the bug this
+      # whole workflow exists to prevent, so it is an error, not a warning.
+      - name: Extract the changelog section
+        if: steps.gate.outputs.release == 'true'
+        env:
+          VERSION: ${{ steps.gate.outputs.version }}
+        run: |
+          awk -v v="$VERSION" 'index($0,"## ["v"]")==1{f=1;next} f&&/^## /{exit} f' \
+            CHANGELOG.md > release-notes.md
+
+          if [ ! -s release-notes.md ]; then
+            echo "::error::CHANGELOG.md has no '## [$VERSION]' section. Rename [Unreleased] to $VERSION before merging the release PR."
+            exit 1
+          fi
+          cat release-notes.md
+
+      - name: Install
+        if: steps.gate.outputs.release == 'true'
+        run: yarn install --frozen-lockfile
+
+      - name: Build
+        if: steps.gate.outputs.release == 'true'
+        run: yarn build
+
+      - name: Unit tests
+        if: steps.gate.outputs.release == 'true'
+        run: yarn test:unit
+
+      # The tag comes after the build and tests pass, so a tag always names a version
+      # that built. It points at the merge commit on dev, never a feature branch.
+      - name: Tag
+        if: steps.gate.outputs.release == 'true'
+        env:
+          TAG: ${{ steps.gate.outputs.tag }}
+          VERSION: ${{ steps.gate.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release $VERSION"
+          git push origin "$TAG"
+
+      - name: GitHub release
+        if: steps.gate.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.gate.outputs.tag }}
+        run: gh release create "$TAG" --title "$TAG" --notes-file release-notes.md
+
+      # Guarded separately: a version already on the registry can never be replaced, and
+      # a re-run after a partial failure must not abort on it.
+      - name: Publish to npm
+        if: steps.gate.outputs.release == 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          VERSION: ${{ steps.gate.outputs.version }}
+        run: |
+          if npm view "@collabdt/core@$VERSION" version >/dev/null 2>&1; then
+            echo "@collabdt/core@$VERSION is already published; skipping."
+          else
+            npm publish
+          fi

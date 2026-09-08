@@ -1,9 +1,307 @@
 
-Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog, and this project adheres to Semantic Versioning.
+
+## [Unreleased]
+
+### Added
+- **Files carry their own scene membership.** `isVisible` on a file record now decides whether the
+  BIM viewer loads it, and the sidebar's Hide/Show entry persists the choice. A building with ten
+  models can keep the architectural and structural ones in the scene and leave the eight
+  superseded versions listed but unloaded, and the choice survives a reload.
+- `useUpdateFile` in the file hooks: `updateFileById(id, patch)` for lists where any row can
+  mutate, which `useFile`'s single-id mutation key cannot express.
+- `useFileVisibility(buildingId)` — `setVisible` and `setVisibleMany`, which write the
+  `filesByBuilding` cache optimistically so the viewer's load effects see the new value in the
+  same tick, and roll back if the request fails.
+- `shouldPersistVisibility` on `useFileActions`, a predicate so a section can opt its rows in. It
+  is off by default: for an IDS run or a BCF import `view` means "apply", not "in the scene".
+- `LoadModels.unload(modelId)`, and `load` now returns the model it loaded. Both go through a
+  per-model queue, so a load that follows a dispose waits for it instead of seeing the outgoing
+  model and skipping its own work.
+- `SET_POINT_CLOUD_IDS` on the BIM store, to seed the list from the file records. `TOGGLE_POINT_CLOUD`
+  is not idempotent, so a seed that ran twice would have switched every cloud back off.
+- `SpatialStructure.forgetModel`, which drops a model's tree but keeps its cached copy, so a model
+  switched back on does not rebuild one it already has.
+- `dropsAtOrigin` in `Placement/placementCapabilities`, naming the files whose coordinates
+  are already surveyed — IFC, fragments and point clouds. Adding one of these no longer arms
+  the crosshair: it uploads at the model origin, since asking where to put a survey of the
+  building is meaningless.
+- IFC conversion reports real progress. `IfcToFragments.loadFromFile` and
+  `convertIfcToFragmentsFile` take an optional `onProgress(fraction)`, fed by the importer's
+  own `progressCallback`, and the upload toast now counts up instead of sitting silent for
+  the minutes a large IFC takes. `onLoadingStateChanged` carries an optional `progress`.
+- `useFileUploadHandler` i18n namespace gained `convertingIfc` and `uploadingConverted`.
+- Adding an IFC through the add-to-BIM toolbar now converts it to fragments first, as the
+  sidebar's Models upload already did. That path previously stored the raw `.ifc`, which
+  `LoadModels` cannot read, so the file uploaded but never appeared.
+
+### Changed
+- The spatial structure no longer opens on a bare `IFCBUILDING`. A building that carries no name
+  and wraps a single child is dropped from the tree, so the level with the real building name
+  leads. A named building, or a nameless one grouping several storeys, is kept — that level still
+  says something.
+- Floorplans and Elevations take an IFC-file filter, shown next to the drawing count, so the levels
+  of several files loaded for the same building no longer read as one list. The two views share the
+  selection, and the control appears only once more than one file is loaded. New
+  `ViewSection.allIfcFiles` i18n key.
+- Switching building now clears placed objects and point clouds along with the models. Only the
+  fragments were disposed before, so a GLB or DXF from the previous building stayed in the scene,
+  and the sidebar's own cleanup could not be relied on because it unmounts with the panel.
+- The spatial-tree cache key moved to `v3`, since `v2` entries hold the wrapper level that is now
+  dropped.
+- A BIM scene loads only the files whose `isVisible` is `true`. `false` and `null` do not load, and
+  a building whose models are all switched off now opens as an empty scene rather than showing the
+  "no BIM files" upload prompt.
+- Hiding a BIM model unloads it rather than making it invisible, so its spatial tree, IFC classes,
+  floorplans and elevations go with it, and its bounds stop inflating the shadow framing and camera
+  fit. Switching it back on reloads it at its stored placement without reframing the camera.
+- A double-click that hits no geometry now places the file at the world origin rather than
+  doing nothing. In the add-to-BIM flow the ground-plane fallback still applies whenever
+  there is a model to miss; with an empty scene the click carries no position at all.
+- Selecting a building now writes `zoom=18` alongside `lat`/`lng` in the URL, so switching
+  to the map viewer opens framed on that building instead of at the organization's default
+  zoom. The zoom is cleared, like the coordinates, for a building with no location.
+
+### Fixed
+- Removing a 3D model no longer leaks GPU memory. `ModelManager.remove` detached the model and
+  freed nothing, and `disposeObject3D` freed geometry and materials but not the textures they
+  reference, which `Material.dispose` does not cascade to. Both now free geometry, materials and
+  every texture, and the animation mixer's root is uncached. `disposeThreeScene` shares the one
+  implementation instead of keeping a second copy.
+- The viewport menu now opens on an animated model. `SkinnedMesh.raycast` tests a bounding
+  sphere three computes once and never refreshes, so a playing model drifted out of the sphere
+  cached at its first pick and every later right-click missed it. `pickSceneObject` recomputes
+  the skinned bounds before casting; a still `Mesh` was never affected, which is why only
+  animated models were unpickable.
+- A BIM file uploaded into an open viewer now appears in the scene without a reload.
+  `nextBimViewerState` returns null once `hasLoadedModels` is set, so the one effect that
+  loaded models never ran again and a newly uploaded IFC sat in the sidebar unloaded.
+  `BimLoadingState` now loads any file the fragments list does not already hold, separately
+  from the first-batch state machine so the loading card does not reopen over a scene in use.
+- The animation card can be opened for a model added in the current session. `ModelManager`
+  gained the `rekey` that `AddDxf` already had, so a model uploaded through add-to-BIM moves
+  from its temporary id to its file id. Without it `getClips` looked up the file id, found
+  nothing, and the menu offered no animate action until the page was reloaded.
+
+### Migration
+- `isVisible` defaults to `false`, and no backfill ships with this release, so a database written
+  before it has every file at `false` or `null` and those BIM scenes will open empty. Switch the
+  models on from the sidebar, or set the flag for the records that should load:
+  `UPDATE "File" SET "isVisible" = true WHERE extension IN ('ifc', 'frag');`
+- A consumer reading `file.isVisible` should compare with `=== true`. `!== false` now reads a
+  never-set flag as visible, which no longer matches what the viewer loads.
+
+## [0.9.0] - 2026-09-02
+
+Consolidates the work previously tagged locally as 0.9.0 through 0.11.1. Those tags were
+never pushed and never published, so they were collapsed into this single release.
+A minor bump rather than a patch: the removals below are breaking, and under 0.x a caret
+range keeps a consumer on 0.8.x until they opt in.
+
+### Added
+- **Point clouds render inside the BIM viewer.** A BIM scene can now load Potree point
+  clouds alongside its IFC models, through `potree-core` rather than the vendored Potree
+  build the standalone viewer uses. New `components/viewers/shared/pointcloud/` holds what
+  both viewers need — `pointCloudApi`, `pointCloudLoader`, `pointCloudSource`,
+  `pointCloudRegistry`, `pointCloudAppearance`, `pointCloudCentroid`, `pointCloudPivot`,
+  `pointCloudPlacement` and `pointCloudTransform`. The BIM side lives in
+  `viewers/bim/src/PointClouds/`.
+- The BIM sidebar gained a Point Clouds section in the File tab and a point cloud block in
+  the Settings tab, with opacity wired to the same setting the standalone viewer reads.
+- Measurements and clipping work against point cloud geometry in the BIM viewer.
+  `ClippingBoxes`, `clipBox` and `cutStyle` add box clipping next to the existing planes,
+  and `scenePicker` picks across model and point cloud content in one pass.
+- A control to centre a point cloud's centroid on the scene origin, and pivot handling
+  through `pointCloudPivot`.
+- **Render modes with sun and shadows.** `renderMode`, `bimLighting`, `solarPosition`,
+  `sunPath`, `sunRig`, `SunPath` and `ShadowEnroller` drive a shadowed render mode from a
+  real solar position; `createBimWorld` and `modelBounds` centralize world setup.
+- **The viewer derives its location from the building it is showing.**
+  `BuildingLocationSync`, `buildingLocationParams` and `useViewerLocation` replace an
+  assumed location, so the sun path is correct for the model on screen.
+- The BIM search bar selects a building rather than only filtering: `searchBuildings`,
+  `useSelectBuilding` and `useOptionListKeys`. Switching building clears the spatial
+  structure and floorplans belonging to the previous one.
+- A pivot indicator (`PivotIndicator`) and camera limits (`CameraLimits`, `cameraLimits`),
+  with viewer state pulled out into `bimViewerState`.
+- **One placement editor for everything placed in a BIM scene.**
+  `viewers/bim/src/Placement/` — `PlacementEditor`, `PlacementEditorHost`,
+  `PlacementPanel`, `NumberField`, `placementTarget`, `resolveViewportTarget`,
+  `placementCapabilities`, `uniformScale`, `markerActions`, `usePlacementSession`,
+  `useViewportContextMenu` and per-kind targets under `targets/` — replaces the separate
+  per-kind placement UIs. `PlacementActionsCard` is its entry point in the files manager.
+- `DbFile` gained `bimRotation`, `pointCloudTransform` and `scale`.
+
+### Changed
+- The DXF loader restores depth state after drawing (`restoreDepthState`), and
+  `disposeObject3D`, `needsMarker` and `sceneContent` factor out scene bookkeeping that
+  was inline in the viewer.
+- Point cloud defaults changed for use inside a BIM scene.
+
+### Fixed
+- **Restored the whole of 0.8.2, which no release since had carried.** 0.9.0 was tagged on a
+  branch that forked before 0.8.2, so the production tile fix was silently reverted: MapTiler
+  requests were signed with the shared demo key again, which is honoured on localhost only and
+  earns a 403 anywhere else. `maptilerKeyForRequest` and `isLocalhostOrigin` are back, the
+  country and building layers skip the request instead of making one that cannot succeed,
+  `MapTilerKeyNotice` explains the degraded state on screen, and `SUBDIVISION_LINE_WIDTH` is
+  again a single zoom ramp branching on hover in its outputs rather than a nested zoom curve
+  MapLibre rejects.
+
+### Removed
+- The standalone point cloud alignment tool — `AlignPointCloudTool`,
+  `AlignPointCloudPanel`, `PointCloudAlignment`, `useBimPointCloudAlignment` — and
+  `Position3DCard`. Both are superseded by the placement editor.
+
+## [0.8.2] - 2026-08-26
+
+### Added
+- `MapTilerKeyNotice`, an on-screen notice when the deployment has no MapTiler key of its
+  own and the map is running on the shared demo key.
+
+### Fixed
+- Map tiles did not appear in production. Subdivision line width is now pinned by a test.
+
+## [0.8.1] - 2026-08-26
+
+### Fixed
+- The map falls back to MapTiler's public demo token when no key is configured, instead of
+  requesting tiles with an empty key.
+- The runtime shim registry listed SDK modules that no longer matched the real SDK surface.
+
+## [0.8.0] - 2026-08-26
+
+### Added
+- **A deployment can supply its own MapTiler key.** `mapStyleSpec` builds the satellite and
+  streets styles programmatically instead of fetching a hosted style URL, so a deployment
+  without a key degrades to Esri World Imagery and Terrarium terrain rather than failing to
+  draw. `MAPTILER_PLACEHOLDER_KEY` keeps localhost working with no account.
+- Country layer subdivisions respond to the camera and to hover, through
+  `useCameraSubdivision` and `useSubdivisionHover`.
+
+### Changed
+- The authentication page renders the deployment's logo.
+
+## [0.7.0] - 2026-08-24
+
+### Changed
+- **The built-in example plugins now use the same layout as an external one.** `hello-bim`
+  and `hello-map` moved their sources under `src/`, matching what `create-cdt-plugin`
+  scaffolds, so an author porting a built-in plugin out of core moves files rather than
+  rearranging them.
+- `@collabdt/plugin-kit` is now a dependency of core, so the host and the kit share one
+  copy of the externals list rather than two that can drift.
+
+### Removed
+- The scaffolder's `registration` module. Registering a built-in plugin is handled by the
+  scaffold step directly.
+
+## [0.6.0] - 2026-08-20
+
+### Added
+- `create-cdt-plugin` gained `labels`, `viewers` and `nextSteps`: the CLI names the viewer
+  a surface belongs to and prints the remaining manual steps after scaffolding.
+- `pluginIcon` resolves a manifest's icon string to a rendered icon in one place, for
+  toolbar tools, viewer tabs and data pages alike.
+
+## [0.5.4] - 2026-08-19
+
+### Added
+- **A data surface for plugins.** `plugins/sdk/data` and the kit's `types/data.ts` let a
+  plugin read platform data through the SDK, reachable as
+  `@collabdt/core/plugins-sdk/data`.
+
+## [0.5.3] - 2026-08-17
+
+Includes 0.5.2, which was tagged but not published.
+
+### Added
+- **Example plugin bodies for all four surfaces.** `create-cdt-plugin` scaffolds dialog,
+  page, tab and layer examples for both built-in and external plugins, not just a toolbar
+  tool. `hello-map` and `hello-bim` were rewritten against the same surfaces.
+- `plugin-kit` ships `types/ui.ts` so a plugin can type against core's UI components
+  without installing Radix.
+- An AI-attribution guard: `scripts/check-ai-attribution.mjs`, a `commit-msg` hook and a CI
+  workflow reject `Co-Authored-By` trailers naming an AI assistant. `yarn hooks:install`
+  points git at `.githooks`.
+
+### Changed
+- `Organization.suspended` appeared twice in `dbTypes` — once optional and once required.
+  The optional one is gone; the required `suspended: boolean` added in 0.5.1 stands.
+
+## [0.5.1] - 2026-08-14
+
+Includes 0.5.0, which was tagged but not published.
+
+### Added
+- **Plugins are a supported boundary, not an internal folder.** `@collabdt/core/plugins-sdk`
+  and `@collabdt/core/plugins-sdk/*` are new package exports. Core owns the runtime shim
+  registry (`PLUGIN_RUNTIME_SHIMS`, `PLUGIN_EXTERNALS`), so a host generates import maps
+  from core rather than from its own copy of the list.
+- Two new packages under `packages/`: `@collabdt/plugin-kit`, a tsup preset plus per-surface
+  types with a build-time guard that fails a plugin bundling `three`, `react` or any other
+  host library; and `create-cdt-plugin`, which scaffolds a built-in or external plugin for
+  any of the four surfaces.
+- Plugin-owned storage, so a plugin persists its own state without the host knowing its
+  shape.
+
+### Changed
+- **`extensions` is now `plugins` throughout.** `ExtensionsManager` → `PluginsManager`,
+  `ExtensionCard` → `PluginCard`, `useExtensionsData` → `usePluginsData`; the folder
+  `components/viewers/extensions/` → `components/viewers/plugins/`; the i18n namespace
+  `Extensions` → `PluginsPage`. `useExtensionListings` is gone, replaced by
+  `usePluginsData` and `pluginStatus`. There are no deprecated aliases.
+- `Organization` gained a required `suspended: boolean`.
+
+### Fixed
+- **A GeoJSON dataset mixing geometry types only drew one of them.** The open-data layer
+  chose how to draw a whole collection from the geometry type of its first feature, so a
+  file starting with a polygon drew its polygons and silently dropped its points. Features
+  are grouped by geometry type and each group gets its own source and layer set; layer ids
+  are unchanged, and points keep their own source so clustering still works.
+- **Organizations could not see their own datasets.** The lookup that mapped a URL path to
+  an organization knew only five of them, so any organization added later fell through to a
+  shared default; it now takes the instance organization directly. Uploaded datasets were
+  also never stamped with their organization, and the visibility filter drops anything with
+  none recorded.
+- **An organizational dataset would list but not draw.** Uploads store under the owning
+  organization while the read side rebuilt the storage path from the organization in the
+  web address, so viewing another instance asked storage for a file never written there.
+  `useOrganizationalDatasets` keeps the two apart: the owning organization builds the path,
+  the address-derived one decides what the viewer may see.
+- Enabling an organization database takes effect immediately instead of after a refresh.
+
+### Migration
+- `import { ExtensionsManager } from '@collabdt/core/components/viewers/extensions'` →
+  `import { PluginsManager } from '@collabdt/core/components/viewers/plugins'`. Rename the
+  `Extensions` message namespace to `PluginsPage`.
+- Anything constructing an `Organization` must now supply `suspended`.
+
+## [0.4.8] - 2026-08-01
+
+Includes 0.4.6 and 0.4.7, which were tagged but not published.
+
+### Added
+- **A classification visibility tab in BIM Layers.** IFC classes can be shown, hidden and
+  recoloured individually, from the class list or from the spatial tree.
+- IFC spaces are included in generated floorplans.
+
+### Changed
+- The viewer sidebar architecture is centralized: tab composition lives in one place rather
+  than being rebuilt per viewer.
+- Topography and rooms are hidden on load. Both are volumetric and hid everything behind
+  them; they can be turned back on from the layers tab.
+
+### Fixed
+- The clipping plane is sized to the model instead of an arbitrary constant, and carries
+  on-screen instructions.
+
+### Removed
+- Dead point cloud code left behind by the viewer rewrite.
 
 ## [0.4.5] - 2026-07-31
 

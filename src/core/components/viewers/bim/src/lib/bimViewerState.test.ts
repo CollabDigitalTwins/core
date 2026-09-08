@@ -16,10 +16,29 @@ const ready: BimViewerStateInputs = {
   filesLoading: false,
   filesError: false,
   bimFileCount: 2,
+  hiddenBimFileCount: 0,
   hasLoadedModels: false,
 }
 
 describe('nextBimViewerState', () => {
+  it('settles on an empty scene when every model is switched off', () => {
+    const inputs = { ...ready, bimFileCount: 0, hiddenBimFileCount: 10 }
+
+    expect(nextBimViewerState(inputs)).toEqual({ state: 'ready' })
+  })
+
+  it('still offers the upload prompt for a building with no models at all', () => {
+    const inputs = { ...ready, bimFileCount: 0, hiddenBimFileCount: 0 }
+
+    expect(nextBimViewerState(inputs)).toEqual({ state: 'noBimFiles' })
+  })
+
+  it('reports a dead files request ahead of an all-hidden scene', () => {
+    const inputs = { ...ready, bimFileCount: 0, hiddenBimFileCount: 4, filesError: true }
+
+    expect(nextBimViewerState(inputs)).toEqual({ state: 'filesUnavailable' })
+  })
+
   it('waits while the viewer world is still being built', () => {
     expect(nextBimViewerState({ ...ready, hasComponents: false })).toEqual({ state: 'opening', resetLoadedModels: true })
   })

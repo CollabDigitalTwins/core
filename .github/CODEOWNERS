@@ -6,7 +6,25 @@
 # so multiple "* ..." lines do NOT combine (only the last would apply). Valid
 # owners are GitHub usernames (@user), teams (@org/team), or emails. A bare org
 # handle (@collabdt) or a display name with spaces (@Collab Digital Twins) is not
-# valid and makes GitHub ignore the file. Add a team like @collabdt/maintainers
-# here once it exists.
+# valid and makes GitHub ignore the file.
+#
+# The team needs explicit **Write** access to this repository or every rule here is
+# silently ignored. Org ownership is not enough; grant the team the repo. Open this
+# file in the GitHub web UI once after changing it — that view is the only place
+# GitHub reports an unknown user, a typo, or a team lacking write access.
 
 * @CollabDigitalTwins/maintainers
+
+# Below: last-match-wins, so these override the catch-all for their paths. Same owner
+# today, listed separately because they are release decisions rather than code changes
+# and should stay owned even if `*` is ever delegated. See CLAUDE.md "Releasing core".
+
+# The version bump and the public release notes: together these are the release.
+/package.json     @CollabDigitalTwins/maintainers
+/CHANGELOG.md     @CollabDigitalTwins/maintainers
+
+# Workflows hold the publish credentials, so editing one is equivalent to holding them.
+/.github/         @CollabDigitalTwins/maintainers
+
+# The CI guards themselves. Editing these disables the checks that protect everything else.
+/scripts/check-*.mjs   @CollabDigitalTwins/maintainers

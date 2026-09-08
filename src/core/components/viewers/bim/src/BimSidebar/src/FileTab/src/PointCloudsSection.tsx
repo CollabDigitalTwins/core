@@ -13,18 +13,19 @@ import { BimContext } from '../../../../../../../../store'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { FileItemComponent, useFileActions, useFileDeleteHandler } from '../../../../../../../ui/FilesManager'
+import { PlacementEditor } from '../../../../Placement/PlacementEditor'
+import { usePointCloudTarget } from '../../../../Placement/targets/usePointCloudTarget'
 import { BimPointClouds } from '../../../../PointClouds'
-import { PointCloudAlignment } from '../../../../PointClouds/PointCloudAlignment'
 import { selectPointCloudFiles } from '../../../../PointClouds/pointCloudFiles'
 import { useBimPointCloudOpacity } from '../../../../PointClouds/useBimPointCloudOpacity'
 
 import type { DbFile } from '../../../../../../../../types/dbTypes'
 import type { FileAction } from '../../../../../../../../types/global'
 
-/** Same set the BIM models offer, plus the download a scan is usually wanted for. */
-const OPTIONS: FileAction[] = ['view', 'ghost', 'move', 'download', 'info', 'delete']
+/** Same set the BIM models offer. No download — a scan is not handed out to viewers. */
+const OPTIONS: FileAction[] = ['view', 'ghost', 'move', 'info', 'delete']
 
-const TOAST_ID = 'bim-pointcloud-align-toast'
+const TOAST_ID = 'bim-pointcloud-placement-toast'
 
 interface PointCloudsSectionProps {
   files: DbFile[]
@@ -34,7 +35,7 @@ interface PointCloudsSectionProps {
 
 export function PointCloudsSection({ files, query = '', buildingId }: PointCloudsSectionProps) {
   const t = useTranslations('PointCloudManagement')
-  const tAlign = useTranslations('PointCloudAlignment')
+  const tAlign = useTranslations('Placement')
 
   const { state, dispatch } = React.useContext(BimContext)
   const { bimComponents, pointCloudIds } = state.bim
@@ -42,6 +43,8 @@ export function PointCloudsSection({ files, query = '', buildingId }: PointCloud
   const { isGhosted, setGhosted } = useBimPointCloudOpacity()
   const { deleteFile } = useDeleteFile(buildingId)
   const { handleDeleteFile } = useFileDeleteHandler({ deleteFile })
+
+  const { targetFor, clearMoving } = usePointCloudTarget()
 
   const clouds = React.useMemo(() => {
     const needle = query.trim().toLowerCase()
@@ -69,18 +72,19 @@ export function PointCloudsSection({ files, query = '', buildingId }: PointCloud
     setGhosted(String(file.id), ghosted)
   }, [setGhosted])
 
-  // Switching a cloud on is async, so alignment waits for it rather than failing silently.
+  // Switching a cloud on is async, so placement waits for it rather than failing silently.
   const editPosition = React.useCallback(async (file: DbFile) => {
     if (!bimComponents) return
     const id = String(file.id)
 
-    if (!bimComponents.get(BimPointClouds).get(id)) {
+    const clouds = bimComponents.get(BimPointClouds)
+    if (!clouds.get(id)) {
       dispatch({ type: 'TOGGLE_POINT_CLOUD', payload: { pointCloudId: id } })
     }
 
-    if (!await bimComponents.get(PointCloudAlignment).begin(id)) return
+    if (!await bimComponents.get(PlacementEditor).begin(targetFor(file, clouds))) return
     toast.info(tAlign('editHint'), { id: TOAST_ID, duration: Infinity })
-  }, [bimComponents, dispatch, tAlign])
+  }, [bimComponents, dispatch, tAlign, targetFor])
 
   const forget = React.useCallback((file: DbFile) => {
     const id = String(file.id)
@@ -95,6 +99,7 @@ export function PointCloudsSection({ files, query = '', buildingId }: PointCloud
     buildingId,
     handleDeleteFile,
     onView: toggle,
+    shouldPersistVisibility: () => true,
     onGhost: ghost,
     onMove: (file) => { void editPosition(file) },
     onDelete: forget,
@@ -102,15 +107,19 @@ export function PointCloudsSection({ files, query = '', buildingId }: PointCloud
 
   React.useEffect(() => {
     if (!bimComponents) return
-    const alignment = bimComponents.get(PointCloudAlignment)
-    const dismissWhenDone = (session: unknown) => { if (!session) toast.dismiss(TOAST_ID) }
+    const editor = bimComponents.get(PlacementEditor)
+    const dismissWhenDone = (session: unknown) => {
+      if (session) return
+      toast.dismiss(TOAST_ID)
+      clearMoving()
+    }
 
-    alignment.onChanged.add(dismissWhenDone)
+    editor.onChanged.add(dismissWhenDone)
     return () => {
-      alignment.onChanged.remove(dismissWhenDone)
+      editor.onChanged.remove(dismissWhenDone)
       toast.dismiss(TOAST_ID)
     }
-  }, [bimComponents])
+  }, [bimComponents, clearMoving])
 
   if (clouds.length === 0) return null
 

@@ -15,7 +15,7 @@ import { useFileUploadHandler, useFileDeleteHandler, FileItemComponent, useFileA
 
 import type { DbFile as IFile } from '../../../../../../../../types/dbTypes'
 
-const PC_FILE_OPTIONS: import('../../../../../../../../types/global').FileAction[] = ['download', 'view', 'move', 'info', 'delete']
+const PC_FILE_OPTIONS: import('../../../../../../../../types/global').FileAction[] = ['view', 'move', 'info', 'delete']
 
 interface FilesSectionProps {
   files: IFile[]

@@ -55,6 +55,7 @@ export const createFileMarker = (
   object3D: THREE.Object3D,
   world: any,
   onAction?: (action: FileMarkerAction) => void,
+  actions?: FileMarkerAction[],
 ): CSS2DObject | null => {
   if (!world) return null
 
@@ -74,7 +75,7 @@ export const createFileMarker = (
   labelDiv.addEventListener('contextmenu', e => e.preventDefault())
 
   createRoot(labelDiv).render(
-    React.createElement(FileMarker, { file: markerFile, onAction }),
+    React.createElement(FileMarker, { file: markerFile, onAction, actions }),
   )
 
   const css2dObject = new CSS2DObject(labelDiv)

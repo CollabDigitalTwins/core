@@ -187,6 +187,23 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable, Sce
     return point ? { point } : null
   }
 
+  /** Like `pick`, but names the cloud that was hit. The viewport menu needs the id, not a point. */
+  pickWithId(ray: THREE.Ray, camera: THREE.Camera, thresholdPx: number): { id: string; point: THREE.Vector3; distance: number } | null {
+    const renderer = this.world?.renderer
+    if (!this.engine || !renderer) return null
+
+    let nearest: { id: string; point: THREE.Vector3; distance: number } | null = null
+    for (const cloud of this.list()) {
+      if (!cloud.root.visible) continue
+      const point = this.engine.pick([cloud.octree], camera, renderer.three, ray, thresholdPx)
+      if (!point) continue
+
+      const distance = ray.origin.distanceTo(point)
+      if (!nearest || distance < nearest.distance) nearest = { id: cloud.id, point, distance }
+    }
+    return nearest
+  }
+
   /**
    * Where the cloud's points actually sit, in world space. Weighted by point count, so a scan with
    * a few stray returns still centres on the building rather than halfway to them.

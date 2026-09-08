@@ -624,6 +624,7 @@
     "hideTitle": "Masquer de la vue",
     "showTitle": "Afficher dans la vue",
     "placeFile": "Placer le fichier",
+    "placeHint": "Double-cliquez dans le modèle pour placer « {name} ». Appuyez sur Échap pour annuler.",
     "toastErrNoID": "Aucun ID de bâtiment disponible",
     "toastSuccessUpFile": "fichier(s) téléchargé(s) avec succès",
     "toastErrUpFile1": "Erreur lors du téléchargement du fichier :",
@@ -1441,6 +1442,7 @@
     "resizeHandleLabel": "Redimensionner la barre latérale"
   },
   "ViewSection": {
+    "allIfcFiles": "Tous les fichiers IFC",
     "floorplanTitle": "Plans d’étage",
     "elevationTitle": "Élévations",
     "north": "Nord",
@@ -1502,8 +1504,7 @@
     "clipping": "Outil de découpage",
     "fit": "Ajuster",
     "add": "Ajouter",
-    "share": "Partager la vue",
-    "pointCloudAlign": "Nuage de points"
+    "share": "Partager la vue"
   },
   "forgotPassword": {
     "h1": "Mot de passe oublié",
@@ -1964,7 +1965,9 @@
     "noBuildingId": "Aucun ID de bâtiment disponible",
     "uploadSuccess": "{count, plural, one {# fichier téléversé avec succès} other {# fichiers téléversés avec succès}}",
     "uploadError": "Erreur lors du téléversement du fichier :",
-    "unknownError": "Erreur inconnue s'est produite"
+    "unknownError": "Erreur inconnue s'est produite",
+    "convertingIfc": "Conversion de « {name} » en fragments… {percent} %",
+    "uploadingConverted": "Téléversement de « {name} »…"
   },
   "BuildingSensors": {
     "average": "moyenne",
@@ -2074,26 +2077,35 @@
     "userReadOnly": "Vous pouvez voir les plugins disponibles, mais pas modifier ce qui s’exécute.",
     "loading": "Chargement des plugins…"
   },
-  "PointCloudAlignment": {
-    "title": "Aligner le nuage de points",
+  "Placement": {
+    "cancel": "Annuler",
+    "confirmPlacement": "Confirmer le placement",
+    "placeAndAdjustHint": "Double-cliquez dans la scène pour placer. Faites glisser le gizmo ou appuyez sur G / R / S pour déplacer, pivoter ou redimensionner.",
+    "unit_mm": "Millimètres → mètres",
+    "unit_cm": "Centimètres → mètres",
+    "unit_m": "Mètres",
+    "unit_in": "Pouces → mètres",
+    "title": "Placer l'objet",
     "position": "Position (m)",
     "rotation": "Rotation (°)",
+    "yaw": "Rotation (°)",
     "scale": "Échelle",
     "modeTranslate": "Déplacer",
     "modeRotate": "Pivoter",
+    "modeScale": "Redimensionner",
     "reset": "Réinitialiser",
     "done": "Terminé",
-    "noClouds": "Aucun nuage de points activé",
-    "editHint": "Faites glisser le gizmo pour placer le nuage de points. La position est enregistrée en appuyant sur Terminé.",
-    "saved": "Position de « {name} » enregistrée",
-    "saveFailed": "Impossible d'enregistrer la position de « {name} »",
-    "centre": "Centrer sur l'origine",
-    "centreFailed": "Le nuage de points n'est pas assez chargé pour trouver son centre",
+    "centre": "Centrer sur l'origine de la scène",
+    "centreFailed": "Pas encore assez chargé pour trouver son centre",
     "pickPivot": "Choisir le point central",
     "pivotSet": "Rotation autour du point choisi",
-    "pivotOrigin": "Revenir à l'origine du nuage",
+    "pivotOrigin": "Revenir à sa propre origine",
     "pickPivotHint": "Double-cliquez pour créer le point de pivot",
-    "pickPivotFailed": "Rien sous le curseur"
+    "pickPivotFailed": "Rien sous le curseur à sélectionner",
+    "editHint": "Faites glisser le gizmo pour le placer. La position est enregistrée en appuyant sur Terminé.",
+    "saved": "Position de « {name} » enregistrée",
+    "saveFailed": "Impossible d'enregistrer la position de « {name} »",
+    "deleteFailed": "Impossible de supprimer « {name} »"
   },
   "PointCloudSettings": {
     "title": "Nuages de points",
@@ -2116,5 +2128,21 @@
     "placeholderExpanded": "Rechercher un bâtiment par nom, adresse ou id...",
     "noResults": "Aucun bâtiment correspondant",
     "unnamed": "Bâtiment sans nom"
+  },
+  "Animation": {
+    "title": "Animation",
+    "clip": "Séquence",
+    "play": "Lire",
+    "pause": "Pause",
+    "speed": "Vitesse",
+    "notSaved": "La lecture n'est pas enregistrée avec le fichier."
+  },
+  "MapTilerKeyNotice": {
+    "title": "Clé du fond de carte non configurée",
+    "devTitle": "Utilisation de la clé de démonstration partagée de MapTiler",
+    "body": "Les bâtiments 3D, les frontières mondiales et le relief sont indisponibles jusqu'à ce que ce déploiement ajoute sa propre clé MapTiler.",
+    "devBody": "La clé de démonstration ne fonctionne que sur localhost. Les déploiements en production nécessitent leur propre clé MapTiler.",
+    "cta": "Obtenez votre clé gratuite",
+    "dismiss": "Fermer"
   }
 }

@@ -23,8 +23,8 @@ export interface PointCloudAppearance {
 }
 
 export const DEFAULT_APPEARANCE: PointCloudAppearance = {
-  pointBudget: 1_000_000,
-  size: 1,
+  pointBudget: 4_000_000,
+  size: 0.1,
   minSize: 2,
   maxSize: 12,
   opacity: 1,

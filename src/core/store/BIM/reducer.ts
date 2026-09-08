@@ -62,6 +62,7 @@ export type BimPayload = {
     ["REMOVE_BCF_TOPIC"]: Pick<BimTypes, "bcfTopicId">;
     ['EDIT_BCF_TOPIC']: Pick<BimTypes, "bcfTopic">;
     ["SET_MODEL_UI_STATE"]: { fileId: number; isVisible?: boolean; isGhost?: boolean };
+    ["SET_POINT_CLOUD_IDS"]: { pointCloudIds: string[] };
     ["SET_BIM_SELECTION"]: Pick<BimTypes, "selection">;
     ["SET_MODEL_IDS"]: Pick<BimTypes, "modelIds">;
     ["TOGGLE_POINT_CLOUD"]: { pointCloudId: string };
@@ -123,6 +124,16 @@ export const BimReducer = (state: BimState, action: BimActions) => {
                 "pointCloudIds": [],
                 "activePointCloudId": null,
             };
+        case "SET_POINT_CLOUD_IDS": {
+            const { pointCloudIds } = action.payload;
+            return {
+                ...state,
+                pointCloudIds,
+                "activePointCloudId": state.activePointCloudId && pointCloudIds.includes(state.activePointCloudId)
+                    ? state.activePointCloudId
+                    : null,
+            };
+        }
         case "TOGGLE_POINT_CLOUD": {
             const { pointCloudId } = action.payload;
             const isOn = state.pointCloudIds.includes(pointCloudId);

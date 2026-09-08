@@ -61,6 +61,13 @@ describe('useBuildingName', () => {
     expect(result.current('11')).toBe('tower')
   })
 
+  it('strips the extension from an unmatched modelId, which fragments keys by file name', () => {
+    const wrapper = withBim(makeState({ multi: [] }))
+    const { result } = renderHook(() => useBuildingName(), { wrapper })
+
+    expect(result.current('Paterson Hall.frag')).toBe('Paterson Hall')
+  })
+
   it('returns the raw modelId when no match is found', () => {
     const wrapper = withBim(makeState({ multi: [] }))
     const { result } = renderHook(() => useBuildingName(), { wrapper })

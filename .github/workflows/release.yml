@@ -11,8 +11,8 @@ name: Release
 # bumps the version in a reviewed release PR (see CLAUDE.md "Releasing core"); everything
 # after the merge is mechanical and happens here.
 #
-# Idempotent: re-running on a commit whose tag already exists is a no-op, so a failed run
-# can be retried safely.
+# Idempotent per artefact: a re-run makes only what is still missing, so a run that failed
+# partway can be retried and will finish the job rather than skip it.
 #
 # ONE-TIME SETUP
 #   1. Authenticate to npm, preferring trusted publishing so no long-lived credential
@@ -60,17 +60,29 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
-      - name: Resolve the version and decide whether to release
+      # Each artefact is checked separately, because a run that fails partway leaves some of
+      # them made and the rest missing -- and gating the whole job on the tag alone made that
+      # state permanent: the tag was pushed, npm was not, and every later run skipped itself.
+      - name: Resolve the version and decide what is missing
         id: gate
         run: |
           VERSION=$(node -p "require('./package.json').version")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
 
-          if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
-            echo "v$VERSION is already tagged; nothing to release."
+          TAGGED=false
+          git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null && TAGGED=true
+          PUBLISHED=false
+          npm view "@collabdt/core@$VERSION" version >/dev/null 2>&1 && PUBLISHED=true
+
+          echo "tagged=$TAGGED" >> "$GITHUB_OUTPUT"
+          echo "published=$PUBLISHED" >> "$GITHUB_OUTPUT"
+
+          if [ "$TAGGED" = true ] && [ "$PUBLISHED" = true ]; then
+            echo "v$VERSION is tagged and published; nothing to release."
             echo "release=false" >> "$GITHUB_OUTPUT"
           else
+            echo "v$VERSION: tagged=$TAGGED published=$PUBLISHED; releasing what is missing."
             echo "release=true" >> "$GITHUB_OUTPUT"
           fi
 
@@ -106,7 +118,7 @@ jobs:
       # The tag comes after the build and tests pass, so a tag always names a version
       # that built. It points at the merge commit on dev, never a feature branch.
       - name: Tag
-        if: steps.gate.outputs.release == 'true'
+        if: steps.gate.outputs.release == 'true' && steps.gate.outputs.tagged != 'true'
         env:
           TAG: ${{ steps.gate.outputs.tag }}
           VERSION: ${{ steps.gate.outputs.version }}
@@ -121,12 +133,23 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.gate.outputs.tag }}
-        run: gh release create "$TAG" --title "$TAG" --notes-file release-notes.md
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "$TAG already has a release; skipping."
+          else
+            gh release create "$TAG" --title "$TAG" --notes-file release-notes.md
+          fi
+
+      # Trusted publishing needs npm 11.5.1+ for OIDC; node 22 ships npm 10, which can only
+      # authenticate with a token -- and failed ENEEDAUTH with no NPM_TOKEN secret set.
+      - name: Upgrade npm so trusted publishing works
+        if: steps.gate.outputs.release == 'true' && steps.gate.outputs.published != 'true'
+        run: npm install -g npm@latest
 
       # Guarded separately: a version already on the registry can never be replaced, and
       # a re-run after a partial failure must not abort on it.
       - name: Publish to npm
-        if: steps.gate.outputs.release == 'true'
+        if: steps.gate.outputs.release == 'true' && steps.gate.outputs.published != 'true'
         env:
           VERSION: ${{ steps.gate.outputs.version }}
         run: |

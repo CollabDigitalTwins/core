@@ -6,7 +6,8 @@ import * as THREE from 'three'
 // `Material.dispose` does not cascade to the maps it references, so walk them first.
 function disposeMaterial(material: THREE.Material) {
   for (const value of Object.values(material)) {
-    if (value instanceof THREE.Texture) value.dispose()
+    const texture = value as THREE.Texture | null
+    if (texture?.isTexture) texture.dispose()
   }
   material.dispose()
 }

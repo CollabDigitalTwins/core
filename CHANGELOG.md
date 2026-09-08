@@ -7,95 +7,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
-### Added
-- **Files carry their own scene membership.** `isVisible` on a file record now decides whether the
-  BIM viewer loads it, and the sidebar's Hide/Show entry persists the choice. A building with ten
-  models can keep the architectural and structural ones in the scene and leave the eight
-  superseded versions listed but unloaded, and the choice survives a reload.
-- `useUpdateFile` in the file hooks: `updateFileById(id, patch)` for lists where any row can
-  mutate, which `useFile`'s single-id mutation key cannot express.
-- `useFileVisibility(buildingId)` — `setVisible` and `setVisibleMany`, which write the
-  `filesByBuilding` cache optimistically so the viewer's load effects see the new value in the
-  same tick, and roll back if the request fails.
-- `shouldPersistVisibility` on `useFileActions`, a predicate so a section can opt its rows in. It
-  is off by default: for an IDS run or a BCF import `view` means "apply", not "in the scene".
-- `LoadModels.unload(modelId)`, and `load` now returns the model it loaded. Both go through a
-  per-model queue, so a load that follows a dispose waits for it instead of seeing the outgoing
-  model and skipping its own work.
-- `SET_POINT_CLOUD_IDS` on the BIM store, to seed the list from the file records. `TOGGLE_POINT_CLOUD`
-  is not idempotent, so a seed that ran twice would have switched every cloud back off.
-- `SpatialStructure.forgetModel`, which drops a model's tree but keeps its cached copy, so a model
-  switched back on does not rebuild one it already has.
-- `dropsAtOrigin` in `Placement/placementCapabilities`, naming the files whose coordinates
-  are already surveyed — IFC, fragments and point clouds. Adding one of these no longer arms
-  the crosshair: it uploads at the model origin, since asking where to put a survey of the
-  building is meaningless.
-- IFC conversion reports real progress. `IfcToFragments.loadFromFile` and
-  `convertIfcToFragmentsFile` take an optional `onProgress(fraction)`, fed by the importer's
-  own `progressCallback`, and the upload toast now counts up instead of sitting silent for
-  the minutes a large IFC takes. `onLoadingStateChanged` carries an optional `progress`.
-- `useFileUploadHandler` i18n namespace gained `convertingIfc` and `uploadingConverted`.
-- Adding an IFC through the add-to-BIM toolbar now converts it to fragments first, as the
-  sidebar's Models upload already did. That path previously stored the raw `.ifc`, which
-  `LoadModels` cannot read, so the file uploaded but never appeared.
-
-### Changed
-- The spatial structure no longer opens on a bare `IFCBUILDING`. A building that carries no name
-  and wraps a single child is dropped from the tree, so the level with the real building name
-  leads. A named building, or a nameless one grouping several storeys, is kept — that level still
-  says something.
-- Floorplans and Elevations take an IFC-file filter, shown next to the drawing count, so the levels
-  of several files loaded for the same building no longer read as one list. The two views share the
-  selection, and the control appears only once more than one file is loaded. New
-  `ViewSection.allIfcFiles` i18n key.
-- Switching building now clears placed objects and point clouds along with the models. Only the
-  fragments were disposed before, so a GLB or DXF from the previous building stayed in the scene,
-  and the sidebar's own cleanup could not be relied on because it unmounts with the panel.
-- The spatial-tree cache key moved to `v3`, since `v2` entries hold the wrapper level that is now
-  dropped.
-- A BIM scene loads only the files whose `isVisible` is `true`. `false` and `null` do not load, and
-  a building whose models are all switched off now opens as an empty scene rather than showing the
-  "no BIM files" upload prompt.
-- Hiding a BIM model unloads it rather than making it invisible, so its spatial tree, IFC classes,
-  floorplans and elevations go with it, and its bounds stop inflating the shadow framing and camera
-  fit. Switching it back on reloads it at its stored placement without reframing the camera.
-- A double-click that hits no geometry now places the file at the world origin rather than
-  doing nothing. In the add-to-BIM flow the ground-plane fallback still applies whenever
-  there is a model to miss; with an empty scene the click carries no position at all.
-- Selecting a building now writes `zoom=18` alongside `lat`/`lng` in the URL, so switching
-  to the map viewer opens framed on that building instead of at the organization's default
-  zoom. The zoom is cleared, like the coordinates, for a building with no location.
-
-### Fixed
-- Removing a 3D model no longer leaks GPU memory. `ModelManager.remove` detached the model and
-  freed nothing, and `disposeObject3D` freed geometry and materials but not the textures they
-  reference, which `Material.dispose` does not cascade to. Both now free geometry, materials and
-  every texture, and the animation mixer's root is uncached. `disposeThreeScene` shares the one
-  implementation instead of keeping a second copy.
-- The viewport menu now opens on an animated model. `SkinnedMesh.raycast` tests a bounding
-  sphere three computes once and never refreshes, so a playing model drifted out of the sphere
-  cached at its first pick and every later right-click missed it. `pickSceneObject` recomputes
-  the skinned bounds before casting; a still `Mesh` was never affected, which is why only
-  animated models were unpickable.
-- A BIM file uploaded into an open viewer now appears in the scene without a reload.
-  `nextBimViewerState` returns null once `hasLoadedModels` is set, so the one effect that
-  loaded models never ran again and a newly uploaded IFC sat in the sidebar unloaded.
-  `BimLoadingState` now loads any file the fragments list does not already hold, separately
-  from the first-batch state machine so the loading card does not reopen over a scene in use.
-- The animation card can be opened for a model added in the current session. `ModelManager`
-  gained the `rekey` that `AddDxf` already had, so a model uploaded through add-to-BIM moves
-  from its temporary id to its file id. Without it `getClips` looked up the file id, found
-  nothing, and the menu offered no animate action until the page was reloaded.
-
-### Migration
-- `isVisible` defaults to `false`, and no backfill ships with this release, so a database written
-  before it has every file at `false` or `null` and those BIM scenes will open empty. Switch the
-  models on from the sidebar, or set the flag for the records that should load:
-  `UPDATE "File" SET "isVisible" = true WHERE extension IN ('ifc', 'frag');`
-- A consumer reading `file.isVisible` should compare with `=== true`. `!== false` now reads a
-  never-set flag as visible, which no longer matches what the viewer loads.
-
-## [0.9.0] - 2026-09-02
+## [0.9.0] - 2026-09-08
 
 Consolidates the work previously tagged locally as 0.9.0 through 0.11.1. Those tags were
 never pushed and never published, so they were collapsed into this single release.
@@ -135,12 +47,67 @@ range keeps a consumer on 0.8.x until they opt in.
   `useViewportContextMenu` and per-kind targets under `targets/` — replaces the separate
   per-kind placement UIs. `PlacementActionsCard` is its entry point in the files manager.
 - `DbFile` gained `bimRotation`, `pointCloudTransform` and `scale`.
+- **Files carry their own scene membership.** `isVisible` on a file record now decides whether the
+  BIM viewer loads it, and the sidebar's Hide/Show entry persists the choice. A building with ten
+  models can keep the architectural and structural ones in the scene and leave the eight
+  superseded versions listed but unloaded, and the choice survives a reload.
+- `useUpdateFile` in the file hooks: `updateFileById(id, patch)` for lists where any row can
+  mutate, which `useFile`'s single-id mutation key cannot express.
+- `useFileVisibility(buildingId)` — `setVisible` and `setVisibleMany`, which write the
+  `filesByBuilding` cache optimistically so the viewer's load effects see the new value in the
+  same tick, and roll back if the request fails.
+- `shouldPersistVisibility` on `useFileActions`, a predicate so a section can opt its rows in. It
+  is off by default: for an IDS run or a BCF import `view` means "apply", not "in the scene".
+- `LoadModels.unload(modelId)`, and `load` now returns the model it loaded. Both go through a
+  per-model queue, so a load that follows a dispose waits for it instead of seeing the outgoing
+  model and skipping its own work.
+- `SET_POINT_CLOUD_IDS` on the BIM store, to seed the list from the file records. `TOGGLE_POINT_CLOUD`
+  is not idempotent, so a seed that ran twice would have switched every cloud back off.
+- `SpatialStructure.forgetModel`, which drops a model's tree but keeps its cached copy, so a model
+  switched back on does not rebuild one it already has.
+- `dropsAtOrigin` in `Placement/placementCapabilities`, naming the files whose coordinates
+  are already surveyed — IFC, fragments and point clouds. Adding one of these no longer arms
+  the crosshair: it uploads at the model origin, since asking where to put a survey of the
+  building is meaningless.
+- IFC conversion reports real progress. `IfcToFragments.loadFromFile` and
+  `convertIfcToFragmentsFile` take an optional `onProgress(fraction)`, fed by the importer's
+  own `progressCallback`, and the upload toast now counts up instead of sitting silent for
+  the minutes a large IFC takes. `onLoadingStateChanged` carries an optional `progress`.
+- `useFileUploadHandler` i18n namespace gained `convertingIfc` and `uploadingConverted`.
+- Adding an IFC through the add-to-BIM toolbar now converts it to fragments first, as the
+  sidebar's Models upload already did. That path previously stored the raw `.ifc`, which
+  `LoadModels` cannot read, so the file uploaded but never appeared.
 
 ### Changed
 - The DXF loader restores depth state after drawing (`restoreDepthState`), and
   `disposeObject3D`, `needsMarker` and `sceneContent` factor out scene bookkeeping that
   was inline in the viewer.
 - Point cloud defaults changed for use inside a BIM scene.
+- The spatial structure no longer opens on a bare `IFCBUILDING`. A building that carries no name
+  and wraps a single child is dropped from the tree, so the level with the real building name
+  leads. A named building, or a nameless one grouping several storeys, is kept — that level still
+  says something.
+- Floorplans and Elevations take an IFC-file filter, shown next to the drawing count, so the levels
+  of several files loaded for the same building no longer read as one list. The two views share the
+  selection, and the control appears only once more than one file is loaded. New
+  `ViewSection.allIfcFiles` i18n key.
+- Switching building now clears placed objects and point clouds along with the models. Only the
+  fragments were disposed before, so a GLB or DXF from the previous building stayed in the scene,
+  and the sidebar's own cleanup could not be relied on because it unmounts with the panel.
+- The spatial-tree cache key moved to `v3`, since `v2` entries hold the wrapper level that is now
+  dropped.
+- A BIM scene loads only the files whose `isVisible` is `true`. `false` and `null` do not load, and
+  a building whose models are all switched off now opens as an empty scene rather than showing the
+  "no BIM files" upload prompt.
+- Hiding a BIM model unloads it rather than making it invisible, so its spatial tree, IFC classes,
+  floorplans and elevations go with it, and its bounds stop inflating the shadow framing and camera
+  fit. Switching it back on reloads it at its stored placement without reframing the camera.
+- A double-click that hits no geometry now places the file at the world origin rather than
+  doing nothing. In the add-to-BIM flow the ground-plane fallback still applies whenever
+  there is a model to miss; with an empty scene the click carries no position at all.
+- Selecting a building now writes `zoom=18` alongside `lat`/`lng` in the URL, so switching
+  to the map viewer opens framed on that building instead of at the organization's default
+  zoom. The zoom is cleared, like the coordinates, for a building with no location.
 
 ### Fixed
 - **Restored the whole of 0.8.2, which no release since had carried.** 0.9.0 was tagged on a
@@ -151,11 +118,38 @@ range keeps a consumer on 0.8.x until they opt in.
   `MapTilerKeyNotice` explains the degraded state on screen, and `SUBDIVISION_LINE_WIDTH` is
   again a single zoom ramp branching on hover in its outputs rather than a nested zoom curve
   MapLibre rejects.
+- Removing a 3D model no longer leaks GPU memory. `ModelManager.remove` detached the model and
+  freed nothing, and `disposeObject3D` freed geometry and materials but not the textures they
+  reference, which `Material.dispose` does not cascade to. Both now free geometry, materials and
+  every texture, and the animation mixer's root is uncached. `disposeThreeScene` shares the one
+  implementation instead of keeping a second copy.
+- The viewport menu now opens on an animated model. `SkinnedMesh.raycast` tests a bounding
+  sphere three computes once and never refreshes, so a playing model drifted out of the sphere
+  cached at its first pick and every later right-click missed it. `pickSceneObject` recomputes
+  the skinned bounds before casting; a still `Mesh` was never affected, which is why only
+  animated models were unpickable.
+- A BIM file uploaded into an open viewer now appears in the scene without a reload.
+  `nextBimViewerState` returns null once `hasLoadedModels` is set, so the one effect that
+  loaded models never ran again and a newly uploaded IFC sat in the sidebar unloaded.
+  `BimLoadingState` now loads any file the fragments list does not already hold, separately
+  from the first-batch state machine so the loading card does not reopen over a scene in use.
+- The animation card can be opened for a model added in the current session. `ModelManager`
+  gained the `rekey` that `AddDxf` already had, so a model uploaded through add-to-BIM moves
+  from its temporary id to its file id. Without it `getClips` looked up the file id, found
+  nothing, and the menu offered no animate action until the page was reloaded.
 
 ### Removed
 - The standalone point cloud alignment tool — `AlignPointCloudTool`,
   `AlignPointCloudPanel`, `PointCloudAlignment`, `useBimPointCloudAlignment` — and
   `Position3DCard`. Both are superseded by the placement editor.
+
+### Migration
+- `isVisible` defaults to `false`, and no backfill ships with this release, so a database written
+  before it has every file at `false` or `null` and those BIM scenes will open empty. Switch the
+  models on from the sidebar, or set the flag for the records that should load:
+  `UPDATE "File" SET "isVisible" = true WHERE extension IN ('ifc', 'frag');`
+- A consumer reading `file.isVisible` should compare with `=== true`. `!== false` now reads a
+  never-set flag as visible, which no longer matches what the viewer loads.
 
 ## [0.8.2] - 2026-08-26
 

@@ -8,6 +8,7 @@ import type { DbFile } from '../../../../../types/dbTypes'
 
 const POINT_CLOUD = new Set(['laz', 'las'])
 const SCALABLE_OBJECT = new Set(['glb', 'gltf', 'fbx', 'obj', '3ds', 'dae', 'ply', 'stl', 'dxf'])
+const SURVEYED = new Set([...POINT_CLOUD, 'ifc', 'frag'])
 
 /**
  * What a file's placement is allowed to change, decided in one place so the card, the viewport
@@ -19,4 +20,9 @@ export function capabilitiesForFile(file: Pick<DbFile, 'extension'>): PlacementC
   if (POINT_CLOUD.has(extension)) return FULL_PLACEMENT
   if (SCALABLE_OBJECT.has(extension)) return SCALABLE_OBJECT_PLACEMENT
   return YAW_ONLY_PLACEMENT
+}
+
+/** A survey of the whole building already carries its own coordinates, so picking a spot for it is meaningless. */
+export function dropsAtOrigin(file: Pick<DbFile, 'extension'>): boolean {
+  return SURVEYED.has(file.extension?.toLowerCase() ?? '')
 }

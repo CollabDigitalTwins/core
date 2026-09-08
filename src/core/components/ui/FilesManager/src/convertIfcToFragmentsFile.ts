@@ -6,17 +6,16 @@ import * as OBC from '@thatopen/components'
 import { IfcToFragments } from '../../../viewers/bim/src/IfcToFragments'
 
 /**
- * Convert an IFC file to a fragments .frag file. The returned File is a
- * `(baseName)(ifc).frag` blob ready to upload via `performUploadFile`.
- *
- * Lazy: this module brings in `@thatopen/components`, `@thatopen/fragments`,
- * and the `web-ifc` WASM bootstrap, so it is intentionally not imported
- * statically by any UI code.
+ * Converts an IFC to a `(baseName)(ifc).frag` File; `onProgress` reports a 0-1 fraction.
+ * Pulls in the web-ifc WASM bootstrap, so this module must only be imported dynamically.
  */
-export async function convertIfcToFragmentsFile(file: File): Promise<File> {
+export async function convertIfcToFragmentsFile(
+  file: File,
+  onProgress?: (progress: number) => void,
+): Promise<File> {
   const bimComponents = new OBC.Components()
   const converter = bimComponents.get(IfcToFragments)
-  const fragmentBytes = await converter.loadFromFile(file)
+  const fragmentBytes = await converter.loadFromFile(file, onProgress)
 
   // Convert Uint8Array to ArrayBuffer slice to satisfy Blob typing.
   const arrayBuffer = (fragmentBytes.buffer as ArrayBuffer).slice(

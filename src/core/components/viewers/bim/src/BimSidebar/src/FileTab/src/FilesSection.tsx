@@ -372,25 +372,24 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
         dom: world.renderer!.three.domElement!,
       })
 
-      if (result?.point && (result.point.x !== 0 || result.point.y !== 0 || result.point.z !== 0)) {
-        const { x, y, z } = result.point
-        setMoveFileId(placingFile.id)
-        // Save coordinates to DB
-        setTimeout(() => {
-          updateFileRef.current({ x, y, z } as any)
-            .catch((err: unknown) => console.error(`Failed to save placement for "${placingFile.name}":`, err))
-        }, 50)
-        if (is3DFile(placingFile.extension)) {
-          void toggleModelVisibility(placingFile, true, new THREE.Vector3(x, y, z))
-        }
-        // Update local state so it shows as placed and visible
-        placingFile.x = x
-        placingFile.y = y
-        placingFile.z = z
-        setLocalFiles(prev => prev.map(f => f.id === placingFile.id ? { ...f, x, y, z, isVisible: true } : f))
-        setPlacingFile(null)
-        if (cursor) cursor.cursor = ''
+      // A click that hit nothing carries no position, so the object lands at the origin.
+      const { x, y, z } = result?.point ?? new THREE.Vector3()
+      setMoveFileId(placingFile.id)
+      // Save coordinates to DB
+      setTimeout(() => {
+        updateFileRef.current({ x, y, z } as any)
+          .catch((err: unknown) => console.error(`Failed to save placement for "${placingFile.name}":`, err))
+      }, 50)
+      if (is3DFile(placingFile.extension)) {
+        void toggleModelVisibility(placingFile, true, new THREE.Vector3(x, y, z))
       }
+      // Update local state so it shows as placed and visible
+      placingFile.x = x
+      placingFile.y = y
+      placingFile.z = z
+      setLocalFiles(prev => prev.map(f => f.id === placingFile.id ? { ...f, x, y, z, isVisible: true } : f))
+      setPlacingFile(null)
+      if (cursor) cursor.cursor = ''
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {

@@ -1964,7 +1964,9 @@
     "noBuildingId": "No hay ID de edificio disponible",
     "uploadSuccess": "{count, plural, one {# archivo subido con éxito} other {# archivos subidos con éxito}}",
     "uploadError": "Error al subir el archivo:",
-    "unknownError": "Ocurrió un error desconocido"
+    "unknownError": "Ocurrió un error desconocido",
+    "convertingIfc": "Convirtiendo \"{name}\" a fragmentos… {percent}%",
+    "uploadingConverted": "Subiendo \"{name}\"…"
   },
   "BuildingSensors": {
     "average": "promedio",

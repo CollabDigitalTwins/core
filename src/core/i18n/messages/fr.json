@@ -1964,7 +1964,9 @@
     "noBuildingId": "Aucun ID de bâtiment disponible",
     "uploadSuccess": "{count, plural, one {# fichier téléversé avec succès} other {# fichiers téléversés avec succès}}",
     "uploadError": "Erreur lors du téléversement du fichier :",
-    "unknownError": "Erreur inconnue s'est produite"
+    "unknownError": "Erreur inconnue s'est produite",
+    "convertingIfc": "Conversion de « {name} » en fragments… {percent} %",
+    "uploadingConverted": "Téléversement de « {name} »…"
   },
   "BuildingSensors": {
     "average": "moyenne",

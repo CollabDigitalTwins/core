@@ -7,10 +7,43 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Added
+- `dropsAtOrigin` in `Placement/placementCapabilities`, naming the files whose coordinates
+  are already surveyed — IFC, fragments and point clouds. Adding one of these no longer arms
+  the crosshair: it uploads at the model origin, since asking where to put a survey of the
+  building is meaningless.
+- IFC conversion reports real progress. `IfcToFragments.loadFromFile` and
+  `convertIfcToFragmentsFile` take an optional `onProgress(fraction)`, fed by the importer's
+  own `progressCallback`, and the upload toast now counts up instead of sitting silent for
+  the minutes a large IFC takes. `onLoadingStateChanged` carries an optional `progress`.
+- `useFileUploadHandler` i18n namespace gained `convertingIfc` and `uploadingConverted`.
+- Adding an IFC through the add-to-BIM toolbar now converts it to fragments first, as the
+  sidebar's Models upload already did. That path previously stored the raw `.ifc`, which
+  `LoadModels` cannot read, so the file uploaded but never appeared.
+
 ### Changed
+- A double-click that hits no geometry now places the file at the world origin rather than
+  doing nothing. In the add-to-BIM flow the ground-plane fallback still applies whenever
+  there is a model to miss; with an empty scene the click carries no position at all.
 - Selecting a building now writes `zoom=18` alongside `lat`/`lng` in the URL, so switching
   to the map viewer opens framed on that building instead of at the organization's default
   zoom. The zoom is cleared, like the coordinates, for a building with no location.
+
+### Fixed
+- The viewport menu now opens on an animated model. `SkinnedMesh.raycast` tests a bounding
+  sphere three computes once and never refreshes, so a playing model drifted out of the sphere
+  cached at its first pick and every later right-click missed it. `pickSceneObject` recomputes
+  the skinned bounds before casting; a still `Mesh` was never affected, which is why only
+  animated models were unpickable.
+- A BIM file uploaded into an open viewer now appears in the scene without a reload.
+  `nextBimViewerState` returns null once `hasLoadedModels` is set, so the one effect that
+  loaded models never ran again and a newly uploaded IFC sat in the sidebar unloaded.
+  `BimLoadingState` now loads any file the fragments list does not already hold, separately
+  from the first-batch state machine so the loading card does not reopen over a scene in use.
+- The animation card can be opened for a model added in the current session. `ModelManager`
+  gained the `rekey` that `AddDxf` already had, so a model uploaded through add-to-BIM moves
+  from its temporary id to its file id. Without it `getClips` looked up the file id, found
+  nothing, and the menu offered no animate action until the page was reloaded.
 
 ## [0.9.0] - 2026-09-02
 

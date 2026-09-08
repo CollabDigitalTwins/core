@@ -1967,7 +1967,9 @@
     "noBuildingId": "No building ID available",
     "uploadSuccess": "{count, plural, one {# file uploaded successfully} other {# files uploaded successfully}}",
     "uploadError": "Error uploading file:",
-    "unknownError": "Unknown error occurred"
+    "unknownError": "Unknown error occurred",
+    "convertingIfc": "Converting \"{name}\" to fragments… {percent}%",
+    "uploadingConverted": "Uploading \"{name}\"…"
   },
   "BuildingSensors": {
     "average": "average",

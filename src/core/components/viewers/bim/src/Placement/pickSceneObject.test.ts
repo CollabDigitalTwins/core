@@ -29,6 +29,30 @@ function drawingRoot(): THREE.Object3D {
   return group
 }
 
+// A rigged GLB arrives as a SkinnedMesh whose vertices follow its bones, not its own transform.
+function animatedRoot(): { root: THREE.Object3D; poseAt: (x: number, z: number) => void } {
+  const geometry = new THREE.BoxGeometry(1, 1, 1)
+  const count = geometry.attributes.position.count
+  geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(new Uint16Array(count * 4), 4))
+  geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute(
+    Float32Array.from({ length: count * 4 }, (_, i) => (i % 4 === 0 ? 1 : 0)), 4))
+
+  const bone = new THREE.Bone()
+  const mesh = new THREE.SkinnedMesh(geometry, new THREE.MeshBasicMaterial())
+  const root = new THREE.Group()
+  root.add(bone)
+  root.add(mesh)
+  mesh.bind(new THREE.Skeleton([bone]))
+
+  const poseAt = (x: number, z: number) => {
+    bone.position.set(x, 0, z)
+    root.updateMatrixWorld(true)
+    mesh.skeleton.update()
+  }
+  poseAt(0, 0)
+  return { root, poseAt }
+}
+
 function rayDownAt(x: number, z: number): THREE.Raycaster {
   const raycaster = new THREE.Raycaster(
     new THREE.Vector3(x, 10, z),
@@ -89,5 +113,19 @@ describe('pickSceneObject', () => {
     registry.add({ key: '4', fileId: '4', kind: 'model', root: high })
 
     expect(pickSceneObject(registry.list(), rayDownAt(0, 0))?.fileId).toBe('4')
+  })
+
+  it('picks an animated model where its bones have moved it, not where it was bound', () => {
+    const registry = makeRegistry()
+    const { root, poseAt } = animatedRoot()
+    registry.add({ key: '5', fileId: '5', kind: 'model', root })
+
+    // The first pick is what caches the skinned bounding sphere at the pose of that moment.
+    poseAt(40, 40)
+    expect(pickSceneObject(registry.list(), rayDownAt(40, 40))?.fileId).toBe('5')
+
+    poseAt(0, 0)
+    expect(pickSceneObject(registry.list(), rayDownAt(0, 0))?.fileId).toBe('5')
+    expect(pickSceneObject(registry.list(), rayDownAt(40, 40))).toBeNull()
   })
 })

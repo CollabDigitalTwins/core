@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { useTranslations } from "next-intl"
 import * as React from "react"
 import { toast } from "sonner"
 import * as THREE from "three"
@@ -11,6 +12,7 @@ import { getFileExtension } from "../../../../../../../utils/utils"
 import { Cursor } from "../../../Cursor"
 import { Highlighter } from "../../../Highlighter"
 import { ModelManager } from "../../../ModelManager"
+import { dropsAtOrigin } from "../../../Placement/placementCapabilities"
 import { BimSceneObjects } from "../../../SceneObjects"
 
 
@@ -63,6 +65,7 @@ export function useFilePlacement(
   uploadFileToDB?: (args: { fileData: any; buildingId: number }) => Promise<any>,
   onMarkerAction?: (id: string, action: FileMarkerAction) => void,
 ) {
+  const t = useTranslations("useFileUploadHandler")
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
   const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 })
   const [isPlacingFile, setIsPlacingFile] = React.useState(false)
@@ -125,46 +128,6 @@ export function useFilePlacement(
     return closest
   }, [fragments, highlighter])
 
-  const processFileObject = React.useCallback((file: File, addingMode: BimToolbarToolsType) => {
-    const fileName = file.name.toLowerCase()
-
-    if (addingMode === "bim-add-cad") {
-      if (!fileName.endsWith(".dxf")) {
-        toast.error("Please select a valid CAD file (.dxf)")
-        return
-      }
-      setShow3DScaleCard(true)
-      setCurrent3DFileType("dxf")
-      setFileScale(0.001)
-    } else if (addingMode === "bim-add-file") {
-      if (fileName.endsWith(".glb") || fileName.endsWith(".gltf")) {
-        setShow3DScaleCard(true)
-        setCurrent3DFileType("model")
-        setFileScale(1)
-      } else if (fileName.endsWith(".dxf")) {
-        setShow3DScaleCard(true)
-        setCurrent3DFileType("dxf")
-        setFileScale(0.001)
-      }
-    }
-
-    setSelectedFile(file)
-    setIsPlacingFile(true)
-    setCursor("crosshair")
-    toast.info(`Double-click in the scene to place: "${file.name}"`, {
-      id: 'place-bim-file-toast',
-      duration: Infinity,
-    })
-  }, [setCursor])
-
-  const handleFileSelect = React.useCallback((event: React.ChangeEvent<HTMLInputElement>, addingMode: BimToolbarToolsType) => {
-    const file = event.target.files?.[0]
-    if (file) processFileObject(file, addingMode)
-  }, [processFileObject])
-
-  const handleFileDrop = React.useCallback((file: File, addingMode: BimToolbarToolsType) => {
-    processFileObject(file, addingMode)
-  }, [processFileObject])
 
   const cancelPlacement = React.useCallback(() => {
     setSelectedFile(null)
@@ -232,6 +195,73 @@ export function useFilePlacement(
     }
   }, [uploadFileToDB, buildingId])
 
+  // Only .frag renders, so an IFC is converted here exactly as the sidebar's upload does.
+  const uploadSurveyedFile = React.useCallback(async (file: File) => {
+    const toastId = `add-to-bim-${file.name}`
+    try {
+      let toUpload = file
+      if (getFileExtension(file)?.toLowerCase() === "ifc") {
+        const { convertIfcToFragmentsFile } = await import("../../../../../../ui/FilesManager/src/convertIfcToFragmentsFile")
+        toast.loading(t("convertingIfc", { name: file.name, percent: 0 }), { id: toastId })
+        toUpload = await convertIfcToFragmentsFile(file, (progress) => {
+          toast.loading(t("convertingIfc", { name: file.name, percent: Math.round(progress * 100) }), { id: toastId })
+        })
+      }
+
+      toast.loading(t("uploadingConverted", { name: file.name }), { id: toastId })
+      await uploadPlacedFile(toUpload, new THREE.Vector3())
+    } finally {
+      toast.dismiss(toastId)
+    }
+  }, [t, uploadPlacedFile])
+
+  const processFileObject = React.useCallback((file: File, addingMode: BimToolbarToolsType) => {
+    const fileName = file.name.toLowerCase()
+
+    if (addingMode === "bim-add-cad") {
+      if (!fileName.endsWith(".dxf")) {
+        toast.error("Please select a valid CAD file (.dxf)")
+        return
+      }
+      setShow3DScaleCard(true)
+      setCurrent3DFileType("dxf")
+      setFileScale(0.001)
+    } else if (addingMode === "bim-add-file") {
+      // A survey is already in building coordinates, so it is uploaded there rather than pointed at.
+      if (dropsAtOrigin({ extension: getFileExtension(file) })) {
+        void uploadSurveyedFile(file)
+        cancelPlacement()
+        return
+      }
+      if (fileName.endsWith(".glb") || fileName.endsWith(".gltf")) {
+        setShow3DScaleCard(true)
+        setCurrent3DFileType("model")
+        setFileScale(1)
+      } else if (fileName.endsWith(".dxf")) {
+        setShow3DScaleCard(true)
+        setCurrent3DFileType("dxf")
+        setFileScale(0.001)
+      }
+    }
+
+    setSelectedFile(file)
+    setIsPlacingFile(true)
+    setCursor("crosshair")
+    toast.info(`Double-click in the scene to place: "${file.name}"`, {
+      id: 'place-bim-file-toast',
+      duration: Infinity,
+    })
+  }, [setCursor, uploadSurveyedFile, cancelPlacement])
+
+  const handleFileSelect = React.useCallback((event: React.ChangeEvent<HTMLInputElement>, addingMode: BimToolbarToolsType) => {
+    const file = event.target.files?.[0]
+    if (file) processFileObject(file, addingMode)
+  }, [processFileObject])
+
+  const handleFileDrop = React.useCallback((file: File, addingMode: BimToolbarToolsType) => {
+    processFileObject(file, addingMode)
+  }, [processFileObject])
+
   React.useEffect(() => {
     if (!selectedFile || !bimComponents || !world || !isPlacingFile) return
 
@@ -249,10 +279,11 @@ export function useFilePlacement(
       mouse.y = e.clientY
 
       const modelHit = await raycast({ camera: world.camera.three, mouse, dom: canvas })
-      const point = modelHit?.point
-        ? modelHit.point.clone()
-        : pointOnGroundPlane(world.camera.three, canvas, e.clientX, e.clientY)
-      if (!point) return
+      // Nothing to aim at means the click carries no position, so the file lands at the origin.
+      const hasGeometry = (fragments?.core.models.list.size ?? 0) > 0
+      const point = modelHit?.point?.clone()
+        ?? (hasGeometry ? pointOnGroundPlane(world.camera.three, canvas, e.clientX, e.clientY) : null)
+        ?? new THREE.Vector3()
 
       const addedFile: AddedFile = {
         id: Date.now().toString(),
@@ -309,7 +340,7 @@ export function useFilePlacement(
       document.removeEventListener("mousemove", handleMouseMove)
       document.removeEventListener("dblclick", onDblClick)
     }
-  }, [selectedFile, bimComponents, world, isPlacingFile, fileScale, fileRotation, modelManager, addDxf, toolsDispatch, raycast, cancelPlacement, setCursor, uploadPlacedFile, onMarkerAction, registry, discardPlacement])
+  }, [selectedFile, bimComponents, world, isPlacingFile, fileScale, fileRotation, modelManager, addDxf, toolsDispatch, raycast, fragments, cancelPlacement, setCursor, uploadPlacedFile, onMarkerAction, registry, discardPlacement])
 
   const confirmPlacement = React.useCallback(() => {
     if (!current3DFileId) return
@@ -340,6 +371,7 @@ export function useFilePlacement(
         if (!created?.id) { discardPlacement(placedId); return }
         // The sidebar owns the object from here; until it is keyed by file id it cannot.
         if (kind === 'dxf') addDxf?.rekey(placedId, String(created.id))
+        else modelManager?.rekey(placedId, String(created.id))
         registry?.rekey(placedId, String(created.id))
         placedFilesRef.current.delete(placedId)
       })

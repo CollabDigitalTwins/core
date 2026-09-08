@@ -73,18 +73,26 @@ export function useFileUploadHandler({
 
       if (ext === 'ifc') {
         const { convertIfcToFragmentsFile } = await import('./convertIfcToFragmentsFile')
-        const fragFile = await convertIfcToFragmentsFile(file)
+        const convertToastId = `ifc-convert-${file.name}`
+        try {
+          toast.loading(t('convertingIfc', { name: file.name, percent: 0 }), { id: convertToastId })
+          const fragFile = await convertIfcToFragmentsFile(file, (progress) => {
+            toast.loading(t('convertingIfc', { name: file.name, percent: Math.round(progress * 100) }), { id: convertToastId })
+          })
 
-        await performUploadFile({
-          // files: [file, fragFile], // Upload both IFC and fragments
-          files: [fragFile], // Upload only fragments
-          buildingId: buildingId || 0,
-          tag,
-          isVisible,
-          user,
-          uploadFile,
-          position: { ...position },
-        })
+          toast.loading(t('uploadingConverted', { name: file.name }), { id: convertToastId })
+          await performUploadFile({
+            files: [fragFile], // Upload only fragments
+            buildingId: buildingId || 0,
+            tag,
+            isVisible,
+            user,
+            uploadFile,
+            position: { ...position },
+          })
+        } finally {
+          toast.dismiss(convertToastId)
+        }
 
         const successMsg = customMessages?.success || t('uploadSuccess', { count: 2 })
         toast.success(successMsg)

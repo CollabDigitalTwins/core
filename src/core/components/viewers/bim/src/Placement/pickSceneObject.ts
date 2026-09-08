@@ -21,6 +21,7 @@ export function pickSceneObject(
 
     // The renderer draws on demand, so nothing else guarantees the world matrix is current.
     entry.root.updateMatrixWorld(true)
+    refreshSkinnedBounds(entry.root)
 
     const hit = raycaster.intersectObject(entry.root, true)[0]
     if (!hit) continue
@@ -30,4 +31,12 @@ export function pickSceneObject(
   }
 
   return nearest
+}
+
+// three caches a skinned mesh's bounding sphere at its first raycast, so an animated one drifts out of it.
+function refreshSkinnedBounds(root: THREE.Object3D): void {
+  root.traverse((child) => {
+    const skinned = child as THREE.SkinnedMesh
+    if (skinned.isSkinnedMesh) skinned.computeBoundingSphere()
+  })
 }

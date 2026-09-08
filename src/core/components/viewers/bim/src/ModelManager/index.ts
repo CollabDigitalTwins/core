@@ -352,6 +352,18 @@ export class ModelManager extends OBC.Component {
   }
 
   /** Clip names in the order the file declares them, empty for a model with no animation. */
+  /** Re-keys a model once its file record exists, so clips and animation resolve by file id. */
+  rekey(id: string, fileId: string): boolean {
+    const modelInfo = this._models.get(id)
+    if (!modelInfo || id === fileId) return false
+
+    this._models.delete(id)
+    modelInfo.id = fileId;
+    (modelInfo.model as any).modelId = fileId
+    this._models.set(fileId, modelInfo)
+    return true
+  }
+
   getClips(id: string): string[] {
     return this._models.get(id)?.clips.map((clip, index) => clip.name || `Clip ${index + 1}`) ?? []
   }

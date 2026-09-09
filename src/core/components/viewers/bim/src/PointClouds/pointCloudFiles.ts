@@ -3,14 +3,20 @@
 
 import type { DbFile } from '../../../../../types/dbTypes'
 
-export const POINT_CLOUD_EXTENSIONS = ['las', 'laz', 'e57'] as const
+export const POINT_CLOUD_EXTENSIONS = ['las', 'laz', 'copc', 'e57'] as const
 
-/** For a file input's `accept`; the same list the section validates against. */
-export const POINT_CLOUD_ACCEPT = POINT_CLOUD_EXTENSIONS.map((ext) => `.${ext}`).join(',')
+/** For a file input's `accept`. `.copc.laz` is listed because that is the conventional name. */
+export const POINT_CLOUD_ACCEPT = '.las,.laz,.copc,.copc.laz,.e57'
 
 const POINT_CLOUD_TYPE = 'point-cloud-file'
 
-const EXTENSION_SUFFIX = new RegExp(`\.(${POINT_CLOUD_EXTENSIONS.join('|')})$`, 'i')
+const EXTENSION_SUFFIX = /\.(copc\.laz|las|laz|copc|e57)$/i
+
+/** A COPC file is a LAZ 1.4 file, and PotreeConverter is laszip-only. */
+export function normalizePointCloudFormat(extension: string): string {
+  const lower = extension.toLowerCase()
+  return lower === 'copc' ? 'laz' : lower
+}
 
 export function isPointCloudExtension(extension: string | null | undefined): boolean {
   if (!extension) return false

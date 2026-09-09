@@ -7,6 +7,7 @@ import {
   POINT_CLOUD_ACCEPT,
   isPointCloudFile,
   isRenderablePointCloud,
+  normalizePointCloudFormat,
   stripPointCloudExtension,
   uniquePointCloudName,
 } from './pointCloudFiles'
@@ -47,7 +48,7 @@ describe('isPointCloudFile', () => {
 
 describe('POINT_CLOUD_ACCEPT', () => {
   it('lists every accepted extension for a file input', () => {
-    expect(POINT_CLOUD_ACCEPT).toBe('.las,.laz,.e57')
+    expect(POINT_CLOUD_ACCEPT).toBe('.las,.laz,.copc,.copc.laz,.e57')
   })
 })
 
@@ -93,5 +94,33 @@ describe('classification by file type', () => {
   it('does not claim a file of another type with no cloud extension', () => {
     expect(isPointCloudFile(file({ type: 'system', extension: 'pdf' }))).toBe(false)
     expect(isPointCloudFile(file({ type: 'bim-file', extension: 'ifc' }))).toBe(false)
+  })
+})
+
+describe('point cloud formats', () => {
+  it('accepts copc in both spellings and never offers bin', () => {
+    expect(POINT_CLOUD_ACCEPT).toContain('.copc')
+    expect(POINT_CLOUD_ACCEPT).toContain('.copc.laz')
+    expect(POINT_CLOUD_ACCEPT).not.toContain('.bin')
+  })
+
+  it('classifies a copc file however it is named', () => {
+    expect(isPointCloudFile(file({ extension: 'copc' }))).toBe(true)
+    expect(isPointCloudFile(file({ extension: 'LAZ' }))).toBe(true)
+  })
+
+  it('tells the converter laz for a copc, because that is what it is', () => {
+    expect(normalizePointCloudFormat('copc')).toBe('laz')
+    expect(normalizePointCloudFormat('COPC')).toBe('laz')
+  })
+
+  it('passes every other accepted format through unchanged', () => {
+    expect(normalizePointCloudFormat('las')).toBe('las')
+    expect(normalizePointCloudFormat('e57')).toBe('e57')
+    expect(normalizePointCloudFormat('LAZ')).toBe('laz')
+  })
+
+  it('strips a compound copc suffix down to the base name', () => {
+    expect(stripPointCloudExtension('scan.copc.laz')).toBe('scan')
   })
 })

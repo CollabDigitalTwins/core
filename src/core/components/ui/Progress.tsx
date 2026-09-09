@@ -25,7 +25,7 @@ const Progress = React.forwardRef<
       value={indeterminate ? undefined : value}
       data-indeterminate={indeterminate ? 'true' : undefined}
       className={cn(
-        'relative h-1.5 w-full overflow-hidden rounded-full bg-muted',
+        'relative h-1.5 w-full overflow-hidden rounded-[999px] bg-muted',
         className,
       )}
       {...props}
@@ -33,7 +33,7 @@ const Progress = React.forwardRef<
       <ProgressPrimitive.Indicator
         data-slot="indicator"
         className={cn(
-          'h-full w-full flex-1 rounded-full bg-primary transition-transform duration-300 ease-out',
+          'h-full w-full flex-1 rounded-[999px] bg-primary transition-transform duration-300 ease-out',
           indeterminate && 'animate-pulse',
         )}
         style={{ transform: `translateX(-${indeterminate ? 60 : 100 - (value ?? 0)}%)` }}

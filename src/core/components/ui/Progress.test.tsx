@@ -27,4 +27,12 @@ describe('Progress', () => {
     const root = container.firstElementChild as HTMLElement
     expect(root.dataset.indeterminate).toBeUndefined()
   })
+
+  it('avoids the rounded-full utility, which a global rule in this app repaints', () => {
+    const { container } = render(<Progress value={50} />)
+    const root = container.firstElementChild as HTMLElement
+    const indicator = container.querySelector('[data-slot="indicator"]') as HTMLElement
+    expect(root.className).not.toContain('rounded-full')
+    expect(indicator.className).not.toContain('rounded-full')
+  })
 })

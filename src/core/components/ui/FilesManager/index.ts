@@ -25,3 +25,7 @@ export type { ViewerContextMenuProps } from './src/ViewerContextMenu'
 // Re-export existing common components
 export { useFileUploadHandler } from './src/useFileUploadHandler'
 export { useFileDeleteHandler } from './src/useFileDeleteHandler'
+
+// File type classification
+export { EXTENSIONS_FOR_TYPE, SECTION_FOR_TYPE, ACCEPT_FOR_TYPE, typeOfFile, typeOfRecord } from './src/fileType'
+export type { FileType, FileSection } from './src/fileType'

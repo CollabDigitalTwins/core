@@ -21,7 +21,7 @@ export interface UploadTask {
   progress: number | null
 }
 
-type Renderer = (task: UploadTask) => React.ReactNode
+type Renderer = (task: UploadTask) => React.ReactElement
 
 let tasks: UploadTask[] = []
 let renderer: Renderer | null = null
@@ -45,9 +45,9 @@ export function setToastRenderer(render: Renderer | null): void {
   renderer = render
 }
 
-// sonner's jsx callback is typed to ReactElement; ReactNode also covers null.
 const draw = (task: UploadTask) => {
-  toast.custom(() => (renderer ? renderer(task) : null) as React.ReactElement, { id: task.id, duration: Number.POSITIVE_INFINITY })
+  if (!renderer) return
+  toast.custom(() => renderer!(task), { id: task.id, duration: Number.POSITIVE_INFINITY })
 }
 
 const sameFrame = (a: UploadTask, b: UploadTask): boolean =>

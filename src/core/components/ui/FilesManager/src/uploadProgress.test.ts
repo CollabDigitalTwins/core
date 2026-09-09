@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { beginTask, endTask, getSnapshot, subscribe, updateTask } from './uploadProgress'
+import { beginTask, endTask, getSnapshot, setToastRenderer, subscribe, updateTask } from './uploadProgress'
 
 vi.mock('sonner', () => ({
   toast: { custom: vi.fn(), dismiss: vi.fn() },
@@ -16,6 +17,7 @@ const task = { name: 'scan', fileType: 'point-cloud-file' as const, phase: 'uplo
 describe('uploadProgress', () => {
   beforeEach(() => {
     for (const t of getSnapshot()) endTask(t.id)
+    setToastRenderer(() => React.createElement('div'))
     vi.mocked(toast.custom).mockClear()
     vi.mocked(toast.dismiss).mockClear()
   })

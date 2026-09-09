@@ -131,6 +131,7 @@ function setUp(requestFrame: (callback: () => void) => number = () => 0) {
   const engine = stubEngine()
   clouds.setup({
     world: world as never,
+    apiBase: 'http://converter.test',
     source: stubSource(),
     engine,
     requestFrame,

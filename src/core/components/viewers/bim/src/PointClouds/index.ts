@@ -35,6 +35,7 @@ export const GHOST_OPACITY = 0.5
 export interface BimPointCloudsSetup {
   world: OBC.World
   source: PointCloudSource
+  apiBase: string
   engine?: PointCloudEngine
   requestFrame?: (callback: () => void) => number
   cancelFrame?: (handle: number) => void
@@ -60,6 +61,7 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable, Sce
   /** Per-cloud opacity. Ghosting and the settings slider are the same value, so they cannot disagree. */
   private readonly opacities = new Map<string, number>()
   private world: OBC.World | null = null
+  private pointCloudApiBase = ''
   private registry: PointCloudRegistry | null = null
   private engine: PointCloudEngine | null = null
   private requestFrame: (callback: () => void) => number = (callback) => requestAnimationFrame(callback)
@@ -78,6 +80,7 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable, Sce
     this.teardownWorld()
 
     this.world = config.world
+    this.pointCloudApiBase = config.apiBase
     this.engine = config.engine ?? createPotreeEngine(this.currentAppearance)
     this.registry = new PointCloudRegistry({
       scene: config.world.scene.three,
@@ -93,6 +96,11 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable, Sce
       renderer.onBeforeUpdate.add(this.onBeforeUpdate)
       renderer.onClippingPlanesUpdated.add(this.onClippingPlanesUpdated)
     }
+  }
+
+  /** The upload panel posts conversions here, so it reads the base the loader already uses. */
+  get apiBase(): string {
+    return this.pointCloudApiBase
   }
 
   get appearance(): PointCloudAppearance {
@@ -286,6 +294,13 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable, Sce
     const appearance = this.appearanceFor(cloud.id)
     applyAppearance(material, appearance)
     applyRenderState(material, appearance)
+    this.applyBoundingBoxes(cloud)
+  }
+
+  /** Node boxes are octree state, not material state, and only exist for nodes already streamed. */
+  private applyBoundingBoxes(cloud: LoadedPointCloud) {
+    cloud.octree.showBoundingBox = this.currentAppearance.showBoundingBoxes
+    cloud.octree.updateBoundingBoxes?.()
   }
 
   // Points carry their own colour and are not lit; letting the AO pass touch them only greys them.
@@ -332,6 +347,9 @@ export class BimPointClouds extends OBC.Component implements OBC.Disposable, Sce
       renderer.three,
     )
     for (const cloud of clouds) applyRenderState(pointCloudMaterial(cloud.octree), this.appearanceFor(cloud.id))
+    if (this.currentAppearance.showBoundingBoxes) {
+      for (const cloud of clouds) cloud.octree.updateBoundingBoxes?.()
+    }
     this.visiblePoints = result.numVisiblePoints
     this.streaming = result.streaming
     if (result.streaming) this.refresh()

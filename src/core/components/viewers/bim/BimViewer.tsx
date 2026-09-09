@@ -16,6 +16,7 @@ import { useBimCoordinateSystem } from "../useCoordinateSystem";
 
 import { BimLoadingState } from "./src/BimLoadingState";
 import { BuildingLocationSync } from "./src/BuildingLocationSync";
+import { CameraNavigation } from "./src/CameraNavigation";
 import { ElementAppearance } from "./src/ElementAppearance";
 import { ElevationsTool } from "./src/ElevationsTool";
 import { FloorplanTool } from "./src/FloorplanTool";
@@ -126,6 +127,7 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
             components.get(ElevationsTool);
             components.get(BimPointClouds);
             components.get(PlacementEditor);
+            components.get(CameraNavigation);
 
             // Grid injection is safe here — fragments.core is initialized.
             if (grid) {

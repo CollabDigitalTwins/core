@@ -20,6 +20,7 @@ export interface PointCloudAppearance {
   opacity: number
   sizeType: PointSizeType
   shape: PointShape
+  showBoundingBoxes: boolean
 }
 
 export const DEFAULT_APPEARANCE: PointCloudAppearance = {
@@ -30,6 +31,7 @@ export const DEFAULT_APPEARANCE: PointCloudAppearance = {
   opacity: 1,
   sizeType: 'adaptive',
   shape: 'circle',
+  showBoundingBoxes: false,
 }
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
@@ -50,6 +52,7 @@ export function normalizeAppearance(
     maxSize: clamp(Number.isFinite(next.maxSize) ? next.maxSize : current.maxSize, minSize, 100),
     sizeType: POINT_SIZE_TYPES.includes(next.sizeType) ? next.sizeType : current.sizeType,
     shape: POINT_SHAPES.includes(next.shape) ? next.shape : current.shape,
+    showBoundingBoxes: next.showBoundingBoxes === true,
   }
 }
 

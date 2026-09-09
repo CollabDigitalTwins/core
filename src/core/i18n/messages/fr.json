@@ -211,7 +211,14 @@
     "moveSpeed": "Vitesse de déplacement",
     "slow": "Lent",
     "fast": "Rapide",
-    "lockElevation": "Verrouiller l'élévation"
+    "lockElevation": "Verrouiller l'élévation",
+    "mode_Orbit": "Orbite",
+    "mode_FirstPerson": "Marche",
+    "walkHint": "Déplacez-vous avec WASD ou les touches fléchées ; Q et E descendent et montent.",
+    "firstPersonNeedsPerspective": "Le mode marche nécessite une projection en perspective",
+    "navigation": "Navigation",
+    "metres": "m",
+    "lockElevationAt": "Verrouiller l’élévation à"
   },
   "ChangePassword": {
     "noMatch": "Les mots de passe ne correspondent pas",
@@ -1097,7 +1104,13 @@
     "deleteFailedWithReason": "Échec de la suppression : {error}",
     "convertStarted": "Conversion lancée pour \"{name}\". ID de tâche : {jobId}",
     "convertFailed": "Échec du démarrage de la conversion",
-    "convertFailedWithReason": "Échec du démarrage de la conversion : {error}"
+    "convertFailedWithReason": "Échec du démarrage de la conversion : {error}",
+    "uploadingFile": "Téléversement de {name}",
+    "convertingFile": "Conversion de {name}",
+    "unsupportedFormat": "Sélectionnez un fichier LAS, LAZ ou E57",
+    "uploadFailed": "Échec du téléversement : {error}",
+    "conversionFinished": "« {name} » est prêt à être affiché",
+    "conversionFailed": "Échec de la conversion de « {name} » : {error}"
   },
   "PropertiesMenuHeader": {
     "closeButton": "Fermer",
@@ -2121,7 +2134,8 @@
     "shape_circle": "Cercle",
     "shape_paraboloid": "Paraboloïde",
     "opacity": "Opacité",
-    "opacityOf": "Opacité — {name}"
+    "opacityOf": "Opacité — {name}",
+    "showBoundingBoxes": "Afficher les boîtes de l’octree"
   },
   "BIMSearchTool": {
     "placeholder": "Rechercher...",

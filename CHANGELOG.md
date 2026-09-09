@@ -7,6 +7,70 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Fixed
+- **A point cloud created through `/api/point-cloud` never appeared in the BIM viewer.**
+  Classification was by extension alone, and the converter records no extension.
+  `isPointCloudFile` now accepts either signal — `type === 'point-cloud-file'` or a cloud
+  extension — matching what `BuildingsTools` already did, so existing rows need no backfill.
+  The BIM branch of the File tab likewise accepts `type === 'bim-file'` alongside ifc/frag.
+  Separately, the source format now travels from the picker through the proxy to the
+  converter, which stores it on the record and in the object key, so an E57 keeps its
+  extension for the worker to read.
+
+### Added
+- **Point clouds are uploaded and converted from the BIM viewer's File tab.** The Point
+  Clouds section gained an upload button, an upload progress bar and a conversion progress
+  bar, plus per-row recovery for the two ways the pipeline fails: re-run conversion when the
+  object uploaded but never converted, and re-upload when the upload itself died.
+  New `viewers/shared/pointcloud/pointCloudConversion` holds `createPointCloud`,
+  `startConversion` and `watchConversion`; `viewers/bim/src/PointClouds/usePointCloudUpload`
+  drives the state machine. `createPointCloud` takes the source extension as its second
+  argument, ahead of `buildingId`.
+- **E57 is accepted alongside LAS and LAZ.** Rendering an E57 also needs the converter
+  service to transcode it, which ships separately.
+- **A camera tool for the BIM viewer**, in the Settings tab rather than the toolbar, split
+  per control the way the existing settings blocks are — `NavigationMode`, `WalkSettings`,
+  and a `useCameraNavigation` hook both share:
+  `CameraNavigation` exposes orbit and walk navigation modes, a walk speed, and an elevation
+  lock with the height editable in metres. Movement is WASD or the arrow keys, with Q and E
+  for down and up; deliberate vertical input re-bases the lock rather than being cancelled by
+  it. Walk mode is refused under an orthographic projection and falls back to orbit if the
+  projection changes mid-walk.
+- An octree bounding-box toggle in the BIM point cloud settings, via a new
+  `showBoundingBoxes` field on `PointCloudAppearance`.
+- `isPointCloudFile`, `isPointCloudExtension`, `POINT_CLOUD_ACCEPT`,
+  `POINT_CLOUD_EXTENSIONS`, `stripPointCloudExtension` and `uniquePointCloudName` in
+  `viewers/bim/src/PointClouds/pointCloudFiles`.
+- i18n keys in the `PointCloudManagement`, `PointCloudSettings` and `CameraSettings`
+  namespaces, for en, es and fr.
+
+### Changed
+- The render mode and perspective/orthographic switches moved from their own settings blocks
+  into the new Camera section, so every camera control sits together — render mode first.
+  `RenderMode` and `ToggleProjection` are unchanged and are now rendered by `CameraSettings`.
+- The BIM File tab lists a point cloud as soon as it exists, not only once converted, so an
+  in-flight or failed conversion is visible instead of falling into the generic Files list.
+  An unconverted row offers only info and delete.
+- `uploadFileWithProgress` is typed, and no longer sends an empty `Content-Type` header for
+  a file whose type the browser cannot determine — which MinIO rejects on a presigned PUT.
+- `BimPointCloudsSetup` requires an `apiBase`, and `BimPointClouds` exposes it as
+  `apiBase`, so the upload panel and the loader cannot disagree about the service base.
+
+### Removed
+- `selectPointCloudFiles` from `viewers/bim/src/PointClouds/pointCloudFiles`. Nothing used
+  it once the File tab began routing by extension.
+
+### Migration
+- Any caller of `BimPointClouds.setup()` must pass `apiBase`, the same value it already
+  passes to `createHttpPointCloudSource`:
+  ```ts
+  const apiBase = resolvePointCloudApiBase(pointcloudApiUrl)
+  clouds.setup({ world, apiBase, source: createHttpPointCloudSource(apiBase) })
+  ```
+- Replace `selectPointCloudFiles(files)` with `files.filter(isRenderablePointCloud)`.
+- A consumer overriding the `PointCloudAppearance` object wholesale must add
+  `showBoundingBoxes`; partial patches through `setAppearance` are unaffected.
+
 ## [0.9.0] - 2026-09-08
 
 Consolidates the work previously tagged locally as 0.9.0 through 0.11.1. Those tags were

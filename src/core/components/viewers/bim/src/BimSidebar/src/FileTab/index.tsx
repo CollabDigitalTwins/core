@@ -10,7 +10,7 @@ import { useFilesByBuildingId } from '../../../../../../../hooks/files/files'
 import { BuildingsContext } from '../../../../../../../store'
 import { ViewerSidebarPanel } from '../../../../../../ui/ViewerSidebar/Panel'
 
-import { isRenderablePointCloud } from '../../../PointClouds/pointCloudFiles'
+import { isPointCloudFile } from '../../../PointClouds/pointCloudFiles'
 
 import { FilesSection } from './src/FilesSection'
 import { ModelsSection } from './src/ModelsSection'
@@ -36,15 +36,16 @@ export function FileTab() {
 
   // single pass to populate the arrays
   filesData.forEach((file) => {
-    const { extension } = file
-    if (!extension) return
-    const isBim = extension.toLowerCase() === 'ifc' || extension.toLowerCase() === 'frag'
+    const extension = file.extension?.toLowerCase()
+    const isBim = file.type?.toLowerCase() === 'bim-file'
+      || extension === 'ifc'
+      || extension === 'frag'
 
     if (isBim) {
       bimFiles.push(file)
-    } else if (isRenderablePointCloud(file)) {
+    } else if (isPointCloudFile(file)) {
       pointCloudFiles.push(file)
-    } else {
+    } else if (extension) {
       nonBimFiles.push(file)
     }
   })

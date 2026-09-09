@@ -211,7 +211,14 @@
     "moveSpeed": "Move speed",
     "slow": "Slow",
     "fast": "Fast",
-    "lockElevation": "Lock elevation"
+    "lockElevation": "Lock elevation",
+    "mode_Orbit": "Orbit",
+    "mode_FirstPerson": "Walk",
+    "walkHint": "Move with WASD or the arrow keys; Q and E move down and up.",
+    "firstPersonNeedsPerspective": "Walk mode needs a perspective projection",
+    "navigation": "Navigation",
+    "metres": "m",
+    "lockElevationAt": "Lock elevation at"
   },
   "ChangePassword": {
     "noMatch": "Passwords do not match",
@@ -1097,7 +1104,13 @@
     "deleteFailedWithReason": "Failed to delete: {error}",
     "convertStarted": "Conversion started for \"{name}\". Job ID: {jobId}",
     "convertFailed": "Failed to start conversion",
-    "convertFailedWithReason": "Failed to start conversion: {error}"
+    "convertFailedWithReason": "Failed to start conversion: {error}",
+    "uploadingFile": "Uploading {name}",
+    "convertingFile": "Converting {name}",
+    "unsupportedFormat": "Select a LAS, LAZ or E57 file",
+    "uploadFailed": "Upload failed: {error}",
+    "conversionFinished": "\"{name}\" is ready to view",
+    "conversionFailed": "Conversion of \"{name}\" failed: {error}"
   },
   "PropertiesMenuHeader": {
     "closeButton": "Close",
@@ -2124,7 +2137,8 @@
     "shape_circle": "Circle",
     "shape_paraboloid": "Paraboloid",
     "opacity": "Opacity",
-    "opacityOf": "Opacity — {name}"
+    "opacityOf": "Opacity — {name}",
+    "showBoundingBoxes": "Show octree boxes"
   },
   "BIMSearchTool": {
     "placeholder": "Search...",

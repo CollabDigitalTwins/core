@@ -120,4 +120,45 @@ describe('SceneObjectRegistry', () => {
     expect(registry.list()).toEqual([])
     expect(scene.children).toEqual([])
   })
+
+  it('does not clear on the first resetForBuilding call', () => {
+    const { registry } = makeRegistry()
+    const entry = registry.add(input('12'))
+
+    registry.resetForBuilding(1)
+
+    expect(registry.get('12')).toBe(entry)
+  })
+
+  it('clears existing entries once the building id actually changes', () => {
+    const { registry } = makeRegistry()
+    registry.resetForBuilding(1)
+    registry.add(input('12'))
+
+    registry.resetForBuilding(2)
+
+    expect(registry.list()).toEqual([])
+  })
+
+  it('resetForBuilding is a no-op on a repeat call with the same id', () => {
+    const { registry } = makeRegistry()
+    registry.resetForBuilding(1)
+    const entry = registry.add(input('12'))
+
+    registry.resetForBuilding(1)
+
+    expect(registry.get('12')).toBe(entry)
+  })
+
+  it('lets two callers reset the same building without either wiping what the other just seeded', () => {
+    const { registry } = makeRegistry()
+    registry.resetForBuilding(1)
+    const fromFirstCaller = registry.add(input('12'))
+
+    registry.resetForBuilding(1)
+    const fromSecondCaller = registry.add(input('13'))
+
+    expect(registry.get('12')).toBe(fromFirstCaller)
+    expect(registry.get('13')).toBe(fromSecondCaller)
+  })
 })

@@ -172,15 +172,8 @@ export function usePlaceableFileRows({
     await toggleModelVisibility(file, visible, position)
   }, [toggleDxfVisibility, toggleModelVisibility])
 
-  // Keyed on the building id, not unmount: closing the sidebar tab must not empty the scene.
-  const loadedBuildingRef = React.useRef<number | null>(null)
   React.useEffect(() => {
-    if (loadedBuildingRef.current === buildingId) return
-    const previous = loadedBuildingRef.current
-    loadedBuildingRef.current = buildingId
-    if (previous === null) return
-
-    registry?.clear()
+    registry?.resetForBuilding(buildingId)
   }, [buildingId, registry])
 
   // Claimed per building so a revalidation cannot re-add what the user just switched off.

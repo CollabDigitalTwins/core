@@ -33,7 +33,7 @@ import type { DbFile } from '../../../../../../../../types/dbTypes'
 
 const added: ((entry: unknown) => void)[] = []
 const registry = {
-  add: vi.fn(), remove: vi.fn(), clear: vi.fn(), setVisible: vi.fn(),
+  add: vi.fn(), remove: vi.fn(), clear: vi.fn(), setVisible: vi.fn(), resetForBuilding: vi.fn(),
   get: vi.fn(() => undefined), has: vi.fn(() => false),
   onAdded: vi.fn((cb: (entry: unknown) => void) => { added.push(cb); return () => undefined }),
   onRemoved: vi.fn(() => () => undefined),

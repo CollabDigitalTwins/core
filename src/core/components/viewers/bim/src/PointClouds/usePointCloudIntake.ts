@@ -8,6 +8,7 @@ import * as React from 'react'
 import { toast } from 'sonner'
 import { mutate } from 'swr'
 
+import { useUpdateFile } from '../../../../../hooks/files/files'
 import { beginTask, endTask, updateTask } from '../../../../ui/FilesManager/src/uploadProgress'
 import { useUploadLabels } from '../../../../ui/FilesManager/src/UploadProgressBar'
 import { uploadFileWithProgress } from '../../../map/src/tools/AddTools/AddFile/utils/uploadToPresignedURLS'
@@ -40,6 +41,7 @@ function extensionOf(fileName: string): string {
 export function usePointCloudIntake({ apiBase, buildingId, existingNames }: UsePointCloudIntakeOptions) {
   const t = useTranslations('PointCloudManagement')
   const { labelFor } = useUploadLabels()
+  const updateFileById = useUpdateFile()
 
   const [busy, setBusy] = React.useState(false)
   const taskRef = React.useRef<string | null>(null)
@@ -61,7 +63,8 @@ export function usePointCloudIntake({ apiBase, buildingId, existingNames }: UseP
     setBusy(true)
     refreshFiles()
 
-    const finish = () => { endTask(id); taskRef.current = null; setBusy(false); refreshFiles() }
+    const stop = () => { endTask(id); taskRef.current = null; setBusy(false) }
+    const finish = () => { stop(); refreshFiles() }
 
     try {
       const { jobId } = await startConversion(apiBase, pointCloudId)
@@ -71,7 +74,11 @@ export function usePointCloudIntake({ apiBase, buildingId, existingNames }: UseP
           if (typeof event.progress !== 'number') return
           updateTask(id, { progress: event.progress })
         },
-        onFinished: () => { finish(); toast.success(t('conversionFinished', { name })) },
+        onFinished: () => {
+          stop()
+          void updateFileById(Number(pointCloudId), { isVisible: true }).catch(() => undefined).finally(refreshFiles)
+          toast.success(t('conversionFinished', { name }))
+        },
         onFailed: (reason) => { finish(); toast.error(t('conversionFailed', { name, error: reason })) },
       })
     }
@@ -79,7 +86,7 @@ export function usePointCloudIntake({ apiBase, buildingId, existingNames }: UseP
       finish()
       toast.error(t('conversionFailed', { name, error: error instanceof Error ? error.message : String(error) }))
     }
-  }, [apiBase, labelFor, refreshFiles, t])
+  }, [apiBase, labelFor, refreshFiles, t, updateFileById])
 
   const upload = React.useCallback(async (file: File) => {
     const extension = extensionOf(file.name)

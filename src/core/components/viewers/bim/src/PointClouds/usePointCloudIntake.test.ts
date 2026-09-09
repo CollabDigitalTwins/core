@@ -7,6 +7,7 @@ import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { endTask, getSnapshot } from '../../../../ui/FilesManager/src/uploadProgress'
+
 import { usePointCloudIntake } from './usePointCloudIntake'
 
 import type { ConversionEvent, ConversionWatcher } from '../../../shared/pointcloud/pointCloudConversion'
@@ -14,6 +15,9 @@ import type { ConversionEvent, ConversionWatcher } from '../../../shared/pointcl
 vi.mock('next-intl', () => ({ useTranslations: () => (key: string) => key }))
 vi.mock('swr', () => ({ mutate: vi.fn() }))
 vi.mock('sonner', () => ({ toast: { custom: vi.fn(), dismiss: vi.fn(), success: vi.fn(), error: vi.fn() } }))
+
+const { updateFileByIdMock } = vi.hoisted(() => ({ updateFileByIdMock: vi.fn(async () => ({})) }))
+vi.mock('../../../../../hooks/files/files', () => ({ useUpdateFile: () => updateFileByIdMock }))
 
 vi.mock('../../../shared/pointcloud/pointCloudConversion', () => ({
   createPointCloud: vi.fn(async () => ({ pointCloud: { id: 5 }, upload: { uploadUrl: 'https://minio/put' } })),
@@ -35,6 +39,7 @@ const options = { apiBase: 'https://pc', buildingId: 7, existingNames: [] as str
 describe('usePointCloudIntake', () => {
   beforeEach(() => {
     for (const task of getSnapshot()) endTask(task.id)
+    updateFileByIdMock.mockClear()
   })
 
   it('creates, uploads and converts a laz', async () => {
@@ -71,6 +76,20 @@ describe('usePointCloudIntake', () => {
     const { result } = renderHook(() => usePointCloudIntake(options))
     await act(async () => { await result.current.upload(new File([''], 'notes.txt')) })
     expect(createPointCloud).not.toHaveBeenCalledWith('notes', 'txt', 7)
+  })
+
+  it('marks the file visible once conversion finishes', async () => {
+    let deliverFinished: (() => void) | null = null
+    vi.mocked(watchConversion).mockImplementation((_base, _job, w: ConversionWatcher) => {
+      deliverFinished = () => w.onFinished?.({} as ConversionEvent)
+      return () => undefined
+    })
+
+    const { result } = renderHook(() => usePointCloudIntake(options))
+    await act(async () => { await result.current.upload(new File([''], 'scan.laz')) })
+    await act(async () => { deliverFinished?.() })
+
+    expect(updateFileByIdMock).toHaveBeenCalledWith(5, { isVisible: true })
   })
 
   it('finishes a conversion that completes after the component unmounted', async () => {

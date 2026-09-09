@@ -13,14 +13,13 @@ import { BimContext } from '../../../../../../../../store'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { Button } from '../../../../../../../ui/Button'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
-import { FileItemComponent, useFileActions, useFileDeleteHandler } from '../../../../../../../ui/FilesManager'
-import { Progress } from '../../../../../../../ui/Progress'
+import { FileItemComponent, UploadProgressBar, useFileActions, useFileDeleteHandler, useUploadTasks } from '../../../../../../../ui/FilesManager'
 import { PlacementEditor } from '../../../../Placement/PlacementEditor'
 import { usePointCloudTarget } from '../../../../Placement/targets/usePointCloudTarget'
 import { BimPointClouds } from '../../../../PointClouds'
 import { POINT_CLOUD_ACCEPT, isRenderablePointCloud } from '../../../../PointClouds/pointCloudFiles'
 import { useBimPointCloudOpacity } from '../../../../PointClouds/useBimPointCloudOpacity'
-import { usePointCloudUpload } from '../../../../PointClouds/usePointCloudUpload'
+import { usePointCloudIntake } from '../../../../PointClouds/usePointCloudIntake'
 
 import type { DbFile } from '../../../../../../../../types/dbTypes'
 import type { FileAction } from '../../../../../../../../types/global'
@@ -61,11 +60,12 @@ export function PointCloudsSection({ files, query = '', buildingId }: PointCloud
 
   const existingNames = React.useMemo(() => files.map((file) => file.name), [files])
   const apiBase = bimComponents?.get(BimPointClouds).apiBase ?? ''
-  const { state: uploadState, upload, convert, busy } = usePointCloudUpload({
+  const { upload, convert, busy } = usePointCloudIntake({
     apiBase,
     buildingId,
     existingNames,
   })
+  const tasks = useUploadTasks('pointClouds')
 
   const inputRef = React.useRef<HTMLInputElement | null>(null)
 
@@ -178,21 +178,13 @@ export function PointCloudsSection({ files, query = '', buildingId }: PointCloud
           className="hidden"
         />
 
-        {uploadState.phase !== 'idle' && (
-          <div className="px-2 py-1 space-y-1">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span className="truncate">
-                {uploadState.phase === 'uploading'
-                  ? t('uploadingFile', { name: uploadState.name })
-                  : t('convertingFile', { name: uploadState.name })}
-              </span>
-              <span className="tabular-nums">{uploadState.progress}%</span>
-            </div>
-            <Progress value={uploadState.progress} />
+        {tasks.map(task => (
+          <div key={task.id} className="px-2 py-1">
+            <UploadProgressBar label={task.label} progress={task.progress} />
           </div>
-        )}
+        ))}
 
-        {rows.length === 0 && uploadState.phase === 'idle' && (
+        {rows.length === 0 && tasks.length === 0 && (
           <div className="px-2 py-3 text-sm text-muted-foreground text-center">
             {t('noPointClouds')}
           </div>

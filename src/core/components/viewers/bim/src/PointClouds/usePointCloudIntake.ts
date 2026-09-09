@@ -8,6 +8,8 @@ import * as React from 'react'
 import { toast } from 'sonner'
 import { mutate } from 'swr'
 
+import { beginTask, endTask, updateTask } from '../../../../ui/FilesManager/src/uploadProgress'
+import { useUploadLabels } from '../../../../ui/FilesManager/src/UploadProgressBar'
 import { uploadFileWithProgress } from '../../../map/src/tools/AddTools/AddFile/utils/uploadToPresignedURLS'
 import {
   createPointCloud,
@@ -17,35 +19,30 @@ import {
 
 import {
   isPointCloudExtension,
+  normalizePointCloudFormat,
   stripPointCloudExtension,
   uniquePointCloudName,
 } from './pointCloudFiles'
 
-export type UploadPhase = 'idle' | 'uploading' | 'converting'
-
-export interface PointCloudUploadState {
-  phase: UploadPhase
-  name: string
-  progress: number
-}
-
-const IDLE: PointCloudUploadState = { phase: 'idle', name: '', progress: 0 }
-
-interface UsePointCloudUploadOptions {
+interface UsePointCloudIntakeOptions {
   apiBase: string
   buildingId: number
   existingNames: string[]
 }
 
 function extensionOf(fileName: string): string {
-  const parts = fileName.split('.')
-  return parts.length > 1 ? parts.pop()!.toLowerCase() : ''
+  const lower = fileName.toLowerCase()
+  if (lower.endsWith('.copc.laz')) return 'copc'
+  const parts = lower.split('.')
+  return parts.length > 1 ? parts.pop()! : ''
 }
 
-export function usePointCloudUpload({ apiBase, buildingId, existingNames }: UsePointCloudUploadOptions) {
+export function usePointCloudIntake({ apiBase, buildingId, existingNames }: UsePointCloudIntakeOptions) {
   const t = useTranslations('PointCloudManagement')
+  const { labelFor } = useUploadLabels()
 
-  const [state, setState] = React.useState<PointCloudUploadState>(IDLE)
+  const [busy, setBusy] = React.useState(false)
+  const taskRef = React.useRef<string | null>(null)
   const closeWatchRef = React.useRef<(() => void) | null>(null)
 
   // The names are only read when an upload starts, so a ref keeps `upload` stable.
@@ -59,8 +56,14 @@ export function usePointCloudUpload({ apiBase, buildingId, existingNames }: UseP
   React.useEffect(() => () => closeWatchRef.current?.(), [])
 
   const convert = React.useCallback(async (pointCloudId: string | number, name: string) => {
-    setState({ phase: 'converting', name, progress: 0 })
+    const id = taskRef.current
+      ?? beginTask({ name, fileType: 'point-cloud-file', phase: 'converting', label: labelFor('converting', name), progress: 0 })
+    taskRef.current = id
+    updateTask(id, { phase: 'converting', label: labelFor('converting', name), progress: 0 })
+    setBusy(true)
     refreshFiles()
+
+    const finish = () => { endTask(id); taskRef.current = null; setBusy(false); refreshFiles() }
 
     try {
       const { jobId } = await startConversion(apiBase, pointCloudId)
@@ -68,26 +71,17 @@ export function usePointCloudUpload({ apiBase, buildingId, existingNames }: UseP
       closeWatchRef.current = watchConversion(apiBase, jobId, {
         onProgress: (event) => {
           if (typeof event.progress !== 'number') return
-          setState({ phase: 'converting', name, progress: event.progress })
+          updateTask(id, { progress: event.progress })
         },
-        onFinished: () => {
-          setState(IDLE)
-          refreshFiles()
-          toast.success(t('conversionFinished', { name }))
-        },
-        onFailed: (reason) => {
-          setState(IDLE)
-          refreshFiles()
-          toast.error(t('conversionFailed', { name, error: reason }))
-        },
+        onFinished: () => { finish(); toast.success(t('conversionFinished', { name })) },
+        onFailed: (reason) => { finish(); toast.error(t('conversionFailed', { name, error: reason })) },
       })
     }
     catch (error) {
-      setState(IDLE)
-      refreshFiles()
+      finish()
       toast.error(t('conversionFailed', { name, error: error instanceof Error ? error.message : String(error) }))
     }
-  }, [apiBase, refreshFiles, t])
+  }, [apiBase, labelFor, refreshFiles, t])
 
   const upload = React.useCallback(async (file: File) => {
     const extension = extensionOf(file.name)
@@ -97,24 +91,28 @@ export function usePointCloudUpload({ apiBase, buildingId, existingNames }: UseP
     }
 
     const name = uniquePointCloudName(stripPointCloudExtension(file.name), namesRef.current)
-    setState({ phase: 'uploading', name, progress: 0 })
+    const id = beginTask({ name, fileType: 'point-cloud-file', phase: 'uploading', label: labelFor('uploading', name), progress: 0 })
+    taskRef.current = id
+    setBusy(true)
 
     let created
     try {
-      created = await createPointCloud(name, extension, buildingId)
+      created = await createPointCloud(name, normalizePointCloudFormat(extension), buildingId)
       await uploadFileWithProgress(created.upload.uploadUrl, file, (progress) => {
-        setState({ phase: 'uploading', name, progress })
+        updateTask(id, { progress })
       })
     }
     catch (error) {
-      setState(IDLE)
+      endTask(id)
+      taskRef.current = null
+      setBusy(false)
       refreshFiles()
       toast.error(t('uploadFailed', { error: error instanceof Error ? error.message : String(error) }))
       return
     }
 
     await convert(created.pointCloud.id, name)
-  }, [buildingId, convert, refreshFiles, t])
+  }, [buildingId, convert, labelFor, refreshFiles, t])
 
-  return { state, upload, convert, busy: state.phase !== 'idle' }
+  return { upload, convert, busy }
 }

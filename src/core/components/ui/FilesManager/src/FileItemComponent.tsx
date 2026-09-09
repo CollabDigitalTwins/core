@@ -46,11 +46,9 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
 
   const isPlaced = currentViewer === 'bim'
     ? true // BIM models are always placed — null x/y/z means origin (0,0,0), use move to reposition
-    : currentViewer === 'pointcloud'
-    ? true // for point clouds we don't have position yet
-      : currentViewer === 'map'
-        ? file.lat != null && file.lng != null
-        : false
+    : currentViewer === 'map'
+      ? file.lat != null && file.lng != null
+      : false
 
   const isGhost = !!(file as any).isGhost
   const hasPlaceOption = options.includes('view') || options.includes('move')

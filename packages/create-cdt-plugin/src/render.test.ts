@@ -44,7 +44,6 @@ describe('capabilityConstant', () => {
   it('names the surface entry the kit exports for each capability', () => {
     expect(capabilityConstant('map.tools')).toBe('map')
     expect(capabilityConstant('bim.tools')).toBe('bim')
-    expect(capabilityConstant('pointcloud.tools')).toBe('pointcloud')
     expect(capabilityConstant('viewer.legends')).toBe('legend')
   })
 })

@@ -12,7 +12,6 @@ export default defineConfig({
     'src/types/data.ts',
     'src/types/map.ts',
     'src/types/bim.ts',
-    'src/types/pointcloud.ts',
     'src/types/legend.ts',
     'src/types/ui.ts',
   ],

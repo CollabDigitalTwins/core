@@ -57,8 +57,23 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   `apiBase`, so the upload panel and the loader cannot disagree about the service base.
 
 ### Removed
+- **The standalone Potree point-cloud viewer, in full.** The BIM viewer renders point clouds
+  through `potree-core` and no longer needs the vendored Potree 1.x globals. Gone:
+  `components/viewers/pointcloud/`, `store/PointCloud/` (and its `PointCloudProvider`),
+  `plugins/sdk/pointCloudViewer` (`usePointCloudViewer`, `PointCloudToolProps`), the
+  `pointcloud` member of `ViewerNames`, the `pointcloud.tools` plugin capability, and the
+  `MeasurePointCloudTool`, `PerformanceSettings`, `PointCloudLoadingState` and
+  `pointcloudToolbarTools` i18n namespaces.
+- The `potree` and `potree-cdt` dependencies. `potree-core` stays — it is what the BIM
+  viewer uses. Consumers can drop the `copyPotree` postinstall step and the
+  `public/vendors/potree` directory it maintained.
+- The map popover's "open point cloud" building action, which now duplicates "open BIM viewer".
+- `@collabdt/plugin-kit`: the `./types/pointcloud` subpath, `pointcloud.tools`, and
+  `pointcloud` from `PluginViewerTarget` and `PluginViewerName`. `CapabilityRegistry` and
+  `PluginContext` lose their third type parameter.
+- `create-cdt-plugin`: the point-cloud surface and its `ExamplePointcloud` template.
 - `selectPointCloudFiles` from `viewers/bim/src/PointClouds/pointCloudFiles`. Nothing used
-  it once the File tab began routing by extension.
+  it once the File tab began routing by type and extension.
 
 ### Migration
 - Any caller of `BimPointClouds.setup()` must pass `apiBase`, the same value it already
@@ -70,6 +85,19 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - Replace `selectPointCloudFiles(files)` with `files.filter(isRenderablePointCloud)`.
 - A consumer overriding the `PointCloudAppearance` object wholesale must add
   `showBoundingBoxes`; partial patches through `setAppearance` are unaffected.
+- Remove `node ./build_potree/copyPotree.js` from your `postinstall`, drop the
+  `potree-cdt` dependency, and delete `public/vendors/potree`. Nothing regenerates it.
+- `?viewer=pointcloud` links now fall back to the map with the parameter stripped, which
+  `Viewer` already did for any viewer an organization has not enabled. Point clouds are
+  reached through the BIM viewer.
+- `SidebarProvider` / `Sidebar` and `ViewerSidebar` no longer take `pointcloudApiUrl`;
+  `Viewer` still does, and that is the path the BIM viewer's clouds use.
+- A plugin registering `pointcloud.tools` must move to `bim.tools`. A `viewer.tabs` or
+  `viewer.legends` contribution naming `pointcloud` should drop it — the host warns and
+  renders nothing. Bind `CapabilityRegistry`/`PluginContext` type parameters positionally
+  as `<MapProps, BimProps, Legend>`.
+- Organizations with `pointcloud` in `appContent` need it removed from that column; an
+  unrecognized entry is ignored, so this is tidying rather than a break.
 
 ## [0.9.0] - 2026-09-08
 

@@ -18,8 +18,8 @@ import type { ToolbarRegistration } from '../sdk/types'
 
 import type { LucideProps } from 'lucide-react'
 
-/** The three toolbar capabilities. All share `ToolbarRegistration`. */
-export type ToolbarCapability = 'map.tools' | 'bim.tools' | 'pointcloud.tools'
+/** The toolbar capabilities. All share `ToolbarRegistration`. */
+export type ToolbarCapability = 'map.tools' | 'bim.tools'
 
 /** What `ToolbarButton` renders for a tool that supplies its own component. */
 type ToolComponent = NonNullable<Tool['component']>

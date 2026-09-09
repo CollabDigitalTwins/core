@@ -14,19 +14,12 @@ import { ToolbarBody } from './ToolbarBody'
 
 import type { Organization, ViewerKey } from '../types/dbTypes'
 
-// The BIM and PointCloud toolbar tool registries transitively import
-// @thatopen and Potree-adjacent code. Statically importing them here (eagerly
-// mounted by Viewer.tsx) kept ~456 KB of @thatopen on the map route's
-// first-load JS. Dynamic-importing both per-viewer toolbars cuts that path.
+// Dynamic: the BIM toolbar registry pulls in @thatopen, ~456 KB the map route must not carry.
 //
 // MapToolbar stays inline (no separate file, no dynamic) because the map
 // is the default landing surface and every user pays its cost anyway.
 const BimToolbar = dynamic(
   () => import('./viewers/bim/BimToolbar').then(m => ({ default: m.BimToolbar })),
-  { ssr: false },
-)
-const PointCloudToolbar = dynamic(
-  () => import('./viewers/pointcloud/PointCloudToolbar').then(m => ({ default: m.PointCloudToolbar })),
   { ssr: false },
 )
 
@@ -62,9 +55,6 @@ export function Toolbar({ viewer, minioBaseUrl, martinBaseUrl, organization, geo
   }
   if (viewer === ViewerNames.bim) {
     return <BimToolbar />
-  }
-  if (viewer === ViewerNames.pointcloud) {
-    return <PointCloudToolbar />
   }
   return null
 }

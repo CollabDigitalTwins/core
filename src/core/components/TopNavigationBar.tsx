@@ -23,17 +23,9 @@ import { ViewerNames } from '../types'
 
 import Geocoder from './viewers/map/src/Geocoder'
 
-// The BIM and PointCloud search tools used to be statically imported at the
-// top of this file, even though the JSX below only renders them when the
-// matching viewer is active. The static imports pulled @thatopen and
-// Potree-adjacent code into the eager bundle. Switching to next/dynamic ties
-// their code to the matching viewer's lazy chunk.
+// Dynamic: a static import would pull @thatopen into the eager bundle for every route.
 const BIMSearchTool = dynamic(
   () => import('./viewers/bim/src/tools/BIMSearchTool'),
-  { ssr: false },
-)
-const PCSearchTool = dynamic(
-  () => import('./viewers/pointcloud/src/tools/PCSearchTool'),
   { ssr: false },
 )
 
@@ -55,7 +47,7 @@ export default function NavigationBar({ geocodeEarthApiKey, geocoderUrl }: Navig
   const { state: menusState } = React.useContext(MenusContext)
   const { currentViewer } = menusState.menus
 
-  const needsViewerSidebar = currentViewer === ViewerNames.bim || currentViewer === ViewerNames.pointcloud || currentViewer === ViewerNames.map
+  const needsViewerSidebar = currentViewer === ViewerNames.bim || currentViewer === ViewerNames.map
 
   // Hide the NavigationBar when the viewer sidebar is open in BIM mode
   if (needsViewerSidebar && openInfo) {
@@ -87,7 +79,6 @@ export default function NavigationBar({ geocodeEarthApiKey, geocoderUrl }: Navig
       {/* geocode search */}
       {currentViewer === ViewerNames.map && <Geocoder geocodeEarthApiKey={geocodeEarthApiKey} geocoderUrl={geocoderUrl} />}
       {currentViewer === ViewerNames.bim && <BIMSearchTool />}
-      {currentViewer === ViewerNames.pointcloud && <PCSearchTool />}
       </Menubar>
     </Menubar>
   )

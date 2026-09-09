@@ -193,12 +193,7 @@ export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({
         return
       }
 
-      if (currentViewer === ViewerNames.pointcloud) {
-        canvas = document.querySelector('#pointcloud-viewer-container canvas')
-      } else {
-        // Fallback to first canvas
-        canvas = document.querySelector('canvas')
-      }
+      canvas = document.querySelector('canvas')
 
       if (!canvas) {
         throw new Error('No canvas found')
@@ -250,8 +245,7 @@ export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({
   // Check if current viewer supports screenshots
   const canTakeScreenshot = [
     ViewerNames.map,
-    ViewerNames.bim,
-    ViewerNames.pointcloud
+    ViewerNames.bim
   ].includes(currentViewer as ViewerNames)
 
   return (

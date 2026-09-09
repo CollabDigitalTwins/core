@@ -76,7 +76,7 @@ describe('usePluginViewerTabs', () => {
   })
 
   // Omitting `viewers` is the "everywhere" case, which is what the type's doc promises.
-  it.each([ViewerNames.map, ViewerNames.bim, ViewerNames.pointcloud])(
+  it.each([ViewerNames.map, ViewerNames.bim])(
     'shows an untargeted tab in %s',
     async (viewer) => {
       renderFor([makeSource('everywhere')], viewer)
@@ -91,11 +91,6 @@ describe('usePluginViewerTabs', () => {
       expect(await screen.findByText('two panel')).toBeInTheDocument()
     },
   )
-
-  it('hides a tab listing several viewers from one it does not name', async () => {
-    renderFor([makeSource('two', [ViewerNames.bim, ViewerNames.map])], ViewerNames.pointcloud)
-    await waitFor(() => expect(screen.queryByText('two panel')).not.toBeInTheDocument())
-  })
 
   it('namespaces the tab id by plugin, so two plugins cannot collide', async () => {
     renderFor([makeSource('alpha'), makeSource('beta')], ViewerNames.bim)

@@ -16,12 +16,8 @@ const BimSidebar = dynamic(
   () => import('../../viewers/bim/src/BimSidebar/src').then(m => ({ default: m.BimSidebar })),
   { ssr: false },
 )
-const PointCloudSidebar = dynamic(
-  () => import('../../viewers/pointcloud/src/PointCloudSidebar').then(m => ({ default: m.PointCloudSidebar })),
-  { ssr: false },
-)
 
-export function ViewerSidebar({ minioBaseUrl, martinBaseUrl, organization, pointcloudApiUrl }: { minioBaseUrl?: string; martinBaseUrl?: string; organization?: Organization; pointcloudApiUrl?: string }) {
+export function ViewerSidebar({ minioBaseUrl, martinBaseUrl, organization }: { minioBaseUrl?: string; martinBaseUrl?: string; organization?: Organization }) {
   const { state: menusState } = React.useContext(MenusContext)
   const { currentViewer } = menusState.menus
 
@@ -29,7 +25,6 @@ export function ViewerSidebar({ minioBaseUrl, martinBaseUrl, organization, point
     <>
       {currentViewer === 'map' && <MapSidebar minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} />}
       {currentViewer === 'bim' && <BimSidebar organization={organization} />}
-      {currentViewer === 'pointcloud' && <PointCloudSidebar pointcloudApiUrl={pointcloudApiUrl} organization={organization} />}
     </>
   )
 }

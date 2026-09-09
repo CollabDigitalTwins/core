@@ -4,7 +4,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 /**
- * Viewer access for plugins — one import for all three engines.
+ * Viewer access for plugins — one import for both engines.
  *
  * Deliberately **not** re-exported from the `plugins-sdk` barrel: `bimViewer`
  * carries a runtime dependency on `@thatopen/components` and three, which the BIM
@@ -18,4 +18,3 @@
 
 export * from './mapViewer'
 export * from './bimViewer'
-export * from './pointCloudViewer'

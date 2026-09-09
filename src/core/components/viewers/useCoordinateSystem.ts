@@ -44,7 +44,7 @@ export function useBimCoordinateSystem(
     applyCoordinateSystem(Y_UP, controls)
 
     return () => {
-      // Reset to the Three.js default so pointcloud viewer finds a clean slate
+      // Reset to the Three.js default so the next viewer finds a clean slate
       THREE.Object3D.DEFAULT_UP.copy(Y_UP)
     }
   }, [controls])

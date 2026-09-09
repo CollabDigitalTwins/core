@@ -5,7 +5,6 @@
 // out of the host's module graph.
 import type { BimToolProps } from './bimViewer'
 import type { MapToolProps } from './mapViewer'
-import type { PointCloudToolProps } from './pointCloudViewer'
 // A value, not just a type: a `viewer.tabs` contribution names the viewers it belongs in.
 export { ViewerNames } from '../../types/dbTypes'
 
@@ -15,7 +14,7 @@ import type { ViewerNames } from '../../types/dbTypes'
  * The viewers that can host a tab or a legend, spelled as plain strings. Derived from
  * `ViewerNames` so the two cannot drift, and the form `@collabdt/plugin-kit` publishes.
  */
-export type PluginViewerTarget = `${ViewerNames.map | ViewerNames.bim | ViewerNames.pointcloud}`
+export type PluginViewerTarget = `${ViewerNames.map | ViewerNames.bim}`
 import type { LucideProps } from 'lucide-react'
 
 // --- Capability definitions ---
@@ -28,7 +27,6 @@ export const VALID_CAPABILITIES = [
   'ui.dialogs',
   'map.tools',
   'bim.tools',
-  'pointcloud.tools',
   'viewer.legends',
   'map.layers',
 ] as const
@@ -198,7 +196,6 @@ export interface CapabilityRegistry {
   'ui.dialogs': DialogRegistration
   'map.tools': ToolbarRegistration<MapToolProps>
   'bim.tools': ToolbarRegistration<BimToolProps>
-  'pointcloud.tools': ToolbarRegistration<PointCloudToolProps>
   'viewer.legends': LegendRegistration
   'map.layers': MapLayerRegistration
 }

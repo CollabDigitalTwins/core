@@ -11,10 +11,7 @@ import ToolbarButton from './ui/ToolbarButton'
 
 import type { Tool } from '../types/tools'
 
-// Shared menubar wrapper used by the per-viewer toolbars (MapToolbar inline
-// in Toolbar.tsx, BimToolbar + PointCloudToolbar in their respective viewer
-// folders so they ride the viewer's lazy chunk). Extracted from Toolbar.tsx
-// to avoid duplicating the JSX across three sites.
+// Shared by the per-viewer toolbars, so BimToolbar can ride the viewer's lazy chunk.
 
 interface Props {
   viewer: string

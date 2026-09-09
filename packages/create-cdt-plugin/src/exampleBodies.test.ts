@@ -116,19 +116,6 @@ describe('the BIM example', () => {
   })
 })
 
-describe('the point cloud example', () => {
-  it('narrows the unknown viewer instead of asserting a type Potree does not publish', () => {
-    const source = body('pointcloud.tools')
-
-    expect(source).toMatch(/typeof|instanceof| in viewer/)
-    expect(source).not.toContain('as any')
-  })
-
-  it('reports readiness, since the component renders before Potree finishes', () => {
-    expect(body('pointcloud.tools')).toContain('ready')
-  })
-})
-
 describe('the legend example', () => {
   it('registers a useLegend hook rather than a component', () => {
     expect(body('viewer.legends')).toContain('useLegend')

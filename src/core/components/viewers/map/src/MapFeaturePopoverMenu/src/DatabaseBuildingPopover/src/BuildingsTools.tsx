@@ -168,11 +168,6 @@ export default function BuildingTools({
     [buildingFiles],
   )
 
-  const pcFiles = React.useMemo(
-    () => buildingFiles.filter((file: DbFile) => file.type === 'point-cloud-file' || ['laz', 'las'].includes(file.extension || '')),
-    [buildingFiles],
-  )
-
   const buildingButtons: Tool[] = React.useMemo(
     () => {
 
@@ -208,14 +203,6 @@ export default function BuildingTools({
           opensViewer: ViewerNames.bim
         },
         {
-          id: 'open-pointcloud',
-          title: t('openPointCloudTitle'),
-          icon: LR.Grip,
-          onClick: () => changeViewer(ViewerNames.pointcloud),
-          disabled: pcFiles.length === 0 || !ability.can('read', 'File'),
-          opensViewer: ViewerNames.pointcloud
-        },
-        {
           id: "map-add-file",
           icon: isUploading
             ? LR.Loader
@@ -240,8 +227,7 @@ export default function BuildingTools({
       setView,
       isUploading,
       triggerFileInput,
-      organization,
-      pcFiles.length
+      organization
     ]
   );
 

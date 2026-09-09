@@ -92,7 +92,6 @@ const SidebarProvider = React.forwardRef<
     minioBaseUrl?: string
     martinBaseUrl?: string
     organization?: import('../../types/dbTypes').Organization
-    pointcloudApiUrl?: string
     geocodeEarthApiKey?: string
     geocoderUrl?: string
   }
@@ -108,7 +107,6 @@ const SidebarProvider = React.forwardRef<
       minioBaseUrl,
       martinBaseUrl,
       organization,
-      pointcloudApiUrl,
       geocodeEarthApiKey,
       geocoderUrl,
       ...props
@@ -277,7 +275,7 @@ const SidebarProvider = React.forwardRef<
                 width: isMobile ? SIDEBAR_WIDTH_MOBILE : infoWidth,
               }}
             >
-              <ViewerSidebar minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} pointcloudApiUrl={pointcloudApiUrl} />
+              <ViewerSidebar minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} />
 
               {/* Right-edge drag handle (desktop only). Drag to resize the sidebar width. */}
               {canResizeInfo && (
@@ -428,7 +426,7 @@ const SidebarTrigger = React.forwardRef<
   if (currentViewer === 'auth') return null
 
   // Render MenuButtons only for interactive viewers
-  if (currentViewer === 'map' || currentViewer === 'bim' || currentViewer === 'pointcloud') {
+  if (currentViewer === 'map' || currentViewer === 'bim') {
     return <NavigationBar geocodeEarthApiKey={geocodeEarthApiKey} geocoderUrl={geocoderUrl} />
   }
 

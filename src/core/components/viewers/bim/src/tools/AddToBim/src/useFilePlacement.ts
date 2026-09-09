@@ -64,6 +64,7 @@ export function useFilePlacement(
   buildingId: number,
   intake: Intake,
   onMarkerAction?: (id: string, action: FileMarkerAction) => void,
+  onDone?: () => void,
 ) {
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
   const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 })
@@ -161,6 +162,7 @@ export function useFilePlacement(
     if (!intake.needsPlacement(file)) {
       void intake.submit(file)
       cancelPlacement()
+      onDone?.()
       return
     }
 
@@ -181,7 +183,7 @@ export function useFilePlacement(
       id: 'place-bim-file-toast',
       duration: Infinity,
     })
-  }, [intake, setCursor, cancelPlacement])
+  }, [intake, setCursor, cancelPlacement, onDone])
 
   const handleFileSelect = React.useCallback((event: React.ChangeEvent<HTMLInputElement>, addingMode: BimToolbarToolsType) => {
     const file = event.target.files?.[0]
@@ -310,7 +312,8 @@ export function useFilePlacement(
     setCursor("")
     toast.dismiss('place-bim-file-toast')
     toolsDispatch({ type: "CLEAR-TOOLS" })
-  }, [current3DFileId, current3DFileType, addDxf, modelManager, selectedFile, intake, setCursor, toolsDispatch, registry, discardPlacement])
+    onDone?.()
+  }, [current3DFileId, current3DFileType, addDxf, modelManager, selectedFile, intake, setCursor, toolsDispatch, registry, discardPlacement, onDone])
 
   // Real-time scale/rotation updates while the placement card is open.
   React.useEffect(() => {

@@ -68,4 +68,27 @@ describe('useFilePlacement', () => {
     expect(submit).toHaveBeenCalledOnce()
     expect(result.current.isPlacingFile).toBe(false)
   })
+
+  it('calls onDone once a no-placement file is submitted', async () => {
+    submit.mockClear()
+    const onDone = vi.fn()
+    const { result } = renderHook(() =>
+      useFilePlacement(null, null, null, vi.fn(), 7, intake, vi.fn(), onDone))
+
+    await act(async () => { result.current.handleFileSelect(change('scan.laz'), 'bim-add-file') })
+
+    expect(onDone).toHaveBeenCalledOnce()
+  })
+
+  it('does not call onDone when a CAD upload rejects a non-dxf file', async () => {
+    submit.mockClear()
+    const onDone = vi.fn()
+    const { result } = renderHook(() =>
+      useFilePlacement(null, null, null, vi.fn(), 7, intake, vi.fn(), onDone))
+
+    await act(async () => { result.current.handleFileSelect(change('model.dwg'), 'bim-add-cad') })
+
+    expect(submit).not.toHaveBeenCalled()
+    expect(onDone).not.toHaveBeenCalled()
+  })
 })

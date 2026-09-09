@@ -153,7 +153,7 @@ export default function AddToBim({ tool }: AddToBimProps) {
 
   const filePlacement = useFilePlacement(
     bimComponents, world, fragments, toolsDispatch, buildingId, intake,
-    handleMarkerAction,
+    handleMarkerAction, () => setAddingMode(null),
   )
   placementRef.current = filePlacement
 

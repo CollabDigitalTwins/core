@@ -7,6 +7,18 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Fixed
+- **A plugin tool that sets `stayActive` now keeps working after its panel is closed.**
+  The plugin host put a plugin's whole component inside the toolbar dropdown, and a
+  dropdown throws its contents away when it closes — so the plugin's cleanup ran and
+  whatever it had added to the map was removed. Core's own stay-active tools were never
+  affected, because they keep their work in the component the toolbar mounts and put only
+  menu items inside the dropdown. A stay-active plugin now gets a panel the host owns:
+  the plugin stays mounted and only the panel around it is hidden while closed.
+  `ToolbarSubmenu` is unchanged, so every other tool behaves exactly as before, and
+  plugin tools that do not set `stayActive` keep the existing dropdown. No plugin needs
+  editing to pick this up.
+
 ## [0.9.0] - 2026-09-08
 
 Consolidates the work previously tagged locally as 0.9.0 through 0.11.1. Those tags were

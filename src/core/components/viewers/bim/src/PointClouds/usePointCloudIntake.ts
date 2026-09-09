@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import { mutate } from 'swr'
 
 import { useUpdateFile } from '../../../../../hooks/files/files'
+import { BimContext } from '../../../../../store/BIM/context'
 import { beginTask, endTask, updateTask } from '../../../../ui/FilesManager/src/uploadProgress'
 import { useUploadLabels } from '../../../../ui/FilesManager/src/UploadProgressBar'
 import { uploadFileWithProgress } from '../../../map/src/tools/AddTools/AddFile/utils/uploadToPresignedURLS'
@@ -42,10 +43,15 @@ export function usePointCloudIntake({ apiBase, buildingId, existingNames }: UseP
   const t = useTranslations('PointCloudManagement')
   const { labelFor } = useUploadLabels()
   const updateFileById = useUpdateFile()
+  const { state: bimState, dispatch: bimDispatch } = React.useContext(BimContext)
 
   const [busy, setBusy] = React.useState(false)
   const taskRef = React.useRef<string | null>(null)
   const closeWatchRef = React.useRef<(() => void) | null>(null)
+
+  // Read through a ref so a stale closure in `convert` cannot toggle against an old list.
+  const pointCloudIdsRef = React.useRef(bimState.bim.pointCloudIds)
+  pointCloudIdsRef.current = bimState.bim.pointCloudIds
 
   // The names are only read when an upload starts, so a ref keeps `upload` stable.
   const namesRef = React.useRef(existingNames)
@@ -77,6 +83,10 @@ export function usePointCloudIntake({ apiBase, buildingId, existingNames }: UseP
         onFinished: () => {
           stop()
           void updateFileById(Number(pointCloudId), { isVisible: true }).catch(() => undefined).finally(refreshFiles)
+          const id = String(pointCloudId)
+          if (!pointCloudIdsRef.current.includes(id)) {
+            bimDispatch({ type: 'TOGGLE_POINT_CLOUD', payload: { pointCloudId: id } })
+          }
           toast.success(t('conversionFinished', { name }))
         },
         onFailed: (reason) => { finish(); toast.error(t('conversionFailed', { name, error: reason })) },
@@ -86,7 +96,7 @@ export function usePointCloudIntake({ apiBase, buildingId, existingNames }: UseP
       finish()
       toast.error(t('conversionFailed', { name, error: error instanceof Error ? error.message : String(error) }))
     }
-  }, [apiBase, labelFor, refreshFiles, t, updateFileById])
+  }, [apiBase, labelFor, refreshFiles, t, updateFileById, bimDispatch])
 
   const upload = React.useCallback(async (file: File) => {
     const extension = extensionOf(file.name)

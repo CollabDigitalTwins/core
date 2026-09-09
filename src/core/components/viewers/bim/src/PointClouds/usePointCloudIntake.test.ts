@@ -4,8 +4,10 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { act, renderHook } from '@testing-library/react'
+import * as React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { BimContext } from '../../../../../store/BIM/context'
 import { endTask, getSnapshot } from '../../../../ui/FilesManager/src/uploadProgress'
 
 import { usePointCloudIntake } from './usePointCloudIntake'
@@ -35,6 +37,14 @@ vi.mock('../../../map/src/tools/AddTools/AddFile/utils/uploadToPresignedURLS', (
 const { createPointCloud, startConversion, watchConversion } = await import('../../../shared/pointcloud/pointCloudConversion')
 
 const options = { apiBase: 'https://pc', buildingId: 7, existingNames: [] as string[] }
+
+const bimDispatch = vi.fn()
+// Only pointCloudIds is read by the hook under test, so the rest of BimState is omitted.
+const bimWrapper = (pointCloudIds: string[]) =>
+  ({ children }: { children: React.ReactNode }) =>
+    React.createElement(BimContext.Provider, {
+      value: { state: { bim: { pointCloudIds } as any }, dispatch: bimDispatch },
+    }, children)
 
 describe('usePointCloudIntake', () => {
   beforeEach(() => {
@@ -90,6 +100,36 @@ describe('usePointCloudIntake', () => {
     await act(async () => { deliverFinished?.() })
 
     expect(updateFileByIdMock).toHaveBeenCalledWith(5, { isVisible: true })
+  })
+
+  it('toggles the cloud on in-session once conversion finishes', async () => {
+    bimDispatch.mockClear()
+    let deliverFinished: (() => void) | null = null
+    vi.mocked(watchConversion).mockImplementation((_base, _job, w: ConversionWatcher) => {
+      deliverFinished = () => w.onFinished?.({} as ConversionEvent)
+      return () => undefined
+    })
+
+    const { result } = renderHook(() => usePointCloudIntake(options), { wrapper: bimWrapper([]) })
+    await act(async () => { await result.current.upload(new File([''], 'scan.laz')) })
+    await act(async () => { deliverFinished?.() })
+
+    expect(bimDispatch).toHaveBeenCalledWith({ type: 'TOGGLE_POINT_CLOUD', payload: { pointCloudId: '5' } })
+  })
+
+  it('does not toggle a cloud already present in pointCloudIds', async () => {
+    bimDispatch.mockClear()
+    let deliverFinished: (() => void) | null = null
+    vi.mocked(watchConversion).mockImplementation((_base, _job, w: ConversionWatcher) => {
+      deliverFinished = () => w.onFinished?.({} as ConversionEvent)
+      return () => undefined
+    })
+
+    const { result } = renderHook(() => usePointCloudIntake(options), { wrapper: bimWrapper(['5']) })
+    await act(async () => { await result.current.upload(new File([''], 'scan.laz')) })
+    await act(async () => { deliverFinished?.() })
+
+    expect(bimDispatch).not.toHaveBeenCalled()
   })
 
   it('finishes a conversion that completes after the component unmounted', async () => {

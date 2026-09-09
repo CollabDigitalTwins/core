@@ -17,7 +17,7 @@ import { ViewerNames } from '../../types'
 import { switchLanguage } from '../../utils/utils'
 import { UserSettings } from '../settings'
 import { Toolbar } from '../Toolbar'
-import { UploadProgressToasts } from '../ui/FilesManager'
+import { UploadProgressToasts } from '../ui/FilesManager/src/UploadProgressBar'
 import { SidebarTrigger } from '../ui/Sidebar'
 
 import { MapViewer } from './map/MapViewer'

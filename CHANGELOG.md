@@ -8,6 +8,13 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ## [Unreleased]
 
 ### Fixed
+- **A `.las`, `.laz` or `.e57` added through the BIM viewer's Add to BIM toolbar was never
+  recognised as a point cloud.** The tool had its own upload path that wrote every file as
+  `type: 'bim-file'` through the generic presigned route, so no point cloud record was
+  created and no conversion job ran; the file surfaced under Models instead of Point Clouds.
+  `useFilePlacement` now routes every upload through the same `useBimFileIntake` hook the
+  rest of the BIM viewer uses, and its own `toast.loading` spinner is gone in favour of the
+  shared upload progress bar.
 - **A point cloud created through `/api/point-cloud` never appeared in the BIM viewer.**
   Classification was by extension alone, and the converter records no extension.
   `isPointCloudFile` now accepts either signal — `type === 'point-cloud-file'` or a cloud

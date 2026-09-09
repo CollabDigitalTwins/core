@@ -79,5 +79,6 @@ describe('useBimFileIntake', () => {
     expect(result.current.needsPlacement(new File([''], 'scan.laz'))).toBe(false)
     expect(result.current.needsPlacement(new File([''], 'tower.ifc'))).toBe(false)
     expect(result.current.needsPlacement(new File([''], 'plan.pdf'))).toBe(false)
+    expect(result.current.needsPlacement(new File([''], 'photo.png'))).toBe(false)
   })
 })

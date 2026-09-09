@@ -3,16 +3,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { useTranslations } from "next-intl"
 import * as React from "react"
 import { toast } from "sonner"
 import * as THREE from "three"
 
-import { getFileExtension } from "../../../../../../../utils/utils"
 import { Cursor } from "../../../Cursor"
 import { Highlighter } from "../../../Highlighter"
 import { ModelManager } from "../../../ModelManager"
-import { dropsAtOrigin } from "../../../Placement/placementCapabilities"
 import { BimSceneObjects } from "../../../SceneObjects"
 
 
@@ -21,6 +18,7 @@ import { addFileToScene, type PlacedKind } from "./FileHandler"
 import { type AddedFile, removeMarker } from "./FileMarkerUtils"
 
 import type { FileMarkerAction } from "../../../../../../ui/FilesManager/src/FileMarker"
+import type { useBimFileIntake } from "../../../lib/useBimFileIntake"
 import type { BimToolbarToolsType } from "../../bimToolbar"
 import type * as OBC from "@thatopen/components"
 import type { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js"
@@ -56,16 +54,17 @@ const pointOnGroundPlane = (
   return raycaster.ray.intersectPlane(GROUND_PLANE, target) ? target : null
 }
 
+type Intake = ReturnType<typeof useBimFileIntake>
+
 export function useFilePlacement(
   bimComponents: OBC.Components | null,
   world: OBC.World | null,
   fragments: OBC.FragmentsManager | null,
   toolsDispatch: React.Dispatch<any>,
   buildingId: number,
-  uploadFileToDB?: (args: { fileData: any; buildingId: number }) => Promise<any>,
+  intake: Intake,
   onMarkerAction?: (id: string, action: FileMarkerAction) => void,
 ) {
-  const t = useTranslations("useFileUploadHandler")
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
   const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 })
   const [isPlacingFile, setIsPlacingFile] = React.useState(false)
@@ -150,98 +149,29 @@ export function useFilePlacement(
     placedFilesRef.current.delete(key)
   }, [registry, world])
 
-  const uploadPlacedFile = React.useCallback(async (file: File, point: THREE.Vector3, rotation = 0) => {
-    if (!uploadFileToDB || buildingId <= 0) return
-    try {
-      const assetId = crypto.randomUUID()
-      const presignedResponse = await fetch(`/api/presigned-url-upload?asset=${assetId}`)
-      if (!presignedResponse.ok) throw new Error(`Failed to get an upload URL: ${presignedResponse.status}`)
-      const { presignedUrl } = await presignedResponse.json()
-      const putResponse = await fetch(presignedUrl, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type },
-      })
-      if (!putResponse.ok) throw new Error(`Upload failed: ${putResponse.status}`)
-      const created = await uploadFileToDB({
-        fileData: {
-          name: file.name,
-          type: "bim-file",
-          mimeType: file.type,
-          extension: getFileExtension(file),
-          sizeBytes: file.size,
-          tag: "file",
-          uploadedAt: new Date().toISOString(),
-          url: "",
-          assetId,
-          description: "",
-          attachedFilesBuildingId: buildingId,
-          isVisible: true,
-          x: point.x,
-          y: point.y,
-          z: point.z,
-          bimRotation: THREE.MathUtils.degToRad(rotation),
-        },
-        buildingId,
-      })
-
-      // The route answers with an envelope, though the adapter types it as the file itself.
-      const envelope = created as { newFile?: { id?: number } } | { id?: number } | undefined
-      return (envelope as { newFile?: { id?: number } })?.newFile ?? (envelope as { id?: number })
-    } catch (err) {
-      console.error("Error uploading placed file:", err)
-      const reason = err instanceof Error ? err.message : String(err)
-      toast.error(`Failed to save "${file.name}"`, { description: reason })
-    }
-  }, [uploadFileToDB, buildingId])
-
-  // Only .frag renders, so an IFC is converted here exactly as the sidebar's upload does.
-  const uploadSurveyedFile = React.useCallback(async (file: File) => {
-    const toastId = `add-to-bim-${file.name}`
-    try {
-      let toUpload = file
-      if (getFileExtension(file)?.toLowerCase() === "ifc") {
-        const { convertIfcToFragmentsFile } = await import("../../../../../../ui/FilesManager/src/convertIfcToFragmentsFile")
-        toast.loading(t("convertingIfc", { name: file.name, percent: 0 }), { id: toastId })
-        toUpload = await convertIfcToFragmentsFile(file, (progress) => {
-          toast.loading(t("convertingIfc", { name: file.name, percent: Math.round(progress * 100) }), { id: toastId })
-        })
-      }
-
-      toast.loading(t("uploadingConverted", { name: file.name }), { id: toastId })
-      await uploadPlacedFile(toUpload, new THREE.Vector3())
-    } finally {
-      toast.dismiss(toastId)
-    }
-  }, [t, uploadPlacedFile])
-
   const processFileObject = React.useCallback((file: File, addingMode: BimToolbarToolsType) => {
     const fileName = file.name.toLowerCase()
 
-    if (addingMode === "bim-add-cad") {
-      if (!fileName.endsWith(".dxf")) {
-        toast.error("Please select a valid CAD file (.dxf)")
-        return
-      }
+    if (addingMode === "bim-add-cad" && !fileName.endsWith(".dxf")) {
+      toast.error("Please select a valid CAD file (.dxf)")
+      return
+    }
+
+    // A point cloud or BIM model carries its own coordinates, so there is nothing to point at.
+    if (!intake.needsPlacement(file)) {
+      void intake.submit(file)
+      cancelPlacement()
+      return
+    }
+
+    if (fileName.endsWith(".dxf")) {
       setShow3DScaleCard(true)
       setCurrent3DFileType("dxf")
       setFileScale(0.001)
-    } else if (addingMode === "bim-add-file") {
-      // A survey is already in building coordinates, so it is uploaded there rather than pointed at.
-      if (dropsAtOrigin({ extension: getFileExtension(file) })) {
-        void uploadSurveyedFile(file)
-        cancelPlacement()
-        return
-      }
-      if (fileName.endsWith(".glb") || fileName.endsWith(".gltf")) {
-        setShow3DScaleCard(true)
-        setCurrent3DFileType("model")
-        setFileScale(1)
-      } else if (fileName.endsWith(".dxf")) {
-        setShow3DScaleCard(true)
-        setCurrent3DFileType("dxf")
-        setFileScale(0.001)
-      }
+    } else if (fileName.endsWith(".glb") || fileName.endsWith(".gltf")) {
+      setShow3DScaleCard(true)
+      setCurrent3DFileType("model")
+      setFileScale(1)
     }
 
     setSelectedFile(file)
@@ -251,7 +181,7 @@ export function useFilePlacement(
       id: 'place-bim-file-toast',
       duration: Infinity,
     })
-  }, [setCursor, uploadSurveyedFile, cancelPlacement])
+  }, [intake, setCursor, cancelPlacement])
 
   const handleFileSelect = React.useCallback((event: React.ChangeEvent<HTMLInputElement>, addingMode: BimToolbarToolsType) => {
     const file = event.target.files?.[0]
@@ -319,11 +249,11 @@ export function useFilePlacement(
       const fileName = selectedFile.name.toLowerCase()
       const is3DFile = fileName.endsWith(".dxf") || fileName.endsWith(".glb") || fileName.endsWith(".gltf")
       if (is3DFile) {
-        // Persist on confirm instead, so the final position/rotation is saved.
+        // Persist on confirm instead, so the final position is saved.
         setIsPlacingFile(false)
         setCursor("")
       } else {
-        void uploadPlacedFile(selectedFile, point).then((created) => {
+        void intake.submit(selectedFile, point).then((created) => {
           if (!created?.id) { discardPlacement(addedFile.id); return }
           registry?.rekey(addedFile.id, String(created.id))
           placedFilesRef.current.delete(addedFile.id)
@@ -340,34 +270,27 @@ export function useFilePlacement(
       document.removeEventListener("mousemove", handleMouseMove)
       document.removeEventListener("dblclick", onDblClick)
     }
-  }, [selectedFile, bimComponents, world, isPlacingFile, fileScale, fileRotation, modelManager, addDxf, toolsDispatch, raycast, fragments, cancelPlacement, setCursor, uploadPlacedFile, onMarkerAction, registry, discardPlacement])
+  }, [selectedFile, bimComponents, world, isPlacingFile, fileScale, fileRotation, modelManager, addDxf, toolsDispatch, raycast, fragments, cancelPlacement, setCursor, intake, onMarkerAction, registry, discardPlacement])
 
   const confirmPlacement = React.useCallback(() => {
     if (!current3DFileId) return
 
-    // Capture the final transform from the placed object, then persist it.
+    // Capture the final position from the placed object, then persist it.
     let finalPos: THREE.Vector3 | undefined
-    let finalRot = fileRotation
     if (current3DFileType === "dxf" && addDxf) {
       const info = addDxf.getDxf(current3DFileId)
-      if (info) {
-        finalPos = info.group.position.clone()
-        finalRot = THREE.MathUtils.radToDeg(info.group.rotation.y)
-      }
+      if (info) finalPos = info.group.position.clone()
       addDxf.confirmPlacement(current3DFileId)
     } else if (current3DFileType === "model" && modelManager) {
       const info = modelManager.getModel(current3DFileId)
-      if (info) {
-        finalPos = info.model.position.clone()
-        finalRot = THREE.MathUtils.radToDeg(info.model.rotation.y)
-      }
+      if (info) finalPos = info.model.position.clone()
       modelManager.toggleGizmo(current3DFileId, false)
     }
     // The record has to exist before the scene content can be keyed by its file id.
     if (selectedFile && finalPos) {
       const placedId = current3DFileId
       const kind = current3DFileType
-      void uploadPlacedFile(selectedFile, finalPos, finalRot).then((created) => {
+      void intake.submit(selectedFile, finalPos).then((created) => {
         if (!created?.id) { discardPlacement(placedId); return }
         // The sidebar owns the object from here; until it is keyed by file id it cannot.
         if (kind === 'dxf') addDxf?.rekey(placedId, String(created.id))
@@ -387,7 +310,7 @@ export function useFilePlacement(
     setCursor("")
     toast.dismiss('place-bim-file-toast')
     toolsDispatch({ type: "CLEAR-TOOLS" })
-  }, [current3DFileId, current3DFileType, addDxf, modelManager, selectedFile, fileRotation, uploadPlacedFile, setCursor, toolsDispatch, registry, discardPlacement])
+  }, [current3DFileId, current3DFileType, addDxf, modelManager, selectedFile, intake, setCursor, toolsDispatch, registry, discardPlacement])
 
   // Real-time scale/rotation updates while the placement card is open.
   React.useEffect(() => {

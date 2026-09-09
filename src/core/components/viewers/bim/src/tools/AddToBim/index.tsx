@@ -21,8 +21,10 @@ import { SensorInput } from "../../../../../ui/Sensors/SensorInput"
 import { FileAdderDialog } from "../../../../map/src/tools/AddTools/AddFile/FileAdder"
 
 import { DEFAULT_PLACEMENT } from "../../../../shared/pointcloud/pointCloudPlacement"
+import { useBimFileIntake } from "../../lib/useBimFileIntake"
 import { PlacementPanel } from "../../Placement/PlacementPanel"
 import { SCALABLE_OBJECT_PLACEMENT } from "../../Placement/placementTarget"
+import { BimPointClouds } from "../../PointClouds"
 
 import { AddToBimToolbar } from "./src/AddToBimToolbar"
 import { initializeCSS2DRenderer } from "./src/FileMarkerUtils"
@@ -142,8 +144,15 @@ export default function AddToBim({ tool }: AddToBimProps) {
     api.editPlacedFile(id, action === "move" ? "translate" : action)
   }, [deleteFile])
 
+  const intake = useBimFileIntake({
+    buildingId,
+    apiBase: bimComponents?.get(BimPointClouds).apiBase ?? '',
+    existingNames: filesData.map(f => f.name),
+    uploadFile,
+  })
+
   const filePlacement = useFilePlacement(
-    bimComponents, world, fragments, toolsDispatch, buildingId, uploadFile,
+    bimComponents, world, fragments, toolsDispatch, buildingId, intake,
     handleMarkerAction,
   )
   placementRef.current = filePlacement
@@ -168,8 +177,7 @@ export default function AddToBim({ tool }: AddToBimProps) {
   const startAdding = React.useCallback((mode: BimToolbarToolsType) => {
     setAddingMode(mode)
     toolsDispatch({ type: "SET-TOOL", payload: { currentToolId: mode } })
-    // Crosshair is set by useFilePlacement.handleFileSelect after the user picks a file,
-    // not here — so the cursor stays normal while the file picker is open.
+    // Crosshair is set by useFilePlacement.handleFileSelect once a file is picked, not here.
   }, [toolsDispatch])
 
   const cancelAdding = React.useCallback(() => {

@@ -53,8 +53,6 @@ export function usePointCloudIntake({ apiBase, buildingId, existingNames }: UseP
     void mutate(['filesByBuilding', buildingId, ''])
   }, [buildingId])
 
-  React.useEffect(() => () => closeWatchRef.current?.(), [])
-
   const convert = React.useCallback(async (pointCloudId: string | number, name: string) => {
     const id = taskRef.current
       ?? beginTask({ name, fileType: 'point-cloud-file', phase: 'converting', label: labelFor('converting', name), progress: 0 })

@@ -4,10 +4,12 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { act, renderHook } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getSnapshot } from '../../../../ui/FilesManager/src/uploadProgress'
+import { endTask, getSnapshot } from '../../../../ui/FilesManager/src/uploadProgress'
 import { usePointCloudIntake } from './usePointCloudIntake'
+
+import type { ConversionWatcher } from '../../../shared/pointcloud/pointCloudConversion'
 
 vi.mock('next-intl', () => ({ useTranslations: () => (key: string) => key }))
 vi.mock('swr', () => ({ mutate: vi.fn() }))
@@ -26,11 +28,17 @@ vi.mock('../../../map/src/tools/AddTools/AddFile/utils/uploadToPresignedURLS', (
   }),
 }))
 
-const { createPointCloud, startConversion } = await import('../../../shared/pointcloud/pointCloudConversion')
+const { createPointCloud, startConversion, watchConversion } = await import('../../../shared/pointcloud/pointCloudConversion')
+
+const FINISHED_EVENT = { jobId: 'job-1', pointCloudId: 5, status: 'finished', progress: 100 }
 
 const options = { apiBase: 'https://pc', buildingId: 7, existingNames: [] as string[] }
 
 describe('usePointCloudIntake', () => {
+  beforeEach(() => {
+    for (const task of getSnapshot()) endTask(task.id)
+  })
+
   it('creates, uploads and converts a laz', async () => {
     const { result } = renderHook(() => usePointCloudIntake(options))
     await act(async () => { await result.current.upload(new File([''], 'scan.laz')) })
@@ -65,5 +73,17 @@ describe('usePointCloudIntake', () => {
     const { result } = renderHook(() => usePointCloudIntake(options))
     await act(async () => { await result.current.upload(new File([''], 'notes.txt')) })
     expect(createPointCloud).not.toHaveBeenCalledWith('notes', 'txt', 7)
+  })
+
+  it('finishes a conversion that completes after the component unmounted', async () => {
+    let watcher: ConversionWatcher = {}
+    vi.mocked(watchConversion).mockImplementation((_base, _job, w) => { watcher = w; return () => undefined })
+
+    const { result, unmount } = renderHook(() => usePointCloudIntake(options))
+    await act(async () => { await result.current.upload(new File([''], 'scan.laz')) })
+    unmount()
+    expect(getSnapshot().length).toBeGreaterThan(0)
+    act(() => { watcher.onFinished?.(FINISHED_EVENT) })
+    expect(getSnapshot()).toEqual([])
   })
 })

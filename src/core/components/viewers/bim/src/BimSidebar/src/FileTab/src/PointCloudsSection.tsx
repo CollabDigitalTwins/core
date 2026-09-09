@@ -109,6 +109,11 @@ export function PointCloudsSection({ files, query = '', buildingId }: PointCloud
     }
   }, [dispatch, pointCloudIds])
 
+  const inFlight = React.useCallback(
+    (file: DbFile) => tasks.some(task => task.name === file.name),
+    [tasks],
+  )
+
   const { handleAction, deleteDialog } = useFileActions({
     files: items,
     setFiles: setItems,
@@ -200,7 +205,7 @@ export function PointCloudsSection({ files, query = '', buildingId }: PointCloud
                 confirmDelete={false}
               />
             </div>
-            {Boolean(file.pointCloudUploaded) && !isRenderablePointCloud(file) && (
+            {Boolean(file.pointCloudUploaded) && !isRenderablePointCloud(file) && !inFlight(file) && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -212,7 +217,7 @@ export function PointCloudsSection({ files, query = '', buildingId }: PointCloud
                 <LR.RefreshCw className="h-3 w-3" />
               </Button>
             )}
-            {!file.pointCloudUploaded && (
+            {!file.pointCloudUploaded && !inFlight(file) && (
               <Button
                 variant="ghost"
                 size="icon"

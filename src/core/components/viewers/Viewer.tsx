@@ -17,6 +17,7 @@ import { ViewerNames } from '../../types'
 import { switchLanguage } from '../../utils/utils'
 import { UserSettings } from '../settings'
 import { Toolbar } from '../Toolbar'
+import { UploadProgressToasts } from '../ui/FilesManager'
 import { SidebarTrigger } from '../ui/Sidebar'
 
 import { MapViewer } from './map/MapViewer'
@@ -205,6 +206,7 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
     <>
       {selectedViewer}
       <Toolbar viewer={validViewer} minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} geocodeEarthApiKey={geocodeEarthApiKey} geocoderUrl={geocoderUrl} />
+      <UploadProgressToasts />
     </>
   )
 }

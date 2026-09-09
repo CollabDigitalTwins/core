@@ -1271,6 +1271,11 @@
     "importBCFTitle": "Import topics from BCF file",
     "createViewpointTitle": "Create viewpoint for current camera position"
   },
+  "Upload": {
+    "uploading": "Uploading {name}",
+    "converting": "Converting {name}",
+    "finalising": "Finishing {name}"
+  },
   "UserDetails": {
     "title": "User Details",
     "adminAccessRequired": "Admin access is required",

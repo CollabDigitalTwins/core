@@ -63,6 +63,9 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
     deleteFile,
   })
 
+  const isDxfPlaceable = React.useCallback((extension?: string | null) => extension?.toLowerCase() === 'dxf', [])
+  const placeHint = React.useCallback((name: string) => t('placeHint', { name }), [t])
+
   const {
     rows: localFiles,
     setRows: setLocalFiles,
@@ -77,8 +80,8 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
   } = usePlaceableFileRows({
     files,
     buildingId,
-    isPlaceable: extension => extension?.toLowerCase() === 'dxf',
-    placeHint: name => t('placeHint', { name }),
+    isPlaceable: isDxfPlaceable,
+    placeHint,
   })
   const [activeIDSFileId, setActiveIDSFileId] = React.useState<number | null>(null)
 

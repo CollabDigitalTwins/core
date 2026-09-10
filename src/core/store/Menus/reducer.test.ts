@@ -3,7 +3,7 @@
 
 import { ViewerNames } from '../../types/dbTypes'
 
-import { MenusReducer, type MenusState } from './reducer'
+import { DEFAULT_FILE_TAB_SECTION_ORDER, MenusReducer, type MenusState } from './reducer'
 
 function baseState(overrides: Partial<MenusState> = {}): MenusState {
   return {
@@ -25,6 +25,7 @@ function baseState(overrides: Partial<MenusState> = {}): MenusState {
     pendingSensorAction: null,
     sensorLegendVisible: {},
     sensorLegendTypeId: {},
+    fileTabSectionOrder: DEFAULT_FILE_TAB_SECTION_ORDER,
     ...overrides,
   }
 }
@@ -376,5 +377,27 @@ describe('MenusReducer', () => {
       } as any)
       expect(cleared.sensorLegendTypeId).toEqual({ [ViewerNames.bim]: null })
     })
+  })
+})
+
+describe('SET_FILE_TAB_SECTION_ORDER', () => {
+  it('replaces the section order', () => {
+    const next = MenusReducer(baseState(), {
+      type: 'SET_FILE_TAB_SECTION_ORDER',
+      payload: { fileTabSectionOrder: ['files', 'bim', 'models', 'pointClouds'] },
+    } as any)
+    expect(next.fileTabSectionOrder).toEqual(['files', 'bim', 'models', 'pointClouds'])
+  })
+
+  it('defaults to BIM, point clouds, models, files', () => {
+    expect(DEFAULT_FILE_TAB_SECTION_ORDER).toEqual(['bim', 'pointClouds', 'models', 'files'])
+  })
+
+  it('ignores an order that does not name every section exactly once', () => {
+    const next = MenusReducer(baseState(), {
+      type: 'SET_FILE_TAB_SECTION_ORDER',
+      payload: { fileTabSectionOrder: ['files', 'bim'] },
+    } as any)
+    expect(next.fileTabSectionOrder).toEqual(DEFAULT_FILE_TAB_SECTION_ORDER)
   })
 })

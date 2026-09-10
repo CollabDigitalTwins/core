@@ -21,6 +21,7 @@ import { POINT_CLOUD_ACCEPT, isRenderablePointCloud } from '../../../../PointClo
 import { useBimPointCloudOpacity } from '../../../../PointClouds/useBimPointCloudOpacity'
 import { usePointCloudIntake } from '../../../../PointClouds/usePointCloudIntake'
 
+import type { FileTabSectionChrome } from './sectionChrome'
 import type { DbFile } from '../../../../../../../../types/dbTypes'
 import type { FileAction } from '../../../../../../../../types/global'
 
@@ -32,15 +33,13 @@ const PENDING_OPTIONS: FileAction[] = ['info', 'delete']
 
 const TOAST_ID = 'bim-pointcloud-placement-toast'
 
-interface PointCloudsSectionProps {
+interface PointCloudsSectionProps extends FileTabSectionChrome {
   files: DbFile[]
   query?: string
   buildingId: number
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
 }
 
-export function PointCloudsSection({ files, query = '', buildingId, open, onOpenChange }: PointCloudsSectionProps) {
+export function PointCloudsSection({ files, query = '', buildingId, ...chrome }: PointCloudsSectionProps) {
   const t = useTranslations('PointCloudManagement')
   const tAlign = useTranslations('Placement')
 
@@ -178,8 +177,7 @@ export function PointCloudsSection({ files, query = '', buildingId, open, onOpen
         itemCount={rows.length}
         onAddItem={pickFile}
         addItemTitle={t('uploadTitle')}
-        open={open}
-        onOpenChange={onOpenChange}
+        {...chrome}
       >
         <input
           ref={inputRef}

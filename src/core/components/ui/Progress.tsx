@@ -25,7 +25,7 @@ const Progress = React.forwardRef<
       value={indeterminate ? undefined : value}
       data-indeterminate={indeterminate ? 'true' : undefined}
       className={cn(
-        'relative h-1.5 w-full overflow-hidden rounded-[999px] bg-muted',
+        'relative h-1.5 w-full overflow-hidden rounded-[999px] bg-input',
         className,
       )}
       {...props}

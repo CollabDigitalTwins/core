@@ -25,19 +25,18 @@ import { usePlacementSession } from '../../../../Placement/usePlacementSession'
 import { BimPointClouds } from '../../../../PointClouds'
 import { SpatialStructure } from '../../../../SpatialStructure'
 
+import type { FileTabSectionChrome } from './sectionChrome'
 import type { DbFile as DbFile } from '../../../../../../../../types/dbTypes'
 
 const BIM_MODEL_OPTIONS: import('../../../../../../../../types/global').FileAction[] = ['view', 'ghost', 'move', 'info', 'delete']
 const BIM_ACCEPT = '.ifc,.frag'
 
-interface BimSectionProps {
+interface BimSectionProps extends FileTabSectionChrome {
   files: DbFile[]
   query?: string
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
 }
 
-export function BimSection({ files, query = '', open, onOpenChange }: BimSectionProps) {
+export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
   const t = useTranslations('BimSection')
 
   const { state: bimState, dispatch: bimDispatch } = React.useContext(BimContext)
@@ -299,8 +298,7 @@ export function BimSection({ files, query = '', open, onOpenChange }: BimSection
         onAddItem={addBim}
         addItemTitle={t('addTitle')}
         switchVariant={handleSwitchVariant()}
-        open={open}
-        onOpenChange={onOpenChange}
+        {...chrome}
       >
         {tasks.map(task => (
           <div key={task.id} className="px-2 py-1">

@@ -7,6 +7,23 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Added
+- **The File tab's sections can be reordered by press-and-hold.** Holding a section header
+  (icon + title) for 400ms lifts it; dragging moves it between the other sections and
+  releasing commits the new order. `Alt+ArrowUp`/`Alt+ArrowDown` on a focused header does the
+  same from the keyboard, and `Escape` abandons a drag. The order lives in `MenusState` as
+  `fileTabSectionOrder`, so it survives tab switches for the session but not a reload.
+  New `SET_FILE_TAB_SECTION_ORDER` action; a payload that is not a permutation of the four
+  sections is ignored rather than dropping a section from the tab.
+- `CollapsibleSection` takes `dragHandleProps` and `isReordering`, and its header is now a
+  focusable `role="button"` that toggles on Enter/Space.
+
+### Changed
+- **Empty File tab sections collapse and sink to the bottom.** A section with no items starts
+  closed and sorts below the populated ones, keeping its relative order; opening one keeps it
+  open, and it returns to its own slot once it holds a file.
+- The File tab's default section order is now BIM, Point clouds, Models, Files.
+
 ### Fixed
 - **A `.las`, `.laz` or `.e57` added through the BIM viewer's Add to BIM toolbar was never
   recognised as a point cloud.** The tool had its own upload path that wrote every file as

@@ -8,20 +8,22 @@ import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
 import { useFilesByBuildingId } from '../../../../../../../hooks/files/files'
-import { BuildingsContext } from '../../../../../../../store'
+import { BuildingsContext, MenusContext } from '../../../../../../../store'
 import { ViewerSidebarPanel } from '../../../../../../ui/ViewerSidebar/Panel'
+import { useLongPressReorder } from '../../../../../../ui/ViewerSidebar/useLongPressReorder'
 import { useResizableSections } from '../../../../../../ui/ViewerSidebar/useResizableSections'
 
 import { BimSection } from './src/BimSection'
 import { FilesSection } from './src/FilesSection'
 import { ModelsSection } from './src/ModelsSection'
+import { orderFileTabSections } from './src/orderFileTabSections'
 import { partitionFileTab } from './src/partitionFileTab'
 import { PointCloudsSection } from './src/PointCloudsSection'
+import { resolveOpenSections } from './src/resolveOpenSections'
 
+import type { FileTabSectionChrome } from './src/sectionChrome'
 import type { DbFile } from '../../../../../../../types/dbTypes'
 import type { FileSection as FileSectionId } from '../../../../../../ui/FilesManager/src/fileType'
-
-const SECTION_IDS: readonly FileSectionId[] = ['bim', 'models', 'pointClouds', 'files']
 
 /** Share of the flexible height each section takes, and the least it may shrink to. */
 const DEFAULT_WEIGHTS: Record<FileSectionId, number> = { bim: 25, models: 25, pointClouds: 25, files: 25 }
@@ -32,6 +34,7 @@ export function FileTab() {
 
   const { state: buildingState } = React.useContext(BuildingsContext)
   const { building } = buildingState.buildings
+  const { state: menusState, dispatch: menusDispatch } = React.useContext(MenusContext)
   const [searchQuery, setSearchQuery] = React.useState('')
 
   const urlBuildingId = useSearchParams().get('buildingId')
@@ -41,97 +44,88 @@ export function FileTab() {
   const filesData: DbFile[] = useFilesByBuildingId(buildingId).files || []
   const buckets = React.useMemo(() => partitionFileTab(filesData), [filesData])
 
-  const [openSections, setOpenSections] = React.useState<Record<FileSectionId, boolean>>({
-    bim: true,
-    models: true,
-    pointClouds: true,
-    files: true,
-  })
+  const counts = React.useMemo<Record<FileSectionId, number>>(() => ({
+    bim: buckets.bim.length,
+    models: buckets.models.length,
+    pointClouds: buckets.pointClouds.length,
+    files: buckets.files.length,
+  }), [buckets])
+
+  const [explicitOpen, setExplicitOpen] = React.useState<Partial<Record<FileSectionId, boolean>>>({})
+  const openSections = React.useMemo(
+    () => resolveOpenSections(explicitOpen, counts),
+    [explicitOpen, counts],
+  )
   const setOpen = (id: FileSectionId) => (value: boolean) =>
-    setOpenSections(current => ({ ...current, [id]: value }))
+    setExplicitOpen(current => ({ ...current, [id]: value }))
+
+  const storedOrder = menusState.menus.fileTabSectionOrder
+  const settledOrder = React.useMemo(
+    () => orderFileTabSections(storedOrder, counts),
+    [storedOrder, counts],
+  )
+
+  const reorder = useLongPressReorder<FileSectionId>({
+    ids: settledOrder,
+    onReorder: fileTabSectionOrder =>
+      menusDispatch({ type: 'SET_FILE_TAB_SECTION_ORDER', payload: { fileTabSectionOrder } }),
+  })
+  const sectionIds = reorder.order
 
   const { layoutRef, gridTemplateRows, separatorAfter, beginResize } = useResizableSections({
-    ids: SECTION_IDS,
+    ids: sectionIds,
     defaultWeights: DEFAULT_WEIGHTS,
     minWeights: MIN_WEIGHTS,
     open: openSections,
   })
 
-  return (
-    <ViewerSidebarPanel search={{ value: searchQuery, onChange: setSearchQuery }}>
-      <div ref={layoutRef} className="grid flex-1 min-h-0" style={{ gridTemplateRows }}>
-        <div className="min-h-0 overflow-hidden">
-          <BimSection
-            files={buckets.bim}
-            query={searchQuery}
-            open={openSections.bim}
-            onOpenChange={setOpen('bim')}
-          />
-        </div>
-
-        {separatorAfter('bim') && (
-          <div
-            role="separator"
-            aria-orientation="horizontal"
-            aria-label={tSidebar('resizeSectionsLabel')}
-            className="group flex items-center justify-center cursor-row-resize select-none touch-none"
-            onPointerDown={beginResize('bim')}
-          >
-            <div className="h-px w-full bg-border transition-colors group-hover:bg-primary/50" />
-          </div>
-        )}
-
-        <div className="min-h-0 overflow-hidden">
-          <ModelsSection
-            files={buckets.models}
-            query={searchQuery}
-            open={openSections.models}
-            onOpenChange={setOpen('models')}
-          />
-        </div>
-
-        {separatorAfter('models') && (
-          <div
-            role="separator"
-            aria-orientation="horizontal"
-            aria-label={tSidebar('resizeSectionsLabel')}
-            className="group flex items-center justify-center cursor-row-resize select-none touch-none"
-            onPointerDown={beginResize('models')}
-          >
-            <div className="h-px w-full bg-border transition-colors group-hover:bg-primary/50" />
-          </div>
-        )}
-
-        <div className="min-h-0 overflow-hidden">
+  const renderSection = (id: FileSectionId, chrome: FileTabSectionChrome) => {
+    switch (id) {
+      case 'bim':
+        return <BimSection files={buckets.bim} query={searchQuery} {...chrome} />
+      case 'models':
+        return <ModelsSection files={buckets.models} query={searchQuery} {...chrome} />
+      case 'pointClouds':
+        return (
           <PointCloudsSection
             files={buckets.pointClouds}
             query={searchQuery}
             buildingId={buildingId ?? 0}
-            open={openSections.pointClouds}
-            onOpenChange={setOpen('pointClouds')}
+            {...chrome}
           />
-        </div>
+        )
+      case 'files':
+        return <FilesSection files={buckets.files} query={searchQuery} {...chrome} />
+    }
+  }
 
-        {separatorAfter('pointClouds') && (
-          <div
-            role="separator"
-            aria-orientation="horizontal"
-            aria-label={tSidebar('resizeSectionsLabel')}
-            className="group flex items-center justify-center cursor-row-resize select-none touch-none"
-            onPointerDown={beginResize('pointClouds')}
-          >
-            <div className="h-px w-full bg-border transition-colors group-hover:bg-primary/50" />
-          </div>
-        )}
+  return (
+    <ViewerSidebarPanel search={{ value: searchQuery, onChange: setSearchQuery }}>
+      <div ref={layoutRef} className="grid flex-1 min-h-0" style={{ gridTemplateRows }}>
+        {sectionIds.map(id => (
+          <React.Fragment key={id}>
+            <div className="min-h-0 overflow-hidden">
+              {renderSection(id, {
+                open: openSections[id],
+                onOpenChange: setOpen(id),
+                dragHandleProps: reorder.handlersFor(id),
+                isReordering: reorder.activeId === id,
+              })}
+            </div>
 
-        <div className="min-h-0 overflow-hidden">
-          <FilesSection
-            files={buckets.files}
-            query={searchQuery}
-            open={openSections.files}
-            onOpenChange={setOpen('files')}
-          />
-        </div>
+            {separatorAfter(id) && (
+              <div
+                role="separator"
+                aria-orientation="horizontal"
+                aria-label={tSidebar('resizeSectionsLabel')}
+                className="group flex items-center justify-center cursor-row-resize select-none touch-none"
+                onPointerDown={beginResize(id)}
+              >
+                <div className="h-px w-full bg-border transition-colors group-hover:bg-primary/50" />
+              </div>
+            )}
+          </React.Fragment>
+        ))}
       </div>
     </ViewerSidebarPanel>
   )

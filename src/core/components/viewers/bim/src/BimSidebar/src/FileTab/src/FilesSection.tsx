@@ -23,6 +23,7 @@ import { createFileMarker, removeMarker, type AddedFile } from '../../../../tool
 
 import { usePlaceableFileRows } from './usePlaceableFileRows'
 
+import type { FileTabSectionChrome } from './sectionChrome'
 import type { DbFile as IFile } from '../../../../../../../../types/dbTypes'
 import type { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
 
@@ -31,17 +32,15 @@ type FileAction = import('../../../../../../../../types/global').FileAction
 const OPTIONS_PLACEABLE: FileAction[] = ['download', 'view', 'move', 'info', 'delete']
 const OPTIONS_PLAIN: FileAction[] = ['download', 'view', 'delete']
 
-interface FilesSectionProps {
+interface FilesSectionProps extends FileTabSectionChrome {
   files: IFile[]
   query?: string
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
 }
 
 // 3D geometry has its own section, so the only file left here that holds a place is a drawing.
 const isPlaceable = (ext?: string | null): boolean => ext?.toLowerCase() === 'dxf'
 
-export function FilesSection({ files, query = '', open, onOpenChange }: FilesSectionProps) {
+export function FilesSection({ files, query = '', ...chrome }: FilesSectionProps) {
   const t = useTranslations('FileSelection')
 
   const { state: bimState, dispatch: bimDispatch } = React.useContext(BimContext)
@@ -301,8 +300,7 @@ export function FilesSection({ files, query = '', open, onOpenChange }: FilesSec
         switchVariant={handleSwitchVariant()}
         onAddItem={addFile}
         addItemTitle={t('addFileTitle')}
-        open={open}
-        onOpenChange={onOpenChange}
+        {...chrome}
       >
         {tasks.map(task => (
           <div key={task.id} className="px-2 py-1">

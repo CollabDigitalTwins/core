@@ -17,6 +17,7 @@ import { BimPointClouds } from '../../../../PointClouds'
 
 import { usePlaceableFileRows } from './usePlaceableFileRows'
 
+import type { FileTabSectionChrome } from './sectionChrome'
 import type { DbFile } from '../../../../../../../../types/dbTypes'
 import type { FileAction } from '../../../../../../../../types/global'
 
@@ -25,14 +26,12 @@ const MODEL_OPTIONS: FileAction[] = ['download', 'view', 'move', 'info', 'delete
 const is3dFile = (extension?: string | null): boolean =>
   EXTENSIONS_FOR_TYPE['3d-file'].includes(extension?.toLowerCase() ?? '')
 
-interface ModelsSectionProps {
+interface ModelsSectionProps extends FileTabSectionChrome {
   files: DbFile[]
   query?: string
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
 }
 
-export function ModelsSection({ files, query = '', open, onOpenChange }: ModelsSectionProps) {
+export function ModelsSection({ files, query = '', ...chrome }: ModelsSectionProps) {
   const t = useTranslations('FileItemComponent')
   const tFiles = useTranslations('FileSelection')
 
@@ -97,8 +96,7 @@ export function ModelsSection({ files, query = '', open, onOpenChange }: ModelsS
         itemCount={filtered.length}
         onAddItem={addModel}
         addItemTitle={t('addModelTitle')}
-        open={open}
-        onOpenChange={onOpenChange}
+        {...chrome}
       >
         {tasks.map(task => (
           <div key={task.id} className="px-2 py-1">

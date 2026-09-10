@@ -7,6 +7,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-09-10
+
 ### Fixed
 - **A plugin tool that sets `stayActive` now keeps working after its panel is closed.**
   The plugin host put a plugin's whole component inside the toolbar dropdown, and a

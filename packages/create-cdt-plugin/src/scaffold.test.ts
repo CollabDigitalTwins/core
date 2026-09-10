@@ -121,7 +121,7 @@ describe('scaffold', () => {
 
     expect((await read('map.tools')).devDependencies['maplibre-gl']).toBeDefined()
     expect((await read('bim.tools')).devDependencies['@thatopen/components']).toBeDefined()
-    expect((await read('pointcloud.tools')).devDependencies['maplibre-gl']).toBeUndefined()
+    expect((await read('bim.tools')).devDependencies['maplibre-gl']).toBeUndefined()
     expect((await read('viewer.legends')).devDependencies['@thatopen/components']).toBeUndefined()
   })
 

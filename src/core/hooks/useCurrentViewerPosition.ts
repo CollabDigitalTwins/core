@@ -3,13 +3,12 @@
 import * as React from 'react'
 import * as THREE from 'three'
 
-import { getCameraPosition } from '../components/viewers/pointcloud/src/tools/SharePointCloudTool/src/getCameraPosition'
-import { MenusContext, MapContext, BimContext, PointCloudContext } from '../store'
+import { MenusContext, MapContext, BimContext } from '../store'
 import { ViewerNames } from '../types'
 
 export type ViewerPosition =
   | { type: 'map'; lat: number; lng: number; zoom: number; bearing: number; pitch: number }
-  | { type: 'bim' | 'pointcloud'; camX: number; camY: number; camZ: number; tarX: number; tarY: number; tarZ: number }
+  | { type: 'bim'; camX: number; camY: number; camZ: number; tarX: number; tarY: number; tarZ: number }
 
 export function useCurrentViewerPosition(): () => ViewerPosition | null {
   const { state: menusState } = React.useContext(MenusContext)
@@ -20,9 +19,6 @@ export function useCurrentViewerPosition(): () => ViewerPosition | null {
 
   const { state: bimState } = React.useContext(BimContext)
   const { world } = bimState.bim
-
-  const { state: pcState } = React.useContext(PointCloudContext)
-  const { viewer } = pcState.pointcloud
 
   return React.useCallback((): ViewerPosition | null => {
     if (currentViewer === ViewerNames.map && map) {
@@ -55,20 +51,6 @@ export function useCurrentViewerPosition(): () => ViewerPosition | null {
       } catch { return null }
     }
 
-    if (currentViewer === ViewerNames.pointcloud && viewer) {
-      const cam = getCameraPosition(viewer)
-      if (!cam) return null
-      return {
-        type: 'pointcloud',
-        camX: parseFloat(cam.position.x.toFixed(3)),
-        camY: parseFloat(cam.position.y.toFixed(3)),
-        camZ: parseFloat(cam.position.z.toFixed(3)),
-        tarX: parseFloat(cam.target.x.toFixed(3)),
-        tarY: parseFloat(cam.target.y.toFixed(3)),
-        tarZ: parseFloat(cam.target.z.toFixed(3)),
-      }
-    }
-
     return null
-  }, [currentViewer, map, world, viewer])
+  }, [currentViewer, map, world])
 }

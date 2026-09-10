@@ -13,7 +13,7 @@
 
 /** Mirrors core's `ViewerNames`, as the union the records carry. */
 export type PluginViewerName =
-  | 'auth' | 'map' | 'bim' | 'pointcloud' | 'buildings' | 'sites' | 'files'
+  | 'auth' | 'map' | 'bim' | 'buildings' | 'sites' | 'files'
   | 'land' | 'infrastructure' | 'extensions' | 'settings' | 'users'
 
 export interface PluginBuilding {

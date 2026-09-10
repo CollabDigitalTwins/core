@@ -11,29 +11,35 @@ import { toast } from 'sonner'
 import { useDeleteFile } from '../../../../../../../../hooks/files/files'
 import { BimContext } from '../../../../../../../../store'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
+import { Button } from '../../../../../../../ui/Button'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
-import { FileItemComponent, useFileActions, useFileDeleteHandler } from '../../../../../../../ui/FilesManager'
+import { FileItemComponent, UploadProgressBar, useFileActions, useFileDeleteHandler, useUploadTasks } from '../../../../../../../ui/FilesManager'
 import { PlacementEditor } from '../../../../Placement/PlacementEditor'
 import { usePointCloudTarget } from '../../../../Placement/targets/usePointCloudTarget'
 import { BimPointClouds } from '../../../../PointClouds'
-import { selectPointCloudFiles } from '../../../../PointClouds/pointCloudFiles'
+import { POINT_CLOUD_ACCEPT, isRenderablePointCloud } from '../../../../PointClouds/pointCloudFiles'
 import { useBimPointCloudOpacity } from '../../../../PointClouds/useBimPointCloudOpacity'
+import { usePointCloudIntake } from '../../../../PointClouds/usePointCloudIntake'
 
+import type { FileTabSectionChrome } from './sectionChrome'
 import type { DbFile } from '../../../../../../../../types/dbTypes'
 import type { FileAction } from '../../../../../../../../types/global'
 
 /** Same set the BIM models offer. No download — a scan is not handed out to viewers. */
 const OPTIONS: FileAction[] = ['view', 'ghost', 'move', 'info', 'delete']
 
+/** An unconverted cloud has nothing to stream, so it omits every action that renders it. */
+const PENDING_OPTIONS: FileAction[] = ['info', 'delete']
+
 const TOAST_ID = 'bim-pointcloud-placement-toast'
 
-interface PointCloudsSectionProps {
+interface PointCloudsSectionProps extends FileTabSectionChrome {
   files: DbFile[]
   query?: string
   buildingId: number
 }
 
-export function PointCloudsSection({ files, query = '', buildingId }: PointCloudsSectionProps) {
+export function PointCloudsSection({ files, query = '', buildingId, ...chrome }: PointCloudsSectionProps) {
   const t = useTranslations('PointCloudManagement')
   const tAlign = useTranslations('Placement')
 
@@ -48,10 +54,21 @@ export function PointCloudsSection({ files, query = '', buildingId }: PointCloud
 
   const clouds = React.useMemo(() => {
     const needle = query.trim().toLowerCase()
-    return selectPointCloudFiles(files)
+    return files
       .filter((file) => !needle || file.name.toLowerCase().includes(needle))
       .sort((a, b) => a.name.localeCompare(b.name))
   }, [files, query])
+
+  const existingNames = React.useMemo(() => files.map((file) => file.name), [files])
+  const apiBase = bimComponents?.get(BimPointClouds).apiBase ?? ''
+  const { upload, convert, busy } = usePointCloudIntake({
+    apiBase,
+    buildingId,
+    existingNames,
+  })
+  const tasks = useUploadTasks('pointClouds')
+
+  const inputRef = React.useRef<HTMLInputElement | null>(null)
 
   const [items, setItems] = React.useState<(DbFile & { isVisible?: boolean })[]>([])
   React.useEffect(() => {
@@ -93,6 +110,11 @@ export function PointCloudsSection({ files, query = '', buildingId }: PointCloud
     }
   }, [dispatch, pointCloudIds])
 
+  const inFlight = React.useCallback(
+    (file: DbFile) => tasks.some(task => task.name === file.name),
+    [tasks],
+  )
+
   const { handleAction, deleteDialog } = useFileActions({
     files: items,
     setFiles: setItems,
@@ -104,6 +126,30 @@ export function PointCloudsSection({ files, query = '', buildingId }: PointCloud
     onMove: (file) => { void editPosition(file) },
     onDelete: forget,
   })
+
+  const pickFile = React.useCallback(() => {
+    if (busy) return
+    inputRef.current?.click()
+  }, [busy])
+
+  const onFilePicked = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    // Clearing lets the same file be picked again after a failure.
+    event.target.value = ''
+    if (file) void upload(file)
+  }, [upload])
+
+  // An upload that died leaves a row with no object behind it; drop it and re-pick.
+  const retryUpload = React.useCallback(async (file: DbFile) => {
+    try {
+      await handleDeleteFile(file)
+    }
+    catch (error) {
+      toast.error(t('uploadFailed', { error: error instanceof Error ? error.message : String(error) }))
+      return
+    }
+    pickFile()
+  }, [handleDeleteFile, pickFile, t])
 
   React.useEffect(() => {
     if (!bimComponents) return
@@ -121,19 +167,73 @@ export function PointCloudsSection({ files, query = '', buildingId }: PointCloud
     }
   }, [bimComponents, clearMoving])
 
-  if (clouds.length === 0) return null
-
   return (
     <>
-      <CollapsibleSection title={t('title')} icon={LR.Grip} itemCount={rows.length}>
+      <CollapsibleSection
+        title={t('title')}
+        icon={LR.Grip}
+        className="min-h-0 overflow-y-auto"
+        style={{ height: '100%', minHeight: 0 }}
+        itemCount={rows.length}
+        onAddItem={pickFile}
+        addItemTitle={t('uploadTitle')}
+        {...chrome}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          accept={POINT_CLOUD_ACCEPT}
+          onChange={onFilePicked}
+          className="hidden"
+        />
+
+        {tasks.map(task => (
+          <div key={task.id} className="px-2 py-1">
+            <UploadProgressBar label={task.label} progress={task.progress} />
+          </div>
+        ))}
+
+        {rows.length === 0 && tasks.length === 0 && (
+          <div className="px-2 py-3 text-sm text-muted-foreground text-center">
+            {t('noPointClouds')}
+          </div>
+        )}
+
         {rows.map((file) => (
-          <FileItemComponent
-            key={file.id}
-            file={file}
-            onAction={handleAction}
-            options={OPTIONS}
-            confirmDelete={false}
-          />
+          <div key={file.id} className="flex items-center gap-1">
+            <div className="flex-1 min-w-0">
+              <FileItemComponent
+                file={file}
+                onAction={handleAction}
+                options={isRenderablePointCloud(file) ? OPTIONS : PENDING_OPTIONS}
+                confirmDelete={false}
+              />
+            </div>
+            {Boolean(file.pointCloudUploaded) && !isRenderablePointCloud(file) && !inFlight(file) && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 p-0"
+                disabled={busy}
+                onClick={() => void convert(file.id, file.name)}
+                title={t('convertTitle')}
+              >
+                <LR.RefreshCw className="h-3 w-3" />
+              </Button>
+            )}
+            {!file.pointCloudUploaded && !inFlight(file) && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 p-0"
+                disabled={busy}
+                onClick={() => void retryUpload(file)}
+                title={t('retryUploadTitle')}
+              >
+                <LR.UploadCloud className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
         ))}
       </CollapsibleSection>
 

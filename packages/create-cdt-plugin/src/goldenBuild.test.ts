@@ -132,7 +132,7 @@ describe('a scaffolded plugin', () => {
   }, 600_000)
 
   it('builds every surface, not just the map', async () => {
-    for (const surface of ['bim.tools', 'pointcloud.tools', 'viewer.legends'] as const) {
+    for (const surface of ['bim.tools', 'viewer.legends'] as const) {
       const { directory } = await build({ surfaces: [surface] })
 
       expect(readdirSync(join(directory, 'dist')).filter(f => f.endsWith('.js'))).toEqual(['index.js'])

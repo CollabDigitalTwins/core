@@ -18,7 +18,6 @@ import { MapProvider } from './Map/context'
 import { MapSitesProvider } from './MapSites/context'
 import { MenusProvider } from './Menus/context'
 import { PermissionsProvider } from './Permissions/context'
-import { PointCloudProvider } from './PointCloud/context'
 import { ToolsProvider } from './Tools/context'
 
 const compose = providers =>
@@ -46,7 +45,6 @@ const InnerProviders = compose([
   MapSitesProvider,
   FilesProvider,
   BuildingsProvider,
-  PointCloudProvider,
   PermissionsProvider,
 ])
 

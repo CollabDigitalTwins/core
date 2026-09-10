@@ -215,10 +215,13 @@ export class ViewportGizmo extends OBC.Component implements OBC.Disposable {
   }
 
   private getGizmoConfig() {
+    // Without a container the library appends its element to document.body, escaping React's lifecycle.
+    const container = this.world?.renderer?.three.domElement.parentElement ?? undefined
     return {
       size: 75,
       placement: 'top-right' as const,
       type: 'cube' as const,
+      ...(container && {container}),
       top: {label: this._labels.top},
       right: {label: this._labels.right},
       bottom: {label: this._labels.bottom},

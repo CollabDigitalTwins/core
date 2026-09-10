@@ -4,67 +4,39 @@
 import { describe, expect, it } from 'vitest'
 
 import { capabilitiesForFile, dropsAtOrigin } from './placementCapabilities'
+import { FULL_PLACEMENT, SCALABLE_OBJECT_PLACEMENT, YAW_ONLY_PLACEMENT } from './placementTarget'
 
 import type { DbFile } from '../../../../../types/dbTypes'
 
-const file = (extension: string) => ({ id: 1, name: `a.${extension}`, extension } as DbFile)
+const file = (extension: string) => ({ extension }) as DbFile
 
 describe('capabilitiesForFile', () => {
-  it('lets a point cloud carry a full transform, which its JSON blob holds', () => {
-    expect(capabilitiesForFile(file('laz'))).toEqual({ rotation: 'full', scale: true })
-    expect(capabilitiesForFile(file('las'))).toEqual({ rotation: 'full', scale: true })
-  })
-
-  it('lets a loaded 3D object be scaled', () => {
-    for (const extension of ['glb', 'gltf', 'fbx', 'obj']) {
-      expect(capabilitiesForFile(file(extension))).toEqual({ rotation: 'yaw', scale: true })
+  it('gives every point cloud format full placement, e57 and copc included', () => {
+    for (const extension of ['las', 'laz', 'copc', 'e57']) {
+      expect(capabilitiesForFile(file(extension)), extension).toBe(FULL_PLACEMENT)
     }
   })
 
-  it('refuses to scale a BIM model', () => {
-    expect(capabilitiesForFile(file('frag'))).toEqual({ rotation: 'yaw', scale: false })
-    expect(capabilitiesForFile(file('ifc'))).toEqual({ rotation: 'yaw', scale: false })
+  it('gives 3d geometry and cad scalable placement', () => {
+    expect(capabilitiesForFile(file('glb'))).toBe(SCALABLE_OBJECT_PLACEMENT)
+    expect(capabilitiesForFile(file('dxf'))).toBe(SCALABLE_OBJECT_PLACEMENT)
   })
 
-  it('lets a DXF be scaled, which is also how its drawing units are set', () => {
-    expect(capabilitiesForFile(file('dxf'))).toEqual({ rotation: 'yaw', scale: true })
-  })
-
-  it('ignores case, because extensions arrive however they were uploaded', () => {
-    expect(capabilitiesForFile(file('GLB')).scale).toBe(true)
-    expect(capabilitiesForFile(file('FRAG')).scale).toBe(false)
-  })
-
-  it('falls back to the most restrictive set for an extension it does not know', () => {
-    expect(capabilitiesForFile(file('wat'))).toEqual({ rotation: 'yaw', scale: false })
-    expect(capabilitiesForFile({ id: 1, name: 'a' } as DbFile)).toEqual({ rotation: 'yaw', scale: false })
+  it('gives everything else yaw only', () => {
+    expect(capabilitiesForFile(file('pdf'))).toBe(YAW_ONLY_PLACEMENT)
   })
 })
 
 describe('dropsAtOrigin', () => {
-  it('drops a BIM model at the origin, whose coordinates the model already carries', () => {
-    expect(dropsAtOrigin(file('ifc'))).toBe(true)
-    expect(dropsAtOrigin(file('frag'))).toBe(true)
-  })
-
-  it('drops a point cloud at the origin, which is surveyed the same way', () => {
-    expect(dropsAtOrigin(file('laz'))).toBe(true)
-    expect(dropsAtOrigin(file('las'))).toBe(true)
-  })
-
-  it('leaves every other 3D object to be placed by hand', () => {
-    for (const extension of ['glb', 'gltf', 'dxf', 'obj', 'fbx']) {
-      expect(dropsAtOrigin(file(extension))).toBe(false)
+  it('is true for surveys, which carry their own coordinates', () => {
+    for (const extension of ['las', 'laz', 'copc', 'e57', 'ifc', 'frag']) {
+      expect(dropsAtOrigin(file(extension)), extension).toBe(true)
     }
   })
 
-  it('leaves a pin to be placed by hand, since a pin at the origin marks nothing', () => {
-    expect(dropsAtOrigin(file('pdf'))).toBe(false)
-    expect(dropsAtOrigin(file('png'))).toBe(false)
-  })
-
-  it('ignores case and a missing extension', () => {
-    expect(dropsAtOrigin(file('IFC'))).toBe(true)
-    expect(dropsAtOrigin({ id: 1, name: 'a' } as DbFile)).toBe(false)
+  it('is false for anything the user has to point at', () => {
+    for (const extension of ['glb', 'dxf', 'pdf', 'png']) {
+      expect(dropsAtOrigin(file(extension)), extension).toBe(false)
+    }
   })
 })

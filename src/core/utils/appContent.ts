@@ -9,7 +9,6 @@ import type { Organization } from '../types/dbTypes'
 const OPTIONAL_VIEWERS: ViewerNames[] = [
   ViewerNames.extensions,
   ViewerNames.bim,
-  ViewerNames.pointcloud,
   ViewerNames.sites,
   ViewerNames.infrastructure,
   ViewerNames.buildings,

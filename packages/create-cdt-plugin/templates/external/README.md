@@ -85,7 +85,7 @@ ctx.register('viewer.tabs', {
 Your generated entry already names the viewers matching the surfaces you scaffolded with.
 Widen it only for a tab that genuinely belongs in another viewer — a panel that reads what
 you recorded on the map and shows it in BIM is the case this exists for. A name outside
-`'map'`, `'bim'` and `'pointcloud'` renders nowhere, and the platform logs it.
+`'map'` and `'bim'` renders nowhere, and the platform logs it.
 
 What you cannot do is lazy-load part of your own plugin. The platform serves exactly one
 file, so a code-split chunk would not resolve. Everything in the bundle loads when the

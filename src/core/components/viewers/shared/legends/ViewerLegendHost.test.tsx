@@ -77,7 +77,7 @@ describe('viewer targeting', () => {
 
   test('shows an untargeted legend everywhere', () => {
     mockContributions.mockReturnValue(targeted())
-    render(<ViewerLegendHost viewer={ViewerNames.pointcloud} />)
+    render(<ViewerLegendHost viewer={ViewerNames.bim} />)
     expect(screen.getByText('Office')).toBeInTheDocument()
   })
 })

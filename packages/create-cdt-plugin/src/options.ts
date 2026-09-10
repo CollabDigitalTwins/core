@@ -8,7 +8,6 @@ export type Body = 'example' | 'empty'
 export const SURFACES = [
   'map.tools',
   'bim.tools',
-  'pointcloud.tools',
   'viewer.legends',
   'map.layers',
   'data.pages',

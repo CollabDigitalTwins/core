@@ -3,8 +3,7 @@
 import * as React from 'react'
 import * as THREE from 'three'
 
-import { getCameraPosition } from '../components/viewers/pointcloud/src/tools/SharePointCloudTool/src/getCameraPosition'
-import { MenusContext, MapContext, BimContext, PointCloudContext, BuildingsContext } from '../store'
+import { MenusContext, MapContext, BimContext, BuildingsContext } from '../store'
 import { ViewerNames } from '../types'
 
 export function useShareUrl(): () => Promise<string> {
@@ -16,9 +15,6 @@ export function useShareUrl(): () => Promise<string> {
 
   const { state: bimState } = React.useContext(BimContext)
   const { world } = bimState.bim
-
-  const { state: pcState } = React.useContext(PointCloudContext)
-  const { viewer } = pcState.pointcloud
 
   const { state: buildingState } = React.useContext(BuildingsContext)
   const { building } = buildingState.buildings
@@ -61,22 +57,6 @@ export function useShareUrl(): () => Promise<string> {
       }
     }
 
-    if (currentViewer === ViewerNames.pointcloud && viewer) {
-      const cam = getCameraPosition(viewer)
-      if (cam) {
-        const params = new URLSearchParams(new URL(window.location.href).search)
-        params.set('viewer', 'pointcloud')
-        params.set('camX', cam.position.x.toFixed(3))
-        params.set('camY', cam.position.y.toFixed(3))
-        params.set('camZ', cam.position.z.toFixed(3))
-        params.set('tarX', cam.target.x.toFixed(3))
-        params.set('tarY', cam.target.y.toFixed(3))
-        params.set('tarZ', cam.target.z.toFixed(3))
-        if (building) params.set('buildingId', String(building.id))
-        return `${origin}${pathname}?${params.toString()}`
-      }
-    }
-
     return fallback
-  }, [currentViewer, map, world, viewer, building])
+  }, [currentViewer, map, world, building])
 }

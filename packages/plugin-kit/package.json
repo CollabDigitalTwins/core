@@ -30,10 +30,6 @@
       "types": "./dist/types/bim.d.ts",
       "default": "./dist/types/bim.js"
     },
-    "./types/pointcloud": {
-      "types": "./dist/types/pointcloud.d.ts",
-      "default": "./dist/types/pointcloud.js"
-    },
     "./types/legend": {
       "types": "./dist/types/legend.d.ts",
       "default": "./dist/types/legend.js"

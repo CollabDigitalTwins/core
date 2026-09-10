@@ -20,7 +20,6 @@ declare module '@collabdt/core/plugins-sdk' {
     'ui.dialogs',
     'map.tools',
     'bim.tools',
-    'pointcloud.tools',
     'viewer.legends',
     'map.layers',
   ]
@@ -32,7 +31,6 @@ declare module '@collabdt/core/plugins-sdk' {
     auth: 'auth'
     map: 'map'
     bim: 'bim'
-    pointcloud: 'pointcloud'
     buildings: 'buildings'
     sites: 'sites'
     files: 'files'

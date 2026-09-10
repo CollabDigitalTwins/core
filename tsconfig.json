@@ -30,7 +30,6 @@
     "**/*.tsx",
     "types/**/*.ts",
     ".next/types/**/*.ts",
-    "src/core/components/viewers/pointcloud/utils/copy-potree.js",
     "src"
   ],
 

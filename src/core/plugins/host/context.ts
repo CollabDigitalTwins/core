@@ -17,14 +17,13 @@ interface CreateContextOptions {
   registry: PluginRegistry
 }
 
-// `ViewerNames` also names routes like settings and users; only these three host contributions.
+// `ViewerNames` also names routes like settings and users; only these two host contributions.
 const TARGETABLE_VIEWERS = new Set<string>([
   ViewerNames.map,
   ViewerNames.bim,
-  ViewerNames.pointcloud,
 ])
 
-// A viewer name outside the three renders nowhere and throws nothing, so say so once here.
+// A viewer name outside the two renders nowhere and throws nothing, so say so once here.
 function warnOnUnknownViewers(pluginId: string, key: string, item: unknown): void {
   const { viewers } = item as { viewers?: unknown }
   if (!Array.isArray(viewers)) return

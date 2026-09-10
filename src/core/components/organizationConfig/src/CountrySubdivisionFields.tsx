@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { useEffect, useState } from 'react'
 import { Check, ChevronsUpDown } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
+import { cn } from '../../../utils/utils'
 import { Button } from '../../ui/Button'
-import { Popover, PopoverContent, PopoverTrigger } from '../../ui/Popover'
 import {
   Command,
   CommandEmpty,
@@ -16,7 +16,7 @@ import {
   CommandItem,
   CommandList,
 } from '../../ui/Command'
-import { cn } from '../../../utils/utils'
+import { Popover, PopoverContent, PopoverTrigger } from '../../ui/Popover'
 
 interface Country {
   name: string

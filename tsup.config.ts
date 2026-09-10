@@ -144,8 +144,6 @@ export default defineConfig((opts) => ({
         // Other dependencies
         'web-ifc',
         'dxf-viewer',
-        'potree',
-        'potree-cdt',
         'potree-core',
         'three-viewport-gizmo',
         '@dnd-kit/core',

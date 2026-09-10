@@ -31,7 +31,7 @@ export interface LegendRegistration {
 }
 
 /** `CapabilityRegistry` with the legend surface bound. */
-export type LegendCapabilityRegistry = CapabilityRegistry<unknown, unknown, unknown, LegendRegistration>
+export type LegendCapabilityRegistry = CapabilityRegistry<unknown, unknown, LegendRegistration>
 
 /** The `activate()` context for a plugin that contributes a map legend. */
-export type LegendPluginContext = PluginContext<unknown, unknown, unknown, LegendRegistration>
+export type LegendPluginContext = PluginContext<unknown, unknown, LegendRegistration>

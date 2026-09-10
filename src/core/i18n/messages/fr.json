@@ -159,6 +159,10 @@
     "noSearchResults": "Aucun bâtiment ne correspond à",
     "noBuildings": "Aucun bâtiment disponible"
   },
+  "BimSection": {
+    "title": "BIM",
+    "addTitle": "Ajouter un modèle BIM"
+  },
   "Breadcrumb": {
     "more": "Plus"
   },
@@ -200,18 +204,15 @@
   },
   "CameraSettings": {
     "title": "Paramètres de caméra",
-    "cameraProjection": "Projection de caméra",
-    "perspective": "Perspective",
-    "orthographic": "Orthographique",
-    "cameraControl": "Contrôle de caméra",
-    "earth": "Terre",
-    "orbit": "Orbite",
-    "firstPerson": "Première personne",
-    "firstPersonSettings": "Paramètres première personne",
     "moveSpeed": "Vitesse de déplacement",
-    "slow": "Lent",
-    "fast": "Rapide",
-    "lockElevation": "Verrouiller l'élévation"
+    "lockElevation": "Verrouiller l'élévation",
+    "mode_Orbit": "Orbite",
+    "mode_FirstPerson": "Marche",
+    "walkHint": "Déplacez-vous avec WASD ou les touches fléchées ; Q et E descendent et montent.",
+    "firstPersonNeedsPerspective": "Le mode marche nécessite une projection en perspective",
+    "navigation": "Navigation",
+    "metres": "m",
+    "lockElevationAt": "Verrouiller l’élévation à"
   },
   "ChangePassword": {
     "noMatch": "Les mots de passe ne correspondent pas",
@@ -580,6 +581,7 @@
     "moreOptions": "Plus d'options",
     "modelsTitles": "Modèles",
     "addBimTitle": "Ajouter un modèle BIM",
+    "addModelTitle": "Ajouter un modèle 3D",
     "pointCloudsTitle": "Nuages de points",
     "addPointCloudTitle": "Ajouter un nuage de points",
     "uploadingFile": "Téléchargement en cours..."
@@ -766,7 +768,6 @@
     "resetNodeLabel": "Réinitialiser",
     "resetColorsTitle": "Réinitialiser les couleurs",
     "searchPlaceholder": "Rechercher",
-    "resizeSectionsLabel": "Redimensionner les sections",
     "retryButton": "Réessayer",
     "appliedDatasetsTitle": "Ensembles de données appliqués",
     "appliedDatasetsEmpty": "Aucun ensemble de données appliqué à la carte.",
@@ -836,12 +837,6 @@
   "MeasureMapTool": {
     "distance": "Distance",
     "area": "Surface",
-    "clear": "Effacer"
-  },
-  "MeasurePointCloudTool": {
-    "line": "Ligne",
-    "area": "Surface",
-    "point": "Point",
     "clear": "Effacer"
   },
   "MeasurementSettings": {
@@ -1034,70 +1029,16 @@
       "uploadFaviconError": "Échec du téléversement de l'icône"
     }
   },
-  "PerformanceSettings": {
-    "title": "Paramètres de performance",
-    "pointBudget": "Budget de points",
-    "points": "points",
-    "budget": "Budget",
-    "splatQuality": "Qualité de splat",
-    "standard": "Standard",
-    "high": "Élevé",
-    "nodeSize": "Taille de nœud",
-    "pointSizeType": "Type de taille de point",
-    "fixed": "Fixe",
-    "attenuated": "Atténué",
-    "adaptive": "Adaptatif",
-    "minimum": "Minimum",
-    "maximum": "Maximum",
-    "showOctreeBox": "Afficher la boîte octree"
-  },
-  "PointCloudLoadingState": {
-    "openingText": "Ouverture du visualiseur de nuage de points",
-    "helpText": "Sélectionnez un fichier LAZ ou LAS à télécharger",
-    "uploadButton": "Télécharger un nuage de points",
-    "noPointCloudLoaded": "Aucun nuage de points chargé",
-    "uploading": "Téléchargement du nuage de points...",
-    "noBuilding": "Aucun bâtiment sélectionné",
-    "selectBuilding": "Sélectionnez un bâtiment dans la base de données",
-    "selectBuildingHelpText": "Charger le bâtiment à partir de la base de données",
-    "searchBuildings": "Rechercher des bâtiments",
-    "loadingBuildings": "Chargement des bâtiments...",
-    "noSearchResults": "Aucun bâtiment trouvé",
-    "noBuildings": "Aucun bâtiment disponible"
-  },
   "PointCloudManagement": {
     "title": "Nuages de points",
-    "loading": "Chargement des nuages de points...",
-    "uploading": "Téléchargement...",
-    "converting": "Conversion...",
-    "needsConversion": "Nécessite une conversion",
-    "refreshTitle": "Actualiser",
-    "allTitle": "Tous les nuages de points",
-    "uploadedTitle": "Téléchargés",
-    "convertedTitle": "Prêt à visualiser",
-    "needsConversionTitle": "Nécessite une conversion",
     "uploadTitle": "Télécharger un nuage de points",
     "noPointClouds": "Aucun nuage de points trouvé",
-    "noUploadedPointClouds": "Aucun nuage de points téléchargé",
-    "noConvertedPointClouds": "Aucun nuage de points converti",
-    "noNeedsConversionPointClouds": "Aucun nuage de points nécessite une conversion",
-    "uploaded": "Téléchargé",
-    "notUploaded": "Non téléchargé",
-    "readyToView": "Prêt",
-    "infoTitle": "Plus d'informations",
     "convertTitle": "Convertir en Potree",
     "retryUploadTitle": "Le téléchargement n'a jamais abouti - cliquez pour réessayer",
-    "viewTitle": "Voir dans le visualiseur Potree",
-    "deleteTitle": "Supprimer le nuage de points",
-    "uploadedBy": "Téléchargé par",
-    "pointCloudItem": "nuage de points",
-    "deleteConfirm": "Supprimer \"{name}\"? Cette action est irréversible.",
-    "deleteSuccess": "\"{name}\" supprimé avec succès",
-    "deleteFailed": "Échec de la suppression du nuage de points",
-    "deleteFailedWithReason": "Échec de la suppression : {error}",
-    "convertStarted": "Conversion lancée pour \"{name}\". ID de tâche : {jobId}",
-    "convertFailed": "Échec du démarrage de la conversion",
-    "convertFailedWithReason": "Échec du démarrage de la conversion : {error}"
+    "unsupportedFormat": "Sélectionnez un fichier LAS, LAZ ou E57",
+    "uploadFailed": "Échec du téléversement : {error}",
+    "conversionFinished": "« {name} » est prêt à être affiché",
+    "conversionFailed": "Échec de la conversion de « {name} » : {error}"
   },
   "PropertiesMenuHeader": {
     "closeButton": "Fermer",
@@ -1331,6 +1272,10 @@
     "importBCFTitle": "Importer des sujets depuis un fichier BCF",
     "createViewpointTitle": "Créer un point de vue pour la position actuelle de la caméra"
   },
+  "Upload": {
+    "uploading": "Téléversement de {name}",
+    "converting": "Conversion de {name}"
+  },
   "UserDetails": {
     "title": "Détails de l'utilisateur",
     "adminAccessRequired": "Accès administrateur requis",
@@ -1439,7 +1384,8 @@
     "roleUnknown": "Rôle inconnu"
   },
   "ViewerSidebar": {
-    "resizeHandleLabel": "Redimensionner la barre latérale"
+    "resizeHandleLabel": "Redimensionner la barre latérale",
+    "resizeSectionsLabel": "Redimensionner les sections"
   },
   "ViewSection": {
     "allIfcFiles": "Tous les fichiers IFC",
@@ -1908,15 +1854,6 @@
     "measureTitle": "Mesurer",
     "shareTitle": "Partager"
   },
-  "pointcloudToolbarTools": {
-    "addTitle": "Ajouter",
-    "shareTitle": "Partager",
-    "clipTitle": "Découper",
-    "selectTitle": "Sélection",
-    "dimensionsTitle": "Dimensions",
-    "floorplanTitle": "Plans d’étage",
-    "settingsPanel": "Paramètres"
-  },
   "resetPassword": {
     "title": "Réinitialiser le mot de passe",
     "subtitle": "Saisissez l'adresse courriel associée à votre compte. Nous vous enverrons un code de vérification pour réinitialiser votre mot de passe.",
@@ -2121,7 +2058,8 @@
     "shape_circle": "Cercle",
     "shape_paraboloid": "Paraboloïde",
     "opacity": "Opacité",
-    "opacityOf": "Opacité — {name}"
+    "opacityOf": "Opacité — {name}",
+    "showBoundingBoxes": "Afficher les boîtes de l’octree"
   },
   "BIMSearchTool": {
     "placeholder": "Rechercher...",

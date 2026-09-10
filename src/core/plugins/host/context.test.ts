@@ -145,8 +145,8 @@ describe('createPluginContext viewer targeting', () => {
     ...(viewers === undefined ? {} : { viewers }),
   }) as Parameters<ReturnType<typeof contextFor>['register']>[1]
 
-  it('stays silent for the three viewers that host contributions', () => {
-    contextFor().register('viewer.tabs', tab(['map', 'bim', 'pointcloud']))
+  it('stays silent for the viewers that host contributions', () => {
+    contextFor().register('viewer.tabs', tab(['map', 'bim']))
     expect(warn).not.toHaveBeenCalled()
   })
 

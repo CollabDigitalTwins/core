@@ -11,6 +11,8 @@ import type { PointCloudSource } from './pointCloudSource'
 
 export interface PointCloudOctreeLike extends THREE.Object3D {
   dispose?: () => void
+  showBoundingBox?: boolean
+  updateBoundingBoxes?: () => void
 }
 
 /** The rendering engine behind a cloud, injected so the registry can be tested without WebGL. */

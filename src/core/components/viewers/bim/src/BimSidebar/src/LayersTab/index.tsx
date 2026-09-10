@@ -9,6 +9,7 @@ import * as React from 'react'
 
 import { FloorplanIcon } from '../../../../../../ui/Icons/FloorPlanIcon'
 import { ViewerSidebarPanel } from '../../../../../../ui/ViewerSidebar/Panel'
+import { useResizableSections } from '../../../../../../ui/ViewerSidebar/useResizableSections'
 
 import { AppearanceProvider } from './src/AppearanceProvider'
 import { ALL_MODELS } from './src/DrawingModelFilter'
@@ -20,8 +21,7 @@ import { SpatialStructureSection } from './src/SpatialStructureSection'
 
 type GroupId = 'drawings' | 'classifier'
 
-/** Height of the drag handle between the two groups, in pixels. */
-const SEPARATOR_HEIGHT = 8
+const GROUP_IDS: readonly GroupId[] = ['drawings', 'classifier']
 
 /** Share of the flexible height each group takes, and the least it may shrink to. */
 const DEFAULT_WEIGHTS: Record<GroupId, number> = { drawings: 45, classifier: 55 }
@@ -41,6 +41,7 @@ const MIN_WEIGHTS: Record<GroupId, number> = { drawings: 20, classifier: 25 }
  */
 export function LayersTab() {
   const t = useTranslations('LayersTab')
+  const tSidebar = useTranslations('ViewerSidebar')
 
   const [searchQuery, setSearchQuery] = React.useState('')
   const [drawingModelFilter, setDrawingModelFilter] = React.useState(ALL_MODELS)
@@ -52,78 +53,19 @@ export function LayersTab() {
     drawings: 'floorplans',
     classifier: 'spatial',
   })
-  const [weights, setWeights] = React.useState<Record<GroupId, number>>(DEFAULT_WEIGHTS)
 
-  const layoutRef = React.useRef<HTMLDivElement | null>(null)
-  const dragStateRef = React.useRef<{
-    startY: number
-    startDrawings: number
-    /** Pixels per weight unit, so pointer movement maps onto the weights. */
-    pixelsPerUnit: number
-  } | null>(null)
-
-  const bothOpen = openGroups.drawings && openGroups.classifier
-
-  const handlePointerMove = React.useCallback((event: PointerEvent) => {
-    const drag = dragStateRef.current
-    if (!drag || drag.pixelsPerUnit <= 0) return
-
-    const total = DEFAULT_WEIGHTS.drawings + DEFAULT_WEIGHTS.classifier
-    const delta = (event.clientY - drag.startY) / drag.pixelsPerUnit
-    const next = Math.min(
-      total - MIN_WEIGHTS.classifier,
-      Math.max(MIN_WEIGHTS.drawings, drag.startDrawings + delta),
-    )
-
-    setWeights({ drawings: next, classifier: total - next })
-  }, [])
-
-  const stopDragging = React.useCallback(() => {
-    dragStateRef.current = null
-    window.removeEventListener('pointermove', handlePointerMove)
-    window.removeEventListener('pointerup', stopDragging)
-    window.removeEventListener('pointercancel', stopDragging)
-  }, [handlePointerMove])
-
-  React.useEffect(() => stopDragging, [stopDragging])
-
-  const beginResize = React.useCallback(
-    (event: React.PointerEvent<HTMLDivElement>) => {
-      const layout = layoutRef.current
-      if (!layout) return
-
-      const total = DEFAULT_WEIGHTS.drawings + DEFAULT_WEIGHTS.classifier
-      // The separator itself is the only fixed row while both groups are open.
-      const flexibleHeight = layout.clientHeight - SEPARATOR_HEIGHT
-      if (flexibleHeight <= 0) return
-
-      event.preventDefault()
-      event.currentTarget.setPointerCapture(event.pointerId)
-      dragStateRef.current = {
-        startY: event.clientY,
-        startDrawings: weights.drawings,
-        pixelsPerUnit: flexibleHeight / total,
-      }
-
-      window.addEventListener('pointermove', handlePointerMove)
-      window.addEventListener('pointerup', stopDragging)
-      window.addEventListener('pointercancel', stopDragging)
-    },
-    [handlePointerMove, stopDragging, weights.drawings],
-  )
+  const { layoutRef, gridTemplateRows, separatorAfter, beginResize } = useResizableSections({
+    ids: GROUP_IDS,
+    defaultWeights: DEFAULT_WEIGHTS,
+    minWeights: MIN_WEIGHTS,
+    open: openGroups,
+  })
 
   const setOpen = (id: GroupId) => (open: boolean) =>
     setOpenGroups(current => ({ ...current, [id]: open }))
 
   const setView = (id: GroupId) => (view: string) =>
     setActiveView(current => ({ ...current, [id]: view }))
-
-  // A collapsed group is `auto` (its header only); the expanded ones split what
-  // is left. With one collapsed, the other simply takes the rest.
-  const rowFor = (id: GroupId) => (openGroups[id] ? `${weights[id]}fr` : 'auto')
-  const gridTemplateRows = bothOpen
-    ? `${rowFor('drawings')} ${SEPARATOR_HEIGHT}px ${rowFor('classifier')}`
-    : `${rowFor('drawings')} ${rowFor('classifier')}`
 
   return (
     <AppearanceProvider>
@@ -174,13 +116,13 @@ export function LayersTab() {
             />
           </div>
 
-          {bothOpen && (
+          {separatorAfter('drawings') && (
             <div
               role="separator"
               aria-orientation="horizontal"
-              aria-label={t('resizeSectionsLabel')}
+              aria-label={tSidebar('resizeSectionsLabel')}
               className="group flex items-center justify-center cursor-row-resize select-none touch-none"
-              onPointerDown={beginResize}
+              onPointerDown={beginResize('drawings')}
             >
               <div className="h-px w-full bg-border transition-colors group-hover:bg-primary/50" />
             </div>

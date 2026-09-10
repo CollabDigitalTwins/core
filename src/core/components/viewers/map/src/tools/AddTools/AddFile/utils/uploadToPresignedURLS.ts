@@ -27,8 +27,12 @@ export function getFileExtension(file: File): string {
   return parts.pop()!.toLowerCase()
 }
 // Progress version
-export const uploadFileWithProgress = async (presignedUrl, file, onProgress) => {
-  return new Promise((resolve, reject) => {
+export const uploadFileWithProgress = async (
+  presignedUrl: string,
+  file: File,
+  onProgress?: (percentComplete: number, bytesLoaded: number) => void,
+): Promise<XMLHttpRequest> => {
+  return new Promise<XMLHttpRequest>((resolve, reject) => {
     const xhr = new XMLHttpRequest()
 
     if (onProgress) {
@@ -54,7 +58,8 @@ export const uploadFileWithProgress = async (presignedUrl, file, onProgress) => 
     })
 
     xhr.open('PUT', presignedUrl)
-    xhr.setRequestHeader('Content-Type', file.type)
+    // A blank type would send an empty Content-Type, which MinIO rejects on a presigned PUT.
+    if (file.type) xhr.setRequestHeader('Content-Type', file.type)
     xhr.send(file)
   })
 }

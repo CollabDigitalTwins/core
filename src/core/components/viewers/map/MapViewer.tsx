@@ -10,12 +10,12 @@ import Map, { NavigationControl } from 'react-map-gl/maplibre'
 
 
 import { PluginMapLayerHost } from '../../../plugins/host/PluginMapLayerHost'
-import { ViewerNames } from '../../../types/dbTypes'
-import { ViewerLegendHost } from '../shared/legends/ViewerLegendHost'
 import { MapContext } from '../../../store'
+import { ViewerNames } from '../../../types/dbTypes'
 import { SensorLegend } from '../../ui/Sensors/SensorLegend'
 import SettingsButton from '../../ui/SettingsButton'
 import { StatsOverlay } from '../../ui/stats'
+import { ViewerLegendHost } from '../shared/legends/ViewerLegendHost'
 
 import DatasetManagerMenu from './datasets/DatasetManager'
 

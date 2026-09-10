@@ -46,7 +46,7 @@ describe('uploadProgress', () => {
   })
 
   it('keeps an indeterminate progress as null', () => {
-    const id = beginTask({ ...task, phase: 'finalising', progress: null })
+    const id = beginTask({ ...task, phase: 'uploading', progress: null })
     expect(getSnapshot()[0].progress).toBeNull()
   })
 

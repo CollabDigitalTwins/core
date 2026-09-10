@@ -46,8 +46,9 @@ export function usePointCloudIntake({ apiBase, buildingId, existingNames }: UseP
   const { state: bimState, dispatch: bimDispatch } = React.useContext(BimContext)
 
   const [busy, setBusy] = React.useState(false)
-  const taskRef = React.useRef<string | null>(null)
-  const closeWatchRef = React.useRef<(() => void) | null>(null)
+  // Keyed per cloud, or a second conversion adopts the first's task and strands its toast.
+  const tasksRef = React.useRef(new Map<string, string>())
+  const closeWatchRef = React.useRef(new Map<string, () => void>())
 
   // Read through a ref so a stale closure in `convert` cannot toggle against an old list.
   const pointCloudIdsRef = React.useRef(bimState.bim.pointCloudIds)
@@ -62,20 +63,21 @@ export function usePointCloudIntake({ apiBase, buildingId, existingNames }: UseP
   }, [buildingId])
 
   const convert = React.useCallback(async (pointCloudId: string | number, name: string) => {
-    const id = taskRef.current
+    const key = String(pointCloudId)
+    const id = tasksRef.current.get(key)
       ?? beginTask({ name, fileType: 'point-cloud-file', phase: 'converting', label: labelFor('converting', name), progress: 0 })
-    taskRef.current = id
+    tasksRef.current.set(key, id)
     updateTask(id, { phase: 'converting', label: labelFor('converting', name), progress: 0 })
     setBusy(true)
     refreshFiles()
 
-    const stop = () => { endTask(id); taskRef.current = null; setBusy(false) }
+    const stop = () => { endTask(id); tasksRef.current.delete(key); setBusy(false) }
     const finish = () => { stop(); refreshFiles() }
 
     try {
       const { jobId } = await startConversion(apiBase, pointCloudId)
-      closeWatchRef.current?.()
-      closeWatchRef.current = watchConversion(apiBase, jobId, {
+      closeWatchRef.current.get(key)?.()
+      closeWatchRef.current.set(key, watchConversion(apiBase, jobId, {
         onProgress: (event) => {
           if (typeof event.progress !== 'number') return
           updateTask(id, { progress: event.progress })
@@ -90,7 +92,7 @@ export function usePointCloudIntake({ apiBase, buildingId, existingNames }: UseP
           toast.success(t('conversionFinished', { name }))
         },
         onFailed: (reason) => { finish(); toast.error(t('conversionFailed', { name, error: reason })) },
-      })
+      }))
     }
     catch (error) {
       finish()
@@ -107,19 +109,19 @@ export function usePointCloudIntake({ apiBase, buildingId, existingNames }: UseP
 
     const name = uniquePointCloudName(stripPointCloudExtension(file.name), namesRef.current)
     const id = beginTask({ name, fileType: 'point-cloud-file', phase: 'uploading', label: labelFor('uploading', name), progress: 0 })
-    taskRef.current = id
     setBusy(true)
 
     let created
     try {
       created = await createPointCloud(name, normalizePointCloudFormat(extension), buildingId)
+      tasksRef.current.set(String(created.pointCloud.id), id)
       await uploadFileWithProgress(created.upload.uploadUrl, file, (progress) => {
         updateTask(id, { progress })
       })
     }
     catch (error) {
       endTask(id)
-      taskRef.current = null
+      if (created) tasksRef.current.delete(String(created.pointCloud.id))
       setBusy(false)
       refreshFiles()
       toast.error(t('uploadFailed', { error: error instanceof Error ? error.message : String(error) }))

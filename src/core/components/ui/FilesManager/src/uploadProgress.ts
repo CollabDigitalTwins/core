@@ -10,7 +10,7 @@ import { SECTION_FOR_TYPE } from './fileType'
 
 import type { FileSection, FileType } from './fileType'
 
-export type UploadPhase = 'converting' | 'uploading' | 'finalising'
+export type UploadPhase = 'converting' | 'uploading'
 
 export interface UploadTask {
   id: string

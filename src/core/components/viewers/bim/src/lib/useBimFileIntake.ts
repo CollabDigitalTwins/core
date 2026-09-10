@@ -86,7 +86,6 @@ export function useBimFileIntake({ buildingId, apiBase, existingNames, uploadFil
         onProgress: progress => updateTask(taskId, { progress }),
       })
 
-      updateTask(taskId, { phase: 'finalising', label: labelFor('finalising', name), progress: null })
       return { id: recordIdOf(result) }
     }
     catch (error) {

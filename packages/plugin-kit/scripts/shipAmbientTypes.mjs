@@ -22,7 +22,7 @@ const AMBIENT = 'sdkModules.d.ts'
 // shipped copy carry an identical directive.
 const DIRECTIVE = `/// <reference path="./${AMBIENT}" />`
 
-const SURFACES = ['map', 'bim', 'pointcloud', 'legend']
+const SURFACES = ['map', 'bim', 'legend']
 
 const shipped = join(packageRoot, 'dist/types', AMBIENT)
 

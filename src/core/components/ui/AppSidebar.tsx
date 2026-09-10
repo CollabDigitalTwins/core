@@ -17,7 +17,6 @@ import * as React from 'react'
 import { useMenusContext } from '../../store'
 import { ViewerNames } from '../../types'
 
-import type { ViewerKey } from '../../types/dbTypes'
 import { BugReportDialog } from '../support/BugReportDialog'
 import { FeatureRequestDialog } from '../support/FeatureRequestDialog'
 
@@ -25,6 +24,8 @@ import { Button } from './Button'
 import { CdtIcon } from './Icons/CdtIcon'
 
 import { Sidebar, useSidebar, NavUser } from './'
+
+import type { ViewerKey } from '../../types/dbTypes'
 
 export const handleChangeViewer = (
   viewer: ViewerKey,

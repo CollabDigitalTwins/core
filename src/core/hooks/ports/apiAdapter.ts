@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { PluginInstallation, PluginRecord, PluginUserSetting } from '../../../core/types/plugins'
 import type { Building, DbFile, Site, OpenDataPortal, DatasetGroup, User, Role, Organization, Comment, Sensor, Infrastructure, SensorType } from '../../../core/types/dbTypes'
+import type { PluginInstallation, PluginRecord, PluginUserSetting } from '../../../core/types/plugins'
 
 /*
  * ApiAdapter is the seam between the core package and whatever backend the app uses.

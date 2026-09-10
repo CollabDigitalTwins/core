@@ -76,7 +76,7 @@ export function BimLoadingState() {
 
     // Models, placed objects and clouds all belong to the building that was open.
     try {
-      bimComponents?.get(BimSceneObjects).registry?.resetForBuilding(id ?? -1)
+      bimComponents?.get(BimSceneObjects).registry?.resetForBuilding(id)
     } catch {
       // The world may not be built yet, in which case there is nothing placed.
     }

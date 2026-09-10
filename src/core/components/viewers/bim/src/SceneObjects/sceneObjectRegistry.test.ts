@@ -161,4 +161,17 @@ describe('SceneObjectRegistry', () => {
     expect(registry.get('12')).toBe(fromFirstCaller)
     expect(registry.get('13')).toBe(fromSecondCaller)
   })
+
+  it('treats every "no building" value as a no-op, so two callers cannot clear each other', () => {
+    const { registry } = makeRegistry()
+    registry.resetForBuilding(null)
+    const fromFirstCaller = registry.add(input('12'))
+
+    registry.resetForBuilding(undefined)
+    const fromSecondCaller = registry.add(input('13'))
+    registry.resetForBuilding(null)
+
+    expect(registry.get('12')).toBe(fromFirstCaller)
+    expect(registry.get('13')).toBe(fromSecondCaller)
+  })
 })

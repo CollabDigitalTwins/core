@@ -112,9 +112,12 @@ export class SceneObjectRegistry {
     for (const key of [...this.entries.keys()]) this.remove(key)
   }
 
-  /** Idempotent per building: clears on change, but the first call only records the id. */
-  // Keyed on the building, not unmount, so closing the sidebar tab does not empty the scene.
-  resetForBuilding(buildingId: number): void {
+  /**
+   * Idempotent per building: clears on change, the first call only records the id, and no
+   * building at all is a no-op. Keyed on the building so closing a tab keeps the scene.
+   */
+  resetForBuilding(buildingId: number | null | undefined): void {
+    if (buildingId == null) return
     if (this.currentBuildingId === buildingId) return
     const first = this.currentBuildingId === null
     this.currentBuildingId = buildingId

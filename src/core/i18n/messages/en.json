@@ -581,6 +581,7 @@
     "moreOptions": "More options",
     "modelsTitles": "Models",
     "addBimTitle": "Add BIM model",
+    "addModelTitle": "Add 3D model",
     "pointCloudsTitle": "Point Clouds",
     "addPointCloudTitle": "Add Point Cloud",
     "uploadingFile": "Uploading..."
@@ -767,7 +768,6 @@
     "resetNodeLabel": "Reset",
     "resetColorsTitle": "Reset colours",
     "searchPlaceholder": "Search",
-    "resizeSectionsLabel": "Resize sections",
     "retryButton": "Retry",
     "appliedDatasetsTitle": "Applied Datasets",
     "appliedDatasetsEmpty": "No datasets applied to the map yet.",
@@ -1275,8 +1275,7 @@
   },
   "Upload": {
     "uploading": "Uploading {name}",
-    "converting": "Converting {name}",
-    "finalising": "Finishing {name}"
+    "converting": "Converting {name}"
   },
   "UserDetails": {
     "title": "User Details",
@@ -1386,7 +1385,8 @@
     "roleUnknown": "Unknown Role"
   },
   "ViewerSidebar": {
-    "resizeHandleLabel": "Resize sidebar"
+    "resizeHandleLabel": "Resize sidebar",
+    "resizeSectionsLabel": "Resize sections"
   },
   "ViewSection": {
     "allIfcFiles": "All IFC files",

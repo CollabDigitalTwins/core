@@ -41,6 +41,7 @@ const MIN_WEIGHTS: Record<GroupId, number> = { drawings: 20, classifier: 25 }
  */
 export function LayersTab() {
   const t = useTranslations('LayersTab')
+  const tSidebar = useTranslations('ViewerSidebar')
 
   const [searchQuery, setSearchQuery] = React.useState('')
   const [drawingModelFilter, setDrawingModelFilter] = React.useState(ALL_MODELS)
@@ -119,7 +120,7 @@ export function LayersTab() {
             <div
               role="separator"
               aria-orientation="horizontal"
-              aria-label={t('resizeSectionsLabel')}
+              aria-label={tSidebar('resizeSectionsLabel')}
               className="group flex items-center justify-center cursor-row-resize select-none touch-none"
               onPointerDown={beginResize('drawings')}
             >

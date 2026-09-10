@@ -28,7 +28,7 @@ const DEFAULT_WEIGHTS: Record<FileSectionId, number> = { bim: 25, models: 25, po
 const MIN_WEIGHTS: Record<FileSectionId, number> = { bim: 15, models: 15, pointClouds: 15, files: 15 }
 
 export function FileTab() {
-  const tLayout = useTranslations('LayersTab')
+  const tSidebar = useTranslations('ViewerSidebar')
 
   const { state: buildingState } = React.useContext(BuildingsContext)
   const { building } = buildingState.buildings
@@ -73,7 +73,7 @@ export function FileTab() {
           <div
             role="separator"
             aria-orientation="horizontal"
-            aria-label={tLayout('resizeSectionsLabel')}
+            aria-label={tSidebar('resizeSectionsLabel')}
             className="group flex items-center justify-center cursor-row-resize select-none touch-none"
             onPointerDown={beginResize('bim')}
           >
@@ -94,7 +94,7 @@ export function FileTab() {
           <div
             role="separator"
             aria-orientation="horizontal"
-            aria-label={tLayout('resizeSectionsLabel')}
+            aria-label={tSidebar('resizeSectionsLabel')}
             className="group flex items-center justify-center cursor-row-resize select-none touch-none"
             onPointerDown={beginResize('models')}
           >
@@ -116,7 +116,7 @@ export function FileTab() {
           <div
             role="separator"
             aria-orientation="horizontal"
-            aria-label={tLayout('resizeSectionsLabel')}
+            aria-label={tSidebar('resizeSectionsLabel')}
             className="group flex items-center justify-center cursor-row-resize select-none touch-none"
             onPointerDown={beginResize('pointClouds')}
           >

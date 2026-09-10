@@ -581,6 +581,7 @@
     "moreOptions": "Más opciones",
     "modelsTitles": "Modelos",
     "addBimTitle": "Añadir modelo BIM",
+    "addModelTitle": "Añadir modelo 3D",
     "pointCloudsTitle": "Nubes de puntos",
     "addPointCloudTitle": "Añadir nube de puntos",
     "uploadingFile": "Subiendo..."
@@ -767,7 +768,6 @@
     "resetNodeLabel": "Restablecer",
     "resetColorsTitle": "Restablecer colores",
     "searchPlaceholder": "Buscar",
-    "resizeSectionsLabel": "Redimensionar secciones",
     "retryButton": "Reintentar",
     "appliedDatasetsTitle": "Conjuntos de datos aplicados",
     "appliedDatasetsEmpty": "No hay conjuntos de datos aplicados al mapa.",
@@ -1274,8 +1274,7 @@
   },
   "Upload": {
     "uploading": "Subiendo {name}",
-    "converting": "Convirtiendo {name}",
-    "finalising": "Finalizando {name}"
+    "converting": "Convirtiendo {name}"
   },
   "UserDetails": {
     "title": "Detalles del usuario",
@@ -1385,7 +1384,8 @@
     "roleUnknown": "Rol desconocido"
   },
   "ViewerSidebar": {
-    "resizeHandleLabel": "Redimensionar la barra lateral"
+    "resizeHandleLabel": "Redimensionar la barra lateral",
+    "resizeSectionsLabel": "Redimensionar secciones"
   },
   "ViewSection": {
     "allIfcFiles": "Todos los archivos IFC",

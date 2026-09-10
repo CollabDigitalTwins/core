@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
@@ -98,8 +99,8 @@ describe('useResizableSections', () => {
     drag('a', 20)
 
     const weights = readWeights()
-    expect(weights.a).not.toBe(DEFAULT_WEIGHTS.a)
-    expect(weights.a + weights.b).toBe(DEFAULT_WEIGHTS.a + DEFAULT_WEIGHTS.b)
+    expect(weights.a).toBe(30)
+    expect(weights.b).toBe(20)
     expect(weights.c).toBe(DEFAULT_WEIGHTS.c)
     expect(weights.d).toBe(DEFAULT_WEIGHTS.d)
   })

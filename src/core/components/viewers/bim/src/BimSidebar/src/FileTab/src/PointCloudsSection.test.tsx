@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
@@ -52,14 +53,17 @@ vi.mock('../../../../../../../ui/FilesManager', async () => ({
 
 import { BimContext } from '../../../../../../../../store/BIM/context'
 import { beginTask, endTask, getSnapshot } from '../../../../../../../ui/FilesManager/src/uploadProgress'
+import { stripPointCloudExtension } from '../../../../PointClouds/pointCloudFiles'
 
 import { PointCloudsSection } from './PointCloudsSection'
 
 import type { DbFile } from '../../../../../../../../types/dbTypes'
 
+const PICKED_FILE_NAME = 'scan.laz'
+
 const CLOUD: DbFile = {
   id: 1,
-  name: 'scan.laz',
+  name: stripPointCloudExtension(PICKED_FILE_NAME),
   pointCloudUploaded: true,
   pointCloudPotreeConverted: false,
 } as DbFile
@@ -92,7 +96,8 @@ describe('PointCloudsSection recovery buttons', () => {
   })
 
   it('hides the convert button while a task for that row is in flight', () => {
-    const id = beginTask({ name: CLOUD.name, fileType: 'point-cloud-file', phase: 'converting', label: 'x', progress: 0 })
+    const name = stripPointCloudExtension(PICKED_FILE_NAME)
+    const id = beginTask({ name, fileType: 'point-cloud-file', phase: 'converting', label: 'x', progress: 0 })
 
     renderSection()
 

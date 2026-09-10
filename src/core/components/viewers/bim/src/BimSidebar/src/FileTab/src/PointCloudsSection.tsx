@@ -36,9 +36,11 @@ interface PointCloudsSectionProps {
   files: DbFile[]
   query?: string
   buildingId: number
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function PointCloudsSection({ files, query = '', buildingId }: PointCloudsSectionProps) {
+export function PointCloudsSection({ files, query = '', buildingId, open, onOpenChange }: PointCloudsSectionProps) {
   const t = useTranslations('PointCloudManagement')
   const tAlign = useTranslations('Placement')
 
@@ -171,9 +173,13 @@ export function PointCloudsSection({ files, query = '', buildingId }: PointCloud
       <CollapsibleSection
         title={t('title')}
         icon={LR.Grip}
+        className="min-h-0 overflow-y-auto"
+        style={{ height: '100%', minHeight: 0 }}
         itemCount={rows.length}
         onAddItem={pickFile}
         addItemTitle={t('uploadTitle')}
+        open={open}
+        onOpenChange={onOpenChange}
       >
         <input
           ref={inputRef}

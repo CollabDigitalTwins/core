@@ -27,8 +27,7 @@ import { usePlaceableFileRows } from './usePlaceableFileRows'
 import type { DbFile as IFile } from '../../../../../../../../types/dbTypes'
 import type { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
 
-// Hoist options arrays so the array identity is stable across renders.
-// Inline `options={[...]}` defeats React.memo on FileItemComponent.
+// Hoisted so identity is stable — inline `options={[...]}` defeats React.memo on FileItemComponent.
 type FileAction = import('../../../../../../../../types/global').FileAction
 const OPTIONS_3D: FileAction[] = ['download', 'view', 'move', 'info', 'delete']
 const OPTIONS_NON_3D: FileAction[] = ['download', 'view', 'delete']
@@ -36,6 +35,8 @@ const OPTIONS_NON_3D: FileAction[] = ['download', 'view', 'delete']
 interface FilesSectionProps {
   files: IFile[]
   query?: string
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 const is3DFile = (ext?: string | null): boolean => {
@@ -46,7 +47,7 @@ const is3DFile = (ext?: string | null): boolean => {
 // Files that live in the 3D scene and can be moved/scaled (3D models + DXF drawings).
 const isPlaceable = (ext?: string | null): boolean => is3DFile(ext) || ext?.toLowerCase() === 'dxf'
 
-export function FilesSection({ files, query = '' }: FilesSectionProps) {
+export function FilesSection({ files, query = '', open, onOpenChange }: FilesSectionProps) {
   const t = useTranslations('FileSelection')
 
   const { state: bimState, dispatch: bimDispatch } = React.useContext(BimContext)
@@ -323,11 +324,14 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
       <CollapsibleSection
         title={t('filesTitle')}
         icon={LR.FileText}
-        className="max-h-40 overflow-y-auto"
+        className="min-h-0 overflow-y-auto"
+        style={{ height: '100%', minHeight: 0 }}
         itemCount={filteredFiles.length}
         switchVariant={handleSwitchVariant()}
         onAddItem={addFile}
         addItemTitle={t('addFileTitle')}
+        open={open}
+        onOpenChange={onOpenChange}
       >
         <div className="space-y-1">
           {filteredFiles.map((item) => (

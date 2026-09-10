@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { POINT_CLOUD_EXTENSIONS } from '../../../viewers/bim/src/PointClouds/pointCloudFiles'
+import { POINT_CLOUD_ACCEPT, POINT_CLOUD_EXTENSIONS } from '../../../viewers/bim/src/PointClouds/pointCloudFiles'
 
 import type { DbFile } from '../../../../types/dbTypes'
 
@@ -19,7 +19,7 @@ export type FileSection = 'bim' | 'models' | 'pointClouds' | 'files'
 export const EXTENSIONS_FOR_TYPE: Record<FileType, readonly string[]> = {
   'bim-file': ['ifc', 'frag'],
   'point-cloud-file': POINT_CLOUD_EXTENSIONS,
-  '3d-file': ['glb', 'gltf', 'fbx', 'obj', '3ds', 'dae', 'ply', 'stl'],
+  '3d-file': ['glb', 'gltf', 'fbx', 'obj', 'dae'],
   'cad-file': ['dxf', 'dwg'],
   'media-file': ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'tif', 'tiff', 'mp4', 'webm', 'mov', 'mp3', 'wav', 'ogg'],
   'document-file': ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv', 'md', 'rtf', 'odt'],
@@ -38,8 +38,8 @@ export const SECTION_FOR_TYPE: Record<FileType, FileSection> = {
 
 export const ACCEPT_FOR_TYPE: Record<FileType, string> = {
   'bim-file': '.ifc,.frag',
-  'point-cloud-file': '.las,.laz,.copc,.copc.laz,.e57',
-  '3d-file': '.glb,.gltf,.fbx,.obj,.3ds,.dae,.ply,.stl',
+  'point-cloud-file': POINT_CLOUD_ACCEPT,
+  '3d-file': '.glb,.gltf,.fbx,.obj,.dae',
   'cad-file': '.dxf,.dwg',
   'media-file': 'image/*,video/*,audio/*',
   'document-file': '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.md,.rtf,.odt',
@@ -59,7 +59,7 @@ const byExtension = (extension: string): FileType | null => {
 }
 
 const byMimeType = (mimeType: string): FileType | null => {
-  if (/^(image|video|audio)\//.test(mimeType)) return 'media-file'
+  if (/^(image|video|audio)\//.test(mimeType.toLowerCase())) return 'media-file'
   return null
 }
 

@@ -7,6 +7,7 @@ import * as React from "react"
 import { toast } from "sonner"
 import * as THREE from "three"
 
+import { typeOfFile } from "../../../../../../ui/FilesManager/src/fileType"
 import { Cursor } from "../../../Cursor"
 import { Highlighter } from "../../../Highlighter"
 import { ModelManager } from "../../../ModelManager"
@@ -170,7 +171,7 @@ export function useFilePlacement(
       setShow3DScaleCard(true)
       setCurrent3DFileType("dxf")
       setFileScale(0.001)
-    } else if (fileName.endsWith(".glb") || fileName.endsWith(".gltf")) {
+    } else if (typeOfFile(file) === "3d-file") {
       setShow3DScaleCard(true)
       setCurrent3DFileType("model")
       setFileScale(1)
@@ -248,9 +249,9 @@ export function useFilePlacement(
         })
       }
 
-      const fileName = selectedFile.name.toLowerCase()
-      const is3DFile = fileName.endsWith(".dxf") || fileName.endsWith(".glb") || fileName.endsWith(".gltf")
-      if (is3DFile) {
+      const confirmedByUser = selectedFile.name.toLowerCase().endsWith(".dxf")
+        || typeOfFile(selectedFile) === "3d-file"
+      if (confirmedByUser) {
         // Persist on confirm instead, so the final position is saved.
         setIsPlacingFile(false)
         setCursor("")

@@ -10,11 +10,15 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ### Fixed
 - **A `.las`, `.laz` or `.e57` added through the BIM viewer's Add to BIM toolbar was never
   recognised as a point cloud.** The tool had its own upload path that wrote every file as
-  `type: 'bim-file'` through the generic presigned route, so no point cloud record was
-  created and no conversion job ran; the file surfaced under Models instead of Point Clouds.
-  `useFilePlacement` now routes every upload through the same `useBimFileIntake` hook the
-  rest of the BIM viewer uses, and its own `toast.loading` spinner is gone in favour of the
-  shared upload progress bar.
+  `type: 'bim-file'` through the generic presigned route, so a `las`/`laz` got no point cloud
+  record and no conversion job, and its row was filed under Models. `e57` was in neither the
+  point-cloud nor the surveyed extension set, so it was offered click-to-place instead of
+  dropping at origin. The same blanket `type: 'bim-file'` also filed placed PDFs and images
+  under Models. `useFilePlacement` now routes every upload through the same `useBimFileIntake`
+  hook the rest of the BIM viewer uses, and its own `toast.loading` spinner is gone in favour of
+  the shared upload progress bar.
+- File classification reads the extension before the stored `type`, so rows the old path
+  mis-stamped re-file themselves correctly with no backfill.
 - **A point cloud created through `/api/point-cloud` never appeared in the BIM viewer.**
   Classification was by extension alone, and the converter records no extension.
   `isPointCloudFile` now accepts either signal — `type === 'point-cloud-file'` or a cloud
@@ -50,6 +54,23 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   `viewers/bim/src/PointClouds/pointCloudFiles`.
 - i18n keys in the `PointCloudManagement`, `PointCloudSettings` and `CameraSettings`
   namespaces, for en, es and fr.
+- **`FileType`**, the file taxonomy — `bim-file`, `point-cloud-file`, `3d-file`, `cad-file`,
+  `media-file`, `document-file`, `file` — with `typeOfFile`, `typeOfRecord`,
+  `EXTENSIONS_FOR_TYPE`, `ACCEPT_FOR_TYPE` and `SECTION_FOR_TYPE` in
+  `ui/FilesManager/src/fileType`.
+- **COPC** (`.copc.laz`) is accepted for upload. A COPC file is a LAZ 1.4 file, so
+  PotreeConverter reads it directly; `normalizePointCloudFormat` tells the converter `laz`.
+- **One shared upload progress bar** for every file kind and every phase, rendered in both the
+  toast and the destination sidebar section: `UploadProgressBar`, the `uploadProgress` task
+  store, and `useBimFileIntake` as the single router.
+- `performUploadFile` takes an optional `onProgress`, switching the PUT to XHR so any caller can
+  report progress.
+- A **BIM** section at the top of the BIM File tab for ifc/frag.
+- `SceneObjectRegistry.resetForBuilding(buildingId)`, an idempotent per-building scene reset:
+  the first call only records the id, and only a later, genuine change clears the scene. Two
+  sidebar sections now both drive the reset without the second wiping what the first seeded.
+- `useResizableSections` in `ui/ViewerSidebar`, the draggable-separator layout for N
+  collapsible sections, extracted from the Layers tab so the File tab could use it too.
 
 ### Changed
 - The render mode and perspective/orthographic switches moved from their own settings blocks
@@ -62,6 +83,21 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   a file whose type the browser cannot determine — which MinIO rejects on a presigned PUT.
 - `BimPointCloudsSetup` requires an `apiBase`, and `BimPointClouds` exposes it as
   `apiBase`, so the upload panel and the loader cannot disagree about the service base.
+- The File tab is four **resizable** sections — BIM (`Box`, ifc/frag), Models (`FileAxis3d`,
+  3D geometry), Point Clouds (`Grip`), Files (`FileText`, CAD/media/documents), separated by a
+  draggable divider (`useResizableSections`) instead of three fixed ones. 3D geometry moved
+  out of Files.
+- `Progress` is themed (`bg-muted` track, `bg-primary` indicator) rather than a white indicator
+  on a grey track, and accepts `value={null}` for an indeterminate bar.
+- `capabilitiesForFile` and `dropsAtOrigin` are derived from `FileType` and no longer keep their
+  own extension lists.
+- `getFileIcon` resolves by `FileType` before falling back to the extension, so a converted
+  point cloud — whose record carries no extension — keeps its point-cloud icon instead of a
+  generic one; `e57` and `copc` are recognised extensions in the fallback too.
+- A point cloud that finishes converting is marked visible automatically, instead of staying
+  in the scene list unseen until toggled on by hand.
+- The Add-file card in the BIM viewer closes as soon as a picked file needs no placement
+  (a point cloud, IFC or fragments file), instead of staying open with nothing left to do.
 
 ### Removed
 - **The standalone Potree point-cloud viewer, in full.** The BIM viewer renders point clouds
@@ -105,6 +141,16 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   as `<MapProps, BimProps, Legend>`.
 - Organizations with `pointcloud` in `appContent` need it removed from that column; an
   unrecognized entry is ignored, so this is tidying rather than a break.
+- `usePointCloudUpload` is now `usePointCloudIntake` and no longer returns `state`; progress is
+  read from the shared store with `useUploadTasks('pointClouds')`.
+  ```ts
+  const { upload, convert, busy } = usePointCloudIntake({ apiBase, buildingId, existingNames })
+  const tasks = useUploadTasks('pointClouds')
+  ```
+- `useFilePlacement` gained a trailing `onDone` callback, called once a file is placed or
+  needs no placement at all — pass a handler that closes your Add-file card. Its sixth
+  argument is now the object returned by `useBimFileIntake`, not `uploadFile`.
+- Mount `<UploadProgressToasts />` once inside the viewer tree for progress toasts to appear.
 
 ## [0.9.0] - 2026-09-08
 

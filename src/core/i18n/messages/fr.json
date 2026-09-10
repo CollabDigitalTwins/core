@@ -159,6 +159,10 @@
     "noSearchResults": "Aucun bâtiment ne correspond à",
     "noBuildings": "Aucun bâtiment disponible"
   },
+  "BimSection": {
+    "title": "BIM",
+    "addTitle": "Ajouter un modèle BIM"
+  },
   "Breadcrumb": {
     "more": "Plus"
   },
@@ -1031,8 +1035,6 @@
     "noPointClouds": "Aucun nuage de points trouvé",
     "convertTitle": "Convertir en Potree",
     "retryUploadTitle": "Le téléchargement n'a jamais abouti - cliquez pour réessayer",
-    "uploadingFile": "Téléversement de {name}",
-    "convertingFile": "Conversion de {name}",
     "unsupportedFormat": "Sélectionnez un fichier LAS, LAZ ou E57",
     "uploadFailed": "Échec du téléversement : {error}",
     "conversionFinished": "« {name} » est prêt à être affiché",
@@ -1269,6 +1271,11 @@
     "exportBCFTitle": "Exporter tous les sujets vers un fichier BCF",
     "importBCFTitle": "Importer des sujets depuis un fichier BCF",
     "createViewpointTitle": "Créer un point de vue pour la position actuelle de la caméra"
+  },
+  "Upload": {
+    "uploading": "Téléversement de {name}",
+    "converting": "Conversion de {name}",
+    "finalising": "Finalisation de {name}"
   },
   "UserDetails": {
     "title": "Détails de l'utilisateur",

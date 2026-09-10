@@ -1035,8 +1035,6 @@
     "noPointClouds": "No point clouds found",
     "convertTitle": "Convert to Potree",
     "retryUploadTitle": "Upload never completed - click to retry",
-    "uploadingFile": "Uploading {name}",
-    "convertingFile": "Converting {name}",
     "unsupportedFormat": "Select a LAS, LAZ or E57 file",
     "uploadFailed": "Upload failed: {error}",
     "conversionFinished": "\"{name}\" is ready to view",

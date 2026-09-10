@@ -45,6 +45,17 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   converter, which stores it on the record and in the object key, so an E57 keeps its
   extension for the worker to read.
 
+- **A plugin tool that sets `stayActive` now keeps working after its panel is closed.**
+  The plugin host put a plugin's whole component inside the toolbar dropdown, and a
+  dropdown throws its contents away when it closes — so the plugin's cleanup ran and
+  whatever it had added to the map was removed. Core's own stay-active tools were never
+  affected, because they keep their work in the component the toolbar mounts and put only
+  menu items inside the dropdown. A stay-active plugin now gets a panel the host owns:
+  the plugin stays mounted and only the panel around it is hidden while closed.
+  `ToolbarSubmenu` is unchanged, so every other tool behaves exactly as before, and
+  plugin tools that do not set `stayActive` keep the existing dropdown. No plugin needs
+  editing to pick this up.
+
 ### Added
 - **Point clouds are uploaded and converted from the BIM viewer's File tab.** The Point
   Clouds section gained an upload button, an upload progress bar and a conversion progress

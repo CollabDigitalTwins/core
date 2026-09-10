@@ -6,7 +6,8 @@
 import * as LR from 'lucide-react'
 import * as React from 'react'
 
-import { ToolbarSubmenu } from '../../components/ToolbarSubmenu'
+import { SubmenuContext, ToolbarSubmenu } from '../../components/ToolbarSubmenu'
+import { Button } from '../../components/ui/Button'
 
 import { resolvePluginIcon } from './pluginIcon'
 import { usePluginConfigs, usePluginContributions, type PluginContribution } from './provider'
@@ -82,6 +83,61 @@ function pluginToolId(contribution: PluginContribution<ToolbarCapability>) {
   return `plugin:${contribution.pluginId}:${contribution.id}` as const
 }
 
+// A stay-active plugin must outlive the dropdown, which destroys its children on close.
+const PluginStayActivePanel: React.FC<{
+  children: React.ReactNode
+  tool: Tool
+}> = ({ children, tool }) => {
+  const { openSubmenu, setOpenSubmenu } = React.useContext(SubmenuContext)
+  const isOpen = openSubmenu === tool.id
+  const panelId = React.useId()
+  const containerRef = React.useRef<HTMLDivElement>(null)
+
+  React.useEffect(() => {
+    if (!isOpen) return
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) setOpenSubmenu(null)
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpenSubmenu(null)
+    }
+
+    // Armed while closed, this would read the press that opens the panel as an outside press.
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen, setOpenSubmenu])
+
+  return (
+    <div ref={containerRef} className="relative flex items-center">
+      <Button
+        size="default"
+        variant="ghost"
+        className="flex flex-row justify-center items-center px-1 pointer-events-auto text-primary-dark"
+        title={tool.title}
+        aria-expanded={isOpen}
+        aria-controls={panelId}
+        onClick={() => setOpenSubmenu(isOpen ? null : tool.id)}
+      >
+        <tool.icon />
+        <LR.ChevronDown className={`-ml-2 transition-all duration-200 scale-75 ${isOpen ? 'rotate-180' : ''}`} />
+      </Button>
+      {/* Opens upward because the toolbar is pinned to the bottom of the viewport. */}
+      <div
+        id={panelId}
+        hidden={!isOpen}
+        className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 min-w-[8rem] max-h-[60vh] overflow-y-auto overflow-x-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md pointer-events-auto"
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
+
 /**
  * Wrap a plugin's component into a real toolbar entry.
  *
@@ -102,13 +158,17 @@ function wrapPluginComponent(
   const Component = contribution.component as unknown as React.ComponentType<Record<string, unknown>>
 
   function PluginToolboxItem({ tool, ...rest }: React.ComponentProps<ToolComponent>) {
-    return (
-      <ToolbarSubmenu tool={tool}>
-        <PluginScopeProvider pluginId={contribution.pluginId} config={readConfig()}>
-          <Component tool={tool} {...rest} />
-        </PluginScopeProvider>
-      </ToolbarSubmenu>
+    const panel = (
+      <PluginScopeProvider pluginId={contribution.pluginId} config={readConfig()}>
+        <Component tool={tool} {...rest} />
+      </PluginScopeProvider>
     )
+
+    if (tool.stayActive) {
+      return <PluginStayActivePanel tool={tool}>{panel}</PluginStayActivePanel>
+    }
+
+    return <ToolbarSubmenu tool={tool}>{panel}</ToolbarSubmenu>
   }
 
   PluginToolboxItem.displayName = `PluginTool(${contribution.pluginId}/${contribution.id})`

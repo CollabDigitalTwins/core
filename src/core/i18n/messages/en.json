@@ -159,6 +159,10 @@
     "noSearchResults": "No buildings found",
     "noBuildings": "No buildings available"
   },
+  "BimSection": {
+    "title": "BIM",
+    "addTitle": "Add a BIM model"
+  },
   "Breadcrumb": {
     "more": "More"
   },

@@ -11,61 +11,48 @@ import { useUploadFileToBuilding, useDeleteFile } from '../../../../../../../../
 import { BimContext, BuildingsContext } from '../../../../../../../../store'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
-import { useFileUploadHandler, useFileDeleteHandler, FileItemComponent, useFileActions, useCommonFileUpload, useFileVisibility } from '../../../../../../../ui/FilesManager'
+import { FileItemComponent, useFileActions, useFileDeleteHandler, useFileVisibility, UploadProgressBar, useUploadTasks } from '../../../../../../../ui/FilesManager'
 import { BIMManager } from '../../../../BIMManager'
-import { CurrentWorld } from '../../../../CurrentWorld'
 import { GhostMode } from '../../../../GhostMode'
 import { Highlighter } from '../../../../Highlighter'
 import { applyModelPlacement } from '../../../../lib/applyModelPlacement'
+import { useBimFileIntake } from '../../../../lib/useBimFileIntake'
 import { LoadModels } from '../../../../LoadModels'
 import { ModelManager } from '../../../../ModelManager'
 import { PlacementEditor } from '../../../../Placement/PlacementEditor'
 import { useModelTarget } from '../../../../Placement/targets/useModelTarget'
 import { usePlacementSession } from '../../../../Placement/usePlacementSession'
+import { BimPointClouds } from '../../../../PointClouds'
 import { SpatialStructure } from '../../../../SpatialStructure'
 
 import type { DbFile as DbFile } from '../../../../../../../../types/dbTypes'
 
 const BIM_MODEL_OPTIONS: import('../../../../../../../../types/global').FileAction[] = ['view', 'ghost', 'move', 'info', 'delete']
+const BIM_ACCEPT = '.ifc,.frag'
 
-interface ModelsSectionProps {
+interface BimSectionProps {
   files: DbFile[]
   query?: string
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
-  // Translation
-  const t = useTranslations('FileItemComponent')
+export function BimSection({ files, query = '', open, onOpenChange }: BimSectionProps) {
+  const t = useTranslations('BimSection')
 
-  // Get BIM context
   const { state: bimState, dispatch: bimDispatch } = React.useContext(BimContext)
-  const { bimComponents, fragments, modelId, modelUIState } = bimState.bim
+  const { bimComponents, fragments, modelUIState } = bimState.bim
 
-  // Get Buildings context for buildingId
   const { state: buildingsState } = React.useContext(BuildingsContext)
   const { building } = buildingsState.buildings
   const buildingId = building?.id || 0
 
-  // Upload file hook and session
   const { uploadFile } = useUploadFileToBuilding(buildingId)
   const { deleteFile } = useDeleteFile(buildingId)
   const { setVisibleMany } = useFileVisibility(buildingId)
 
-  // Use the reusable upload handler
-  const { handleFileUpload } = useFileUploadHandler({
-    buildingId,
-    tag: 'bim-file',
-    isVisible: true,
-    uploadFile,
-  })
+  const { handleDeleteFile } = useFileDeleteHandler({ deleteFile })
 
-  // Use the reusable delete handler
-  const { handleDeleteFile } = useFileDeleteHandler({
-    deleteFile,
-
-  })
-
-  // Local state for file management with isVisible property
   const [loadedModels, setLoadedModels] = React.useState<(DbFile & { isVisible?: boolean })[]>(
     files.map(file => ({
       ...file,
@@ -74,7 +61,6 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
     }))
   )
 
-  // Keep local list in sync with incoming props and store UI state changes
   React.useEffect(() => {
     setLoadedModels(prev => {
       const prevMap = new Map(prev.map(f => [f.id, f as any]))
@@ -86,7 +72,6 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
     })
   }, [files, modelUIState])
 
-  // Get ModelManager from BIM components
   const modelManager = React.useMemo(() => {
     if (!bimComponents) return null
     try {
@@ -97,7 +82,6 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
     }
   }, [bimComponents])
 
-  // Get BIMManager from BIM components
   const bimManager = React.useMemo(() => {
     if (!bimComponents) return null
     try {
@@ -108,7 +92,6 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
     }
   }, [bimComponents])
 
-  // Get GhostMode from BIM components
   const ghostMode = React.useMemo(() => {
     if (!bimComponents) return null
     try {
@@ -124,7 +107,6 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
   const placementSession = usePlacementSession()
   React.useEffect(() => { if (!placementSession) clearMoving() }, [placementSession, clearMoving])
 
-  // Get Highlighter from BIM components
   const highlighter = React.useMemo(() => {
     if (!bimComponents) return null
     try {
@@ -135,7 +117,6 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
     }
   }, [bimComponents])
 
-  // Custom handlers for BIM-specific actions (view and delete only - download uses default)
   const handleBimView = React.useCallback(async (file: DbFile, newVisibility: boolean) => {
     const isGhosted = modelUIState[file.id]?.isGhost ?? false
 
@@ -144,7 +125,6 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
       else highlighter.enableModel(file.name)
     }
 
-    // Non-fragment models (gltf/obj/fbx) managed by ModelManager
     if (modelManager) {
       const modelInfo = modelManager.getModel(file.id.toString())
       if (modelInfo) {
@@ -191,23 +171,18 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
   }, [bimComponents, modelManager, fragments, highlighter, ghostMode, bimManager, bimDispatch, modelUIState])
 
   const handleBimDelete = React.useCallback((file: DbFile) => {
-    // Remove from ModelManager if it exists (gltf/obj/fbx models)
     if (modelManager) {
       const modelIdStr = file.id.toString()
       modelManager.remove(modelIdStr)
     }
 
-    // Remove fragment model from scene if it exists (ifc/frag models)
     if (fragments) {
       const fragModel = fragments.core.models.list.get(file.name)
       if (fragModel) {
         fragments.core.disposeModel(fragModel.modelId).catch((err: unknown) => {
           console.error(`Failed to dispose fragment model "${file.name}":`, err)
         })
-        // Also clean up BIMManager tracking
         bimManager?.remove(file.name)
-        // Drop the model's spatial tree too, otherwise the sidebar keeps
-        // rendering it and pushing visibility changes at a disposed model.
         try {
           bimComponents?.get(SpatialStructure).clearForModel(file.name)
         } catch {
@@ -246,7 +221,6 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
     ghostMode.setModelGhost(fragModel, ghostState)
     bimDispatch({ type: 'SET_MODEL_UI_STATE', payload: { fileId: file.id, isGhost: ghostState } })
 
-    // Disable highlighting for ghosted models; re-enable only when visible and not ghosted
     if (highlighter) {
       const isVisible = modelUIState[file.id]?.isVisible ?? true
       if (ghostState || !isVisible) {
@@ -257,7 +231,6 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
     }
   }, [fragments, ghostMode, bimDispatch, highlighter, modelUIState])
 
-  // Use the common file actions hook (no custom download handler - use default for all files)
   const { handleAction, deleteDialog } = useFileActions({
     files: loadedModels,
     setFiles: setLoadedModels,
@@ -270,17 +243,25 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
     onGhost: handleBimGhost
   })
 
-  // Use the common file upload hook
-  const { handleAddFile } = useCommonFileUpload({
+  const intake = useBimFileIntake({
     buildingId,
-    acceptedFileTypes: '.ifc,.frag',
-    handleFileUpload,
-    onUploadError: (error) => {
-      console.error('Error uploading model:', error)
-    }
+    apiBase: bimComponents?.get(BimPointClouds).apiBase ?? '',
+    existingNames: files.map(file => file.name),
+    uploadFile,
   })
+  const tasks = useUploadTasks('bim')
 
-  // Filter models based on search query
+  const addBim = React.useCallback(() => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = BIM_ACCEPT
+    input.addEventListener('change', () => {
+      const picked = input.files?.[0]
+      if (picked) void intake.submit(picked)
+    })
+    input.click()
+  }, [intake])
+
   const filteredModels = React.useMemo(() => {
     if (!query.trim()) return loadedModels
     return loadedModels.filter(file =>
@@ -310,14 +291,22 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
   return (
     <>
       <CollapsibleSection
-        title={t('modelsTitles')}
+        title={t('title')}
         icon={LR.Box}
-        className="max-h-40 overflow-y-auto"
+        className="min-h-0 overflow-y-auto"
+        style={{ height: '100%', minHeight: 0 }}
         itemCount={filteredModels.length}
-        onAddItem={handleAddFile}
-        addItemTitle={t('addBimTitle')}
+        onAddItem={addBim}
+        addItemTitle={t('addTitle')}
         switchVariant={handleSwitchVariant()}
+        open={open}
+        onOpenChange={onOpenChange}
       >
+        {tasks.map(task => (
+          <div key={task.id} className="px-2 py-1">
+            <UploadProgressBar label={task.label} progress={task.progress} />
+          </div>
+        ))}
         <div className="space-y-1">
           {filteredModels.map((file) => (
             <FileItemComponent

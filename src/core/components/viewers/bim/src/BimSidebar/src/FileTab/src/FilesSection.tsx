@@ -10,12 +10,11 @@ import { useDeleteFile } from '../../../../../../../../hooks/files/files'
 import { BimContext, BuildingsContext, MenusContext, ToolsContext } from '../../../../../../../../store'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
-import { useFileDeleteHandler, FileItemComponent, useFileActions } from '../../../../../../../ui/FilesManager'
+import { useFileDeleteHandler, FileItemComponent, useFileActions, UploadProgressBar, useUploadTasks } from '../../../../../../../ui/FilesManager'
 import { BCFTopicsManager } from '../../../../BCFTopicsManager'
 import { CurrentWorld } from '../../../../CurrentWorld'
 import { IDSManager } from '../../../../IDSManager'
 import { needsMarker } from '../../../../lib/needsMarker'
-import { isFileInScene } from '../../../../lib/sceneContent'
 import { ModelManager } from '../../../../ModelManager'
 import { AnimationSession } from '../../../../Placement/AnimationSession'
 import { markerActionsFor } from '../../../../Placement/markerActions'
@@ -29,8 +28,8 @@ import type { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
 
 // Hoisted so identity is stable — inline `options={[...]}` defeats React.memo on FileItemComponent.
 type FileAction = import('../../../../../../../../types/global').FileAction
-const OPTIONS_3D: FileAction[] = ['download', 'view', 'move', 'info', 'delete']
-const OPTIONS_NON_3D: FileAction[] = ['download', 'view', 'delete']
+const OPTIONS_PLACEABLE: FileAction[] = ['download', 'view', 'move', 'info', 'delete']
+const OPTIONS_PLAIN: FileAction[] = ['download', 'view', 'delete']
 
 interface FilesSectionProps {
   files: IFile[]
@@ -39,13 +38,8 @@ interface FilesSectionProps {
   onOpenChange?: (open: boolean) => void
 }
 
-const is3DFile = (ext?: string | null): boolean => {
-  if (!ext) return false
-  return ['glb', 'gltf', 'fbx', 'obj', 'collada'].includes(ext.toLowerCase())
-}
-
-// Files that live in the 3D scene and can be moved/scaled (3D models + DXF drawings).
-const isPlaceable = (ext?: string | null): boolean => is3DFile(ext) || ext?.toLowerCase() === 'dxf'
+// 3D geometry has its own section, so the only file left here that holds a place is a drawing.
+const isPlaceable = (ext?: string | null): boolean => ext?.toLowerCase() === 'dxf'
 
 export function FilesSection({ files, query = '', open, onOpenChange }: FilesSectionProps) {
   const t = useTranslations('FileSelection')
@@ -54,7 +48,7 @@ export function FilesSection({ files, query = '', open, onOpenChange }: FilesSec
   const { bimComponents, fragments } = bimState.bim
   const { state: buildingsState } = React.useContext(BuildingsContext)
   const { building } = buildingsState.buildings
-  const buildingId = building?.id || -1
+  const buildingId = building?.id ?? 0
   const { dispatch: menusDispatch } = React.useContext(MenusContext)
   const { dispatch: toolsDispatch } = React.useContext(ToolsContext)
 
@@ -64,7 +58,6 @@ export function FilesSection({ files, query = '', open, onOpenChange }: FilesSec
     deleteFile,
   })
 
-  const isDxfPlaceable = React.useCallback((extension?: string | null) => extension?.toLowerCase() === 'dxf', [])
   const placeHint = React.useCallback((name: string) => t('placeHint', { name }), [t])
 
   const {
@@ -73,48 +66,24 @@ export function FilesSection({ files, query = '', open, onOpenChange }: FilesSec
     toggleVisibility,
     handleMove: handleBimMove,
     registry,
-    registryRef,
     getSceneObject,
     editObject,
     placingIdRef,
     loadedTick,
   } = usePlaceableFileRows({
     files,
-    buildingId,
-    isPlaceable: isDxfPlaceable,
+    buildingId: building?.id,
+    isPlaceable,
     placeHint,
   })
   const [activeIDSFileId, setActiveIDSFileId] = React.useState<number | null>(null)
 
-  // Initialize and sync files
+  // An IDS file is not in the scene, so only the active one counts as shown.
   React.useEffect(() => {
-    setLocalFiles(prevFiles => {
-      const visibilityMap = new Map(
-        prevFiles.map(f => [f.id, f.isVisible ?? false])
-      )
-      // The record seeds a placeable file; after that the scene is the truth.
-      const inScene = (file: IFile): boolean => {
-        if (file.extension === 'ids') return activeIDSFileId === file.id
-        if (!isPlaceable(file.extension)) return false
-
-        return isFileInScene(file, registryRef.current) || (file as any).isVisible === true
-      }
-      return files
-        .filter(file => file.tag !== 'user')
-        .filter(file => (file as any).type !== 'map-file')
-        .map(file => {
-          // A tracked file keeps the user's toggle; a first-seen one asks the scene.
-          let isVisible = visibilityMap.has(file.id) ? visibilityMap.get(file.id)! : inScene(file)
-          if (file.extension === 'ids' && activeIDSFileId === file.id) {
-            isVisible = true
-          } else if (file.extension === 'ids' && activeIDSFileId !== null && activeIDSFileId !== file.id) {
-            isVisible = false
-          }
-          return { ...file, isVisible }
-        })
-        .sort((a, b) => a.name.localeCompare(b.name))
-    })
-  }, [files, activeIDSFileId])
+    if (activeIDSFileId === null) return
+    setLocalFiles(prevFiles => prevFiles.map(file =>
+      file.extension === 'ids' ? { ...file, isVisible: activeIDSFileId === file.id } : file))
+  }, [files, activeIDSFileId, setLocalFiles])
 
   // Listen to IDS reset events
   React.useEffect(() => {
@@ -221,6 +190,8 @@ export function FilesSection({ files, query = '', open, onOpenChange }: FilesSec
     toolsDispatch({ type: 'SET-TOOL', payload: { currentToolId: 'bim-add-file' } })
   }, [toolsDispatch])
 
+  const tasks = useUploadTasks('files')
+
   const filteredFiles = React.useMemo(() => {
     if (!query.trim()) return localFiles
     return localFiles.filter(file =>
@@ -244,7 +215,7 @@ export function FilesSection({ files, query = '', open, onOpenChange }: FilesSec
   // createFileMarker expects an AddedFile; build a lightweight one from the DB file.
   const makeMarkerInput = React.useCallback((file: IFile, position: THREE.Vector3): AddedFile => ({
     id: file.id.toString(),
-    file: new File([], file.name, { type: (file as any).mimeType ?? '' }),
+    file: new File([], file.name, { type: file.mimeType ?? '' }),
     position,
   }), [])
 
@@ -333,13 +304,19 @@ export function FilesSection({ files, query = '', open, onOpenChange }: FilesSec
         open={open}
         onOpenChange={onOpenChange}
       >
+        {tasks.map(task => (
+          <div key={task.id} className="px-2 py-1">
+            <UploadProgressBar label={task.label} progress={task.progress} />
+          </div>
+        ))}
+
         <div className="space-y-1">
           {filteredFiles.map((item) => (
             <FileItemComponent
               key={item.id}
               file={item}
               onAction={handleAction}
-              options={isPlaceable(item.extension) ? OPTIONS_3D : OPTIONS_NON_3D}
+              options={isPlaceable(item.extension) ? OPTIONS_PLACEABLE : OPTIONS_PLAIN}
               translationKey="FileSelection"
               confirmDelete={false}
             />

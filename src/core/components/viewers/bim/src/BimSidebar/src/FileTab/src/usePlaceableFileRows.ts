@@ -9,11 +9,12 @@ import * as THREE from 'three'
 
 import { useFile } from '../../../../../../../../hooks/files/files'
 import { BimContext } from '../../../../../../../../store'
+import { EXTENSIONS_FOR_TYPE } from '../../../../../../../ui/FilesManager/src/fileType'
 import { CurrentWorld } from '../../../../CurrentWorld'
 import { Cursor } from '../../../../Cursor'
 import { DXFManager } from '../../../../DXFLoader'
 import { Highlighter } from '../../../../Highlighter'
-import { sceneObjectForFile } from '../../../../lib/sceneContent'
+import { isFileInScene, sceneObjectForFile } from '../../../../lib/sceneContent'
 import { selectSceneSeedFiles } from '../../../../lib/sceneSeed'
 import { ModelManager } from '../../../../ModelManager'
 import { capabilitiesForFile } from '../../../../Placement/placementCapabilities'
@@ -26,9 +27,15 @@ import type { DbFile } from '../../../../../../../../types/dbTypes'
 import type { PlacementMode } from '../../../../Placement/PlacementEditor'
 import type { SceneObject, SceneObjectRegistry } from '../../../../SceneObjects'
 
-const is3DFile = (ext?: string | null): boolean => {
-  if (!ext) return false
-  return ['glb', 'gltf', 'fbx', 'obj', 'collada'].includes(ext.toLowerCase())
+const is3DFile = (extension?: string | null): boolean =>
+  EXTENSIONS_FOR_TYPE['3d-file'].includes(extension?.toLowerCase() ?? '')
+
+type Row = DbFile & { isVisible?: boolean }
+
+// Returning the previous array unchanged keeps a caller that rebuilds `files` out of a render loop.
+const sameRow = (a: Row, b: Row): boolean => {
+  const keys = Object.keys(a) as (keyof Row)[]
+  return keys.length === Object.keys(b).length && keys.every(key => a[key] === b[key])
 }
 
 const PLACE_TOAST_ID = 'bim-file-place-toast'
@@ -40,7 +47,7 @@ const placedPosition = (file: DbFile): THREE.Vector3 =>
 
 export interface PlaceableRowsOptions {
   files: DbFile[]
-  buildingId: number
+  buildingId: number | null | undefined
   isPlaceable: (extension?: string | null) => boolean
   placeHint: (name: string) => string
 }
@@ -86,6 +93,24 @@ export function usePlaceableFileRows({
   }, [bimComponents, world])
   const registryRef = React.useRef(registry)
   React.useEffect(() => { registryRef.current = registry }, [registry])
+
+  // A tracked row keeps whatever the user last toggled; a first-seen one asks the scene.
+  React.useEffect(() => {
+    setRows(previous => {
+      const tracked = new Map(previous.map(row => [row.id, row.isVisible]))
+      const next = files
+        .map(file => ({
+          ...file,
+          isVisible: tracked.get(file.id)
+            ?? (isPlaceable(file.extension)
+              && (isFileInScene(file, registryRef.current) || file.isVisible === true)),
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name))
+      const unchanged = next.length === previous.length
+        && next.every((row, index) => sameRow(row, previous[index]))
+      return unchanged ? previous : next
+    })
+  }, [files, isPlaceable])
 
   // Bumped after an object finishes loading so the marker reconcile effect re-runs.
   const [loadedTick, setLoadedTick] = React.useState(0)
@@ -179,6 +204,7 @@ export function usePlaceableFileRows({
   // Claimed per building so a revalidation cannot re-add what the user just switched off.
   const seededBuildingRef = React.useRef<number | null>(null)
   React.useEffect(() => {
+    if (buildingId == null) return
     if (!registry || !modelManager || files.length === 0) return
     if (seededBuildingRef.current === buildingId) return
     seededBuildingRef.current = buildingId
@@ -327,7 +353,7 @@ export function usePlaceableFileRows({
       return
     }
     if (!registry?.has(file.id.toString())) {
-      const load = file.extension === 'dxf'
+      const load = file.extension?.toLowerCase() === 'dxf'
         ? toggleDxfVisibility(file, true)
         : toggleModelVisibility(file, true)
       void load.then(() => editObject(file, 'translate'))

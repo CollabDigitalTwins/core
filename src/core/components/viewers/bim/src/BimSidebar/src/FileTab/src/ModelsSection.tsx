@@ -39,9 +39,9 @@ export function ModelsSection({ files, query = '', open, onOpenChange }: ModelsS
   const { state: bimState } = React.useContext(BimContext)
   const { bimComponents } = bimState.bim
   const { state: buildingsState } = React.useContext(BuildingsContext)
-  const buildingId = buildingsState.buildings.building?.id || 0
+  const buildingId = buildingsState.buildings.building?.id
 
-  const { uploadFile } = useUploadFileToBuilding(buildingId)
+  const { uploadFile } = useUploadFileToBuilding(buildingId ?? 0)
   const { deleteFile } = useDeleteFile(buildingId)
   const { handleDeleteFile } = useFileDeleteHandler({ deleteFile })
 
@@ -53,7 +53,7 @@ export function ModelsSection({ files, query = '', open, onOpenChange }: ModelsS
   })
 
   const intake = useBimFileIntake({
-    buildingId,
+    buildingId: buildingId ?? 0,
     apiBase: bimComponents?.get(BimPointClouds).apiBase ?? '',
     existingNames: files.map(file => file.name),
     uploadFile,
@@ -63,7 +63,7 @@ export function ModelsSection({ files, query = '', open, onOpenChange }: ModelsS
   const { handleAction, deleteDialog } = useFileActions({
     files: rows,
     setFiles: setRows,
-    buildingId,
+    buildingId: buildingId ?? 0,
     handleDeleteFile,
     onView: toggleVisibility,
     shouldPersistVisibility: () => true,
@@ -96,7 +96,7 @@ export function ModelsSection({ files, query = '', open, onOpenChange }: ModelsS
         style={{ height: '100%', minHeight: 0 }}
         itemCount={filtered.length}
         onAddItem={addModel}
-        addItemTitle={t('addBimTitle')}
+        addItemTitle={t('addModelTitle')}
         open={open}
         onOpenChange={onOpenChange}
       >

@@ -8,7 +8,7 @@ import * as React from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('../../../../../../../../hooks/files/files', () => ({
-  useFile: () => ({ updateFile: vi.fn() }),
+  useFile: () => ({ updateFile: vi.fn(() => Promise.resolve()) }),
 }))
 
 vi.mock('../../../../Placement/usePlacementSession', () => ({
@@ -25,6 +25,9 @@ vi.mock('../../../../Placement/PlacementEditor', () => ({ PlacementEditor: class
 vi.mock('../../../../SceneObjects', () => ({ BimSceneObjects: class {} }))
 
 import { BimContext } from '../../../../../../../../store/BIM/context'
+import { CurrentWorld } from '../../../../CurrentWorld'
+import { Cursor } from '../../../../Cursor'
+import { ModelManager } from '../../../../ModelManager'
 import { BimSceneObjects } from '../../../../SceneObjects'
 
 import { usePlaceableFileRows } from './usePlaceableFileRows'
@@ -61,6 +64,24 @@ const options = {
   placeHint: (name: string) => `place ${name}`,
 }
 
+const modelLoad = vi.fn(async () => ({ model: { position: { copy: vi.fn() } } }))
+
+// A viewer with a world and a model loader, which click-to-place needs to reach the scene.
+const placingComponents = {
+  get: (ctor: unknown) => {
+    if (ctor === BimSceneObjects) return { registry }
+    if (ctor === ModelManager) return { load: modelLoad, getClips: () => [] }
+    if (ctor === CurrentWorld) return { world: { camera: { three: {} }, renderer: { three: { domElement: document.createElement('canvas') } } } }
+    if (ctor === Cursor) return { cursor: '' }
+    throw new Error('not registered')
+  },
+}
+
+function placingWrapper({ children }: { children: React.ReactNode }) {
+  const value = { state: { bim: { bimComponents: placingComponents, fragments: null, world: null } }, dispatch: vi.fn() }
+  return <BimContext.Provider value={value as any}>{children}</BimContext.Provider>
+}
+
 describe('usePlaceableFileRows', () => {
   it('resolves the scene registry from BIM components without crashing when rows are empty', () => {
     const { result } = renderHook(() => usePlaceableFileRows(options), { wrapper })
@@ -76,6 +97,28 @@ describe('usePlaceableFileRows', () => {
     added.at(-1)?.({ fileId: '1', kind: 'model' })
 
     await waitFor(() => expect(result.current.rows[0].isVisible).toBe(true))
+  })
+
+  it('lists the files it is given, so a section need not sync them itself', async () => {
+    const given = [file({ id: 2, name: 'b.dae', extension: 'dae' }), file({ id: 1, name: 'a.glb' })]
+    const { result } = renderHook(() => usePlaceableFileRows({ ...options, files: given }), { wrapper })
+
+    await waitFor(() => expect(result.current.rows.map(row => row.name)).toEqual(['a.glb', 'b.dae']))
+  })
+
+  it.each(['glb', 'dae'])('double-click places an unplaced .%s into the scene', async (extension) => {
+    modelLoad.mockClear()
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => ({ presignedUrl: 'u' }) })))
+    const placed = file({ id: 9, name: `m.${extension}`, extension })
+    const { result } = renderHook(
+      () => usePlaceableFileRows({ ...options, files: [placed] }),
+      { wrapper: placingWrapper },
+    )
+
+    act(() => { result.current.handleMove(placed) })
+    await act(async () => { document.dispatchEvent(new MouseEvent('dblclick')) })
+
+    await waitFor(() => expect(modelLoad).toHaveBeenCalledWith('u', '9', `m.${extension}`, expect.anything()))
   })
 
   it('ignores a marker entry, since it has no file to report visibility for', async () => {

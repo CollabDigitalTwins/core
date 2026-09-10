@@ -7,6 +7,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-09-10
 ### Added
 - **The File tab's sections can be reordered by press-and-hold.** Holding a section header
   (icon + title) for 400ms lifts it; dragging moves it between the other sections and

@@ -147,10 +147,6 @@ The following files instantiate `OBC.Components`, manipulate `THREE.Scene` / `TH
 
 **Mitigation for future contributors:** where pure helper logic is embedded in these classes (e.g., the spatial-tree transform inside `SpatialStructure.ts`, the rotation math in `exportDrawingToDxf.ts`), extract it into a sibling file and add a pure-utility test — the same approach as `FloorplanTool/src/utils.ts → normalizeElevation`, which is unit-tested even though the surrounding `FloorplanRenderer` is not.
 
-### Pointcloud viewer
-
-`src/core/components/viewers/pointcloud/` — Potree-based 3D rendering. Same rationale as the BIM viewer (heavy renderer dependencies, no isolated logic worth unit-testing).
-
 ### Heavy "shell" components
 
 `AuthPage.tsx`, the top-level layout components, and the global navigation chrome are skipped because they orchestrate `next/dynamic` imports, MapLibre, and other heavy children. They contain no branching beyond what their child components already provide.

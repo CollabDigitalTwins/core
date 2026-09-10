@@ -4,7 +4,6 @@
 import type { CursorType } from './global'
 import type { BimToolbarToolsType } from '../components/viewers/bim/src/tools/bimToolbar'
 import type { MapToolbarToolType } from '../components/viewers/map/src/tools/mapTools'
-import type { PointCloudToolType } from '../components/viewers/pointcloud/src/tools/pointcloudToolbarTools'
 import type { Building } from '../types/dbTypes'
 import type { LucideProps } from 'lucide-react'
 
@@ -17,7 +16,7 @@ import type { LucideProps } from 'lucide-react'
  */
 export type PluginToolId = `plugin:${string}`
 
-export type ToolbarToolType = BimToolbarToolsType | MapToolbarToolType | PointCloudToolType | PluginToolId | 'settings' | 'file-manager' | null
+export type ToolbarToolType = BimToolbarToolsType | MapToolbarToolType | PluginToolId | 'settings' | 'file-manager' | null
 export interface Tool {
   id: ToolbarToolType
   title: string

@@ -7,18 +7,16 @@ import * as React from 'react'
 
 import { ViewerSidebarPanel } from '../../../../../../ui/ViewerSidebar/Panel'
 
+import { CameraSettings } from './src/CameraSettings'
 import { GridManagement } from './src/GridManagement'
 import { LightingManagement } from './src/LightingManagement'
 import { MeasurementSettings } from './src/MeasurementSettings'
 import { PointCloudSettings } from './src/PointCloudSettings'
-import { RenderMode } from './src/RenderMode'
-import { ToggleProjection } from './src/ToggleProjection'
 
 export function SettingsTab() {
   return (
     <ViewerSidebarPanel variant="scroll">
-      <ToggleProjection />
-      <RenderMode />
+      <CameraSettings />
       <GridManagement />
       <MeasurementSettings />
       <LightingManagement />

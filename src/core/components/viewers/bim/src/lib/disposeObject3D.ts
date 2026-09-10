@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as THREE from 'three'
+import type * as THREE from 'three'
 
 // `Material.dispose` does not cascade to the maps it references, so walk them first.
 function disposeMaterial(material: THREE.Material) {

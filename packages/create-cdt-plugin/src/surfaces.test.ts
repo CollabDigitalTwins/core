@@ -11,7 +11,6 @@ describe('factsFor', () => {
   it('points each surface at the kit type entry that names only what it needs', () => {
     expect(factsFor('map.tools').entry).toBe('@collabdt/plugin-kit/types/map')
     expect(factsFor('bim.tools').entry).toBe('@collabdt/plugin-kit/types/bim')
-    expect(factsFor('pointcloud.tools').entry).toBe('@collabdt/plugin-kit/types/pointcloud')
     expect(factsFor('viewer.legends').entry).toBe('@collabdt/plugin-kit/types/legend')
   })
 
@@ -28,14 +27,12 @@ describe('factsFor', () => {
   it('binds the capability registry per surface, so the wrong component is a compile error', () => {
     expect(factsFor('map.tools').contextType).toBe('MapPluginContext')
     expect(factsFor('bim.tools').contextType).toBe('BimPluginContext')
-    expect(factsFor('pointcloud.tools').contextType).toBe('PointCloudPluginContext')
     expect(factsFor('viewer.legends').contextType).toBe('LegendPluginContext')
   })
 
   it('gives a type-only dependency to exactly the two surfaces that name an external type', () => {
     expect(factsFor('map.tools').typeDependency).toEqual(['maplibre-gl', '^5.24.0'])
     expect(factsFor('bim.tools').typeDependency).toEqual(['@thatopen/components', '~3.4.0'])
-    expect(factsFor('pointcloud.tools').typeDependency).toBeNull()
     expect(factsFor('viewer.legends').typeDependency).toBeNull()
   })
 
@@ -68,6 +65,5 @@ describe('factsFor', () => {
   it('gives every toolbar surface a props type to intersect with ToolbarToolProps', () => {
     expect(factsFor('map.tools').propsType).toBe('MapToolProps')
     expect(factsFor('bim.tools').propsType).toBe('BimToolProps')
-    expect(factsFor('pointcloud.tools').propsType).toBe('PointCloudToolProps')
   })
 })

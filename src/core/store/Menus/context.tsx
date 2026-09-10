@@ -8,7 +8,7 @@ import * as React from "react";
 
 import { ViewerNames } from '../../types/dbTypes'
 
-import { MenusReducer } from './reducer'
+import { DEFAULT_FILE_TAB_SECTION_ORDER, MenusReducer } from './reducer'
 
 import type { MenusActions, MenusState } from './reducer';
 import type { Building, Site, User, Infrastructure } from '../../types/dbTypes'
@@ -47,6 +47,7 @@ const getInitialState = (pathname?: string): InitialStateType => {
             pendingSensorAction: null,
             sensorLegendVisible: {},
             sensorLegendTypeId: {},
+            fileTabSectionOrder: DEFAULT_FILE_TAB_SECTION_ORDER,
         },
     }
 }
@@ -76,7 +77,7 @@ export const MenusContext = React.createContext<{
     setIsDatasetMenuOpen: React.Dispatch<React.SetStateAction<boolean>>
     isAuthPage?: boolean
 }>({
-    state: { menus: { currentViewer: ViewerNames.map, rowsPerPage: 10, selectedTab: 'file', commentsVisibleInViewer: [], currentCommentId: null, focusedCommentId: null, focusRequestId: 0, pendingCommentAction: null, sensorsVisibleInViewer: [], visibleSensorTypes: {}, visibleSensorTags: {}, currentSensorId: null, currentSensorTypeId: null, focusedSensorId: null, sensorFocusRequestId: 0, pendingSensorAction: null, sensorLegendVisible: {}, sensorLegendTypeId: {} } },
+    state: { menus: { currentViewer: ViewerNames.map, rowsPerPage: 10, selectedTab: 'file', commentsVisibleInViewer: [], currentCommentId: null, focusedCommentId: null, focusRequestId: 0, pendingCommentAction: null, sensorsVisibleInViewer: [], visibleSensorTypes: {}, visibleSensorTags: {}, currentSensorId: null, currentSensorTypeId: null, focusedSensorId: null, sensorFocusRequestId: 0, pendingSensorAction: null, sensorLegendVisible: {}, sensorLegendTypeId: {}, fileTabSectionOrder: DEFAULT_FILE_TAB_SECTION_ORDER } },
     dispatch: () => null,
     isSidebarOpen: false,
     setIsSidebarOpen: () => null,

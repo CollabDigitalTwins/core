@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import type { FileSection } from '../../components/ui/FilesManager/src/fileType'
 import type { ViewerKey, ViewerNames } from '../../types/dbTypes'
 import type { ActionMap } from '../ActionMap'
+
+export const DEFAULT_FILE_TAB_SECTION_ORDER: readonly FileSection[] = ['bim', 'pointClouds', 'models', 'files']
 
 export type SidebarTabType = 'file' | 'layers' | 'communication' |  'sensors' | 'settings'
 
@@ -50,6 +53,8 @@ interface MenusTypes {
   sensorLegendVisible: Partial<Record<ViewerNames, boolean>>
   /** Sensor type the legend is pinned to, overriding the focused sensor's own type. */
   sensorLegendTypeId: Partial<Record<ViewerNames, number | null>>
+  /** File tab section order, as left by the user's last reorder. Session-lived. */
+  fileTabSectionOrder: readonly FileSection[]
 }
 
 export type MenusState = MenusTypes
@@ -78,10 +83,18 @@ export type MenusPayload = {
    *  the visibility toggles above, because the legend's close button needs an explicit hide. */
   ['TOGGLE_SENSOR_LEGEND']: { viewer: ViewerNames; visible?: boolean }
   ['SET_SENSOR_LEGEND_TYPE_ID']: { viewer: ViewerNames; sensorTypeId: number | null }
+  ['SET_FILE_TAB_SECTION_ORDER']: Pick<MenusTypes, 'fileTabSectionOrder'>
 }
 
 export type MenusActions
   = ActionMap<MenusPayload>[keyof ActionMap<MenusPayload>]
+
+/** A reorder must be a permutation: a short or duplicated list would drop a section from the tab. */
+function isCompleteSectionOrder(order: readonly FileSection[]): boolean {
+  const unique = new Set(order)
+  return unique.size === DEFAULT_FILE_TAB_SECTION_ORDER.length
+    && DEFAULT_FILE_TAB_SECTION_ORDER.every(id => unique.has(id))
+}
 
 export const MenusReducer = (state: MenusState, action: MenusActions) => {
   switch (action.type) {
@@ -277,6 +290,14 @@ export const MenusReducer = (state: MenusState, action: MenusActions) => {
           ...state.sensorLegendTypeId,
           [legendTypeViewer]: legendTypeId,
         },
+      }
+
+    case 'SET_FILE_TAB_SECTION_ORDER':
+      const proposedOrder = action.payload.fileTabSectionOrder
+      if (!isCompleteSectionOrder(proposedOrder)) return state
+      return {
+        ...state,
+        fileTabSectionOrder: proposedOrder,
       }
 
     case 'SHOW_ALL_SENSOR_IN_VIEWER':

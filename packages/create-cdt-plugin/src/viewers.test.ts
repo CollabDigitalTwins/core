@@ -9,7 +9,6 @@ describe('viewersFor', () => {
   it('reads the viewer off a toolbar surface', () => {
     expect(viewersFor(['bim.tools'])).toEqual(['bim'])
     expect(viewersFor(['map.tools'])).toEqual(['map'])
-    expect(viewersFor(['pointcloud.tools'])).toEqual(['pointcloud'])
   })
 
   it('treats a map layer as the map, since that is where it draws', () => {
@@ -37,10 +36,10 @@ describe('viewersFor', () => {
 
 describe('untooledViewers', () => {
   it('names the viewers a plugin targets without contributing a tool there', () => {
-    expect(untooledViewers(['bim.tools'])).toEqual(['map', 'pointcloud'])
+    expect(untooledViewers(['bim.tools'])).toEqual(['map'])
   })
 
   it('is empty once every viewer has a surface', () => {
-    expect(untooledViewers(['map.tools', 'bim.tools', 'pointcloud.tools'])).toEqual([])
+    expect(untooledViewers(['map.tools', 'bim.tools'])).toEqual([])
   })
 })

@@ -8,8 +8,44 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ## [Unreleased]
 
 ## [0.10.0] - 2026-09-10
+### Added
+- **The File tab's sections can be reordered by press-and-hold.** Holding a section header
+  (icon + title) for 400ms lifts it; dragging moves it between the other sections and
+  releasing commits the new order. `Alt+ArrowUp`/`Alt+ArrowDown` on a focused header does the
+  same from the keyboard, and `Escape` abandons a drag. The order lives in `MenusState` as
+  `fileTabSectionOrder`, so it survives tab switches for the session but not a reload.
+  New `SET_FILE_TAB_SECTION_ORDER` action; a payload that is not a permutation of the four
+  sections is ignored rather than dropping a section from the tab.
+- `CollapsibleSection` takes `dragHandleProps` and `isReordering`, and its header is now a
+  focusable `role="button"` that toggles on Enter/Space.
+
+### Changed
+- **Empty File tab sections collapse and sink to the bottom.** A section with no items starts
+  closed and sorts below the populated ones, keeping its relative order; opening one keeps it
+  open, and it returns to its own slot once it holds a file.
+- The File tab's default section order is now BIM, Point clouds, Models, Files.
 
 ### Fixed
+- **A `.las`, `.laz` or `.e57` added through the BIM viewer's Add to BIM toolbar was never
+  recognised as a point cloud.** The tool had its own upload path that wrote every file as
+  `type: 'bim-file'` through the generic presigned route, so a `las`/`laz` got no point cloud
+  record and no conversion job, and its row was filed under Models. `e57` was in neither the
+  point-cloud nor the surveyed extension set, so it was offered click-to-place instead of
+  dropping at origin. The same blanket `type: 'bim-file'` also filed placed PDFs and images
+  under Models. `useFilePlacement` now routes every upload through the same `useBimFileIntake`
+  hook the rest of the BIM viewer uses, and its own `toast.loading` spinner is gone in favour of
+  the shared upload progress bar.
+- File classification reads the extension before the stored `type`, so rows the old path
+  mis-stamped re-file themselves correctly with no backfill.
+- **A point cloud created through `/api/point-cloud` never appeared in the BIM viewer.**
+  Classification was by extension alone, and the converter records no extension.
+  `isPointCloudFile` now accepts either signal — `type === 'point-cloud-file'` or a cloud
+  extension — matching what `BuildingsTools` already did, so existing rows need no backfill.
+  The BIM branch of the File tab likewise accepts `type === 'bim-file'` alongside ifc/frag.
+  Separately, the source format now travels from the picker through the proxy to the
+  converter, which stores it on the record and in the object key, so an E57 keeps its
+  extension for the worker to read.
+
 - **A plugin tool that sets `stayActive` now keeps working after its panel is closed.**
   The plugin host put a plugin's whole component inside the toolbar dropdown, and a
   dropdown throws its contents away when it closes — so the plugin's cleanup ran and
@@ -20,6 +56,140 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   `ToolbarSubmenu` is unchanged, so every other tool behaves exactly as before, and
   plugin tools that do not set `stayActive` keep the existing dropdown. No plugin needs
   editing to pick this up.
+
+### Added
+- **Point clouds are uploaded and converted from the BIM viewer's File tab.** The Point
+  Clouds section gained an upload button, an upload progress bar and a conversion progress
+  bar, plus per-row recovery for the two ways the pipeline fails: re-run conversion when the
+  object uploaded but never converted, and re-upload when the upload itself died.
+  New `viewers/shared/pointcloud/pointCloudConversion` holds `createPointCloud`,
+  `startConversion` and `watchConversion`; `viewers/bim/src/PointClouds/usePointCloudIntake`
+  drives the state machine. `createPointCloud` takes the source extension as its second
+  argument, ahead of `buildingId`.
+- **E57 is accepted alongside LAS and LAZ.** Rendering an E57 also needs the converter
+  service to transcode it, which ships separately.
+- **A camera tool for the BIM viewer**, in the Settings tab rather than the toolbar, split
+  per control the way the existing settings blocks are — `NavigationMode`, `WalkSettings`,
+  and a `useCameraNavigation` hook both share:
+  `CameraNavigation` exposes orbit and walk navigation modes, a walk speed, and an elevation
+  lock with the height editable in metres. Movement is WASD or the arrow keys, with Q and E
+  for down and up; deliberate vertical input re-bases the lock rather than being cancelled by
+  it. Walk mode is refused under an orthographic projection and falls back to orbit if the
+  projection changes mid-walk.
+- An octree bounding-box toggle in the BIM point cloud settings, via a new
+  `showBoundingBoxes` field on `PointCloudAppearance`.
+- `isPointCloudFile`, `isPointCloudExtension`, `POINT_CLOUD_ACCEPT`,
+  `POINT_CLOUD_EXTENSIONS`, `stripPointCloudExtension` and `uniquePointCloudName` in
+  `viewers/bim/src/PointClouds/pointCloudFiles`.
+- i18n keys in the `PointCloudManagement`, `PointCloudSettings` and `CameraSettings`
+  namespaces, plus `FileItemComponent.addModelTitle` and `ViewerSidebar.resizeSectionsLabel`,
+  for en, es and fr.
+- **`FileType`**, the file taxonomy — `bim-file`, `point-cloud-file`, `3d-file`, `cad-file`,
+  `media-file`, `document-file`, `file` — with `typeOfFile`, `typeOfRecord`,
+  `EXTENSIONS_FOR_TYPE`, `ACCEPT_FOR_TYPE` and `SECTION_FOR_TYPE` in
+  `ui/FilesManager/src/fileType`. `3d-file` is exactly what `ModelManager` can load — `glb`,
+  `gltf`, `obj`, `fbx`, `dae` — and every 3D check in the BIM viewer now derives from it, so
+  the picker cannot advertise a format the loader refuses. `3ds`, `ply` and `stl` are not in
+  it and classify as plain files.
+- **COPC** (`.copc.laz`) is accepted for upload. A COPC file is a LAZ 1.4 file, so
+  PotreeConverter reads it directly; `normalizePointCloudFormat` tells the converter `laz`.
+- **One shared upload progress bar** for every file kind and both phases — `converting` and
+  `uploading` — rendered in both the toast and the destination sidebar section:
+  `UploadProgressBar`, the `uploadProgress` task store, and `useBimFileIntake` as the single
+  router.
+- `performUploadFile` takes an optional `onProgress`, switching the PUT to XHR so any caller can
+  report progress.
+- A **BIM** section at the top of the BIM File tab for ifc/frag.
+- `SceneObjectRegistry.resetForBuilding(buildingId)`, an idempotent per-building scene reset:
+  the first call only records the id, only a later, genuine change clears the scene, and a
+  `null`/`undefined` building is a no-op. Every sidebar section now drives the reset without
+  the second wiping what the first seeded.
+- `useResizableSections` in `ui/ViewerSidebar`, the draggable-separator layout for N
+  collapsible sections, extracted from the Layers tab so the File tab could use it too.
+
+### Changed
+- The render mode and perspective/orthographic switches moved from their own settings blocks
+  into the new Camera section, so every camera control sits together — render mode first.
+  `RenderMode` and `ToggleProjection` are unchanged and are now rendered by `CameraSettings`.
+- The BIM File tab lists a point cloud as soon as it exists, not only once converted, so an
+  in-flight or failed conversion is visible instead of falling into the generic Files list.
+  An unconverted row offers only info and delete.
+- `uploadFileWithProgress` is typed, and no longer sends an empty `Content-Type` header for
+  a file whose type the browser cannot determine — which MinIO rejects on a presigned PUT.
+- `BimPointCloudsSetup` requires an `apiBase`, and `BimPointClouds` exposes it as
+  `apiBase`, so the upload panel and the loader cannot disagree about the service base.
+- The File tab is four **resizable** sections — BIM (`Box`, ifc/frag), Models (`FileAxis3d`,
+  3D geometry), Point Clouds (`Grip`), Files (`FileText`, CAD/media/documents), separated by a
+  draggable divider (`useResizableSections`) instead of three fixed ones. 3D geometry moved
+  out of Files.
+- `Progress` is themed (`bg-muted` track, `bg-primary` indicator) rather than a white indicator
+  on a grey track, and accepts `value={null}` for an indeterminate bar.
+- `capabilitiesForFile` and `dropsAtOrigin` are derived from `FileType` and no longer keep their
+  own extension lists.
+- `getFileIcon` resolves by `FileType` before falling back to the extension, so a converted
+  point cloud — whose record carries no extension — keeps its point-cloud icon instead of a
+  generic one; `e57` and `copc` are recognised extensions in the fallback too.
+- A point cloud that finishes converting is marked visible automatically, instead of staying
+  in the scene list unseen until toggled on by hand.
+- The Add-file card in the BIM viewer closes as soon as a picked file needs no placement
+  (a point cloud, IFC or fragments file), instead of staying open with nothing left to do.
+
+### Removed
+- `Upload.finalising`, and the `finalising` member of `UploadPhase`. The phase was set and the
+  task ended in the same tick, so it never rendered.
+- **The standalone Potree point-cloud viewer, in full.** The BIM viewer renders point clouds
+  through `potree-core` and no longer needs the vendored Potree 1.x globals. Gone:
+  `components/viewers/pointcloud/`, `store/PointCloud/` (and its `PointCloudProvider`),
+  `plugins/sdk/pointCloudViewer` (`usePointCloudViewer`, `PointCloudToolProps`), the
+  `pointcloud` member of `ViewerNames`, the `pointcloud.tools` plugin capability, and the
+  `MeasurePointCloudTool`, `PerformanceSettings`, `PointCloudLoadingState` and
+  `pointcloudToolbarTools` i18n namespaces.
+- The `potree` and `potree-cdt` dependencies. `potree-core` stays — it is what the BIM
+  viewer uses. Consumers can drop the `copyPotree` postinstall step and the
+  `public/vendors/potree` directory it maintained.
+- The map popover's "open point cloud" building action, which now duplicates "open BIM viewer".
+- `@collabdt/plugin-kit`: the `./types/pointcloud` subpath, `pointcloud.tools`, and
+  `pointcloud` from `PluginViewerTarget` and `PluginViewerName`. `CapabilityRegistry` and
+  `PluginContext` lose their third type parameter.
+- `create-cdt-plugin`: the point-cloud surface and its `ExamplePointcloud` template.
+- `selectPointCloudFiles` from `viewers/bim/src/PointClouds/pointCloudFiles`. Nothing used
+  it once the File tab began routing by type and extension.
+
+### Migration
+- `LayersTab.resizeSectionsLabel` moved to `ViewerSidebar.resizeSectionsLabel`, since two tabs
+  now share the separator. A consumer overriding that key must move it.
+- Any caller of `BimPointClouds.setup()` must pass `apiBase`, the same value it already
+  passes to `createHttpPointCloudSource`:
+  ```ts
+  const apiBase = resolvePointCloudApiBase(pointcloudApiUrl)
+  clouds.setup({ world, apiBase, source: createHttpPointCloudSource(apiBase) })
+  ```
+- Replace `selectPointCloudFiles(files)` with `files.filter(isRenderablePointCloud)`.
+- A consumer overriding the `PointCloudAppearance` object wholesale must add
+  `showBoundingBoxes`; partial patches through `setAppearance` are unaffected.
+- Remove `node ./build_potree/copyPotree.js` from your `postinstall`, drop the
+  `potree-cdt` dependency, and delete `public/vendors/potree`. Nothing regenerates it.
+- `?viewer=pointcloud` links now fall back to the map with the parameter stripped, which
+  `Viewer` already did for any viewer an organization has not enabled. Point clouds are
+  reached through the BIM viewer.
+- `SidebarProvider` / `Sidebar` and `ViewerSidebar` no longer take `pointcloudApiUrl`;
+  `Viewer` still does, and that is the path the BIM viewer's clouds use.
+- A plugin registering `pointcloud.tools` must move to `bim.tools`. A `viewer.tabs` or
+  `viewer.legends` contribution naming `pointcloud` should drop it — the host warns and
+  renders nothing. Bind `CapabilityRegistry`/`PluginContext` type parameters positionally
+  as `<MapProps, BimProps, Legend>`.
+- Organizations with `pointcloud` in `appContent` need it removed from that column; an
+  unrecognized entry is ignored, so this is tidying rather than a break.
+- `usePointCloudUpload` is now `usePointCloudIntake` and no longer returns `state`; progress is
+  read from the shared store with `useUploadTasks('pointClouds')`.
+  ```ts
+  const { upload, convert, busy } = usePointCloudIntake({ apiBase, buildingId, existingNames })
+  const tasks = useUploadTasks('pointClouds')
+  ```
+- `useFilePlacement` gained a trailing `onDone` callback, called once a file is placed or
+  needs no placement at all — pass a handler that closes your Add-file card. Its sixth
+  argument is now the object returned by `useBimFileIntake`, not `uploadFile`.
+- Mount `<UploadProgressToasts />` once inside the viewer tree for progress toasts to appear.
 
 ## [0.9.0] - 2026-09-08
 

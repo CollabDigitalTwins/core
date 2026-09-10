@@ -17,6 +17,7 @@ import { ViewerNames } from '../../types'
 import { switchLanguage } from '../../utils/utils'
 import { UserSettings } from '../settings'
 import { Toolbar } from '../Toolbar'
+import { UploadProgressToasts } from '../ui/FilesManager/src/UploadProgressBar'
 import { SidebarTrigger } from '../ui/Sidebar'
 
 import { MapViewer } from './map/MapViewer'
@@ -28,10 +29,6 @@ import type { Organization, ViewerKey } from '../../types/dbTypes'
 const BimViewer = dynamic(
   () => import('./bim/BimViewer').then(m => ({ default: m.BimViewer })),
   { ssr: false, loading: () => <ViewerLoadingFallback label="Loading BIM viewer…" /> },
-)
-const PointCloudViewer = dynamic(
-  () => import('./pointcloud/PointCloudViewer').then(m => ({ default: m.PointCloudViewer })),
-  { ssr: false, loading: () => <ViewerLoadingFallback label="Loading point cloud viewer…" /> },
 )
 
 // DataMenu reaches BimViewer through FilePreview, so a static import undoes the split above.
@@ -175,14 +172,13 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
   const selectedViewer = (
     <>
       {builtInViewer !== null
-        && [ViewerNames.map, ViewerNames.bim, ViewerNames.pointcloud].includes(builtInViewer)
+        && [ViewerNames.map, ViewerNames.bim].includes(builtInViewer)
         && <SidebarTrigger />}
       <div style={{ height: '100%', width: '100%', position: 'relative' }}>
         <div style={{ display: builtInViewer === ViewerNames.map ? 'block' : 'none', width: '100%', height: '100%' }}>
           <MapViewer organization={organization} maptilerKey={maptilerKey} />
         </div>
         {builtInViewer === ViewerNames.bim && <BimViewer pointcloudApiUrl={pointcloudApiUrl} />}
-        {builtInViewer === ViewerNames.pointcloud && <PointCloudViewer pointcloudApiUrl={pointcloudApiUrl} />}
         {builtInViewer !== null
           && [ViewerNames.buildings, ViewerNames.sites, ViewerNames.files, ViewerNames.land, ViewerNames.infrastructure, ViewerNames.users].includes(builtInViewer) && (
           <DataMenu currentViewer={builtInViewer} organization={organization} geocodeEarthApiKey={geocodeEarthApiKey} geocoderUrl={geocoderUrl} />
@@ -210,6 +206,7 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
     <>
       {selectedViewer}
       <Toolbar viewer={validViewer} minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} geocodeEarthApiKey={geocodeEarthApiKey} geocoderUrl={geocoderUrl} />
+      <UploadProgressToasts />
     </>
   )
 }

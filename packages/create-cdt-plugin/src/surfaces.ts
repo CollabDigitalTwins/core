@@ -58,18 +58,6 @@ const FACTS: Record<Surface, SurfaceFacts> = {
     allowsEmpty: true,
     usesReadoutRow: true,
   },
-  'pointcloud.tools': {
-    entry: '@collabdt/plugin-kit/types/pointcloud',
-    propsType: 'PointCloudToolProps',
-    contextType: 'PointCloudPluginContext',
-    typeDependency: null,
-    icon: 'Grip',
-    indexTemplate: 'index',
-    entryImports: '{{COMPONENT}}',
-    example: 'ExamplePointcloud',
-    allowsEmpty: true,
-    usesReadoutRow: true,
-  },
   'viewer.legends': {
     // A legend registers a hook rather than a component, so it takes no toolbar props.
     entry: '@collabdt/plugin-kit/types/legend',

@@ -40,6 +40,7 @@ export class SceneObjectRegistry {
   private readonly entries = new Map<string, SceneObject>()
   private readonly added = new Set<Listener>()
   private readonly removed = new Set<Listener>()
+  private currentBuildingId: number | null = null
 
   constructor(deps: { scene: THREE.Object3D }) {
     this.scene = deps.scene
@@ -109,6 +110,18 @@ export class SceneObjectRegistry {
 
   clear(): void {
     for (const key of [...this.entries.keys()]) this.remove(key)
+  }
+
+  /**
+   * Idempotent per building: clears on change, the first call only records the id, and no
+   * building at all is a no-op. Keyed on the building so closing a tab keeps the scene.
+   */
+  resetForBuilding(buildingId: number | null | undefined): void {
+    if (buildingId == null) return
+    if (this.currentBuildingId === buildingId) return
+    const first = this.currentBuildingId === null
+    this.currentBuildingId = buildingId
+    if (!first) this.clear()
   }
 
   onAdded(listener: Listener): () => void {

@@ -3,6 +3,7 @@
 
 import * as THREE from 'three'
 
+import { typeOfFile } from '../../../../../../ui/FilesManager/src/fileType'
 import { disposeObject3D } from '../../../lib/disposeObject3D'
 
 import { createGenericFileMarker, removeMarker } from './FileMarkerUtils'
@@ -41,7 +42,7 @@ export const addFileToScene = async (
 
   const fileName = addedFile.file.name.toLowerCase()
 
-  if (fileName.endsWith('.glb') || fileName.endsWith('.gltf')) {
+  if (typeOfFile(addedFile.file) === '3d-file') {
     const modelInfo = await modelManager.load(addedFile.file, addedFile.id, addedFile.file.name, {
       position: addedFile.position,
       scale: fileScale,

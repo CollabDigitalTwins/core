@@ -161,12 +161,6 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
       id: ViewerNames.bim,
       icon: LR.Box,
       onClick: () => changeViewer(ViewerNames.bim),
-    },
-    {
-      title: t('pointCloudTitle'),
-      id: ViewerNames.pointcloud,
-      icon: LR.Grip,
-      onClick: () => changeViewer(ViewerNames.pointcloud),
     }
   ]
 

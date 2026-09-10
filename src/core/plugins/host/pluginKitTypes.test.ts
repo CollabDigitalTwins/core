@@ -151,7 +151,6 @@ describe('@collabdt/plugin-kit types', () => {
     // event worth reviewing, whichever library it names.
     expect(moduleReferences('map.ts')).toEqual(['./base', 'maplibre-gl'])
     expect(moduleReferences('bim.ts')).toEqual(['./base', '@thatopen/components'].sort())
-    expect(moduleReferences('pointcloud.ts')).toEqual(['./base'])
     expect(moduleReferences('legend.ts')).toEqual(['./base'])
   })
 

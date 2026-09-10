@@ -54,9 +54,11 @@ export function BimPointCloudSync({ pointcloudApiUrl }: { pointcloudApiUrl?: str
   React.useEffect(() => {
     if (!bimComponents || !world) return
     const clouds = bimComponents.get(BimPointClouds)
+    const apiBase = resolvePointCloudApiBase(pointcloudApiUrl)
     clouds.setup({
       world,
-      source: createHttpPointCloudSource(resolvePointCloudApiBase(pointcloudApiUrl)),
+      apiBase,
+      source: createHttpPointCloudSource(apiBase),
     })
     // Clouds are invisible to the fragment raycaster, so the pivot pick needs them offered.
     bimComponents.get(PlacementEditor).setup({ world, pickSources: () => [clouds] })

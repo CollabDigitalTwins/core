@@ -59,10 +59,7 @@ export function useCaptureScreenshot(): () => Promise<string | null> {
           try { viewerDataUrl = viewerCanvas.toDataURL('image/png') } catch { /* ignore */ }
         }
       } else {
-        const sel = currentViewer === ViewerNames.pointcloud ? '#pointcloud-viewer-container' : null
-        viewerCanvas = sel
-          ? document.querySelector<HTMLCanvasElement>(`${sel} canvas`)
-          : document.querySelector<HTMLCanvasElement>('canvas')
+        viewerCanvas = document.querySelector<HTMLCanvasElement>('canvas')
         if (viewerCanvas) {
           viewerBounds = viewerCanvas.getBoundingClientRect()
           try { viewerDataUrl = viewerCanvas.toDataURL('image/png') } catch { /* ignore */ }

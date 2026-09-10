@@ -35,6 +35,10 @@ interface CollapsibleSectionProps {
   open?: boolean
   /** Called whenever the section wants to open or close. */
   onOpenChange?: (open: boolean) => void
+  /** Handlers making the header a drag handle, e.g. from `useLongPressReorder`. */
+  dragHandleProps?: React.HTMLAttributes<HTMLElement> & { ref?: React.Ref<HTMLElement> }
+  /** True while this section is the one being dragged to a new position. */
+  isReordering?: boolean
 }
 
 export function CollapsibleSection({
@@ -54,6 +58,8 @@ export function CollapsibleSection({
   headerActions,
   open,
   onOpenChange,
+  dragHandleProps,
+  isReordering,
 }: CollapsibleSectionProps) {
   // Controlled when `open` is supplied (the Layers tab drives its sections so it
   // can give the collapsed ones no more height than their header), uncontrolled
@@ -66,6 +72,8 @@ export function CollapsibleSection({
     if (!isControlled) setUncontrolledOpen(next)
     onOpenChange?.(next)
   }, [isControlled, onOpenChange])
+
+  const { ref: dragRef, onKeyDown: onDragKeyDown, onClick: onDragClick, ...dragHandlers } = dragHandleProps ?? {}
 
   const prevCheckedRef = React.useRef(switchVariant?.checked)
 
@@ -91,8 +99,24 @@ export function CollapsibleSection({
     <div className="w-full min-h-0 flex flex-col p-2 pb-2 " style={style}>
       <div className="flex-shrink-0">
         <div
-          className="flex items-center overflow-hidden gap-2 cursor-pointer hover:bg-accent/50 rounded-md p-1 -m-1 transition-colors"
+          {...dragHandlers}
+          ref={dragRef as React.Ref<HTMLDivElement>}
+          role="button"
+          tabIndex={0}
+          aria-expanded={isOpen}
+          data-reordering={isReordering ? 'true' : undefined}
+          className={`flex items-center overflow-hidden gap-2 cursor-pointer hover:bg-accent/50 rounded-md p-1 -m-1 transition-colors ${isReordering ? 'opacity-70 ring-1 ring-primary' : ''}`}
+          onKeyDown={(e) => {
+            onDragKeyDown?.(e)
+            if (e.defaultPrevented || e.target !== e.currentTarget) return
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setIsOpen(!isOpen)
+            }
+          }}
           onClick={(e) => {
+            onDragClick?.(e)
+            if (e.defaultPrevented) return
             // Prevent toggle when clicking on switch or add button
             if (e.target instanceof HTMLElement
               && (e.target.closest('[role="switch"]') || e.target.closest('button'))) {
@@ -100,7 +124,7 @@ export function CollapsibleSection({
             }
             setIsOpen(!isOpen)
           }}
-          title={isOpen ? 'Collapse section' : 'Expand section'}
+          title={`${isOpen ? 'Collapse section' : 'Expand section'}${dragHandleProps ? ' — hold to reorder' : ''}`}
         >
           {chevronPosition === 'left' && (
             <LR.ChevronRight

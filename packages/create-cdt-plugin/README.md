@@ -95,13 +95,12 @@ The French and Spanish message blocks start as copies of the English ones. Every
 
 ## Choosing a surface
 
-Eight capabilities, which is every one the platform renders:
+Seven capabilities, which is every one the platform renders:
 
 | Surface | Where it appears | What your component receives |
 |---|---|---|
 | `map.tools` | Map toolbar | The MapLibre map, nullable until it initialises |
 | `bim.tools` | BIM viewer toolbar | Model ids, selection, and methods to query, select, isolate and frame elements |
-| `pointcloud.tools` | Point cloud toolbar | The Potree viewer as `unknown`, plus a `ready` flag |
 | `viewer.legends` | Map legend | Nothing: a legend registers a hook, so its rows can carry live counts |
 | `map.layers` | Drawn on the map, for as long as the map exists | The MapLibre map. Renders `null` and manages its own sources and layers |
 | `data.pages` | Datasets nav, as a full page | Nothing: you supply a rows hook and columns, and the platform renders the page |

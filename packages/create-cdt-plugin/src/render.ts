@@ -19,7 +19,6 @@ export type TOKENS = Record<string, string>
 const SURFACE_ENTRY: Record<Surface, string> = {
   'map.tools': 'map',
   'bim.tools': 'bim',
-  'pointcloud.tools': 'pointcloud',
   'viewer.legends': 'legend',
   'map.layers': 'map',
   'data.pages': 'ui',

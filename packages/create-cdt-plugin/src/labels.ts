@@ -20,10 +20,6 @@ export const SURFACE_LABELS: Record<Surface, SurfaceLabel> = {
     label: 'BIM toolbar',
     description: 'A button and dropdown panel in the BIM viewer. Receives the model and selection.',
   },
-  'pointcloud.tools': {
-    label: 'Point cloud toolbar',
-    description: 'A button and dropdown panel in the point cloud viewer. Receives the Potree viewer.',
-  },
   'viewer.legends': {
     label: 'Viewer legend',
     description: 'Rows in the viewer legend panel. Registers a hook, so counts can stay live.',

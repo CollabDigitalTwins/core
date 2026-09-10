@@ -14,7 +14,6 @@ describe('SURFACES', () => {
     expect([...SURFACES]).toEqual([
       'map.tools',
       'bim.tools',
-      'pointcloud.tools',
       'viewer.legends',
       'map.layers',
       'data.pages',

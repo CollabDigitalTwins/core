@@ -185,7 +185,6 @@ describe('the empty body template', () => {
   it('renders a props intersection for each toolbar surface', () => {
     expect(forSurface('map.tools')).toContain('ToolbarToolProps & MapToolProps')
     expect(forSurface('bim.tools')).toContain('ToolbarToolProps & BimToolProps')
-    expect(forSurface('pointcloud.tools')).toContain('ToolbarToolProps & PointCloudToolProps')
   })
 
   it('is unusable for viewer.legends, which is why the scaffolder must never route it there', () => {

@@ -21,7 +21,6 @@ export const VALID_CAPABILITIES = [
   'ui.dialogs',
   'map.tools',
   'bim.tools',
-  'pointcloud.tools',
   'viewer.legends',
   'map.layers',
 ] as const
@@ -92,7 +91,7 @@ export interface DataPageRegistration<Row = Record<string, unknown>> {
 }
 
 /** The viewers that host a tab or a legend. Core spells them exactly this way. */
-export type PluginViewerTarget = 'map' | 'bim' | 'pointcloud'
+export type PluginViewerTarget = 'map' | 'bim'
 
 export interface ViewerTabRegistration {
   id: string
@@ -114,7 +113,6 @@ export interface DialogRegistration<P = Record<string, unknown>> {
 export interface CapabilityRegistry<
   MapProps = unknown,
   BimProps = unknown,
-  PointCloudProps = unknown,
   Legend = unknown,
 > {
   'data.pages': DataPageRegistration
@@ -122,7 +120,6 @@ export interface CapabilityRegistry<
   'ui.dialogs': DialogRegistration
   'map.tools': ToolbarRegistration<MapProps>
   'bim.tools': ToolbarRegistration<BimProps>
-  'pointcloud.tools': ToolbarRegistration<PointCloudProps>
   'viewer.legends': Legend
   'map.layers': MapLayerRegistration<MapProps>
 }
@@ -132,13 +129,12 @@ export interface CapabilityRegistry<
 export interface PluginContext<
   MapProps = unknown,
   BimProps = unknown,
-  PointCloudProps = unknown,
   Legend = unknown,
 > {
   pluginId: string
   register<K extends keyof CapabilityRegistry>(
     key: K,
-    item: CapabilityRegistry<MapProps, BimProps, PointCloudProps, Legend>[K],
+    item: CapabilityRegistry<MapProps, BimProps, Legend>[K],
   ): void
   config: Record<string, unknown>
 }

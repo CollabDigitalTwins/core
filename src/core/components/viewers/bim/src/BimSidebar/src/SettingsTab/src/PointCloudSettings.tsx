@@ -11,6 +11,7 @@ import { BimContext } from '../../../../../../../../store'
 import { Label } from '../../../../../../../ui/Label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../../../ui/Select'
 import { SliderWithInput } from '../../../../../../../ui/Slider'
+import { Switch } from '../../../../../../../ui/Switch'
 import { SettingsSection } from '../../../../../../../ui/ViewerSidebar/SettingsSection'
 import {
   DEFAULT_APPEARANCE,
@@ -129,6 +130,17 @@ export function PointCloudSettings() {
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <Label htmlFor="pointcloud-bounding-boxes" className="text-xs text-muted-foreground cursor-pointer">
+            {t('showBoundingBoxes')}
+          </Label>
+          <Switch
+            id="pointcloud-bounding-boxes"
+            checked={appearance.showBoundingBoxes}
+            onCheckedChange={(showBoundingBoxes) => update({ showBoundingBoxes })}
+          />
         </div>
       </div>
     </SettingsSection>

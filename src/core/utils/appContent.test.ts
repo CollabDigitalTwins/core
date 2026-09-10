@@ -16,7 +16,7 @@ describe('resolveAppContent', () => {
     const all = resolveAppContent(org([]))
     expect(all).toContain(ViewerNames.map)
     expect(all).toContain(ViewerNames.bim)
-    expect(all).toContain(ViewerNames.pointcloud)
+    expect(all).toContain(ViewerNames.sites)
     expect(all).toContain(ViewerNames.buildings)
   })
 
@@ -37,7 +37,7 @@ describe('resolveAppContent', () => {
 
 describe('hasAppContent', () => {
   it('is false for a viewer the organization did not switch on', () => {
-    expect(hasAppContent(org([ViewerNames.bim]), ViewerNames.pointcloud)).toBe(false)
+    expect(hasAppContent(org([ViewerNames.bim]), ViewerNames.sites)).toBe(false)
   })
 
   it('is true for a configured viewer', () => {
@@ -45,6 +45,6 @@ describe('hasAppContent', () => {
   })
 
   it('is true for everything when nothing is configured', () => {
-    expect(hasAppContent(org([]), ViewerNames.pointcloud)).toBe(true)
+    expect(hasAppContent(org([]), ViewerNames.sites)).toBe(true)
   })
 })

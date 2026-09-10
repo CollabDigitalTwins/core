@@ -25,7 +25,7 @@ export enum SiteProjectPhase { Inception_Phase = 'Inception_Phase', Conceptualiz
 export enum SiteProjectType { Modification = 'Modification', New_Build = 'New_Build', Renovation = 'Renovation', Repair = 'Repair', Operation_Maintenance = 'Operation_Maintenance', Retrofit = 'Retrofit' }
 export enum DatasetGroup { Organizational = 'Organizational', Municipal = 'Municipal', National = 'National', Provincial = 'Provincial' }
 export enum DataManagementSystem { Ckan = 'Ckan', Arcgis = 'Arcgis', Opendatasoft = 'Opendatasoft', Socrata = 'Socrata', Other = 'Other' }
-export enum ViewerNames { auth = 'auth', map = 'map', bim = 'bim', pointcloud = 'pointcloud', buildings = 'buildings', sites = 'sites', files = 'files', land = 'land', infrastructure = 'infrastructure', extensions = 'extensions', settings = 'settings', users = 'users' }
+export enum ViewerNames { auth = 'auth', map = 'map', bim = 'bim', buildings = 'buildings', sites = 'sites', files = 'files', land = 'land', infrastructure = 'infrastructure', extensions = 'extensions', settings = 'settings', users = 'users' }
 /**
  * A built-in viewer or a plugin page, as `plugin:<pluginId>:<pageId>`. Widened rather than
  * adding enum members: `ViewerNames` mirrors the Prisma `appContent` enum.

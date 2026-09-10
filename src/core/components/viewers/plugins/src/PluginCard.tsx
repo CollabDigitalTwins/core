@@ -46,7 +46,6 @@ const CAPABILITY_ICON: Record<string, LucideIcon> = {
   'viewer.legends': LR.SquareMenu,
   'map.layers': LR.Layers,
   'bim.tools': LR.Box,
-  'pointcloud.tools': LR.Grip,
   'data.pages': LR.Table2,
   'viewer.tabs': LR.PanelLeft,
   'ui.dialogs': LR.SquareStack,

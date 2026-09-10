@@ -92,7 +92,6 @@ const bySpecifier = (a: string, b: string) =>
 const SLOT_TYPES: Array<{ surfaces: Surface[]; type: string; entry: string }> = [
   { surfaces: ['map.tools', 'map.layers'], type: 'MapToolProps', entry: 'map' },
   { surfaces: ['bim.tools'], type: 'BimToolProps', entry: 'bim' },
-  { surfaces: ['pointcloud.tools'], type: 'PointCloudToolProps', entry: 'pointcloud' },
   { surfaces: ['viewer.legends'], type: 'LegendRegistration', entry: 'legend' },
 ]
 

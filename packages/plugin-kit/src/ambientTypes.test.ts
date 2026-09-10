@@ -34,7 +34,6 @@ const TYPE_FILES = [
   'components.ts',
   'map.ts',
   'bim.ts',
-  'pointcloud.ts',
   'legend.ts',
 ].map(name => join(packageRoot, 'src/types', name))
 

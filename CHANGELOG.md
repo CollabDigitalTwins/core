@@ -34,7 +34,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   bar, plus per-row recovery for the two ways the pipeline fails: re-run conversion when the
   object uploaded but never converted, and re-upload when the upload itself died.
   New `viewers/shared/pointcloud/pointCloudConversion` holds `createPointCloud`,
-  `startConversion` and `watchConversion`; `viewers/bim/src/PointClouds/usePointCloudUpload`
+  `startConversion` and `watchConversion`; `viewers/bim/src/PointClouds/usePointCloudIntake`
   drives the state machine. `createPointCloud` takes the source extension as its second
   argument, ahead of `buildingId`.
 - **E57 is accepted alongside LAS and LAZ.** Rendering an E57 also needs the converter
@@ -53,22 +53,28 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   `POINT_CLOUD_EXTENSIONS`, `stripPointCloudExtension` and `uniquePointCloudName` in
   `viewers/bim/src/PointClouds/pointCloudFiles`.
 - i18n keys in the `PointCloudManagement`, `PointCloudSettings` and `CameraSettings`
-  namespaces, for en, es and fr.
+  namespaces, plus `FileItemComponent.addModelTitle` and `ViewerSidebar.resizeSectionsLabel`,
+  for en, es and fr.
 - **`FileType`**, the file taxonomy — `bim-file`, `point-cloud-file`, `3d-file`, `cad-file`,
   `media-file`, `document-file`, `file` — with `typeOfFile`, `typeOfRecord`,
   `EXTENSIONS_FOR_TYPE`, `ACCEPT_FOR_TYPE` and `SECTION_FOR_TYPE` in
-  `ui/FilesManager/src/fileType`.
+  `ui/FilesManager/src/fileType`. `3d-file` is exactly what `ModelManager` can load — `glb`,
+  `gltf`, `obj`, `fbx`, `dae` — and every 3D check in the BIM viewer now derives from it, so
+  the picker cannot advertise a format the loader refuses. `3ds`, `ply` and `stl` are not in
+  it and classify as plain files.
 - **COPC** (`.copc.laz`) is accepted for upload. A COPC file is a LAZ 1.4 file, so
   PotreeConverter reads it directly; `normalizePointCloudFormat` tells the converter `laz`.
-- **One shared upload progress bar** for every file kind and every phase, rendered in both the
-  toast and the destination sidebar section: `UploadProgressBar`, the `uploadProgress` task
-  store, and `useBimFileIntake` as the single router.
+- **One shared upload progress bar** for every file kind and both phases — `converting` and
+  `uploading` — rendered in both the toast and the destination sidebar section:
+  `UploadProgressBar`, the `uploadProgress` task store, and `useBimFileIntake` as the single
+  router.
 - `performUploadFile` takes an optional `onProgress`, switching the PUT to XHR so any caller can
   report progress.
 - A **BIM** section at the top of the BIM File tab for ifc/frag.
 - `SceneObjectRegistry.resetForBuilding(buildingId)`, an idempotent per-building scene reset:
-  the first call only records the id, and only a later, genuine change clears the scene. Two
-  sidebar sections now both drive the reset without the second wiping what the first seeded.
+  the first call only records the id, only a later, genuine change clears the scene, and a
+  `null`/`undefined` building is a no-op. Every sidebar section now drives the reset without
+  the second wiping what the first seeded.
 - `useResizableSections` in `ui/ViewerSidebar`, the draggable-separator layout for N
   collapsible sections, extracted from the Layers tab so the File tab could use it too.
 
@@ -100,6 +106,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   (a point cloud, IFC or fragments file), instead of staying open with nothing left to do.
 
 ### Removed
+- `Upload.finalising`, and the `finalising` member of `UploadPhase`. The phase was set and the
+  task ended in the same tick, so it never rendered.
 - **The standalone Potree point-cloud viewer, in full.** The BIM viewer renders point clouds
   through `potree-core` and no longer needs the vendored Potree 1.x globals. Gone:
   `components/viewers/pointcloud/`, `store/PointCloud/` (and its `PointCloudProvider`),
@@ -119,6 +127,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   it once the File tab began routing by type and extension.
 
 ### Migration
+- `LayersTab.resizeSectionsLabel` moved to `ViewerSidebar.resizeSectionsLabel`, since two tabs
+  now share the separator. A consumer overriding that key must move it.
 - Any caller of `BimPointClouds.setup()` must pass `apiBase`, the same value it already
   passes to `createHttpPointCloudSource`:
   ```ts

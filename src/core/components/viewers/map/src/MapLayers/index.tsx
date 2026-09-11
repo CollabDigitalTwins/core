@@ -12,6 +12,7 @@ import { BuildingLayer } from './src/BuildingLayers'
 import { CommentLayer } from './src/CommentLayer'
 import { CountryLayer } from './src/CountryLayer'
 import { FileLayers } from './src/FileLayer'
+import { MapPopupStack } from './src/MapPopupStack'
 import { OpenDataLayers } from './src/OpenDataLayer/src'
 import { SensorLayers } from './src/SensorsLayer'
 import { SiteLayer } from './src/SiteLayer/SiteLayer'
@@ -41,6 +42,7 @@ export const MapLayers = ({ organization, maptilerKey }: { organization?: Organi
       <SensorLayers />
       <FileLayers />
       <BimLayerGate />
+      <MapPopupStack />
     </>
   )
 }

@@ -8,10 +8,12 @@ import type { MapHoverManager } from '../../components/viewers/map/utils/MapEven
 import type { CursorType } from '../../types/global'
 import type {
   Coordinates,
+  PopupEntry,
   MapCameraPosition,
   MapStyle,
   CurrentLocation,
   TerrainLevel,
+  PopupStack,
 } from '../../types/map'
 import type { ActionMap } from '../ActionMap'
 import type { Feature, Geometry } from 'geojson'
@@ -42,6 +44,7 @@ export interface MapTypes {
   dimensionsColour: string;
   terrainLevel: TerrainLevel
   show3dBuildings: boolean
+  popupStack: PopupStack | null
 }
 
 export type MapState = MapTypes
@@ -70,6 +73,8 @@ export type MapPayload = {
   ['UPDATE_DIMENSIONS_COLOUR']: Pick<MapTypes, 'dimensionsColour'>
   ['UPDATE_TERRAIN_LEVEL']: Pick<MapTypes, 'terrainLevel'>
   ['UPDATE_SHOW_3D_BUILDINGS']: Pick<MapTypes, 'show3dBuildings'>
+  ['SET_POPUP_STACK']: { entries: PopupEntry[] } | null
+  ['SET_POPUP_INDEX']: { activeIndex: number }
 }
 
 export type MapActions = ActionMap<MapPayload>[keyof ActionMap<MapPayload>]
@@ -131,6 +136,23 @@ export const MapReducer = (state: MapState, action: MapActions) => {
         ...state,
         addedLayers,
       }
+    case 'SET_POPUP_STACK': {
+      const entries = action.payload?.entries
+      return {
+        ...state,
+        popupStack: entries?.length ? { entries, activeIndex: 0 } : null,
+      }
+    }
+    case 'SET_POPUP_INDEX': {
+      if (!state.popupStack) return state
+      const { entries } = state.popupStack
+      const total = entries.length
+      const activeIndex = ((action.payload.activeIndex % total) + total) % total
+      return {
+        ...state,
+        popupStack: { entries, activeIndex },
+      }
+    }
     case 'SET_CLICKED_FEATURE':
       return {
         ...state,

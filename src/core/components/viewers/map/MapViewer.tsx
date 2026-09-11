@@ -150,6 +150,9 @@ export function MapViewer({ width = '100%', height = '100%', organization, mapti
     }
     // initilize a new click manager
     const mapClickManager = new MapClickManager(map)
+    mapClickManager.onPopupStack(entries =>
+      mapDispatch({ type: 'SET_POPUP_STACK', payload: { entries } }),
+    )
     mapDispatch({
       type: 'ADD_MAP_CLICK_MANAGER',
       payload: { mapClickManager },

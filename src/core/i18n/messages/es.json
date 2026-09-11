@@ -255,7 +255,8 @@
   },
   "CommentLayers": {
     "commentEdited": "Comentario editado",
-    "commentDeleted": "Comentario eliminado"
+    "commentDeleted": "Comentario eliminado",
+    "commentTitle": "Comentario"
   },
   "CommentsSection": {
     "commentsTitle": "Comentarios",
@@ -1081,7 +1082,8 @@
   },
   "SensorLayers": {
     "sensorEdited": "Sensor editado",
-    "sensorDeleted": "Sensor eliminado"
+    "sensorDeleted": "Sensor eliminado",
+    "sensorTitle": "Sensor"
   },
   "SensorsSection": {
     "sensorsTitle": "Sensores",
@@ -1198,7 +1200,7 @@
     "addPoints": "Haga clic para añadir puntos. Haga clic cerca del primer punto para cerrar el polígono y crear un sitio.",
     "startDrawingClick": "Haga clic en 'Empezar a dibujar' y luego haga clic en el mapa para añadir puntos"
   },
-  "SiteContextMenu": {
+  "SiteMenu": {
     "namePlaceholder": "Nombre del sitio",
     "editShape": "Editar forma",
     "doneEditing": "Terminar de editar la forma",
@@ -2083,5 +2085,13 @@
     "devBody": "La clave de demostración solo funciona en localhost. Las instalaciones en producción necesitan su propia clave de MapTiler.",
     "cta": "Obtén tu clave gratuita",
     "dismiss": "Descartar"
+  },
+  "MapPopupStack": {
+    "counter": "{index} de {total}",
+    "previous": "Elemento anterior",
+    "next": "Elemento siguiente",
+    "clusterContents": "{count} elementos aquí",
+    "zoomToExpand": "Acercar para expandir",
+    "close": "Cerrar"
   }
 }

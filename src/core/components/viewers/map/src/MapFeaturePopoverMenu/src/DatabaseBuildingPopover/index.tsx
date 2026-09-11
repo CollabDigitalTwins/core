@@ -23,9 +23,11 @@ type DatabaseBuildingPopoverProps = {
     "feature": MapGeoJSONFeature;
     "isOpen": boolean;
     "onCloseAction": () => void;
+    "header"?: React.ReactNode;
 };
 
 export default function DatabaseBuildingPopover ({
+    header,
     feature,
     isOpen,
     onCloseAction,
@@ -124,6 +126,7 @@ export default function DatabaseBuildingPopover ({
             className="w-64 -m-1"
             side="top"
         >
+            {header}
             {/* Header row: title + close button, no overlap */}
             <div className="flex items-center justify-between gap-2 mb-1">
                 <div className="flex-1 min-w-0">
@@ -140,15 +143,17 @@ export default function DatabaseBuildingPopover ({
                     }
                     {isError && <p className="text-xs text-muted-foreground mt-1">{String(isError)}</p>}
                 </div>
-                <Button
-                    aria-label="Close"
-                    className="shrink-0 p-0 m-0 text-muted-foreground hover:text-foreground"
-                    onClick={onCloseAction}
-                    variant="ghost"
-                    size="icon"
-                >
-                    <LR.X className="w-4 h-4" />
-                </Button>
+                {!header && (
+                    <Button
+                        aria-label="Close"
+                        className="shrink-0 p-0 m-0 text-muted-foreground hover:text-foreground"
+                        onClick={onCloseAction}
+                        variant="ghost"
+                        size="icon"
+                    >
+                        <LR.X className="w-4 h-4" />
+                    </Button>
+                )}
             </div>
             {/* The footprint's own number, always visible: the colour on the map is only
                 readable once you can see the value behind it. */}

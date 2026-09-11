@@ -45,9 +45,12 @@ export type CommentProps = {
   canEdit?: boolean
   canDelete?: boolean
   actionLabels?: CommentActionLabels
+  /** Slot rendered inside the card, above the content. Used by the map popup switcher. */
+  header?: React.ReactNode
 }
 
 export default function Comment({
+  header,
   text,
   createdAt,
   userName,
@@ -141,6 +144,7 @@ export default function Comment({
       }}
     >
       <Card className="w-48 px-3 py-2.5 shadow-md group-hover:shadow-lg transition-shadow duration-200">
+        {header}
         <div className="flex items-start gap-3">
           <div className="h-9 w-9 rounded-full shadow-sm flex items-center justify-center select-none flex-shrink-0 bg-card">
             {isPending ? (
@@ -168,7 +172,7 @@ export default function Comment({
             </span>
           </div>
 
-          {showActions && (
+          {showActions && !header && (
             <Button
               type="button"
               variant="ghost"

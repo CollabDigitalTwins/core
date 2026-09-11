@@ -431,12 +431,12 @@ export const MeasureMapTool: React.FC<MeasureToolProps> = ({ tool }) => {
       map.getCanvas().style.cursor = features.length > 0 ? 'pointer' : 'crosshair'
     }
 
-    if (active) mapClickManager.register('measure-tools', MapLayerClickPriority.ActiveTool, clickHandler)
+    if (active) mapClickManager.registerLegacy('measure-tools', MapLayerClickPriority.ActiveTool, clickHandler)
     else mapClickManager.unregister('measure-tools')
 
     // Add map event listeners
     // map.on('click', clickHandler);
-    // mapClickManager.register("measure-tools", MapLayerClickPriority.ActiveTool, clickHandler)
+    // mapClickManager.registerLegacy("measure-tools", MapLayerClickPriority.ActiveTool, clickHandler)
     map.on('mousemove', mousemoveHandler)
 
     // Clean up when the component unmounts

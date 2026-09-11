@@ -255,7 +255,8 @@
   },
   "CommentLayers": {
     "commentEdited": "Comment edited",
-    "commentDeleted": "Comment deleted"
+    "commentDeleted": "Comment deleted",
+    "commentTitle": "Comment"
   },
   "CommentsSection": {
     "commentsTitle": "Comments",
@@ -1081,7 +1082,8 @@
   },
   "SensorLayers": {
     "sensorEdited": "Sensor edited",
-    "sensorDeleted": "Sensor deleted"
+    "sensorDeleted": "Sensor deleted",
+    "sensorTitle": "Sensor"
   },
   "SensorsSection": {
     "sensorsTitle": "Sensors",
@@ -1199,7 +1201,7 @@
     "addPoints": "Click to add points. Click near the first point to close the polygon and create a site.",
     "startDrawingClick": "Click \\'Start Drawing\\' then click on the map to add points"
   },
-  "SiteContextMenu": {
+  "SiteMenu": {
     "namePlaceholder": "Site name",
     "editShape": "Edit shape",
     "doneEditing": "Done editing shape",
@@ -2086,5 +2088,13 @@
     "devBody": "The demo key works on localhost only. Production deployments need their own MapTiler key.",
     "cta": "Get your free key",
     "dismiss": "Dismiss"
+  },
+  "MapPopupStack": {
+    "counter": "{index} of {total}",
+    "previous": "Previous feature",
+    "next": "Next feature",
+    "clusterContents": "{count} items here",
+    "zoomToExpand": "Zoom to expand",
+    "close": "Close"
   }
 }

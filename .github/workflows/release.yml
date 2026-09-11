@@ -44,6 +44,9 @@ concurrency:
 
 jobs:
   release:
+    # Forks must never tag or publish: a fork run mints a second annotated tag object with
+    # the same name over the same commit, and every clone then conflicts on pull forever.
+    if: github.repository == 'CollabDigitalTwins/core'
     runs-on: ubuntu-latest
     # Only the publish needs this, but yarn 1.x expands every env placeholder in the .npmrc
     # setup-node writes for `registry-url` and dies when one is undefined -- on `install`,

@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 The format is based on Keep a Changelog, and this project adheres to Semantic Versioning.
 
 ## [Unreleased]
+
+## [0.10.1] - 2026-09-11
+
 ### Security
 - **`maplibre-gl` is now required at `^6.9.0`, which closes CVE-2026-85061 (CVSS 9.6).**
   `DOM.sanitize()` in every version up to and including 6.4.0 walked the live `NamedNodeMap`

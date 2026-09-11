@@ -41,6 +41,11 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   `Matrix4` so a render loop allocates nothing.
 
 ### Changed
+- `resolveBounds` (`…/viewers/map/utils/validateBounds`) now returns flat bounds
+  `[minLng, minLat, maxLng, maxLat] | undefined` instead of `LngLatBoundsLike`, normalising a
+  nested `[[minLng, minLat], [maxLng, maxLat]]` input to that shape. Nested bounds and
+  `LngLatBounds` instances are not assignable to the map's `maxBounds` prop under
+  `maplibre-gl@6`. Its `fallbackBounds` parameter takes the same flat tuple.
 - **`SiteContextMenu` is renamed `SiteMenu`**, along with its file, its props type and its
   i18n namespace. It is anchored by the map popup rather than the cursor, so the
   "context menu" name was misleading; its `x` / `y` props are gone with the fixed
@@ -84,6 +89,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   and `global-borders-country` still draws country outlines.
 
 ### Migration
+- A caller of `resolveBounds` that relied on its nested input coming back unchanged now receives
+  the flattened equivalent, and a `fallbackBounds` passed as a nested array or a `LngLatBounds`
+  must be written flat.
 - Rename any import of `SiteContextMenu` to `SiteMenu` (the file moves from
   `SiteContextMenu.tsx` to `SiteMenu.tsx`, and `SiteContextMenuProps` becomes `SiteMenuProps`).
   Drop the `x` / `y` props. A message catalog that overrides the `SiteContextMenu` namespace

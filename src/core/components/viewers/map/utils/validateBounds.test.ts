@@ -11,17 +11,17 @@ describe('resolveBounds', () => {
     expect(resolveBounds(flat, FALLBACK)).toBe(flat)
   })
 
-  it('returns a valid nested bounds array as-is', () => {
+  it('flattens a valid nested bounds array', () => {
     const nested = [[-75, 45], [-74, 46]] as [[number, number], [number, number]]
-    expect(resolveBounds(nested, FALLBACK)).toBe(nested)
+    expect(resolveBounds(nested, FALLBACK)).toEqual([-75, 45, -74, 46])
   })
 
   it('parses a JSON-encoded flat bounds string', () => {
     expect(resolveBounds('[-75, 45, -74, 46]', FALLBACK)).toEqual([-75, 45, -74, 46])
   })
 
-  it('parses a JSON-encoded nested bounds string', () => {
-    expect(resolveBounds('[[-75, 45], [-74, 46]]', FALLBACK)).toEqual([[-75, 45], [-74, 46]])
+  it('parses and flattens a JSON-encoded nested bounds string', () => {
+    expect(resolveBounds('[[-75, 45], [-74, 46]]', FALLBACK)).toEqual([-75, 45, -74, 46])
   })
 
   it('falls back when the input has Infinity or NaN', () => {

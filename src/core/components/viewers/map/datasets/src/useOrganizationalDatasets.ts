@@ -108,7 +108,7 @@ export function useOrganizationalDatasets({
         : Promise.resolve([])
 
       if (!martinBaseUrlClean) {
-        console.warn('NEXT_PUBLIC_MARTIN_SERVER_URL not configured — skipping Martin pre-load')
+        console.warn('No Martin server URL supplied (set MARTIN_SERVER_URL) — skipping Martin pre-load')
       }
 
       // Martin must resolve first so MinIO suppression can check live catalog

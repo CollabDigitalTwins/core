@@ -43,7 +43,6 @@ export const SUBDIVISION_LINE_OPACITY = [
 
 const GLOBAL_LAYER_IDS = [
   'global-borders-country',
-  'global-borders-region',
   'global-labels-country',
   'global-labels-state',
   'global-labels-city',
@@ -73,24 +72,6 @@ function addGlobalBorderLayer(map: any, color: string, maptilerKey?: string) {
         paint: {
           'line-color': color,
           'line-width': { base: 1, stops: [[0, 0.8], [4, 1.4], [10, 1.4], [14, 1]] },
-        },
-      })
-    }
-
-    // State / province borders — fade in around zoom 3, dominate from 5+.
-    if (!map.getLayer('global-borders-region')) {
-      map.addLayer({
-        id: 'global-borders-region',
-        type: 'line',
-        source: BOUNDARIES_SOURCE_ID,
-        'source-layer': 'boundary',
-        filter: ['all', ['in', 'admin_level', 3, 4], ['==', 'maritime', 0]],
-        minzoom: 2,
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: {
-          'line-color': color,
-          'line-width': { base: 1, stops: [[2, 0], [4, 0.5], [8, 1.4], [14, 2.4]] },
-          'line-opacity': { base: 1, stops: [[2, 0], [4, 0.7], [6, 1]] },
         },
       })
     }

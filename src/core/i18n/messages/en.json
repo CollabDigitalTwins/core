@@ -820,7 +820,8 @@
     "medium": "Medium",
     "high": "High",
     "disabled": "Disabled",
-    "dimensionsColour": "Dimensions Colour"
+    "dimensionsColour": "Dimensions Colour",
+    "buildings3d": "3D Buildings"
   },
   "MeasureBimTool": {
     "free": "Free",

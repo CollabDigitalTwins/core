@@ -41,6 +41,7 @@ export interface MapTypes {
   mapHoverManager: MapHoverManager
   dimensionsColour: string;
   terrainLevel: TerrainLevel
+  show3dBuildings: boolean
 }
 
 export type MapState = MapTypes
@@ -68,6 +69,7 @@ export type MapPayload = {
   ['ADD_MAP_HOVER_MANAGER']: Pick<MapTypes, 'mapHoverManager'>
   ['UPDATE_DIMENSIONS_COLOUR']: Pick<MapTypes, 'dimensionsColour'>
   ['UPDATE_TERRAIN_LEVEL']: Pick<MapTypes, 'terrainLevel'>
+  ['UPDATE_SHOW_3D_BUILDINGS']: Pick<MapTypes, 'show3dBuildings'>
 }
 
 export type MapActions = ActionMap<MapPayload>[keyof ActionMap<MapPayload>]
@@ -198,6 +200,11 @@ export const MapReducer = (state: MapState, action: MapActions) => {
       return {
         ...state,
         terrainLevel: action.payload.terrainLevel,
+      }
+    case 'UPDATE_SHOW_3D_BUILDINGS':
+      return {
+        ...state,
+        show3dBuildings: action.payload.show3dBuildings,
       }
     default:
       return state

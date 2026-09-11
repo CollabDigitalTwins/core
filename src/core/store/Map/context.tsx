@@ -37,6 +37,7 @@ const initialState: InitialStateType = {
     mapHoverManager: null,
     dimensionsColour: '#ffffff',
     terrainLevel: 'medium',
+    show3dBuildings: true,
   },
 }
 

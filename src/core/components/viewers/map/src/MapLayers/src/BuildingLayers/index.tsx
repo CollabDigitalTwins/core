@@ -73,12 +73,29 @@ function addOwnBuildingSource(map: any, key: string): string {
   return OWN_SOURCE_ID;
 }
 
+// Basemaps such as maptiler streets-v2 extrude buildings themselves, which double-draws ours.
+function removeBasemapBuildingLayers(map: any, sourceId: string) {
+  const basemapSources = new Set<string>([...REUSABLE_SOURCE_IDS, sourceId]);
+
+  for (const layer of map.getStyle()?.layers ?? []) {
+    const isDuplicate =
+      layer.id !== LAYER_ID &&
+      layer.type === "fill-extrusion" &&
+      layer["source-layer"] === "building" &&
+      basemapSources.has(layer.source);
+
+    if (isDuplicate) map.removeLayer(layer.id);
+  }
+}
+
 function addBuildingLayer(map: any, hiddenBimOsmIds: string[], colourExpr: PaintExpression, maptilerKey?: string) {
   try {
     if (map.getLayer(LAYER_ID)) return;
 
     const sourceId = resolveBuildingSource(map, maptilerKey);
     if (!sourceId) return;
+
+    removeBasemapBuildingLayers(map, sourceId);
 
     // Insert below road labels so buildings don't cover text
     const beforeId = map.getLayer("road_label") ? "road_label" : undefined;
@@ -110,7 +127,7 @@ function addBuildingLayer(map: any, hiddenBimOsmIds: string[], colourExpr: Paint
 
 export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
   const { state: mapState } = React.useContext(MapContext);
-  const { map, mapClickManager } = mapState.map;
+  const { map, mapClickManager, show3dBuildings } = mapState.map;
   const { setCompareItems } = useBuildingsContext();
   const { buildings } = useBuildings();
   const { state: bimState } = useBimContext();
@@ -211,6 +228,22 @@ export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
     map.setFilter(LAYER_ID, buildLayerFilter() as any);
     map.setPaintProperty(LAYER_ID, "fill-extrusion-height", buildHeightExpression(hiddenBimOsmIds) as any);
   }, [map, hiddenBimOsmIds]);
+
+  React.useEffect(() => {
+    if (!map) return;
+
+    const applyVisibility = () => {
+      if (!map.getLayer(LAYER_ID)) return;
+      map.setLayoutProperty(LAYER_ID, "visibility", show3dBuildings ? "visible" : "none");
+    };
+
+    applyVisibility();
+    map.on("styledata", applyVisibility);
+
+    return () => {
+      map.off("styledata", applyVisibility);
+    };
+  }, [map, show3dBuildings]);
 
   // Register click, hover, and mouse leave handlers
   React.useEffect(() => {

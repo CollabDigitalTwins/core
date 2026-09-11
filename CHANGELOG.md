@@ -17,6 +17,10 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   Fixed upstream in 6.4.1.
 
 ### Added
+- **A 3D-buildings toggle in the map settings panel.** New `show3dBuildings` on the map store
+  (default `true`) with an `UPDATE_SHOW_3D_BUILDINGS` action, a `BuildingVisibility` control
+  under Map Style, and a `MapCustomization.buildings3d` message in `en`, `es` and `fr`.
+  Switching it off hides the layer, which also takes it out of hit-testing.
 - `TERRAIN_SPEC` from `…/map/utils/mapStyleSpec` and `SUBDIVISION_LINE_OPACITY` from
   `…/map/src/MapLayers/src/CountryLayer`, so a consumer overriding either can reuse the same values.
 - `writeModelMatrix` in `@collabdt/core/core/components/viewers/map/utils/modelMatrix` builds the
@@ -43,11 +47,19 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   layer-scoped events and require a layer id, so they never fired when bound to the map itself.
 
 ### Fixed
+- **Streets no longer draws buildings twice.** Basemaps such as maptiler `streets-v2` extrude
+  the `building` source-layer themselves, so the basemap's own extrusion is dropped before
+  `maptiler-3d-buildings` is added and only ours renders.
 - **Terrain is removed while the globe projection is active.** The globe has no fog matrix, so
   maplibre logged `calculateFogMatrix is not supported on globe projection` and drew a terrain
   pass that produced nothing. Terrain is restored when the map returns to mercator.
 - `MapHoverManager.destroy()` removed a `mouseenter` listener it had never registered, leaving
   its `mousemove` handler bound to the map for the life of the page.
+
+### Removed
+- The `global-borders-region` layer. Its `admin_level` 3–4 lines drew a second province border
+  on top of the subdivision outline; the subdivision layer is the org-coloured, hover-aware one,
+  and `global-borders-country` still draws country outlines.
 
 ### Migration
 - Upgrade `maplibre-gl` to `^6.9.0` and regenerate your lockfile in the same commit. Bumping

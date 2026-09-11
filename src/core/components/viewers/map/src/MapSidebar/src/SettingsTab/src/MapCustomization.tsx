@@ -14,6 +14,7 @@ import { Tabs, TabsList, TabsTrigger } from '../../../../../../../ui/Tabs'
 import { SettingsSection } from '../../../../../../../ui/ViewerSidebar/SettingsSection'
 import { buildMapStylesCatalog, resolveMapStyle } from '../../../../../utils/mapStyleCatalog'
 
+import { BuildingVisibility } from './BuildingVisibility'
 import { MapProjection } from './MapProjection'
 import { TerrainLevel } from './TerrainLevel'
 
@@ -73,6 +74,7 @@ export function MapCustomization() {
 
           <TerrainLevel />
           <MapProjection />
+          <BuildingVisibility />
         </div>
       </SettingsSection>
 

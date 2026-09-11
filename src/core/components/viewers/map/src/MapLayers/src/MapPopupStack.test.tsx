@@ -8,14 +8,15 @@ import { describe, it, expect, vi } from 'vitest'
 
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string, values?: Record<string, unknown>) =>
-    values ? `${key}:${Object.values(values).join('/')}` : key,
+    values ? `${key}:${Object.values(values).map(String).join('/')}` : key,
 }))
 vi.mock('react-map-gl/maplibre', () => ({
   Popup: ({ children }: any) => <div>{children}</div>,
 }))
 
-import { MapPopupStack } from './MapPopupStack'
 import { MapContext } from '../../../../../../store'
+
+import { MapPopupStack } from './MapPopupStack'
 
 import type { PopupEntry, PopupStack } from '../../../../../../types/map'
 

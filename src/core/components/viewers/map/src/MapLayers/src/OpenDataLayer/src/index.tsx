@@ -524,8 +524,8 @@ export const OpenDataLayers = () => {
                 }
 
                 const featureId = properties.globalid || properties.id || `temp-${Date.now()}`;
+                // The popover reads only id and properties; spreading the feature would drop its prototype.
                 const featureClone: any = {
-                    ...feature,
                     id: featureId,
                     properties: { ...properties, coordinates, _name, datasetName: datasetNameFromFeature },
                 };

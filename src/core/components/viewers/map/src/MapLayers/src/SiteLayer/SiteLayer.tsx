@@ -18,11 +18,11 @@ import {
 import { ViewerNames, type Site } from '../../../../../../../types/dbTypes'
 import { MapLayerClickPriority } from '../../../../utils/MapEventManager/MapClickManager'
 
-import { SiteMenu } from './SiteMenu'
 import { polygonCentroid, uploadGeoJsonToAsset, pointToSegmentDistance } from './siteGeometry'
+import { SiteMenu } from './SiteMenu'
 
-import type * as maplibregl from 'maplibre-gl'
 import type { PopupEntry } from '../../../../../../../types/map'
+import type * as maplibregl from 'maplibre-gl'
 import type { MapGeoJSONFeature, MapMouseEvent } from 'maplibre-gl'
 import type { LayerProps } from 'react-map-gl/maplibre'
 

@@ -3,9 +3,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { Source, Layer, Popup } from "react-map-gl/maplibre";
+import { Source, Layer } from "react-map-gl/maplibre";
 
 
 import { DatasetsContext } from '../../../../../../../../store';
@@ -19,7 +20,8 @@ import { groupFeaturesByGeometry } from "./geometryGroups";
 import { WmsTimeControl } from "./WmsTimeControl";
 
 import type { Building } from '../../../../../../../../types/dbTypes';
-import type { MapMouseEvent } from "maplibre-gl";
+import type { PopupEntry } from "../../../../../../../../types/map";
+import type { MapGeoJSONFeature, MapMouseEvent } from "maplibre-gl";
 
 interface BuildingDataset {
     "type": "buildings";
@@ -473,15 +475,11 @@ WMSDatasetLayer.displayName = 'WMSDatasetLayer';
 export const OpenDataLayers = () => {
     const { "state": mapState, "dispatch": mapDispatch } = React.useContext(MapContext);
     const { map, mapClickManager } = mapState.map;
+    const t = useTranslations('OpenDataFeaturePopover');
 
     const { state: datasetState } = React.useContext(DatasetsContext);
     const { addedDatasets } = datasetState.datasets;
 
-    const [clickedFeature, setClickedFeature] = React.useState<any>(null);
-    const [addedFeaturesPopup, setAddedFeaturesPopup] = React.useState<Array<{
-        id: string | number;
-        popup: React.ReactElement;
-    }>>([]);
 
     // Track interactive layer IDs per dataset for click handling
     const layerIdsMapRef = React.useRef<Record<string, string[]>>({});
@@ -501,46 +499,57 @@ export const OpenDataLayers = () => {
     React.useEffect(() => {
         if (!map || !mapClickManager || allLayerNames.length === 0) return;
 
-        const handleMapClick = (e: MapMouseEvent) => {
-            const clicked = map.queryRenderedFeatures(e.point, { layers: allLayerNames });
-            const localClickedFeature = clicked?.[0];
+        const resolvePopups = (e: MapMouseEvent, hits: MapGeoJSONFeature[]): PopupEntry[] => {
+            const coordinates: [number, number] = [e.lngLat.lng, e.lngLat.lat];
 
-            if (!localClickedFeature) {
-                setClickedFeature(null);
-                return;
-            }
+            return hits.map((feature) => {
+                const properties = feature.properties || {};
+                const _name = Object.entries(properties).find(([key]) => key.toLowerCase().includes('name'))?.[1] || undefined;
 
-            const lng = e.lngLat.lng;
-            const lat = e.lngLat.lat;
-            const coordinates = [lng, lat];
-            const properties = localClickedFeature.properties || {};
-            const _name = Object.entries(properties).find(([key]) => key.toLowerCase().includes('name'))?.[1] || undefined;
-
-            let datasetNameFromFeature = properties.datasetName;
-            if (!datasetNameFromFeature && localClickedFeature.layer) {
-                const layerId = localClickedFeature.layer.id;
-                const suffixes = ['-unclustered-point', '-clusters', '-cluster-count', '-outline', '-fill', '-line', '-circle', '-extrusion', '-points'];
-                let extractedName = layerId;
-                for (const suffix of suffixes) {
-                    if (layerId.endsWith(suffix)) {
-                        extractedName = layerId.slice(0, -suffix.length);
-                        break;
+                let datasetNameFromFeature = properties.datasetName;
+                if (!datasetNameFromFeature && feature.layer) {
+                    const layerId = feature.layer.id;
+                    const suffixes = ['-unclustered-point', '-clusters', '-cluster-count', '-outline', '-fill', '-line', '-circle', '-extrusion', '-points'];
+                    let extractedName = layerId;
+                    for (const suffix of suffixes) {
+                        if (layerId.endsWith(suffix)) {
+                            extractedName = layerId.slice(0, -suffix.length);
+                            break;
+                        }
                     }
+                    if (extractedName === layerId && layerId.includes('-')) {
+                        extractedName = layerId.slice(0, layerId.lastIndexOf('-'));
+                    }
+                    datasetNameFromFeature = extractedName;
                 }
-                if (extractedName === layerId && layerId.includes('-')) {
-                    extractedName = layerId.slice(0, layerId.lastIndexOf('-'));
-                }
-                datasetNameFromFeature = extractedName;
-            }
 
-            const featureId = properties.globalid || properties.id || `temp-${Date.now()}`;
-            localClickedFeature.id = featureId;
-            localClickedFeature.properties = { ...properties, coordinates, _name, datasetName: datasetNameFromFeature };
-            setClickedFeature(localClickedFeature);
+                const featureId = properties.globalid || properties.id || `temp-${Date.now()}`;
+                const featureClone: any = {
+                    ...feature,
+                    id: featureId,
+                    properties: { ...properties, coordinates, _name, datasetName: datasetNameFromFeature },
+                };
+
+                return {
+                    // One resolver is registered per open-data layer id, so fill + outline must collapse to one entry.
+                    id: `open-data:${datasetNameFromFeature}:${featureId}`,
+                    layerId: feature.layer?.id ?? '',
+                    priority: MapLayerClickPriority.OpenDataLayerClickPriority,
+                    title: (_name as string) || (datasetNameFromFeature as string) || t('unknownDataset'),
+                    coordinates,
+                    render: (header) => (
+                        <MapFeaturePopoverMenu
+                            header={header}
+                            feature={featureClone}
+                            onCloseAction={() => clearClickedFeature()}
+                        />
+                    ),
+                };
+            });
         };
 
         for (const layerId of allLayerNames) {
-            mapClickManager.register(layerId, MapLayerClickPriority.OpenDataLayerClickPriority, handleMapClick);
+            mapClickManager.register(layerId, MapLayerClickPriority.OpenDataLayerClickPriority, resolvePopups);
         }
 
         return () => {
@@ -548,7 +557,7 @@ export const OpenDataLayers = () => {
                 mapClickManager.unregister(layerId);
             }
         };
-    }, [map, mapClickManager, allLayerNames]);
+    }, [map, mapClickManager, allLayerNames, t]);
 
     // ── Hover cursor handling ──
     React.useEffect(() => {
@@ -584,35 +593,9 @@ export const OpenDataLayers = () => {
         };
     }, [map, allLayerNames]);
 
-    // ── Popup ──
-    React.useEffect(() => {
-        if (!clickedFeature || !clickedFeature.properties?.coordinates) {
-            setAddedFeaturesPopup([]);
-            return;
-        }
-        const popup = (
-            <Popup
-                anchor="bottom"
-                closeButton={true}
-                closeOnClick={false}
-                closeOnMove={false}
-                focusAfterOpen={true}
-                key={clickedFeature.id}
-                latitude={clickedFeature.properties.coordinates[1]}
-                longitude={clickedFeature.properties.coordinates[0]}
-            >
-                <MapFeaturePopoverMenu
-                    feature={clickedFeature}
-                    onCloseAction={() => clearClickedFeature()}
-                />
-            </Popup>
-        );
-        setAddedFeaturesPopup([{ id: clickedFeature.id as string | number, popup }]);
-    }, [clickedFeature]);
-
     function clearClickedFeature() {
         mapDispatch({ type: "SET_CLICKED_FEATURE", payload: { clickedFeature: null } });
-        setClickedFeature(null);
+        mapDispatch({ type: "SET_POPUP_STACK", payload: null });
     }
 
     // ── Sort datasets by display order ──
@@ -661,10 +644,6 @@ export const OpenDataLayers = () => {
                     />
                 );
             })}
-
-            {addedFeaturesPopup.map((popup) => (
-                <React.Fragment key={popup.id}>{popup.popup}</React.Fragment>
-            ))}
         </>
     );
 };

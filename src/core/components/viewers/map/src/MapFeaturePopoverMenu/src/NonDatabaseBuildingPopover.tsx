@@ -44,9 +44,11 @@ interface NonDatabaseBuildingPopoverProps {
   feature: MapGeoJSONFeature
   isOpen: boolean
   onCloseAction: () => void
+  header?: React.ReactNode
 }
 
 export default function NonDatabaseBuildingPopover({
+  header,
   feature,
   onCloseAction,
 }: NonDatabaseBuildingPopoverProps) {
@@ -341,13 +343,14 @@ export default function NonDatabaseBuildingPopover({
 
   return (
     <PopoverContent className="w-64 -m-1 pt-2 relative" side="top">
+      {header}
     <form onSubmit={(event) => void handleCreateNewBuilding(event)}>
       <Button
         type="button"
         onClick={onCloseAction}
         variant="ghost"
         size="icon"
-        className="absolute right-2 top-2 h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+        className={`absolute right-2 top-2 h-6 w-6 p-0 text-muted-foreground hover:text-foreground${header ? ' hidden' : ''}`}
         aria-label={t('closeAriaLabel')}
       >
         <LR.X className="w-4 h-4" />

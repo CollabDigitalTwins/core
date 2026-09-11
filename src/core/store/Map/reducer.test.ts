@@ -15,6 +15,7 @@ const base = {
   addedLayers: [], clickedFeature: null, modelId: null,
   bimModelsAddedToMap: [], bimModelLoadingLocation: [],
   mapClickManager: null, mapHoverManager: null, dimensionsColour: '', terrainLevel: null,
+  popupStack: null,
 } as unknown as MapState
 
 describe('MapReducer', () => {
@@ -49,5 +50,38 @@ describe('MapReducer', () => {
 
   it('unknown action returns the same state', () => {
     expect(MapReducer(base, { type: 'NOPE' } as never)).toBe(base)
+  })
+})
+
+describe('popupStack', () => {
+  const entry = (id: string) => ({
+    id, layerId: 'l', priority: 100, title: id,
+    coordinates: [0, 0] as [number, number], render: () => null,
+  })
+
+  it('SET_POPUP_STACK stores entries and resets activeIndex to 0', () => {
+    const seeded = MapReducer(base, { type: 'SET_POPUP_STACK', payload: { entries: [entry('a'), entry('b')] } } as never)
+    expect(seeded.popupStack?.entries.map(e => e.id)).toEqual(['a', 'b'])
+    expect(seeded.popupStack?.activeIndex).toBe(0)
+
+    const moved = MapReducer(seeded, { type: 'SET_POPUP_INDEX', payload: { activeIndex: 1 } } as never)
+    const reclicked = MapReducer(moved, { type: 'SET_POPUP_STACK', payload: { entries: [entry('c')] } } as never)
+    expect(reclicked.popupStack?.activeIndex).toBe(0)
+  })
+
+  it('SET_POPUP_STACK with null or no entries closes the stack', () => {
+    const seeded = MapReducer(base, { type: 'SET_POPUP_STACK', payload: { entries: [entry('a')] } } as never)
+    expect(MapReducer(seeded, { type: 'SET_POPUP_STACK', payload: null } as never).popupStack).toBeNull()
+    expect(MapReducer(seeded, { type: 'SET_POPUP_STACK', payload: { entries: [] } } as never).popupStack).toBeNull()
+  })
+
+  it('SET_POPUP_INDEX wraps around in both directions', () => {
+    const seeded = MapReducer(base, { type: 'SET_POPUP_STACK', payload: { entries: [entry('a'), entry('b'), entry('c')] } } as never)
+    expect(MapReducer(seeded, { type: 'SET_POPUP_INDEX', payload: { activeIndex: 3 } } as never).popupStack?.activeIndex).toBe(0)
+    expect(MapReducer(seeded, { type: 'SET_POPUP_INDEX', payload: { activeIndex: -1 } } as never).popupStack?.activeIndex).toBe(2)
+  })
+
+  it('SET_POPUP_INDEX on a closed stack is a no-op', () => {
+    expect(MapReducer(base, { type: 'SET_POPUP_INDEX', payload: { activeIndex: 1 } } as never)).toBe(base)
   })
 })

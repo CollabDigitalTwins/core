@@ -13,9 +13,8 @@ import { Input } from '../../../../../../ui/Input'
 
 import type { ShownSite } from '../../../../../../../store/MapSites/reducer'
 
-export interface SiteContextMenuProps {
-  x: number
-  y: number
+export interface SiteMenuProps {
+  header?: React.ReactNode
   site: ShownSite
   isEditing: boolean
   canUpdate: boolean
@@ -29,11 +28,11 @@ export interface SiteContextMenuProps {
   onDelete: () => void | Promise<void>
 }
 
-export const SiteContextMenu: React.FC<SiteContextMenuProps> = ({
-  x, y, site, isEditing, canUpdate, canDelete, canRead,
+export const SiteMenu: React.FC<SiteMenuProps> = ({
+  header, site, isEditing, canUpdate, canDelete, canRead,
   onClose, onRename, onToggleEdit, onHide, onInfo, onDelete,
 }) => {
-  const t = useTranslations('SiteContextMenu')
+  const t = useTranslations('SiteMenu')
   // Translate with an English fallback so the menu is usable before the host
   // app's message catalog is updated (mirrors SiteAdder's approach).
   const tf = React.useCallback(
@@ -87,12 +86,12 @@ export const SiteContextMenu: React.FC<SiteContextMenuProps> = ({
   return (
     <div
       ref={ref}
-      className="fixed z-50 w-56 rounded-md border bg-popover text-popover-foreground shadow-md p-1"
-      style={{ left: x, top: y }}
+      className="w-60 rounded-md border bg-popover p-2 text-popover-foreground shadow-md"
       onClick={e => e.stopPropagation()}
     >
-      {/* Editable site name */}
-      <div className="px-2 pt-1.5 pb-2">
+      {header}
+      {/* Editable site name. The floating close button overlays this row, so keep its corner clear. */}
+      <div className={`pb-2 pl-2 pt-1.5 ${header ? 'pr-9' : 'pr-2'}`}>
         <Input
           value={name}
           disabled={!canUpdate}

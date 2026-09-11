@@ -6,7 +6,7 @@
 import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
-import { Source, Layer, Popup, Marker } from 'react-map-gl/maplibre'
+import { Source, Layer, Marker } from 'react-map-gl/maplibre'
 import { toast } from 'sonner'
 
 import { useComments, useDeleteComments } from '../../../../../../../hooks/comments/comments'
@@ -19,14 +19,49 @@ import Comment from '../../../../../../ui/Comments/Comment'
 import { UserAvatar } from '../../../../../../ui/UserAvatar'
 import { extractCoordinatesFromFeature } from '../../../../utils/extractCoordinates'
 import { MapLayerClickPriority } from '../../../../utils/MapEventManager/MapClickManager'
+import { buildClusterEntry, clusterSpecFromFeature } from '../clusterPopupEntry'
 import { createClusterLayer, createClusterCountLayer, createUnclusteredPointLayer } from '../mapLayersUtils'
 
-import type { ClickCallback } from '../../../../utils/MapEventManager/MapClickManager';
-import type { MapGeoJSONFeature, MapLayerMouseEvent } from 'maplibre-gl'
+import type { PopupEntry } from '../../../../../../../types/map'
+import type { MapGeoJSONFeature, MapLayerMouseEvent, MapMouseEvent } from 'maplibre-gl'
 
 type MapComment = IComment & {
   authorName?: string
   imageFileId?: number | null
+}
+
+const COMMENT_ENTRY_PREFIX = 'comments:'
+const COMMENT_CLUSTER_LAYER_ID = 'comments-clusters'
+
+const CommentPopupCard = ({ header, comment, currentUserId, onEdit, onReply, onRemove, onClose }: {
+  header?: React.ReactNode
+  comment: MapComment & { authorName?: string; imageFileId?: number | null }
+  currentUserId?: string
+  onEdit: (id: number) => void
+  onReply: (id: number) => void
+  onRemove: (id: number) => void
+  onClose: () => void
+}) => {
+  const { user: author } = useUser(comment.authorId != null ? String(comment.authorId) : '')
+  const isAuthor = currentUserId === String(comment.authorId)
+
+  return (
+    <Comment
+      header={header}
+      userName={comment.authorName || ''}
+      userImage={author?.imageFileId ?? comment.imageFileId ?? null}
+      userImageFileId={author?.imageFileId ?? comment.imageFileId ?? null}
+      text={comment.text}
+      createdAt={comment.createdAt}
+      showActions
+      canEdit={isAuthor}
+      canDelete={isAuthor}
+      onEdit={isAuthor ? () => onEdit(comment.id) : undefined}
+      onReply={() => onReply(comment.id)}
+      onRemove={isAuthor ? () => onRemove(comment.id) : undefined}
+      onClose={onClose}
+    />
+  )
 }
 
 const CommentAvatarMarker = ({ feature, isHighlighted, isFocused, onMouseEnter, onMouseLeave, onClick, onDoubleClick, center, offset }: { feature: MapGeoJSONFeature; isHighlighted?: boolean; isFocused?: boolean; onMouseEnter?: () => void; onMouseLeave?: () => void; onClick?: () => void; onDoubleClick?: () => void; center?: [number, number]; offset?: [number, number] }) => {
@@ -84,14 +119,12 @@ export const CommentLayer = () => {
 
   const t = useTranslations('CommentLayers')
 
-  const { state: mapState } = React.useContext(MapContext)
-  const { map, mapClickManager } = mapState.map
+  const { state: mapState, dispatch: mapDispatch } = React.useContext(MapContext)
+  const { map, mapClickManager, popupStack } = mapState.map
   const { comments } = useComments()
   const { users } = useUsers()
   const user = useSession().data?.user
 
-  const [popupInfo, setPopUpInfo] = React.useState<(Partial<IComment> & { authorName?: string; imageFileId?: number | null }) | null>(null)
-  const { user: popupAuthor } = useUser(popupInfo?.authorId != null ? String(popupInfo.authorId) : '')
   const { deleteComments } = useDeleteComments()
   const { state: menusState, dispatch: menusDispatch, setIsSidebarOpen } = React.useContext(MenusContext)
   const { commentsVisibleInViewer, currentCommentId, focusedCommentId, focusRequestId } = menusState.menus
@@ -112,6 +145,49 @@ export const CommentLayer = () => {
     menusDispatch({ type: 'REQUEST_COMMENT_ACTION', payload: { commentId, action } })
   }, [menusDispatch, setIsSidebarOpen])
 
+  const closePopups = React.useCallback(
+    () => mapDispatch({ type: 'SET_POPUP_STACK', payload: null }),
+    [mapDispatch],
+  )
+
+  const handleRemoveComment = React.useCallback((id: number) => {
+    toast.success(t('commentDeleted'))
+    // Cascade: delete the comment together with its replies (the DB does not cascade).
+    const replyIds = comments.filter((c) => c.replyToId === id).map((c) => c.id)
+    void deleteComments({ ids: [id, ...replyIds] })
+    closePopups()
+  }, [comments, deleteComments, closePopups, t])
+
+  const buildCommentEntry = React.useCallback((comment: MapComment): PopupEntry => ({
+    id: `${COMMENT_ENTRY_PREFIX}${comment.id}`,
+    layerId: 'comments-unclustered-points',
+    priority: MapLayerClickPriority.CommentLayersClickPriority,
+    title: comment.authorName || t('commentTitle'),
+    coordinates: [comment.longitude, comment.latitude],
+    render: (header) => (
+      <CommentPopupCard
+        header={header}
+        comment={comment}
+        currentUserId={user?.id}
+        onEdit={(id) => requestSidebarAction(id, 'edit')}
+        onReply={(id) => requestSidebarAction(id, 'reply')}
+        onRemove={handleRemoveComment}
+        onClose={closePopups}
+      />
+    ),
+  }), [user?.id, requestSidebarAction, handleRemoveComment, closePopups, t])
+
+  const openComment = React.useCallback((comment: MapComment) => {
+    mapDispatch({ type: 'SET_POPUP_STACK', payload: { entries: [buildCommentEntry(comment)] } })
+  }, [mapDispatch, buildCommentEntry])
+
+  const openCommentId = React.useMemo(() => {
+    const active = popupStack?.entries[popupStack.activeIndex]
+    return active?.id.startsWith(COMMENT_ENTRY_PREFIX)
+      ? Number(active.id.slice(COMMENT_ENTRY_PREFIX.length))
+      : null
+  }, [popupStack])
+
   // Hover-to-expand (spiderfy) state for clusters
   const [spider, setSpider] = React.useState<{ center: [number, number]; features: MapGeoJSONFeature[] } | null>(null)
   const spiderCloseTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -128,12 +204,12 @@ export const CommentLayer = () => {
     spiderCloseTimer.current = setTimeout(() => setSpider(null), 150)
   }, [cancelSpiderClose])
 
-  const openPopupFromFeature = React.useCallback((feature?: MapGeoJSONFeature) => {
-    if (!feature || feature.properties.point_count) return
-    if (feature.geometry.type !== 'Point') return
+  const commentFromFeature = React.useCallback((feature?: MapGeoJSONFeature): MapComment | null => {
+    if (!feature || feature.properties.point_count) return null
+    if (feature.geometry.type !== 'Point') return null
     const [longitude, latitude] = feature.geometry.coordinates
     const p = feature.properties as MapComment
-    setPopUpInfo({
+    return {
       id: Number(p.id),
       authorId: Number(p.authorId),
       organizationId: feature.properties?.organizationId,
@@ -145,8 +221,13 @@ export const CommentLayer = () => {
       authorName: p.authorName,
       imageFileId: p.imageFileId,
       viewer: ViewerNames.map,
-    })
+    } as MapComment
   }, [])
+
+  const openPopupFromFeature = React.useCallback((feature?: MapGeoJSONFeature) => {
+    const comment = commentFromFeature(feature)
+    if (comment) openComment(comment)
+  }, [commentFromFeature, openComment])
 
   const eligibleComments = comments
     .filter((comment) => comment.viewer === ViewerNames.map)
@@ -165,10 +246,10 @@ export const CommentLayer = () => {
 
   // Close popup if the comment was deleted
   React.useEffect(() => {
-    if (popupInfo && !comments.find((c) => c.id === popupInfo.id)) {
-      setPopUpInfo(null)
+    if (openCommentId != null && !comments.find((c) => c.id === openCommentId)) {
+      closePopups()
     }
-  }, [comments, popupInfo])
+  }, [comments, openCommentId, closePopups])
 
   // Fly to a comment when it is focused (double-clicked here or in the sidebar) and open its card.
   React.useEffect(() => {
@@ -176,20 +257,8 @@ export const CommentLayer = () => {
     const target = eligibleCommentsRef.current.find((c) => c.id === focusedCommentId)
     if (!target || target.longitude == null || target.latitude == null) return
     map.flyTo({ center: [target.longitude, target.latitude], zoom: Math.max(map.getZoom(), 17), duration: 800 })
-    setPopUpInfo({
-      id: target.id,
-      authorId: target.authorId,
-      organizationId: target.organizationId,
-      visible: target.visible,
-      longitude: target.longitude,
-      latitude: target.latitude,
-      text: target.text,
-      createdAt: target.createdAt,
-      authorName: target.authorName,
-      imageFileId: target.imageFileId,
-      viewer: ViewerNames.map,
-    })
-  }, [focusRequestId, map])
+    openComment(target)
+  }, [focusRequestId, map, openComment])
 
   const geojsonCommentData = React.useMemo(() => {
     const convertDataToGeojson = (commentData: MapComment[]): GeoJSON.FeatureCollection<GeoJSON.Point, { [key: string]: any }> => {
@@ -231,9 +300,11 @@ export const CommentLayer = () => {
   // event listeners for comment unclustered points
   React.useEffect(() => {
     if (!map) return
-    const showCommentPopUp: ClickCallback = (e: MapLayerMouseEvent, features: MapGeoJSONFeature[]) => {
-      openPopupFromFeature(features?.[0])
-    }
+    const resolveComments = (_e: MapMouseEvent, features: MapGeoJSONFeature[]): PopupEntry[] =>
+      features
+        .map((feature) => commentFromFeature(feature))
+        .filter((comment): comment is MapComment => comment !== null)
+        .map(buildCommentEntry)
 
     const mouseEnterChangeCursor = () => {
       map.getCanvas().style.cursor = 'pointer'
@@ -243,7 +314,7 @@ export const CommentLayer = () => {
     }
 
     // event listener for clicking on single point to show comment, hover to change cursor
-    mapClickManager.register('comments-unclustered-points', MapLayerClickPriority.CommentLayersClickPriority, showCommentPopUp)
+    mapClickManager.register('comments-unclustered-points', MapLayerClickPriority.CommentLayersClickPriority, resolveComments)
 
     map.on('mouseenter', 'comments-unclustered-points', mouseEnterChangeCursor)
     map.on('mouseleave', 'comments-unclustered-points', mouseLeaveChangeCursor)
@@ -252,17 +323,7 @@ export const CommentLayer = () => {
       map.off('mouseenter', 'comments-unclustered-points', mouseEnterChangeCursor)
       map.off('mouseleave', 'comments-unclustered-points', mouseLeaveChangeCursor)
     }
-  }, [map, mapClickManager, openPopupFromFeature])
-
-  const handleRemoveComment = () => {
-    if (popupInfo?.id == null) return
-    toast.success(t('commentDeleted'))
-    // Cascade: delete the comment together with its replies (the DB does not cascade).
-    const id = popupInfo.id
-    const replyIds = comments.filter((c) => c.replyToId === id).map((c) => c.id)
-    void deleteComments({ ids: [id, ...replyIds] })
-    setPopUpInfo(null)
-  }
+  }, [map, mapClickManager, commentFromFeature, buildCommentEntry])
 
   // Close the spiderfied cluster when the map moves (positions would be stale)
   React.useEffect(() => {
@@ -280,25 +341,20 @@ export const CommentLayer = () => {
   React.useEffect(() => {
     if (!map) return
 
-    const zoomInToDecluster = (e: MapLayerMouseEvent) => {
-      const feature = e.features?.[0] // only proceed if this is actually a cluster
-      if (!feature || !feature.properties.cluster_id) return
+    const resolveCluster = (_e: MapMouseEvent, features: MapGeoJSONFeature[]): PopupEntry[] => {
+      const feature = features[0]
+      const spec = feature && clusterSpecFromFeature(feature)
+      if (!spec) return []
 
-      const clusterId = feature.properties.cluster_id as number
-
-      // Check if geometry has coordinates (not a GeometryCollection)
-      if (!('coordinates' in feature.geometry)) return
-      const [lng, lat] = feature.geometry.coordinates as [number, number]
-
-      const source = map.getSource('comments') as any
-      source.getClusterExpansionZoom(clusterId).then(
-        (zoom: number) => {
-          map.easeTo({ center: [lng, lat], zoom })
-        },
-      )
-        .catch((error) => {
-          console.error(error)
-        })
+      return [buildClusterEntry({
+        map,
+        sourceId: 'comments',
+        layerId: COMMENT_CLUSTER_LAYER_ID,
+        title: t('commentTitle'),
+        priority: MapLayerClickPriority.CommentLayersClickPriority,
+        leafLabel: (leaf) => String(leaf.properties?.authorName ?? leaf.properties?.text ?? ''),
+        ...spec,
+      })]
     }
 
     // Hover a cluster to expand (spiderfy) its members
@@ -326,60 +382,16 @@ export const CommentLayer = () => {
       scheduleSpiderClose()
     }
 
-    // Hover expands the cluster; click still zooms in to decluster as a fallback
-    map.on('click', 'comments-clusters', zoomInToDecluster)
-    map.on('mouseenter', 'comments-clusters', expandClusterOnHover)
-    map.on('mouseleave', 'comments-clusters', mouseLeaveCluster)
+    // Hover expands the cluster; a click contributes one entry listing its contents
+    mapClickManager.register(COMMENT_CLUSTER_LAYER_ID, MapLayerClickPriority.CommentLayersClickPriority, resolveCluster)
+    map.on('mouseenter', COMMENT_CLUSTER_LAYER_ID, expandClusterOnHover)
+    map.on('mouseleave', COMMENT_CLUSTER_LAYER_ID, mouseLeaveCluster)
     return () => {
-      map.off('click', 'comments-clusters', zoomInToDecluster)
-      map.off('mouseenter', 'comments-clusters', expandClusterOnHover)
-      map.off('mouseleave', 'comments-clusters', mouseLeaveCluster)
+      mapClickManager.unregister(COMMENT_CLUSTER_LAYER_ID)
+      map.off('mouseenter', COMMENT_CLUSTER_LAYER_ID, expandClusterOnHover)
+      map.off('mouseleave', COMMENT_CLUSTER_LAYER_ID, mouseLeaveCluster)
     }
-  }, [map, cancelSpiderClose, scheduleSpiderClose])
-
-  const renderPopup = () => {
-    if (!popupInfo) return null
-    return (
-      <Popup
-        className="noBorderPopup"
-        longitude={popupInfo.longitude}
-        latitude={popupInfo.latitude}
-        closeOnClick={false}
-        onClose={() => setPopUpInfo(null)}
-        anchor="bottom"
-        style={{ height: '50px', border: 'none', boxShadow: 'none' }}
-        offset={[0, 10]}
-      >
-        <Comment
-          userName={popupInfo.authorName || ''}
-          userImage={popupAuthor?.imageFileId ?? popupInfo.imageFileId ?? null}
-          userImageFileId={popupAuthor?.imageFileId ?? popupInfo.imageFileId ?? null}
-          text={popupInfo.text}
-          createdAt={popupInfo.createdAt}
-          showActions
-          canEdit={user.id === String(popupInfo.authorId)}
-          canDelete={user.id === String(popupInfo.authorId)}
-          onEdit={user.id === String(popupInfo.authorId) ? () => requestSidebarAction(popupInfo.id, 'edit') : undefined}
-          onReply={() => requestSidebarAction(popupInfo.id, 'reply')}
-          onRemove={user.id === String(popupInfo.authorId) ? handleRemoveComment : undefined}
-          onClose={() => setPopUpInfo(null)}
-        />
-        {/* inline styles to override MapLibre’s Pop up CSS */}
-        <style>
-          {`
-              .noBorderPopup .maplibregl-popup-content {
-                border: none !important;
-                box-shadow: none !important;
-                background: transparent !important;
-              }
-              .noBorderPopup .maplibregl-popup-tip {
-                display: none !important;
-              }
-            `}
-        </style>
-      </Popup>
-    )
-  }
+  }, [map, mapClickManager, cancelSpiderClose, scheduleSpiderClose, t])
 
   // Track unclustered comments to display avatars
   const [unclusteredFeatures, setUnclusteredFeatures] = React.useState<MapGeoJSONFeature[]>([])
@@ -431,9 +443,8 @@ export const CommentLayer = () => {
       <Layer {...clusterCountLayer} />
       <Layer {...unclusteredPointLayer} />
 
-      {renderPopup()}
       {unclusteredFeatures
-        .filter((feature) => feature.properties?.id !== popupInfo?.id)
+        .filter((feature) => feature.properties?.id !== openCommentId)
         .map((feature) => (
           <CommentAvatarMarker
             key={String(feature.properties?.id)}

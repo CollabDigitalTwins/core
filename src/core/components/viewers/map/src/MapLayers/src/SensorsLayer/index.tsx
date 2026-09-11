@@ -7,7 +7,7 @@ import * as LR from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
-import { Source, Layer, Popup, Marker } from 'react-map-gl/maplibre'
+import { Source, Layer, Marker } from 'react-map-gl/maplibre'
 import { toast } from 'sonner'
 
 import { useSensor, useSensors } from '../../../../../../../hooks/sensors/sensors'
@@ -26,13 +26,17 @@ import { activeSensorTypeId, visibleSensors } from '../../../../../../ui/Sensors
 import { useSensorSeriesMulti } from '../../../../../../ui/Sensors/useSensorSeriesMulti'
 import { extractCoordinatesFromFeature } from '../../../../utils/extractCoordinates'
 import { MapLayerClickPriority } from '../../../../utils/MapEventManager/MapClickManager'
+import { buildClusterEntry, clusterSpecFromFeature } from '../clusterPopupEntry'
 import { CLUSTER_COUNT_COLOUR, createClusterLayer, createClusterCountLayer, createUnclusteredPointLayer } from '../mapLayersUtils'
 
 import { SENSOR_CLUSTER_PROPERTIES, sensorClusterColour } from './sensorClusterColour'
 
+const SENSOR_POINTS_LAYER_ID = 'sensors-unclustered-points'
+const SENSOR_CLUSTER_LAYER_ID = 'sensors-clusters'
+
 import type { SensorType} from '../../../../../../../types/dbTypes';
-import type { ClickCallback } from '../../../../utils/MapEventManager/MapClickManager';
-import type { MapGeoJSONFeature, MapLayerMouseEvent } from 'maplibre-gl'
+import type { PopupEntry } from '../../../../../../../types/map'
+import type { MapGeoJSONFeature, MapLayerMouseEvent, MapMouseEvent } from 'maplibre-gl'
 
 const SensorIconMarker = ({ feature, isHighlighted, isFocused, haloColour, onMouseEnter, onMouseLeave, sensorTypes }: { feature: MapGeoJSONFeature; isHighlighted?: boolean; isFocused?: boolean; haloColour?: string; onMouseEnter?: () => void; onMouseLeave?: () => void; sensorTypes: SensorType[] }) => {
 
@@ -87,13 +91,24 @@ export const SensorLayers = () => {
   const t = useTranslations('SensorLayers')
   const tSensors = useTranslations('SensorsSection')
 
-  const { state: mapState } = React.useContext(MapContext)
+  const { state: mapState, dispatch: mapDispatch } = React.useContext(MapContext)
   const { map, mapClickManager } = mapState.map
   const { sensors } = useSensors()
   const { users } = useUsers()
   const user = useSession().data?.user
 
-  const [popupInfo, setPopUpInfo] = React.useState<Partial<ISensor & { sensorType: SensorType }> | null>(null)
+  const sensorEntriesRef = React.useRef<Record<string, Partial<ISensor & { sensorType: SensorType }>>>({})
+  const sensorBodyRef = React.useRef<(header: React.ReactNode) => React.ReactNode>(() => null)
+
+  const closePopups = React.useCallback(
+    () => mapDispatch({ type: 'SET_POPUP_STACK', payload: null }),
+    [mapDispatch],
+  )
+
+  const popupInfo = React.useMemo(() => {
+    const active = mapState.map.popupStack?.entries[mapState.map.popupStack.activeIndex]
+    return active?.layerId === SENSOR_POINTS_LAYER_ID ? sensorEntriesRef.current[active.id] ?? null : null
+  }, [mapState.map.popupStack])
   const { deleteSensor, updateSensor } = useSensor(popupInfo?.id ?? null)
   const { state: menusState, dispatch: menusDispatch } = React.useContext(MenusContext)
   const { visibleSensorTypes, visibleSensorTags, currentSensorId, focusedSensorId, sensorLegendTypeId } = menusState.menus
@@ -125,9 +140,9 @@ export const SensorLayers = () => {
   // Close popup if the sensor was deleted
   React.useEffect(() => {
     if (popupInfo && !sensors.find((s) => s.id === popupInfo.id)) {
-      setPopUpInfo(null)
+      closePopups()
     }
-  }, [sensors, popupInfo])
+  }, [sensors, popupInfo, closePopups])
 
   // Every sensor sharing the active type gets a halo coloured by its own current value, readable
   // against the SensorLegend card. Only that one type is polled. Resolved through the same
@@ -210,32 +225,51 @@ export const SensorLayers = () => {
   // event listeners for sensor unclustered points
   React.useEffect(() => {
     if (!map) return
-    const showSensorPopUp: ClickCallback = (e: MapLayerMouseEvent, features: MapGeoJSONFeature[]) => {
-      const feature = features?.[0]
+    const resolveSensors = (_e: MapMouseEvent, features: MapGeoJSONFeature[]): PopupEntry[] => {
+      sensorEntriesRef.current = {}
 
-      if (!feature || feature.properties.point_count) return
+      const entries = features.flatMap((feature) => {
+        if (feature.properties.point_count) return []
+        if (feature.geometry.type !== 'Point') return []
+        const [longitude, latitude] = feature.geometry.coordinates
+        const { id, authorId, name, typeId, data, dataFormat, updateFrequency, createdAt, url } = feature.properties
 
-      if (feature.geometry.type !== 'Point') return
-      const [longitude, latitude] = feature.geometry.coordinates
-      const { id, authorId, name, typeId, data, dataFormat, updateFrequency, createdAt, url } = feature.properties
-      // Focus on click so the legend and the sibling halos follow the sensor just opened.
-      menusDispatch({ type: 'SET_FOCUSED_SENSOR_ID', payload: { sensorId: Number(id) } })
-      setPopUpInfo({
-        id: Number(id),
-        authorId: Number(authorId),
-        organizationId: feature.properties?.organizationId,
-        visible: feature.properties?.visible,
-        longitude,
-        latitude,
-        name,
-        typeId: Number(typeId),
-        data,
-        dataFormat,
-        updateFrequency,
-        url,
-        createdAt,
-        viewer: ViewerNames.map,
+        const entryId = `${SENSOR_POINTS_LAYER_ID}:${id}`
+        sensorEntriesRef.current[entryId] = {
+          id: Number(id),
+          authorId: Number(authorId),
+          organizationId: feature.properties?.organizationId,
+          visible: feature.properties?.visible,
+          longitude,
+          latitude,
+          name,
+          typeId: Number(typeId),
+          data,
+          dataFormat,
+          updateFrequency,
+          url,
+          createdAt,
+          viewer: ViewerNames.map,
+        }
+
+        return [{
+          id: entryId,
+          layerId: SENSOR_POINTS_LAYER_ID,
+          priority: MapLayerClickPriority.CommentLayersClickPriority,
+          title: (name as string) || t('sensorTitle'),
+          coordinates: [longitude, latitude] as [number, number],
+          // Readings and tags are live, so the body resolves at render time, not in this closure.
+          render: (header) => sensorBodyRef.current(header),
+        }]
       })
+
+      // Focus on click so the legend and the sibling halos follow the sensor just opened.
+      const first = entries[0]
+      if (first) {
+        menusDispatch({ type: 'SET_FOCUSED_SENSOR_ID', payload: { sensorId: sensorEntriesRef.current[first.id].id } })
+      }
+
+      return entries
     }
 
     const mouseEnterChangeCursor = () => {
@@ -246,7 +280,7 @@ export const SensorLayers = () => {
     }
 
     // event listener for clicking on single point to show sensor, hover to change cursor
-    mapClickManager.register('sensors-unclustered-points', MapLayerClickPriority.CommentLayersClickPriority, showSensorPopUp)
+    mapClickManager.register(SENSOR_POINTS_LAYER_ID, MapLayerClickPriority.CommentLayersClickPriority, resolveSensors)
 
     map.on('mouseenter', 'sensors-unclustered-points', mouseEnterChangeCursor)
     map.on('mouseleave', 'sensors-unclustered-points', mouseLeaveChangeCursor)
@@ -255,120 +289,92 @@ export const SensorLayers = () => {
       map.off('mouseenter', 'sensors-unclustered-points', mouseEnterChangeCursor)
       map.off('mouseleave', 'sensors-unclustered-points', mouseLeaveChangeCursor)
     }
-  }, [map, mapClickManager, menusDispatch])
+  }, [map, mapClickManager, menusDispatch, t])
 
   const handleRemoveSensor = () => {
     toast.success(t('sensorDeleted'))
     void deleteSensor()
-    setPopUpInfo(null)
+    closePopups()
   }
 
   // event listeners for clustered points
   React.useEffect(() => {
     if (!map) return
 
-    const zoomInToDecluster = (e: MapLayerMouseEvent) => {
-      const feature = e.features?.[0] // only proceed if this is actually a cluster
-      if (!feature || !feature.properties.cluster_id) return
+    const resolveCluster = (_e: MapMouseEvent, features: MapGeoJSONFeature[]): PopupEntry[] => {
+      const feature = features[0]
+      const spec = feature && clusterSpecFromFeature(feature)
+      if (!spec) return []
 
-      const clusterId = feature.properties.cluster_id as number
-
-      // Check if geometry has coordinates (not a GeometryCollection)
-      if (!('coordinates' in feature.geometry)) return
-      const [lng, lat] = feature.geometry.coordinates as [number, number]
-
-      const source = map.getSource('sensors') as any
-      source.getClusterExpansionZoom(clusterId).then(
-        (zoom: number) => {
-          map.easeTo({ center: [lng, lat], zoom })
-        },
-      )
-        .catch((error) => {
-          console.error(error)
-        })
+      return [buildClusterEntry({
+        map,
+        sourceId: 'sensors',
+        layerId: SENSOR_CLUSTER_LAYER_ID,
+        title: t('sensorTitle'),
+        priority: MapLayerClickPriority.CommentLayersClickPriority,
+        leafLabel: (leaf) => String(leaf.properties?.name ?? ''),
+        ...spec,
+      })]
     }
 
     const mouseEnterChangeCursor = () => { map.getCanvas().style.cursor = 'pointer' }
     const mouseLeaveChangeCursor = () => { map.getCanvas().style.cursor = '' }
 
-    // event listener for clicking on single point to zoom in and decluster, hover to change cursor
-    map.on('click', 'sensors-clusters', zoomInToDecluster)
-    map.on('mouseenter', 'sensors-clusters', mouseEnterChangeCursor)
-    map.on('mouseleave', 'sensors-clusters', mouseLeaveChangeCursor)
+    // a cluster click contributes one entry listing its contents, hover to change cursor
+    mapClickManager.register(SENSOR_CLUSTER_LAYER_ID, MapLayerClickPriority.CommentLayersClickPriority, resolveCluster)
+    map.on('mouseenter', SENSOR_CLUSTER_LAYER_ID, mouseEnterChangeCursor)
+    map.on('mouseleave', SENSOR_CLUSTER_LAYER_ID, mouseLeaveChangeCursor)
     return () => {
-      map.off('click', 'sensors-clusters', zoomInToDecluster)
-      map.off('mouseenter', 'sensors-clusters', mouseEnterChangeCursor)
-      map.off('mouseleave', 'sensors-clusters', mouseLeaveChangeCursor)
+      mapClickManager.unregister(SENSOR_CLUSTER_LAYER_ID)
+      map.off('mouseenter', SENSOR_CLUSTER_LAYER_ID, mouseEnterChangeCursor)
+      map.off('mouseleave', SENSOR_CLUSTER_LAYER_ID, mouseLeaveChangeCursor)
     }
-  }, [map])
+  }, [map, mapClickManager, t])
 
-  const renderPopup = () => {
+  const renderSensorBody = (header: React.ReactNode) => {
     if (!popupInfo) return null
     const sensorType = sensorTypes.find(t => t.id === popupInfo.typeId)
     const liveSensor = sensors.find(s => s.id === popupInfo.id)
     const dataUrl = popupInfo.url || popupInfo.data || ''
 
     return (
-      <Popup
-        className="noBorderPopup"
-        longitude={popupInfo.longitude}
-        latitude={popupInfo.latitude}
-        closeOnClick={false}
-        closeButton={false}
-        onClose={() => setPopUpInfo(null)}
-        anchor="bottom"
-        style={{ height: '50px', border: 'none', boxShadow: 'none' }}
-        offset={[0, 10]}
-      >
-        <Sensor
-          sensorName={popupInfo.name || ''}
-          sensorType={sensorType}
-          sensorId={popupInfo.id}
-          tags={liveSensor?.tags ?? []}
-          onAddTag={async (tag) => { await updateSensor({ tags: [...(liveSensor?.tags ?? []), tag] }) }}
-          onDeleteTag={async (tag) => { await updateSensor({ tags: (liveSensor?.tags ?? []).filter(t => t !== tag) }) }}
-          tagsTranslations={{
-            addTag: tSensors('addTag'),
-            removeTag: tSensors('removeTag'),
-            cancel: tSensors('cancel'),
-            newTagPlaceholder: tSensors('newTagPlaceholder'),
-          }}
-          dataUrl={dataUrl}
-          dataFormat={popupInfo.dataFormat}
-          updateFrequency={popupInfo.updateFrequency}
-          buildingId={popupInfo.buildingId}
-          createdAt={popupInfo.createdAt}
-          onRemove={user.id === String(popupInfo.authorId) ? handleRemoveSensor : null}
-          onClose={() => setPopUpInfo(null)}
-          onExpand={() => { if (liveSensor) setDetailSensor(liveSensor) }}
-          onEdit={user.id === String(popupInfo.authorId) && liveSensor ? () => setEditSensor(liveSensor) : undefined}
-          showActions
-          focused={focusedSensorId === popupInfo.id}
-          haloColour={popupInfo.id == null ? undefined : readings.get(popupInfo.id)?.colour}
-          onSelect={() => {
-            if (popupInfo.id != null) {
-              menusDispatch({ type: 'SET_FOCUSED_SENSOR_ID', payload: { sensorId: popupInfo.id } })
-            }
-          }}
-          timeZone={timeZone}
-          size="sm"
-        />
-        {/* inline styles to override MapLibre's Pop up CSS */}
-        <style>
-          {`
-              .noBorderPopup .maplibregl-popup-content {
-                border: none !important;
-                box-shadow: none !important;
-                background: transparent !important;
-              }
-              .noBorderPopup .maplibregl-popup-tip {
-                display: none !important;
-              }
-            `}
-        </style>
-      </Popup>
+    <Sensor
+      header={header}
+      sensorName={popupInfo.name || ''}
+      sensorType={sensorType}
+      sensorId={popupInfo.id}
+      tags={liveSensor?.tags ?? []}
+      onAddTag={async (tag) => { await updateSensor({ tags: [...(liveSensor?.tags ?? []), tag] }) }}
+      onDeleteTag={async (tag) => { await updateSensor({ tags: (liveSensor?.tags ?? []).filter(t => t !== tag) }) }}
+      tagsTranslations={{
+        addTag: tSensors('addTag'),
+        removeTag: tSensors('removeTag'),
+        cancel: tSensors('cancel'),
+        newTagPlaceholder: tSensors('newTagPlaceholder'),
+      }}
+      dataUrl={dataUrl}
+      dataFormat={popupInfo.dataFormat}
+      updateFrequency={popupInfo.updateFrequency}
+      buildingId={popupInfo.buildingId}
+      createdAt={popupInfo.createdAt}
+      onRemove={user.id === String(popupInfo.authorId) ? handleRemoveSensor : null}
+      onClose={closePopups}
+      onExpand={() => { if (liveSensor) setDetailSensor(liveSensor) }}
+      onEdit={user.id === String(popupInfo.authorId) && liveSensor ? () => setEditSensor(liveSensor) : undefined}
+      showActions
+      focused={focusedSensorId === popupInfo.id}
+      haloColour={popupInfo.id == null ? undefined : readings.get(popupInfo.id)?.colour}
+      onSelect={() => {
+        if (popupInfo.id != null) {
+          menusDispatch({ type: 'SET_FOCUSED_SENSOR_ID', payload: { sensorId: popupInfo.id } })
+        }
+      }}
+      timeZone={timeZone}
+      size="sm"
+    />
     )
   }
+  sensorBodyRef.current = renderSensorBody
 
   // Track unclustered sensors to display icons
   const [unclusteredFeatures, setUnclusteredFeatures] = React.useState<MapGeoJSONFeature[]>([])
@@ -438,7 +444,7 @@ export const SensorLayers = () => {
       <Layer {...clusterCountLayer} />
       <Layer {...unclusteredPointLayer} />
 
-      {renderPopup()}
+
       {unclusteredFeatures
         .filter((feature) => feature.properties?.id !== popupInfo?.id)
         .map((feature) => (

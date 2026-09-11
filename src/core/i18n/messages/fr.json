@@ -255,7 +255,8 @@
   },
   "CommentLayers": {
     "commentEdited": "Commentaire modifié",
-    "commentDeleted": "Commentaire supprimé"
+    "commentDeleted": "Commentaire supprimé",
+    "commentTitle": "Commentaire"
   },
   "CommentsSection": {
     "commentsTitle": "Commentaires",
@@ -1081,7 +1082,8 @@
   },
   "SensorLayers": {
     "sensorEdited": "Capteur modifié",
-    "sensorDeleted": "Capteur supprimé"
+    "sensorDeleted": "Capteur supprimé",
+    "sensorTitle": "Capteur"
   },
   "SensorsSection": {
     "sensorsTitle": "Capteurs",
@@ -1198,7 +1200,7 @@
     "addPoints": "Cliquez pour ajouter des points. Cliquez près du premier point pour fermer le polygone et créer un site.",
     "startDrawingClick": "Cliquez sur 'Commencer le dessin' puis cliquez sur la carte pour ajouter des points"
   },
-  "SiteContextMenu": {
+  "SiteMenu": {
     "namePlaceholder": "Nom du site",
     "editShape": "Modifier la forme",
     "doneEditing": "Terminer la modification",
@@ -2083,5 +2085,13 @@
     "devBody": "La clé de démonstration ne fonctionne que sur localhost. Les déploiements en production nécessitent leur propre clé MapTiler.",
     "cta": "Obtenez votre clé gratuite",
     "dismiss": "Fermer"
+  },
+  "MapPopupStack": {
+    "counter": "{index} sur {total}",
+    "previous": "Élément précédent",
+    "next": "Élément suivant",
+    "clusterContents": "{count} éléments ici",
+    "zoomToExpand": "Zoomer pour développer",
+    "close": "Fermer"
   }
 }

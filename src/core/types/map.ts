@@ -3,7 +3,7 @@
 
 import type { Feature } from 'geojson'
 import type { LngLatBounds, LngLatBoundsLike } from 'maplibre-gl'
-import type { JSX } from 'react'
+import type { JSX, ReactNode } from 'react'
 
 export interface MapStyle {
   name: string
@@ -18,6 +18,24 @@ export interface LngLat {
 }
 export interface PopupInfo extends LngLat {
   feature: JSX.Element
+}
+
+/**
+ * One popup a click resolved to. `render` is built inside the owning layer so it
+ * keeps that layer's state, and places `header` inside its own card.
+ */
+export interface PopupEntry {
+  id: string
+  layerId: string
+  priority: number
+  title: string
+  coordinates: [number, number]
+  render: (header: ReactNode) => ReactNode
+}
+
+export interface PopupStack {
+  entries: PopupEntry[]
+  activeIndex: number
 }
 
 export type BoundingBox = number[] | LngLatBounds | LngLatBoundsLike

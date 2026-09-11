@@ -33,9 +33,11 @@ interface OpenDataFeaturePopoverProps {
   feature: MapGeoJSONFeature
   isOpen: boolean
   onCloseAction: () => void
+  header?: React.ReactNode
 }
 
 export default function OpenDataFeaturePopover({
+  header,
   feature,
   isOpen,
   onCloseAction,
@@ -134,11 +136,12 @@ export default function OpenDataFeaturePopover({
 
   return (
     <PopoverContent className="w-80 -m-1" side="top">
+      {header}
       <div className="grid gap-4">
         <Button
           onClick={onCloseAction}
           variant="ghost"
-          className="absolute top-1 right-2 p-1 text-muted-foreground hover:text-foreground"
+          className={`absolute top-1 right-2 p-1 text-muted-foreground hover:text-foreground${header ? ' hidden' : ''}`}
           aria-label="Close"
         >
           <LR.X className="w-4 h-4" />

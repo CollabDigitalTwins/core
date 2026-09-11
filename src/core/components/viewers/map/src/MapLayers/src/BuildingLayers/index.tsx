@@ -4,8 +4,8 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 
+import { useTranslations } from "next-intl";
 import * as React from "react";
-import { Popup } from "react-map-gl/maplibre";
 
 import { useBuildings } from "../../../../../../../hooks/buildings/buildings";
 import { useBuildingsContext } from "../../../../../../../store";
@@ -25,7 +25,8 @@ import {
 } from "./buildingColourExpression";
 import { BuildingSensorMarkers } from "./src/BuildingSensorMarkers";
 
-import type { MapMouseEvent } from "maplibre-gl";
+import type { PopupEntry } from "../../../../../../../types/map";
+import type { MapGeoJSONFeature, MapMouseEvent } from "maplibre-gl";
 
 const LAYER_ID = "maptiler-3d-buildings";
 const OWN_SOURCE_ID = "cdt-buildings";
@@ -126,15 +127,21 @@ function addBuildingLayer(map: any, hiddenBimOsmIds: string[], colourExpr: Paint
 }
 
 export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
-  const { state: mapState } = React.useContext(MapContext);
-  const { map, mapClickManager, show3dBuildings } = mapState.map;
+  const { state: mapState, dispatch: mapDispatch } = React.useContext(MapContext);
+  const { map, mapClickManager, show3dBuildings, popupStack } = mapState.map;
+  const t = useTranslations("DatabaseBuildingPopover");
   const { setCompareItems } = useBuildingsContext();
   const { buildings } = useBuildings();
   const { state: bimState } = useBimContext();
   const { bimModelsAddedToMap } = bimState.bim;
 
   const [hoveredFeature, setHoveredFeature] = React.useState<string | number | null>(null);
-  const [clickedFeature, setClickedFeature] = React.useState<any>(null);
+  const entryFeaturesRef = React.useRef<Record<string, any>>({});
+
+  const closePopups = React.useCallback(
+    () => mapDispatch({ type: "SET_POPUP_STACK", payload: null }),
+    [mapDispatch],
+  );
   const [buildingByOsmId, setBuildingByOsmId] = React.useState<Record<string, { id: number }>>({});
 
   // Footprints are tinted by the average reading of the legend's sensor type. Nothing is polled
@@ -147,13 +154,18 @@ export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
     [averages, buildings],
   );
 
+  const activeEntry = popupStack ? popupStack.entries[popupStack.activeIndex] : null;
+  const clickedKey = activeEntry?.layerId === LAYER_ID
+    ? entryFeaturesRef.current[activeEntry.id]?.id ?? null
+    : null;
+
   const colourExpr = React.useMemo(
     () => buildingColourExpression({
       osmColours,
-      clickedKey: clickedFeature?.id ?? null,
+      clickedKey,
       hoveredKey: hoveredFeature,
     }),
-    [osmColours, clickedFeature, hoveredFeature],
+    [osmColours, clickedKey, hoveredFeature],
   );
 
   // Read by the add-layer effect, which must not re-run when only the colours change.
@@ -249,44 +261,56 @@ export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
   React.useEffect(() => {
     if (!map || !mapClickManager) return;
 
-    const handleClick = (e: MapMouseEvent) => {
-      if (!map.getLayer(LAYER_ID)) return;
-      const clicked = map.queryRenderedFeatures(e.point, { layers: [LAYER_ID] });
-      const feature = clicked?.[0];
-      if (!feature) {
-        setClickedFeature(null);
-        return;
-      }
+    const resolvePopups = (e: MapMouseEvent, hits: MapGeoJSONFeature[]): PopupEntry[] => {
+      entryFeaturesRef.current = {};
+      const coordinates: [number, number] = [e.lngLat.lng, e.lngLat.lat];
 
-      const properties = feature.properties || {};
-      const lng = e.lngLat.lng;
-      const lat = e.lngLat.lat;
-      const coordinates = [lng, lat];
+      return hits.map((feature) => {
+        const properties = feature.properties || {};
 
-      // Use MVT feature.id (OSM ID) or fall back to properties
-      const featureId = feature.id || properties.osm_id || `temp-${Date.now()}`;
-      const normalizedOsmId = String(featureId);
-      const dbId = buildingByOsmId[normalizedOsmId]?.id || null;
-      const _name = Object.entries(properties).find(
-        ([key]) => key.toLowerCase().includes("name")
-      )?.[1] || undefined;
+        // Use MVT feature.id (OSM ID) or fall back to properties
+        const featureId = feature.id || properties.osm_id || `temp-${Date.now()}`;
+        const normalizedOsmId = String(featureId);
+        const dbId = buildingByOsmId[normalizedOsmId]?.id || null;
+        const _name = Object.entries(properties).find(
+          ([key]) => key.toLowerCase().includes("name")
+        )?.[1] || undefined;
 
-      const featureClone: any = {
-        ...feature,
-        id: featureId,
-        properties: {
-          ...properties,
+        const featureClone: any = {
+          ...feature,
+          id: featureId,
+          properties: {
+            ...properties,
+            coordinates,
+            _name,
+            osm_id: normalizedOsmId,
+            isBuilding: true,
+            isDbBuilding: Boolean(dbId),
+            dbId,
+          },
+        };
+
+        const id = `${LAYER_ID}:${normalizedOsmId}`;
+        entryFeaturesRef.current[id] = featureClone;
+
+        return {
+          id,
+          layerId: LAYER_ID,
+          priority: MapLayerClickPriority.BuildingLayersClickPriority,
+          title: (_name as string) || t("fallbackName"),
           coordinates,
-          _name,
-          osm_id: normalizedOsmId,
-          isBuilding: true,
-          isDbBuilding: Boolean(dbId),
-          dbId,
-          _popupNonce: Date.now(),
-        },
-      };
-
-      setClickedFeature(featureClone);
+          render: (header) => (
+            <MapFeaturePopoverMenu
+              header={header}
+              feature={featureClone}
+              onCloseAction={() => {
+                closePopups();
+                setCompareItems([]);
+              }}
+            />
+          ),
+        };
+      });
     };
 
     const handleHover = (e: MapMouseEvent) => {
@@ -311,7 +335,7 @@ export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
     mapClickManager.register(
       LAYER_ID,
       MapLayerClickPriority.BuildingLayersClickPriority,
-      handleClick
+      resolvePopups
     );
     map.on("mousemove", LAYER_ID, handleHover);
     map.on("mouseleave", LAYER_ID, handleMouseLeave);
@@ -321,7 +345,7 @@ export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
       map.off("mousemove", LAYER_ID, handleHover);
       map.off("mouseleave", LAYER_ID, handleMouseLeave);
     };
-  }, [map, mapClickManager, buildingByOsmId, hiddenBimOsmIds]);
+  }, [map, mapClickManager, buildingByOsmId, hiddenBimOsmIds, t, closePopups, setCompareItems]);
 
   // Single writer for fill-extrusion-color: hover, click and sensor colours are merged into one
   // expression upstream, so there is no second effect to race with. `colourExpr` only changes
@@ -334,26 +358,6 @@ export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
   return (
     <>
       <BuildingSensorMarkers buildings={buildings ?? []} sensorColours={sensorColours} />
-      {clickedFeature && clickedFeature.properties?.coordinates && (
-        <Popup
-          anchor="bottom"
-          closeButton={true}
-          closeOnClick={false}
-          focusAfterOpen={true}
-          key={`maptiler-${clickedFeature.id}-${clickedFeature.properties._popupNonce}`}
-          latitude={clickedFeature.properties.coordinates[1]}
-          longitude={clickedFeature.properties.coordinates[0]}
-          onClose={() => setClickedFeature(null)}
-        >
-          <MapFeaturePopoverMenu
-            feature={clickedFeature}
-            onCloseAction={() => {
-              setClickedFeature(null);
-              setCompareItems([]);
-            }}
-          />
-        </Popup>
-      )}
     </>
   );
 }

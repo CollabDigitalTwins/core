@@ -17,6 +17,18 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   Fixed upstream in 6.4.1.
 
 ### Added
+- **Overlapping map features now open one popup with a switcher instead of only the topmost.**
+  Clicking where several interactive layers overlap collects every hit into a `popupStack`
+  on the map store (`SET_POPUP_STACK`, `SET_POPUP_INDEX`) and renders them through a single
+  `MapPopupStack`, with a `‹ 2 of 5 · Building ›` header when there is more than one. Entries
+  are ordered by `MapLayerClickPriority`, deduplicated by id and capped at 10 per click.
+  Clusters contribute one entry listing their contents with a zoom-to-expand button. New
+  `MapPopupStack` message namespace in `en`, `es` and `fr`.
+- `PopupEntry` and `PopupStack` in `…/types/map`, the descriptor a layer returns from its
+  click resolver.
+- An optional `header` slot on `Sensor`, `Comment` and `MapFeaturePopoverMenu`, so the popup
+  switcher renders inside the body's own card. The slot also carries the popup's single close
+  button: a body that receives a `header` hides its own, so every map popup closes the same way.
 - **A 3D-buildings toggle in the map settings panel.** New `show3dBuildings` on the map store
   (default `true`) with an `UPDATE_SHOW_3D_BUILDINGS` action, a `BuildingVisibility` control
   under Map Style, and a `MapCustomization.buildings3d` message in `en`, `es` and `fr`.
@@ -29,6 +41,16 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   `Matrix4` so a render loop allocates nothing.
 
 ### Changed
+- **`SiteContextMenu` is renamed `SiteMenu`**, along with its file, its props type and its
+  i18n namespace. It is anchored by the map popup rather than the cursor, so the
+  "context menu" name was misleading; its `x` / `y` props are gone with the fixed
+  positioning they drove. See Migration.
+- **`MapClickManager.register` now takes a `PopupResolver` that returns `PopupEntry[]`, not a
+  side-effecting `ClickCallback`.** Clicks collect entries from every layer that was hit rather
+  than stopping at the highest-priority one, so `MapLayerClickPriority` orders the stack instead
+  of deciding which single layer wins. `registerLegacy` keeps the old callback contract for
+  handlers that own their own UI, and `MapLayerClickPriority.ActiveTool` is still exclusive:
+  a click while a tool is active opens nothing. See Migration.
 - maplibre 6 is ESM-only and no longer inlines its tile-parsing worker the way 5 did; the
   worker now ships as a separate `maplibre-gl-worker.mjs` chunk that has to be resolvable at
   runtime. See Migration.
@@ -62,6 +84,32 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   and `global-borders-country` still draws country outlines.
 
 ### Migration
+- Rename any import of `SiteContextMenu` to `SiteMenu` (the file moves from
+  `SiteContextMenu.tsx` to `SiteMenu.tsx`, and `SiteContextMenuProps` becomes `SiteMenuProps`).
+  Drop the `x` / `y` props. A message catalog that overrides the `SiteContextMenu` namespace
+  must rename that key to `SiteMenu`, or its overrides fall back to the bundled strings.
+- **A custom map layer that called `mapClickManager.register` must return `PopupEntry[]`
+  instead of opening its own `<Popup>`.** Build the descriptor in the layer so `render` keeps
+  that layer's state and hooks:
+  ```ts
+  mapClickManager.register(LAYER_ID, MapLayerClickPriority.BuildingLayersClickPriority,
+    (e, hits) => hits.map(feature => ({
+      id: `${LAYER_ID}:${feature.id}`,
+      layerId: LAYER_ID,
+      priority: MapLayerClickPriority.BuildingLayersClickPriority,
+      title: feature.properties.name ?? 'Feature',
+      coordinates: [e.lngLat.lng, e.lngLat.lat],
+      render: header => <MyPopupBody header={header} feature={feature} />,
+    })))
+  ```
+  `render` receives the stack's switcher bar and must place it **inside** its own card, so
+  per-card chrome (the sensor ring, a coloured border) wraps the bar too. `Sensor`, `Comment`
+  and `MapFeaturePopoverMenu` take it as a new optional `header` prop.
+  `id` is the dedup key, so a layer drawn as several maplibre layers (fill + outline) must
+  produce the same id for the same feature. A body that reads live data should render a
+  component rather than capture values in the closure, which is built once per click.
+  Registrations that open their own UI and consume the click — an active tool, for example —
+  move to `registerLegacy` with no other change.
 - Upgrade `maplibre-gl` to `^6.9.0` and regenerate your lockfile in the same commit. Bumping
   `package.json` alone leaves the vulnerable version resolved and the advisory open.
 - Upgrade `react-map-gl` to `^8.1.3` at the same time. The two are not independent: maplibre 6

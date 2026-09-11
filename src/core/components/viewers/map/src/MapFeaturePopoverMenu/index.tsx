@@ -19,6 +19,7 @@ import type { MapGeoJSONFeature } from 'maplibre-gl'
 type Props = {
   feature: MapGeoJSONFeature | null
   onCloseAction: () => void
+  header?: React.ReactNode
 }
 
 type PopoverType
@@ -27,7 +28,7 @@ type PopoverType
     | 'open-data'
     | 'loading'
 
-export default function MapFeaturePopoverMenu({ feature, onCloseAction }: Props) {
+export default function MapFeaturePopoverMenu({ feature, onCloseAction, header }: Props) {
   const [open, setOpen] = React.useState(true)
   const [popoverType, setPopoverType] = React.useState<PopoverType>('loading')
 
@@ -90,6 +91,7 @@ export default function MapFeaturePopoverMenu({ feature, onCloseAction }: Props)
       case 'database-building': {
         return (
           <DatabaseBuildingPopover
+            header={header}
             feature={feature}
             isOpen={open}
             onCloseAction={handleClose}
@@ -99,6 +101,7 @@ export default function MapFeaturePopoverMenu({ feature, onCloseAction }: Props)
       case 'non-database-building':
         return (
           <NonDatabaseBuildingPopover
+            header={header}
             feature={feature}
             isOpen={open}
             onCloseAction={handleClose}
@@ -108,6 +111,7 @@ export default function MapFeaturePopoverMenu({ feature, onCloseAction }: Props)
       default:
         return (
           <OpenDataFeaturePopover
+            header={header}
             feature={feature}
             isOpen={open}
             onCloseAction={handleClose}

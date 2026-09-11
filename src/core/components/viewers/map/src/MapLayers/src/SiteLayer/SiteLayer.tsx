@@ -16,13 +16,14 @@ import {
   useMapSitesContext,
 } from '../../../../../../../store'
 import { ViewerNames, type Site } from '../../../../../../../types/dbTypes'
-import { MapLayerClickPriority, type ClickCallback } from '../../../../utils/MapEventManager/MapClickManager'
+import { MapLayerClickPriority } from '../../../../utils/MapEventManager/MapClickManager'
 
-import { SiteContextMenu } from './SiteContextMenu'
+import { SiteMenu } from './SiteMenu'
 import { polygonCentroid, uploadGeoJsonToAsset, pointToSegmentDistance } from './siteGeometry'
 
 import type * as maplibregl from 'maplibre-gl'
-import type { MapGeoJSONFeature } from 'maplibre-gl'
+import type { PopupEntry } from '../../../../../../../types/map'
+import type { MapGeoJSONFeature, MapMouseEvent } from 'maplibre-gl'
 import type { LayerProps } from 'react-map-gl/maplibre'
 
 const SITE_FILL_ID = 'site-fill'
@@ -69,7 +70,7 @@ const labelLayer: LayerProps = {
 }
 
 export const SiteLayer = () => {
-  const { state: mapState } = React.useContext(MapContext)
+  const { state: mapState, dispatch: mapDispatch } = React.useContext(MapContext)
   const { map, mapClickManager } = mapState.map
   const { state: mapSitesState, dispatch } = useMapSitesContext()
   const { sites, editingSiteId } = mapSitesState.mapSites
@@ -81,7 +82,14 @@ export const SiteLayer = () => {
 
   const { dispatch: menusDispatch, setSelectedSite, setView } = useMenusContext()
 
-  const [menu, setMenu] = React.useState<{ x: number, y: number, siteId: number } | null>(null)
+  const [menu, setMenu] = React.useState<{ siteId: number } | null>(null)
+
+  const closeMenu = React.useCallback(() => {
+    setMenu(null)
+    mapDispatch({ type: 'SET_POPUP_STACK', payload: null })
+  }, [mapDispatch])
+  // Site state is live, so the menu body resolves at render time, not in the entry's closure.
+  const siteMenuRef = React.useRef<(header: React.ReactNode) => React.ReactNode>(() => null)
 
   // The site the user is currently acting on (menu open) or editing.
   const activeSiteId = menu?.siteId ?? editingSiteId ?? null
@@ -96,6 +104,34 @@ export const SiteLayer = () => {
   sitesRef.current = sites
   const editingSiteIdRef = React.useRef(editingSiteId)
   editingSiteIdRef.current = editingSiteId
+
+  // The ring as it was when editing began, so Escape can put it back.
+  const editStartRingRef = React.useRef<[number, number][] | null>(null)
+
+  React.useEffect(() => {
+    editStartRingRef.current = editingSiteId == null
+      ? null
+      : sitesRef.current.find(s => s.id === editingSiteId)?.ring ?? null
+  }, [editingSiteId])
+
+  const cancelEdit = React.useCallback(() => {
+    const id = editingSiteIdRef.current
+    if (id == null) return
+    const original = editStartRingRef.current
+    if (original) dispatch({ type: 'UPDATE_SITE_RING', payload: { id, ring: original } })
+    dispatch({ type: 'SET_EDITING_SITE', payload: { id: null } })
+  }, [dispatch])
+
+  React.useEffect(() => {
+    if (editingSiteId == null) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      e.stopPropagation()
+      cancelEdit()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [editingSiteId, cancelEdit])
 
   // Build the rendered FeatureCollection: a polygon + a single centroid label
   // per shown site.
@@ -117,30 +153,31 @@ export const SiteLayer = () => {
     return { type: 'FeatureCollection', features }
   }, [sites])
 
-  // Lowest-priority click handler: opens the site menu only when no other
-  // interactive layer was hit at the click point.
+  // Lowest-priority handler: the site entry sorts last in the popup stack.
   React.useEffect(() => {
     if (!map || !mapClickManager) return
 
-    const handleSiteClick: ClickCallback = (e, features: MapGeoJSONFeature[]) => {
-      // While editing a shape, fill clicks are for adding vertices (see the
-      // edit-click effect), not for (re)opening the menu.
-      if (editingSiteIdRef.current != null) return
+    const resolveSitePopups = (e: MapMouseEvent, features: MapGeoJSONFeature[]): PopupEntry[] => {
       const feature = features?.[0]
       const siteId = Number(feature?.properties?.siteId)
-      if (!siteId || Number.isNaN(siteId)) return
-      const native = e.originalEvent as MouseEvent | undefined
-      setMenu({
-        x: native?.clientX ?? e.point.x,
-        y: native?.clientY ?? e.point.y,
-        siteId,
-      })
+      if (!siteId || Number.isNaN(siteId)) return []
+
+      setMenu({ siteId })
+
+      return [{
+        id: `${SITE_FILL_ID}:${siteId}`,
+        layerId: SITE_FILL_ID,
+        priority: MapLayerClickPriority.SiteLayerClickPriority,
+        title: String(feature?.properties?.name ?? sitesRef.current.find(s => s.id === siteId)?.name ?? 'Site'),
+        coordinates: [e.lngLat.lng, e.lngLat.lat],
+        render: (header) => siteMenuRef.current(header),
+      }]
     }
 
     const onEnter = () => { map.getCanvas().style.cursor = 'pointer' }
     const onLeave = () => { map.getCanvas().style.cursor = '' }
 
-    mapClickManager.register(SITE_FILL_ID, MapLayerClickPriority.SiteLayerClickPriority, handleSiteClick)
+    mapClickManager.register(SITE_FILL_ID, MapLayerClickPriority.SiteLayerClickPriority, resolveSitePopups)
     map.on('mouseenter', SITE_FILL_ID, onEnter)
     map.on('mouseleave', SITE_FILL_ID, onLeave)
 
@@ -253,7 +290,7 @@ export const SiteLayer = () => {
   const handleHide = () => {
     if (!menu) return
     dispatch({ type: 'HIDE_SITE', payload: { id: menu.siteId } })
-    setMenu(null)
+    closeMenu()
   }
 
   const handleInfo = () => {
@@ -262,7 +299,7 @@ export const SiteLayer = () => {
     setSelectedSite({ id: menu.siteId, siteName: s?.name } as Site)
     setView('detail')
     menusDispatch({ type: 'SET_VIEWER', payload: { currentViewer: ViewerNames.sites } })
-    setMenu(null)
+    closeMenu()
   }
 
   const handleDelete = async () => {
@@ -276,7 +313,7 @@ export const SiteLayer = () => {
         catch { /* geometry file orphaned; site itself is gone */ }
       }
       dispatch({ type: 'HIDE_SITE', payload: { id } })
-      setMenu(null)
+      closeMenu()
       toast.success('Site deleted.')
     }
     catch {
@@ -285,6 +322,27 @@ export const SiteLayer = () => {
   }
 
   const editingSite = editingSiteId != null ? sites.find(s => s.id === editingSiteId) ?? null : null
+
+  const renderSiteMenu = (header: React.ReactNode) => {
+    if (!menu || !menuSite) return null
+    return (
+      <SiteMenu
+        header={header}
+        site={menuSite}
+        isEditing={editingSiteId === menu.siteId}
+        canUpdate={canUpdate}
+        canDelete={canDelete}
+        canRead={canRead}
+        onClose={closeMenu}
+        onRename={(name) => void handleRename(name)}
+        onToggleEdit={() => void handleToggleEdit()}
+        onHide={handleHide}
+        onInfo={handleInfo}
+        onDelete={handleDelete}
+      />
+    )
+  }
+  siteMenuRef.current = renderSiteMenu
 
   return (
     <>
@@ -320,23 +378,6 @@ export const SiteLayer = () => {
         </Marker>
       ))}
 
-      {menu && menuSite && (
-        <SiteContextMenu
-          x={menu.x}
-          y={menu.y}
-          site={menuSite}
-          isEditing={editingSiteId === menu.siteId}
-          canUpdate={canUpdate}
-          canDelete={canDelete}
-          canRead={canRead}
-          onClose={() => setMenu(null)}
-          onRename={(name) => void handleRename(name)}
-          onToggleEdit={() => void handleToggleEdit()}
-          onHide={handleHide}
-          onInfo={handleInfo}
-          onDelete={handleDelete}
-        />
-      )}
     </>
   )
 }

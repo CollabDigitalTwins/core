@@ -57,6 +57,8 @@ export type SensorProps = {
   canEdit?: boolean
   canDelete?: boolean
   actionLabels?: CommentActionLabels
+  /** Slot rendered inside the card, above the content. Used by the map popup switcher. */
+  header?: React.ReactNode
 }
 
 export default function Sensor({
@@ -81,6 +83,7 @@ export default function Sensor({
   canEdit = true,
   canDelete = true,
   actionLabels,
+  header,
   sensorId,
   tags = [],
   tagsVariant = 'edit',
@@ -202,6 +205,7 @@ export default function Sensor({
       }}
     >
       <Card className={`${currentSize.cardWidth} ${currentSize.cardPadding} shadow-md group-hover:shadow-lg transition-shadow duration-200`}>
+        {header}
         <div className={`flex items-start ${currentSize.gap}`}>
           <div className={`${currentSize.iconSize} rounded-full shadow-sm flex items-center justify-center select-none flex-shrink-0 bg-primary`}>
             <SensorIcon className={`${currentSize.iconInnerSize} text-primary-foreground`} />
@@ -216,7 +220,7 @@ export default function Sensor({
             </span>
           </div>
 
-          {showActions && (
+          {showActions && !header && (
             <Button
               type="button"
               variant="ghost"

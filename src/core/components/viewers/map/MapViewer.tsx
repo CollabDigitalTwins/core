@@ -24,7 +24,7 @@ import { MapTilerKeyNotice } from './src/MapTilerKeyNotice'
 import { MapClickManager } from './utils/MapEventManager/MapClickManager'
 import { MapHoverManager } from './utils/MapEventManager/MapHoverManager'
 import { DEFAULT_MAP_STYLE } from './utils/mapStyleCatalog'
-import { resolveStyleSpec } from './utils/mapStyleSpec'
+import { resolveStyleSpec, TERRAIN_SPEC } from './utils/mapStyleSpec'
 import { resolveBounds } from './utils/validateBounds'
 
 
@@ -101,7 +101,17 @@ export function MapViewer({ width = '100%', height = '100%', organization, mapti
     if (!activeMap) return
 
     const enforceProjectionForZoom = () => {
-      if (activeMap.getZoom() <= MAX_GLOBE_ZOOM) return
+      // The globe projection has no fog matrix, so terrain rendering there warns and draws nothing.
+      const onGlobe = activeMap.getZoom() <= MAX_GLOBE_ZOOM
+
+      if (onGlobe) {
+        if (activeMap.getTerrain()) activeMap.setTerrain(null)
+        return
+      }
+
+      if (!activeMap.getTerrain() && activeMap.getSource(TERRAIN_SPEC.source)) {
+        activeMap.setTerrain({ ...TERRAIN_SPEC })
+      }
 
       const projection = activeMap.getProjection()
       const currentType =
@@ -116,9 +126,11 @@ export function MapViewer({ width = '100%', height = '100%', organization, mapti
 
     enforceProjectionForZoom()
     activeMap.on('zoom', enforceProjectionForZoom)
+    activeMap.on('styledata', enforceProjectionForZoom)
 
     return () => {
       activeMap.off('zoom', enforceProjectionForZoom)
+      activeMap.off('styledata', enforceProjectionForZoom)
     }
   }, [activeMap])
 

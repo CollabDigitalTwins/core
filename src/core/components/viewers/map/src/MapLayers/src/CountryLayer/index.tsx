@@ -22,7 +22,7 @@ const BOUNDARIES_SOURCE_ID = 'openmaptiles-boundaries'
 const SUBDIVISION_SOURCE_ID = 'admin-subdivisions-source'
 const SUBDIVISION_FILL_ID = 'admin-subdivisions-fill'
 const SUBDIVISION_LINE_ID = 'admin-subdivisions-line'
-const SUBDIVISION_LINE_MAX_ZOOM = 15
+const SUBDIVISION_LINE_MAX_ZOOM = 10
 
 const HOVERED = ['boolean', ['feature-state', 'hover'], false] as const
 
@@ -34,6 +34,13 @@ export const SUBDIVISION_LINE_WIDTH = [
   14, ['case', HOVERED, 4.6, 2.4],
   15, ['case', HOVERED, 5, 2.4],
 ] as const
+// The border only helps while picking a subdivision; past zoom 9 the fill still hit-tests without it.
+export const SUBDIVISION_LINE_OPACITY = [
+  'interpolate', ['linear'], ['zoom'],
+  9, 1,
+  9.5, 0,
+] as const
+
 const GLOBAL_LAYER_IDS = [
   'global-borders-country',
   'global-borders-region',
@@ -272,6 +279,7 @@ export const CountryLayer = ({ organization, maptilerKey }: { organization?: Org
         paint={{
           'line-color': borderColor,
           'line-width': SUBDIVISION_LINE_WIDTH as never,
+          'line-opacity': SUBDIVISION_LINE_OPACITY as never,
         }}
       />
     </Source>

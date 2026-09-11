@@ -17,6 +17,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   Fixed upstream in 6.4.1.
 
 ### Added
+- `TERRAIN_SPEC` from `…/map/utils/mapStyleSpec` and `SUBDIVISION_LINE_OPACITY` from
+  `…/map/src/MapLayers/src/CountryLayer`, so a consumer overriding either can reuse the same values.
 - `writeModelMatrix` in `@collabdt/core/core/components/viewers/map/utils/modelMatrix` builds the
   model-to-mercator matrix for a three.js custom layer, replacing the
   `map.transform.getMatrixForModel` that maplibre 6 removed. It writes into a caller-owned
@@ -34,10 +36,16 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   and react-map-gl read it on every camera event. Versions below 8.1.3 therefore throw
   `Cannot read properties of undefined (reading 'center')` on any pan, zoom or `flyTo`; 8.1.3
   reads the public getters instead.
+- **The country-subdivision border fades out above zoom 9 and stops drawing at 10.** The
+  subdivision fill is unchanged and still hit-tests at every zoom, so camera tracking and hover
+  keep resolving `countrySubdivision` with no border on screen.
 - Map-level pointer listeners use `mouseout`. In maplibre 6 `mouseenter` and `mouseleave` are
   layer-scoped events and require a layer id, so they never fired when bound to the map itself.
 
 ### Fixed
+- **Terrain is removed while the globe projection is active.** The globe has no fog matrix, so
+  maplibre logged `calculateFogMatrix is not supported on globe projection` and drew a terrain
+  pass that produced nothing. Terrain is restored when the map returns to mercator.
 - `MapHoverManager.destroy()` removed a `mouseenter` listener it had never registered, leaving
   its `mousemove` handler bound to the map for the life of the page.
 

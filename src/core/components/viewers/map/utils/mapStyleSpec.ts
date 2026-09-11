@@ -12,6 +12,9 @@ export const STREETS_STYLE_URL = 'cdt:streets'
 
 const MAPTILER_ATTRIBUTION = '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>'
 const ESRI_ATTRIBUTION = 'Imagery &copy; <a href="https://www.esri.com/" target="_blank">Esri</a>, Maxar, Earthstar Geographics'
+// Exported so the viewer can drop terrain on the globe and put back exactly what the style had.
+export const TERRAIN_SPEC = { source: 'terrainSource', exaggeration: 0.6 } as const
+
 const TERRARIUM_ATTRIBUTION = '<a href="https://registry.opendata.aws/terrain-tiles/" target="_blank">Terrain Tiles</a>, <a href="https://earth.jaxa.jp/en/data/policy/" target="_blank">AW3D30 (JAXA)</a>'
 
 const ESRI_IMAGERY_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
@@ -128,7 +131,7 @@ export function buildSatelliteStyle(key?: string | null): StyleSpecification {
       intensity: 0.6,
       position: [1.15, 0, 0],
     },
-    terrain: { source: 'terrainSource', exaggeration: 0.6 },
+    terrain: TERRAIN_SPEC,
   } as StyleSpecification
 }
 

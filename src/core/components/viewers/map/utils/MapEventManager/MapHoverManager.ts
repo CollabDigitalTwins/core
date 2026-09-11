@@ -2,7 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // MapClickManager.ts
-import type maplibregl from 'maplibre-gl'
+import type * as maplibregl from 'maplibre-gl'
 
 /**
  * This is very important. Declare a new priority for your layer in this enum if you need to,
@@ -75,7 +75,7 @@ export class MapHoverManager {
   }
 
   destroy() {
-    this.map.off('mouseenter', this.boundedHoverHandler)
+    this.map.off('mousemove', this.boundedHoverHandler)
     this.hoverHandlers = []
   }
 }

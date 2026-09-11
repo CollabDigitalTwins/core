@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type maplibregl from 'maplibre-gl' // or 'mapbox-gl'
+import type * as maplibregl from 'maplibre-gl' // or 'mapbox-gl'
 
 export async function getOsmIdFromLatLng(
   map: maplibregl.Map,

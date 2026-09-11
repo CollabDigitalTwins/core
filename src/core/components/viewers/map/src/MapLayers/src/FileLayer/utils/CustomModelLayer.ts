@@ -5,6 +5,7 @@ import { type CustomLayerInterface, type LngLatLike, type Map } from 'maplibre-g
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
+import { writeModelMatrix } from '../../../../../utils/modelMatrix'
 import { disposeThreeScene } from '../../disposeThreeScene'
 
 import type { DbFile } from '../../../../../../../../types/dbTypes'
@@ -218,11 +219,8 @@ export const CustomModelLayer = (
           : cachedTerrainElev
         const altitude = terrainAltitude + fileElevation
 
-        const modelMatrix = map.transform.getMatrixForModel(modelOrigin, altitude)
-        // Reuse temps and write into the camera's own matrix — no per-frame
-        // allocation. The previous `.scale(1,1,1)` was an identity no-op.
         _m.fromArray(args.defaultProjectionData.mainMatrix)
-        _l.fromArray(modelMatrix)
+        writeModelMatrix(_l, modelOrigin, altitude)
         this.camera.projectionMatrix.multiplyMatrices(_m, _l)
 
         if (this.mixer) {

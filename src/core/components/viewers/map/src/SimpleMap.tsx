@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import maplibregl from 'maplibre-gl'
+import * as maplibregl from 'maplibre-gl'
 import * as React from 'react'
 import Map from 'react-map-gl/maplibre'
 

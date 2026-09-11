@@ -6,6 +6,66 @@ All notable changes to this project will be documented in this file.
 The format is based on Keep a Changelog, and this project adheres to Semantic Versioning.
 
 ## [Unreleased]
+### Security
+- **`maplibre-gl` is now required at `^6.9.0`, which closes CVE-2026-85061 (CVSS 9.6).**
+  `DOM.sanitize()` in every version up to and including 6.4.0 walked the live `NamedNodeMap`
+  returned by `elem.attributes` while removing entries from it, so the indexes shifted and an
+  adjacent dangerous attribute was skipped. Two consecutive ones let an `onload` or `ontoggle`
+  survive sanitization and run when the attribution control wrote the string into `innerHTML`.
+  Attribution text comes from the style document, so any deployment that renders a third-party
+  or user-supplied style was one map load away from script execution in the viewer's session.
+  Fixed upstream in 6.4.1.
+
+### Added
+- `writeModelMatrix` in `@collabdt/core/core/components/viewers/map/utils/modelMatrix` builds the
+  model-to-mercator matrix for a three.js custom layer, replacing the
+  `map.transform.getMatrixForModel` that maplibre 6 removed. It writes into a caller-owned
+  `Matrix4` so a render loop allocates nothing.
+
+### Changed
+- maplibre 6 is ESM-only and no longer inlines its tile-parsing worker the way 5 did; the
+  worker now ships as a separate `maplibre-gl-worker.mjs` chunk that has to be resolvable at
+  runtime. See Migration.
+- **`maplibre-gl` moves from `^5.0.0` to `^6.9.0` in `peerDependencies`.** A consumer has to
+  upgrade in lockstep; the new range cannot be satisfied by any release still carrying the
+  advisory above.
+- **`react-map-gl` moves from `^8.0.0` to `^8.1.3` in `peerDependencies`.** maplibre 6 removed
+  the internal `map.transform` property — `Map` now composes a `Camera` instead of extending it —
+  and react-map-gl read it on every camera event. Versions below 8.1.3 therefore throw
+  `Cannot read properties of undefined (reading 'center')` on any pan, zoom or `flyTo`; 8.1.3
+  reads the public getters instead.
+- Map-level pointer listeners use `mouseout`. In maplibre 6 `mouseenter` and `mouseleave` are
+  layer-scoped events and require a layer id, so they never fired when bound to the map itself.
+
+### Fixed
+- `MapHoverManager.destroy()` removed a `mouseenter` listener it had never registered, leaving
+  its `mousemove` handler bound to the map for the life of the page.
+
+### Migration
+- Upgrade `maplibre-gl` to `^6.9.0` and regenerate your lockfile in the same commit. Bumping
+  `package.json` alone leaves the vulnerable version resolved and the advisory open.
+- Upgrade `react-map-gl` to `^8.1.3` at the same time. The two are not independent: maplibre 6
+  with react-map-gl 8.1.1 or earlier crashes on the first camera movement.
+- **Call `setWorkerUrl()` once, at application startup.** maplibre 6 loads tile parsing from a
+  separate worker chunk, and under a bundler `import.meta.url` does not resolve into the module
+  graph, so its own `defaultWorkerUrl()` returns an empty string and no tiles load. The URL is
+  bundler-specific, so this package does not guess it. On Next.js, copy both
+  `maplibre-gl-worker.mjs` and its sibling `maplibre-gl-shared.mjs` out of `maplibre-gl/dist`
+  into `public/maplibre/` from a pre-build script, then point at the served path:
+  ```ts
+  import { setWorkerUrl } from 'maplibre-gl'
+  setWorkerUrl('/maplibre/maplibre-gl-worker.mjs')
+  ```
+  The worker imports that sibling on its first line, and Turbopack does not emit it beside a
+  hashed worker asset, so the `new URL('maplibre-gl/dist/maplibre-gl-worker.mjs',
+  import.meta.url)` form that works under plain webpack fails there. Vite instead wants
+  `import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'`.
+- maplibre 6 drops its default export. `import maplibregl from 'maplibre-gl'` becomes
+  `import * as maplibregl from 'maplibre-gl'`, and the same for `import type`.
+- `map.transform.getMatrixForModel` is gone. A custom layer that builds its own model matrix
+  should call `writeModelMatrix(out, lngLat, altitude)` instead.
+- A map-level `map.on('mouseleave', fn)` or `map.on('mouseenter', fn)` must become
+  `map.on('mouseout', fn)` / `map.on('mousemove', fn)`, or pass a layer id to keep the old event.
 
 ## [0.10.0] - 2026-09-10
 ### Added

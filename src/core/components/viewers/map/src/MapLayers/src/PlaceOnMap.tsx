@@ -11,7 +11,7 @@ import { useFile } from "../../../../../../hooks/files/files"
 import { MapContext } from "../../../../../../store"
 
 import type { DbFile } from "../../../../../../types/dbTypes"
-import type maplibregl from "maplibre-gl"
+import type * as maplibregl from "maplibre-gl"
 
 
 

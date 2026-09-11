@@ -13,6 +13,7 @@ import * as THREE from "three";
 import { BimContext, MapContext } from "../../../../../../../store";
 import { markerOcclusionProps } from "../../../../../../../utils/markerUtils";
 import { ViewerContextMenu } from '../../../../../../ui/FilesManager';
+import { writeModelMatrix } from "../../../../utils/modelMatrix";
 import { disposeThreeScene } from "../disposeThreeScene";
 import { EditPosition, extractPositionAndRotation } from "../EditPosition";
 
@@ -310,10 +311,9 @@ export const BimLayer = () => {
                     // ── Build renderCamera (VP × M, for Three.js rendering) ───
                     // Reused temps — render() allocates nothing. Math is identical
                     // to the prior allocate-every-frame version.
-                    const modelMatrix = map.transform.getMatrixForModel(modelOrigin, modelAltitude);
                     _scaleVec.set(scaling, scaling, scaling);
                     _vp.fromArray(args.defaultProjectionData.mainMatrix);
-                    _m.fromArray(modelMatrix).scale(_scaleVec);
+                    writeModelMatrix(_m, modelOrigin, modelAltitude).scale(_scaleVec);
                     renderCamera.projectionMatrix.multiplyMatrices(_vp, _m);   // VP × M, into the camera's own matrix
 
                     // camIFCPos = translation of (P⁻¹ · (VP×M))⁻¹

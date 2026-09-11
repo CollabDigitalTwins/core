@@ -575,11 +575,11 @@ export const OpenDataLayers = () => {
         };
 
         map.on('mousemove', handleMouseMove);
-        map.on('mouseleave', handleMouseLeave);
+        map.on('mouseout', handleMouseLeave);
 
         return () => {
             map.off('mousemove', handleMouseMove);
-            map.off('mouseleave', handleMouseLeave);
+            map.off('mouseout', handleMouseLeave);
             setDefaultCursor();
         };
     }, [map, allLayerNames]);

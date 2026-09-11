@@ -21,6 +21,7 @@ import { MapLayerClickPriority, type ClickCallback } from '../../../../utils/Map
 import { SiteContextMenu } from './SiteContextMenu'
 import { polygonCentroid, uploadGeoJsonToAsset, pointToSegmentDistance } from './siteGeometry'
 
+import type * as maplibregl from 'maplibre-gl'
 import type { MapGeoJSONFeature } from 'maplibre-gl'
 import type { LayerProps } from 'react-map-gl/maplibre'
 

@@ -18,6 +18,8 @@ import {
 } from '../../../../ui/DropdownMenu'
 import { MapLayerClickPriority } from '../../utils/MapEventManager/MapClickManager'
 
+import type * as maplibregl from 'maplibre-gl'
+
 import type { CursorType } from '../../../../../types/global'
 import type { Tool} from '../../../../../types/tools';
 

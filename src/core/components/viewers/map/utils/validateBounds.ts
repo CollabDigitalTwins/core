@@ -1,21 +1,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { LngLatBoundsLike } from 'maplibre-gl'
+/** Flat bounds `[minLng, minLat, maxLng, maxLat]` — the only shape `<Map maxBounds>` accepts. */
+export type FlatBounds = [number, number, number, number]
 
-/**
- * Type guard to check if a value is a valid flat bounds array [minLng, minLat, maxLng, maxLat]
- */
-const isValidFlatBounds = (value: unknown): value is [number, number, number, number] => (
+type NestedBounds = [[number, number], [number, number]]
+
+const isValidFlatBounds = (value: unknown): value is FlatBounds => (
   Array.isArray(value)
   && value.length === 4
   && value.every((n) => typeof n === 'number' && Number.isFinite(n))
 )
 
-/**
- * Type guard to check if a value is a valid nested bounds array [[minLng, minLat], [maxLng, maxLat]]
- */
-const isValidNestedBounds = (value: unknown): value is [[number, number], [number, number]] => (
+const isValidNestedBounds = (value: unknown): value is NestedBounds => (
   Array.isArray(value)
   && value.length === 2
   && value.every((pair) => (
@@ -25,23 +22,20 @@ const isValidNestedBounds = (value: unknown): value is [[number, number], [numbe
   ))
 )
 
+const flatten = ([[minLng, minLat], [maxLng, maxLat]]: NestedBounds): FlatBounds => (
+  [minLng, minLat, maxLng, maxLat]
+)
+
 /**
- * Resolves and validates bounds to a LngLatBoundsLike format.
- * Accepts bounds as an array (flat or nested) or as a JSON string.
- * Falls back to the provided fallback bounds if validation fails.
- *
- * @param bounds - The bounds to validate (can be an array or JSON string)
- * @param fallbackBounds - The bounds to use if validation fails. When omitted,
- *   invalid input resolves to `undefined`, i.e. no panning restriction.
- * @returns Valid LngLatBoundsLike bounds, or the fallback (which may be undefined)
+ * Validates flat or nested bounds, given as an array or a JSON string, and normalises to flat.
+ * Invalid input resolves to `fallbackBounds`, which may be `undefined` — no panning restriction.
  */
 export const resolveBounds = (
   bounds: unknown,
-  fallbackBounds?: LngLatBoundsLike
-): LngLatBoundsLike | undefined => {
-  if (isValidFlatBounds(bounds) || isValidNestedBounds(bounds)) {
-    return bounds as LngLatBoundsLike
-  }
+  fallbackBounds?: FlatBounds
+): FlatBounds | undefined => {
+  if (isValidFlatBounds(bounds)) return bounds
+  if (isValidNestedBounds(bounds)) return flatten(bounds)
 
   if (typeof bounds === 'string') {
     const trimmed = bounds.trim()
@@ -51,9 +45,8 @@ export const resolveBounds = (
 
     try {
       const parsed = JSON.parse(trimmed) as unknown
-      if (isValidFlatBounds(parsed) || isValidNestedBounds(parsed)) {
-        return parsed as LngLatBoundsLike
-      }
+      if (isValidFlatBounds(parsed)) return parsed
+      if (isValidNestedBounds(parsed)) return flatten(parsed)
     } catch {
       // fall back to fallbackBounds
     }

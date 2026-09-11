@@ -26,7 +26,7 @@ import {
 import { BuildingSensorMarkers } from "./src/BuildingSensorMarkers";
 
 import type { PopupEntry } from "../../../../../../../types/map";
-import type { MapGeoJSONFeature, MapMouseEvent } from "maplibre-gl";
+import type { DataDrivenPropertyValueSpecification, MapGeoJSONFeature, MapMouseEvent } from "maplibre-gl";
 
 const LAYER_ID = "maptiler-3d-buildings";
 const OWN_SOURCE_ID = "cdt-buildings";
@@ -352,7 +352,12 @@ export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
   // when a highlight moves or a sensor colour actually differs, not on every 15s poll.
   React.useEffect(() => {
     if (!map || !map.getLayer(LAYER_ID)) return;
-    map.setPaintProperty(LAYER_ID, "fill-extrusion-color", colourExpr);
+    // The spec union cannot describe an expression assembled at runtime, so the structural type is asserted here.
+    map.setPaintProperty(
+      LAYER_ID,
+      "fill-extrusion-color",
+      colourExpr as DataDrivenPropertyValueSpecification<string>,
+    );
   }, [map, colourExpr]);
 
   return (

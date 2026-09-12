@@ -68,12 +68,12 @@ Three rules apply once you do this:
   type Ctx = PluginContext<MapToolProps, BimToolProps>
   ```
 
-  The order is map, BIM, point cloud, legend; trailing ones you do not use can be left off.
+  The order is map, BIM, legend; trailing ones you do not use can be left off.
 
 ### Where a tab or a legend appears
 
 `viewer.tabs` and `viewer.legends` are shared between viewers, so each one carries a
-`viewers` list saying which. Omitting it means **all three**, which is rarely what you want:
+`viewers` list saying which. Omitting it means **both**, which is rarely what you want:
 
 ```ts
 ctx.register('viewer.tabs', {

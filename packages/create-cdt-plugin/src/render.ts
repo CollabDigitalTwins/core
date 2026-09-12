@@ -63,7 +63,7 @@ export function render(source: string, tokens: TOKENS): string {
 // Slicing off the quotes JSON.stringify adds lets the template keep its own and stay readable.
 const jsonSafe = (value: string) => JSON.stringify(value).slice(1, -1)
 
-// Explicit even when it lists all three: omitting the field means every viewer, chosen by none.
+// Explicit even when it lists both: omitting the field means every viewer, chosen by none.
 function viewersToken(options: Options): string {
   return `[${viewersFor(options.surfaces).map(viewer => `'${viewer}'`).join(', ')}]`
 }

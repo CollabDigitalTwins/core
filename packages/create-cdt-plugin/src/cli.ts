@@ -48,7 +48,7 @@ function gitAuthor(): string {
   }
 }
 
-// The one location nobody chose: no viewer surface to tie a tab or legend to means all three.
+// The one location nobody chose: no viewer surface to tie a tab or legend to means both.
 function warnOnEveryViewer(surfaces: Surface[]): void {
   const shared = surfaces.filter(
     surface => surface === 'viewer.tabs' || surface === 'viewer.legends',
@@ -59,7 +59,7 @@ function warnOnEveryViewer(surfaces: Surface[]): void {
 
   console.warn(
     `\nHeads up: ${shared.join(' and ')} will appear in every viewer, because you picked no `
-    + 'map, BIM or point cloud surface to tie it to. Narrow the `viewers` line in the generated '
+    + 'map or BIM surface to tie it to. Narrow the `viewers` line in the generated '
     + 'entry if it belongs in only one.',
   )
 }

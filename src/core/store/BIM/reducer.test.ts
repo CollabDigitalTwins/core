@@ -16,6 +16,7 @@ const base = {
   bcfTopic: null, bcfTopics: [], bcfTopicId: null,
   modelUIState: {},
   pointCloudIds: [], activePointCloudId: null,
+  splatIds: [],
 } as unknown as BimState
 
 describe('BimReducer', () => {
@@ -114,5 +115,33 @@ describe('BimReducer', () => {
 
   it('unknown action returns the same state', () => {
     expect(BimReducer(base, { type: 'NOPE' } as never)).toBe(base)
+  })
+
+  it('SET_SPLAT_IDS replaces the list rather than toggling each id', () => {
+    let s = BimReducer(base, { type: 'SET_SPLAT_IDS', payload: { splatIds: ['12', '13'] } } as never)
+    expect(s.splatIds).toEqual(['12', '13'])
+
+    s = BimReducer(s, { type: 'SET_SPLAT_IDS', payload: { splatIds: ['14'] } } as never)
+    expect(s.splatIds).toEqual(['14'])
+  })
+
+  it('TOGGLE_SPLAT switches one id on and back off', () => {
+    let s = BimReducer(base, { type: 'TOGGLE_SPLAT', payload: { splatId: '12' } } as never)
+    expect(s.splatIds).toEqual(['12'])
+
+    s = BimReducer(s, { type: 'TOGGLE_SPLAT', payload: { splatId: '12' } } as never)
+    expect(s.splatIds).toEqual([])
+  })
+
+  it('TOGGLE_SPLAT leaves the point clouds alone', () => {
+    const start = { ...base, pointCloudIds: ['669'] } as never
+    const s = BimReducer(start, { type: 'TOGGLE_SPLAT', payload: { splatId: '12' } } as never)
+    expect(s.pointCloudIds).toEqual(['669'])
+    expect(s.splatIds).toEqual(['12'])
+  })
+
+  it('DISPOSE-BIM clears the splats too', () => {
+    const start = { ...base, splatIds: ['12'] } as never
+    expect(BimReducer(start, { type: 'DISPOSE-BIM' } as never).splatIds).toEqual([])
   })
 })

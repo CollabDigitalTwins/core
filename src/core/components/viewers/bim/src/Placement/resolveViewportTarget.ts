@@ -16,6 +16,11 @@ export interface CloudHit {
   id: string
 }
 
+export interface SplatHit {
+  distance: number
+  id: string
+}
+
 export interface ObjectHit {
   distance: number
   /** The scene registry key, which is the file id for anything that finished uploading. */
@@ -24,7 +29,7 @@ export interface ObjectHit {
 
 export interface ViewportTarget {
   file: DbFile
-  kind: 'model' | 'cloud' | 'object'
+  kind: 'model' | 'cloud' | 'splat' | 'object'
   capabilities: PlacementCapabilities
 }
 
@@ -32,12 +37,13 @@ export interface ResolveViewportTargetInput {
   files: DbFile[]
   fragment: FragmentHit | null
   cloud: CloudHit | null
+  splat: SplatHit | null
   object: ObjectHit | null
 }
 
 /** What sits under the cursor, or null when nothing placeable does. */
 export function resolveViewportTarget(
-  { files, fragment, cloud, object }: ResolveViewportTargetInput,
+  { files, fragment, cloud, splat, object }: ResolveViewportTargetInput,
 ): ViewportTarget | null {
   const byName = (name?: string) => files.find((candidate) => candidate.name === name)
   const byId = (id: string) => files.find((candidate) => String(candidate.id) === id)
@@ -47,6 +53,7 @@ export function resolveViewportTarget(
     fragment && { distance: fragment.distance, kind: 'model' as const, file: byName(fragment.modelId) },
     object && { distance: object.distance, kind: 'object' as const, file: byId(object.fileId) },
     cloud && { distance: cloud.distance, kind: 'cloud' as const, file: byId(cloud.id) },
+    splat && { distance: splat.distance, kind: 'splat' as const, file: byId(splat.id) },
   ].filter((candidate): candidate is { distance: number; kind: ViewportTarget['kind']; file: DbFile | undefined } => Boolean(candidate))
 
   let nearest: { kind: ViewportTarget['kind']; file: DbFile } | null = null

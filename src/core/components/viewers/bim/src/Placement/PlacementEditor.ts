@@ -70,6 +70,8 @@ export class PlacementEditor extends OBC.Component implements OBC.Disposable, Ex
   private createGizmo: (() => PlacementGizmo) | null = null
   private pickPoint: (() => Promise<THREE.Vector3 | null>) | null = null
   private pickSources: (() => Iterable<ScenePickSource>) | null = null
+  /** Sources that register themselves, so a second kind of object cannot clobber the first. */
+  private readonly registeredPickSources = new Set<ScenePickSource>()
   private world: OBC.World | null = null
 
   private gizmo: PlacementGizmo | null = null
@@ -95,6 +97,14 @@ export class PlacementEditor extends OBC.Component implements OBC.Disposable, Ex
     this.createGizmo = config.createGizmo ?? (() => new GizmoController(config.world))
     this.pickSources = config.pickSources ?? (() => [])
     this.pickPoint = config.pickPoint ?? (() => this.pickWorldPointOnDoubleClick())
+  }
+
+  registerPickSource(source: ScenePickSource) {
+    this.registeredPickSources.add(source)
+  }
+
+  unregisterPickSource(source: ScenePickSource) {
+    this.registeredPickSources.delete(source)
   }
 
   get activeId(): string | null {
@@ -355,7 +365,8 @@ export class PlacementEditor extends OBC.Component implements OBC.Disposable, Ex
 
     const raycaster = new THREE.Raycaster()
     raycaster.setFromCamera(caster.mouse.position, camera)
-    const sceneHit = pickNearest(this.pickSources?.() ?? [], raycaster.ray, camera, SCENE_PICK_WINDOW_PX)
+    const sources = [...(this.pickSources?.() ?? []), ...this.registeredPickSources]
+    const sceneHit = pickNearest(sources, raycaster.ray, camera, SCENE_PICK_WINDOW_PX)
 
     const fragmentHit = (await caster.castRay({ items: [] }))?.point ?? null
     if (!sceneHit) return fragmentHit

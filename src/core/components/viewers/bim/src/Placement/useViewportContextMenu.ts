@@ -12,6 +12,7 @@ import { ndcFromPointer, SCENE_PICK_WINDOW_PX } from '../lib/scenePicker'
 import { ModelManager } from '../ModelManager'
 import { BimPointClouds } from '../PointClouds'
 import { BimSceneObjects } from '../SceneObjects'
+import { BimSplats } from '../Splats'
 
 import { RIGHT_BUTTON, beginPress, opensMenu, trackPress, withinViewport } from './contextMenuGesture'
 import { pickSceneObject } from './pickSceneObject'
@@ -116,10 +117,11 @@ async function resolveAtPointer(
   raycaster.setFromCamera(ndc, camera)
 
   const cloud = pickCloud(components, raycaster.ray, camera)
+  const splat = pickSplat(components, raycaster.ray, camera)
   const object = pickObject(components, raycaster)
   const fragment = await nearestFragment(components, world, clientX, clientY)
 
-  return resolveViewportTarget({ files, fragment, cloud, object })
+  return resolveViewportTarget({ files, fragment, cloud, splat, object })
 }
 
 // Loaded objects are plain scene meshes, invisible to both the fragment and the cloud pick.
@@ -145,6 +147,15 @@ function isAnimated(components: OBC.Components, target: ViewportTarget): boolean
 function pickCloud(components: OBC.Components, ray: THREE.Ray, camera: THREE.Camera) {
   try {
     return components.get(BimPointClouds).pickWithId(ray, camera, SCENE_PICK_WINDOW_PX)
+  }
+  catch {
+    return null
+  }
+}
+
+function pickSplat(components: OBC.Components, ray: THREE.Ray, camera: THREE.Camera) {
+  try {
+    return components.get(BimSplats).pickWithId(ray, camera, SCENE_PICK_WINDOW_PX)
   }
   catch {
     return null

@@ -582,7 +582,7 @@
     "moreOptions": "More options",
     "modelsTitles": "Models",
     "addBimTitle": "Add BIM model",
-    "addModelTitle": "Add 3D model",
+    "addModelTitle": "Add 3D model or splat",
     "pointCloudsTitle": "Point Clouds",
     "addPointCloudTitle": "Add Point Cloud",
     "uploadingFile": "Uploading..."
@@ -2096,5 +2096,24 @@
     "clusterContents": "{count} items here",
     "zoomToExpand": "Zoom to expand",
     "close": "Close"
+  },
+  "SplatSettings": {
+    "title": "Gaussian splats",
+    "opacity": "Opacity",
+    "opacityOf": "Opacity — {name}",
+    "detail": "Detail",
+    "detailOf": "Detail — {name}",
+    "debugTint": "Debug tint",
+    "debugTintOf": "Debug tint — {name}",
+    "mode2d": "2D splat mode",
+    "blur": "Blur",
+    "preBlur": "Pre-blur"
+  },
+  "SplatManagement": {
+    "title": "Gaussian splats",
+    "uploadTitle": "Upload a Gaussian splat",
+    "unsupportedFormat": "Unsupported splat format",
+    "uploadFailed": "Could not upload \"{name}\"",
+    "loadFailed": "Could not load \"{name}\""
   }
 }

@@ -32,6 +32,7 @@ import { BimPointClouds } from "./src/PointClouds";
 import { BimPointCloudSync } from "./src/PointClouds/BimPointCloudSync";
 import { PropertiesMenu } from "./src/propertiesMenu";
 import { SelectionSync } from "./src/SelectionSync";
+import { BimSplatSync } from "./src/Splats/BimSplatSync";
 import { ClippingPlanes } from "./src/tools/ClippingTool/ClippingPlanes";
 import { ViewportGizmo } from "./src/ViewportGizmo";
 
@@ -244,6 +245,7 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
             <ModelsSync />
             <BuildingLocationSync />
             <BimPointCloudSync pointcloudApiUrl={pointcloudApiUrl} />
+            <BimSplatSync />
             <PlacementEditorHost />
             <SelectionSync />
             <div

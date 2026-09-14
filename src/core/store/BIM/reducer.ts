@@ -43,6 +43,11 @@ interface BimTypes {
     pointCloudIds: string[];
     /** The cloud the alignment tools act on. */
     activePointCloudId: string | null;
+    /**
+     * File ids the user has switched on for the BIM scene. The desired set;
+     * `BimSplatSync` reconciles `BimSplats` against it.
+     */
+    splatIds: string[];
 }
 
 export type BimState = BimTypes;
@@ -67,6 +72,8 @@ export type BimPayload = {
     ["SET_MODEL_IDS"]: Pick<BimTypes, "modelIds">;
     ["TOGGLE_POINT_CLOUD"]: { pointCloudId: string };
     ["SET_ACTIVE_POINT_CLOUD"]: Pick<BimTypes, "activePointCloudId">;
+    ["SET_SPLAT_IDS"]: { splatIds: string[] };
+    ["TOGGLE_SPLAT"]: { splatId: string };
 };
 
 export type BimActions = ActionMap<BimPayload>[keyof ActionMap<BimPayload>];
@@ -123,6 +130,7 @@ export const BimReducer = (state: BimState, action: BimActions) => {
                 "selection": {},
                 "pointCloudIds": [],
                 "activePointCloudId": null,
+                "splatIds": [],
             };
         case "SET_POINT_CLOUD_IDS": {
             const { pointCloudIds } = action.payload;
@@ -152,6 +160,20 @@ export const BimReducer = (state: BimState, action: BimActions) => {
                 ...state,
                 "activePointCloudId": action.payload.activePointCloudId,
             };
+        case "SET_SPLAT_IDS":
+            return {
+                ...state,
+                "splatIds": action.payload.splatIds,
+            };
+        case "TOGGLE_SPLAT": {
+            const { splatId } = action.payload;
+            return {
+                ...state,
+                "splatIds": state.splatIds.includes(splatId)
+                    ? state.splatIds.filter((id) => id !== splatId)
+                    : [...state.splatIds, splatId],
+            };
+        }
         case "TOGGLE_BIM_TO_MAP": {
 
             const { bimFile } = action.payload.buildingModel;

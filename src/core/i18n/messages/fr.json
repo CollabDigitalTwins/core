@@ -582,7 +582,7 @@
     "moreOptions": "Plus d'options",
     "modelsTitles": "Modèles",
     "addBimTitle": "Ajouter un modèle BIM",
-    "addModelTitle": "Ajouter un modèle 3D",
+    "addModelTitle": "Ajouter un modèle 3D ou un splat",
     "pointCloudsTitle": "Nuages de points",
     "addPointCloudTitle": "Ajouter un nuage de points",
     "uploadingFile": "Téléchargement en cours..."
@@ -2093,5 +2093,24 @@
     "clusterContents": "{count} éléments ici",
     "zoomToExpand": "Zoomer pour développer",
     "close": "Fermer"
+  },
+  "SplatSettings": {
+    "title": "Splats gaussiens",
+    "opacity": "Opacité",
+    "opacityOf": "Opacité — {name}",
+    "detail": "Détail",
+    "detailOf": "Détail — {name}",
+    "debugTint": "Teinte de débogage",
+    "debugTintOf": "Teinte de débogage — {name}",
+    "mode2d": "Mode splat 2D",
+    "blur": "Flou",
+    "preBlur": "Pré-flou"
+  },
+  "SplatManagement": {
+    "title": "Splats gaussiens",
+    "uploadTitle": "Téléverser un splat gaussien",
+    "unsupportedFormat": "Format de splat non pris en charge",
+    "uploadFailed": "Impossible de téléverser « {name} »",
+    "loadFailed": "Impossible de charger « {name} »"
   }
 }

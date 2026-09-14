@@ -2,12 +2,14 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { POINT_CLOUD_ACCEPT, POINT_CLOUD_EXTENSIONS } from '../../../viewers/bim/src/PointClouds/pointCloudFiles'
+import { SPLAT_ACCEPT, SPLAT_EXTENSIONS } from '../../../viewers/shared/splat/splatFiles'
 
 import type { DbFile } from '../../../../types/dbTypes'
 
 export type FileType =
   | 'bim-file'
   | 'point-cloud-file'
+  | 'splat-file'
   | '3d-file'
   | 'cad-file'
   | 'media-file'
@@ -19,6 +21,7 @@ export type FileSection = 'bim' | 'models' | 'pointClouds' | 'files'
 export const EXTENSIONS_FOR_TYPE: Record<FileType, readonly string[]> = {
   'bim-file': ['ifc', 'frag'],
   'point-cloud-file': POINT_CLOUD_EXTENSIONS,
+  'splat-file': SPLAT_EXTENSIONS,
   '3d-file': ['glb', 'gltf', 'fbx', 'obj', 'dae'],
   'cad-file': ['dxf', 'dwg'],
   'media-file': ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'tif', 'tiff', 'mp4', 'webm', 'mov', 'mp3', 'wav', 'ogg'],
@@ -29,6 +32,7 @@ export const EXTENSIONS_FOR_TYPE: Record<FileType, readonly string[]> = {
 export const SECTION_FOR_TYPE: Record<FileType, FileSection> = {
   'bim-file': 'bim',
   '3d-file': 'models',
+  'splat-file': 'models',
   'point-cloud-file': 'pointClouds',
   'cad-file': 'files',
   'media-file': 'files',
@@ -39,6 +43,7 @@ export const SECTION_FOR_TYPE: Record<FileType, FileSection> = {
 export const ACCEPT_FOR_TYPE: Record<FileType, string> = {
   'bim-file': '.ifc,.frag',
   'point-cloud-file': POINT_CLOUD_ACCEPT,
+  'splat-file': SPLAT_ACCEPT,
   '3d-file': '.glb,.gltf,.fbx,.obj,.dae',
   'cad-file': '.dxf,.dwg',
   'media-file': 'image/*,video/*,audio/*',
@@ -47,10 +52,10 @@ export const ACCEPT_FOR_TYPE: Record<FileType, string> = {
 }
 
 const ORDER: readonly FileType[] = [
-  'bim-file', 'point-cloud-file', '3d-file', 'cad-file', 'media-file', 'document-file',
+  'bim-file', 'point-cloud-file', 'splat-file', '3d-file', 'cad-file', 'media-file', 'document-file',
 ]
 
-const STORED_TYPES = new Set<string>(['bim-file', 'point-cloud-file', '3d-file', 'cad-file', 'media-file', 'document-file'])
+const STORED_TYPES = new Set<string>(['bim-file', 'point-cloud-file', 'splat-file', '3d-file', 'cad-file', 'media-file', 'document-file'])
 
 const byExtension = (extension: string): FileType | null => {
   if (!extension) return null

@@ -2300,6 +2300,13 @@
   dependencies:
     "@sinonjs/commons" "^3.0.1"
 
+"@sparkjsdev/spark@^2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@sparkjsdev/spark/-/spark-2.2.0.tgz#2db1bfd233e9945c4dee7973ac748486be63841d"
+  integrity sha512-wf5F2YAmPXnjm20/MgXYer9FQTXz2JOCo05HwxFkaD7Guk9rHVPIwdJ6fq0oF9ME0heMvYj+TxS6DTrucvy6KA==
+  dependencies:
+    fflate "^0.8.2"
+
 "@standard-schema/spec@^1.0.0", "@standard-schema/spec@^1.1.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@standard-schema/spec/-/spec-1.1.0.tgz#a79b55dbaf8604812f52d140b2c9ab41bc150bb8"
@@ -6378,7 +6385,7 @@ fdir@^6.5.0:
   resolved "https://registry.yarnpkg.com/fdir/-/fdir-6.5.0.tgz#ed2ab967a331ade62f18d077dae192684d50d350"
   integrity sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==
 
-fflate@^0.8.1:
+fflate@^0.8.1, fflate@^0.8.2:
   version "0.8.3"
   resolved "https://registry.yarnpkg.com/fflate/-/fflate-0.8.3.tgz#bc27d8eb30343d4d512abb03480202ce65d825fc"
   integrity sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==

@@ -7,6 +7,30 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Added
+- **Gaussian splat support in the BIM viewer.** `.ply`, `.spz`, `.splat`, `.ksplat` and `.sog`
+  files upload, render and place alongside the BIM model, using
+  [Spark](https://sparkjs.dev) (`@sparkjsdev/spark`, MIT) as a new runtime dependency. Splats
+  are a new `'splat-file'` type listed inside the existing **Models** sidebar section — no new
+  section — and are moved, rotated and uniformly scaled with the existing placement gizmo.
+  A `Gaussian splats` settings panel exposes per-splat opacity, detail (`maxSh`) and a debug
+  tint, plus the renderer-wide 2D-splat mode and blur.
+  New modules: `components/viewers/shared/splat/*`, `components/viewers/bim/src/Splats/*`,
+  `components/viewers/bim/src/Placement/targets/splatTarget` and `useSplatTarget`.
+- `PlacementEditor.registerPickSource()` / `unregisterPickSource()`, so more than one kind of
+  scene object can offer itself to the placement raycast without the last caller of `setup()`
+  clobbering the rest.
+
+### Changed
+- `resolveViewportTarget()` takes a `splat` hit and can return `kind: 'splat'`.
+- `BimState` gains `splatIds`, with the `SET_SPLAT_IDS` and `TOGGLE_SPLAT` actions.
+- Splat placements persist to the existing `File.pointCloudTransform` column, whose shape
+  already matched. No schema change.
+
+### Migration
+- `resolveViewportTarget()` now requires a `splat` property on its input. Pass `splat: null`
+  where there is no splat pick.
+
 ## [0.10.1] - 2026-09-11
 
 ### Security

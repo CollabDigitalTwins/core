@@ -16,7 +16,7 @@ type Classifiable = Pick<DbFile, 'extension'> & Partial<Pick<DbFile, 'type' | 'm
  */
 export function capabilitiesForFile(file: Classifiable): PlacementCapabilities {
   const type = typeOfRecord(file as DbFile)
-  if (type === 'point-cloud-file') return FULL_PLACEMENT
+  if (type === 'point-cloud-file' || type === 'splat-file') return FULL_PLACEMENT
   if (type === '3d-file' || type === 'cad-file') return SCALABLE_OBJECT_PLACEMENT
   return YAW_ONLY_PLACEMENT
 }
@@ -24,5 +24,5 @@ export function capabilitiesForFile(file: Classifiable): PlacementCapabilities {
 /** A survey of the whole building already carries its own coordinates, so picking a spot is meaningless. */
 export function dropsAtOrigin(file: Classifiable): boolean {
   const type = typeOfRecord(file as DbFile)
-  return type === 'point-cloud-file' || type === 'bim-file'
+  return type === 'point-cloud-file' || type === 'splat-file' || type === 'bim-file'
 }

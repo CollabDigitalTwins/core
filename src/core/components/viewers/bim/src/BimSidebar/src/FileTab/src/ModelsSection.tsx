@@ -12,9 +12,11 @@ import { BimContext, BuildingsContext } from '../../../../../../../../store'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { FileItemComponent, useFileActions, useFileDeleteHandler, ACCEPT_FOR_TYPE, EXTENSIONS_FOR_TYPE, UploadProgressBar, useUploadTasks } from '../../../../../../../ui/FilesManager'
+import { isSplatFile } from '../../../../../../shared/splat/splatFiles'
 import { useBimFileIntake } from '../../../../lib/useBimFileIntake'
 import { BimPointClouds } from '../../../../PointClouds'
 
+import { SplatRows } from './SplatRows'
 import { usePlaceableFileRows } from './usePlaceableFileRows'
 
 import type { FileTabSectionChrome } from './sectionChrome'
@@ -35,6 +37,11 @@ export function ModelsSection({ files, query = '', ...chrome }: ModelsSectionPro
   const t = useTranslations('FileItemComponent')
   const tFiles = useTranslations('FileSelection')
 
+  const [splatFiles, modelFiles] = React.useMemo(() => [
+    files.filter(isSplatFile),
+    files.filter(file => !isSplatFile(file)),
+  ], [files])
+
   const { state: bimState } = React.useContext(BimContext)
   const { bimComponents } = bimState.bim
   const { state: buildingsState } = React.useContext(BuildingsContext)
@@ -45,7 +52,7 @@ export function ModelsSection({ files, query = '', ...chrome }: ModelsSectionPro
   const { handleDeleteFile } = useFileDeleteHandler({ deleteFile })
 
   const { rows, setRows, toggleVisibility, handleMove, registry } = usePlaceableFileRows({
-    files,
+    files: modelFiles,
     buildingId,
     isPlaceable: is3dFile,
     placeHint: name => tFiles('placeHint', { name }),
@@ -73,7 +80,7 @@ export function ModelsSection({ files, query = '', ...chrome }: ModelsSectionPro
   const addModel = React.useCallback(() => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = ACCEPT_FOR_TYPE['3d-file']
+    input.accept = `${ACCEPT_FOR_TYPE['3d-file']},${ACCEPT_FOR_TYPE['splat-file']}`
     input.addEventListener('change', () => {
       const picked = input.files?.[0]
       if (picked) void intake.submit(picked)
@@ -86,6 +93,11 @@ export function ModelsSection({ files, query = '', ...chrome }: ModelsSectionPro
     return needle ? rows.filter(file => file.name.toLowerCase().includes(needle)) : rows
   }, [rows, query])
 
+  const filteredSplats = React.useMemo(() => {
+    const needle = query.trim().toLowerCase()
+    return needle ? splatFiles.filter(file => file.name.toLowerCase().includes(needle)) : splatFiles
+  }, [splatFiles, query])
+
   return (
     <>
       <CollapsibleSection
@@ -93,7 +105,7 @@ export function ModelsSection({ files, query = '', ...chrome }: ModelsSectionPro
         icon={LR.FileAxis3d}
         className="min-h-0 overflow-y-auto"
         style={{ height: '100%', minHeight: 0 }}
-        itemCount={filtered.length}
+        itemCount={filtered.length + filteredSplats.length}
         onAddItem={addModel}
         addItemTitle={t('addModelTitle')}
         {...chrome}
@@ -113,6 +125,7 @@ export function ModelsSection({ files, query = '', ...chrome }: ModelsSectionPro
               confirmDelete={false}
             />
           ))}
+          <SplatRows files={filteredSplats} buildingId={buildingId ?? 0} />
         </div>
       </CollapsibleSection>
 

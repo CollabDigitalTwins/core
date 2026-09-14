@@ -22,6 +22,7 @@ const initialState = {
     modelIds: [],
     pointCloudIds: [],
     activePointCloudId: null,
+    splatIds: [],
     floorplans: [],
     grid: null  ,
     buildingModel: {

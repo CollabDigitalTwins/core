@@ -1,8 +1,11 @@
 name: Changelog
 
-# Blocks a pull request that changes the public surface of the package without adding a
-# changelog entry. Every path under src/core/ is reachable through a `./*` subpath export,
-# so a consumer can import it and a silent change there is a silent break.
+# Blocks a pull request that changes a public surface without adding a changelog entry.
+# Every path under src/core/ is reachable through a `./*` subpath export, so a consumer can
+# import it and a silent change there is a silent break.
+#
+# Each surface answers to its own changelog: src/core/ to the root CHANGELOG.md, and each
+# package under packages/ to its own, because they version and publish independently of core.
 #
 # The rule used to be documentation only, and it lapsed: the changelog stopped after 0.4.5
 # and nine releases shipped undocumented.

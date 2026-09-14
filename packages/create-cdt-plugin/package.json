@@ -1,12 +1,13 @@
 {
   "name": "create-cdt-plugin",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Scaffold a CDT plugin.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "files": [
     "dist",
-    "templates"
+    "templates",
+    "CHANGELOG.md"
   ],
   "bin": {
     "create-cdt-plugin": "./dist/cli.js"

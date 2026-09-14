@@ -138,7 +138,7 @@ describe('tokensFor, surface-derived tokens', () => {
     expect(tokens.CONTEXT_TYPE).toBe('MapPluginContext')
     expect(tokens.SURFACE_ENTRY).toBe('@collabdt/plugin-kit/types/map')
     expect(tokens.PROPS_TYPE).toBe('MapToolProps')
-    expect(tokens.ICON).toBe('MapPin')
+    expect(tokens.ICON).toBe('Map')
   })
 
   it('tracks the surface rather than the name, so switching surface reshapes the imports', () => {

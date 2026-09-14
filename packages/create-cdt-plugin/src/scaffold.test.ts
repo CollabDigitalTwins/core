@@ -264,7 +264,7 @@ describe('scaffold, spanning several surfaces', () => {
     const { directory } = await scaffold(spanning(['bim.tools', 'viewer.legends']), temp())
 
     expect(read(directory, 'src/index.ts'))
-      .toContain('type Ctx = PluginContext<unknown, BimToolProps, unknown, LegendRegistration>')
+      .toContain('type Ctx = PluginContext<unknown, BimToolProps, LegendRegistration>')
   })
 
   it('targets a tab at the viewers the plugin actually contributes tools to', async () => {

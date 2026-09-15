@@ -4,6 +4,11 @@
 import * as THREE from 'three'
 import { describe, expect, it, vi } from 'vitest'
 
+vi.mock('@thatopen/components', () => ({}))
+vi.mock('../PointClouds', () => ({ BimPointClouds: class BimPointClouds {} }))
+vi.mock('../SceneObjects', () => ({ BimSceneObjects: class BimSceneObjects {} }))
+vi.mock('../Splats', () => ({ BimSplats: class BimSplats {} }))
+
 import { nearestFragmentHit } from './pickAtPointer'
 
 const model = (distance: number | null, localId = 7) => ({

@@ -91,11 +91,16 @@ describe('BimSplats.setHighlight', () => {
 // Spark's SplatMesh has no geometry, so bounds come from splat centres, not Box3.setFromObject.
 type FakeSplat = LoadedSplat & { boundingBoxCalls: () => number }
 
-const fakeSplat = (id: string, centers: THREE.Vector3[], matrixWorld = new THREE.Matrix4()): FakeSplat => {
+const fakeSplat = (
+  id: string,
+  centers: THREE.Vector3[],
+  matrixWorld = new THREE.Matrix4(),
+  rootMatrixWorld: THREE.Matrix4 = matrixWorld,
+): FakeSplat => {
   let calls = 0
   return {
     id,
-    root: { updateMatrixWorld: vi.fn() },
+    root: { updateMatrixWorld: vi.fn(), matrixWorld: rootMatrixWorld },
     mesh: {
       getBoundingBox: () => {
         calls++
@@ -155,6 +160,27 @@ describe('BimSplats.boundsOf', () => {
 
     expect(box.min.toArray()).toEqual([8, -2, -2])
     expect(box.max.toArray()).toEqual([12, 2, 2])
+  })
+
+  it('transforms by the mesh world matrix, not the root, because upFix rotates between them', () => {
+    const meshMatrixWorld = new THREE.Matrix4().compose(
+      new THREE.Vector3(10, 0, 0),
+      new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI, 0)),
+      new THREE.Vector3(1, 1, 1),
+    )
+    const rootMatrixWorld = new THREE.Matrix4()
+    const splat = fakeSplat(
+      'a',
+      [new THREE.Vector3(0, 0, 1), new THREE.Vector3(2, 1, 3)],
+      meshMatrixWorld,
+      rootMatrixWorld,
+    )
+    const map = new Map<string, LoadedSplat>([['a', splat]])
+
+    const box = boundsComponent(map).boundsOf('a') as THREE.Box3
+
+    expect(box.min.toArray().map((n: number) => Math.round(n))).toEqual([8, 0, -3])
+    expect(box.max.toArray().map((n: number) => Math.round(n))).toEqual([10, 1, -1])
   })
 
   it('iterates the splat once, then serves the cached box on later calls', () => {

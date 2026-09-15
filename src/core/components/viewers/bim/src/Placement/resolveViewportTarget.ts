@@ -9,6 +9,8 @@ import type { DbFile } from '../../../../../types/dbTypes'
 export interface FragmentHit {
   distance: number
   modelId?: string
+  /** Only the selection needs the element; the menu resolves a file from the model alone. */
+  localId?: number
 }
 
 export interface CloudHit {

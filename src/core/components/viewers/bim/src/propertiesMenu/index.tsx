@@ -36,6 +36,8 @@ interface PropertiesSideBarProps {
   onOpenChangeAction?: (open: boolean) => void
 }
 
+const identityPropertyValue = (value: string | number) => String(value)
+
 // Hook to get element names for multiple elements
 function useElementNames(bimComponents: any) {
   const { fetchElementProperties } = useElementProperties(bimComponents)
@@ -305,7 +307,6 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
       size: t('size'),
       uploaded: t('uploaded'),
       description: t('description'),
-      tag: t('tag'),
     }
     if (!selectedFile) return base
     const typeKey = `type_${typeOfRecord(selectedFile)}`
@@ -526,7 +527,7 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
                       group={group}
                       isExpanded={expandedGroups.has(group.id)}
                       onToggleAction={toggleGroup}
-                      formatPropertyValueAction={formatPropertyValue}
+                      formatPropertyValueAction={selectedFile ? identityPropertyValue : formatPropertyValue}
                     />
                   ))}
                 </div>
@@ -537,7 +538,6 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
                 isExpanded={expandedGroups.has('position')}
                 onToggleAction={toggleGroup}
                 onEditInViewport={handleEditInViewport}
-                hint={modelFileForElement ? t('movesModel', { name: modelFileForElement.name }) : undefined}
               />
 
               {!selectedFile && (

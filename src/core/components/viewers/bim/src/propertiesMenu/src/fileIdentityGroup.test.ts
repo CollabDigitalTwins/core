@@ -9,7 +9,7 @@ import type { DbFile } from '../../../../../../types/dbTypes'
 
 const labels = {
   identity: 'Identity Data', name: 'Name', type: 'Type', extension: 'Extension',
-  size: 'Size', uploaded: 'Uploaded', description: 'Description', tag: 'Tag',
+  size: 'Size', uploaded: 'Uploaded', description: 'Description',
   'type_splat-file': 'Gaussian splat',
 }
 
@@ -30,14 +30,18 @@ describe('fileIdentityGroup', () => {
     expect(group.properties.find(property => property.name === 'Size')?.value).toBe('193.2 MB')
   })
 
-  it('shows description and tag only when they carry something', () => {
+  it('shows description only when it carries something', () => {
     const bare = fileIdentityGroup(file({}), labels).properties.map(property => property.name)
     expect(bare).not.toContain('Description')
 
-    const full = fileIdentityGroup(file({ description: 'East wing', tag: 'splat-file' }), labels)
+    const full = fileIdentityGroup(file({ description: 'East wing' }), labels)
       .properties.map(property => property.name)
     expect(full).toContain('Description')
-    expect(full).toContain('Tag')
+  })
+
+  it('does not show a tag row', () => {
+    const names = fileIdentityGroup(file({ tag: 'splat-file' }), labels).properties.map(property => property.name)
+    expect(names).not.toContain('Tag')
   })
 
   it('keeps the identity-data id, so it opens by default like an element does', () => {
@@ -55,5 +59,21 @@ describe('fileIdentityGroup', () => {
 
     const absent = fileIdentityGroup(file({}), labels).properties.map(property => property.name)
     expect(absent).not.toContain('Size')
+  })
+
+  it('keeps the size units instead of a bare number', () => {
+    const group = fileIdentityGroup(file({ sizeBytes: 193_200_000 }), labels)
+    expect(group.properties.find(property => property.name === 'Size')?.value).toBe('193.2 MB')
+  })
+
+  it('renders the uploaded date as a full timestamp, not a truncated number', () => {
+    const group = fileIdentityGroup(file({ uploadedAt: '2026-09-14T20:01:15Z' }), labels)
+    const uploaded = group.properties.find(property => property.name === 'Uploaded')?.value
+    expect(uploaded).toBe(new Date('2026-09-14T20:01:15Z').toLocaleString())
+  })
+
+  it('omits the uploaded row when uploadedAt does not parse', () => {
+    const names = fileIdentityGroup(file({ uploadedAt: 'not-a-date' }), labels).properties.map(property => property.name)
+    expect(names).not.toContain('Uploaded')
   })
 })

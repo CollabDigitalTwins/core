@@ -21,18 +21,23 @@ function formatSize(bytes: number): string {
   return `${unit === 0 ? value : value.toFixed(1)} ${UNITS[unit]}`
 }
 
+function formatUploadedAt(uploadedAt: string): string | null {
+  const date = new Date(uploadedAt)
+  return Number.isNaN(date.getTime()) ? null : date.toLocaleString()
+}
+
 /** What a file record can say about itself, for the panel's Identity Data group. */
 export function fileIdentityGroup(file: DbFile, labels: Record<string, string>): PropertyGroup {
   const typeLabel = labels[`type_${typeOfRecord(file)}`]
+  const uploadedAt = formatUploadedAt(file.uploadedAt)
 
   const properties = [
     { name: labels.name, value: file.name },
     { name: labels.type, value: typeLabel },
     file.extension ? { name: labels.extension, value: file.extension } : null,
     file.sizeBytes ? { name: labels.size, value: formatSize(file.sizeBytes) } : null,
-    { name: labels.uploaded, value: new Date(file.uploadedAt).toLocaleString() },
+    uploadedAt ? { name: labels.uploaded, value: uploadedAt } : null,
     file.description ? { name: labels.description, value: file.description } : null,
-    file.tag ? { name: labels.tag, value: file.tag } : null,
   ].filter((property): property is { name: string, value: string } => property !== null)
 
   return {

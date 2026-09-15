@@ -16,7 +16,7 @@ const { highlighterState, FILES, targetForCalls, translators } = vi.hoisted(() =
     selectedItems: {} as Record<string, Set<number>>,
   },
   FILES: [
-    { id: 10, name: 'a.splat', extension: 'splat', uploadedAt: '2026-01-01T00:00:00Z' },
+    { id: 10, name: 'a.splat', extension: 'splat', uploadedAt: '2026-01-01T00:00:00Z', sizeBytes: 193_200_000 },
     { id: 20, name: 'b.splat', extension: 'splat', uploadedAt: '2026-01-01T00:00:00Z' },
     { id: 40, name: 'mesh.glb', extension: 'glb', uploadedAt: '2026-01-01T00:00:00Z' },
     { id: 50, name: 'building.frag', extension: 'frag', uploadedAt: '2026-01-01T00:00:00Z' },
@@ -171,6 +171,16 @@ describe('PropertiesMenu selection wiring', () => {
 
     expect(screen.getByText('a.splat')).toBeInTheDocument()
     expect(targetForCalls.count).toBe(1)
+  })
+
+  it('shows file identity values without running them through the BIM numeric formatter', () => {
+    const api = {} as HarnessApi
+    render(<Harness api={api} />)
+
+    act(() => { api.setSceneSelection({ kind: 'splat', fileId: '10' }) })
+
+    expect(screen.getByText('193.2 MB')).toBeInTheDocument()
+    expect(screen.getByText(new Date('2026-01-01T00:00:00Z').toLocaleString())).toBeInTheDocument()
   })
 
   it('renders an object selection without a render-loop crash', () => {

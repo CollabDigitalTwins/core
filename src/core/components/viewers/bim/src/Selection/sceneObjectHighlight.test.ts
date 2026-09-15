@@ -21,7 +21,30 @@ const skinnedRoot = () => {
   return mesh
 }
 
+const animatedRoot = () => {
+  const root = new THREE.Group()
+  const blade = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial())
+  root.add(blade)
+  return { root, blade }
+}
+
 describe('SceneObjectHighlight', () => {
+  it('follows a node the animation moves, rather than freezing at the bind pose', () => {
+    const { root, blade } = animatedRoot()
+    const highlight = new SceneObjectHighlight()
+    highlight.set(root, 'selected')
+
+    const overlay = root.children[1]
+    const clone = overlay.children[0] as THREE.Mesh
+
+    // What an AnimationMixer does to a blade driven by a transform track.
+    blade.rotation.z = Math.PI / 3
+    root.updateMatrixWorld(true)
+    clone.onBeforeRender(null as never, null as never, null as never, null as never, null as never, null as never)
+
+    expect(clone.matrixWorld.elements).toEqual(blade.matrixWorld.elements)
+  })
+
   it('adds one overlay as a child of the highlighted root', () => {
     const root = meshRoot()
     new SceneObjectHighlight().set(root, 'hover')

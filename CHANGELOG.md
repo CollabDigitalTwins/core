@@ -76,6 +76,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   kind of placement target rather than splats alone.
 
 ### Fixed
+- The hover and selection highlight on an animated 3D model no longer freezes at the bind pose
+  while the model moves. The overlay is a clone, so a node an `AnimationMixer` drives left it
+  behind; each cloned mesh now claims its source's world matrix before it renders.
 - Adding a 3D model or splat from the sidebar now opens the placement crosshair, the same as
   adding it from the toolbar. The two entry points had separate implementations and only the
   toolbar consulted the placement rules; both now route through one shared decision.

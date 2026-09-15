@@ -16,6 +16,21 @@ function bindSkinnedClones(original: THREE.Object3D, clone: THREE.Object3D): voi
   for (const [index, child] of original.children.entries()) bindSkinnedClones(child, clone.children[index])
 }
 
+/**
+ * A clone copies the bind pose once, so a node an AnimationMixer drives leaves its overlay
+ * behind. Three computes `modelViewMatrix` after `onBeforeRender`, so claiming the source's
+ * world matrix there keeps the two in step whatever moves them.
+ */
+function trackSourceTransforms(original: THREE.Object3D, clone: THREE.Object3D): void {
+  if ((clone as THREE.Mesh).isMesh) {
+    clone.matrixAutoUpdate = false
+    clone.matrixWorldAutoUpdate = false
+    clone.frustumCulled = false
+    clone.onBeforeRender = () => { clone.matrixWorld.copy(original.matrixWorld) }
+  }
+  for (const [index, child] of original.children.entries()) trackSourceTransforms(child, clone.children[index])
+}
+
 /** The cyan overlay for anything that is a plain scene object: a loaded model, a DXF group. */
 export class SceneObjectHighlight {
   private readonly materials: Record<'hover' | 'selected', THREE.Material>
@@ -38,6 +53,7 @@ export class SceneObjectHighlight {
     overlay.updateMatrix()
 
     bindSkinnedClones(root, overlay)
+    trackSourceTransforms(root, overlay)
     overlay.traverse((child) => {
       const mesh = child as THREE.Mesh
       if (!mesh.isMesh) return

@@ -33,6 +33,7 @@ const initialState = {
     bimModelName: null,
     editingBimModel: null,
     selection: {},
+    sceneSelection: null,
     bcfTopic: null,
     bcfTopics: [],
     bcfTopicId: null,

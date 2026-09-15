@@ -32,6 +32,8 @@ interface BimTypes {
     bimModelName: string | null;
     /** Mirror of the Highlighter's selection; only SelectionSync dispatches SET_BIM_SELECTION. */
     selection: OBC.ModelIdMap;
+    /** The selected file-backed object, when the last click hit one. Only SelectionSync dispatches it. */
+    sceneSelection: { kind: 'object' | 'splat'; fileId: string } | null;
     bcfTopic: OBC.Topic | Partial<OBC.Topic> | null;
     bcfTopics: OBC.Topic[] | Partial<OBC.Topic>[];
     bcfTopicId: string | null;
@@ -69,6 +71,7 @@ export type BimPayload = {
     ["SET_MODEL_UI_STATE"]: { fileId: number; isVisible?: boolean; isGhost?: boolean };
     ["SET_POINT_CLOUD_IDS"]: { pointCloudIds: string[] };
     ["SET_BIM_SELECTION"]: Pick<BimTypes, "selection">;
+    ["SET_SCENE_SELECTION"]: Pick<BimTypes, "sceneSelection">;
     ["SET_MODEL_IDS"]: Pick<BimTypes, "modelIds">;
     ["TOGGLE_POINT_CLOUD"]: { pointCloudId: string };
     ["SET_ACTIVE_POINT_CLOUD"]: Pick<BimTypes, "activePointCloudId">;
@@ -114,6 +117,11 @@ export const BimReducer = (state: BimState, action: BimActions) => {
                 ...state,
                 "selection": action.payload.selection,
             };
+        case "SET_SCENE_SELECTION":
+            return {
+                ...state,
+                "sceneSelection": action.payload.sceneSelection,
+            };
         case "SET_MODEL_IDS":
             return {
                 ...state,
@@ -128,6 +136,7 @@ export const BimReducer = (state: BimState, action: BimActions) => {
                 "modelId": null,
                 "modelIds": [],
                 "selection": {},
+                "sceneSelection": null,
                 "pointCloudIds": [],
                 "activePointCloudId": null,
                 "splatIds": [],

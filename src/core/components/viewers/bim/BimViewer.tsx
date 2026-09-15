@@ -31,6 +31,7 @@ import { PlacementEditorHost } from "./src/Placement/PlacementEditorHost";
 import { BimPointClouds } from "./src/PointClouds";
 import { BimPointCloudSync } from "./src/PointClouds/BimPointCloudSync";
 import { PropertiesMenu } from "./src/propertiesMenu";
+import { Selection } from "./src/Selection";
 import { SelectionSync } from "./src/SelectionSync";
 import { BimSplatSync } from "./src/Splats/BimSplatSync";
 import { ClippingPlanes } from "./src/tools/ClippingTool/ClippingPlanes";
@@ -47,7 +48,7 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
     const locale = useLocale();
 
     const { dispatch: bimDispatch, state: bimState } = React.useContext(BimContext);
-    const { bimComponents } = bimState.bim;
+    const { bimComponents, world } = bimState.bim;
 
     const { dispatch: toolsDispatch, state: toolsState } = React.useContext(ToolsContext);
     const { currentToolId } = toolsState.tools;
@@ -231,6 +232,12 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
             viewportGizmo.remove();
         }
     }, [bimComponents, currentViewer, locale, t]);
+
+    // Highlighter is built synchronously in createViewer, before SET_COMPONENTS dispatches — so it already exists here.
+    React.useEffect(() => {
+        if (!bimComponents || !world) return;
+        bimComponents.get(Selection).setup({ world });
+    }, [bimComponents, world]);
 
     return (
         <div

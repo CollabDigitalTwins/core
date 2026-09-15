@@ -76,6 +76,10 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   kind of placement target rather than splats alone.
 
 ### Fixed
+- The "add file" card reappeared after dropping a file into the scene. Finishing a placement
+  cleared the tool but not the panel's own adding mode, so the drop target came straight back.
+- A file still uploading now shows a spinning placeholder pin rather than its final icon, and
+  a splat's placeholder is removed once the real splat takes over.
 - Loaded 3D models now cast and receive shadows, like BIM elements. Flat DXF drawings and
   scene markers are deliberately excluded. Gaussian splats and point clouds still cannot cast
   shadows — they render outside three.js's shadow pass.

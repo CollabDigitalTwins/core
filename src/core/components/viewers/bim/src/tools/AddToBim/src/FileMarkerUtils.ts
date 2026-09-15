@@ -56,6 +56,7 @@ export const createFileMarker = (
   world: any,
   onAction?: (action: FileMarkerAction) => void,
   actions?: FileMarkerAction[],
+  loading = false,
 ): CSS2DObject | null => {
   if (!world) return null
 
@@ -74,11 +75,13 @@ export const createFileMarker = (
   labelDiv.style.zIndex = '1001'
   labelDiv.addEventListener('contextmenu', e => e.preventDefault())
 
-  createRoot(labelDiv).render(
-    React.createElement(FileMarker, { file: markerFile, onAction, actions }),
-  )
+  const root = createRoot(labelDiv)
+  root.render(React.createElement(FileMarker, { file: markerFile, onAction, actions, loading }))
 
   const css2dObject = new CSS2DObject(labelDiv)
+  ;(css2dObject as any).setLoading = (value: boolean) => {
+    root.render(React.createElement(FileMarker, { file: markerFile, onAction, actions, loading: value }))
+  }
   css2dObject.position.copy(addedFile.position)
   css2dObject.position.y += 0.2
   ;(css2dObject as any).fileId = addedFile.id
@@ -92,6 +95,7 @@ export const createGenericFileMarker = (
   addedFile: AddedFile,
   world: any,
   onAction?: (action: FileMarkerAction) => void,
+  loading = false,
 ): { marker: CSS2DObject | null, object3D: THREE.Object3D } => {
   const sphere = new THREE.Mesh(
     new THREE.SphereGeometry(0.025, 10, 10),
@@ -101,8 +105,13 @@ export const createGenericFileMarker = (
   ;(sphere as any).fileId = addedFile.id
   if (world) world.scene.three.add(sphere)
 
-  const marker = createFileMarker(addedFile, sphere, world, onAction)
+  const marker = createFileMarker(addedFile, sphere, world, onAction, undefined, loading)
   return { marker, object3D: sphere }
+}
+
+/** Swaps a placeholder pin's spinner for its real icon once the upload has a record. */
+export const markerFinishedLoading = (marker: CSS2DObject | null) => {
+  (marker as any)?.setLoading?.(false)
 }
 
 export const removeMarker = (marker: CSS2DObject | null, world?: any) => {

@@ -16,7 +16,7 @@ import { BimSceneObjects } from "../../../SceneObjects"
 
 import { AddDxf } from "./AddDxf"
 import { addFileToScene, type PlacedKind } from "./FileHandler"
-import { type AddedFile, removeMarker } from "./FileMarkerUtils"
+import { type AddedFile, markerFinishedLoading, removeMarker } from "./FileMarkerUtils"
 
 import type { FileMarkerAction } from "../../../../../../ui/FilesManager/src/FileMarker"
 import type { useBimFileIntake } from "../../../lib/useBimFileIntake"
@@ -217,10 +217,15 @@ export function useFilePlacement(
           : undefined,
       }
 
+      // Anything not confirmed in a panel uploads straight away, so its pin stands in while it does.
+      const uploadsImmediately = !(selectedFile.name.toLowerCase().endsWith(".dxf")
+        || typeOfFile(selectedFile) === "3d-file")
+
       const placed = await addFileToScene(
         addedFile, fileScale, fileRotation,
         world, modelManager, addDxf, setCurrent3DFileId,
         (action) => onMarkerAction?.(addedFile.id, action),
+        uploadsImmediately,
       )
 
       if (placed) {
@@ -246,14 +251,16 @@ export function useFilePlacement(
         setIsPlacingFile(false)
         setCursor("")
       } else {
-        // A splat is rendered by BimSplatSync from the stored placement, so the marker is only a stand-in.
+        // A splat is rendered by BimSplatSync from the stored placement, so the pin is only a stand-in.
         const standInOnly = typeOfFile(selectedFile) === "splat-file"
         void intake.submit(selectedFile, point).then((created) => {
           if (!created?.id || standInOnly) { discardPlacement(addedFile.id); return }
+          markerFinishedLoading(placed?.marker ?? null)
           registry?.rekey(addedFile.id, String(created.id))
           placedFilesRef.current.delete(addedFile.id)
         })
         cancelPlacement()
+        onDone?.()
       }
     }
 
@@ -286,7 +293,7 @@ export function useFilePlacement(
       document.removeEventListener("dblclick", onDblClick)
       document.removeEventListener("keydown", onKeyDown)
     }
-  }, [selectedFile, bimComponents, world, isPlacingFile, fileScale, fileRotation, modelManager, addDxf, toolsDispatch, raycast, fragments, cancelPlacement, setCursor, intake, onMarkerAction, registry, discardPlacement])
+  }, [selectedFile, bimComponents, world, isPlacingFile, fileScale, fileRotation, modelManager, addDxf, toolsDispatch, raycast, fragments, cancelPlacement, setCursor, intake, onMarkerAction, registry, discardPlacement, onDone])
 
   const confirmPlacement = React.useCallback(() => {
     if (!current3DFileId) return

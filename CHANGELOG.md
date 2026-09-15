@@ -76,6 +76,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   kind of placement target rather than splats alone.
 
 ### Fixed
+- Adding a 3D model or splat from the sidebar now opens the placement crosshair, the same as
+  adding it from the toolbar. The two entry points had separate implementations and only the
+  toolbar consulted the placement rules; both now route through one shared decision.
 - The "add file" card reappeared after dropping a file into the scene. Finishing a placement
   cleared the tool but not the panel's own adding mode, so the drop target came straight back.
 - A file still uploading now shows a spinning placeholder pin rather than its final icon, and

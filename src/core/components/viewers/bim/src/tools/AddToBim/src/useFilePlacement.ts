@@ -384,6 +384,7 @@ export function useFilePlacement(
     setFileRotation,
     handleFileSelect,
     handleFileDrop,
+    processFileObject,
     cancelPlacement,
     confirmPlacement,
     setCursor,

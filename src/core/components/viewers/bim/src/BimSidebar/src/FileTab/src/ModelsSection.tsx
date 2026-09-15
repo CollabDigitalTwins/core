@@ -13,6 +13,8 @@ import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { FileItemComponent, useFileActions, useFileDeleteHandler, ACCEPT_FOR_TYPE, EXTENSIONS_FOR_TYPE, UploadProgressBar, useUploadTasks } from '../../../../../../../ui/FilesManager'
 import { isSplatFile } from '../../../../../../shared/splat/splatFiles'
+import { acceptAttribute, pickFile, routePickedFile } from '../../../../lib/pickAndRouteFile'
+import { requestPlacement } from '../../../../lib/placementRequests'
 import { useBimFileIntake } from '../../../../lib/useBimFileIntake'
 import { BimPointClouds } from '../../../../PointClouds'
 
@@ -24,6 +26,8 @@ import type { DbFile } from '../../../../../../../../types/dbTypes'
 import type { FileAction } from '../../../../../../../../types/global'
 
 const MODEL_OPTIONS: FileAction[] = ['download', 'view', 'move', 'info', 'delete']
+
+const ADDABLE_HERE = ['3d-file', 'splat-file'] as const
 
 const is3dFile = (extension?: string | null): boolean =>
   EXTENSIONS_FOR_TYPE['3d-file'].includes(extension?.toLowerCase() ?? '')
@@ -78,14 +82,15 @@ export function ModelsSection({ files, query = '', ...chrome }: ModelsSectionPro
   })
 
   const addModel = React.useCallback(() => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = `${ACCEPT_FOR_TYPE['3d-file']},${ACCEPT_FOR_TYPE['splat-file']}`
-    input.addEventListener('change', () => {
-      const picked = input.files?.[0]
-      if (picked) void intake.submit(picked)
+    pickFile(acceptAttribute(ADDABLE_HERE), (picked) => {
+      routePickedFile(picked, {
+        accept: ADDABLE_HERE,
+        needsPlacement: intake.needsPlacement,
+        // The toolbar owns the crosshair; if it is not mounted the file still uploads.
+        onPlace: file => { if (!requestPlacement(file)) void intake.submit(file) },
+        onSubmit: file => { void intake.submit(file) },
+      })
     })
-    input.click()
   }, [intake])
 
   const filtered = React.useMemo(() => {

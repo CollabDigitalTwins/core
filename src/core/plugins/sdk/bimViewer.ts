@@ -25,10 +25,6 @@ import type { BimItemProperties } from '../../components/viewers/bim/src/lib/bim
 import type { ModelIdMap } from '../../components/viewers/bim/src/lib/bimTree'
 import type * as OBC from '@thatopen/components'
 
-/**
- * The BIM viewer, as a plugin sees it. Kept out of the `plugins-sdk` barrel: it depends on
- * `@thatopen/components` and three at runtime.
- */
 export interface BimToolProps {
   components: OBC.Components | null
   world: OBC.World | null
@@ -51,10 +47,6 @@ export interface BimToolProps {
   /** The escape hatch from `isolate`: makes everything visible again. */
   showAll: () => Promise<void>
 
-  /**
-   * Every element of one IFC class, e.g. `getItemsOfCategory('IFCSPACE')`. Spaces
-   * start hidden, being volumetric, so showing them needs `setItemsVisible` too.
-   */
   getItemsOfCategory: (category: string) => Promise<ModelIdMap>
   /** Attributes for the given elements. Omit `attributes` for the default set. */
   getProperties: (items: ModelIdMap, attributes?: string[]) => Promise<BimItemProperties[]>
@@ -109,26 +101,15 @@ export interface BimAppearance {
   opacity?: number
 }
 
-/** One appearance and the elements wearing it. */
 export interface BimAppearanceGroup {
   items: ModelIdMap
   appearance: BimAppearance
 }
 
 export interface PluginBimAppearance {
-  /**
-   * Every group in one call, replacing this plugin's previous paint. Calling it per group
-   * would replace that same entry each time and leave only the last. An empty list clears.
-   */
   setAppearance: (groups: readonly BimAppearanceGroup[]) => void
-  /** Gives this plugin's elements back their own colours. */
   clearAppearance: () => void
 }
-
-/**
- * Colour and opacity, bucketed into one `highlight()` per appearance — per element would
- * exhaust the model's ~65 500 material slots. Scoped to this plugin, outside the sidebar's undo.
- */
 export function usePluginBimAppearance(): PluginBimAppearance {
   const pluginId = usePluginId()
   const { state } = React.useContext(BimContext)

@@ -50,9 +50,6 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
     const { dispatch: bimDispatch, state: bimState } = React.useContext(BimContext);
     const { bimComponents, world } = bimState.bim;
 
-    const { dispatch: toolsDispatch, state: toolsState } = React.useContext(ToolsContext);
-    const { currentToolId } = toolsState.tools;
-
     const { state: menusState } = React.useContext(MenusContext);
     const { currentViewer } = menusState.menus;
 
@@ -109,6 +106,8 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
 
             const container = containerRef.current;
             const { components, world, fragments, grid, workerUrl, pivot } = await createBimWorld(container);
+
+            world.renderer.showLogo = false;
             workerUrlRef.current = workerUrl;
             pivotRef.current = pivot;
 

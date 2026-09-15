@@ -20,6 +20,7 @@ export class Highlighter extends OBC.Component {
   static uuid = 'c0ceb167-5fad-4727-9630-553405d92021' as const
 
   private _enabled = true
+  private _ownsPointer = true
   private world: OBC.World | null = null
   private fragments: OBC.FragmentsManager | null = null
   private _selectedMeshes = new DataSet<THREE.Mesh>()
@@ -191,12 +192,22 @@ export class Highlighter extends OBC.Component {
 
   set enabled(value: boolean) {
     this._enabled = value
-    this.setupEvents(value)
+    this.setupEvents(value && this._ownsPointer)
     if (!value) this.clearHover()
   }
 
   get enabled() {
     return this._enabled
+  }
+
+  /** False while `Selection` owns the canvas; the highlighter still renders and still selects. */
+  set ownsPointer(value: boolean) {
+    this._ownsPointer = value
+    this.setupEvents(this._enabled && value)
+  }
+
+  get ownsPointer() {
+    return this._ownsPointer
   }
 
   disableModel(modelId: string) {

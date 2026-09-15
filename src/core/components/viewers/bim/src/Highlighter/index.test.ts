@@ -101,7 +101,7 @@ function makeWorld(canvas: ReturnType<typeof makeCanvas>) {
   return world
 }
 
-function makeHighlighter() {
+function buildHighlighter() {
   const canvas = makeCanvas()
   const world = makeWorld(canvas)
   const fragments = { list: new Map<string, unknown>() }
@@ -132,14 +132,14 @@ describe('Highlighter teardown', () => {
   afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks() })
 
   it('is disposeable, so Components.dispose() calls dispose() instead of only setting enabled', () => {
-    const { highlighter } = makeHighlighter()
+    const { highlighter } = buildHighlighter()
     // Without `onDisposed` this predicate is false and OBC silently skips the component.
     expect('dispose' in highlighter && 'onDisposed' in highlighter).toBe(true)
     expect(highlighter.isDisposeable()).toBe(true)
   })
 
   it('survives `enabled = false` when the world already nulled the hover mesh geometry', () => {
-    const { highlighter, world } = makeHighlighter()
+    const { highlighter, world } = buildHighlighter()
     addHoverMeshAlreadyReleasedByTheWorld(highlighter)
     world.tearDown()
 
@@ -148,7 +148,7 @@ describe('Highlighter teardown', () => {
   })
 
   it('dispose() completes against a torn-down world', () => {
-    const { highlighter, world } = makeHighlighter()
+    const { highlighter, world } = buildHighlighter()
     addHoverMeshAlreadyReleasedByTheWorld(highlighter)
     world.tearDown()
 
@@ -156,7 +156,7 @@ describe('Highlighter teardown', () => {
   })
 
   it('dispose() detaches canvas listeners even though world.renderer is already null', () => {
-    const { highlighter, world, canvas } = makeHighlighter()
+    const { highlighter, world, canvas } = buildHighlighter()
     expect(canvas.count()).toBeGreaterThan(0)
 
     world.tearDown()
@@ -168,7 +168,7 @@ describe('Highlighter teardown', () => {
   })
 
   it('cancels the queued hover raycast before anything else in dispose() can fail', () => {
-    const { highlighter, world, canvas } = makeHighlighter()
+    const { highlighter, world, canvas } = buildHighlighter()
     addHoverMeshAlreadyReleasedByTheWorld(highlighter)
     canvas.fire('mousemove', { clientX: 10, clientY: 10 })
 
@@ -185,7 +185,7 @@ describe('Highlighter teardown', () => {
   })
 
   it('a hover raycast that outlives the world resolves to no hit instead of throwing', async () => {
-    const { highlighter, world } = makeHighlighter()
+    const { highlighter, world } = buildHighlighter()
     world.tearDown()
 
     const nearestHit = (highlighter as unknown as {
@@ -193,5 +193,35 @@ describe('Highlighter teardown', () => {
     })._nearestHit.bind(highlighter)
 
     await expect(nearestHit(10, 10)).resolves.toBeNull()
+  })
+})
+
+describe('Highlighter.ownsPointer', () => {
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('drops its canvas listeners when something else owns the pointer', () => {
+    const { highlighter, canvas } = buildHighlighter()
+    const removed = vi.spyOn(canvas, 'removeEventListener')
+
+    highlighter.ownsPointer = false
+
+    expect(removed).toHaveBeenCalledWith('click', expect.any(Function))
+    expect(removed).toHaveBeenCalledWith('mousemove', expect.any(Function))
+  })
+
+  it('stays enabled without the pointer', () => {
+    const { highlighter } = buildHighlighter()
+    highlighter.ownsPointer = false
+    expect(highlighter.enabled).toBe(true)
+  })
+
+  it('does not re-bind on enable while something else owns the pointer', () => {
+    const { highlighter, canvas } = buildHighlighter()
+    highlighter.ownsPointer = false
+    const added = vi.spyOn(canvas, 'addEventListener')
+
+    highlighter.enabled = true
+
+    expect(added).not.toHaveBeenCalled()
   })
 })

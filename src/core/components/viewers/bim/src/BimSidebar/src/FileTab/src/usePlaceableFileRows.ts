@@ -273,18 +273,8 @@ export function usePlaceableFileRows({
 
     const mouse = new THREE.Vector2()
 
-    const handleDblClick = async (e: MouseEvent) => {
-      mouse.x = e.clientX
-      mouse.y = e.clientY
-
-      const result = await raycast({
-        camera: world.camera.three,
-        mouse,
-        dom: world.renderer!.three.domElement!,
-      })
-
-      // A click that hit nothing carries no position, so the object lands at the origin.
-      const { x, y, z } = result?.point ?? new THREE.Vector3()
+    const placeAt = (point: THREE.Vector3) => {
+      const { x, y, z } = point
       setMoveFileId(placingFile.id)
       // Save coordinates to DB
       setTimeout(() => {
@@ -303,7 +293,22 @@ export function usePlaceableFileRows({
       if (cursor) cursor.cursor = ''
     }
 
+    const handleDblClick = async (e: MouseEvent) => {
+      mouse.x = e.clientX
+      mouse.y = e.clientY
+
+      const result = await raycast({
+        camera: world.camera.three,
+        mouse,
+        dom: world.renderer!.three.domElement!,
+      })
+
+      // A click that hit nothing carries no position, so the object lands at the origin.
+      placeAt(result?.point ?? new THREE.Vector3())
+    }
+
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') placeAt(new THREE.Vector3())
       if (e.key === 'Escape') {
         setPlacingFile(null)
         if (cursor) cursor.cursor = ''

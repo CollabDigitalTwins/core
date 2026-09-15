@@ -180,7 +180,7 @@ export function useFilePlacement(
     setSelectedFile(file)
     setIsPlacingFile(true)
     setCursor("crosshair")
-    toast.info(`Double-click in the scene to place: "${file.name}"`, {
+    toast.info(`Double-click in the scene to place: "${file.name}". Press Enter for the origin, Escape to cancel.`, {
       id: 'place-bim-file-toast',
       duration: Infinity,
     })
@@ -207,17 +207,7 @@ export function useFilePlacement(
       mouse.y = e.clientY
     }
 
-    const handleDblClick = async (e: MouseEvent) => {
-      mouse.x = e.clientX
-      mouse.y = e.clientY
-
-      const modelHit = await raycast({ camera: world.camera.three, mouse, dom: canvas })
-      // Nothing to aim at means the click carries no position, so the file lands at the origin.
-      const hasGeometry = (fragments?.core.models.list.size ?? 0) > 0
-      const point = modelHit?.point?.clone()
-        ?? (hasGeometry ? pointOnGroundPlane(world.camera.three, canvas, e.clientX, e.clientY) : null)
-        ?? new THREE.Vector3()
-
+    const placeAt = async (point: THREE.Vector3) => {
       const addedFile: AddedFile = {
         id: Date.now().toString(),
         file: selectedFile,
@@ -265,13 +255,34 @@ export function useFilePlacement(
       }
     }
 
+    const handleDblClick = async (e: MouseEvent) => {
+      mouse.x = e.clientX
+      mouse.y = e.clientY
+
+      const modelHit = await raycast({ camera: world.camera.three, mouse, dom: canvas })
+      // Nothing to aim at means the click carries no position, so the file lands at the origin.
+      const hasGeometry = (fragments?.core.models.list.size ?? 0) > 0
+      const point = modelHit?.point?.clone()
+        ?? (hasGeometry ? pointOnGroundPlane(world.camera.three, canvas, e.clientX, e.clientY) : null)
+        ?? new THREE.Vector3()
+
+      await placeAt(point)
+    }
+
     const onDblClick = (e: MouseEvent) => { void handleDblClick(e) }
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") void placeAt(new THREE.Vector3())
+      if (e.key === "Escape") cancelPlacement()
+    }
 
     document.addEventListener("mousemove", handleMouseMove)
     document.addEventListener("dblclick", onDblClick)
+    document.addEventListener("keydown", onKeyDown)
     return () => {
       document.removeEventListener("mousemove", handleMouseMove)
       document.removeEventListener("dblclick", onDblClick)
+      document.removeEventListener("keydown", onKeyDown)
     }
   }, [selectedFile, bimComponents, world, isPlacingFile, fileScale, fileRotation, modelManager, addDxf, toolsDispatch, raycast, fragments, cancelPlacement, setCursor, intake, onMarkerAction, registry, discardPlacement])
 

@@ -627,7 +627,7 @@
     "hideTitle": "Ocultar de la vista",
     "showTitle": "Mostrar en la vista",
     "placeFile": "Colocar archivo",
-    "placeHint": "Haz doble clic en el modelo para colocar «{name}». Pulsa Escape para cancelar.",
+    "placeHint": "Haz doble clic en el modelo para colocar «{name}». Pulsa Intro para el origen o Escape para cancelar.",
     "toastErrNoID": "No hay ID de edificio disponible",
     "toastSuccessUpFile": "archivo(s) subido(s) con éxito",
     "toastErrUpFile1": "Error al subir el archivo:",

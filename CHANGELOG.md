@@ -8,6 +8,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ## [Unreleased]
 
 ### Added
+- In BIM placing mode, **Enter** drops the file at the world origin and **Escape** cancels.
+  Escape previously worked only when re-placing an already-uploaded file, and there was no
+  keyboard way to accept the origin.
 - `uniqueFileName(name, existingNames)` in `@collabdt/core/utils` — the point-cloud-only
   `uniquePointCloudName` now delegates to it.
 - **Gaussian splat support in the BIM viewer.** `.ply`, `.spz`, `.splat`, `.ksplat` and `.sog`

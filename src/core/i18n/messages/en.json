@@ -627,7 +627,7 @@
     "hideTitle": "Hide from view",
     "showTitle": "Show in view",
     "placeFile": "Place File",
-    "placeHint": "Double-click in the model to place \"{name}\". Press Escape to cancel.",
+    "placeHint": "Double-click in the model to place \"{name}\". Press Enter for the origin, Escape to cancel.",
     "toastErrNoID": "No building ID available",
     "toastSuccessUpFile": "file(s) uploaded successfully",
     "toastErrUpFile1": "Error uploading file:",

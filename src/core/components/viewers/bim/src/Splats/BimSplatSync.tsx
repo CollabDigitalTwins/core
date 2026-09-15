@@ -22,7 +22,7 @@ import type { DbFile } from '../../../../../types/dbTypes'
  *  Viewer-lifetime, so a panel closing cannot drop a splat. Renders nothing. */
 export function BimSplatSync() {
   const { state, dispatch } = React.useContext(BimContext)
-  const { bimComponents, world, splatIds } = state.bim
+  const { bimComponents, world, splatIds, fragmentsStarted } = state.bim
 
   const { state: buildingState } = React.useContext(BuildingsContext)
   const buildingId = buildingState.buildings.building?.id ?? 0
@@ -70,7 +70,7 @@ export function BimSplatSync() {
 
   // Waits for the file records, so a splat is never added at the default placement first.
   React.useEffect(() => {
-    if (!bimComponents || !world || filesLoading) return
+    if (!bimComponents || !world || filesLoading || !fragmentsStarted) return
     const splats = bimComponents.get(BimSplats)
 
     for (const id of splats.ids()) {
@@ -87,7 +87,7 @@ export function BimSplatSync() {
         dispatch({ type: 'TOGGLE_SPLAT', payload: { splatId: id } })
       })
     }
-  }, [bimComponents, world, splatIds, filesLoading, dispatch])
+  }, [bimComponents, world, splatIds, filesLoading, fragmentsStarted, dispatch])
 
   return null
 }

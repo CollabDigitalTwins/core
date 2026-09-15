@@ -19,6 +19,8 @@ interface BimTypes {
     modelIds: string[];
     floorplans: Plan[];
     grid: OBC.SimpleGrid | null;
+    /** Gates the point cloud, splat, model and DXF loaders so the BIM model gets the first bytes. */
+    fragmentsStarted: boolean;
     // For now, store the file with the building
     buildingModel: {
         bimFile: DbFile | null;
@@ -60,6 +62,7 @@ export type BimPayload = {
     ["SET_MODEL"]: Pick<BimTypes, "modelId">;
     ["SET_FLOORPLANS"]: Pick<BimTypes, "floorplans">;
     ["SET_GRID"]: Pick<BimTypes, "grid">;
+    ["SET_FRAGMENTS_STARTED"]: Pick<BimTypes, "fragmentsStarted">;
     ["DISPOSE-BIM"]: void;
     ["TOGGLE_BIM_TO_MAP"]: Pick<BimTypes, "buildingModel">;
     ["REMOVE_BIM_FROM_MAP"]: Pick<BimTypes, "bimModelName">;
@@ -112,6 +115,11 @@ export const BimReducer = (state: BimState, action: BimActions) => {
                 ...state,
                 "grid": action.payload.grid,
             };
+        case "SET_FRAGMENTS_STARTED":
+            return {
+                ...state,
+                "fragmentsStarted": action.payload.fragmentsStarted,
+            };
         case "SET_BIM_SELECTION":
             return {
                 ...state,
@@ -140,6 +148,7 @@ export const BimReducer = (state: BimState, action: BimActions) => {
                 "pointCloudIds": [],
                 "activePointCloudId": null,
                 "splatIds": [],
+                "fragmentsStarted": false,
             };
         case "SET_POINT_CLOUD_IDS": {
             const { pointCloudIds } = action.payload;

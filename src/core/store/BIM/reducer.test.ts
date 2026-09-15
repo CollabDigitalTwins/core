@@ -144,4 +144,14 @@ describe('BimReducer', () => {
     const start = { ...base, splatIds: ['12'] } as never
     expect(BimReducer(start, { type: 'DISPOSE-BIM' } as never).splatIds).toEqual([])
   })
+
+  it('SET_FRAGMENTS_STARTED records that the fragment load has begun', () => {
+    const s = BimReducer(base, { type: 'SET_FRAGMENTS_STARTED', payload: { fragmentsStarted: true } } as never)
+    expect(s.fragmentsStarted).toBe(true)
+  })
+
+  it('DISPOSE-BIM clears fragmentsStarted so the next building re-gates', () => {
+    const start = { ...base, fragmentsStarted: true } as never
+    expect(BimReducer(start, { type: 'DISPOSE-BIM' } as never).fragmentsStarted).toBe(false)
+  })
 })

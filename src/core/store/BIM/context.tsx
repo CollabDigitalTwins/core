@@ -25,6 +25,7 @@ const initialState = {
     splatIds: [],
     floorplans: [],
     grid: null  ,
+    fragmentsStarted: false,
     buildingModel: {
       bimFile: null,
       building: null,

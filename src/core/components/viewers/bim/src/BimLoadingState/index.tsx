@@ -39,7 +39,7 @@ export function BimLoadingState() {
   const { ability } = usePermissions()
 
   const { state: bimState, dispatch: bimDispatch } = React.useContext(BimContext)
-  const { bimComponents, world, fragments, modelUIState } = bimState.bim
+  const { bimComponents, world, fragments, modelUIState, fragmentsStarted } = bimState.bim
   const { state: buildingState, dispatch: buildingDispatch } = React.useContext(BuildingsContext)
   const { building: storeBuilding } = buildingState.buildings
 
@@ -194,6 +194,7 @@ export function BimLoadingState() {
     if (isLoadingModelsRef.current) return
 
     isLoadingModelsRef.current = true
+    bimDispatch({ type: 'SET_FRAGMENTS_STARTED', payload: { fragmentsStarted: true } })
 
     try {
       // State should already be 'loading' when this is called
@@ -216,7 +217,13 @@ export function BimLoadingState() {
     } finally {
       isLoadingModelsRef.current = false
     }
-  }, [bimComponents, bimFiles, loadBimFiles])
+  }, [bimComponents, bimFiles, loadBimFiles, bimDispatch])
+
+  // A building with no BIM file has nothing to wait for, so it must open the gate itself.
+  React.useEffect(() => {
+    if (fragmentsStarted || filesLoading || bimFiles.length > 0) return
+    bimDispatch({ type: 'SET_FRAGMENTS_STARTED', payload: { fragmentsStarted: true } })
+  }, [fragmentsStarted, filesLoading, bimFiles.length, bimDispatch])
 
   // The state machine stops after the first batch, so a later upload needs its own pass.
   React.useEffect(() => {

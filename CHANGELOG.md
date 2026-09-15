@@ -53,6 +53,10 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   carries the credit.
 
 ### Changed
+- The BIM model now starts loading before point clouds, splats, 3D models and DXF drawings.
+  The others still load in parallel with each other, they just no longer compete with the
+  fragment fetch for the first bytes. `BimState` gains `fragmentsStarted`, with the
+  `SET_FRAGMENTS_STARTED` action.
 - `resolveViewportTarget()` takes a `splat` hit and can return `kind: 'splat'`.
 - `BimState` gains `splatIds`, with the `SET_SPLAT_IDS` and `TOGGLE_SPLAT` actions.
 - `BimState` gains `sceneSelection`, with the `SET_SCENE_SELECTION` action; `SelectionSync`

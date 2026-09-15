@@ -73,7 +73,7 @@ export function usePlaceableFileRows({
   placeHint,
 }: PlaceableRowsOptions): PlaceableRows {
   const { state: bimState } = React.useContext(BimContext)
-  const { bimComponents, fragments, world } = bimState.bim
+  const { bimComponents, fragments, world, fragmentsStarted } = bimState.bim
 
   const [rows, setRows] = React.useState<(DbFile & { isVisible?: boolean })[]>([])
 
@@ -204,7 +204,7 @@ export function usePlaceableFileRows({
   // Claimed per building so a revalidation cannot re-add what the user just switched off.
   const seededBuildingRef = React.useRef<number | null>(null)
   React.useEffect(() => {
-    if (buildingId == null) return
+    if (buildingId == null || !fragmentsStarted) return
     if (!registry || !modelManager || files.length === 0) return
     if (seededBuildingRef.current === buildingId) return
     seededBuildingRef.current = buildingId
@@ -214,7 +214,7 @@ export function usePlaceableFileRows({
         ? toggleDxfVisibility(file, true)
         : toggleModelVisibility(file, true))
     }
-  }, [buildingId, files, registry, modelManager, isPlaceable, toggleModelVisibility, toggleDxfVisibility])
+  }, [buildingId, files, registry, modelManager, isPlaceable, fragmentsStarted, toggleModelVisibility, toggleDxfVisibility])
 
   // Read by the marker rAF loop, so it hides the marker of whatever is being placed.
   const placingIdRef = React.useRef<string | null>(null)

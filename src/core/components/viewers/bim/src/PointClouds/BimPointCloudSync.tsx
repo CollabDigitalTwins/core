@@ -25,7 +25,7 @@ import type { DbFile } from '../../../../../types/dbTypes'
  *  Viewer-lifetime, so a panel closing cannot drop a cloud. Renders nothing. */
 export function BimPointCloudSync({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
   const { state, dispatch } = React.useContext(BimContext)
-  const { bimComponents, world, pointCloudIds } = state.bim
+  const { bimComponents, world, pointCloudIds, fragmentsStarted } = state.bim
 
   const { state: buildingState } = React.useContext(BuildingsContext)
   const buildingId = buildingState.buildings.building?.id ?? 0
@@ -70,7 +70,7 @@ export function BimPointCloudSync({ pointcloudApiUrl }: { pointcloudApiUrl?: str
 
   // Waits for the file records, so a cloud is never added at the default placement first.
   React.useEffect(() => {
-    if (!bimComponents || !world || filesLoading) return
+    if (!bimComponents || !world || filesLoading || !fragmentsStarted) return
     const clouds = bimComponents.get(BimPointClouds)
 
     for (const id of clouds.ids()) {
@@ -84,7 +84,7 @@ export function BimPointCloudSync({ pointcloudApiUrl }: { pointcloudApiUrl?: str
         dispatch({ type: 'TOGGLE_POINT_CLOUD', payload: { pointCloudId: id } })
       })
     }
-  }, [bimComponents, world, pointCloudIds, pointcloudApiUrl, filesLoading, dispatch])
+  }, [bimComponents, world, pointCloudIds, pointcloudApiUrl, filesLoading, fragmentsStarted, dispatch])
 
   return null
 }

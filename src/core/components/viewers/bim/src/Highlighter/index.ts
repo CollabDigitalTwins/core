@@ -12,6 +12,7 @@ import {
   modelIdMapSize,
   type ModelIdMap,
 } from '../lib/bimTree'
+import { hoverMaterial, selectedMaterial } from '../lib/highlightMaterials'
 
 import type * as FRAGS from '@thatopen/fragments'
 
@@ -44,22 +45,8 @@ export class Highlighter extends OBC.Component {
    */
   readonly onDisposed = new OBC.Event<string>()
 
-  // Selection material
-  private _selectedMaterial: THREE.Material = new THREE.MeshBasicMaterial({
-    color: 0x73_CE_E2,
-    transparent: true,
-    opacity: 0.3,
-    depthTest: false,
-    userData: { _maxSelectedOpacity: 0.3 },
-  })
-
-  // Hover material
-  private _hoveredMaterial: THREE.MeshBasicMaterial = new THREE.MeshBasicMaterial({
-    color: 0x73_CE_E2,
-    transparent: true,
-    opacity: 0.15,
-    depthTest: false,
-  })
+  private _selectedMaterial: THREE.Material = selectedMaterial()
+  private _hoveredMaterial: THREE.MeshBasicMaterial = hoverMaterial()
 
   get selectedMaterial() {
     return this._selectedMaterial

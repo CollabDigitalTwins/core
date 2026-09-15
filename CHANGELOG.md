@@ -76,6 +76,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   kind of placement target rather than splats alone.
 
 ### Fixed
+- Loaded 3D models now cast and receive shadows, like BIM elements. Flat DXF drawings and
+  scene markers are deliberately excluded. Gaussian splats and point clouds still cannot cast
+  shadows — they render outside three.js's shadow pass.
 - The BIM viewer's grid no longer appears and then disappears while the scene loads. It is
   created hidden; the Settings toggle turns it on.
 - Uploading a file whose name is already taken now stores it as `plan (1).dxf` instead of a

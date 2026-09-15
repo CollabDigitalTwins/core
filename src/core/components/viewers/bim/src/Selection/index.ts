@@ -40,7 +40,7 @@ export class Selection extends OBC.Component implements OBC.Disposable {
     this.teardown()
     this.world = config.world
     this.canvas = config.world.renderer?.three.domElement ?? null
-    this.overlay = new SceneObjectHighlight(config.world.scene.three)
+    this.overlay = new SceneObjectHighlight()
 
     this.highlighter().ownsPointer = false
 

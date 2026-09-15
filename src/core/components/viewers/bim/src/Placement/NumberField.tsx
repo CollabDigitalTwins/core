@@ -12,6 +12,8 @@ export interface NumberFieldProps {
   value: number
   step: number
   min?: number
+  max?: number
+  maxDecimals?: number
   className?: string
   onCommit: (value: number) => void
 }
@@ -20,7 +22,7 @@ export interface NumberFieldProps {
  * A number input that can be emptied. It holds what was typed until focus leaves, so clearing the
  * field to retype does not immediately snap a value back in.
  */
-export function NumberField({ label, value, step, min, className, onCommit }: NumberFieldProps) {
+export function NumberField({ label, value, step, min, max, maxDecimals, className, onCommit }: NumberFieldProps) {
   const [draft, setDraft] = React.useState<string | null>(null)
 
   return (
@@ -30,8 +32,19 @@ export function NumberField({ label, value, step, min, className, onCommit }: Nu
       value={draft ?? String(value)}
       step={step}
       min={min}
+      max={max}
       className={className}
       onChange={(event) => {
+        let val = event.target.value
+        if (maxDecimals !== undefined && val.includes('.')) {
+          const [integer, decimal] = val.split('.')
+          if (maxDecimals === 0) {
+            val = integer
+          } else if (decimal.length > maxDecimals) {
+            val = `${integer}.${decimal.slice(0, maxDecimals)}`
+          }
+        }
+
         setDraft(event.target.value)
         const parsed = Number.parseFloat(event.target.value)
         if (Number.isFinite(parsed)) onCommit(parsed)

@@ -94,6 +94,8 @@ export function PositionSection({ target, isExpanded, onToggleAction, onEditInVi
               label={t('rotation')}
               value={toDegrees(placement.rotation[1])}
               step={1}
+              max={360}
+              min={-360}
               onCommit={(degrees) => {
                 const rotation = [...placement.rotation] as [number, number, number]
                 rotation[1] = toRadians(degrees)
@@ -102,13 +104,14 @@ export function PositionSection({ target, isExpanded, onToggleAction, onEditInVi
             />
           </div>
           {target.capabilities.scale && (
-            <div className="space-y-1">
+            <div className="space-y-1 ">
               <Label className="text-xs text-muted-foreground">{t('scale')}</Label>
               <NumberField
                 label={t('scale')}
                 value={placement.scale}
                 step={0.01}
                 min={0.001}
+                maxDecimals={3}
                 onCommit={scale => change({ ...placement, scale })}
               />
             </div>

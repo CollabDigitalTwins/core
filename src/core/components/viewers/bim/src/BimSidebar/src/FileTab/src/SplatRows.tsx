@@ -13,6 +13,7 @@ import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { FileItemComponent, useFileActions, useFileDeleteHandler } from '../../../../../../../ui/FilesManager'
 import { PlacementEditor } from '../../../../Placement/PlacementEditor'
 import { useSplatTarget } from '../../../../Placement/targets/useSplatTarget'
+import { useSceneUnload } from '../../../../Placement/useSceneUnload'
 import { BimSplats } from '../../../../Splats'
 
 import type { DbFile } from '../../../../../../../../types/dbTypes'
@@ -37,6 +38,7 @@ export function SplatRows({ files, buildingId }: SplatRowsProps) {
   const { deleteFile } = useDeleteFile(buildingId)
   const { handleDeleteFile } = useFileDeleteHandler({ deleteFile })
   const { targetFor } = useSplatTarget()
+  const unloadFromScene = useSceneUnload()
 
   const splats = React.useMemo(
     () => [...files].sort((a, b) => a.name.localeCompare(b.name)),
@@ -76,13 +78,6 @@ export function SplatRows({ files, buildingId }: SplatRowsProps) {
     toast.info(tAlign('editHint'), { id: TOAST_ID, duration: Infinity })
   }, [bimComponents, dispatch, splatIds, tAlign, targetFor])
 
-  const forget = React.useCallback((file: DbFile) => {
-    const id = String(file.id)
-    if (splatIds.includes(id)) {
-      dispatch({ type: 'TOGGLE_SPLAT', payload: { splatId: id } })
-    }
-  }, [dispatch, splatIds])
-
   const { handleAction, deleteDialog } = useFileActions({
     files: items,
     setFiles: setItems,
@@ -92,7 +87,7 @@ export function SplatRows({ files, buildingId }: SplatRowsProps) {
     shouldPersistVisibility: () => true,
     onGhost: ghost,
     onMove: (file) => { void editPosition(file) },
-    onDelete: forget,
+    onDelete: file => unloadFromScene(file, 'splat'),
   })
 
   return (

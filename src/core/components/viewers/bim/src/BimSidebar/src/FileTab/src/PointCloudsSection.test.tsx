@@ -25,6 +25,12 @@ vi.mock('../../../../../../../../hooks/files/files', () => ({
 
 vi.mock('../../../../PointClouds', () => ({ BimPointClouds: class {} }))
 
+// jsdom can't load @thatopen/components; these are only used as bimComponents.get() keys.
+vi.mock('../../../../ModelManager', () => ({ ModelManager: class {} }))
+vi.mock('../../../../BIMManager', () => ({ BIMManager: class {} }))
+vi.mock('../../../../SpatialStructure', () => ({ SpatialStructure: class {} }))
+vi.mock('../../../../SceneObjects', () => ({ BimSceneObjects: class {} }))
+
 vi.mock('../../../../Placement/PlacementEditor', () => ({ PlacementEditor: class {} }))
 
 vi.mock('../../../../Placement/targets/usePointCloudTarget', () => ({

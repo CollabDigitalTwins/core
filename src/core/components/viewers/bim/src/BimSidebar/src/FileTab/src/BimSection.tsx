@@ -22,6 +22,7 @@ import { ModelManager } from '../../../../ModelManager'
 import { PlacementEditor } from '../../../../Placement/PlacementEditor'
 import { useModelTarget } from '../../../../Placement/targets/useModelTarget'
 import { usePlacementSession } from '../../../../Placement/usePlacementSession'
+import { useSceneUnload } from '../../../../Placement/useSceneUnload'
 import { BimPointClouds } from '../../../../PointClouds'
 import { SpatialStructure } from '../../../../SpatialStructure'
 
@@ -51,6 +52,7 @@ export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
   const { setVisibleMany } = useFileVisibility(buildingId)
 
   const { handleDeleteFile } = useFileDeleteHandler({ deleteFile })
+  const unloadFromScene = useSceneUnload()
 
   const [loadedModels, setLoadedModels] = React.useState<(DbFile & { isVisible?: boolean })[]>(
     files.map(file => ({
@@ -169,28 +171,6 @@ export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
     }
   }, [bimComponents, modelManager, fragments, highlighter, ghostMode, bimManager, bimDispatch, modelUIState])
 
-  const handleBimDelete = React.useCallback((file: DbFile) => {
-    if (modelManager) {
-      const modelIdStr = file.id.toString()
-      modelManager.remove(modelIdStr)
-    }
-
-    if (fragments) {
-      const fragModel = fragments.core.models.list.get(file.name)
-      if (fragModel) {
-        fragments.core.disposeModel(fragModel.modelId).catch((err: unknown) => {
-          console.error(`Failed to dispose fragment model "${file.name}":`, err)
-        })
-        bimManager?.remove(file.name)
-        try {
-          bimComponents?.get(SpatialStructure).clearForModel(file.name)
-        } catch {
-          // The viewer may already be tearing down; nothing to clean up then.
-        }
-      }
-    }
-  }, [modelManager, bimComponents, fragments, bimManager])
-
   const handleBimMove = React.useCallback((file: DbFile) => {
     if (!bimComponents || !fragments) return
 
@@ -237,7 +217,7 @@ export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
     handleDeleteFile,
     onView: handleBimView,
     shouldPersistVisibility: () => true,
-    onDelete: handleBimDelete,
+    onDelete: file => unloadFromScene(file, 'model'),
     onMove: handleBimMove,
     onGhost: handleBimGhost
   })

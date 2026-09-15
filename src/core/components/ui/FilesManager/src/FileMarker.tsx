@@ -7,6 +7,7 @@ import * as LR from 'lucide-react'
 import Image from 'next/image'
 import * as React from 'react'
 
+import { UploadProgressRing } from './MarkerProgressRing'
 import { PlacementActionsCard } from './PlacementActionsCard'
 
 import type { FileMarkerAction } from './PlacementActionsCard'
@@ -20,7 +21,7 @@ interface FileMarkerProps {
   highlight?: boolean
   /** Which placement actions this file can actually save. Omit to offer them all. */
   actions?: FileMarkerAction[]
-  /** A placeholder pin for a file still uploading: spins, and refuses to open the card. */
+  /** A placeholder pin for a file still uploading: shows upload progress, and refuses to open the card. */
   loading?: boolean
 }
 
@@ -37,10 +38,11 @@ export default function FileMarker({ file, onAction, highlight = false, actions,
   if (loading) {
     return (
       <div
-        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary shadow-md"
+        className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary shadow-md"
         title={file.name}
       >
-        <LR.Loader2 className="h-4 w-4 animate-spin text-primary-foreground" />
+        <UploadProgressRing fileName={file.name} />
+        <Icon className="h-4 w-4 text-primary-foreground" />
       </div>
     )
   }

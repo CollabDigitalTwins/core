@@ -19,6 +19,7 @@ import { ModelManager } from '../../../../ModelManager'
 import { AnimationSession } from '../../../../Placement/AnimationSession'
 import { markerActionsFor } from '../../../../Placement/markerActions'
 import { capabilitiesForFile } from '../../../../Placement/placementCapabilities'
+import { useSceneUnload } from '../../../../Placement/useSceneUnload'
 import { createFileMarker, removeMarker, type AddedFile } from '../../../../tools/AddToBim/src/FileMarkerUtils'
 
 import { usePlaceableFileRows } from './usePlaceableFileRows'
@@ -58,13 +59,13 @@ export function FilesSection({ files, query = '', ...chrome }: FilesSectionProps
   })
 
   const placeHint = React.useCallback((name: string) => t('placeHint', { name }), [t])
+  const unloadFromScene = useSceneUnload()
 
   const {
     rows: localFiles,
     setRows: setLocalFiles,
     toggleVisibility,
     handleMove: handleBimMove,
-    registry,
     getSceneObject,
     editObject,
     placingIdRef,
@@ -181,7 +182,7 @@ export function FilesSection({ files, query = '', ...chrome }: FilesSectionProps
     onView: handleBimView,
     shouldPersistVisibility: (file) => isPlaceable(file.extension),
     onMove: handleBimMove,
-    onDelete: (file) => { registry?.remove(file.id.toString()) },
+    onDelete: file => unloadFromScene(file, 'object'),
   })
 
   // AddToBim owns adding: crosshair on file choice, and the upload carries the placement.

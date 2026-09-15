@@ -12,6 +12,7 @@ import { toast } from 'sonner'
 import { useDeleteFile, useFilesByBuildingId } from '../../../../../hooks/files/files'
 import { BimContext, BuildingsContext } from '../../../../../store'
 import ConfirmDialog from '../../../../ConfirmDialog'
+import { useFileDeleteHandler } from '../../../../ui/FilesManager'
 import { PlacementActionsCard } from '../../../../ui/FilesManager/src/PlacementActionsCard'
 
 import { Highlighter } from '../Highlighter'
@@ -32,10 +33,12 @@ import { usePointCloudTarget } from './targets/usePointCloudTarget'
 import { useSplatTarget } from './targets/useSplatTarget'
 import { useAnimationSession } from './useAnimationSession'
 import { usePlacementSession } from './usePlacementSession'
+import { useSceneUnload } from './useSceneUnload'
 import { useViewportContextMenu } from './useViewportContextMenu'
 
 import type { PlacementMode } from './PlacementEditor'
 import type { ViewportTarget } from './resolveViewportTarget'
+import type { SceneKind } from './useSceneUnload'
 import type { ViewportMenuState } from './useViewportContextMenu'
 import type { DbFile } from '../../../../../types/dbTypes'
 import type { AnimationState } from '../ModelManager/modelAnimation'
@@ -79,10 +82,11 @@ export function PlacementEditorHost() {
   const cloudTarget = usePointCloudTarget()
   const modelTarget = useModelTarget()
   const splatTarget = useSplatTarget()
+  const unloadFromScene = useSceneUnload()
 
   const animation = useAnimationSession()
   const [animationState, setAnimationState] = React.useState<AnimationState | null>(null)
-  const [pendingDelete, setPendingDelete] = React.useState<DbFile | null>(null)
+  const [pendingDelete, setPendingDelete] = React.useState<{ file: DbFile; kind: SceneKind } | null>(null)
   const [isDeleting, setIsDeleting] = React.useState(false)
 
   const editor = React.useMemo(
@@ -171,21 +175,17 @@ export function PlacementEditorHost() {
 
   const endAnimation = () => bimComponents?.get(AnimationSession).end()
 
-  const confirmDelete = async () => {
-    if (!pendingDelete) return
-    setIsDeleting(true)
-    try {
-      await deleteFile(pendingDelete.id)
-      bimComponents?.get(BimSceneObjects).registry?.remove(String(pendingDelete.id))
+  const { handleDeleteFile } = useFileDeleteHandler({
+    deleteFile,
+    onDeleteStart: () => setIsDeleting(true),
+    onDeleteEnd: () => setIsDeleting(false),
+    onDeleteSuccess: () => {
+      if (pendingDelete) unloadFromScene(pendingDelete.file, pendingDelete.kind)
       setPendingDelete(null)
-    }
-    catch {
-      toast.error(t('deleteFailed', { name: pendingDelete.name }))
-    }
-    finally {
-      setIsDeleting(false)
-    }
-  }
+    },
+  })
+
+  const confirmDelete = () => pendingDelete && handleDeleteFile(pendingDelete.file)
 
   // Splats and clouds live outside the fragment scene, so each needs its own target builder.
   const targetFromMenu = (target: ViewportMenuState, components: OBC.Components) => {
@@ -200,7 +200,7 @@ export function PlacementEditorHost() {
 
   const beginFromMenu = (action: 'move' | 'rotate' | 'scale' | 'animate' | 'delete') => {
     if (!menu || !bimComponents) return
-    if (action === 'delete') { setPendingDelete(menu.file); return }
+    if (action === 'delete') { setPendingDelete({ file: menu.file, kind: menu.kind }); return }
     if (action === 'animate') {
       bimComponents.get(AnimationSession).begin({ fileId: String(menu.file.id), name: menu.file.name })
       return
@@ -216,7 +216,7 @@ export function PlacementEditorHost() {
       isDeleting={isDeleting}
       onOpenChange={(open: boolean) => { if (!open) setPendingDelete(null) }}
       handleConfirm={() => { void confirmDelete() }}
-      itemName={pendingDelete?.name ?? ''}
+      itemName={pendingDelete?.file.name ?? ''}
     />
   )
 

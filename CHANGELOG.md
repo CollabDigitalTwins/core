@@ -74,8 +74,16 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   already matched. No schema change.
 - The canvas shows a crosshair cursor while "pick pivot" waits for its double-click, for every
   kind of placement target rather than splats alone.
+- The pin for a file that is still uploading now draws a ring that fills to the upload
+  percentage, with its own icon in the middle, instead of an indeterminate spinner. Phases that
+  report no percentage (conversion) spin a short arc, so the ring never sits frozen at 0%.
 
 ### Fixed
+- Deleting from the viewport context menu now unloads the file from the scene and reports the
+  delete, matching the sidebar. The menu deletes four kinds of target but only ever removed the
+  one held by the scene-object registry, so a BIM model, point cloud or splat stayed on screen
+  after its record was gone; it also showed no success toast. Both paths now go through one
+  `useSceneUnload()`.
 - The hover and selection highlight on an animated 3D model no longer freezes at the bind pose
   while the model moves. The overlay is a clone, so a node an `AnimationMixer` drives left it
   behind; each cloned mesh now claims its source's world matrix before it renders.

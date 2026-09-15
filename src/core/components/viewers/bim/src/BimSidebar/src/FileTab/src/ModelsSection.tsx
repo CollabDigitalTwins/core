@@ -16,6 +16,7 @@ import { isSplatFile } from '../../../../../../shared/splat/splatFiles'
 import { acceptAttribute, pickFile, routePickedFile } from '../../../../lib/pickAndRouteFile'
 import { requestPlacement } from '../../../../lib/placementRequests'
 import { useBimFileIntake } from '../../../../lib/useBimFileIntake'
+import { useSceneUnload } from '../../../../Placement/useSceneUnload'
 import { BimPointClouds } from '../../../../PointClouds'
 
 import { SplatRows } from './SplatRows'
@@ -54,8 +55,9 @@ export function ModelsSection({ files, query = '', ...chrome }: ModelsSectionPro
   const { uploadFile } = useUploadFileToBuilding(buildingId ?? 0)
   const { deleteFile } = useDeleteFile(buildingId)
   const { handleDeleteFile } = useFileDeleteHandler({ deleteFile })
+  const unloadFromScene = useSceneUnload()
 
-  const { rows, setRows, toggleVisibility, handleMove, registry } = usePlaceableFileRows({
+  const { rows, setRows, toggleVisibility, handleMove } = usePlaceableFileRows({
     files: modelFiles,
     buildingId,
     isPlaceable: is3dFile,
@@ -78,7 +80,7 @@ export function ModelsSection({ files, query = '', ...chrome }: ModelsSectionPro
     onView: toggleVisibility,
     shouldPersistVisibility: () => true,
     onMove: handleMove,
-    onDelete: file => { registry?.remove(String(file.id)) },
+    onDelete: file => unloadFromScene(file, 'object'),
   })
 
   const addModel = React.useCallback(() => {

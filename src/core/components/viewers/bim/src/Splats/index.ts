@@ -9,6 +9,8 @@ import { SplatRegistry } from '../../../shared/splat/splatRegistry'
 import { createHttpSplatSource } from '../../../shared/splat/splatSource'
 import { DEFAULT_SPLAT_PLACEMENT } from '../../../shared/splat/splatUpAxis'
 
+import { SplatClipper } from './splatClipping'
+
 import type { SplatEngine, SplatLoadOptions, SplatRenderSettings } from '../../../shared/splat/splatLoader'
 import type { LoadedSplat } from '../../../shared/splat/splatRegistry'
 import type { SplatSource } from '../../../shared/splat/splatSource'
@@ -73,6 +75,7 @@ export class BimSplats extends OBC.Component implements OBC.Disposable, ScenePic
   private world: OBC.World | null = null
   private registry: SplatRegistry | null = null
   private engine: SplatEngine | null = null
+  private clipper: SplatClipper | null = null
   private requestFrame: (callback: () => void) => number = (callback) => requestAnimationFrame(callback)
   private cancelFrame: (handle: number) => void = (handle) => cancelAnimationFrame(handle)
 
@@ -99,6 +102,11 @@ export class BimSplats extends OBC.Component implements OBC.Disposable, ScenePic
 
     const renderer = config.world.renderer
     if (!renderer) return
+
+    this.clipper = new SplatClipper()
+    this.clipper.attach(config.world.scene.three)
+    this.syncClipping()
+    renderer.onClippingPlanesUpdated.add(this.onClippingPlanesUpdated)
 
     void this.engine.attach({
       renderer: renderer.three,
@@ -295,7 +303,21 @@ export class BimSplats extends OBC.Component implements OBC.Disposable, ScenePic
     }
   }
 
+  private readonly onClippingPlanesUpdated = () => {
+    this.syncClipping()
+    this.refresh()
+  }
+
+  // Spark's shader has none of three's clipping includes, so the planes become cutting sdfs.
+  private syncClipping() {
+    this.clipper?.apply(this.world?.renderer?.clippingPlanes ?? [])
+  }
+
   private teardownWorld() {
+    const renderer = this.world?.renderer
+    if (renderer) renderer.onClippingPlanesUpdated.remove(this.onClippingPlanesUpdated)
+    this.clipper?.dispose()
+    this.clipper = null
     this.stopPump()
     this.registry?.dispose()
     this.registry = null

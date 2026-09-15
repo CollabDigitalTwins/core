@@ -3,14 +3,26 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as OBC from '@thatopen/components'
+import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
-import { BimContext, ToolsContext } from '../../../../../store'
+import { useFilesByBuildingId } from '../../../../../hooks/files/files'
+import { BimContext, BuildingsContext, ToolsContext } from '../../../../../store'
+import { typeOfRecord } from '../../../../ui/FilesManager/src/fileType'
 import { Highlighter } from '../Highlighter'
 import { IDSManager } from '../IDSManager'
 import { IDSLegend } from '../IDSManager/src/IDSLegend'
+import { capabilitiesForFile } from '../Placement/placementCapabilities'
+import { PlacementEditor } from '../Placement/PlacementEditor'
+import { useModelTarget } from '../Placement/targets/useModelTarget'
+import { useSplatTarget } from '../Placement/targets/useSplatTarget'
+import { BimSceneObjects } from '../SceneObjects'
+import { BimSplats } from '../Splats'
 
 import { ElementList } from './src/ElementList'
+import { fileIdentityGroup } from './src/fileIdentityGroup'
+import { PositionSection } from './src/PositionSection'
 import { PropertiesMenuHeader } from './src/PropertiesMenuHeader'
 import { PropertyGroup } from './src/PropertyGroup'
 import { useElementProperties } from './src/useElementProperties'
@@ -62,9 +74,23 @@ function useElementNames(bimComponents: any) {
 
 export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesSideBarProps) {
   const { state: bimState } = React.useContext(BimContext)
-  const { bimComponents } = bimState.bim
+  const { bimComponents, sceneSelection } = bimState.bim
   const { state: toolsState } = React.useContext(ToolsContext)
   const { currentToolId } = toolsState.tools
+
+  const t = useTranslations('PropertiesMenu')
+  const { state: buildingState } = React.useContext(BuildingsContext)
+  const { files } = useFilesByBuildingId(buildingState.buildings.building?.id ?? 0)
+
+  const selectedFile = React.useMemo(
+    () => (sceneSelection
+      ? files?.find(file => String(file.id) === sceneSelection.fileId) ?? null
+      : null),
+    [files, sceneSelection],
+  )
+
+  const splatTargets = useSplatTarget()
+  const modelTargets = useModelTarget()
 
   const { fetchElementProperties } = useElementProperties(bimComponents)
   const { getElementNames } = useElementNames(bimComponents)
@@ -72,7 +98,7 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
   const [currentElementId, setCurrentElementId] = React.useState<number | null>(null)
   const [currentElementName, setCurrentElementName] = React.useState<string | null>(null)
   const [propertyGroups, setPropertyGroups] = React.useState<PropertyGroupType[]>([])
-  const [expandedGroups, setExpandedGroups] = React.useState<Set<string>>(new Set(['identity-data']))
+  const [expandedGroups, setExpandedGroups] = React.useState<Set<string>>(new Set(['identity-data', 'position']))
   const [loading, setLoading] = React.useState(false)
   const [internalOpen, setInternalOpen] = React.useState(false)
   const [elementNames, setElementNames] = React.useState<Record<number, string>>({})
@@ -114,7 +140,7 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
       setPropertyGroups(groups)
       setCurrentElementName(elementName)
       // Reset expanded groups to defaults when element changes
-      setExpandedGroups(new Set(['identity-data']))
+      setExpandedGroups(new Set(['identity-data', 'position']))
     }
     catch (error) {
       console.error('Error fetching element properties:', error)
@@ -198,6 +224,68 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
       // If no element has ever been selected or tool is active, do nothing (don't open panel)
     }
   }, [currentToolId, hasEverSelectedElement, handleOpenChange, handleClose])
+
+  React.useEffect(() => {
+    if (!selectedFile) return
+    if (currentToolId !== null) return
+    setSelectedElementIds([])
+    setCurrentElementId(null)
+    setCurrentElementName(selectedFile.name)
+    setHasEverSelectedElement(true)
+    handleOpenChange(true)
+  }, [selectedFile, currentToolId, handleOpenChange])
+
+  const modelFileForElement = React.useMemo(() => {
+    if (!bimComponents || currentElementId === null) return null
+    const selectedItems = bimComponents.get(Highlighter).selectedItems
+    const modelId = Object.keys(selectedItems).find(id => selectedItems[id].has(currentElementId))
+    return files?.find(file => file.name === modelId) ?? null
+  }, [bimComponents, currentElementId, files])
+
+  const positionTarget = React.useMemo(() => {
+    if (!bimComponents) return null
+    if (selectedFile && sceneSelection?.kind === 'splat') {
+      return splatTargets.targetFor(selectedFile, bimComponents.get(BimSplats))
+    }
+    if (selectedFile && sceneSelection?.kind === 'object') {
+      return modelTargets.targetFor(
+        selectedFile,
+        () => bimComponents.get(BimSceneObjects).registry?.get(String(selectedFile.id))?.root ?? null,
+        capabilitiesForFile(selectedFile),
+      )
+    }
+    if (currentElementId !== null && modelFileForElement) {
+      return modelTargets.targetFor(
+        modelFileForElement,
+        () => bimComponents.get(OBC.FragmentsManager).core.models.list.get(modelFileForElement.name)?.object ?? null,
+        capabilitiesForFile(modelFileForElement),
+      )
+    }
+    return null
+  }, [bimComponents, selectedFile, sceneSelection, currentElementId, modelFileForElement, splatTargets, modelTargets])
+
+  const handleEditInViewport = React.useCallback(() => {
+    if (!bimComponents || !positionTarget) return
+    void bimComponents.get(PlacementEditor).begin(positionTarget)
+  }, [bimComponents, positionTarget])
+
+  const identityLabels = React.useMemo(() => {
+    const base = {
+      identity: t('identity'),
+      name: t('name'),
+      type: t('type'),
+      extension: t('extension'),
+      size: t('size'),
+      uploaded: t('uploaded'),
+      description: t('description'),
+      tag: t('tag'),
+    }
+    if (!selectedFile) return base
+    const typeKey = `type_${typeOfRecord(selectedFile)}`
+    return { ...base, [typeKey]: t(typeKey) }
+  }, [t, selectedFile])
+
+  const groups = selectedFile ? [fileIdentityGroup(selectedFile, identityLabels)] : propertyGroups
 
   // Handler to close IDS verification
   const handleIDSClose = React.useCallback(async () => {
@@ -399,18 +487,12 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
           onCloseAction={handleManualClose}
           idsStatus={currentElementIdsStatus}
         />
-        <div className="flex-1 overflow-y-auto space-y-4">{selectedElementIds.length > 0 && !loading && (
+        <div className="flex-1 overflow-y-auto space-y-4">
+          {(selectedFile || (selectedElementIds.length > 0 && !loading)) && (
             <>
-              <ElementList
-                selectedElementIds={selectedElementIds}
-                currentElementId={currentElementId}
-                onElementSelectAction={handleElementSelect}
-                elementNames={elementNames}
-              />
-
-              {propertyGroups.length > 0 && (
+              {groups.length > 0 && (
                 <div className="space-y-1">
-                  {propertyGroups.map(group => (
+                  {groups.map(group => (
                     <PropertyGroup
                       key={group.id}
                       group={group}
@@ -420,6 +502,23 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
                     />
                   ))}
                 </div>
+              )}
+
+              <PositionSection
+                target={positionTarget}
+                isExpanded={expandedGroups.has('position')}
+                onToggleAction={toggleGroup}
+                onEditInViewport={handleEditInViewport}
+                hint={modelFileForElement ? t('movesModel', { name: modelFileForElement.name }) : undefined}
+              />
+
+              {!selectedFile && (
+                <ElementList
+                  selectedElementIds={selectedElementIds}
+                  currentElementId={currentElementId}
+                  onElementSelectAction={handleElementSelect}
+                  elementNames={elementNames}
+                />
               )}
             </>
           )}

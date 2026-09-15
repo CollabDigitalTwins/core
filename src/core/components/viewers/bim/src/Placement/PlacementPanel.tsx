@@ -12,15 +12,11 @@ import { Label } from '../../../../ui/Label'
 import { Separator } from '../../../../ui/Separator'
 
 import { NumberField } from './NumberField'
+import { AXES, WORLD_AXIS, toDegrees, toRadians } from './placementAxes'
 
 import type { PlacementMode } from './PlacementEditor'
 import type { PlacementCapabilities } from './placementTarget'
 import type { PointCloudPlacement } from '../../../shared/pointcloud/pointCloudPlacement'
-
-const AXES = ['X', 'Y', 'Z'] as const
-
-// The card is Z-up like the BIM authoring tools; the scene is Y-up. Index by display axis.
-const WORLD_AXIS = [0, 2, 1] as const
 
 const YAW_AXIS = 1
 
@@ -60,8 +56,6 @@ export interface PlacementPanelProps {
   allowPivot?: boolean
 }
 
-const toDegrees = (radians: number) => Math.round((radians * 180) / Math.PI * 100) / 100
-const toRadians = (degrees: number) => (degrees * Math.PI) / 180
 const round = (value: number) => Math.round(value * 1000) / 1000
 
 function NumberRow({

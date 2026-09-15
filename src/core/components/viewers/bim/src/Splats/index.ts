@@ -13,6 +13,7 @@ import type { SplatEngine, SplatLoadOptions, SplatRenderSettings } from '../../.
 import type { LoadedSplat } from '../../../shared/splat/splatRegistry'
 import type { SplatSource } from '../../../shared/splat/splatSource'
 import type { SplatPlacement } from '../../../shared/splat/splatUpAxis'
+import type { HighlightLevel } from '../lib/highlightMaterials'
 import type { ScenePickSource } from '../lib/scenePicker'
 
 /** Frames to keep drawing after a splat settles, because Spark sorts a frame behind. */
@@ -32,6 +33,12 @@ export const DEFAULT_SPLAT_APPEARANCE: SplatAppearance = {
   opacity: 1,
   maxSh: 3,
   recolor: '#ffffff',
+}
+
+const HIGHLIGHT_TINT: Record<HighlightLevel, string | null> = {
+  none: null,
+  hover: '#cfeef5',
+  selected: '#73cee2',
 }
 
 export interface BimSplatsSetup {
@@ -57,6 +64,7 @@ export class BimSplats extends OBC.Component implements OBC.Disposable, ScenePic
   readonly onDisposed = new OBC.Event()
 
   private readonly appearances = new Map<string, SplatAppearance>()
+  private readonly highlights = new Map<string, HighlightLevel>()
   private world: OBC.World | null = null
   private registry: SplatRegistry | null = null
   private engine: SplatEngine | null = null
@@ -111,6 +119,7 @@ export class BimSplats extends OBC.Component implements OBC.Disposable, ScenePic
   remove(id: string) {
     this.registry?.remove(id)
     this.appearances.delete(id)
+    this.highlights.delete(id)
     this.refresh()
     this.onChanged.trigger(this.ids())
   }
@@ -145,6 +154,20 @@ export class BimSplats extends OBC.Component implements OBC.Disposable, ScenePic
 
   setGhosted(id: string, ghosted: boolean) {
     this.setAppearance(id, { opacity: ghosted ? GHOST_OPACITY : 1 })
+  }
+
+  /** Tints a splat without touching the tint the user picked, which `appearanceOf` keeps reporting. */
+  setHighlight(id: string, level: HighlightLevel) {
+    if (this.highlightOf(id) === level) return
+    this.highlights.set(id, level)
+
+    const splat = this.get(id)
+    if (splat) this.applyAppearance(splat)
+    this.refresh()
+  }
+
+  highlightOf(id: string): HighlightLevel {
+    return this.highlights.get(id) ?? 'none'
   }
 
   get settings(): SplatRenderSettings | null {
@@ -194,6 +217,16 @@ export class BimSplats extends OBC.Component implements OBC.Disposable, ScenePic
     return box.isEmpty() ? splat.root.position.clone() : box.getCenter(new THREE.Vector3())
   }
 
+  /** The splat's world box, for framing it. Null when it has not loaded enough to have one. */
+  boundsOf(id: string): THREE.Box3 | null {
+    const splat = this.get(id)
+    if (!splat) return null
+
+    splat.root.updateMatrixWorld(true)
+    const box = new THREE.Box3().setFromObject(splat.root)
+    return box.isEmpty() ? null : box
+  }
+
   get(id: string): LoadedSplat | undefined {
     return this.registry?.get(id)
   }
@@ -225,7 +258,7 @@ export class BimSplats extends OBC.Component implements OBC.Disposable, ScenePic
     const appearance = this.appearanceOf(splat.id)
     splat.mesh.opacity = appearance.opacity
     splat.mesh.maxSh = appearance.maxSh
-    splat.mesh.recolor.set(appearance.recolor)
+    splat.mesh.recolor.set(HIGHLIGHT_TINT[this.highlightOf(splat.id)] ?? appearance.recolor)
   }
 
   // Splats carry their own colour and are not lit; letting the AO pass touch them only greys them.

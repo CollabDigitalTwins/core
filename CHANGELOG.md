@@ -8,6 +8,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ## [Unreleased]
 
 ### Added
+- `uniqueFileName(name, existingNames)` in `@collabdt/core/utils` — the point-cloud-only
+  `uniquePointCloudName` now delegates to it.
 - **Gaussian splat support in the BIM viewer.** `.ply`, `.spz`, `.splat`, `.ksplat` and `.sog`
   files upload, render and place alongside the BIM model, using
   [Spark](https://sparkjs.dev) (`@sparkjsdev/spark`, MIT) as a new runtime dependency. Splats
@@ -66,6 +68,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ### Fixed
 - The BIM viewer's grid no longer appears and then disappears while the scene loads. It is
   created hidden; the Settings toggle turns it on.
+- Uploading a file whose name is already taken now stores it as `plan (1).dxf` instead of a
+  second `plan.dxf`. Duplicate names previously bound scene objects to the wrong database
+  record, because placement and the viewport menu resolve an object to its file by name.
 - The viewport context menu stayed open, still anchored to a stale screen position or file,
   after a camera move, a file deletion, a file being hidden, or pressing Escape. It now closes
   on all four.

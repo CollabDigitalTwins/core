@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { uniqueFileName } from '../../utils/uniqueFileName'
 import { getFileExtension } from '../../utils/utils'
 import { getAttachmentFieldName } from '../viewers/Data/details/getAttachmentFileName'
 import { uploadFileWithProgress } from '../viewers/map/src/tools/AddTools/AddFile/utils/uploadToPresignedURLS'
@@ -19,6 +20,7 @@ interface UploadFileArgs {
   y?: number
   z?: number
   onProgress?: (percent: number) => void
+  existingNames?: string[]
 }
 
 export async function uploadFile({
@@ -34,12 +36,14 @@ export async function uploadFile({
   y,
   z,
   onProgress,
+  existingNames,
 }: UploadFileArgs) {
   if ((!file && (!files || files.length === 0)) || !buildingId) return null
 
   const filesToProcess: File[] = files ?? (file ? [file] : [])
 
   const uploadResults: any[] = []
+  const taken = new Set(existingNames ?? [])
 
   for (const currentFile of filesToProcess) {
     const fileId = crypto.randomUUID()
@@ -60,8 +64,10 @@ export async function uploadFile({
     }
 
     const attachmentFieldName = getAttachmentFieldName(tag as string)
+    const name = uniqueFileName(currentFile.name, [...taken])
+    taken.add(name)
     const fileData = {
-      name: currentFile.name,
+      name,
       type: 'system',
       mimeType: currentFile.type,
       extension: getFileExtension(currentFile),

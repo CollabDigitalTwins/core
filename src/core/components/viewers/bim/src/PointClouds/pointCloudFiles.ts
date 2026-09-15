@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { uniqueFileName } from '../../../../../utils/uniqueFileName'
+
 import type { DbFile } from '../../../../../types/dbTypes'
 
 export const POINT_CLOUD_EXTENSIONS = ['las', 'laz', 'copc', 'e57'] as const
@@ -42,10 +44,5 @@ export function stripPointCloudExtension(fileName: string): string {
 
 /** The converter writes one object per source name, so a clash would overwrite a sibling. */
 export function uniquePointCloudName(baseName: string, existingNames: string[]): string {
-  const taken = new Set(existingNames)
-  if (!taken.has(baseName)) return baseName
-
-  let counter = 1
-  while (taken.has(`${baseName} (${counter})`)) counter++
-  return `${baseName} (${counter})`
+  return uniqueFileName(baseName, existingNames)
 }

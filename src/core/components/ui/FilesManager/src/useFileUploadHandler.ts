@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
 import { useBuilding } from '../../../../hooks/buildings/buildings'
+import { useFilesByBuildingId } from '../../../../hooks/files/files'
 import { getFileExtension } from '../../../../utils/utils'
 import { uploadFile as performUploadFile } from '../../uploadFile'
 
@@ -48,6 +49,7 @@ export function useFileUploadHandler({
   const user = session?.user
   const t = useTranslations('useFileUploadHandler')
   const { building } = useBuilding(buildingId)
+  const existingNames = (useFilesByBuildingId(buildingId).files || []).map((file: { name: string }) => file.name)
 
           // Inherit building position for the uploaded fragment file
         const position = building ? {
@@ -89,6 +91,7 @@ export function useFileUploadHandler({
             user,
             uploadFile,
             position: { ...position },
+            existingNames,
           })
         } finally {
           toast.dismiss(convertToastId)
@@ -106,6 +109,7 @@ export function useFileUploadHandler({
           uploadFile,
           isVisible,
           position: position !== undefined || isVisible !== undefined ? { ...position } : undefined,
+          existingNames,
         })
 
         const successMsg = customMessages?.success || t('uploadSuccess', { count: 1 })

@@ -40,6 +40,10 @@ export function useBimFileIntake({ buildingId, apiBase, existingNames, uploadFil
   const { labelFor } = useUploadLabels()
   const pointClouds = usePointCloudIntake({ apiBase, buildingId, existingNames })
 
+  // The names are only read when an upload starts, so a ref keeps `submit` stable.
+  const namesRef = React.useRef(existingNames)
+  namesRef.current = existingNames
+
   const needsPlacement = React.useCallback(
     (file: File) => PLACED_BY_USER.includes(typeOfFile(file)),
     [],
@@ -84,6 +88,7 @@ export function useBimFileIntake({ buildingId, apiBase, existingNames, uploadFil
         y: at?.y,
         z: at?.z,
         onProgress: progress => updateTask(taskId, { progress }),
+        existingNames: namesRef.current,
       })
 
       return { id: recordIdOf(result) }

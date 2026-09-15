@@ -75,7 +75,7 @@ export function PlacementEditorHost() {
   const buildingId = buildingState.buildings.building?.id ?? 0
   const { files } = useFilesByBuildingId(buildingId)
   const { deleteFile } = useDeleteFile(buildingId)
-  const { menu, close } = useViewportContextMenu(bimComponents ?? null, files ?? [])
+  const { menu, close } = useViewportContextMenu(bimComponents ?? null, files ?? [], state.bim.splatIds)
   const cloudTarget = usePointCloudTarget()
   const modelTarget = useModelTarget()
   const splatTarget = useSplatTarget()

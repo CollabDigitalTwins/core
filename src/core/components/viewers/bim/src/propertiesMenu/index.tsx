@@ -28,6 +28,7 @@ import { PropertyGroup } from './src/PropertyGroup'
 import { useElementProperties } from './src/useElementProperties'
 import { formatPropertyValue } from './src/utils'
 
+import type { PlacementTarget } from '../Placement/placementTarget'
 import type { PropertyGroup as PropertyGroupType } from './src/utils'
 
 interface PropertiesSideBarProps {
@@ -113,6 +114,14 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
 
   // Ref to prevent circular calls between React and ClickHandler
   const isInternalCloseRef = React.useRef(false)
+  const pendingCloseRef = React.useRef<number | null>(null)
+
+  const cancelPendingClose = React.useCallback(() => {
+    if (pendingCloseRef.current === null) return
+    clearTimeout(pendingCloseRef.current)
+    pendingCloseRef.current = null
+    setIsExiting(false)
+  }, [])
 
   // Use internal state if no external control is provided
   const isOpen = onOpenChangeAction ? open : internalOpen
@@ -154,6 +163,8 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
 
   // Handle closing the properties panel
   const handleClose = React.useCallback(() => {
+    cancelPendingClose()
+
     if (!isOpen) {
       // If not open, close immediately without animation
       setSelectedElementIds([])
@@ -168,7 +179,8 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
 
     setIsExiting(true)
     // Delay the actual close to allow animation to complete
-    setTimeout(() => {
+    pendingCloseRef.current = window.setTimeout(() => {
+      pendingCloseRef.current = null
       setSelectedElementIds([])
       setCurrentElementId(null)
       setCurrentElementName(null)
@@ -178,7 +190,7 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
       setIsExiting(false)
       handleOpenChange(false)
     }, 300) // Match animation duration
-  }, [isOpen, handleOpenChange])
+  }, [isOpen, handleOpenChange, cancelPendingClose])
 
   // Handle manual close (e.g., when user clicks close button)
   const handleManualClose = React.useCallback(() => {
@@ -213,6 +225,7 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
       setHasEverSelectedElement(true)
       // Only open properties panel if no tool is currently active
       if (currentToolId === null) {
+        cancelPendingClose()
         handleOpenChange(true)
       }
     }
@@ -223,17 +236,19 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
       }
       // If no element has ever been selected or tool is active, do nothing (don't open panel)
     }
-  }, [currentToolId, hasEverSelectedElement, handleOpenChange, handleClose])
+  }, [currentToolId, hasEverSelectedElement, handleOpenChange, handleClose, cancelPendingClose])
 
   React.useEffect(() => {
     if (!selectedFile) return
     if (currentToolId !== null) return
+    cancelPendingClose()
     setSelectedElementIds([])
     setCurrentElementId(null)
     setCurrentElementName(selectedFile.name)
     setHasEverSelectedElement(true)
+    setExpandedGroups(new Set(['identity-data', 'position']))
     handleOpenChange(true)
-  }, [selectedFile, currentToolId, handleOpenChange])
+  }, [selectedFile, currentToolId, handleOpenChange, cancelPendingClose])
 
   const modelFileForElement = React.useMemo(() => {
     if (!bimComponents || currentElementId === null) return null
@@ -242,27 +257,39 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
     return files?.find(file => file.name === modelId) ?? null
   }, [bimComponents, currentElementId, files])
 
-  const positionTarget = React.useMemo(() => {
-    if (!bimComponents) return null
+  const latestPositionInputsRef = React.useRef({ bimComponents, selectedFile, modelFileForElement, splatTargets, modelTargets })
+  React.useEffect(() => {
+    latestPositionInputsRef.current = { bimComponents, selectedFile, modelFileForElement, splatTargets, modelTargets }
+  })
+
+  const [positionTarget, setPositionTarget] = React.useState<PlacementTarget | null>(null)
+
+  React.useEffect(() => {
+    const { bimComponents, selectedFile, modelFileForElement, splatTargets, modelTargets } = latestPositionInputsRef.current
+    if (!bimComponents) { setPositionTarget(null); return }
+
     if (selectedFile && sceneSelection?.kind === 'splat') {
-      return splatTargets.targetFor(selectedFile, bimComponents.get(BimSplats))
+      setPositionTarget(splatTargets.targetFor(selectedFile, bimComponents.get(BimSplats)))
+      return
     }
     if (selectedFile && sceneSelection?.kind === 'object') {
-      return modelTargets.targetFor(
+      setPositionTarget(modelTargets.targetFor(
         selectedFile,
         () => bimComponents.get(BimSceneObjects).registry?.get(String(selectedFile.id))?.root ?? null,
         capabilitiesForFile(selectedFile),
-      )
+      ))
+      return
     }
     if (currentElementId !== null && modelFileForElement) {
-      return modelTargets.targetFor(
+      setPositionTarget(modelTargets.targetFor(
         modelFileForElement,
         () => bimComponents.get(OBC.FragmentsManager).core.models.list.get(modelFileForElement.name)?.object ?? null,
         capabilitiesForFile(modelFileForElement),
-      )
+      ))
+      return
     }
-    return null
-  }, [bimComponents, selectedFile, sceneSelection, currentElementId, modelFileForElement, splatTargets, modelTargets])
+    setPositionTarget(null)
+  }, [bimComponents, sceneSelection?.kind, sceneSelection?.fileId, currentElementId, modelFileForElement?.id])
 
   const handleEditInViewport = React.useCallback(() => {
     if (!bimComponents || !positionTarget) return
@@ -361,6 +388,7 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
     // Get the currently selected elements if any
     const currentlySelected = highlighter.selectedElement
     if (currentlySelected && currentlySelected.length > 0 && currentToolId === null) {
+      cancelPendingClose()
       setSelectedElementIds(currentlySelected)
       setCurrentElementId(currentlySelected[0])
       setHasEverSelectedElement(true)
@@ -372,13 +400,13 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
       highlighter.onElementsSelected.remove(handleElementsSelected)
       highlighter.onSelectionCleared.remove(handleSelectionCleared)
     }
-  }, [bimComponents, handleElementsSelected, handleSelectionCleared, currentToolId, handleOpenChange])
+  }, [bimComponents, handleElementsSelected, handleSelectionCleared, currentToolId, handleOpenChange, cancelPendingClose])
   // Fetch properties when currentElementId changes
   React.useEffect(() => {
     if (currentElementId === null) {
       setPropertyGroups([])
       setCurrentElementName(null)
-      setExpandedGroups(new Set())
+      if (!selectedFile) setExpandedGroups(new Set())
       setCurrentElementIdsStatus(null)
     }
     else {
@@ -419,7 +447,7 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
         setCurrentElementIdsStatus(null)
       }
     }
-  }, [currentElementId, loadElementProperties, bimComponents, idsEnabled])
+  }, [currentElementId, loadElementProperties, bimComponents, idsEnabled, selectedFile])
 
   // Close properties panel when a tool becomes active
   React.useEffect(() => {

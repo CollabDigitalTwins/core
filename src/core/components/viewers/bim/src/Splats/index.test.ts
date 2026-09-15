@@ -165,7 +165,7 @@ describe('BimSplats.boundsOf', () => {
   it('transforms by the mesh world matrix, not the root, because upFix rotates between them', () => {
     const meshMatrixWorld = new THREE.Matrix4().compose(
       new THREE.Vector3(10, 0, 0),
-      new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI, 0)),
+      new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI, 0, 0)),
       new THREE.Vector3(1, 1, 1),
     )
     const rootMatrixWorld = new THREE.Matrix4()
@@ -179,8 +179,8 @@ describe('BimSplats.boundsOf', () => {
 
     const box = boundsComponent(map).boundsOf('a') as THREE.Box3
 
-    expect(box.min.toArray().map((n: number) => Math.round(n))).toEqual([8, 0, -3])
-    expect(box.max.toArray().map((n: number) => Math.round(n))).toEqual([10, 1, -1])
+    expect(box.min.toArray().map((n: number) => Math.round(n) + 0)).toEqual([10, -1, -3])
+    expect(box.max.toArray().map((n: number) => Math.round(n) + 0)).toEqual([12, 0, -1])
   })
 
   it('iterates the splat once, then serves the cached box on later calls', () => {

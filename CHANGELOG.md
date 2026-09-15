@@ -20,16 +20,43 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - `PlacementEditor.registerPickSource()` / `unregisterPickSource()`, so more than one kind of
   scene object can offer itself to the placement raycast without the last caller of `setup()`
   clobbering the rest.
+- **Loaded 3D models, DXF drawings and splats now hover and select in the BIM viewer**, the
+  same as a fragment element, and a click on empty space clears the selection. A new
+  `Selection` component takes ownership of the canvas pointer from the `Highlighter` (which
+  gains an `ownsPointer` flag for exactly this handoff) and picks the nearest hit across
+  fragments, scene objects and splats through one shared raycast. Point clouds are picked but
+  deliberately excluded from hover and selection. New modules: `Selection/index.ts`,
+  `Selection/sceneObjectHighlight.ts` (the cyan overlay for a model or drawing, reparented
+  under its target so it inherits root motion and skeletal animation), `Selection/selectionState.ts`,
+  `lib/pickAtPointer.ts` and `lib/highlightMaterials.ts` (the hover/selected materials shared
+  between the highlighter and the new overlay).
+- `BimSplats` gains `setHighlight()` / `highlightOf()`, tinting a splat for hover or selection
+  without disturbing the recolor the user picked, and `boundsOf()`, its world-space bounding
+  box derived from the splat's own centres (`SplatMesh` has no geometry for `Box3.setFromObject`
+  to walk).
+- **The properties panel now shows the selected model, drawing or splat's file record** as an
+  Identity Data group (name, type, extension, size, upload date, description) and an editable
+  Position section (position, rotation, and scale where the target supports it), reusing the
+  same placement gizmo as the sidebar. The element list now sits below the property groups.
+  New modules: `propertiesMenu/src/fileIdentityGroup.ts`, `propertiesMenu/src/PositionSection.tsx`
+  and `Placement/placementAxes.ts`. New `PropertiesMenu` i18n namespace in `en`, `es` and `fr`.
+- Fit now frames the selected splat or object instead of falling back to the whole scene.
 
 ### Changed
 - `resolveViewportTarget()` takes a `splat` hit and can return `kind: 'splat'`.
 - `BimState` gains `splatIds`, with the `SET_SPLAT_IDS` and `TOGGLE_SPLAT` actions.
+- `BimState` gains `sceneSelection`, with the `SET_SCENE_SELECTION` action; `SelectionSync`
+  publishes it alongside the existing fragment `selection`.
+- `FragmentHit` gains an optional `localId`, so a fragment pick can carry which element was hit.
 - Splat placements persist to the existing `File.pointCloudTransform` column, whose shape
   already matched. No schema change.
 - The canvas shows a crosshair cursor while "pick pivot" waits for its double-click, for every
   kind of placement target rather than splats alone.
 
 ### Fixed
+- The viewport context menu stayed open, still anchored to a stale screen position or file,
+  after a camera move, a file deletion, a file being hidden, or pressing Escape. It now closes
+  on all four.
 - A splat uploaded while the viewer was open stayed switched off until a reload. The seed only
   ran once per building, so a file that appeared afterwards was never added to `splatIds`; the
   reconcile now claims each splat id once and switches on any that arrives visible.

@@ -62,6 +62,8 @@ export async function createBimWorld(container: HTMLElement): Promise<BimWorldBo
 
     const grids = components.get(OBC.Grids);
     const grid: OBC.SimpleGrid | null = grids.create(world) ?? null;
+    // The worker fetch below runs for seconds with the renderer already live.
+    if (grid) grid.config.visible = false;
 
     const axes = new THREE.AxesHelper(5);
     world.scene.three.add(axes);
@@ -97,7 +99,6 @@ export async function createBimWorld(container: HTMLElement): Promise<BimWorldBo
         world.scene.distanceRenderer.excludedObjects.add(grid.three);
         shadows.excludeFromShadows(grid.three);
         excludeFromPostproduction(world, grid.material);
-        grid.config.visible = false;
     }
 
     applyBimLighting(world, DEFAULT_BIM_LIGHTING, modelBounds(components));

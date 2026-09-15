@@ -64,6 +64,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   kind of placement target rather than splats alone.
 
 ### Fixed
+- The BIM viewer's grid no longer appears and then disappears while the scene loads. It is
+  created hidden; the Settings toggle turns it on.
 - The viewport context menu stayed open, still anchored to a stale screen position or file,
   after a camera move, a file deletion, a file being hidden, or pressing Escape. It now closes
   on all four.

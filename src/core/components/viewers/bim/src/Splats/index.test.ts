@@ -66,4 +66,20 @@ describe('BimSplats.setHighlight', () => {
 
     expect(component.isGhosted('7')).toBe(true)
   })
+
+  it('forgets a highlight when the world tears down, so a reused id starts clean', () => {
+    const component = splats()
+    Object.assign(component, {
+      frameHandle: 0,
+      onChanged: { reset: () => {} },
+      onSettingsChanged: { reset: () => {} },
+      onDisposed: { trigger: () => {}, reset: () => {} },
+    })
+    component.onAppearanceChanged.reset = () => {}
+    component.setHighlight('7', 'selected')
+
+    component.dispose()
+
+    expect(component.highlightOf('7')).toBe('none')
+  })
 })

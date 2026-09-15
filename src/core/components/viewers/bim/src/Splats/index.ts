@@ -283,6 +283,7 @@ export class BimSplats extends OBC.Component implements OBC.Disposable, ScenePic
     this.engine = null
     this.world = null
     this.appearances.clear()
+    this.highlights.clear()
   }
 
   private readonly pump = () => {

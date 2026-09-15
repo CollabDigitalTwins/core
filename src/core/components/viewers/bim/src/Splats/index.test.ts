@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as THREE from 'three'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('@thatopen/components', () => {
@@ -13,12 +14,15 @@ vi.mock('@thatopen/components', () => {
 
 import { BimSplats } from './index'
 
+import type { LoadedSplat } from '../../../shared/splat/splatRegistry'
+
 // Only the appearance bookkeeping is under test; nothing here touches Spark or WebGL.
 const splats = () => {
   const component = Object.create(BimSplats.prototype) as BimSplats
   Object.assign(component, {
     appearances: new Map(),
     highlights: new Map(),
+    localBounds: new Map(),
     onAppearanceChanged: { trigger: vi.fn() },
     get: () => undefined,
     refresh: () => {},
@@ -81,5 +85,113 @@ describe('BimSplats.setHighlight', () => {
     component.dispose()
 
     expect(component.highlightOf('7')).toBe('none')
+  })
+})
+
+// Spark's SplatMesh has no geometry, so bounds come from splat centres, not Box3.setFromObject.
+type FakeSplat = LoadedSplat & { boundingBoxCalls: () => number }
+
+const fakeSplat = (id: string, centers: THREE.Vector3[], matrixWorld = new THREE.Matrix4()): FakeSplat => {
+  let calls = 0
+  return {
+    id,
+    root: { updateMatrixWorld: vi.fn() },
+    mesh: {
+      getBoundingBox: () => {
+        calls++
+        return new THREE.Box3().setFromPoints(centers)
+      },
+      matrixWorld,
+      opacity: 1,
+      maxSh: 3,
+      recolor: { set: vi.fn() },
+    },
+    boundingBoxCalls: () => calls,
+  } as unknown as FakeSplat
+}
+
+const boundsComponent = (registryMap: Map<string, LoadedSplat> = new Map()) => {
+  const component = Object.create(BimSplats.prototype) as BimSplats
+  Object.assign(component, {
+    appearances: new Map(),
+    highlights: new Map(),
+    localBounds: new Map(),
+    onAppearanceChanged: { trigger: vi.fn() },
+    onChanged: { trigger: vi.fn() },
+    refresh: () => {},
+    registry: {
+      add: vi.fn(async (id: string) => registryMap.get(id)),
+      remove: vi.fn((id: string) => registryMap.delete(id)),
+      get: (id: string) => registryMap.get(id),
+      list: () => [...registryMap.values()],
+    },
+  })
+  return component
+}
+
+describe('BimSplats.boundsOf', () => {
+  it('reports nothing for a splat it does not hold', () => {
+    const component = boundsComponent()
+
+    expect(component.boundsOf('nope')).toBeNull()
+  })
+
+  it('returns null for a splat with zero splats loaded, instead of an empty box', () => {
+    const map = new Map<string, LoadedSplat>([['a', fakeSplat('a', [])]])
+
+    expect(boundsComponent(map).boundsOf('a')).toBeNull()
+  })
+
+  it('transforms the splat centres by the placement, not just their local extent', () => {
+    const matrixWorld = new THREE.Matrix4().compose(
+      new THREE.Vector3(10, 0, 0),
+      new THREE.Quaternion(),
+      new THREE.Vector3(2, 2, 2),
+    )
+    const splat = fakeSplat('a', [new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1)], matrixWorld)
+    const map = new Map<string, LoadedSplat>([['a', splat]])
+
+    const box = boundsComponent(map).boundsOf('a') as THREE.Box3
+
+    expect(box.min.toArray()).toEqual([8, -2, -2])
+    expect(box.max.toArray()).toEqual([12, 2, 2])
+  })
+
+  it('iterates the splat once, then serves the cached box on later calls', () => {
+    const splat = fakeSplat('a', [new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1)])
+    const map = new Map<string, LoadedSplat>([['a', splat]])
+    const component = boundsComponent(map)
+
+    component.boundsOf('a')
+    component.boundsOf('a')
+
+    expect((splat as unknown as FakeSplat).boundingBoxCalls()).toBe(1)
+  })
+
+  it('drops the cached box when the splat is reloaded', async () => {
+    const map = new Map<string, LoadedSplat>([['a', fakeSplat('a', [new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1)])]])
+    const component = boundsComponent(map)
+    component.boundsOf('a')
+
+    const reloaded = fakeSplat('a', [new THREE.Vector3(-5, -5, -5), new THREE.Vector3(5, 5, 5)])
+    map.set('a', reloaded)
+    await component.add('a')
+
+    const box = component.boundsOf('a') as THREE.Box3
+    expect(box.max.toArray()).toEqual([5, 5, 5])
+    expect((reloaded as unknown as FakeSplat).boundingBoxCalls()).toBe(1)
+  })
+
+  it('drops the cached box when the splat is removed', () => {
+    const map = new Map<string, LoadedSplat>([['a', fakeSplat('a', [new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1)])]])
+    const component = boundsComponent(map)
+    component.boundsOf('a')
+
+    component.remove('a')
+    const reloaded = fakeSplat('a', [new THREE.Vector3(-5, -5, -5), new THREE.Vector3(5, 5, 5)])
+    map.set('a', reloaded)
+
+    const box = component.boundsOf('a') as THREE.Box3
+    expect(box.max.toArray()).toEqual([5, 5, 5])
   })
 })

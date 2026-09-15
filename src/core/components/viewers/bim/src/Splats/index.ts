@@ -51,6 +51,10 @@ export interface BimSplatsSetup {
 
 type OnDemandRenderer = OBC.BaseRenderer & { needsUpdate: boolean }
 
+// SplatMesh's inherited THREE.Object3D members don't type-check: three ships no .d.ts here.
+const meshMatrixWorld = (mesh: LoadedSplat['mesh']): THREE.Matrix4 =>
+  (mesh as unknown as { matrixWorld: THREE.Matrix4 }).matrixWorld
+
 /** Owns the splats in the BIM scene so they outlive every React panel and die with
  *  `components.dispose()`. React mirrors this; it never owns a splat. */
 export class BimSplats extends OBC.Component implements OBC.Disposable, ScenePickSource {
@@ -65,6 +69,7 @@ export class BimSplats extends OBC.Component implements OBC.Disposable, ScenePic
 
   private readonly appearances = new Map<string, SplatAppearance>()
   private readonly highlights = new Map<string, HighlightLevel>()
+  private readonly localBounds = new Map<string, THREE.Box3>()
   private world: OBC.World | null = null
   private registry: SplatRegistry | null = null
   private engine: SplatEngine | null = null
@@ -110,6 +115,7 @@ export class BimSplats extends OBC.Component implements OBC.Disposable, ScenePic
     if (!this.registry) return null
 
     const loaded = await this.registry.add(id, placement, options)
+    this.localBounds.delete(id)
     this.applyAppearance(loaded)
     this.refresh()
     this.onChanged.trigger(this.ids())
@@ -120,6 +126,7 @@ export class BimSplats extends OBC.Component implements OBC.Disposable, ScenePic
     this.registry?.remove(id)
     this.appearances.delete(id)
     this.highlights.delete(id)
+    this.localBounds.delete(id)
     this.refresh()
     this.onChanged.trigger(this.ids())
   }
@@ -222,9 +229,21 @@ export class BimSplats extends OBC.Component implements OBC.Disposable, ScenePic
     const splat = this.get(id)
     if (!splat) return null
 
+    const localBox = this.localBoundsOf(splat)
+    if (localBox.isEmpty()) return null
+
     splat.root.updateMatrixWorld(true)
-    const box = new THREE.Box3().setFromObject(splat.root)
-    return box.isEmpty() ? null : box
+    return localBox.clone().applyMatrix4(meshMatrixWorld(splat.mesh))
+  }
+
+  /** SplatMesh has no geometry for `Box3.setFromObject` to walk, so bounds come from its splat centres. */
+  private localBoundsOf(splat: LoadedSplat): THREE.Box3 {
+    const cached = this.localBounds.get(splat.id)
+    if (cached) return cached
+
+    const box = splat.mesh.getBoundingBox(true)
+    this.localBounds.set(splat.id, box)
+    return box
   }
 
   get(id: string): LoadedSplat | undefined {
@@ -284,6 +303,7 @@ export class BimSplats extends OBC.Component implements OBC.Disposable, ScenePic
     this.world = null
     this.appearances.clear()
     this.highlights.clear()
+    this.localBounds.clear()
   }
 
   private readonly pump = () => {

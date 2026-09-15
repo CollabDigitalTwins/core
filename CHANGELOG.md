@@ -48,6 +48,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - `BimState` gains `sceneSelection`, with the `SET_SCENE_SELECTION` action; `SelectionSync`
   publishes it alongside the existing fragment `selection`.
 - `FragmentHit` gains an optional `localId`, so a fragment pick can carry which element was hit.
+- `useViewportContextMenu()` now requires a `splatIds: string[]` third argument, the store's
+  splat-visibility list, so it can close the menu when its splat is switched off.
 - Splat placements persist to the existing `File.pointCloudTransform` column, whose shape
   already matched. No schema change.
 - The canvas shows a crosshair cursor while "pick pivot" waits for its double-click, for every

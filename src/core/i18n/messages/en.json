@@ -2137,5 +2137,9 @@
     "unsupportedFormat": "Unsupported splat format",
     "uploadFailed": "Could not upload \"{name}\"",
     "loadFailed": "Could not load \"{name}\""
+  },
+  "BimAttribution": {
+    "poweredBy": "Powered by:",
+    "toggle": "Toggle attribution"
   }
 }

@@ -8,12 +8,13 @@ import * as React from "react";
 import * as THREE from "three";
 
 import { useUndoRedoShortcuts } from "../../../hooks/useUndoRedoShortcuts";
-import { ToolsContext, BimContext, MenusContext } from "../../../store";
+import { BimContext, MenusContext } from "../../../store";
 import { ViewerNames } from "../../../types/dbTypes";
 import { SensorLegend } from "../../ui/Sensors/SensorLegend";
 import { ViewerLegendHost } from "../shared/legends/ViewerLegendHost";
 import { useBimCoordinateSystem } from "../useCoordinateSystem";
 
+import { BimAttribution } from "./src/BimAttribution";
 import { BimLoadingState } from "./src/BimLoadingState";
 import { BuildingLocationSync } from "./src/BuildingLocationSync";
 import { CameraNavigation } from "./src/CameraNavigation";
@@ -271,6 +272,7 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
                 <SensorLegend />
                 <ViewerLegendHost viewer={ViewerNames.bim} />
             </div>
+            <BimAttribution />
             <PropertiesMenu />
         </div>
     );

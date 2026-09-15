@@ -27,4 +27,10 @@ describe('message catalogues', () => {
       expect(keysOf((locale as never)['PropertiesMenu']), name).toEqual(keysOf((en as never)['PropertiesMenu']))
     }
   })
+
+  it('gives every locale the new BimAttribution namespace', () => {
+    for (const [name, locale] of [['es', es], ['fr', fr]] as const) {
+      expect(keysOf((locale as never)['BimAttribution']), name).toEqual(keysOf((en as never)['BimAttribution']))
+    }
+  })
 })

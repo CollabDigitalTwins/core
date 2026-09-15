@@ -2134,5 +2134,9 @@
     "unsupportedFormat": "Formato de splat no compatible",
     "uploadFailed": "No se pudo subir «{name}»",
     "loadFailed": "No se pudo cargar «{name}»"
+  },
+  "BimAttribution": {
+    "poweredBy": "Con tecnología de:",
+    "toggle": "Mostrar atribuciones"
   }
 }

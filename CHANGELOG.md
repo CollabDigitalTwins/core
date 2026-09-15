@@ -41,6 +41,14 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   New modules: `propertiesMenu/src/fileIdentityGroup.ts`, `propertiesMenu/src/PositionSection.tsx`
   and `Placement/placementAxes.ts`. New `PropertiesMenu` i18n namespace in `en`, `es` and `fr`.
 - Fit now frames the selected splat or object instead of falling back to the whole scene.
+- **An attribution control in the BIM viewer**, crediting Three.js, That Open Company, Potree
+  and Spark with a link to each project, behind a `Powered by:` label that `useIsMobile()`
+  drops below 768px to keep the pill off a phone's viewport. It is a copy of MapLibre's
+  compact attribution control — same geometry, icon, typography and bottom-right placement —
+  so the two viewers credit their dependencies identically. New module
+  `components/viewers/bim/src/BimAttribution` and a new `BimAttribution` i18n namespace in
+  `en`, `es` and `fr`. The That Open renderer's own logo is switched off now that the control
+  carries the credit.
 
 ### Changed
 - `resolveViewportTarget()` takes a `splat` hit and can return `kind: 'splat'`.

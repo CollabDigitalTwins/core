@@ -21,6 +21,7 @@ interface UploadFileArgs {
   z?: number
   onProgress?: (percent: number) => void
   existingNames?: string[]
+  pointCloudTransform?: unknown
 }
 
 export async function uploadFile({
@@ -37,6 +38,7 @@ export async function uploadFile({
   z,
   onProgress,
   existingNames,
+  pointCloudTransform,
 }: UploadFileArgs) {
   if ((!file && (!files || files.length === 0)) || !buildingId) return null
 
@@ -84,6 +86,7 @@ export async function uploadFile({
       y,
       z,
       isVisible: isVisible ?? false,
+      ...(pointCloudTransform === undefined ? {} : { pointCloudTransform }),
     }
 
     const result = await uploadFile({ fileData, buildingId })

@@ -81,4 +81,31 @@ describe('useBimFileIntake', () => {
     expect(result.current.needsPlacement(new File([''], 'plan.pdf'))).toBe(false)
     expect(result.current.needsPlacement(new File([''], 'photo.png'))).toBe(false)
   })
+
+  it('routes a splat through user placement, like a model', () => {
+    const { result } = renderHook(() => useBimFileIntake(options))
+    expect(result.current.needsPlacement(new File([''], 'scan.spz'))).toBe(true)
+    expect(result.current.needsPlacement(new File([''], 'scan.ply'))).toBe(true)
+  })
+
+  it('persists a placed splat into pointCloudTransform, not x/y/z', async () => {
+    vi.mocked(uploadFile).mockClear()
+    const { result } = renderHook(() => useBimFileIntake(options))
+    await act(async () => {
+      await result.current.submit(new File([''], 'scan.spz'), { x: 1, y: 2, z: 3 } as never)
+    })
+    const sent = vi.mocked(uploadFile).mock.calls[0][0] as { pointCloudTransform?: { position?: number[] } }
+    expect(sent.pointCloudTransform?.position).toEqual([1, 2, 3])
+  })
+
+  it('leaves pointCloudTransform unset for a model, which uses x/y/z', async () => {
+    vi.mocked(uploadFile).mockClear()
+    const { result } = renderHook(() => useBimFileIntake(options))
+    await act(async () => {
+      await result.current.submit(new File([''], 'model.glb'), { x: 1, y: 2, z: 3 } as never)
+    })
+    const sent = vi.mocked(uploadFile).mock.calls[0][0] as { pointCloudTransform?: unknown, x?: number }
+    expect(sent.pointCloudTransform).toBeUndefined()
+    expect(sent.x).toBe(1)
+  })
 })

@@ -11,7 +11,10 @@ import { typeOfFile } from '../../../../ui/FilesManager/src/fileType'
 import { beginTask, endTask, updateTask } from '../../../../ui/FilesManager/src/uploadProgress'
 import { useUploadLabels } from '../../../../ui/FilesManager/src/UploadProgressBar'
 import { uploadFile as performUploadFile } from '../../../../ui/uploadFile'
+import { DEFAULT_SPLAT_PLACEMENT } from '../../../shared/splat/splatUpAxis'
 import { usePointCloudIntake } from '../PointClouds/usePointCloudIntake'
+import { splatPlacementPatch } from '../Splats/splatPlacementStore'
+
 
 import type { FileType } from '../../../../ui/FilesManager/src/fileType'
 import type * as THREE from 'three'
@@ -27,7 +30,7 @@ export interface IntakeResult {
   id?: number
 }
 
-const PLACED_BY_USER: readonly FileType[] = ['3d-file', 'cad-file']
+const PLACED_BY_USER: readonly FileType[] = ['3d-file', 'cad-file', 'splat-file']
 
 const recordIdOf = (result: unknown): number | undefined => {
   const first = Array.isArray(result) ? result[0] : result
@@ -87,6 +90,10 @@ export function useBimFileIntake({ buildingId, apiBase, existingNames, uploadFil
         x: at?.x,
         y: at?.y,
         z: at?.z,
+        // A splat reads its placement from `pointCloudTransform`, never from x/y/z.
+        pointCloudTransform: fileType === 'splat-file' && at
+          ? splatPlacementPatch({ ...DEFAULT_SPLAT_PLACEMENT, position: [at.x, at.y, at.z] }).pointCloudTransform
+          : undefined,
         onProgress: progress => updateTask(taskId, { progress }),
         existingNames: namesRef.current,
       })

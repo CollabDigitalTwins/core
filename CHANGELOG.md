@@ -8,6 +8,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ## [Unreleased]
 
 ### Added
+- Gaussian splats are now placed with the crosshair on upload, like 3D models and DXF
+  drawings, instead of always landing at the world origin. The position persists to the same
+  `pointCloudTransform` column the placement gizmo already writes.
 - In BIM placing mode, **Enter** drops the file at the world origin and **Escape** cancels.
   Escape previously worked only when re-placing an already-uploaded file, and there was no
   keyboard way to accept the origin.
@@ -92,6 +95,10 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   was toggled away. It now asks the store, which is what the scene reconciles from.
 - The viewport context menu could not place a splat — it had no `'splat'` branch, so it built
   a model target whose object lookup never resolves a splat and the gizmo never appeared.
+
+### Removed
+- `dropsAtOrigin` from the placement capabilities module. It was unreferenced, and its claim
+  that splats are origin-only no longer describes the viewer.
 
 ### Migration
 - `resolveViewportTarget()` now requires a `splat` property on its input. Pass `splat: null`

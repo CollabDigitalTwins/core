@@ -246,8 +246,10 @@ export function useFilePlacement(
         setIsPlacingFile(false)
         setCursor("")
       } else {
+        // A splat is rendered by BimSplatSync from the stored placement, so the marker is only a stand-in.
+        const standInOnly = typeOfFile(selectedFile) === "splat-file"
         void intake.submit(selectedFile, point).then((created) => {
-          if (!created?.id) { discardPlacement(addedFile.id); return }
+          if (!created?.id || standInOnly) { discardPlacement(addedFile.id); return }
           registry?.rekey(addedFile.id, String(created.id))
           placedFilesRef.current.delete(addedFile.id)
         })

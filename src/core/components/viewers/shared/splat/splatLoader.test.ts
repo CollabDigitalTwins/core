@@ -20,7 +20,7 @@ class FakeSparkRenderer {
 
 class FakeSplatMesh {
   initialized: Promise<FakeSplatMesh>
-  constructor(public options: { url: string, onProgress?: (event: ProgressEvent) => void }) {
+  constructor(public options: { url: string, fileType?: string, onProgress?: (event: ProgressEvent) => void }) {
     meshInstances.push(this)
     this.initialized = Promise.resolve(this)
   }
@@ -74,6 +74,24 @@ describe('load', () => {
 
     expect(mesh).toBe(meshInstances[0])
     expect(meshInstances[0].options.url).toBe('https://example.test/capture.spz')
+  })
+
+  it('names the decoder so Spark never has to guess from a presigned URL', async () => {
+    const engine = createSparkEngine()
+    await engine.attach(attachment(fakeScene()))
+
+    await engine.load('https://minio.test/bucket/9f2a-uuid?X-Amz-Signature=abc', { fileType: 'pcsogszip' })
+
+    expect(meshInstances[0].options.fileType).toBe('pcsogszip')
+  })
+
+  it('omits the key entirely when the type is unknown, leaving Spark to sniff', async () => {
+    const engine = createSparkEngine()
+    await engine.attach(attachment(fakeScene()))
+
+    await engine.load('https://minio.test/bucket/9f2a-uuid')
+
+    expect(meshInstances[0].options).not.toHaveProperty('fileType')
   })
 
   it('reports progress as a whole percentage', async () => {

@@ -341,8 +341,12 @@ export class PlacementEditor extends OBC.Component implements OBC.Disposable, Ex
     const canvas = this.world?.renderer?.three.domElement
     if (!canvas) return Promise.resolve(null)
 
+    const restoreCursor = canvas.style.cursor
+    canvas.style.cursor = 'crosshair'
+
     return new Promise((resolve) => {
       const done = (point: THREE.Vector3 | null) => {
+        canvas.style.cursor = restoreCursor
         canvas.removeEventListener('dblclick', onDoubleClick)
         window.removeEventListener('keydown', onKeyDown)
         resolve(point)

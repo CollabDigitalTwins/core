@@ -19,6 +19,7 @@ import { Highlighter } from '../Highlighter'
 import { ModelManager } from '../ModelManager'
 import { BimPointClouds } from '../PointClouds'
 import { BimSceneObjects } from '../SceneObjects'
+import { BimSplats } from '../Splats'
 
 
 import { AnimationPanel } from './AnimationPanel'
@@ -28,16 +29,23 @@ import { PlacementEditor } from './PlacementEditor'
 import { PlacementPanel } from './PlacementPanel'
 import { useModelTarget } from './targets/useModelTarget'
 import { usePointCloudTarget } from './targets/usePointCloudTarget'
+import { useSplatTarget } from './targets/useSplatTarget'
 import { useAnimationSession } from './useAnimationSession'
 import { usePlacementSession } from './usePlacementSession'
 import { useViewportContextMenu } from './useViewportContextMenu'
 
 import type { PlacementMode } from './PlacementEditor'
 import type { ViewportTarget } from './resolveViewportTarget'
+import type { ViewportMenuState } from './useViewportContextMenu'
 import type { DbFile } from '../../../../../types/dbTypes'
 import type { AnimationState } from '../ModelManager/modelAnimation'
 
 const PIVOT_TOAST_ID = 'bim-placement-pivot-toast'
+
+const MENU_ICONS: Partial<Record<ViewportTarget['kind'], typeof LR.Box>> = {
+  cloud: LR.Grip,
+  splat: LR.Sparkles,
+}
 
 const sceneObject = (components: OBC.Components, kind: ViewportTarget['kind'], file: DbFile) => {
   try {
@@ -70,6 +78,7 @@ export function PlacementEditorHost() {
   const { menu, close } = useViewportContextMenu(bimComponents ?? null, files ?? [])
   const cloudTarget = usePointCloudTarget()
   const modelTarget = useModelTarget()
+  const splatTarget = useSplatTarget()
 
   const animation = useAnimationSession()
   const [animationState, setAnimationState] = React.useState<AnimationState | null>(null)
@@ -178,6 +187,17 @@ export function PlacementEditorHost() {
     }
   }
 
+  // Splats and clouds live outside the fragment scene, so each needs its own target builder.
+  const targetFromMenu = (target: ViewportMenuState, components: OBC.Components) => {
+    if (target.kind === 'cloud') return cloudTarget.targetFor(target.file, components.get(BimPointClouds))
+    if (target.kind === 'splat') return splatTarget.targetFor(target.file, components.get(BimSplats))
+    return modelTarget.targetFor(
+      target.file,
+      () => sceneObject(components, target.kind, target.file),
+      target.capabilities,
+    )
+  }
+
   const beginFromMenu = (action: 'move' | 'rotate' | 'scale' | 'animate' | 'delete') => {
     if (!menu || !bimComponents) return
     if (action === 'delete') { setPendingDelete(menu.file); return }
@@ -187,15 +207,7 @@ export function PlacementEditorHost() {
     }
 
     const mode = action === 'move' ? 'translate' : action
-    const target = menu.kind === 'cloud'
-      ? cloudTarget.targetFor(menu.file, bimComponents.get(BimPointClouds))
-      : modelTarget.targetFor(
-        menu.file,
-        () => sceneObject(bimComponents, menu.kind, menu.file),
-        menu.capabilities,
-      )
-
-    void editor?.begin(target, mode)
+    void editor?.begin(targetFromMenu(menu, bimComponents), mode)
   }
 
   const deleteDialog = (
@@ -215,7 +227,7 @@ export function PlacementEditorHost() {
           <div className="fixed z-50" style={{ left: menu.x, top: menu.y }}>
             <PlacementActionsCard
               name={menu.file.name}
-              Icon={menu.kind === 'cloud' ? LR.Grip : LR.Box}
+              Icon={MENU_ICONS[menu.kind] ?? LR.Box}
               actions={markerActionsFor(menu.capabilities, { animated: menu.animated })}
               onAction={beginFromMenu}
               onClose={close}

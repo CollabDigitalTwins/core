@@ -8,7 +8,7 @@ import * as React from 'react'
 import { useFilesByBuildingId } from '../../../../../hooks/files/files'
 import { BimContext } from '../../../../../store/BIM/context'
 import { BuildingsContext } from '../../../../../store/Buildings/context'
-import { isSplatFile } from '../../../shared/splat/splatFiles'
+import { claimSplatIds, splatFileType } from '../../../shared/splat/splatFiles'
 import { BimMeasurementManager } from '../BimMeasurements/BimMeasurementManager'
 import { PlacementEditor } from '../Placement/PlacementEditor'
 
@@ -34,17 +34,20 @@ export function BimSplatSync() {
     fileOfRef.current = (id: string) => files?.find((file) => String(file.id) === id)
   }, [files])
 
-  // Claimed per building so a file refetch cannot re-add a splat the user just switched off.
-  const seededBuildingRef = React.useRef<number | null>(null)
+  // Every splat is claimed once per building, so a file refetch cannot re-add one the user switched off.
+  const seenRef = React.useRef<{ buildingId: number, ids: Set<string> } | null>(null)
   React.useEffect(() => {
-    if (filesLoading || !files || files.length === 0) return
-    if (seededBuildingRef.current === buildingId) return
-    seededBuildingRef.current = buildingId
+    if (filesLoading || !files) return
 
-    const visible = files
-      .filter(file => isSplatFile(file) && file.isVisible === true)
-      .map(file => String(file.id))
-    dispatch({ type: 'SET_SPLAT_IDS', payload: { splatIds: visible } })
+    const seeding = seenRef.current?.buildingId !== buildingId
+    const seen = seeding ? new Set<string>() : seenRef.current?.ids ?? new Set<string>()
+    seenRef.current = { buildingId, ids: seen }
+
+    const visible = claimSplatIds(files, seen)
+
+    // A splat uploaded into an open viewer is new rather than seeded, so it switches itself on.
+    if (seeding) dispatch({ type: 'SET_SPLAT_IDS', payload: { splatIds: visible } })
+    else for (const id of visible) dispatch({ type: 'TOGGLE_SPLAT', payload: { splatId: id } })
   }, [buildingId, files, filesLoading, dispatch])
 
   React.useEffect(() => {
@@ -76,7 +79,10 @@ export function BimSplatSync() {
 
     for (const id of splatIds) {
       if (splats.get(id)) continue
-      void splats.add(id, readSplatPlacement(fileOfRef.current(id))).catch((error) => {
+      const file = fileOfRef.current(id)
+      void splats.add(id, readSplatPlacement(file), {
+        fileType: splatFileType(file?.extension),
+      }).catch((error) => {
         console.warn(`[splat ${id}] could not be loaded:`, error)
         dispatch({ type: 'TOGGLE_SPLAT', payload: { splatId: id } })
       })

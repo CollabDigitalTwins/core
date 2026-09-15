@@ -62,19 +62,19 @@ export function SplatRows({ files, buildingId }: SplatRowsProps) {
     bimComponents?.get(BimSplats).setGhosted(String(file.id), ghosted)
   }, [bimComponents])
 
-  // Switching a splat on is async, so placement waits for it rather than failing silently.
+  // Asks the store, not the registry: a splat switched on but still loading is already on.
   const editPosition = React.useCallback(async (file: DbFile) => {
     if (!bimComponents) return
     const id = String(file.id)
 
     const component = bimComponents.get(BimSplats)
-    if (!component.get(id)) {
+    if (!splatIds.includes(id)) {
       dispatch({ type: 'TOGGLE_SPLAT', payload: { splatId: id } })
     }
 
     if (!await bimComponents.get(PlacementEditor).begin(targetFor(file, component))) return
     toast.info(tAlign('editHint'), { id: TOAST_ID, duration: Infinity })
-  }, [bimComponents, dispatch, tAlign, targetFor])
+  }, [bimComponents, dispatch, splatIds, tAlign, targetFor])
 
   const forget = React.useCallback((file: DbFile) => {
     const id = String(file.id)

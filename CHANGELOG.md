@@ -26,6 +26,21 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - `BimState` gains `splatIds`, with the `SET_SPLAT_IDS` and `TOGGLE_SPLAT` actions.
 - Splat placements persist to the existing `File.pointCloudTransform` column, whose shape
   already matched. No schema change.
+- The canvas shows a crosshair cursor while "pick pivot" waits for its double-click, for every
+  kind of placement target rather than splats alone.
+
+### Fixed
+- A splat uploaded while the viewer was open stayed switched off until a reload. The seed only
+  ran once per building, so a file that appeared afterwards was never added to `splatIds`; the
+  reconcile now claims each splat id once and switches on any that arrives visible.
+- Splats failed to load with `Unknown file type`. Assets are stored under an extensionless
+  UUID, so Spark could not infer a decoder from the download URL and the streaming decoder was
+  built before any bytes arrived. The type now comes from the file's `extension` column.
+- "Edit position" on a splat switched it off instead of on: it asked the registry whether the
+  splat was loaded, then dispatched `TOGGLE_SPLAT`, so a splat that was on but still loading
+  was toggled away. It now asks the store, which is what the scene reconciles from.
+- The viewport context menu could not place a splat — it had no `'splat'` branch, so it built
+  a model target whose object lookup never resolves a splat and the gizmo never appeared.
 
 ### Migration
 - `resolveViewportTarget()` now requires a `splat` property on its input. Pass `splat: null`

@@ -9,7 +9,7 @@ import { SplatRegistry } from '../../../shared/splat/splatRegistry'
 import { createHttpSplatSource } from '../../../shared/splat/splatSource'
 import { DEFAULT_SPLAT_PLACEMENT } from '../../../shared/splat/splatUpAxis'
 
-import type { SplatEngine, SplatRenderSettings } from '../../../shared/splat/splatLoader'
+import type { SplatEngine, SplatLoadOptions, SplatRenderSettings } from '../../../shared/splat/splatLoader'
 import type { LoadedSplat } from '../../../shared/splat/splatRegistry'
 import type { SplatSource } from '../../../shared/splat/splatSource'
 import type { SplatPlacement } from '../../../shared/splat/splatUpAxis'
@@ -94,10 +94,14 @@ export class BimSplats extends OBC.Component implements OBC.Disposable, ScenePic
     }).then(() => this.excludeFromPostproduction())
   }
 
-  async add(id: string, placement: SplatPlacement = DEFAULT_SPLAT_PLACEMENT): Promise<LoadedSplat | null> {
+  async add(
+    id: string,
+    placement: SplatPlacement = DEFAULT_SPLAT_PLACEMENT,
+    options?: SplatLoadOptions,
+  ): Promise<LoadedSplat | null> {
     if (!this.registry) return null
 
-    const loaded = await this.registry.add(id, placement)
+    const loaded = await this.registry.add(id, placement, options)
     this.applyAppearance(loaded)
     this.refresh()
     this.onChanged.trigger(this.ids())

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { SparkRenderer, SplatMesh } from '@sparkjsdev/spark'
+import type { SplatFileType } from './splatFiles'
+import type { SparkRenderer, SplatFileType as SparkFileType, SplatMesh } from '@sparkjsdev/spark'
 import type * as THREE from 'three'
 
 /** Renderer-wide splat drawing knobs. They live on the one shared `SparkRenderer`. */
@@ -20,6 +21,7 @@ export interface SplatAttachment {
 
 export interface SplatLoadOptions {
   onProgress?: (percent: number) => void
+  fileType?: SplatFileType
 }
 
 export interface SplatEngine {
@@ -57,10 +59,11 @@ export function createSparkEngine(): SplatEngine {
       scene.add(spark)
     },
 
-    async load(url, { onProgress } = {}) {
+    async load(url, { onProgress, fileType } = {}) {
       const { SplatMesh } = await sparkModule()
       const mesh = new SplatMesh({
         url,
+        ...(fileType ? { fileType: fileType as SparkFileType } : {}),
         onProgress: event => onProgress?.(percentOf(event)),
       })
       await mesh.initialized

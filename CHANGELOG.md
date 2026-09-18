@@ -62,6 +62,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   carries the credit.
 
 ### Changed
+- Section-box drag handles are now coloured by axis — X red, Y green, Z blue, following
+  three.js's own axis convention — instead of all six being blue. The wireframe shell is
+  unchanged.
 - The BIM model now starts loading before point clouds, splats, 3D models and DXF drawings.
   The others still load in parallel with each other, they just no longer compete with the
   fragment fetch for the first bytes. `BimState` gains `fragmentsStarted`, with the

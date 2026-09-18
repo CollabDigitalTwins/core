@@ -9,6 +9,7 @@ import { sdfTransformForPlane } from '../../../../shared/splat/splatClipping'
 import {
   boxClipPlanes,
   CLIP_BOX_FACES,
+  colourForFace,
   faceCentre,
   faceOutwardNormal,
   fittedBox,
@@ -179,5 +180,16 @@ describe('boxClipPlanes as splat cutting sdfs', () => {
     expect(kept(new THREE.Vector3(0.9, -0.9, 0.5))).toBe(true)
     expect(kept(new THREE.Vector3(2, 0, 0))).toBe(false)
     expect(kept(new THREE.Vector3(0, 0, -5))).toBe(false)
+  })
+})
+
+describe('colourForFace', () => {
+  it('follows three.js axis colours, both faces of an axis alike', () => {
+    expect(colourForFace('x-')).toBe(0xff0000)
+    expect(colourForFace('x+')).toBe(0xff0000)
+    expect(colourForFace('y-')).toBe(0x00ff00)
+    expect(colourForFace('y+')).toBe(0x00ff00)
+    expect(colourForFace('z-')).toBe(0x0000ff)
+    expect(colourForFace('z+')).toBe(0x0000ff)
   })
 })

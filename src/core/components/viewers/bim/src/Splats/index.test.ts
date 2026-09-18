@@ -221,3 +221,47 @@ describe('BimSplats.boundsOf', () => {
     expect(box.max.toArray()).toEqual([5, 5, 5])
   })
 })
+
+// Spark's lod build leaves the mesh's own splat array empty and moves every centre into lodSplats.
+const fakeLodSplat = (id: string, centers: THREE.Vector3[]): LoadedSplat => ({
+  id,
+  root: { updateMatrixWorld: vi.fn(), matrixWorld: new THREE.Matrix4() },
+  mesh: {
+    getBoundingBox: () => new THREE.Box3(),
+    matrixWorld: new THREE.Matrix4(),
+    packedSplats: {
+      lodSplats: {
+        forEachSplat: (callback: (index: number, center: THREE.Vector3) => void) =>
+          centers.forEach((center, index) => callback(index, center)),
+      },
+    },
+    opacity: 1,
+    maxSh: 3,
+    recolor: { set: vi.fn() },
+  },
+} as unknown as LoadedSplat)
+
+describe('BimSplats.boundsOf under LOD', () => {
+  it('falls back to the lod splat centres when the mesh reports an empty box', () => {
+    const splat = fakeLodSplat('a', [new THREE.Vector3(-1, -2, -3), new THREE.Vector3(1, 2, 3)])
+    const map = new Map<string, LoadedSplat>([['a', splat]])
+
+    const box = boundsComponent(map).boundsOf('a') as THREE.Box3
+
+    expect(box).not.toBeNull()
+    expect(box.min.toArray()).toEqual([-1, -2, -3])
+    expect(box.max.toArray()).toEqual([1, 2, 3])
+  })
+
+  it('never caches an empty box, so a splat that streams in later still gets framed', () => {
+    const empty = fakeLodSplat('a', [])
+    const map = new Map<string, LoadedSplat>([['a', empty]])
+    const component = boundsComponent(map)
+
+    expect(component.boundsOf('a')).toBeNull()
+    map.set('a', fakeLodSplat('a', [new THREE.Vector3(0, 0, 0), new THREE.Vector3(4, 4, 4)]))
+
+    const box = component.boundsOf('a') as THREE.Box3
+    expect(box.max.toArray()).toEqual([4, 4, 4])
+  })
+})

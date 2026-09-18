@@ -94,6 +94,11 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   report no percentage (conversion) spin a short arc, so the ring never sits frozen at 0%.
 
 ### Fixed
+- **Fit** now frames a selected gaussian splat instead of the whole scene. Switching splats to
+  Spark's LOD moved every splat centre into `lodSplats`, leaving `getBoundingBox` reporting an
+  empty box, so `BimSplats.boundsOf` returned null and the camera fell through to fitting
+  everything. Bounds are now read from the LOD centres when the mesh's own array is empty, and an
+  empty box is no longer cached.
 - The 3D scene no longer shows through a floorplan or elevation drawing. The BIM model was only
   clipped to a slab-thick band rather than hidden, and point clouds, splats and loaded 3D models
   were not touched at all, so all of it stayed on screen behind the drawing — plainly in

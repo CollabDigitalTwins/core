@@ -55,6 +55,32 @@ type OnDemandRenderer = OBC.BaseRenderer & { needsUpdate: boolean }
 const meshMatrixWorld = (mesh: LoadedSplat['mesh']): THREE.Matrix4 =>
   (mesh as unknown as { matrixWorld: THREE.Matrix4 }).matrixWorld
 
+interface SplatCentres {
+  forEachSplat(callback: (index: number, centre: THREE.Vector3) => void): void
+}
+
+// Spark's lod build moves every centre into lodSplats and leaves the mesh's own array empty.
+const lodCentresOf = (mesh: LoadedSplat['mesh']): SplatCentres | null => {
+  const sources = mesh as unknown as {
+    packedSplats?: { lodSplats?: SplatCentres }
+    extSplats?: { lodSplats?: SplatCentres }
+  }
+  return sources.packedSplats?.lodSplats ?? sources.extSplats?.lodSplats ?? null
+}
+
+// getBoundingBox only walks the mesh's own splats, so under lod it reports an empty box.
+const centresBox = (mesh: LoadedSplat['mesh']): THREE.Box3 => {
+  const box = mesh.getBoundingBox(true)
+  if (!box.isEmpty()) return box
+
+  const lod = lodCentresOf(mesh)
+  if (!lod) return box
+
+  const lodBox = new THREE.Box3()
+  lod.forEachSplat((_index, centre) => lodBox.expandByPoint(centre))
+  return lodBox
+}
+
 /** Owns the splats in the BIM scene so they outlive every React panel and die with
  *  `components.dispose()`. React mirrors this; it never owns a splat. */
 export class BimSplats extends OBC.Component implements OBC.Disposable, ScenePickSource {
@@ -245,8 +271,8 @@ export class BimSplats extends OBC.Component implements OBC.Disposable, ScenePic
     const cached = this.localBounds.get(splat.id)
     if (cached) return cached
 
-    const box = splat.mesh.getBoundingBox(true)
-    this.localBounds.set(splat.id, box)
+    const box = centresBox(splat.mesh)
+    if (!box.isEmpty()) this.localBounds.set(splat.id, box)
     return box
   }
 

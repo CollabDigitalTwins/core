@@ -36,6 +36,7 @@ export class CameraController {
   private _savedPosition: THREE.Vector3 | null = null
   private _savedTarget: THREE.Vector3 | null = null
   private _savedProjection: 'Orthographic' | 'Perspective' | null = null
+  private _savedNavMode: string | null = null
 
   constructor(private components: OBC.Components) {}
 
@@ -104,6 +105,7 @@ export class CameraController {
         // ignore
       }
     }
+    this._restoreNavMode(camera)
 
     controls.minPolarAngle = saved.minPolarAngle
     controls.maxPolarAngle = saved.maxPolarAngle
@@ -137,11 +139,7 @@ export class CameraController {
     if (!sourceWorld?.camera?.controls) return
     const camera = sourceWorld.camera as OBC.OrthoPerspectiveCamera
 
-    try {
-      void camera.projection.set('Orthographic')
-    } catch {
-      // already ortho
-    }
+    this._forceOrthographic(camera)
 
     const dir = viewDirection.clone().normalize()
     const camPos = target.clone().sub(dir.multiplyScalar(span))
@@ -155,6 +153,39 @@ export class CameraController {
       target.z,
       true,
     )
+  }
+
+  // OBC refuses an orthographic switch silently, leaving a perspective plan the model cannot line up under.
+  private _forceOrthographic(camera: OBC.OrthoPerspectiveCamera) {
+    if (this._isOrtho(camera)) return
+    this._trySetOrtho(camera)
+    if (this._isOrtho(camera)) return
+
+    // The refusal OBC can recover from: it will not leave FirstPerson for an orthographic frustum.
+    const mode = (camera as any).mode
+    if (mode?.id && mode.id !== 'Orbit') {
+      this._savedNavMode = mode.id as string
+      try { (camera as any).set('Orbit') } catch { /* mode not registered on this camera */ }
+      this._trySetOrtho(camera)
+    }
+    if (this._isOrtho(camera)) return
+
+    console.warn('[CameraController] Could not switch to an orthographic projection; the drawing view will not line up with the model.')
+  }
+
+  private _isOrtho(camera: OBC.OrthoPerspectiveCamera) {
+    return (camera as any).projection?.current === 'Orthographic'
+  }
+
+  // `set` resolves asynchronously but applies the orthographic swap before it returns.
+  private _trySetOrtho(camera: OBC.OrthoPerspectiveCamera) {
+    try { void (camera as any).projection.set('Orthographic') } catch { /* no world or renderer yet */ }
+  }
+
+  private _restoreNavMode(camera: OBC.OrthoPerspectiveCamera) {
+    if (!this._savedNavMode) return
+    try { (camera as any).set(this._savedNavMode) } catch { /* mode no longer registered */ }
+    this._savedNavMode = null
   }
 
   private _reset() {

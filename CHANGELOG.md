@@ -128,6 +128,13 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   override.
 
 ### Fixed
+- The model now lines up under a floorplan's or elevation's lines. The drawing view asks for an
+  orthographic projection, but OBC's `ProjectionManager.setOrthoCamera` returns silently — leaving
+  the camera in perspective — when the camera has no navigation mode, is in FirstPerson, or has no
+  renderer yet, and the request was fire-and-forget inside an empty `catch`. A perspective camera
+  aimed straight down draws the flat lines correctly while giving the model receding faces, so the
+  two appeared misaligned. The switch is now verified, escapes FirstPerson and restores the
+  navigation mode on exit, and warns rather than silently drawing a perspective plan.
 - Floorplan and elevation drawings no longer stay in the scene after switching buildings without
   first exiting the view, including when a drawing is still being generated. Nothing was scoped to
   the building: the viewer's components outlive it, and freeing a drawing depended on a model-delete

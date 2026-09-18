@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 import { useDeleteFile, useFilesByBuildingId } from '../../../../../hooks/files/files'
 import { BimContext, BuildingsContext } from '../../../../../store'
 import ConfirmDialog from '../../../../ConfirmDialog'
-import { useFileDeleteHandler } from '../../../../ui/FilesManager'
+import { useFileDeleteHandler, useFileVisibility } from '../../../../ui/FilesManager'
 import { PlacementActionsCard } from '../../../../ui/FilesManager/src/PlacementActionsCard'
 
 import { Highlighter } from '../Highlighter'
@@ -41,6 +41,7 @@ import type { ViewportTarget } from './resolveViewportTarget'
 import type { SceneKind } from './useSceneUnload'
 import type { ViewportMenuState } from './useViewportContextMenu'
 import type { DbFile } from '../../../../../types/dbTypes'
+import type { FileMarkerAction } from '../../../../ui/FilesManager/src/PlacementActionsCard'
 import type { AnimationState } from '../ModelManager/modelAnimation'
 
 const PIVOT_TOAST_ID = 'bim-placement-pivot-toast'
@@ -64,13 +65,18 @@ const safeHighlighter = (components: OBC.Components) => {
   try { return components.get(Highlighter) } catch { return null }
 }
 
+const safeRegistry = (components: OBC.Components) => {
+  try { return components.get(BimSceneObjects).registry } catch { return null }
+}
+
 /** Renderless owner of the placement card. Sessions are started by whoever resolves the target. */
 export function PlacementEditorHost() {
   const t = useTranslations('Placement')
   const tAnimation = useTranslations('Animation')
+  const tFile = useTranslations('FileItemComponent')
 
-  const { state } = React.useContext(BimContext)
-  const { bimComponents } = state.bim
+  const { state, dispatch } = React.useContext(BimContext)
+  const { bimComponents, fragments, pointCloudIds, splatIds } = state.bim
 
   const session = usePlacementSession()
 
@@ -78,7 +84,8 @@ export function PlacementEditorHost() {
   const buildingId = buildingState.buildings.building?.id ?? 0
   const { files } = useFilesByBuildingId(buildingId)
   const { deleteFile } = useDeleteFile(buildingId)
-  const { menu, close } = useViewportContextMenu(bimComponents ?? null, files ?? [], state.bim.splatIds)
+  const { setVisible } = useFileVisibility(buildingId)
+  const { menu, close } = useViewportContextMenu(bimComponents ?? null, files ?? [], splatIds)
   const cloudTarget = usePointCloudTarget()
   const modelTarget = useModelTarget()
   const splatTarget = useSplatTarget()
@@ -198,9 +205,37 @@ export function PlacementEditorHost() {
     )
   }
 
-  const beginFromMenu = (action: 'move' | 'rotate' | 'scale' | 'animate' | 'delete') => {
+  // Each kind hides the way its own sidebar row does, so the row and the scene cannot drift.
+  const hideFromScene = (target: ViewportMenuState, components: OBC.Components) => {
+    const id = String(target.file.id)
+    if (target.kind === 'splat') {
+      if (splatIds.includes(id)) dispatch({ type: 'TOGGLE_SPLAT', payload: { splatId: id } })
+      return
+    }
+    if (target.kind === 'cloud') {
+      if (pointCloudIds.includes(id)) dispatch({ type: 'TOGGLE_POINT_CLOUD', payload: { pointCloudId: id } })
+      return
+    }
+    if (target.kind === 'object') { safeRegistry(components)?.setVisible(id, false); return }
+
+    // A hidden model that stays pickable would still answer a click through what is drawn over it.
+    safeHighlighter(components)?.disableModel(target.file.name)
+    const object = sceneObject(components, 'model', target.file)
+    if (object) object.visible = false
+    dispatch({ type: 'SET_MODEL_UI_STATE', payload: { fileId: target.file.id, isVisible: false } })
+    void fragments?.core.update(true)
+  }
+
+  const hideFromMenu = (target: ViewportMenuState, components: OBC.Components) => {
+    hideFromScene(target, components)
+    void setVisible(target.file, false)
+      .catch((error: unknown) => console.error(`Could not save visibility for "${target.file.name}":`, error))
+  }
+
+  const beginFromMenu = (action: FileMarkerAction) => {
     if (!menu || !bimComponents) return
     if (action === 'delete') { setPendingDelete({ file: menu.file, kind: menu.kind }); return }
+    if (action === 'hide') { hideFromMenu(menu, bimComponents); return }
     if (action === 'animate') {
       bimComponents.get(AnimationSession).begin({ fileId: String(menu.file.id), name: menu.file.name })
       return
@@ -228,7 +263,8 @@ export function PlacementEditorHost() {
             <PlacementActionsCard
               name={menu.file.name}
               Icon={MENU_ICONS[menu.kind] ?? LR.Box}
-              actions={markerActionsFor(menu.capabilities, { animated: menu.animated })}
+              actions={markerActionsFor(menu.capabilities, { animated: menu.animated, hidable: true })}
+              hideLabel={tFile('hideTitle')}
               onAction={beginFromMenu}
               onClose={close}
             />

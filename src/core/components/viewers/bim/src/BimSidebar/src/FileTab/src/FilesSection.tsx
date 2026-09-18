@@ -30,8 +30,8 @@ import type { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
 
 // Hoisted so identity is stable — inline `options={[...]}` defeats React.memo on FileItemComponent.
 type FileAction = import('../../../../../../../../types/global').FileAction
-const OPTIONS_PLACEABLE: FileAction[] = ['download', 'view', 'move', 'info', 'delete']
-const OPTIONS_PLAIN: FileAction[] = ['download', 'view', 'delete']
+export const OPTIONS_PLACEABLE: FileAction[] = ['view', 'move', 'info', 'delete']
+export const OPTIONS_PLAIN: FileAction[] = ['view', 'delete']
 
 interface FilesSectionProps extends FileTabSectionChrome {
   files: IFile[]
@@ -245,12 +245,13 @@ export function FilesSection({ files, query = '', ...chrome }: FilesSectionProps
       const clips = modelManager?.getClips(file.id.toString()) ?? []
       const marker = createFileMarker(makeMarkerInput(file, obj.position.clone()), obj, world, (action) => {
         if (action === 'delete') { void handleAction('delete', file); return }
+        if (action === 'hide') { void handleAction('view', file); return }
         if (action === 'animate') {
           bimComponents.get(AnimationSession).begin({ fileId: file.id.toString(), name: file.name })
           return
         }
         editObject(file, action === 'move' ? 'translate' : action)
-      }, markerActionsFor(capabilitiesForFile(file), { animated: clips.length > 0 }))
+      }, markerActionsFor(capabilitiesForFile(file), { animated: clips.length > 0, hidable: true }))
       if (marker) markersRef.current.set(key, { marker, file })
     }
   }, [localFiles, loadedTick, bimComponents, getSceneObject, editObject, handleAction, makeMarkerInput, modelManager])

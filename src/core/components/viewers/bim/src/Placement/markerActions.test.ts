@@ -21,6 +21,17 @@ describe('markerActionsFor', () => {
     expect(markerActionsFor(FULL_PLACEMENT)).not.toContain('animate')
   })
 
+  it('offers hide only when the caller opted in', () => {
+    expect(markerActionsFor(FULL_PLACEMENT, { hidable: true })).toEqual(['move', 'rotate', 'scale', 'hide'])
+    expect(markerActionsFor(FULL_PLACEMENT, { hidable: false })).not.toContain('hide')
+    expect(markerActionsFor(FULL_PLACEMENT)).not.toContain('hide')
+  })
+
+  it('offers hide after animate, so the destructive-looking items stay together', () => {
+    expect(markerActionsFor(FULL_PLACEMENT, { animated: true, hidable: true }))
+      .toEqual(['move', 'rotate', 'scale', 'animate', 'hide'])
+  })
+
   it('always offers move and rotate', () => {
     expect(markerActionsFor(YAW_ONLY_PLACEMENT)).toContain('move')
     expect(markerActionsFor(YAW_ONLY_PLACEMENT)).toContain('rotate')

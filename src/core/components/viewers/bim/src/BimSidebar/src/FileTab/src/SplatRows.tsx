@@ -19,7 +19,7 @@ import { BimSplats } from '../../../../Splats'
 import type { DbFile } from '../../../../../../../../types/dbTypes'
 import type { FileAction } from '../../../../../../../../types/global'
 
-const SPLAT_OPTIONS: FileAction[] = ['download', 'view', 'ghost', 'move', 'info', 'delete']
+export const SPLAT_OPTIONS: FileAction[] = ['view', 'ghost', 'move', 'info', 'delete']
 
 const TOAST_ID = 'bim-splat-placement-toast'
 

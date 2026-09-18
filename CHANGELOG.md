@@ -8,6 +8,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ## [Unreleased]
 
 ### Added
+- **Hide from view** in the BIM viewport right-click menu, for a loaded model, a DXF drawing, a
+  point cloud or a splat. Each kind hides the way its own sidebar row does, and the visibility is
+  persisted, so the row and the scene cannot drift apart.
 - A **Splat budget** slider in the Gaussian splats settings panel, the splat analogue of the
   point budget. `SplatRenderSettings` gains `lodSplatCount`, and the new `SplatSettings.splatBudget`
   key is in all three catalogues.
@@ -156,6 +159,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   a model target whose object lookup never resolves a splat and the gizmo never appeared.
 
 ### Removed
+- **Download** is gone from the BIM file rows and the viewer context menu — it is no longer offered
+  for plain files, loaded models or splats. Download remains available elsewhere in the files UI.
 - `dropsAtOrigin` from the placement capabilities module. It was unreferenced, and its claim
   that splats are origin-only no longer describes the viewer.
 

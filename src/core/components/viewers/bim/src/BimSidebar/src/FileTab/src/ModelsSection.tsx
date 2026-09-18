@@ -26,7 +26,7 @@ import type { FileTabSectionChrome } from './sectionChrome'
 import type { DbFile } from '../../../../../../../../types/dbTypes'
 import type { FileAction } from '../../../../../../../../types/global'
 
-const MODEL_OPTIONS: FileAction[] = ['download', 'view', 'move', 'info', 'delete']
+export const MODEL_OPTIONS: FileAction[] = ['view', 'move', 'info', 'delete']
 
 const ADDABLE_HERE = ['3d-file', 'splat-file'] as const
 

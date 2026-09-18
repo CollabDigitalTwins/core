@@ -43,16 +43,8 @@ export function getElevationStagePercent(
 const SLOT_SECTION = 'elevation:section'
 
 /**
- * Elevation drawings (N/S/E/W) per loaded model, built on the same
- * DrawingEditor + TechnicalDrawings pipeline as FloorplanTool. Activate
- * runs in stages — init → resolve → cull → project → done — so the
- * sidebar can show a progress bar and the user gets immediate camera
- * framing while the slow projection runs in the background.
- *
- * The model itself is hidden during the elevation view so projected lines
- * from front and back of the building both read clearly. Style each IFC
- * class via the per-class drawing layers (visibility + color in the
- * sidebar).
+ * Elevation drawings (N/S/E/W) per loaded model. Activation previews the
+ * clipped model; `generateLines` hides it and projects the vector lines.
  */
 export class ElevationsTool extends OBC.Component {
   static uuid = ELEVATIONS_TOOL_UUID
@@ -85,12 +77,7 @@ export class ElevationsTool extends OBC.Component {
     this.chrome = new ChromeController(components)
     this.clip = new ClipController(components)
     this.grid = new GridController(components)
-    // No face-fill groups: the cull pass hides the whole model, then the
-    // line projection paints on top of an empty scene. Filling front faces
-    // (the previous behaviour) was occluding back-of-building elements,
-    // which the user wanted to see in elevation. Only the projected lines
-    // remain visible — the per-IFC-class drawing layers are how the user
-    // styles them.
+    // No face-fill groups: filling front faces occludes the back-of-building elements an elevation must show.
     this.highlighter = new CategoryHighlighter(components, {
       groups: [],
     })
@@ -176,9 +163,8 @@ export class ElevationsTool extends OBC.Component {
   }
 
   /**
-   * Activate an elevation: chrome + section clip + camera frame applied
-   * synchronously for instant feedback, then face-highlighting and line
-   * projection run in parallel with stage events.
+   * Activate an elevation: chrome, section clip, camera, then the clipped
+   * model as the preview. Stops at `done` — lines come from `generateLines`.
    */
   async activate(id: string) {
     const entry = this._entries.get(id)
@@ -209,8 +195,7 @@ export class ElevationsTool extends OBC.Component {
         safeRun(() => this.chrome.hideSceneContent(), 'hideSceneContent')
       }
 
-      // Section clip just behind the drawing plane so we don't see the
-      // far side of the building bleeding through.
+      // Section clip just behind the drawing plane so the far side of the building doesn't bleed through.
       const clipNormal = entry.viewDirection.clone().negate()
       const clipPoint = entry.position.clone().addScaledVector(clipNormal, -0.05)
       this.clip.set(SLOT_SECTION, clipNormal, clipPoint)
@@ -229,39 +214,77 @@ export class ElevationsTool extends OBC.Component {
       this._activeId = id
       this.onActiveChanged.trigger(entry)
 
-      // ----- Phase 2: parallel render + project (slow) -----
-      const renderPromise = this.highlighter.apply(
-        entry.id,
-        async () => ({ modelId: entry.modelId, filterIds: null }),
-        ((stage: string) => {
-          if (seq !== this._activateSeq) return
-          this._emit({
-            isLoading: true,
-            stage: stage as ElevationLoadingStage,
-          })
-        }) as StageEmitter,
-      )
-      const projectPromise = this.projector.project(entry)
-
-      renderPromise
-        .then(() => {
-          if (seq !== this._activateSeq) return
-          this._emit({ isLoading: true, stage: 'project' })
-        })
-        .catch(() => {})
-
-      await Promise.all([renderPromise, projectPromise])
+      // ----- Phase 2: the cull belongs to the line pass, so an unprojected elevation previews the model itself. -----
+      if (entry.projected) {
+        await this._cullModel(entry, seq)
+      } else {
+        await safeRunAsync(() => this.highlighter.restore(), 'restoreModelRendering')
+      }
       if (seq !== this._activateSeq) return
 
-      const editor = this.components.get(OBF.DrawingEditor)
-      editor.activeDrawing = entry.drawing
-      if (entry.drawing) entry.drawing.three.visible = true
+      this._showDrawing(entry)
 
       this._emit({ isLoading: false, stage: 'done' })
     } catch (error) {
       console.warn('[ElevationsTool] activate failed:', error)
       this._emit({ isLoading: false })
     }
+  }
+
+  /**
+   * Project the active elevation's lines over the hidden model. Split out
+   * of `activate` because the projection dominates its cost.
+   */
+  async generateLines(id: string) {
+    const entry = this._entries.get(id)
+    if (!entry || entry.projected) return
+    if (this._activeId !== id) return
+
+    const seq = this._activateSeq
+
+    try {
+      const cullPromise = this._cullModel(entry, seq)
+      const projectPromise = this.projector.project(entry)
+
+      cullPromise
+        .then(() => {
+          if (seq !== this._activateSeq) return
+          this._emit({ isLoading: true, stage: 'project' })
+        })
+        .catch(() => {})
+
+      await Promise.all([cullPromise, projectPromise])
+      if (seq !== this._activateSeq) return
+
+      this._showDrawing(entry)
+
+      this.onLayersChanged.trigger(entry)
+      this._emit({ isLoading: false, stage: 'done' })
+    } catch (error) {
+      console.warn('[ElevationsTool] generateLines failed:', error)
+      this._emit({ isLoading: false })
+    }
+  }
+
+  // Hides the model so the projected lines read against an empty scene, front and back alike.
+  private async _cullModel(entry: ElevationEntry, seq: number) {
+    await this.highlighter.apply(
+      entry.id,
+      async () => ({ modelId: entry.modelId, filterIds: null }),
+      ((stage: string) => {
+        if (seq !== this._activateSeq) return
+        this._emit({
+          isLoading: true,
+          stage: stage as ElevationLoadingStage,
+        })
+      }) as StageEmitter,
+    )
+  }
+
+  private _showDrawing(entry: ElevationEntry) {
+    const editor = this.components.get(OBF.DrawingEditor)
+    editor.activeDrawing = entry.drawing
+    if (entry.drawing) entry.drawing.three.visible = true
   }
 
   /** Robust exit. Each cleanup step runs independently so a failure in one

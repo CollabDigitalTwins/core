@@ -76,6 +76,10 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   lines** action on the active drawing card, and a storey whose lines already exist still shows them
   at once. `FloorplanTool` gains `generateLines(id)`, and `ViewSectionList` gains the optional
   `generateLinesLabel` / `canGenerateLines` / `onGenerateLines` props.
+- Opening an elevation no longer waits for its vector lines either. The clipped model is shown
+  immediately as the preview and the lines come from the same **Generate lines** action;
+  `ElevationsTool` gains `generateLines(id)`. The whole-model cull moved out of activation and into
+  the line pass, where it belongs — it exists so the projection paints onto an empty scene.
 - Section-box drag handles are now coloured by axis — X red, Y green, Z blue, following
   three.js's own axis convention — instead of all six being blue. The wireframe shell is
   unchanged.

@@ -1,13 +1,19 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as OBC from '@thatopen/components'
 import * as THREE from 'three'
 
 import { CurrentWorld } from '../CurrentWorld'
 import { Highlighter } from '../Highlighter'
+import { BimPointClouds } from '../PointClouds'
+import { BimSceneObjects } from '../SceneObjects'
+import { BimSplats } from '../Splats'
 import { ViewportGizmo } from '../ViewportGizmo'
 
-import type * as OBC from '@thatopen/components'
+import { hideSceneContent, restoreSceneContent } from './sceneContent'
+
+import type { SceneContentVisibility } from './sceneContent'
 
 /**
  * Manages the viewer chrome muted while a drawing-based view tool is
@@ -29,7 +35,35 @@ export class ChromeController {
   private _savedBackground: THREE.Color | THREE.Texture | null | undefined =
     undefined
 
+  private readonly _savedContent: SceneContentVisibility = []
+
   constructor(private components: OBC.Components) {}
+
+  /** A drawing replaces the whole 3D scene, which would otherwise show through it. */
+  hideSceneContent() {
+    hideSceneContent(this._contentRoots(), this._savedContent)
+  }
+
+  restoreSceneContent() {
+    restoreSceneContent(this._savedContent)
+  }
+
+  // Each get() throws rather than returning null when the viewer is tearing down.
+  private _contentRoots() {
+    const roots: { visible: boolean }[] = []
+    const collect = (read: () => { root: { visible: boolean } }[]) => {
+      try { for (const item of read()) roots.push(item.root) }
+      catch { /* that kind of content is not in this scene */ }
+    }
+    collect(() => this.components.get(BimPointClouds).list())
+    collect(() => this.components.get(BimSplats).list())
+    collect(() => this.components.get(BimSceneObjects).registry?.list() ?? [])
+    // The fragments too: the drawing carries its own cut lines and fills, so the model behind it is
+    // not what makes a plan readable — it is what the user sees in perspective behind the lines.
+    collect(() => [...this.components.get(OBC.FragmentsManager).core.models.list.values()]
+      .map(model => ({ root: model.object })))
+    return roots
+  }
 
   setCursor() {
     const canvas = this._canvas()

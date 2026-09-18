@@ -91,6 +91,13 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   report no percentage (conversion) spin a short arc, so the ring never sits frozen at 0%.
 
 ### Fixed
+- The 3D scene no longer shows through a floorplan or elevation drawing. The BIM model was only
+  clipped to a slab-thick band rather than hidden, and point clouds, splats and loaded 3D models
+  were not touched at all, so all of it stayed on screen behind the drawing — plainly in
+  perspective once the camera moved. `ChromeController` now hides every piece of 3D content while
+  a drawing is active and restores exactly the visibility each root had on exit, alongside the
+  cursor, highlighter, gizmo and lighting it already managed. The drawing carries its own cut
+  lines and fills, so the plan itself is unaffected.
 - Clipping planes and the clipping box now cut gaussian splats, which previously ignored
   them. Splats render through Spark's own shader, outside three.js's clipping pass, so the
   cut is applied with Spark's `SplatEdit` signed-distance fields; splat meshes are now

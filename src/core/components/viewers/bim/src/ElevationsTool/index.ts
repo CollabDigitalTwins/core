@@ -206,6 +206,7 @@ export class ElevationsTool extends OBC.Component {
         this.chrome.setCursor()
         this.chrome.disableHighlighter()
         this.chrome.hideGizmo()
+        safeRun(() => this.chrome.hideSceneContent(), 'hideSceneContent')
       }
 
       // Section clip just behind the drawing plane so we don't see the
@@ -291,6 +292,7 @@ export class ElevationsTool extends OBC.Component {
     safeRun(() => this.chrome.restoreHighlighter(), 'restoreHighlighter')
     safeRun(() => this.chrome.showGizmo(), 'showGizmo')
     safeRun(() => this.chrome.removeLighting(), 'removeLighting')
+    safeRun(() => this.chrome.restoreSceneContent(), 'restoreSceneContent')
 
     await safeRunAsync(
       () => this.highlighter.restore(),

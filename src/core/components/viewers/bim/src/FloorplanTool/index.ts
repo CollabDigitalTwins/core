@@ -17,7 +17,6 @@ import { SPACES_LAYER } from '../lib/spaceOverlay'
 import { ViewModeCoordinator } from '../lib/ViewModeCoordinator'
 import { stagePercent } from '../lib/viewSection'
 
-import { cutVolumeFor } from './src/customLevel'
 import { FloorplanRenderer } from './src/FloorplanRenderer'
 import { StoreyProjector } from './src/StoreyProjector'
 import { CUT_COLOR, FILL_COLOR, FLOORPLAN_TOOL_UUID } from './src/types'
@@ -770,6 +769,7 @@ export class FloorplanTool extends OBC.Component {
         this.chrome.setCursor()
         this.chrome.disableHighlighter()
         this.chrome.hideGizmo()
+        safeRun(() => this.chrome.hideSceneContent(), 'hideSceneContent')
       }
 
       // Section clip just above the drawing plane. StoreyProjector positions
@@ -884,6 +884,7 @@ export class FloorplanTool extends OBC.Component {
     safeRun(() => this.chrome.showGizmo(), 'showGizmo')
     safeRun(() => this.chrome.removeLighting(), 'removeLighting')
     safeRun(() => this.chrome.restoreBackground(), 'restoreBackground')
+    safeRun(() => this.chrome.restoreSceneContent(), 'restoreSceneContent')
 
     // Slow async step last. Awaited so callers can chain on it, but failures
     // can't undo the synchronous restores above.
@@ -951,7 +952,7 @@ export class FloorplanTool extends OBC.Component {
    *  so ceiling fixtures / lights / equipment of the storey below never
    *  bleed into the projection or the 3D underlay. */
   private _applyLowerClip(entry: FloorplanEntry) {
-    const { cutY } = cutVolumeFor(entry)
+    const cutY = entry.elevation - 0.5
     this.clip.set(
       SLOT_LOWER,
       new THREE.Vector3(0, 1, 0),

@@ -19,7 +19,6 @@ import {
 import { addSpacesToDrawing } from '../../lib/spaceOverlay'
 import { initializeCSS2DRenderer } from '../../tools/AddToBim/src/FileMarkerUtils'
 
-import { cutVolumeFor } from './customLevel'
 import { getStoreyItemIds } from './utils'
 
 import type { FloorplanEntry } from './types'
@@ -52,12 +51,13 @@ export class StoreyProjector {
     const center = new THREE.Vector3()
     model.box.getCenter(center)
 
-    // Anything under the slab is visually masked by the opaque white slab + lower clip plane.
-    const { planeY, far } = cutVolumeFor(entry)
+    // Cut plane sits 1.5 m above the floor; capture 2 m downward → volume
+    // spans [elevation - 0.5, elevation + 1.5]. Anything under the slab is
+    // visually masked by the opaque white slab + lower clip plane.
     const drawing = createDrawing(this.components, {
       orientation: new THREE.Vector3(0, -1, 0),
-      position: new THREE.Vector3(center.x, planeY, center.z),
-      far,
+      position: new THREE.Vector3(center.x, entry.elevation + 1.5, center.z),
+      far: 3,
       viewport: {
         left: -25,
         right: 25,
@@ -155,12 +155,9 @@ export class StoreyProjector {
 
   async getCachedStoreyIds(
     modelId: string,
-    storeyLocalId: number | undefined,
+    storeyLocalId: number,
     model: any,
   ): Promise<number[]> {
-    // A custom level has no storey; [] is the projector's own "fall back to the whole model".
-    if (storeyLocalId === undefined) return []
-
     const key = `${modelId}::${storeyLocalId}`
     const cached = this._storeyIdCache.get(key)
     if (cached) return cached

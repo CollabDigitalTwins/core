@@ -94,14 +94,22 @@ export function usePlaceableFileRows({
   const registryRef = React.useRef(registry)
   React.useEffect(() => { registryRef.current = registry }, [registry])
 
-  // A tracked row keeps whatever the user last toggled; a first-seen one asks the scene.
+  const storedVisibilityRef = React.useRef(new Map<number, boolean | undefined>())
+
+  // A local toggle holds only until the store's own value for that file moves.
   React.useEffect(() => {
+    const stored = storedVisibilityRef.current
+    const overruled = new Set(files
+      .filter(file => stored.has(file.id) && stored.get(file.id) !== file.isVisible)
+      .map(file => file.id))
+    storedVisibilityRef.current = new Map(files.map(file => [file.id, file.isVisible]))
+
     setRows(previous => {
       const tracked = new Map(previous.map(row => [row.id, row.isVisible]))
       const next = files
         .map(file => ({
           ...file,
-          isVisible: tracked.get(file.id)
+          isVisible: (overruled.has(file.id) ? undefined : tracked.get(file.id))
             ?? (isPlaceable(file.extension)
               && (isFileInScene(file, registryRef.current) || file.isVisible === true)),
         }))

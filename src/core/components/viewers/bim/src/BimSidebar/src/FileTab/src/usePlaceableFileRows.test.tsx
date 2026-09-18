@@ -121,6 +121,34 @@ describe('usePlaceableFileRows', () => {
     await waitFor(() => expect(modelLoad).toHaveBeenCalledWith('u', '9', `m.${extension}`, expect.anything()))
   })
 
+  it('hides a tracked row when the store reports the file was hidden elsewhere', async () => {
+    const { result, rerender } = renderHook(
+      (props: { files: DbFile[] }) => usePlaceableFileRows({ ...options, files: props.files }),
+      { wrapper, initialProps: { files: [file({ id: 4, name: 'h.glb', isVisible: true })] } },
+    )
+
+    await waitFor(() => expect(result.current.rows[0].isVisible).toBe(true))
+
+    rerender({ files: [file({ id: 4, name: 'h.glb', isVisible: false })] })
+
+    await waitFor(() => expect(result.current.rows[0].isVisible).toBe(false))
+  })
+
+  it('keeps a local toggle when a revalidation returns the same stored value', async () => {
+    const { result, rerender } = renderHook(
+      (props: { files: DbFile[] }) => usePlaceableFileRows({ ...options, files: props.files }),
+      { wrapper, initialProps: { files: [file({ id: 5, name: 'k.glb', isVisible: false })] } },
+    )
+
+    await waitFor(() => expect(result.current.rows[0].isVisible).toBe(false))
+
+    act(() => { result.current.setRows(rows => rows.map(row => ({ ...row, isVisible: true }))) })
+    rerender({ files: [file({ id: 5, name: 'k.glb', isVisible: false })] })
+
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(result.current.rows[0].isVisible).toBe(true)
+  })
+
   it('ignores a marker entry, since it has no file to report visibility for', async () => {
     const { result } = renderHook(() => usePlaceableFileRows(options), { wrapper })
 

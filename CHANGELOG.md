@@ -128,6 +128,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   override.
 
 ### Fixed
+- A file hidden from the BIM viewport right-click menu now shows as hidden in the sidebar's file
+  list. The list's row state kept a local toggle forever, so a visibility change written by anyone
+  else was ignored for any row it had already seen.
 - The model now lines up under a floorplan's or elevation's lines. The drawing view asks for an
   orthographic projection, but OBC's `ProjectionManager.setOrthoCamera` returns silently — leaving
   the camera in perspective — when the camera has no navigation mode, is in FirstPerson, or has no

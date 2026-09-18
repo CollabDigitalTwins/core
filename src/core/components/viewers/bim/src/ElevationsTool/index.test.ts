@@ -7,6 +7,7 @@ import * as THREE from 'three'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { CurrentWorld } from '../CurrentWorld'
+import { disposeDrawing } from '../lib/drawingProjection'
 import { ViewModeCoordinator } from '../lib/ViewModeCoordinator'
 
 import { ElevationsTool } from './index'
@@ -99,9 +100,16 @@ function makeEntry(): ElevationEntry {
 
 function makeTool() {
   const model = { box: new THREE.Box3(new THREE.Vector3(-5, 0, -5), new THREE.Vector3(5, 10, 5)) }
+  const deleteHandlers: ((modelId: string) => void)[] = []
   const fragments = {
     list: Object.assign(new Map([['model-1', model]]), {
-      onItemDeleted: { add() {}, remove() {} },
+      onItemDeleted: {
+        add(cb: (modelId: string) => void) { deleteHandlers.push(cb) },
+        remove(cb: (modelId: string) => void) {
+          const at = deleteHandlers.indexOf(cb)
+          if (at >= 0) deleteHandlers.splice(at, 1)
+        },
+      },
     }),
     core: { onModelLoaded: { add() {} }, update: vi.fn() },
   }
@@ -125,7 +133,7 @@ function makeTool() {
   const states: ElevationLoadingState[] = []
   tool.onLoadingStateChanged.add((state) => states.push(state))
 
-  return { tool, entry, states, editor }
+  return { tool, entry, states, editor, deleteHandlers }
 }
 
 describe('ElevationsTool activation split', () => {
@@ -190,5 +198,45 @@ describe('ElevationsTool activation split', () => {
     await tool.generateLines(entry.id)
 
     expect(spies.project).not.toHaveBeenCalled()
+  })
+})
+
+describe('ElevationsTool resetAll', () => {
+  beforeEach(() => {
+    vi.mocked(disposeDrawing).mockClear()
+    spies.project.mockImplementation(async (entry: ElevationEntry) => {
+      entry.drawing = { three: new THREE.Object3D(), layers: new Map() } as never
+      entry.projected = true
+    })
+  })
+
+  it('drops every drawing without unsubscribing', async () => {
+    const { tool, entry, editor, deleteHandlers } = makeTool()
+    await tool.activate(entry.id)
+    await tool.generateLines(entry.id)
+    const drawing = entry.drawing
+
+    tool.resetAll()
+
+    expect(tool.elevations).toEqual([])
+    expect(tool.activeId).toBeNull()
+    expect(editor.activeDrawing).toBeNull()
+    expect(vi.mocked(disposeDrawing)).toHaveBeenCalledWith(expect.anything(), drawing)
+    expect(deleteHandlers).toHaveLength(1)
+  })
+
+  it('still projects for the next building after a reset', async () => {
+    const { tool, entry } = makeTool()
+    await tool.activate(entry.id)
+    await tool.generateLines(entry.id)
+
+    tool.resetAll()
+
+    const next = makeEntry()
+    ;(tool as unknown as { _entries: Map<string, ElevationEntry> })._entries.set(next.id, next)
+    await tool.activate(next.id)
+    await tool.generateLines(next.id)
+
+    expect(next.projected).toBe(true)
   })
 })

@@ -8,6 +8,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ## [Unreleased]
 
 ### Added
+- `FloorplanTool.resetAll()` and `ElevationsTool.resetAll()`: building-scoped teardown that
+  deactivates the view, disposes every drawing and resets the true-north angle, while keeping the
+  tools subscribed to model load and delete so the same instance serves the next building.
 - **Hide from view** in the BIM viewport right-click menu, for a loaded model, a DXF drawing, a
   point cloud or a splat. Each kind hides the way its own sidebar row does, and the visibility is
   persisted, so the row and the scene cannot drift apart.
@@ -117,6 +120,11 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   override.
 
 ### Fixed
+- Floorplan and elevation drawings no longer stay in the scene after switching buildings without
+  first exiting the view, including when a drawing is still being generated. Nothing was scoped to
+  the building: the viewer's components outlive it, and freeing a drawing depended on a model-delete
+  event that an in-flight projection could race past, orphaning a finished drawing that no teardown
+  path could still reach.
 - A building with no BIM model could only be given `.ifc` and `.frag` files from the viewer's
   empty-state card, which was the only upload affordance it offered.
 - The BIM model is visible again behind a floorplan or elevation drawing, so the white slab fill and

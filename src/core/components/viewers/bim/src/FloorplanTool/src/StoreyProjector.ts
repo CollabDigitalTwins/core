@@ -66,6 +66,8 @@ export class StoreyProjector {
       },
     })
     if (!drawing) return
+    // Reachable from the entry before the first await, so a teardown mid-projection can still dispose it.
+    entry.drawing = drawing
 
     // Make the drawing visible BEFORE projection starts so lines appear
     // class-by-class as `addItemsProjectionByClass` walks the IFC classes —
@@ -96,7 +98,6 @@ export class StoreyProjector {
     for (const id of allIdsWithGeometry) if (filterFn(id)) idFilter.add(id)
 
     if (idFilter.size === 0) {
-      entry.drawing = drawing
       entry.projected = true
       entry.layers = []
       return
@@ -146,7 +147,6 @@ export class StoreyProjector {
     } catch (error) {
       console.warn('[StoreyProjector] door swings skipped:', error)
     }
-    entry.drawing = drawing
     entry.projected = true
     entry.layers = layers
   }

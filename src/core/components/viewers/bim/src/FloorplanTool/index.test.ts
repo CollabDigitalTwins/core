@@ -7,6 +7,7 @@ import * as THREE from 'three'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { CurrentWorld } from '../CurrentWorld'
+import { disposeDrawing } from '../lib/drawingProjection'
 import { ViewModeCoordinator } from '../lib/ViewModeCoordinator'
 
 import { FloorplanTool } from './index'
@@ -92,9 +93,16 @@ function makeEntry(): FloorplanEntry {
 
 function makeTool() {
   const model = { box: new THREE.Box3(new THREE.Vector3(-5, 0, -5), new THREE.Vector3(5, 10, 5)) }
+  const deleteHandlers: ((modelId: string) => void)[] = []
   const fragments = {
     list: Object.assign(new Map([['model-1', model]]), {
-      onItemDeleted: { add() {}, remove() {} },
+      onItemDeleted: {
+        add(cb: (modelId: string) => void) { deleteHandlers.push(cb) },
+        remove(cb: (modelId: string) => void) {
+          const at = deleteHandlers.indexOf(cb)
+          if (at >= 0) deleteHandlers.splice(at, 1)
+        },
+      },
     }),
     core: { onModelLoaded: { add() {} }, update: vi.fn() },
   }
@@ -118,7 +126,7 @@ function makeTool() {
   const states: FloorplanLoadingState[] = []
   tool.onGenerationStateChanged.add((state) => states.push(state))
 
-  return { tool, entry, states, editor }
+  return { tool, entry, states, editor, deleteHandlers }
 }
 
 describe('FloorplanTool activation split', () => {
@@ -172,5 +180,47 @@ describe('FloorplanTool activation split', () => {
     await tool.generateLines(entry.id)
 
     expect(spies.project).not.toHaveBeenCalled()
+  })
+})
+
+describe('FloorplanTool resetAll', () => {
+  beforeEach(() => {
+    vi.mocked(disposeDrawing).mockClear()
+    spies.project.mockImplementation(async (entry: FloorplanEntry) => {
+      entry.drawing = { three: new THREE.Object3D(), layers: new Map() } as never
+      entry.projected = true
+    })
+  })
+
+  it('drops every drawing and resets north without unsubscribing', async () => {
+    const { tool, entry, editor, deleteHandlers } = makeTool()
+    await tool.activate(entry.id)
+    await tool.generateLines(entry.id)
+    tool.setNorthAngle(45)
+    const drawing = entry.drawing
+
+    tool.resetAll()
+
+    expect(tool.drawings).toEqual([])
+    expect(tool.activeDrawingId).toBeNull()
+    expect(tool.northAngle).toBe(0)
+    expect(editor.activeDrawing).toBeNull()
+    expect(vi.mocked(disposeDrawing)).toHaveBeenCalledWith(expect.anything(), drawing)
+    expect(deleteHandlers).toHaveLength(1)
+  })
+
+  it('still projects for the next building after a reset', async () => {
+    const { tool, entry } = makeTool()
+    await tool.activate(entry.id)
+    await tool.generateLines(entry.id)
+
+    tool.resetAll()
+
+    const next = makeEntry()
+    ;(tool as unknown as { _entries: Map<string, FloorplanEntry> })._entries.set(next.id, next)
+    await tool.activate(next.id)
+    await tool.generateLines(next.id)
+
+    expect(next.projected).toBe(true)
   })
 })

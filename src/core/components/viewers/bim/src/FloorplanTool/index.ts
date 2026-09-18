@@ -80,7 +80,7 @@ export class FloorplanTool extends OBC.Component {
    *  its final state. Prior calls bail out at await boundaries. */
   private _activateSeq = 0
   /** True-north rotation in degrees (clockwise from default screen-up).
-   *  Persists across storey switches but resets to 0 on tool dispose. */
+   *  Persists across storey switches; cleared by `resetAll` on a building change. */
   private _northAngle = 0
   /** True while the user is drawing the two-point north line. */
   private _pickingNorth = false
@@ -913,6 +913,29 @@ export class FloorplanTool extends OBC.Component {
     this.renderer.invalidateForModel(modelId)
     this.projector.invalidateForModel(modelId)
     if (touched) this.onDrawingsChanged.trigger(this.drawings)
+  }
+
+  /**
+   * Building-scoped teardown: frees every drawing and the north angle while
+   * keeping the model subscriptions, so the tool serves the next building.
+   */
+  resetAll() {
+    this._activateSeq++
+    void this.deactivate()
+    safeRun(() => {
+      this.components.get(OBF.DrawingEditor).activeDrawing = null
+    }, 'clear active drawing')
+    for (const entry of this._entries.values()) {
+      safeRun(() => entry.spaces?.dispose(), 'disposeSpaces')
+      disposeDrawing(this.components, entry.drawing)
+      this.renderer.invalidateForEntry(entry.id)
+      this.projector.invalidateForModel(entry.modelId)
+      this.renderer.invalidateForModel(entry.modelId)
+    }
+    this._entries.clear()
+    this._northAngle = 0
+    this.onNorthAngleChanged.trigger(0)
+    this.onDrawingsChanged.trigger([])
   }
 
   dispose() {

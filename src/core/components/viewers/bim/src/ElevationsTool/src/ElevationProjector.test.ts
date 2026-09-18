@@ -4,23 +4,16 @@
 import * as THREE from 'three'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { StoreyProjector } from './StoreyProjector'
-import { storeyLowerClipY } from './utils'
+import { ElevationProjector } from './ElevationProjector'
 
-import type { FloorplanEntry } from './types'
+import type { ElevationEntry } from './types'
 
 const createDrawing = vi.fn(() => null)
 
 vi.mock('@thatopen/components', () => ({ FragmentsManager: class FragmentsManager {} }))
 vi.mock('@thatopen/components-front', () => ({ DrawingEditor: class DrawingEditor {} }))
-vi.mock('../../CurrentWorld', () => ({ CurrentWorld: class CurrentWorld {} }))
-vi.mock('../../lib/spaceOverlay', () => ({ addSpacesToDrawing: vi.fn() }))
-vi.mock('../../tools/AddToBim/src/FileMarkerUtils', () => ({
-  initializeCSS2DRenderer: vi.fn(),
-}))
 vi.mock('../../lib/drawingProjection', () => ({
-  addDoorSwingsToDrawing: vi.fn(),
-  addItemsProjectionByClass: vi.fn(),
+  addItemsProjectionByClassOccluded: vi.fn(),
   createDrawing: (...args: unknown[]) => createDrawing(...(args as [])),
   disableProjectorWebGPU: vi.fn(),
   DrawingEditorReady: class DrawingEditorReady {
@@ -30,7 +23,7 @@ vi.mock('../../lib/drawingProjection', () => ({
   patchModelGeometryRepresentationIds: vi.fn(),
 }))
 
-function projectorFor(elevation: number) {
+function projectorFor() {
   const model = {
     box: new THREE.Box3(new THREE.Vector3(-5, 0, -5), new THREE.Vector3(5, 10, 5)),
     getItemsIdsWithGeometry: () => new Promise<number[]>(() => {}),
@@ -38,43 +31,27 @@ function projectorFor(elevation: number) {
   const components = {
     get: () => ({ list: new Map([['model-1', model]]), core: { update: vi.fn() } }),
   } as any
-  const entry: FloorplanEntry = {
-    id: 'model-1::L1',
-    name: 'L1',
-    elevation,
-    storeyLocalId: 1,
+  const entry: ElevationEntry = {
+    id: 'model-1::elev::north',
+    direction: 'north',
     modelId: 'model-1',
+    position: new THREE.Vector3(0, 5, 12),
+    viewDirection: new THREE.Vector3(0, 0, -1),
+    viewport: { left: -6, right: 6, top: 6, bottom: -6 },
+    far: 14,
+    modelBox: new THREE.Box3(new THREE.Vector3(-5, 0, -5), new THREE.Vector3(5, 10, 5)),
     drawing: null,
     projected: false,
     layers: [],
   }
-  return { projector: new StoreyProjector(components), entry }
+  return { projector: new ElevationProjector(components), entry }
 }
 
-describe('StoreyProjector cut volume', () => {
-  beforeEach(() => createDrawing.mockClear())
-
-  it.each([0, 3.2, -4.5])(
-    'bottoms the captured volume out at the lower clip plane (elevation %s)',
-    async (elevation) => {
-      const { projector, entry } = projectorFor(elevation)
-
-      await projector.project(entry)
-
-      const config = createDrawing.mock.calls[0][1] as {
-        position: THREE.Vector3
-        far: number
-      }
-      expect(config.position.y - config.far).toBeCloseTo(storeyLowerClipY(elevation), 6)
-    },
-  )
-})
-
-describe('StoreyProjector in-flight teardown', () => {
+describe('ElevationProjector in-flight teardown', () => {
   beforeEach(() => createDrawing.mockReset())
 
   it('makes the drawing reachable from the entry before the first await', () => {
-    const { projector, entry } = projectorFor(0)
+    const { projector, entry } = projectorFor()
     const drawing = { three: new THREE.Object3D(), layers: new Map() }
     createDrawing.mockReturnValue(drawing as never)
 

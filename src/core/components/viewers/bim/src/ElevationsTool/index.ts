@@ -344,6 +344,25 @@ export class ElevationsTool extends OBC.Component {
     if (touched) this.onElevationsChanged.trigger(this.elevations)
   }
 
+  /**
+   * Building-scoped teardown: frees every drawing while keeping the model
+   * subscriptions, so the tool serves the next building.
+   */
+  resetAll() {
+    this._activateSeq++
+    void this.deactivate()
+    safeRun(() => {
+      this.components.get(OBF.DrawingEditor).activeDrawing = null
+    }, 'clear active drawing')
+    for (const entry of this._entries.values()) {
+      disposeDrawing(this.components, entry.drawing)
+      this.highlighter.invalidateForEntry(entry.id)
+      this.highlighter.invalidateForModel(entry.modelId)
+    }
+    this._entries.clear()
+    this.onElevationsChanged.trigger([])
+  }
+
   dispose() {
     void this.deactivate()
     safeRun(

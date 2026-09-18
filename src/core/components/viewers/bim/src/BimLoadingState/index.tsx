@@ -20,6 +20,8 @@ import { Input } from '../../../../ui/Input'
 import { LoadingSpinner } from '../../../../ui/LoadingSpinner'
 import { setCameraLookAt } from '../../utils/setCameraLookAt'
 import { partitionFileTab } from '../BimSidebar/src/FileTab/src/partitionFileTab'
+import { ElevationsTool } from '../ElevationsTool'
+import { FloorplanTool } from '../FloorplanTool'
 import { applyModelPlacement } from '../lib/applyModelPlacement'
 import { isBimFile, selectLoadableBimFiles } from '../lib/bimFilesToLoad'
 import { nextBimViewerState } from '../lib/bimViewerState'
@@ -80,6 +82,14 @@ export function BimLoadingState() {
 
     for (const [modelId] of fragments?.list ?? []) {
       void fragments?.core.disposeModel(modelId).catch(() => undefined)
+    }
+
+    // The drawing tools outlive the building: nothing disposes them per route, so they need an explicit reset.
+    try {
+      bimComponents?.get(FloorplanTool).resetAll()
+      bimComponents?.get(ElevationsTool).resetAll()
+    } catch {
+      // The drawing tools only exist once the world is built.
     }
 
     // Models, placed objects and clouds all belong to the building that was open.

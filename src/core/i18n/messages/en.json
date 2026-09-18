@@ -2128,6 +2128,7 @@
     "debugTint": "Debug tint",
     "debugTintOf": "Debug tint — {name}",
     "mode2d": "2D splat mode",
+    "splatBudget": "Splat budget",
     "blur": "Blur",
     "preBlur": "Pre-blur"
   },

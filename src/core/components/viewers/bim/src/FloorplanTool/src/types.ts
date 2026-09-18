@@ -9,7 +9,8 @@ export interface FloorplanEntry {
   id: string
   name: string
   elevation: number
-  storeyLocalId: number
+  /** Absent on a custom level, which has no IFC storey behind it. */
+  storeyLocalId?: number
   modelId: string
   drawing: OBC.TechnicalDrawing | null
   projected: boolean
@@ -19,6 +20,10 @@ export interface FloorplanEntry {
   /** Room overlay, when the storey has spaces. Not a `drawing.layers` entry —
    *  those hold line materials only, and the fill is a mesh. */
   spaces?: SpaceOverlayHandle | null
+  /** Cut depth above the plane; the projector's own default applies when unset. */
+  above?: number
+  /** Cut depth below the plane; the projector's own default applies when unset. */
+  below?: number
 }
 
 export const FLOORPLAN_TOOL_UUID =

@@ -2125,6 +2125,7 @@
     "debugTint": "Tinte de depuración",
     "debugTintOf": "Tinte de depuración — {name}",
     "mode2d": "Modo splat 2D",
+    "splatBudget": "Presupuesto de splats",
     "blur": "Desenfoque",
     "preBlur": "Predesenfoque"
   },

@@ -17,6 +17,7 @@ import { SPACES_LAYER } from '../lib/spaceOverlay'
 import { ViewModeCoordinator } from '../lib/ViewModeCoordinator'
 import { stagePercent } from '../lib/viewSection'
 
+import { cutVolumeFor } from './src/customLevel'
 import { FloorplanRenderer } from './src/FloorplanRenderer'
 import { StoreyProjector } from './src/StoreyProjector'
 import { CUT_COLOR, FILL_COLOR, FLOORPLAN_TOOL_UUID } from './src/types'
@@ -950,7 +951,7 @@ export class FloorplanTool extends OBC.Component {
    *  so ceiling fixtures / lights / equipment of the storey below never
    *  bleed into the projection or the 3D underlay. */
   private _applyLowerClip(entry: FloorplanEntry) {
-    const cutY = entry.elevation - 0.5
+    const { cutY } = cutVolumeFor(entry)
     this.clip.set(
       SLOT_LOWER,
       new THREE.Vector3(0, 1, 0),

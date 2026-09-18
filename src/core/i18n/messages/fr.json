@@ -2125,6 +2125,7 @@
     "debugTint": "Teinte de débogage",
     "debugTintOf": "Teinte de débogage — {name}",
     "mode2d": "Mode splat 2D",
+    "splatBudget": "Budget de splats",
     "blur": "Flou",
     "preBlur": "Pré-flou"
   },

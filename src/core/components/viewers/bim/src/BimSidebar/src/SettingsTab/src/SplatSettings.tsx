@@ -113,6 +113,16 @@ export function SplatSettings() {
             </div>
 
             <SliderWithInput
+              label={t('splatBudget')}
+              unit="M"
+              value={[Math.round((settings.lodSplatCount ?? 0) / 100_000) / 10]}
+              onValueChange={([millions]) => component?.configure({ lodSplatCount: millions * 1_000_000 })}
+              min={0.1}
+              max={10}
+              step={0.1}
+            />
+
+            <SliderWithInput
               label={t('blur')}
               value={[settings.blurAmount]}
               onValueChange={([blurAmount]) => component?.configure({ blurAmount })}

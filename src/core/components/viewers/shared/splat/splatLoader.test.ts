@@ -1,17 +1,22 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as THREE from 'three'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
 
 import { createSparkEngine } from './splatLoader'
 
 const sparkInstances: FakeSparkRenderer[] = []
 const meshInstances: FakeSplatMesh[] = []
+const editInstances: FakeSplatEdit[] = []
 
 class FakeSparkRenderer {
   enable2DGS = false
   preBlurAmount = 0
   blurAmount = 0.3
+  lodSplatCount: number | undefined = undefined
+  defaultSplatTarget = () => 2_500_000
   dispose = vi.fn()
   constructor(public options: { renderer: unknown, onDirty?: () => void }) {
     sparkInstances.push(this)
@@ -20,15 +25,37 @@ class FakeSparkRenderer {
 
 class FakeSplatMesh {
   initialized: Promise<FakeSplatMesh>
-  constructor(public options: { url: string, fileType?: string, onProgress?: (event: ProgressEvent) => void }) {
+  constructor(public options: { url: string, fileType?: string, editable?: boolean, lod?: boolean, onProgress?: (event: ProgressEvent) => void }) {
     meshInstances.push(this)
     this.initialized = Promise.resolve(this)
   }
 }
 
+class FakeSplatEdit {
+  sdfs: unknown[] | null
+  children: unknown[] = []
+  constructor(public options: { sdfs?: unknown[] }) {
+    this.sdfs = options.sdfs ?? null
+    editInstances.push(this)
+  }
+
+  add(child: unknown) { this.children.push(child) }
+}
+
+class FakeSplatEditSdf {
+  position = new THREE.Vector3()
+  quaternion = new THREE.Quaternion()
+  updateMatrixWorld = vi.fn()
+  removeFromParent = vi.fn()
+  constructor(public options: { type: string, opacity: number }) {}
+}
+
 vi.mock('@sparkjsdev/spark', () => ({
   SparkRenderer: FakeSparkRenderer,
   SplatMesh: FakeSplatMesh,
+  SplatEdit: FakeSplatEdit,
+  SplatEditSdf: FakeSplatEditSdf,
+  SplatEditSdfType: { PLANE: 'plane' },
 }))
 
 const fakeScene = () => ({ add: vi.fn(), remove: vi.fn() })
@@ -38,6 +65,7 @@ const attachment = (scene: ReturnType<typeof fakeScene>, onDirty?: () => void) =
 beforeEach(() => {
   sparkInstances.length = 0
   meshInstances.length = 0
+  editInstances.length = 0
 })
 
 describe('attach', () => {
@@ -74,6 +102,24 @@ describe('load', () => {
 
     expect(mesh).toBe(meshInstances[0])
     expect(meshInstances[0].options.url).toBe('https://example.test/capture.spz')
+  })
+
+  it('creates the mesh editable, or Spark ignores the SplatEdit that clips it', async () => {
+    const engine = createSparkEngine()
+    await engine.attach(attachment(fakeScene()))
+
+    await engine.load('https://example.test/capture.spz')
+
+    expect(meshInstances[0].options.editable).toBe(true)
+  })
+
+  it('opts the mesh into lod, which the renderer enables but the mesh never joins', async () => {
+    const engine = createSparkEngine()
+    await engine.attach(attachment(fakeScene()))
+
+    await engine.load('https://example.test/capture.spz')
+
+    expect(meshInstances[0].options.lod).toBe(true)
   })
 
   it('names the decoder so Spark never has to guess from a presigned URL', async () => {
@@ -128,7 +174,7 @@ describe('configure', () => {
 
     engine.configure({ enable2DGS: true })
 
-    expect(engine.settings()).toEqual({ enable2DGS: true, preBlurAmount: 0, blurAmount: 0.3 })
+    expect(engine.settings()).toEqual({ enable2DGS: true, preBlurAmount: 0, blurAmount: 0.3, lodSplatCount: 2_500_000 })
   })
 
   it('writes a falsy value rather than skipping it', async () => {
@@ -138,6 +184,26 @@ describe('configure', () => {
     engine.configure({ blurAmount: 0 })
 
     expect(engine.settings()?.blurAmount).toBe(0)
+  })
+
+  it('drives the lod budget live, so the slider needs no re-attach', async () => {
+    const engine = createSparkEngine()
+    await engine.attach(attachment(fakeScene()))
+
+    engine.configure({ lodSplatCount: 1_200_000 })
+
+    expect(sparkInstances[0].lodSplatCount).toBe(1_200_000)
+    expect(engine.settings()?.lodSplatCount).toBe(1_200_000)
+  })
+
+  it('leaves the budget unset so Spark keeps its own per-device default', async () => {
+    const engine = createSparkEngine()
+    await engine.attach(attachment(fakeScene()))
+
+    engine.configure({ enable2DGS: true })
+
+    expect(sparkInstances[0].lodSplatCount).toBeUndefined()
+    expect(engine.settings()?.lodSplatCount).toBe(2_500_000)
   })
 
   it('is inert before attach', () => {
@@ -171,5 +237,111 @@ describe('dispose', () => {
     await engine.attach(attachment(scene))
 
     expect(sparkInstances).toHaveLength(2)
+  })
+})
+
+describe('setClippingPlanes', () => {
+  const flush = () => new Promise(resolve => setTimeout(resolve, 0))
+  const planeAt = (y: number) => new THREE.Plane(new THREE.Vector3(0, 1, 0), -y)
+
+  it('adds one global edit to the scene, outside any SplatMesh, so every splat is cut', async () => {
+    const engine = createSparkEngine()
+    const scene = fakeScene()
+    await engine.attach(attachment(scene))
+
+    engine.setClippingPlanes([planeAt(1)])
+    await flush()
+
+    expect(editInstances).toHaveLength(1)
+    expect(scene.add).toHaveBeenCalledWith(editInstances[0])
+  })
+
+  it('gives the edit one sdf per plane and reuses the edit as planes change', async () => {
+    const engine = createSparkEngine()
+    await engine.attach(attachment(fakeScene()))
+
+    engine.setClippingPlanes([planeAt(1), planeAt(2)])
+    await flush()
+    engine.setClippingPlanes([planeAt(3)])
+    await flush()
+
+    expect(editInstances).toHaveLength(1)
+    expect(editInstances[0].sdfs).toHaveLength(1)
+  })
+
+  it('remembers planes set before attach, so a splat opened into a clipped scene still cuts', async () => {
+    const engine = createSparkEngine()
+
+    engine.setClippingPlanes([planeAt(1)])
+    await engine.attach(attachment(fakeScene()))
+    await flush()
+
+    expect(editInstances[0].sdfs).toHaveLength(1)
+  })
+})
+
+describe('setClippingPlanes reconciliation', () => {
+  const flush = () => new Promise(resolve => setTimeout(resolve, 0))
+  const planeAt = (y: number) => new THREE.Plane(new THREE.Vector3(0, 1, 0), -y)
+
+  it('ignores a repeat call with unchanged planes, so a per-frame sync is free', async () => {
+    const engine = createSparkEngine()
+    await engine.attach(attachment(fakeScene()))
+    const planes = [planeAt(1)]
+
+    engine.setClippingPlanes(planes)
+    await flush()
+    const sdf = editInstances[0].sdfs![0] as { updateMatrixWorld: ReturnType<typeof vi.fn> }
+    const callsAfterFirst = sdf.updateMatrixWorld.mock.calls.length
+
+    engine.setClippingPlanes(planes)
+    await flush()
+
+    expect(sdf.updateMatrixWorld.mock.calls.length).toBe(callsAfterFirst)
+  })
+
+  // OBC drags a plane by mutating it in place and fires no event, so the same array must re-sync.
+  it('follows a plane dragged in place, even though the array is the same object', async () => {
+    const engine = createSparkEngine()
+    await engine.attach(attachment(fakeScene()))
+    const planes = [planeAt(1)]
+
+    engine.setClippingPlanes(planes)
+    await flush()
+
+    planes[0].constant = -6
+    engine.setClippingPlanes(planes)
+    await flush()
+
+    const sdf = editInstances[0].sdfs![0] as { position: THREE.Vector3 }
+    expect(sdf.position.y).toBeCloseTo(6)
+  })
+
+  it('follows a plane rotated in place, not just moved', async () => {
+    const engine = createSparkEngine()
+    await engine.attach(attachment(fakeScene()))
+    const planes = [planeAt(0)]
+
+    engine.setClippingPlanes(planes)
+    await flush()
+
+    planes[0].normal.set(1, 0, 0)
+    engine.setClippingPlanes(planes)
+    await flush()
+
+    const sdf = editInstances[0].sdfs![0] as { quaternion: THREE.Quaternion }
+    expect(new THREE.Vector3(0, 0, 1).applyQuaternion(sdf.quaternion).x).toBeCloseTo(1)
+  })
+
+  it('drops the sdfs when the last plane is deleted', async () => {
+    const engine = createSparkEngine()
+    await engine.attach(attachment(fakeScene()))
+
+    engine.setClippingPlanes([planeAt(1)])
+    await flush()
+    engine.setClippingPlanes([])
+    await flush()
+
+    expect(editInstances[0].sdfs).toHaveLength(0)
   })
 })

@@ -8,6 +8,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ## [Unreleased]
 
 ### Added
+- A **Splat budget** slider in the Gaussian splats settings panel, the splat analogue of the
+  point budget. `SplatRenderSettings` gains `lodSplatCount`, and the new `SplatSettings.splatBudget`
+  key is in all three catalogues.
 - Gaussian splats are now placed with the crosshair on upload, like 3D models and DXF
   drawings, instead of always landing at the world origin. The position persists to the same
   `pointCloudTransform` column the placement gizmo already writes.
@@ -74,11 +77,31 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   already matched. No schema change.
 - The canvas shows a crosshair cursor while "pick pivot" waits for its double-click, for every
   kind of placement target rather than splats alone.
+- Gaussian splats now build a level-of-detail tree. `SparkRenderer` enabled LOD already, but
+  the meshes never opted in, so there was nothing to traverse; they are now created with
+  `lod: true`. Left unset, the budget stays Spark's own per-device target (500K on WebXR up
+  to 2.5M on desktop) rather than a hard-coded constant.
+
+### Migration
+- `SplatRenderSettings` gains an optional `lodSplatCount`. `settings()` now reports the budget
+  in force rather than `undefined`, so a consumer reading it back gets Spark's per-device
+  default until something overrides it. No action needed unless you assert on the exact object.
 - The pin for a file that is still uploading now draws a ring that fills to the upload
   percentage, with its own icon in the middle, instead of an indeterminate spinner. Phases that
   report no percentage (conversion) spin a short arc, so the ring never sits frozen at 0%.
 
 ### Fixed
+- Clipping planes and the clipping box now cut gaussian splats, which previously ignored
+  them. Splats render through Spark's own shader, outside three.js's clipping pass, so the
+  cut is applied with Spark's `SplatEdit` signed-distance fields; splat meshes are now
+  created with `editable: true`. One scene-level edit cuts every splat, including any loaded
+  after the planes were set. `SplatEngine` gains `setClippingPlanes(planes)`: Spark collects
+  an edit by `instanceof`, so the edit has to be built from the same dynamically imported
+  copy of Spark the loader already owns. The planes are reconciled by value once per frame,
+  not on `onClippingPlanesUpdated` alone — OBC drags a section plane by mutating the same
+  `THREE.Plane` in place and fires no event, so anything holding a reference follows for free
+  while a snapshot silently freezes. Unchanged planes early-out, so the per-frame cost is a
+  string compare.
 - Deleting from the viewport context menu now unloads the file from the scene and reports the
   delete, matching the sidebar. The menu deletes four kinds of target but only ever removed the
   one held by the scene-object registry, so a BIM model, point cloud or splat stayed on screen

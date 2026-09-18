@@ -8,6 +8,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ## [Unreleased]
 
 ### Added
+- `ClippingPlanes` now publishes its planes: a `planes` accessor returning `ClippingPlaneInfo[]`
+  (`key`, `normal`, `point`, all copies), an `onChanged` event carrying the new list on every add,
+  delete, undo/redo and drag, and `planeAtCursor()` for the plane under the pointer.
 - `FloorplanTool.resetAll()` and `ElevationsTool.resetAll()`: building-scoped teardown that
   deactivates the view, disposes every drawing and resets the true-north angle, while keeping the
   tools subscribed to model load and delete so the same instance serves the next building.

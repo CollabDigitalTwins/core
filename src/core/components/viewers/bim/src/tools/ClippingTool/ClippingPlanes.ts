@@ -52,6 +52,20 @@ interface PlaneRecord {
 }
 
 /**
+ * A clipping plane as a caller outside this component sees it: the stable key
+ * and copies of the geometry, with no handle on the live plane or its cut.
+ */
+export interface ClippingPlaneInfo {
+  readonly key: string
+  readonly normal: THREE.Vector3
+  readonly point: THREE.Vector3
+}
+
+function infoOf(record: PlaneRecord): ClippingPlaneInfo {
+  return { key: record.key, normal: record.normal.clone(), point: record.point.clone() }
+}
+
+/**
  * Hides the translucent square without touching the arrow gizmo.
  *
  * `plane.visible` and `clipper.visible` would be the obvious route, but that
@@ -80,6 +94,9 @@ export class ClippingPlanes extends OBC.Component implements OBC.Disposable {
   /** {@link OBC.Disposable.onDisposed} */
   readonly onDisposed = new OBC.Event<string>()
 
+  /** Fires whenever a plane is added, removed or dragged to a new point. */
+  readonly onChanged = new OBC.Event<ClippingPlaneInfo[]>()
+
   /**
    * Undo/redo steps for adding, deleting and moving planes. Toggling the squares
    * is deliberately out: it is a view state the tool drives, not a change.
@@ -96,6 +113,11 @@ export class ClippingPlanes extends OBC.Component implements OBC.Disposable {
   constructor(components: OBC.Components) {
     super(components)
     components.add(ClippingPlanes.uuid, this)
+  }
+
+  /** Every live plane, in creation order. */
+  get planes(): ClippingPlaneInfo[] {
+    return [...this._records.values()].map(infoOf)
   }
 
   /**
@@ -188,25 +210,15 @@ export class ClippingPlanes extends OBC.Component implements OBC.Disposable {
     })
   }
 
+  /** The plane under the cursor, or null when the cursor is over none. */
+  planeAtCursor(): ClippingPlaneInfo | null {
+    const record = this.recordAtCursor()
+    return record ? infoOf(record) : null
+  }
+
   /** Removes the plane under the cursor, if the cursor is over one. */
   deleteAtCursor(): void {
-    const world = this.world
-    if (!world) return
-
-    // `Clipper.pickPlane` is private, and it would only hand back the plane. The
-    // pick happens here so the record — the identity undo closes over — is known.
-    // Hidden squares stay pickable: three's raycaster does not test `visible`.
-    const owners = new Map<THREE.Object3D, PlaneRecord>()
-    for (const candidate of this._records.values()) {
-      if (!candidate.plane) continue
-      for (const mesh of candidate.plane.meshes) owners.set(mesh, candidate)
-    }
-    if (owners.size === 0) return
-
-    const hit = this.components.get(OBC.Raycasters).get(world).castRayToObjects([...owners.keys()])
-    if (!hit) return
-
-    const record = owners.get(hit.object)
+    const record = this.recordAtCursor()
     if (!record) return
 
     this.despawn(record)
@@ -268,9 +280,11 @@ export class ClippingPlanes extends OBC.Component implements OBC.Disposable {
     // The planes themselves belong to the Clipper, which OBC disposes on its own.
     // Deleting them here would fight that teardown for no gain.
     this._records.clear()
+    this.onChanged.trigger(this.planes)
     this.history.clear()
     this._setupWorld = null
     this._dragOrigin = null
+    this.onChanged.reset()
     this.onDisposed.trigger(ClippingPlanes.uuid)
     this.onDisposed.reset()
   }
@@ -285,6 +299,25 @@ export class ClippingPlanes extends OBC.Component implements OBC.Disposable {
 
   private get styler(): OBF.ClipStyler {
     return this.components.get(OBF.ClipStyler)
+  }
+
+  // `Clipper.pickPlane` is private, and would only hand back the plane rather than the record.
+  private recordAtCursor(): PlaneRecord | null {
+    const world = this.world
+    if (!world) return null
+
+    // Hidden squares stay pickable: three's raycaster does not test `visible`.
+    const owners = new Map<THREE.Object3D, PlaneRecord>()
+    for (const candidate of this._records.values()) {
+      if (!candidate.plane) continue
+      for (const mesh of candidate.plane.meshes) owners.set(mesh, candidate)
+    }
+    if (owners.size === 0) return null
+
+    const hit = this.components.get(OBC.Raycasters).get(world).castRayToObjects([...owners.keys()])
+    if (!hit) return null
+
+    return owners.get(hit.object) ?? null
   }
 
   /** Builds the OBC plane and its cut for a record. False when there is no world. */
@@ -316,6 +349,7 @@ export class ClippingPlanes extends OBC.Component implements OBC.Disposable {
     })
 
     this._records.set(record.key, record)
+    this.onChanged.trigger(this.planes)
     return true
   }
 
@@ -328,6 +362,7 @@ export class ClippingPlanes extends OBC.Component implements OBC.Disposable {
     // Clipper's own `onBeforeDelete` disposes the plane, drops it from the
     // renderer, and the linked cut goes with it.
     if (planeId) this.clipper.list.delete(planeId)
+    this.onChanged.trigger(this.planes)
   }
 
   private onBeforeDrag = (plane: OBC.SimplePlane) => {
@@ -347,6 +382,7 @@ export class ClippingPlanes extends OBC.Component implements OBC.Disposable {
     if (to.distanceToSquared(from) < 1e-8) return
 
     record.point = to
+    this.onChanged.trigger(this.planes)
     this.history.push({
       label: 'Move clipping plane',
       undo: () => this.moveTo(record, from),
@@ -363,6 +399,7 @@ export class ClippingPlanes extends OBC.Component implements OBC.Disposable {
    */
   private moveTo(record: PlaneRecord, point: THREE.Vector3): void {
     record.point = point.clone()
+    this.onChanged.trigger(this.planes)
 
     const { plane } = record
     if (!plane) return

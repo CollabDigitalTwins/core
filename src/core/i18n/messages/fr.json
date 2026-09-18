@@ -1429,6 +1429,7 @@
     "exit": "Quitter",
     "layers": "Calques",
     "toggleVisibility": "Afficher/masquer",
+    "generateLines": "Générer les lignes",
     "chooseColor": "Choisir la couleur",
     "trueNorthTitle": "Nord géographique",
     "trueNorthAngleLabel": "Angle de rotation (0–360°)",

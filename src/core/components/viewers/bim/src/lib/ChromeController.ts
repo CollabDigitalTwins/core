@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as OBC from '@thatopen/components'
 import * as THREE from 'three'
 
 import { CurrentWorld } from '../CurrentWorld'
@@ -14,6 +13,7 @@ import { ViewportGizmo } from '../ViewportGizmo'
 import { hideSceneContent, restoreSceneContent } from './sceneContent'
 
 import type { SceneContentVisibility } from './sceneContent'
+import type * as OBC from '@thatopen/components'
 
 /**
  * Manages the viewer chrome muted while a drawing-based view tool is
@@ -39,7 +39,7 @@ export class ChromeController {
 
   constructor(private components: OBC.Components) {}
 
-  /** A drawing replaces the whole 3D scene, which would otherwise show through it. */
+  /** Hides the scene content a drawing replaces. The fragment models stay: they are its fill. */
   hideSceneContent() {
     hideSceneContent(this._contentRoots(), this._savedContent)
   }
@@ -58,10 +58,6 @@ export class ChromeController {
     collect(() => this.components.get(BimPointClouds).list())
     collect(() => this.components.get(BimSplats).list())
     collect(() => this.components.get(BimSceneObjects).registry?.list() ?? [])
-    // The fragments too: the drawing carries its own cut lines and fills, so the model behind it is
-    // not what makes a plan readable — it is what the user sees in perspective behind the lines.
-    collect(() => [...this.components.get(OBC.FragmentsManager).core.models.list.values()]
-      .map(model => ({ root: model.object })))
     return roots
   }
 

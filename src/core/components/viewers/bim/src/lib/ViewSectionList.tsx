@@ -39,6 +39,11 @@ interface Props {
   toggleVisibilityLabel: string
   /** Translated tooltip for the color picker. */
   chooseColorLabel: string
+  /** Translated label of the "generate lines" action. Omit to hide the action. */
+  generateLinesLabel?: string
+  /** True when the active entry's drawing has not been projected yet. */
+  canGenerateLines?: boolean
+  onGenerateLines?: () => void
   /** Maps an IFC class name to a friendly translated label
    *  (e.g. "IFCWALL" → "Wall"). */
   friendlyClassName: (className: string) => string
@@ -67,6 +72,9 @@ export function ViewSectionList({
   layersLabel,
   toggleVisibilityLabel,
   chooseColorLabel,
+  generateLinesLabel,
+  canGenerateLines = false,
+  onGenerateLines,
   friendlyClassName,
   onSelect,
   onExit,
@@ -121,6 +129,17 @@ export function ViewSectionList({
                 style={{ width: `${loadingPercent}%` }}
               />
             </div>
+          )}
+          {!isLoading && canGenerateLines && onGenerateLines && generateLinesLabel && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onGenerateLines}
+              className="mt-2 h-6 w-full text-xs px-2"
+            >
+              <LR.PenLine className="h-3 w-3 mr-1" />
+              {generateLinesLabel}
+            </Button>
           )}
         </div>
       )}

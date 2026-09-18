@@ -1429,6 +1429,7 @@
     "exit": "Salir",
     "layers": "Capas",
     "toggleVisibility": "Mostrar/ocultar",
+    "generateLines": "Generar líneas",
     "chooseColor": "Elegir color",
     "trueNorthTitle": "Norte geográfico",
     "trueNorthAngleLabel": "Ángulo de rotación (0–360°)",

@@ -125,6 +125,11 @@ export function FloorplanSection({
     }
   }
 
+  const handleGenerateLines = () => {
+    if (!bimComponents || !activeId) return
+    void bimComponents.get(FloorplanTool).generateLines(activeId)
+  }
+
   const handleExit = () => {
     if (!bimComponents) return
     setPendingId(null)
@@ -219,6 +224,9 @@ export function FloorplanSection({
         layersLabel={t('layers')}
         toggleVisibilityLabel={t('toggleVisibility')}
         chooseColorLabel={t('chooseColor')}
+        generateLinesLabel={t('generateLines')}
+        canGenerateLines={!!activeEntry && !activeEntry.projected}
+        onGenerateLines={handleGenerateLines}
         friendlyClassName={friendlyClassName}
         onSelect={handleSelect}
         onExit={handleExit}

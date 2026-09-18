@@ -1430,6 +1430,7 @@
     "exit": "Exit",
     "layers": "Layers",
     "toggleVisibility": "Toggle visibility",
+    "generateLines": "Generate lines",
     "chooseColor": "Choose color",
     "trueNorthTitle": "True north",
     "trueNorthAngleLabel": "Rotation angle (0–360°)",

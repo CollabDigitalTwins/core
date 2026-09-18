@@ -157,6 +157,9 @@ export default function AddToBim({ tool }: AddToBimProps) {
     bimComponents, world, fragments, toolsDispatch, buildingId, intake,
     handleMarkerAction, () => setAddingMode(null),
   )
+
+  const { setGizmoMode } = filePlacement
+  React.useEffect(() => { setGizmoMode(placementMode) }, [placementMode, setGizmoMode])
   placementRef.current = filePlacement
 
   // Initialize CSS2D renderer

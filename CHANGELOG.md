@@ -97,6 +97,10 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   report no percentage (conversion) spin a short arc, so the ring never sits frozen at 0%.
 
 ### Fixed
+- Dragging the placement gizmo while placing a freshly uploaded file now updates the rotation,
+  position and scale fields live. The gizmos on the upload path never emitted a change back into
+  the placement card, so the numbers and the object diverged until Enter or Escape. Re-placing an
+  already-uploaded file was already correct and is unchanged.
 - **Fit** now frames a selected gaussian splat instead of the whole scene. Switching splats to
   Spark's LOD moved every splat centre into `lodSplats`, leaving `getBoundingBox` reporting an
   empty box, so `BimSplats.boundsOf` returned null and the camera fell through to fitting

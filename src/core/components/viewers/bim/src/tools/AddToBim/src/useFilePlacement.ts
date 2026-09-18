@@ -18,8 +18,10 @@ import { AddDxf } from "./AddDxf"
 import { addFileToScene, type PlacedKind } from "./FileHandler"
 import { type AddedFile, markerFinishedLoading, removeMarker } from "./FileMarkerUtils"
 
+import type { DxfInfo } from "./AddDxf"
 import type { FileMarkerAction } from "../../../../../../ui/FilesManager/src/FileMarker"
 import type { useBimFileIntake } from "../../../lib/useBimFileIntake"
+import type { ModelInfo } from "../../../ModelManager"
 import type { BimToolbarToolsType } from "../../bimToolbar"
 import type * as OBC from "@thatopen/components"
 import type { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js"
@@ -34,6 +36,16 @@ export interface PlacedFile {
   marker: CSS2DObject | null
   object3D: THREE.Object3D
 }
+
+const LIVE_TRANSFORM_EPSILON = 1e-9
+
+// Returning the identical number lets React bail out, which is what stops the write-back from looping.
+const unchangedWithin = (current: number, next: number): number =>
+  Math.abs(next - current) < LIVE_TRANSFORM_EPSILON ? current : next
+
+/** Degrees for the rotation field from a gizmo's radians, returning the current value unchanged when the angle has not moved. */
+export const rotationDegreesFromGizmo = (current: number, radians: number): number =>
+  unchangedWithin(current, THREE.MathUtils.radToDeg(radians))
 
 // Horizontal floor at world height 0; used when a double-click misses all BIM geometry.
 const GROUND_PLANE = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)
@@ -343,10 +355,45 @@ export function useFilePlacement(
       addDxf.updateScale(current3DFileId, fileScale)
       addDxf.updateRotation(current3DFileId, fileRotation)
     } else if (current3DFileType === "model" && modelManager) {
+      const model = modelManager.getModel(current3DFileId)?.model
+      if (!model) return
       modelManager.setScale(current3DFileId, fileScale)
-      modelManager.setRotation(current3DFileId, new THREE.Euler(0, THREE.MathUtils.degToRad(fileRotation), 0))
+      const turned = new THREE.Euler(model.rotation.x, THREE.MathUtils.degToRad(fileRotation), model.rotation.z)
+      modelManager.setRotation(current3DFileId, turned)
     }
   }, [fileScale, fileRotation, current3DFileId, show3DScaleCard, current3DFileType, addDxf, modelManager])
+
+  // A gizmo drag is the same rotation the field edits, so it lands in the same state rather than beside it.
+  React.useEffect(() => {
+    if (!current3DFileId || !show3DScaleCard || !current3DFileType) return
+
+    const readTransform = (radians: number, scale: number) => {
+      setFileRotation((current) => rotationDegreesFromGizmo(current, radians))
+      setFileScale((current) => unchangedWithin(current, scale))
+    }
+
+    if (current3DFileType === "dxf" && addDxf) {
+      const onDxf = (info: DxfInfo) => {
+        if (info.id === current3DFileId) readTransform(info.group.rotation.y, info.group.scale.x)
+      }
+      addDxf.onDxfTransformed.add(onDxf)
+      return () => { addDxf.onDxfTransformed.remove(onDxf) }
+    }
+
+    if (current3DFileType === "model" && modelManager) {
+      const onModel = (info: ModelInfo) => {
+        if (info.id === current3DFileId) readTransform(info.model.rotation.y, info.model.scale.x)
+      }
+      modelManager.onModelTransformed.add(onModel)
+      return () => { modelManager.onModelTransformed.remove(onModel) }
+    }
+  }, [current3DFileId, show3DScaleCard, current3DFileType, addDxf, modelManager])
+
+  const setGizmoMode = React.useCallback((mode: GizmoMode) => {
+    if (!current3DFileId) return
+    if (current3DFileType === "dxf") addDxf?.setGizmoMode(current3DFileId, mode)
+    else if (current3DFileType === "model") modelManager?.getModel(current3DFileId)?.gizmoController?.setMode(mode)
+  }, [current3DFileId, current3DFileType, addDxf, modelManager])
 
   const getPlacedFile = React.useCallback((id: string): PlacedFile | undefined => {
     return placedFilesRef.current.get(id)
@@ -382,6 +429,7 @@ export function useFilePlacement(
     current3DFileType,
     setFileScale,
     setFileRotation,
+    setGizmoMode,
     handleFileSelect,
     handleFileDrop,
     processFileObject,

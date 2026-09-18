@@ -987,16 +987,7 @@ export class FloorplanTool extends OBC.Component {
     )
   }
 
-  /** Frame the camera over the active floor in orthographic top-down,
-   *  then re-apply the building's true-north rotation so storey switches
-   *  preserve the user's chosen orientation. */
-  /**
-   * Fit the camera to the projected drawing, so activating a storey lands on a
-   * framed plan without the user having to hit Fit.
-   *
-   * North is applied first: the fit is computed against an axis-aligned box, so
-   * rotating afterwards could push content back out of frame.
-   */
+  // North is applied first: the fit uses an axis-aligned box, so rotating after it could push content out of frame.
   private async _fitToDrawing(entry: FloorplanEntry) {
     if (!entry.drawing) return
 

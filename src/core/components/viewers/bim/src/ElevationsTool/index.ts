@@ -15,8 +15,10 @@ import { GridController } from '../lib/GridController'
 import { safeRun, safeRunAsync } from '../lib/safeRun'
 import { ViewModeCoordinator } from '../lib/ViewModeCoordinator'
 import { stagePercent } from '../lib/viewSection'
+import { ClippingPlanes } from '../tools/ClippingTool/ClippingPlanes'
 
 import { ElevationProjector } from './src/ElevationProjector'
+import { planeToEntry } from './src/planeToEntry'
 import {
   ELEVATION_STAGE_PERCENT,
   ELEVATIONS_TOOL_UUID
@@ -27,6 +29,7 @@ import type {
   ElevationLoadingStage,
   ElevationLoadingState} from './src/types';
 import type { StageEmitter } from '../lib/CategoryHighlighter';
+import type { ClippingPlaneInfo } from '../tools/ClippingTool/ClippingPlanes';
 
 export type {
   ElevationEntry,
@@ -60,6 +63,7 @@ export class ElevationsTool extends OBC.Component {
   private _entries = new Map<string, ElevationEntry>()
   private _activeId: string | null = null
   private _activateSeq = 0
+  private _planeWatch: ((planes: ClippingPlaneInfo[]) => void) | null = null
 
   private projector: ElevationProjector
   private highlighter: CategoryHighlighter
@@ -160,6 +164,60 @@ export class ElevationsTool extends OBC.Component {
     } finally {
       this._emit({ isLoading: false })
     }
+  }
+
+  /**
+   * Add a custom view cut from a clipping plane. Returns the new entry's id,
+   * or null when no loaded model can be framed against the plane.
+   */
+  addFromPlane(plane: ClippingPlaneInfo, label: string): string | null {
+    const model = this._modelForPoint(plane.point)
+    if (!model) return null
+
+    this._watchPlanes()
+    const entry = planeToEntry(plane, model.modelId, model.box, label)
+    this._entries.set(entry.id, entry)
+    this.onElevationsChanged.trigger(this.elevations)
+    return entry.id
+  }
+
+  private _modelForPoint(point: THREE.Vector3): { modelId: string; box: THREE.Box3 } | null {
+    const fragments = this.components.get(OBC.FragmentsManager)
+    let fallback: { modelId: string; box: THREE.Box3 } | null = null
+    for (const [modelId, model] of fragments.list) {
+      const box = model.box as THREE.Box3 | undefined
+      if (!box || box.isEmpty()) continue
+      if (box.containsPoint(point)) return { modelId, box }
+      fallback ??= { modelId, box }
+    }
+    return fallback
+  }
+
+  // Lazy so the tool does not instantiate the clipper for a viewer that never cuts one.
+  private _watchPlanes() {
+    if (this._planeWatch) return
+    const watch = (planes: ClippingPlaneInfo[]) => {
+      this._dropCustomEntriesMissing(new Set(planes.map((plane) => plane.key)))
+    }
+    try {
+      this.components.get(ClippingPlanes).onChanged.add(watch)
+      this._planeWatch = watch
+    } catch {
+      // No ClippingPlanes in this viewer — the entry simply outlives its plane.
+    }
+  }
+
+  private _dropCustomEntriesMissing(liveKeys: Set<string>) {
+    let touched = false
+    for (const [id, entry] of this._entries) {
+      if (!entry.planeKey || liveKeys.has(entry.planeKey)) continue
+      if (this._activeId === id) void this.deactivate()
+      disposeDrawing(this.components, entry.drawing)
+      this._entries.delete(id)
+      this.highlighter.invalidateForEntry(id)
+      touched = true
+    }
+    if (touched) this.onElevationsChanged.trigger(this.elevations)
   }
 
   /**
@@ -365,6 +423,14 @@ export class ElevationsTool extends OBC.Component {
 
   dispose() {
     void this.deactivate()
+    if (this._planeWatch) {
+      const watch = this._planeWatch
+      this._planeWatch = null
+      safeRun(
+        () => this.components.get(ClippingPlanes).onChanged.remove(watch),
+        'unsubscribePlaneChanged',
+      )
+    }
     safeRun(
       () => this.components.get(OBC.FragmentsManager).list.onItemDeleted.remove(this.onModelRemoved),
       'unsubscribeModelRemoved',

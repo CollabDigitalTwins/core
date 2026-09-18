@@ -26,7 +26,7 @@ import type {
   ElevationLoadingState} from '../../../../ElevationsTool';
 import type { ViewListEntry } from '../../../../lib/viewSection'
 
-interface ElevationSectionProps {
+interface CustomSectionProps {
   query?: string
   modelFilter?: string
   onModelFilterChange?: (value: string) => void
@@ -34,11 +34,12 @@ interface ElevationSectionProps {
 
 const IDLE_LOADING: ElevationLoadingState = { isLoading: false }
 
-export function ElevationSection({
+/** Drawings cut from a clipping plane, sharing `ElevationsTool` with the cardinal elevations. */
+export function CustomSection({
   query = '',
   modelFilter = ALL_MODELS,
   onModelFilterChange,
-}: ElevationSectionProps) {
+}: CustomSectionProps) {
   const t = useTranslations('ViewSection')
   const friendlyClassName = useFriendlyIfcClassName()
   const buildingName = useBuildingName()
@@ -82,23 +83,27 @@ export function ElevationSection({
     }
   }, [bimComponents])
 
+  const customEntries = React.useMemo(
+    () => entries.filter((entry) => entry.planeKey !== undefined),
+    [entries],
+  )
+
   const models = React.useMemo(() => {
-    const ids = [...new Set(entries.map((entry) => entry.modelId))]
+    const ids = [...new Set(customEntries.map((entry) => entry.modelId))]
     return ids.map((id) => ({ id, label: buildingName(id) }))
-  }, [entries, buildingName])
+  }, [customEntries, buildingName])
 
   const filteredEntries: ViewListEntry[] = React.useMemo(() => {
     const q = query.trim().toLowerCase()
-    return entries
-      .filter((entry) => entry.planeKey === undefined)
+    return customEntries
       .filter((entry) => modelFilter === ALL_MODELS || entry.modelId === modelFilter)
-      .map((entry) => ({ id: entry.id, label: t(entry.direction) }))
+      .map((entry) => ({ id: entry.id, label: entry.label ?? t(entry.direction) }))
       .filter((row) => !q || row.label.toLowerCase().includes(q))
-  }, [entries, query, t, modelFilter])
+  }, [customEntries, query, t, modelFilter])
 
   const activeEntry = React.useMemo(
-    () => entries.find((entry) => entry.id === activeId) ?? null,
-    [entries, activeId],
+    () => customEntries.find((entry) => entry.id === activeId) ?? null,
+    [customEntries, activeId],
   )
 
   const handleSelect = (entry: ViewListEntry) => {
@@ -127,10 +132,10 @@ export function ElevationSection({
   const handleDownload = (entry: ViewListEntry, event: React.MouseEvent) => {
     event.stopPropagation()
     if (!bimComponents) return
-    const elevEntry = entries.find((e) => e.id === entry.id)
-    if (!elevEntry?.drawing) return
-    const fileName = `${buildingName(elevEntry.modelId)}-${elevEntry.direction}`
-    exportDrawingToDxf(bimComponents, elevEntry.drawing, fileName)
+    const custom = customEntries.find((e) => e.id === entry.id)
+    if (!custom?.drawing) return
+    const fileName = `${buildingName(custom.modelId)}-${custom.label ?? custom.direction}`
+    exportDrawingToDxf(bimComponents, custom.drawing, fileName)
   }
 
   const handleToggleLayer = (className: string, visible: boolean) => {
@@ -160,7 +165,7 @@ export function ElevationSection({
     >
       <ViewSectionList
         entries={filteredEntries}
-        activeId={activeId}
+        activeId={activeEntry?.id ?? null}
         pendingId={pendingId}
         loading={loading}
         loadingPercent={getElevationStagePercent(loading.stage)}

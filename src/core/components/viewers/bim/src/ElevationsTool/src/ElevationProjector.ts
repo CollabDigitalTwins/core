@@ -128,7 +128,7 @@ export class ElevationProjector {
       viewport: {
         ...entry.viewport,
         scale: 100,
-        name: `Elevation - ${entry.direction}`,
+        name: `Elevation - ${entry.label ?? entry.direction}`,
       },
     })
     if (!drawing) return

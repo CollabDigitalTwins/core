@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CurrentWorld } from '../CurrentWorld'
 import { disposeDrawing } from '../lib/drawingProjection'
 import { ViewModeCoordinator } from '../lib/ViewModeCoordinator'
+import { ClippingPlanes } from '../tools/ClippingTool/ClippingPlanes'
 
 import { ElevationsTool } from './index'
 
@@ -66,6 +67,9 @@ vi.mock('../lib/GridController', () => ({
   GridController: class GridController { hide() {} restore() {} setGrid() {} },
 }))
 vi.mock('../lib/drawingProjection', () => ({ disposeDrawing: vi.fn() }))
+vi.mock('../tools/ClippingTool/ClippingPlanes', () => ({
+  ClippingPlanes: class ClippingPlanes {},
+}))
 vi.mock('../lib/CategoryHighlighter', () => ({
   CategoryHighlighter: class CategoryHighlighter {
     apply = spies.apply
@@ -115,6 +119,16 @@ function makeTool() {
   }
   const editor = { activeDrawing: null as unknown }
   const world = { camera: { controls: { fitToBox: vi.fn(async () => {}) } } }
+  const planeHandlers: ((planes: { key: string }[]) => void)[] = []
+  const clipping = {
+    onChanged: {
+      add(cb: (planes: { key: string }[]) => void) { planeHandlers.push(cb) },
+      remove(cb: (planes: { key: string }[]) => void) {
+        const at = planeHandlers.indexOf(cb)
+        if (at >= 0) planeHandlers.splice(at, 1)
+      },
+    },
+  }
   const components = {
     add() {},
     get(ctor: unknown) {
@@ -122,6 +136,7 @@ function makeTool() {
       if (ctor === OBF.DrawingEditor) return editor
       if (ctor === CurrentWorld) return { world }
       if (ctor === ViewModeCoordinator) return { claim: async () => {}, release() {} }
+      if (ctor === ClippingPlanes) return clipping
       return {}
     },
   } as unknown as OBC.Components
@@ -133,7 +148,7 @@ function makeTool() {
   const states: ElevationLoadingState[] = []
   tool.onLoadingStateChanged.add((state) => states.push(state))
 
-  return { tool, entry, states, editor, deleteHandlers }
+  return { tool, entry, states, editor, deleteHandlers, planeHandlers }
 }
 
 describe('ElevationsTool activation split', () => {
@@ -238,5 +253,83 @@ describe('ElevationsTool resetAll', () => {
     await tool.generateLines(next.id)
 
     expect(next.projected).toBe(true)
+  })
+})
+
+describe('ElevationsTool custom entries', () => {
+  beforeEach(() => {
+    vi.mocked(disposeDrawing).mockClear()
+    spies.project.mockClear()
+    spies.project.mockImplementation(async (entry: ElevationEntry) => {
+      entry.drawing = { three: new THREE.Object3D(), layers: new Map() } as never
+      entry.projected = true
+    })
+  })
+
+  const plane = (key: string) => ({
+    key,
+    normal: new THREE.Vector3(1, 0, 0),
+    point: new THREE.Vector3(0, 4, 0),
+  })
+
+  it('adds an entry cut from a plane and announces it', () => {
+    const { tool } = makeTool()
+    const seen: ElevationEntry[][] = []
+    tool.onElevationsChanged.add((entries) => seen.push(entries))
+
+    const id = tool.addFromPlane(plane('plane-0'), 'Section 1')
+
+    expect(id).not.toBeNull()
+    const added = tool.elevations.find((entry) => entry.id === id)
+    expect(added?.label).toBe('Section 1')
+    expect(added?.planeKey).toBe('plane-0')
+    expect(added?.modelId).toBe('model-1')
+    expect(seen.at(-1)?.some((entry) => entry.id === id)).toBe(true)
+  })
+
+  it('previews without projecting, then projects on demand like any elevation', async () => {
+    const { tool } = makeTool()
+    const id = tool.addFromPlane(plane('plane-0'), 'Section 1')!
+
+    await tool.activate(id)
+    expect(spies.project).not.toHaveBeenCalled()
+
+    await tool.generateLines(id)
+    expect(spies.project).toHaveBeenCalledTimes(1)
+  })
+
+  it('disposes the drawing when its source plane is deleted', async () => {
+    const { tool, planeHandlers } = makeTool()
+    const id = tool.addFromPlane(plane('plane-0'), 'Section 1')!
+    await tool.activate(id)
+    await tool.generateLines(id)
+    const drawing = tool.elevations.find((entry) => entry.id === id)?.drawing
+
+    planeHandlers.forEach((notify) => notify([]))
+
+    expect(tool.elevations.some((entry) => entry.id === id)).toBe(false)
+    expect(vi.mocked(disposeDrawing)).toHaveBeenCalledWith(expect.anything(), drawing)
+    expect(tool.activeId).toBeNull()
+  })
+
+  it('keeps entries whose plane is still there, and the cardinal ones too', () => {
+    const { tool, entry, planeHandlers } = makeTool()
+    const kept = tool.addFromPlane(plane('plane-0'), 'Section 1')!
+    const dropped = tool.addFromPlane(plane('plane-1'), 'Section 2')!
+
+    planeHandlers.forEach((notify) => notify([{ key: 'plane-0' }]))
+
+    expect(tool.elevations.map((e) => e.id)).toContain(kept)
+    expect(tool.elevations.map((e) => e.id)).toContain(entry.id)
+    expect(tool.elevations.map((e) => e.id)).not.toContain(dropped)
+  })
+
+  it('drops a custom entry with the rest on resetAll', () => {
+    const { tool } = makeTool()
+    tool.addFromPlane(plane('plane-0'), 'Section 1')
+
+    tool.resetAll()
+
+    expect(tool.elevations).toEqual([])
   })
 })

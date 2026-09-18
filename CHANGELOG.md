@@ -8,6 +8,11 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ## [Unreleased]
 
 ### Added
+- A clipping plane can be turned into a drawing from the clipping tool's menu. The new view appears
+  under Layers -> Drawings -> **Custom**, previews instantly, generates its lines on demand and
+  exports to DXF like any elevation; deleting the source plane disposes it. `ElevationEntry` gains
+  an optional `label` (a display name overriding the translated direction) and `planeKey` (a
+  back-reference to the source plane), and `ElevationsTool` gains `addFromPlane(plane, label)`.
 - `ClippingPlanes` now publishes its planes: a `planes` accessor returning `ClippingPlaneInfo[]`
   (`key`, `normal`, `point`, all copies), an `onChanged` event carrying the new list on every add,
   delete, undo/redo and drag, and `planeAtCursor()` for the plane under the pointer.

@@ -12,6 +12,7 @@ import { ViewerSidebarPanel } from '../../../../../../ui/ViewerSidebar/Panel'
 import { useResizableSections } from '../../../../../../ui/ViewerSidebar/useResizableSections'
 
 import { AppearanceProvider } from './src/AppearanceProvider'
+import { CustomSection } from './src/CustomSection'
 import { ALL_MODELS } from './src/DrawingModelFilter'
 import { ElevationSection } from './src/ElevationsSection'
 import { FloorplanSection } from './src/FloorplanSection'
@@ -106,6 +107,18 @@ export function LayersTab() {
                   icon: LR.House,
                   content: (
                     <ElevationSection
+                      query={searchQuery}
+                      modelFilter={drawingModelFilter}
+                      onModelFilterChange={setDrawingModelFilter}
+                    />
+                  ),
+                },
+                {
+                  id: 'custom',
+                  label: t('customTab'),
+                  icon: LR.Frame,
+                  content: (
+                    <CustomSection
                       query={searchQuery}
                       modelFilter={drawingModelFilter}
                       onModelFilterChange={setDrawingModelFilter}

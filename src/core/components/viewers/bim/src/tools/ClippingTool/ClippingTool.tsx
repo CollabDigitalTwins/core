@@ -19,6 +19,7 @@ import { DropdownMenuItem } from '../../../../../ui/DropdownMenu'
 
 // Icons
 import { Cursor } from '../../Cursor'
+import { ElevationsTool } from '../../ElevationsTool'
 
 import { ClippingBoxes } from './ClippingBoxes'
 import { ClippingPlanes } from './ClippingPlanes'
@@ -96,6 +97,24 @@ export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
       toast.dismiss(BOX_TOAST_ID)
     }
   }, [boxes, t])
+
+  // The menu steals the pointer, so a lone plane is unambiguous enough to act on.
+  const planeToDrawing = React.useCallback(() => {
+    if (!planes || !bimComponents) return
+    const all = planes.planes
+    const target = planes.planeAtCursor() ?? (all.length === 1 ? all[0] : null)
+    if (!target) {
+      toast.info(t('planeToDrawingHint'))
+      return
+    }
+    const name = t('planeDrawingName', {
+      number: all.findIndex((plane) => plane.key === target.key) + 1,
+    })
+    const id = bimComponents.get(ElevationsTool).addFromPlane(target, name)
+    toast[id ? 'success' : 'error'](
+      id ? t('planeToDrawingAdded', { name }) : t('planeToDrawingNoModel'),
+    )
+  }, [planes, bimComponents, t])
 
   const startCreating = React.useCallback(() => {
     if (!planes) return
@@ -195,6 +214,11 @@ export const ClippingTool: React.FC<ClippingToolProps> = ({ tool }) => {
         <DropdownMenuItem onClick={() => planes?.deleteAll()}>
           <LR.Trash2 />
           <span>{t('deleteAll')}</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem onClick={planeToDrawing}>
+          <LR.Frame />
+          <span>{t('planeToDrawing')}</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem onClick={toggleBox}>

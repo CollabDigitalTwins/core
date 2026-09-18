@@ -145,9 +145,9 @@
   },
   "BimLoadingState": {
     "openingText": "Ouverture du visualiseur BIM",
-    "helpText": "Glissez-déposez ou sélectionnez un fichier IFC ou Fragment à charger",
+    "helpText": "Glissez-déposez ou sélectionnez n'importe quel fichier 3D : modèle BIM, nuage de points ou splat",
     "uploadButton": "Télécharger un fichier",
-    "noBIMLoaded": "Aucun fichier BIM chargé",
+    "no3DLoaded": "Aucun fichier 3D chargé",
     "filesUnavailable": "Fichiers du bâtiment indisponibles",
     "filesUnavailableHelpText": "La liste des fichiers n'a pas pu être chargée ; les modèles BIM sont toujours présents mais ne peuvent pas être ouverts. Réessayez dans un instant.",
     "loadingBimModel": "Chargement des modèles BIM...",

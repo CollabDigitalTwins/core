@@ -14,17 +14,23 @@ import { BimContext, BuildingsContext, usePermissions } from '../../../../../sto
 import { cn } from '../../../../../utils/utils'
 import { Button } from '../../../../ui/Button'
 import { Card, CardContent, CardHeader } from '../../../../ui/Card'
+import { typeOfFile } from '../../../../ui/FilesManager/src/fileType'
 import { useFileUploadHandler } from '../../../../ui/FilesManager/src/useFileUploadHandler'
 import { Input } from '../../../../ui/Input'
 import { LoadingSpinner } from '../../../../ui/LoadingSpinner'
 import { setCameraLookAt } from '../../utils/setCameraLookAt'
+import { partitionFileTab } from '../BimSidebar/src/FileTab/src/partitionFileTab'
 import { applyModelPlacement } from '../lib/applyModelPlacement'
 import { isBimFile, selectLoadableBimFiles } from '../lib/bimFilesToLoad'
 import { nextBimViewerState } from '../lib/bimViewerState'
+import { acceptAttribute, routePickedFile } from '../lib/pickAndRouteFile'
+import { requestPlacement } from '../lib/placementRequests'
 import { searchBuildings } from '../lib/searchBuildings'
+import { useBimFileIntake } from '../lib/useBimFileIntake'
 import { useOptionListKeys } from '../lib/useOptionListKeys'
 import { useSelectBuilding } from '../lib/useSelectBuilding'
 import { LoadModels } from '../LoadModels'
+import { BimPointClouds } from '../PointClouds'
 import { BimSceneObjects } from '../SceneObjects'
 
 import type { DbFile as DbFile } from '../../../../../types/dbTypes'
@@ -32,6 +38,8 @@ import type { BimViewerState } from '../lib/bimViewerState'
 
 
 export type bimViewerState = BimViewerState
+
+const ADDABLE_HERE = ['bim-file', 'point-cloud-file', 'splat-file', '3d-file', 'cad-file'] as const
 
 export function BimLoadingState() {
   const t = useTranslations('BimLoadingState')
@@ -83,6 +91,7 @@ export function BimLoadingState() {
     bimDispatch({ type: 'SET_POINT_CLOUD_IDS', payload: { pointCloudIds: [] } })
 
     setHasLoadedModels(false)
+    setPlacingFile(false)
     setCurrentState('opening')
   }, [building?.id, fragments, bimComponents, bimDispatch])
 
@@ -100,6 +109,7 @@ export function BimLoadingState() {
   const [currentState, setCurrentState] = React.useState<BimViewerState>('opening')
   const [hasLoadedModels, setHasLoadedModels] = React.useState(false)
   const [cameraHasMoved, setCameraHasMoved] = React.useState(false)
+  const [placingFile, setPlacingFile] = React.useState(false)
   const isLoadingModelsRef = React.useRef(false)
   const [searchTerm, setSearchTerm] = React.useState('')
   const [searchResults, setSearchResults] = React.useState<any[]>([])
@@ -112,6 +122,17 @@ export function BimLoadingState() {
     () => selectLoadableBimFiles(files, modelUIState),
     [files, modelUIState],
   )
+  const sceneFileCount = React.useMemo(() => {
+    const buckets = partitionFileTab(files)
+    return buckets.bim.length + buckets.models.length + buckets.pointClouds.length
+  }, [files])
+
+  const intake = useBimFileIntake({
+    buildingId: building?.id ?? 0,
+    apiBase: bimComponents?.get(BimPointClouds).apiBase ?? '',
+    existingNames: files.map(file => file.name),
+    uploadFile,
+  })
 
   // Handle search
   const handleSearch = React.useCallback((term: string) => {
@@ -121,7 +142,7 @@ export function BimLoadingState() {
     }
   }, [buildings])
 
-  const shouldShow = (currentState === 'opening' || currentState === 'noBimFiles' || currentState === 'loading' || currentState === 'noBuilding' || currentState === 'filesUnavailable') && !cameraHasMoved
+  const shouldShow = (currentState === 'opening' || currentState === 'noBimFiles' || currentState === 'loading' || currentState === 'noBuilding' || currentState === 'filesUnavailable') && !cameraHasMoved && !placingFile
   // The scrim is there to focus a card the user must act on; while merely loading it just greys the viewer.
   const dimBackdrop = currentState === 'noBuilding' || currentState === 'noBimFiles' || currentState === 'filesUnavailable'
 
@@ -248,6 +269,7 @@ export function BimLoadingState() {
       filesError: !!filesError,
       bimFileCount: bimFiles.length,
       hiddenBimFileCount: allBimFiles.length - bimFiles.length,
+      sceneFileCount,
       hasLoadedModels,
     })
     if (!transition) return
@@ -258,7 +280,7 @@ export function BimLoadingState() {
       setCameraHasMoved(false)
       void loadBimModels()
     }
-  }, [bimComponents, building, buildingLoading, buildingError, buildingId, filesLoading, filesError, bimFiles.length, allBimFiles.length, loadBimModels, hasLoadedModels])
+  }, [bimComponents, building, buildingLoading, buildingError, buildingId, filesLoading, filesError, bimFiles.length, allBimFiles.length, sceneFileCount, loadBimModels, hasLoadedModels])
 
   // Don't render if not visible
   if (!shouldShow) {
@@ -276,12 +298,7 @@ export function BimLoadingState() {
     setSearchResults([])
   }
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
-    if (!files || files.length === 0) return
-
-    const file = files[0]
-
+  const uploadBimFile = async (file: File) => {
     try {
       const modelId = file.name
       setCurrentState('loading')
@@ -298,6 +315,27 @@ export function BimLoadingState() {
       console.error('Error uploading file:', error)
       setCurrentState('error')
     }
+  }
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = event.target.files?.[0]
+    event.target.value = ''
+    if (!picked) return
+
+    if (typeOfFile(picked) === 'bim-file') {
+      await uploadBimFile(picked)
+      return
+    }
+
+    routePickedFile(picked, {
+      needsPlacement: intake.needsPlacement,
+      // The card covers the viewport the user has to click to place the file.
+      onPlace: (file) => {
+        setPlacingFile(true)
+        if (!requestPlacement(file)) void intake.submit(file)
+      },
+      onSubmit: file => { void intake.submit(file) },
+    })
   }
 
   return (
@@ -343,7 +381,7 @@ export function BimLoadingState() {
                     {t('filesUnavailable')}
                   </>
                 ) : (
-                  t('noBIMLoaded')
+                  t('no3DLoaded')
                 )}
               </div>
               {(currentState === 'noBimFiles' || currentState === 'noBuilding' || currentState === 'filesUnavailable') && (
@@ -435,7 +473,7 @@ export function BimLoadingState() {
                 <Input
                   ref={fileInputRef}
                   type="file"
-                  accept=".ifc,.frag"
+                  accept={acceptAttribute(ADDABLE_HERE)}
                   onChange={(event) => void handleFileChange(event)}
                   className="hidden"
                 />

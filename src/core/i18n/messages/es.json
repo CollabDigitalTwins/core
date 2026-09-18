@@ -145,9 +145,9 @@
   },
   "BimLoadingState": {
     "openingText": "Abriendo visor BIM",
-    "helpText": "Arrastre y suelte o seleccione un archivo IFC o Fragment para cargar",
+    "helpText": "Arrastre y suelte o seleccione cualquier archivo 3D: modelo BIM, nube de puntos o splat",
     "uploadButton": "Subir archivo",
-    "noBIMLoaded": "No se ha cargado ningún archivo BIM",
+    "no3DLoaded": "No se ha cargado ningún archivo 3D",
     "filesUnavailable": "Archivos del edificio no disponibles",
     "filesUnavailableHelpText": "No se pudo cargar la lista de archivos, por lo que los modelos BIM siguen ahí pero no se pueden abrir. Inténtalo de nuevo en unos momentos.",
     "loadingBimModel": "Cargando modelos BIM...",

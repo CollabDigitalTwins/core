@@ -145,9 +145,9 @@
   },
   "BimLoadingState": {
     "openingText": "Opening BIM viewer",
-    "helpText": "Drag and drop or select an IFC or Fragment file to load",
+    "helpText": "Drag and drop or select any 3D file — BIM model, point cloud or splat",
     "uploadButton": "Upload File",
-    "noBIMLoaded": "No BIM file loaded",
+    "no3DLoaded": "No 3D file loaded",
     "filesUnavailable": "Building files unavailable",
     "filesUnavailableHelpText": "The file list could not be loaded, so any BIM models are still there but cannot be opened. Try again shortly.",
     "loadingBimModel": "Loading BIM models...",

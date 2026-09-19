@@ -16,10 +16,12 @@ import { BimSceneObjects } from "../../../SceneObjects"
 
 import { AddDxf } from "./AddDxf"
 import { addFileToScene, type PlacedKind } from "./FileHandler"
-import { type AddedFile, removeMarker } from "./FileMarkerUtils"
+import { type AddedFile, markerFinishedLoading, removeMarker } from "./FileMarkerUtils"
 
+import type { DxfInfo } from "./AddDxf"
 import type { FileMarkerAction } from "../../../../../../ui/FilesManager/src/FileMarker"
 import type { useBimFileIntake } from "../../../lib/useBimFileIntake"
+import type { ModelInfo } from "../../../ModelManager"
 import type { BimToolbarToolsType } from "../../bimToolbar"
 import type * as OBC from "@thatopen/components"
 import type { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js"
@@ -34,6 +36,16 @@ export interface PlacedFile {
   marker: CSS2DObject | null
   object3D: THREE.Object3D
 }
+
+const LIVE_TRANSFORM_EPSILON = 1e-9
+
+// Returning the identical number lets React bail out, which is what stops the write-back from looping.
+const unchangedWithin = (current: number, next: number): number =>
+  Math.abs(next - current) < LIVE_TRANSFORM_EPSILON ? current : next
+
+/** Degrees for the rotation field from a gizmo's radians, returning the current value unchanged when the angle has not moved. */
+export const rotationDegreesFromGizmo = (current: number, radians: number): number =>
+  unchangedWithin(current, THREE.MathUtils.radToDeg(radians))
 
 // Horizontal floor at world height 0; used when a double-click misses all BIM geometry.
 const GROUND_PLANE = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)
@@ -180,7 +192,7 @@ export function useFilePlacement(
     setSelectedFile(file)
     setIsPlacingFile(true)
     setCursor("crosshair")
-    toast.info(`Double-click in the scene to place: "${file.name}"`, {
+    toast.info(`Double-click in the scene to place: "${file.name}". Press Enter for the origin, Escape to cancel.`, {
       id: 'place-bim-file-toast',
       duration: Infinity,
     })
@@ -207,17 +219,7 @@ export function useFilePlacement(
       mouse.y = e.clientY
     }
 
-    const handleDblClick = async (e: MouseEvent) => {
-      mouse.x = e.clientX
-      mouse.y = e.clientY
-
-      const modelHit = await raycast({ camera: world.camera.three, mouse, dom: canvas })
-      // Nothing to aim at means the click carries no position, so the file lands at the origin.
-      const hasGeometry = (fragments?.core.models.list.size ?? 0) > 0
-      const point = modelHit?.point?.clone()
-        ?? (hasGeometry ? pointOnGroundPlane(world.camera.three, canvas, e.clientX, e.clientY) : null)
-        ?? new THREE.Vector3()
-
+    const placeAt = async (point: THREE.Vector3) => {
       const addedFile: AddedFile = {
         id: Date.now().toString(),
         file: selectedFile,
@@ -227,10 +229,15 @@ export function useFilePlacement(
           : undefined,
       }
 
+      // Anything not confirmed in a panel uploads straight away, so its pin stands in while it does.
+      const uploadsImmediately = !(selectedFile.name.toLowerCase().endsWith(".dxf")
+        || typeOfFile(selectedFile) === "3d-file")
+
       const placed = await addFileToScene(
         addedFile, fileScale, fileRotation,
         world, modelManager, addDxf, setCurrent3DFileId,
         (action) => onMarkerAction?.(addedFile.id, action),
+        uploadsImmediately,
       )
 
       if (placed) {
@@ -256,44 +263,70 @@ export function useFilePlacement(
         setIsPlacingFile(false)
         setCursor("")
       } else {
+        // A splat is rendered by BimSplatSync from the stored placement, so the pin is only a stand-in.
+        const standInOnly = typeOfFile(selectedFile) === "splat-file"
         void intake.submit(selectedFile, point).then((created) => {
-          if (!created?.id) { discardPlacement(addedFile.id); return }
+          if (!created?.id || standInOnly) { discardPlacement(addedFile.id); return }
+          markerFinishedLoading(placed?.marker ?? null)
           registry?.rekey(addedFile.id, String(created.id))
           placedFilesRef.current.delete(addedFile.id)
         })
         cancelPlacement()
+        onDone?.()
       }
+    }
+
+    const handleDblClick = async (e: MouseEvent) => {
+      mouse.x = e.clientX
+      mouse.y = e.clientY
+
+      const modelHit = await raycast({ camera: world.camera.three, mouse, dom: canvas })
+      // Nothing to aim at means the click carries no position, so the file lands at the origin.
+      const hasGeometry = (fragments?.core.models.list.size ?? 0) > 0
+      const point = modelHit?.point?.clone()
+        ?? (hasGeometry ? pointOnGroundPlane(world.camera.three, canvas, e.clientX, e.clientY) : null)
+        ?? new THREE.Vector3()
+
+      await placeAt(point)
     }
 
     const onDblClick = (e: MouseEvent) => { void handleDblClick(e) }
 
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") void placeAt(new THREE.Vector3())
+      if (e.key === "Escape") cancelPlacement()
+    }
+
     document.addEventListener("mousemove", handleMouseMove)
     document.addEventListener("dblclick", onDblClick)
+    document.addEventListener("keydown", onKeyDown)
     return () => {
       document.removeEventListener("mousemove", handleMouseMove)
       document.removeEventListener("dblclick", onDblClick)
+      document.removeEventListener("keydown", onKeyDown)
     }
-  }, [selectedFile, bimComponents, world, isPlacingFile, fileScale, fileRotation, modelManager, addDxf, toolsDispatch, raycast, fragments, cancelPlacement, setCursor, intake, onMarkerAction, registry, discardPlacement])
+  }, [selectedFile, bimComponents, world, isPlacingFile, fileScale, fileRotation, modelManager, addDxf, toolsDispatch, raycast, fragments, cancelPlacement, setCursor, intake, onMarkerAction, registry, discardPlacement, onDone])
 
   const confirmPlacement = React.useCallback(() => {
     if (!current3DFileId) return
 
     // Capture the final position from the placed object, then persist it.
     let finalPos: THREE.Vector3 | undefined
+    let finalScale: number | undefined
     if (current3DFileType === "dxf" && addDxf) {
       const info = addDxf.getDxf(current3DFileId)
-      if (info) finalPos = info.group.position.clone()
+      if (info) { finalPos = info.group.position.clone(); finalScale = info.group.scale.x }
       addDxf.confirmPlacement(current3DFileId)
     } else if (current3DFileType === "model" && modelManager) {
       const info = modelManager.getModel(current3DFileId)
-      if (info) finalPos = info.model.position.clone()
+      if (info) { finalPos = info.model.position.clone(); finalScale = info.model.scale.x }
       modelManager.toggleGizmo(current3DFileId, false)
     }
     // The record has to exist before the scene content can be keyed by its file id.
     if (selectedFile && finalPos) {
       const placedId = current3DFileId
       const kind = current3DFileType
-      void intake.submit(selectedFile, finalPos).then((created) => {
+      void intake.submit(selectedFile, finalPos, finalScale).then((created) => {
         if (!created?.id) { discardPlacement(placedId); return }
         // The sidebar owns the object from here; until it is keyed by file id it cannot.
         if (kind === 'dxf') addDxf?.rekey(placedId, String(created.id))
@@ -323,10 +356,45 @@ export function useFilePlacement(
       addDxf.updateScale(current3DFileId, fileScale)
       addDxf.updateRotation(current3DFileId, fileRotation)
     } else if (current3DFileType === "model" && modelManager) {
+      const model = modelManager.getModel(current3DFileId)?.model
+      if (!model) return
       modelManager.setScale(current3DFileId, fileScale)
-      modelManager.setRotation(current3DFileId, new THREE.Euler(0, THREE.MathUtils.degToRad(fileRotation), 0))
+      const turned = new THREE.Euler(model.rotation.x, THREE.MathUtils.degToRad(fileRotation), model.rotation.z)
+      modelManager.setRotation(current3DFileId, turned)
     }
   }, [fileScale, fileRotation, current3DFileId, show3DScaleCard, current3DFileType, addDxf, modelManager])
+
+  // A gizmo drag is the same rotation the field edits, so it lands in the same state rather than beside it.
+  React.useEffect(() => {
+    if (!current3DFileId || !show3DScaleCard || !current3DFileType) return
+
+    const readTransform = (radians: number, scale: number) => {
+      setFileRotation((current) => rotationDegreesFromGizmo(current, radians))
+      setFileScale((current) => unchangedWithin(current, scale))
+    }
+
+    if (current3DFileType === "dxf" && addDxf) {
+      const onDxf = (info: DxfInfo) => {
+        if (info.id === current3DFileId) readTransform(info.group.rotation.y, info.group.scale.x)
+      }
+      addDxf.onDxfTransformed.add(onDxf)
+      return () => { addDxf.onDxfTransformed.remove(onDxf) }
+    }
+
+    if (current3DFileType === "model" && modelManager) {
+      const onModel = (info: ModelInfo) => {
+        if (info.id === current3DFileId) readTransform(info.model.rotation.y, info.model.scale.x)
+      }
+      modelManager.onModelTransformed.add(onModel)
+      return () => { modelManager.onModelTransformed.remove(onModel) }
+    }
+  }, [current3DFileId, show3DScaleCard, current3DFileType, addDxf, modelManager])
+
+  const setGizmoMode = React.useCallback((mode: GizmoMode) => {
+    if (!current3DFileId) return
+    if (current3DFileType === "dxf") addDxf?.setGizmoMode(current3DFileId, mode)
+    else if (current3DFileType === "model") modelManager?.getModel(current3DFileId)?.gizmoController?.setMode(mode)
+  }, [current3DFileId, current3DFileType, addDxf, modelManager])
 
   const getPlacedFile = React.useCallback((id: string): PlacedFile | undefined => {
     return placedFilesRef.current.get(id)
@@ -362,8 +430,10 @@ export function useFilePlacement(
     current3DFileType,
     setFileScale,
     setFileRotation,
+    setGizmoMode,
     handleFileSelect,
     handleFileDrop,
+    processFileObject,
     cancelPlacement,
     confirmPlacement,
     setCursor,

@@ -12,12 +12,14 @@ import { ViewerSidebarPanel } from '../../../../../../ui/ViewerSidebar/Panel'
 import { useResizableSections } from '../../../../../../ui/ViewerSidebar/useResizableSections'
 
 import { AppearanceProvider } from './src/AppearanceProvider'
+import { CustomSection } from './src/CustomSection'
 import { ALL_MODELS } from './src/DrawingModelFilter'
 import { ElevationSection } from './src/ElevationsSection'
 import { FloorplanSection } from './src/FloorplanSection'
 import { IfcClassesSection } from './src/IfcClassesSection'
 import { LayerGroupSection } from './src/LayerGroupSection'
 import { SpatialStructureSection } from './src/SpatialStructureSection'
+import { useHasCustomDrawings } from './src/useHasCustomDrawings'
 
 type GroupId = 'drawings' | 'classifier'
 
@@ -53,6 +55,16 @@ export function LayersTab() {
     drawings: 'floorplans',
     classifier: 'spatial',
   })
+
+  const hasCustomDrawings = useHasCustomDrawings()
+
+  // The tab the user was on can vanish with its last drawing, and nothing else moves them off it.
+  React.useEffect(() => {
+    if (hasCustomDrawings) return
+    setActiveView(current =>
+      current.drawings === 'custom' ? { ...current, drawings: 'floorplans' } : current,
+    )
+  }, [hasCustomDrawings])
 
   const { layoutRef, gridTemplateRows, separatorAfter, beginResize } = useResizableSections({
     ids: GROUP_IDS,
@@ -112,6 +124,20 @@ export function LayersTab() {
                     />
                   ),
                 },
+                ...(hasCustomDrawings
+                  ? [{
+                      id: 'custom',
+                      label: t('customTab'),
+                      icon: LR.Frame,
+                      content: (
+                        <CustomSection
+                          query={searchQuery}
+                          modelFilter={drawingModelFilter}
+                          onModelFilterChange={setDrawingModelFilter}
+                        />
+                      ),
+                    }]
+                  : []),
               ]}
             />
           </div>

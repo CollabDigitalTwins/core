@@ -21,6 +21,13 @@ const AXIS_OF: Record<ClipBoxFace, 'x' | 'y' | 'z'> = {
   'x-': 'x', 'x+': 'x', 'y-': 'y', 'y+': 'y', 'z-': 'z', 'z+': 'z',
 }
 
+const AXIS_COLOUR: Record<'x' | 'y' | 'z', number> = { x: 0xff0000, y: 0x00ff00, z: 0x0000ff }
+
+/** three.js's own axis colours, as AxesHelper and TransformControls use them. */
+export function colourForFace(face: ClipBoxFace): number {
+  return AXIS_COLOUR[AXIS_OF[face]]
+}
+
 const OUTWARD: Record<ClipBoxFace, THREE.Vector3> = {
   'x-': new THREE.Vector3(-1, 0, 0),
   'x+': new THREE.Vector3(1, 0, 0),

@@ -40,6 +40,9 @@ const sameRow = (a: Row, b: Row): boolean => {
 
 const PLACE_TOAST_ID = 'bim-file-place-toast'
 
+// DXF coordinates are millimetres, so an unscaled drawing lands a thousand times too big.
+const DXF_UNPLACED_SCALE = 0.001
+
 const placedPosition = (file: DbFile): THREE.Vector3 =>
   file.x != null && file.y != null && file.z != null
     ? new THREE.Vector3(file.x as number, file.y as number, file.z as number)
@@ -73,7 +76,7 @@ export function usePlaceableFileRows({
   placeHint,
 }: PlaceableRowsOptions): PlaceableRows {
   const { state: bimState } = React.useContext(BimContext)
-  const { bimComponents, fragments, world } = bimState.bim
+  const { bimComponents, fragments, world, fragmentsStarted } = bimState.bim
 
   const [rows, setRows] = React.useState<(DbFile & { isVisible?: boolean })[]>([])
 
@@ -94,14 +97,22 @@ export function usePlaceableFileRows({
   const registryRef = React.useRef(registry)
   React.useEffect(() => { registryRef.current = registry }, [registry])
 
-  // A tracked row keeps whatever the user last toggled; a first-seen one asks the scene.
+  const storedVisibilityRef = React.useRef(new Map<number, boolean | undefined>())
+
+  // A local toggle holds only until the store's own value for that file moves.
   React.useEffect(() => {
+    const stored = storedVisibilityRef.current
+    const overruled = new Set(files
+      .filter(file => stored.has(file.id) && stored.get(file.id) !== file.isVisible)
+      .map(file => file.id))
+    storedVisibilityRef.current = new Map(files.map(file => [file.id, file.isVisible]))
+
     setRows(previous => {
       const tracked = new Map(previous.map(row => [row.id, row.isVisible]))
       const next = files
         .map(file => ({
           ...file,
-          isVisible: tracked.get(file.id)
+          isVisible: (overruled.has(file.id) ? undefined : tracked.get(file.id))
             ?? (isPlaceable(file.extension)
               && (isFileInScene(file, registryRef.current) || file.isVisible === true)),
         }))
@@ -154,6 +165,7 @@ export function usePlaceableFileRows({
       const info = await modelManager.load(presignedUrl, key, file.name, {
         position: position ?? placedPosition(file),
         rotation: file.bimRotation != null ? new THREE.Euler(0, file.bimRotation, 0) : undefined,
+        scale: file.scale ?? undefined,
         extension: file.extension ?? undefined,
       })
       if (info) {
@@ -180,7 +192,7 @@ export function usePlaceableFileRows({
       group.position.copy(placed
         ? new THREE.Vector3(file.x as number, file.y as number, file.z as number)
         : new THREE.Vector3())
-      group.scale.setScalar(0.001)
+      group.scale.setScalar(file.scale ?? DXF_UNPLACED_SCALE)
       if (file.bimRotation != null) group.rotation.y = file.bimRotation as number
       registry.add({ key, fileId: key, kind: 'dxf', root: group })
     } catch (err) {
@@ -204,7 +216,7 @@ export function usePlaceableFileRows({
   // Claimed per building so a revalidation cannot re-add what the user just switched off.
   const seededBuildingRef = React.useRef<number | null>(null)
   React.useEffect(() => {
-    if (buildingId == null) return
+    if (buildingId == null || !fragmentsStarted) return
     if (!registry || !modelManager || files.length === 0) return
     if (seededBuildingRef.current === buildingId) return
     seededBuildingRef.current = buildingId
@@ -214,7 +226,7 @@ export function usePlaceableFileRows({
         ? toggleDxfVisibility(file, true)
         : toggleModelVisibility(file, true))
     }
-  }, [buildingId, files, registry, modelManager, isPlaceable, toggleModelVisibility, toggleDxfVisibility])
+  }, [buildingId, files, registry, modelManager, isPlaceable, fragmentsStarted, toggleModelVisibility, toggleDxfVisibility])
 
   // Read by the marker rAF loop, so it hides the marker of whatever is being placed.
   const placingIdRef = React.useRef<string | null>(null)
@@ -273,18 +285,8 @@ export function usePlaceableFileRows({
 
     const mouse = new THREE.Vector2()
 
-    const handleDblClick = async (e: MouseEvent) => {
-      mouse.x = e.clientX
-      mouse.y = e.clientY
-
-      const result = await raycast({
-        camera: world.camera.three,
-        mouse,
-        dom: world.renderer!.three.domElement!,
-      })
-
-      // A click that hit nothing carries no position, so the object lands at the origin.
-      const { x, y, z } = result?.point ?? new THREE.Vector3()
+    const placeAt = (point: THREE.Vector3) => {
+      const { x, y, z } = point
       setMoveFileId(placingFile.id)
       // Save coordinates to DB
       setTimeout(() => {
@@ -303,7 +305,22 @@ export function usePlaceableFileRows({
       if (cursor) cursor.cursor = ''
     }
 
+    const handleDblClick = async (e: MouseEvent) => {
+      mouse.x = e.clientX
+      mouse.y = e.clientY
+
+      const result = await raycast({
+        camera: world.camera.three,
+        mouse,
+        dom: world.renderer!.three.domElement!,
+      })
+
+      // A click that hit nothing carries no position, so the object lands at the origin.
+      placeAt(result?.point ?? new THREE.Vector3())
+    }
+
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') placeAt(new THREE.Vector3())
       if (e.key === 'Escape') {
         setPlacingFile(null)
         if (cursor) cursor.cursor = ''

@@ -22,8 +22,10 @@ const initialState = {
     modelIds: [],
     pointCloudIds: [],
     activePointCloudId: null,
+    splatIds: [],
     floorplans: [],
     grid: null  ,
+    fragmentsStarted: false,
     buildingModel: {
       bimFile: null,
       building: null,
@@ -32,6 +34,7 @@ const initialState = {
     bimModelName: null,
     editingBimModel: null,
     selection: {},
+    sceneSelection: null,
     bcfTopic: null,
     bcfTopics: [],
     bcfTopicId: null,

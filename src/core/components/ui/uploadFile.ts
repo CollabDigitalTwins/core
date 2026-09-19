@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { uniqueFileName } from '../../utils/uniqueFileName'
 import { getFileExtension } from '../../utils/utils'
 import { getAttachmentFieldName } from '../viewers/Data/details/getAttachmentFileName'
 import { uploadFileWithProgress } from '../viewers/map/src/tools/AddTools/AddFile/utils/uploadToPresignedURLS'
@@ -18,7 +19,10 @@ interface UploadFileArgs {
   x?: number
   y?: number
   z?: number
+  scale?: number
   onProgress?: (percent: number) => void
+  existingNames?: string[]
+  pointCloudTransform?: unknown
 }
 
 export async function uploadFile({
@@ -33,13 +37,17 @@ export async function uploadFile({
   x,
   y,
   z,
+  scale,
   onProgress,
+  existingNames,
+  pointCloudTransform,
 }: UploadFileArgs) {
   if ((!file && (!files || files.length === 0)) || !buildingId) return null
 
   const filesToProcess: File[] = files ?? (file ? [file] : [])
 
   const uploadResults: any[] = []
+  const taken = new Set(existingNames ?? [])
 
   for (const currentFile of filesToProcess) {
     const fileId = crypto.randomUUID()
@@ -60,8 +68,10 @@ export async function uploadFile({
     }
 
     const attachmentFieldName = getAttachmentFieldName(tag as string)
+    const name = uniqueFileName(currentFile.name, [...taken])
+    taken.add(name)
     const fileData = {
-      name: currentFile.name,
+      name,
       type: 'system',
       mimeType: currentFile.type,
       extension: getFileExtension(currentFile),
@@ -77,7 +87,9 @@ export async function uploadFile({
       x,
       y,
       z,
+      scale,
       isVisible: isVisible ?? false,
+      ...(pointCloudTransform === undefined ? {} : { pointCloudTransform }),
     }
 
     const result = await uploadFile({ fileData, buildingId })

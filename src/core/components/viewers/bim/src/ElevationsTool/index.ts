@@ -15,8 +15,11 @@ import { GridController } from '../lib/GridController'
 import { safeRun, safeRunAsync } from '../lib/safeRun'
 import { ViewModeCoordinator } from '../lib/ViewModeCoordinator'
 import { stagePercent } from '../lib/viewSection'
+import { ClippingPlanes } from '../tools/ClippingTool/ClippingPlanes'
 
+import { drawingNameFor } from './src/drawingName'
 import { ElevationProjector } from './src/ElevationProjector'
+import { planeToEntry } from './src/planeToEntry'
 import {
   ELEVATION_STAGE_PERCENT,
   ELEVATIONS_TOOL_UUID
@@ -27,6 +30,7 @@ import type {
   ElevationLoadingStage,
   ElevationLoadingState} from './src/types';
 import type { StageEmitter } from '../lib/CategoryHighlighter';
+import type { ClippingPlaneInfo } from '../tools/ClippingTool/ClippingPlanes';
 
 export type {
   ElevationEntry,
@@ -43,16 +47,8 @@ export function getElevationStagePercent(
 const SLOT_SECTION = 'elevation:section'
 
 /**
- * Elevation drawings (N/S/E/W) per loaded model, built on the same
- * DrawingEditor + TechnicalDrawings pipeline as FloorplanTool. Activate
- * runs in stages — init → resolve → cull → project → done — so the
- * sidebar can show a progress bar and the user gets immediate camera
- * framing while the slow projection runs in the background.
- *
- * The model itself is hidden during the elevation view so projected lines
- * from front and back of the building both read clearly. Style each IFC
- * class via the per-class drawing layers (visibility + color in the
- * sidebar).
+ * Elevation drawings (N/S/E/W) per loaded model. Activation previews the
+ * clipped model; `generateLines` hides it and projects the vector lines.
  */
 export class ElevationsTool extends OBC.Component {
   static uuid = ELEVATIONS_TOOL_UUID
@@ -68,6 +64,7 @@ export class ElevationsTool extends OBC.Component {
   private _entries = new Map<string, ElevationEntry>()
   private _activeId: string | null = null
   private _activateSeq = 0
+  private _planeWatch: ((planes: ClippingPlaneInfo[]) => void) | null = null
 
   private projector: ElevationProjector
   private highlighter: CategoryHighlighter
@@ -85,12 +82,7 @@ export class ElevationsTool extends OBC.Component {
     this.chrome = new ChromeController(components)
     this.clip = new ClipController(components)
     this.grid = new GridController(components)
-    // No face-fill groups: the cull pass hides the whole model, then the
-    // line projection paints on top of an empty scene. Filling front faces
-    // (the previous behaviour) was occluding back-of-building elements,
-    // which the user wanted to see in elevation. Only the projected lines
-    // remain visible — the per-IFC-class drawing layers are how the user
-    // styles them.
+    // No face-fill groups: filling front faces occludes the back-of-building elements an elevation must show.
     this.highlighter = new CategoryHighlighter(components, {
       groups: [],
     })
@@ -176,9 +168,77 @@ export class ElevationsTool extends OBC.Component {
   }
 
   /**
-   * Activate an elevation: chrome + section clip + camera frame applied
-   * synchronously for instant feedback, then face-highlighting and line
-   * projection run in parallel with stage events.
+   * Add a custom view cut from a clipping plane. Returns the new entry's id,
+   * or null when no loaded model can be framed against the plane.
+   */
+  addFromPlane(plane: ClippingPlaneInfo, label: string): string | null {
+    const model = this._modelForPoint(plane.point)
+    if (!model) return null
+
+    this._watchPlanes()
+    const entry = planeToEntry(plane, model.modelId, model.box, label)
+    this._entries.set(entry.id, entry)
+    this.onElevationsChanged.trigger(this.elevations)
+    return entry.id
+  }
+
+  /** Session-only rename of a plane-cut drawing; cardinal elevations keep their translated name. */
+  rename(id: string, label: string): void {
+    const entry = this._entries.get(id)
+    if (!entry?.planeKey) return
+
+    const next = label.trim()
+    if (!next || next === entry.label) return
+
+    entry.label = next
+    for (const viewport of entry.drawing?.viewports.values() ?? []) {
+      viewport.name = drawingNameFor(entry)
+    }
+    this.onElevationsChanged.trigger(this.elevations)
+  }
+
+  private _modelForPoint(point: THREE.Vector3): { modelId: string; box: THREE.Box3 } | null {
+    const fragments = this.components.get(OBC.FragmentsManager)
+    let fallback: { modelId: string; box: THREE.Box3 } | null = null
+    for (const [modelId, model] of fragments.list) {
+      const box = model.box as THREE.Box3 | undefined
+      if (!box || box.isEmpty()) continue
+      if (box.containsPoint(point)) return { modelId, box }
+      fallback ??= { modelId, box }
+    }
+    return fallback
+  }
+
+  // Lazy so the tool does not instantiate the clipper for a viewer that never cuts one.
+  private _watchPlanes() {
+    if (this._planeWatch) return
+    const watch = (planes: ClippingPlaneInfo[]) => {
+      this._dropCustomEntriesMissing(new Set(planes.map((plane) => plane.key)))
+    }
+    try {
+      this.components.get(ClippingPlanes).onChanged.add(watch)
+      this._planeWatch = watch
+    } catch {
+      // No ClippingPlanes in this viewer — the entry simply outlives its plane.
+    }
+  }
+
+  private _dropCustomEntriesMissing(liveKeys: Set<string>) {
+    let touched = false
+    for (const [id, entry] of this._entries) {
+      if (!entry.planeKey || liveKeys.has(entry.planeKey)) continue
+      if (this._activeId === id) void this.deactivate()
+      disposeDrawing(this.components, entry.drawing)
+      this._entries.delete(id)
+      this.highlighter.invalidateForEntry(id)
+      touched = true
+    }
+    if (touched) this.onElevationsChanged.trigger(this.elevations)
+  }
+
+  /**
+   * Activate an elevation: chrome, section clip, camera, then the clipped
+   * model as the preview. Stops at `done` — lines come from `generateLines`.
    */
   async activate(id: string) {
     const entry = this._entries.get(id)
@@ -206,10 +266,10 @@ export class ElevationsTool extends OBC.Component {
         this.chrome.setCursor()
         this.chrome.disableHighlighter()
         this.chrome.hideGizmo()
+        safeRun(() => this.chrome.hideSceneContent(), 'hideSceneContent')
       }
 
-      // Section clip just behind the drawing plane so we don't see the
-      // far side of the building bleeding through.
+      // Section clip just behind the drawing plane so the far side of the building doesn't bleed through.
       const clipNormal = entry.viewDirection.clone().negate()
       const clipPoint = entry.position.clone().addScaledVector(clipNormal, -0.05)
       this.clip.set(SLOT_SECTION, clipNormal, clipPoint)
@@ -228,39 +288,77 @@ export class ElevationsTool extends OBC.Component {
       this._activeId = id
       this.onActiveChanged.trigger(entry)
 
-      // ----- Phase 2: parallel render + project (slow) -----
-      const renderPromise = this.highlighter.apply(
-        entry.id,
-        async () => ({ modelId: entry.modelId, filterIds: null }),
-        ((stage: string) => {
-          if (seq !== this._activateSeq) return
-          this._emit({
-            isLoading: true,
-            stage: stage as ElevationLoadingStage,
-          })
-        }) as StageEmitter,
-      )
-      const projectPromise = this.projector.project(entry)
-
-      renderPromise
-        .then(() => {
-          if (seq !== this._activateSeq) return
-          this._emit({ isLoading: true, stage: 'project' })
-        })
-        .catch(() => {})
-
-      await Promise.all([renderPromise, projectPromise])
+      // ----- Phase 2: the cull belongs to the line pass, so an unprojected elevation previews the model itself. -----
+      if (entry.projected) {
+        await this._cullModel(entry, seq)
+      } else {
+        await safeRunAsync(() => this.highlighter.restore(), 'restoreModelRendering')
+      }
       if (seq !== this._activateSeq) return
 
-      const editor = this.components.get(OBF.DrawingEditor)
-      editor.activeDrawing = entry.drawing
-      if (entry.drawing) entry.drawing.three.visible = true
+      this._showDrawing(entry)
 
       this._emit({ isLoading: false, stage: 'done' })
     } catch (error) {
       console.warn('[ElevationsTool] activate failed:', error)
       this._emit({ isLoading: false })
     }
+  }
+
+  /**
+   * Project the active elevation's lines over the hidden model. Split out
+   * of `activate` because the projection dominates its cost.
+   */
+  async generateLines(id: string) {
+    const entry = this._entries.get(id)
+    if (!entry || entry.projected) return
+    if (this._activeId !== id) return
+
+    const seq = this._activateSeq
+
+    try {
+      const cullPromise = this._cullModel(entry, seq)
+      const projectPromise = this.projector.project(entry)
+
+      cullPromise
+        .then(() => {
+          if (seq !== this._activateSeq) return
+          this._emit({ isLoading: true, stage: 'project' })
+        })
+        .catch(() => {})
+
+      await Promise.all([cullPromise, projectPromise])
+      if (seq !== this._activateSeq) return
+
+      this._showDrawing(entry)
+
+      this.onLayersChanged.trigger(entry)
+      this._emit({ isLoading: false, stage: 'done' })
+    } catch (error) {
+      console.warn('[ElevationsTool] generateLines failed:', error)
+      this._emit({ isLoading: false })
+    }
+  }
+
+  // Hides the model so the projected lines read against an empty scene, front and back alike.
+  private async _cullModel(entry: ElevationEntry, seq: number) {
+    await this.highlighter.apply(
+      entry.id,
+      async () => ({ modelId: entry.modelId, filterIds: null }),
+      ((stage: string) => {
+        if (seq !== this._activateSeq) return
+        this._emit({
+          isLoading: true,
+          stage: stage as ElevationLoadingStage,
+        })
+      }) as StageEmitter,
+    )
+  }
+
+  private _showDrawing(entry: ElevationEntry) {
+    const editor = this.components.get(OBF.DrawingEditor)
+    editor.activeDrawing = entry.drawing
+    if (entry.drawing) entry.drawing.three.visible = true
   }
 
   /** Robust exit. Each cleanup step runs independently so a failure in one
@@ -291,6 +389,7 @@ export class ElevationsTool extends OBC.Component {
     safeRun(() => this.chrome.restoreHighlighter(), 'restoreHighlighter')
     safeRun(() => this.chrome.showGizmo(), 'showGizmo')
     safeRun(() => this.chrome.removeLighting(), 'removeLighting')
+    safeRun(() => this.chrome.restoreSceneContent(), 'restoreSceneContent')
 
     await safeRunAsync(
       () => this.highlighter.restore(),
@@ -319,8 +418,35 @@ export class ElevationsTool extends OBC.Component {
     if (touched) this.onElevationsChanged.trigger(this.elevations)
   }
 
+  /**
+   * Building-scoped teardown: frees every drawing while keeping the model
+   * subscriptions, so the tool serves the next building.
+   */
+  resetAll() {
+    this._activateSeq++
+    void this.deactivate()
+    safeRun(() => {
+      this.components.get(OBF.DrawingEditor).activeDrawing = null
+    }, 'clear active drawing')
+    for (const entry of this._entries.values()) {
+      disposeDrawing(this.components, entry.drawing)
+      this.highlighter.invalidateForEntry(entry.id)
+      this.highlighter.invalidateForModel(entry.modelId)
+    }
+    this._entries.clear()
+    this.onElevationsChanged.trigger([])
+  }
+
   dispose() {
     void this.deactivate()
+    if (this._planeWatch) {
+      const watch = this._planeWatch
+      this._planeWatch = null
+      safeRun(
+        () => this.components.get(ClippingPlanes).onChanged.remove(watch),
+        'unsubscribePlaneChanged',
+      )
+    }
     safeRun(
       () => this.components.get(OBC.FragmentsManager).list.onItemDeleted.remove(this.onModelRemoved),
       'unsubscribeModelRemoved',

@@ -4,9 +4,12 @@
 import * as THREE from 'three'
 import { describe, expect, it } from 'vitest'
 
+import { sdfTransformForPlane } from '../../../../shared/splat/splatClipping'
+
 import {
   boxClipPlanes,
   CLIP_BOX_FACES,
+  colourForFace,
   faceCentre,
   faceOutwardNormal,
   fittedBox,
@@ -153,5 +156,40 @@ describe('the helper geometry', () => {
     expect(shell.x).toBeGreaterThan(0)
     expect(shell.y).toBeGreaterThan(0)
     expect(shell.z).toBeGreaterThan(0)
+  })
+})
+
+describe('boxClipPlanes as splat cutting sdfs', () => {
+  const box = new THREE.Box3(new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1))
+
+  const sdfLocalZ = (plane: THREE.Plane, point: THREE.Vector3) => {
+    const { position, quaternion } = sdfTransformForPlane(plane)
+    const world = new THREE.Matrix4().compose(position, quaternion, new THREE.Vector3(1, 1, 1))
+    return point.clone().applyMatrix4(world.invert()).z
+  }
+
+  it('needs only six sdfs, which fits the default budget with no BOX special case', () => {
+    expect(boxClipPlanes(box)).toHaveLength(6)
+  })
+
+  it('keeps a point inside the box and cuts one outside, matching the AND across planes', () => {
+    const planes = boxClipPlanes(box)
+    const kept = (point: THREE.Vector3) => planes.every(plane => sdfLocalZ(plane, point) >= 0)
+
+    expect(kept(new THREE.Vector3(0, 0, 0))).toBe(true)
+    expect(kept(new THREE.Vector3(0.9, -0.9, 0.5))).toBe(true)
+    expect(kept(new THREE.Vector3(2, 0, 0))).toBe(false)
+    expect(kept(new THREE.Vector3(0, 0, -5))).toBe(false)
+  })
+})
+
+describe('colourForFace', () => {
+  it('follows three.js axis colours, both faces of an axis alike', () => {
+    expect(colourForFace('x-')).toBe(0xff0000)
+    expect(colourForFace('x+')).toBe(0xff0000)
+    expect(colourForFace('y-')).toBe(0x00ff00)
+    expect(colourForFace('y+')).toBe(0x00ff00)
+    expect(colourForFace('z-')).toBe(0x0000ff)
+    expect(colourForFace('z+')).toBe(0x0000ff)
   })
 })

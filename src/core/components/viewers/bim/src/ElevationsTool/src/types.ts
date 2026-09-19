@@ -12,6 +12,10 @@ export interface ElevationEntry {
   id: string
   /** north / south / east / west — used as a translation key by the UI. */
   direction: ElevationDirection
+  /** Display name that overrides the translated direction, for custom views. */
+  label?: string
+  /** Key of the clipping plane this view was cut from, for custom views. */
+  planeKey?: string
   modelId: string
   /** World position of the drawing plane (camera position). */
   position: THREE.Vector3

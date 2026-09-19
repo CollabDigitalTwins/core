@@ -21,10 +21,12 @@ import { SensorInput } from "../../../../../ui/Sensors/SensorInput"
 import { FileAdderDialog } from "../../../../map/src/tools/AddTools/AddFile/FileAdder"
 
 import { DEFAULT_PLACEMENT } from "../../../../shared/pointcloud/pointCloudPlacement"
+import { subscribeToPlacementRequests } from "../../lib/placementRequests"
 import { useBimFileIntake } from "../../lib/useBimFileIntake"
 import { PlacementPanel } from "../../Placement/PlacementPanel"
 import { SCALABLE_OBJECT_PLACEMENT } from "../../Placement/placementTarget"
 import { BimPointClouds } from "../../PointClouds"
+
 
 import { AddToBimToolbar } from "./src/AddToBimToolbar"
 import { initializeCSS2DRenderer } from "./src/FileMarkerUtils"
@@ -140,7 +142,7 @@ export default function AddToBim({ tool }: AddToBimProps) {
       if (dbFile?.id) deleteFile(dbFile.id).catch(() => { })
       return
     }
-    if (action === "animate") return
+    if (action === "animate" || action === "hide") return
     api.editPlacedFile(id, action === "move" ? "translate" : action)
   }, [deleteFile])
 
@@ -155,12 +157,23 @@ export default function AddToBim({ tool }: AddToBimProps) {
     bimComponents, world, fragments, toolsDispatch, buildingId, intake,
     handleMarkerAction, () => setAddingMode(null),
   )
+
+  const { setGizmoMode } = filePlacement
+  React.useEffect(() => { setGizmoMode(placementMode) }, [placementMode, setGizmoMode])
   placementRef.current = filePlacement
 
   // Initialize CSS2D renderer
   React.useEffect(() => {
     if (world) initializeCSS2DRenderer(world)
   }, [world])
+
+  // The sidebar's add buttons have no placement of their own, so they hand the file here.
+  React.useEffect(() => subscribeToPlacementRequests((file) => {
+    const mode: BimToolbarToolsType = file.name.toLowerCase().endsWith(".dxf") ? "bim-add-cad" : "bim-add-file"
+    setAddingMode(mode)
+    toolsDispatch({ type: "SET-TOOL", payload: { currentToolId: mode } })
+    placementRef.current?.processFileObject(file, mode)
+  }), [toolsDispatch])
 
   // Allow other UI to trigger AddToBim modes via currentToolId
   const { currentToolId } = toolsState.tools

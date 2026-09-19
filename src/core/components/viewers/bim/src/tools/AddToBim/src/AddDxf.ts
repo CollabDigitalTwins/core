@@ -173,18 +173,27 @@ export class AddDxf {
   private setupGizmo(group: THREE.Group, dxfId: string): GizmoController {
     const gizmoController = new GizmoController(this._world)
 
-    // Enter/Esc detach the gizmo internally; clear our reference so callers
-    // (and the marker visibility check) know editing has ended.
-    const endEditing = () => {
+    const readBackFromScene = (): DxfInfo | undefined => {
       const dxfInfo = this._loadedDxfs.get(dxfId)
-      if (!dxfInfo) return
+      if (!dxfInfo) return undefined
       dxfInfo.position.copy(group.position)
       dxfInfo.scale = group.scale.x
       dxfInfo.rotation = THREE.MathUtils.radToDeg(group.rotation.y)
+      return dxfInfo
+    }
+
+    // Enter/Esc detach the gizmo internally; clearing our reference is how callers learn editing ended.
+    const endEditing = () => {
+      const dxfInfo = readBackFromScene()
+      if (!dxfInfo) return
       dxfInfo.gizmoController = undefined
       this.onDxfTransformed.trigger(dxfInfo)
     }
 
+    gizmoController.onChange = () => {
+      const dxfInfo = readBackFromScene()
+      if (dxfInfo) this.onDxfTransformed.trigger(dxfInfo)
+    }
     gizmoController.onAccept = endEditing
     gizmoController.onCancel = endEditing
     gizmoController.setMode('translate')

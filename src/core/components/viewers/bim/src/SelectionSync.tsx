@@ -8,6 +8,9 @@ import * as React from 'react'
 import { BimContext } from '../../../../store/BIM/context'
 
 import { getSelectedItems, onSelectionChanged } from './lib/bimItemActions'
+import { Selection } from './Selection'
+
+import type { SceneSelection } from './Selection/selectionState'
 
 /**
  * Mirrors the Highlighter's selection into `BimState.selection`.
@@ -41,6 +44,22 @@ export function SelectionSync() {
     publish()
 
     return onSelectionChanged(bimComponents, publish)
+  }, [bimComponents, dispatch])
+
+  React.useEffect(() => {
+    if (!bimComponents) return
+    const selection = bimComponents.get(Selection)
+
+    const publish = (next: SceneSelection) => {
+      dispatch({
+        type: 'SET_SCENE_SELECTION',
+        payload: { sceneSelection: next && next.kind !== 'fragments' ? next : null },
+      })
+    }
+
+    publish(selection.current)
+    selection.onChanged.add(publish)
+    return () => selection.onChanged.remove(publish)
   }, [bimComponents, dispatch])
 
   return null

@@ -75,7 +75,7 @@ describe('objectTarget', () => {
     expect(updateFile).toHaveBeenCalledWith({ x: 1, y: 2, z: 3, bimRotation: 0.8 })
   })
 
-  it('does not send a scale, because there is no column for one', async () => {
+  it('sends no scale for a target that cannot be scaled', async () => {
     const { target, updateFile } = setUp()
 
     await target.commit({ ...DEFAULT_PLACEMENT, scale: 3 })
@@ -114,6 +114,14 @@ describe('objectTarget for a scalable object', () => {
     object.scale.setScalar(4)
 
     expect(target.read().scale).toBe(4)
+  })
+
+  it('commits the scale, so a reload restores it', async () => {
+    const { target, updateFile } = setUpScalable()
+
+    await target.commit({ ...DEFAULT_PLACEMENT, position: [1, 2, 3], rotation: [0, 0.8, 0], scale: 2.5 })
+
+    expect(updateFile).toHaveBeenCalledWith({ x: 1, y: 2, z: 3, bimRotation: 0.8, scale: 2.5 })
   })
 
   it('leaves a yaw-only target at scale 1, so nothing shifts under it', () => {

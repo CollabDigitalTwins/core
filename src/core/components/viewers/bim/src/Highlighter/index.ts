@@ -12,6 +12,7 @@ import {
   modelIdMapSize,
   type ModelIdMap,
 } from '../lib/bimTree'
+import { hoverMaterial, selectedMaterial } from '../lib/highlightMaterials'
 
 import type * as FRAGS from '@thatopen/fragments'
 
@@ -19,6 +20,7 @@ export class Highlighter extends OBC.Component {
   static uuid = 'c0ceb167-5fad-4727-9630-553405d92021' as const
 
   private _enabled = true
+  private _ownsPointer = true
   private world: OBC.World | null = null
   private fragments: OBC.FragmentsManager | null = null
   private _selectedMeshes = new DataSet<THREE.Mesh>()
@@ -44,22 +46,8 @@ export class Highlighter extends OBC.Component {
    */
   readonly onDisposed = new OBC.Event<string>()
 
-  // Selection material
-  private _selectedMaterial: THREE.Material = new THREE.MeshBasicMaterial({
-    color: 0x73_CE_E2,
-    transparent: true,
-    opacity: 0.3,
-    depthTest: false,
-    userData: { _maxSelectedOpacity: 0.3 },
-  })
-
-  // Hover material
-  private _hoveredMaterial: THREE.MeshBasicMaterial = new THREE.MeshBasicMaterial({
-    color: 0x73_CE_E2,
-    transparent: true,
-    opacity: 0.15,
-    depthTest: false,
-  })
+  private _selectedMaterial: THREE.Material = selectedMaterial()
+  private _hoveredMaterial: THREE.MeshBasicMaterial = hoverMaterial()
 
   get selectedMaterial() {
     return this._selectedMaterial
@@ -204,12 +192,22 @@ export class Highlighter extends OBC.Component {
 
   set enabled(value: boolean) {
     this._enabled = value
-    this.setupEvents(value)
+    this.setupEvents(value && this._ownsPointer)
     if (!value) this.clearHover()
   }
 
   get enabled() {
     return this._enabled
+  }
+
+  /** False while `Selection` owns the canvas; the highlighter still renders and still selects. */
+  set ownsPointer(value: boolean) {
+    this._ownsPointer = value
+    this.setupEvents(this._enabled && value)
+  }
+
+  get ownsPointer() {
+    return this._ownsPointer
   }
 
   disableModel(modelId: string) {

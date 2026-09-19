@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { DEFAULT_PLACEMENT, parsePlacement } from '../../../shared/pointcloud/pointCloudPlacement'
+import { DEFAULT_PLACEMENT, parsePlacement, samePlacement } from '../../../shared/pointcloud/pointCloudPlacement'
 
 import type { DbFile } from '../../../../../types/dbTypes'
 import type { PointCloudPlacement } from '../../../shared/pointcloud/pointCloudPlacement'
+
+export { samePlacement }
 
 export const PLACEMENT_VERSION = 1
 
@@ -19,13 +21,6 @@ export function readPlacement(file: Pick<DbFile, 'pointCloudTransform'> | undefi
 
 export function placementPatch(placement: PointCloudPlacement): Partial<DbFile> {
   return { pointCloudTransform: { version: PLACEMENT_VERSION, ...placement } }
-}
-
-export function samePlacement(a: PointCloudPlacement, b: PointCloudPlacement): boolean {
-  return a.scale === b.scale
-    && a.sourceUp === b.sourceUp
-    && a.position.every((value, index) => value === b.position[index])
-    && a.rotation.every((value, index) => value === b.rotation[index])
 }
 
 function safeParse(raw: string): unknown {

@@ -426,14 +426,24 @@ export class ModelManager extends OBC.Component {
 
     const gizmoController = new GizmoController(this._world)
 
-    // Enter/Esc detach the gizmo internally; clear our reference so callers
-    // (and the marker visibility check) know editing has ended.
-    const endEditing = () => {
+    const readBackFromScene = (): ModelInfo | undefined => {
       const modelInfo = [...this._models.values()].find(info => info.model === model)
-      if (!modelInfo) return
+      if (!modelInfo) return undefined
       model.updateMatrixWorld(true)
+      return modelInfo
+    }
+
+    // Enter/Esc detach the gizmo internally; clearing our reference is how callers learn editing ended.
+    const endEditing = () => {
+      const modelInfo = readBackFromScene()
+      if (!modelInfo) return
       modelInfo.gizmoController = undefined
       this.onModelTransformed.trigger(modelInfo)
+    }
+
+    gizmoController.onChange = () => {
+      const modelInfo = readBackFromScene()
+      if (modelInfo) this.onModelTransformed.trigger(modelInfo)
     }
     gizmoController.onAccept = endEditing
     gizmoController.onCancel = endEditing

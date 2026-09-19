@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { capabilitiesForFile, dropsAtOrigin } from './placementCapabilities'
+import { capabilitiesForFile } from './placementCapabilities'
 import { FULL_PLACEMENT, SCALABLE_OBJECT_PLACEMENT, YAW_ONLY_PLACEMENT } from './placementTarget'
 
 import type { DbFile } from '../../../../../types/dbTypes'
@@ -24,19 +24,5 @@ describe('capabilitiesForFile', () => {
 
   it('gives everything else yaw only', () => {
     expect(capabilitiesForFile(file('pdf'))).toBe(YAW_ONLY_PLACEMENT)
-  })
-})
-
-describe('dropsAtOrigin', () => {
-  it('is true for surveys, which carry their own coordinates', () => {
-    for (const extension of ['las', 'laz', 'copc', 'e57', 'ifc', 'frag']) {
-      expect(dropsAtOrigin(file(extension)), extension).toBe(true)
-    }
-  })
-
-  it('is false for anything the user has to point at', () => {
-    for (const extension of ['glb', 'dxf', 'pdf', 'png']) {
-      expect(dropsAtOrigin(file(extension)), extension).toBe(false)
-    }
   })
 })

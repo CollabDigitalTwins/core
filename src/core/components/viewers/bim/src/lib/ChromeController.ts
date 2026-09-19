@@ -5,8 +5,14 @@ import * as THREE from 'three'
 
 import { CurrentWorld } from '../CurrentWorld'
 import { Highlighter } from '../Highlighter'
+import { BimPointClouds } from '../PointClouds'
+import { BimSceneObjects } from '../SceneObjects'
+import { BimSplats } from '../Splats'
 import { ViewportGizmo } from '../ViewportGizmo'
 
+import { hideSceneContent, restoreSceneContent } from './sceneContent'
+
+import type { SceneContentVisibility } from './sceneContent'
 import type * as OBC from '@thatopen/components'
 
 /**
@@ -29,7 +35,31 @@ export class ChromeController {
   private _savedBackground: THREE.Color | THREE.Texture | null | undefined =
     undefined
 
+  private readonly _savedContent: SceneContentVisibility = []
+
   constructor(private components: OBC.Components) {}
+
+  /** Hides the scene content a drawing replaces. The fragment models stay: they are its fill. */
+  hideSceneContent() {
+    hideSceneContent(this._contentRoots(), this._savedContent)
+  }
+
+  restoreSceneContent() {
+    restoreSceneContent(this._savedContent)
+  }
+
+  // Each get() throws rather than returning null when the viewer is tearing down.
+  private _contentRoots() {
+    const roots: { visible: boolean }[] = []
+    const collect = (read: () => { root: { visible: boolean } }[]) => {
+      try { for (const item of read()) roots.push(item.root) }
+      catch { /* that kind of content is not in this scene */ }
+    }
+    collect(() => this.components.get(BimPointClouds).list())
+    collect(() => this.components.get(BimSplats).list())
+    collect(() => this.components.get(BimSceneObjects).registry?.list() ?? [])
+    return roots
+  }
 
   setCursor() {
     const canvas = this._canvas()

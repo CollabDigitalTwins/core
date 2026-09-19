@@ -145,6 +145,7 @@ export default defineConfig((opts) => ({
         'web-ifc',
         'dxf-viewer',
         'potree-core',
+        '@sparkjsdev/spark',
         'three-viewport-gizmo',
         '@dnd-kit/core',
         '@dnd-kit/sortable',

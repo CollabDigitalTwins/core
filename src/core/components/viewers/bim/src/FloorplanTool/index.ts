@@ -7,6 +7,7 @@ import * as THREE from 'three'
 
 import { CurrentWorld } from '../CurrentWorld'
 import { CameraController } from '../lib/CameraController'
+import { pumpCameraTransition } from '../lib/cameraTransition'
 import { ChromeController } from '../lib/ChromeController'
 import { ClipController } from '../lib/ClipController'
 import { CUT_CLASSES, FILL_CLASSES } from '../lib/drawingLayers'
@@ -20,7 +21,7 @@ import { stagePercent } from '../lib/viewSection'
 import { FloorplanRenderer } from './src/FloorplanRenderer'
 import { StoreyProjector } from './src/StoreyProjector'
 import { CUT_COLOR, FILL_COLOR, FLOORPLAN_TOOL_UUID } from './src/types'
-import { normalizeElevation } from './src/utils'
+import { normalizeElevation, storeyCutPlaneY, storeyLowerClipY } from './src/utils'
 
 import type { RenderStage } from './src/FloorplanRenderer';
 import type { FloorplanEntry} from './src/types';
@@ -80,7 +81,7 @@ export class FloorplanTool extends OBC.Component {
    *  its final state. Prior calls bail out at await boundaries. */
   private _activateSeq = 0
   /** True-north rotation in degrees (clockwise from default screen-up).
-   *  Persists across storey switches but resets to 0 on tool dispose. */
+   *  Persists across storey switches; cleared by `resetAll` on a building change. */
   private _northAngle = 0
   /** True while the user is drawing the two-point north line. */
   private _pickingNorth = false
@@ -656,7 +657,7 @@ export class FloorplanTool extends OBC.Component {
     const controls = world.camera.controls as any
     const radians = (this._northAngle * Math.PI) / 180
     if (typeof controls.rotateAzimuthTo === 'function') {
-      void controls.rotateAzimuthTo(radians, true)
+      void pumpCameraTransition(this.components, controls.rotateAzimuthTo(radians, true))
     } else {
       controls.azimuthAngle = radians
     }
@@ -735,12 +736,8 @@ export class FloorplanTool extends OBC.Component {
   }
 
   /**
-   * Activate a floorplan with progressive feedback. Camera, lighting and
-   * clip planes are applied synchronously so the user gets an immediate
-   * top-down framing. The slow steps — fill/cut highlighting and line
-   * projection — run in parallel and emit stage events as each phase
-   * completes, so a loading bar can advance through `init → resolve → cull
-   * → fill → cut → project → done`.
+   * Activate a floorplan: chrome, clip planes and camera synchronously, then
+   * the fill/cut recolour. Stops at `done` — lines come from `generateLines`.
    */
   async activate(id: string) {
     const entry = this._entries.get(id)
@@ -769,15 +766,14 @@ export class FloorplanTool extends OBC.Component {
         this.chrome.setCursor()
         this.chrome.disableHighlighter()
         this.chrome.hideGizmo()
+        safeRun(() => this.chrome.hideSceneContent(), 'hideSceneContent')
       }
 
-      // Section clip just above the drawing plane. StoreyProjector positions
-      // the drawing at elevation + 1.5; clip normal is -Y so anything above
-      // 1.55 is hidden but the drawing's own lines survive.
+      // Clipped 5 cm above the drawing plane so the drawing's own lines survive the cut.
       this.clip.set(
         SLOT_SECTION,
         new THREE.Vector3(0, -1, 0),
-        new THREE.Vector3(0, entry.elevation + 1.5 + 0.05, 0),
+        new THREE.Vector3(0, storeyCutPlaneY(entry.elevation) + 0.05, 0),
       )
       safeRun(() => this._applyLowerClip(entry), 'applyLower')
       safeRun(() => this.grid.hide(), 'hideGrid')
@@ -797,50 +793,60 @@ export class FloorplanTool extends OBC.Component {
       this._activeId = id
       this.onActiveDrawingChanged.trigger(entry)
 
-      // ----- Phase 2: parallel render + project (slow) -----
-      const renderPromise = this.renderer.apply(entry, (stage) => {
+      // ----- Phase 2: recolour only. Lines are a separate, explicit step. -----
+      await this.renderer.apply(entry, (stage) => {
         if (seq !== this._activateSeq) return
         this._emit({ isLoading: true, stage })
       })
-
-      // Project once render-stage events have started flowing — this lets
-      // the bar progress through resolve/cull/fill/cut while line generation
-      // runs in the background. Once render completes we flip to 'project'.
-      const projectPromise = this.projector.project(entry)
-
-      renderPromise
-        .then(() => {
-          if (seq !== this._activateSeq) return
-          this._emit({ isLoading: true, stage: 'project' })
-        })
-        .catch(() => {})
-
-      await Promise.all([renderPromise, projectPromise])
       if (seq !== this._activateSeq) return
 
-      // Drawing visible + editor swap (fast, post-projection).
-      const editor = this.components.get(OBF.DrawingEditor)
-      editor.activeDrawing = entry.drawing
-      if (entry.drawing) {
-        entry.drawing.three.visible = true
-      }
-
-      // Frame the finished drawing. The Phase 1 `_frameCamera` call runs before
-      // anything is projected, so it can only guess from the model bounds —
-      // which left the plan off-screen and made users reach for the toolbar's
-      // Fit button. Now that the lines exist, fit to what is actually drawn.
-      await safeRunAsync(() => this._fitToDrawing(entry), 'fitToDrawing')
+      await this._showDrawing(entry, seq)
       if (seq !== this._activateSeq) return
-
-      // Prepend Fill / Cut group-color controls so the sidebar shows them
-      // at the top of the layers list.
-      this._injectGroupColorLayers(entry)
 
       this._emit({ isLoading: false, stage: 'done' })
     } catch (error) {
       console.warn('[FloorplanTool] activate failed:', error)
       this._emit({ isLoading: false })
     }
+  }
+
+  /**
+   * Project the active storey's vector lines. Split out of `activate` because
+   * the projection dominates its cost and a plan reads without it.
+   */
+  async generateLines(id: string) {
+    const entry = this._entries.get(id)
+    if (!entry || entry.projected) return
+    if (this._activeId !== id) return
+
+    const seq = this._activateSeq
+    this._emit({ isLoading: true, stage: 'project' })
+
+    try {
+      await this.projector.project(entry)
+      if (seq !== this._activateSeq) return
+
+      await this._showDrawing(entry, seq)
+      if (seq !== this._activateSeq) return
+
+      this.onLayersChanged.trigger(entry)
+      this._emit({ isLoading: false, stage: 'done' })
+    } catch (error) {
+      console.warn('[FloorplanTool] generateLines failed:', error)
+      this._emit({ isLoading: false })
+    }
+  }
+
+  private async _showDrawing(entry: FloorplanEntry, seq: number) {
+    const editor = this.components.get(OBF.DrawingEditor)
+    editor.activeDrawing = entry.drawing
+    if (entry.drawing) entry.drawing.three.visible = true
+
+    // Phase 1's `_frameCamera` can only guess from the model bounds; once lines exist, fit to them.
+    await safeRunAsync(() => this._fitToDrawing(entry), 'fitToDrawing')
+    if (seq !== this._activateSeq) return
+
+    this._injectGroupColorLayers(entry)
   }
 
   /**
@@ -883,6 +889,7 @@ export class FloorplanTool extends OBC.Component {
     safeRun(() => this.chrome.showGizmo(), 'showGizmo')
     safeRun(() => this.chrome.removeLighting(), 'removeLighting')
     safeRun(() => this.chrome.restoreBackground(), 'restoreBackground')
+    safeRun(() => this.chrome.restoreSceneContent(), 'restoreSceneContent')
 
     // Slow async step last. Awaited so callers can chain on it, but failures
     // can't undo the synchronous restores above.
@@ -907,6 +914,29 @@ export class FloorplanTool extends OBC.Component {
     this.renderer.invalidateForModel(modelId)
     this.projector.invalidateForModel(modelId)
     if (touched) this.onDrawingsChanged.trigger(this.drawings)
+  }
+
+  /**
+   * Building-scoped teardown: frees every drawing and the north angle while
+   * keeping the model subscriptions, so the tool serves the next building.
+   */
+  resetAll() {
+    this._activateSeq++
+    void this.deactivate()
+    safeRun(() => {
+      this.components.get(OBF.DrawingEditor).activeDrawing = null
+    }, 'clear active drawing')
+    for (const entry of this._entries.values()) {
+      safeRun(() => entry.spaces?.dispose(), 'disposeSpaces')
+      disposeDrawing(this.components, entry.drawing)
+      this.renderer.invalidateForEntry(entry.id)
+      this.projector.invalidateForModel(entry.modelId)
+      this.renderer.invalidateForModel(entry.modelId)
+    }
+    this._entries.clear()
+    this._northAngle = 0
+    this.onNorthAngleChanged.trigger(0)
+    this.onDrawingsChanged.trigger([])
   }
 
   dispose() {
@@ -950,7 +980,7 @@ export class FloorplanTool extends OBC.Component {
    *  so ceiling fixtures / lights / equipment of the storey below never
    *  bleed into the projection or the 3D underlay. */
   private _applyLowerClip(entry: FloorplanEntry) {
-    const cutY = entry.elevation - 0.5
+    const cutY = storeyLowerClipY(entry.elevation)
     this.clip.set(
       SLOT_LOWER,
       new THREE.Vector3(0, 1, 0),
@@ -958,16 +988,7 @@ export class FloorplanTool extends OBC.Component {
     )
   }
 
-  /** Frame the camera over the active floor in orthographic top-down,
-   *  then re-apply the building's true-north rotation so storey switches
-   *  preserve the user's chosen orientation. */
-  /**
-   * Fit the camera to the projected drawing, so activating a storey lands on a
-   * framed plan without the user having to hit Fit.
-   *
-   * North is applied first: the fit is computed against an axis-aligned box, so
-   * rotating afterwards could push content back out of frame.
-   */
+  // North is applied first: the fit uses an axis-aligned box, so rotating after it could push content out of frame.
   private async _fitToDrawing(entry: FloorplanEntry) {
     if (!entry.drawing) return
 
@@ -983,7 +1004,7 @@ export class FloorplanTool extends OBC.Component {
     const world = this.components.get(CurrentWorld).world
     const controls = world?.camera?.controls
     if (!controls) return
-    await controls.fitToBox(box, true)
+    await pumpCameraTransition(this.components, controls.fitToBox(box, true))
   }
 
   private _frameCamera(entry: FloorplanEntry) {

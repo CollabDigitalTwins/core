@@ -3,7 +3,10 @@
 
 import * as THREE from 'three'
 
+import { CameraNavigation } from '../CameraNavigation'
 import { CurrentWorld } from '../CurrentWorld'
+
+import { pumpCameraTransition } from './cameraTransition'
 
 import type * as OBC from '@thatopen/components'
 
@@ -36,6 +39,7 @@ export class CameraController {
   private _savedPosition: THREE.Vector3 | null = null
   private _savedTarget: THREE.Vector3 | null = null
   private _savedProjection: 'Orthographic' | 'Perspective' | null = null
+  private _savedNavMode: string | null = null
 
   constructor(private components: OBC.Components) {}
 
@@ -97,12 +101,17 @@ export class CameraController {
     // Restore projection BEFORE pose so the orthographic frustum doesn't
     // fight the new perspective look-at.
     const camera = sourceWorld.camera as OBC.OrthoPerspectiveCamera
+    // First Person refuses to run under an orthographic lens, so the mode can only go back after it.
     if (this._savedProjection) {
       try {
-        void camera.projection.set(this._savedProjection)
+        void Promise.resolve(camera.projection.set(this._savedProjection))
+          .then(() => this._restoreNavMode(camera))
+          .catch(() => undefined)
       } catch {
-        // ignore
+        this._restoreNavMode(camera)
       }
+    } else {
+      this._restoreNavMode(camera)
     }
 
     controls.minPolarAngle = saved.minPolarAngle
@@ -115,7 +124,7 @@ export class CameraController {
     if (this._savedPosition && this._savedTarget) {
       const p = this._savedPosition
       const t = this._savedTarget
-      void controls.setLookAt(p.x, p.y, p.z, t.x, t.y, t.z, true)
+      void pumpCameraTransition(this.components, controls.setLookAt(p.x, p.y, p.z, t.x, t.y, t.z, true))
     }
 
     this._reset()
@@ -137,16 +146,12 @@ export class CameraController {
     if (!sourceWorld?.camera?.controls) return
     const camera = sourceWorld.camera as OBC.OrthoPerspectiveCamera
 
-    try {
-      void camera.projection.set('Orthographic')
-    } catch {
-      // already ortho
-    }
+    this._forceOrthographic(camera)
 
     const dir = viewDirection.clone().normalize()
     const camPos = target.clone().sub(dir.multiplyScalar(span))
 
-    void sourceWorld.camera.controls.setLookAt(
+    void pumpCameraTransition(this.components, sourceWorld.camera.controls.setLookAt(
       camPos.x,
       camPos.y,
       camPos.z,
@@ -154,7 +159,56 @@ export class CameraController {
       target.y,
       target.z,
       true,
-    )
+    ))
+  }
+
+  // OBC refuses an orthographic switch silently, leaving a perspective plan the model cannot line up under.
+  private _forceOrthographic(camera: OBC.OrthoPerspectiveCamera) {
+    if (this._isOrtho(camera)) return
+    this._trySetOrtho(camera)
+    if (this._isOrtho(camera)) return
+
+    // First Person and an orthographic lens each refuse the other, so the mode moves first — via its owner, or its walk loop survives.
+    const navigation = this._navigation()
+    if (navigation && navigation.mode !== 'Orbit') {
+      this._savedNavMode = navigation.mode
+      navigation.setMode('Orbit')
+      this._trySetOrtho(camera)
+    } else if (!navigation && (camera as any).mode?.id === 'FirstPerson') {
+      this._savedNavMode = 'FirstPerson'
+      try { (camera as any).set('Orbit') } catch { /* mode not registered on this camera */ }
+      this._trySetOrtho(camera)
+    }
+    if (this._isOrtho(camera)) return
+
+    console.warn('[CameraController] Could not switch to an orthographic projection; the drawing view will not line up with the model.')
+  }
+
+  private _isOrtho(camera: OBC.OrthoPerspectiveCamera) {
+    return (camera as any).projection?.current === 'Orthographic'
+  }
+
+  // `set` resolves asynchronously but applies the orthographic swap before it returns.
+  private _trySetOrtho(camera: OBC.OrthoPerspectiveCamera) {
+    try { void (camera as any).projection.set('Orthographic') } catch { /* no world or renderer yet */ }
+  }
+
+  // Not every host registers it — SimpleBimViewer has no navigation component.
+  private _navigation(): { mode: string; setMode: (mode: any) => void } | null {
+    try {
+      const navigation = this.components.get(CameraNavigation) as any
+      return typeof navigation?.setMode === 'function' ? navigation : null
+    } catch { return null }
+  }
+
+  private _restoreNavMode(camera: OBC.OrthoPerspectiveCamera) {
+    const mode = this._savedNavMode
+    if (!mode) return
+    this._savedNavMode = null
+
+    const navigation = this._navigation()
+    if (navigation) { navigation.setMode(mode); return }
+    try { (camera as any).set(mode) } catch { /* mode no longer registered */ }
   }
 
   private _reset() {

@@ -4,12 +4,16 @@
 import * as OBF from '@thatopen/components-front'
 import { describe, expect, it, vi } from 'vitest'
 
-import { applyRenderMode, enablePostproduction, readRenderMode } from './renderMode'
+import { applyRenderMode, enablePostproduction, readRenderMode, syncPostproductionCamera } from './renderMode'
 
 import type * as OBC from '@thatopen/components'
 
 function makeWorld(options: { postproductionThrows?: boolean } = {}) {
-    const postproduction = { enabled: false, style: OBF.PostproductionAspect.COLOR }
+    const postproduction = {
+        enabled: false,
+        style: OBF.PostproductionAspect.COLOR,
+        updateCamera: vi.fn(),
+    }
     const light = { shadow: { needsUpdate: false } }
     const scene = {
         shadowsEnabled: true,
@@ -19,6 +23,7 @@ function makeWorld(options: { postproductionThrows?: boolean } = {}) {
     const renderer = {
         three: { shadowMap: { enabled: false } },
         turnOffOnManualMode: true,
+        needsUpdate: false,
         get postproduction() {
             if (options.postproductionThrows) throw new Error('Renderer not initialized yet with a world!')
             return postproduction
@@ -119,5 +124,23 @@ describe('readRenderMode', () => {
 
     it('falls back to Shadowed without a world', () => {
         expect(readRenderMode(null)).toBe('Shadowed')
+    })
+})
+
+describe('syncPostproductionCamera', () => {
+    it('repoints the composer and asks for a redraw', () => {
+        const { world, renderer, postproduction } = makeWorld()
+
+        syncPostproductionCamera(world)
+
+        expect(postproduction.updateCamera).toHaveBeenCalledOnce()
+        expect(renderer.needsUpdate).toBe(true)
+    })
+
+    it('does nothing while the composer has no world', () => {
+        const { world, postproduction } = makeWorld({ postproductionThrows: true })
+
+        expect(() => syncPostproductionCamera(world)).not.toThrow()
+        expect(postproduction.updateCamera).not.toHaveBeenCalled()
     })
 })

@@ -7,6 +7,7 @@ import * as LR from 'lucide-react'
 import Image from 'next/image'
 import * as React from 'react'
 
+import { UploadProgressRing } from './MarkerProgressRing'
 import { PlacementActionsCard } from './PlacementActionsCard'
 
 import type { FileMarkerAction } from './PlacementActionsCard'
@@ -20,10 +21,12 @@ interface FileMarkerProps {
   highlight?: boolean
   /** Which placement actions this file can actually save. Omit to offer them all. */
   actions?: FileMarkerAction[]
+  /** A placeholder pin for a file still uploading: shows upload progress, and refuses to open the card. */
+  loading?: boolean
 }
 
 // An icon pin above a placed file that opens the placement card; pointer-down so the camera controls cannot swallow it.
-export default function FileMarker({ file, onAction, highlight = false, actions }: FileMarkerProps) {
+export default function FileMarker({ file, onAction, highlight = false, actions, loading = false }: FileMarkerProps) {
   const [open, setOpen] = React.useState(false)
 
   const isImage = file.type.startsWith('image/') && !!file.url
@@ -31,6 +34,18 @@ export default function FileMarker({ file, onAction, highlight = false, actions 
   const isModel = file.type.includes('model') || /\.(obj|fbx|gltf|glb|3ds|dae|ply|stl)$/i.test(file.name)
   const isDxf = file.name.toLowerCase().endsWith('.dxf')
   const Icon = isVideo ? LR.Video : isModel ? LR.Box : isDxf ? LR.DraftingCompass : LR.FileText
+
+  if (loading) {
+    return (
+      <div
+        className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary shadow-md"
+        title={file.name}
+      >
+        <UploadProgressRing fileName={file.name} />
+        <Icon className="h-4 w-4 text-primary-foreground" />
+      </div>
+    )
+  }
 
   if (!open) {
     return (

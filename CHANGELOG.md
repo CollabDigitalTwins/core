@@ -7,6 +7,263 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Added
+- A clipping plane can be turned into a drawing from the clipping tool's menu. The new view appears
+  under Layers -> Drawings -> **Custom**, previews instantly, generates its lines on demand and
+  exports to DXF like any elevation; deleting the source plane disposes it. `ElevationEntry` gains
+  an optional `label` (a display name overriding the translated direction) and `planeKey` (a
+  back-reference to the source plane), and `ElevationsTool` gains `addFromPlane(plane, label)`.
+- `ClippingPlanes` now publishes its planes: a `planes` accessor returning `ClippingPlaneInfo[]`
+  (`key`, `normal`, `point`, all copies), an `onChanged` event carrying the new list on every add,
+  delete, undo/redo and drag, and `planeAtCursor()` for the plane under the pointer.
+- `FloorplanTool.resetAll()` and `ElevationsTool.resetAll()`: building-scoped teardown that
+  deactivates the view, disposes every drawing and resets the true-north angle, while keeping the
+  tools subscribed to model load and delete so the same instance serves the next building.
+- **Hide from view** in the BIM viewport right-click menu, for a loaded model, a DXF drawing, a
+  point cloud or a splat. Each kind hides the way its own sidebar row does, and the visibility is
+  persisted, so the row and the scene cannot drift apart.
+- A **Splat budget** slider in the Gaussian splats settings panel, the splat analogue of the
+  point budget. `SplatRenderSettings` gains `lodSplatCount`, and the new `SplatSettings.splatBudget`
+  key is in all three catalogues.
+- Gaussian splats are now placed with the crosshair on upload, like 3D models and DXF
+  drawings, instead of always landing at the world origin. The position persists to the same
+  `pointCloudTransform` column the placement gizmo already writes.
+- In BIM placing mode, **Enter** drops the file at the world origin and **Escape** cancels.
+  Escape previously worked only when re-placing an already-uploaded file, and there was no
+  keyboard way to accept the origin.
+- `uniqueFileName(name, existingNames)` in `@collabdt/core/utils` — the point-cloud-only
+  `uniquePointCloudName` now delegates to it.
+- **Gaussian splat support in the BIM viewer.** `.ply`, `.spz`, `.splat`, `.ksplat` and `.sog`
+  files upload, render and place alongside the BIM model, using
+  [Spark](https://sparkjs.dev) (`@sparkjsdev/spark`, MIT) as a new runtime dependency. Splats
+  are a new `'splat-file'` type listed inside the existing **Models** sidebar section — no new
+  section — and are moved, rotated and uniformly scaled with the existing placement gizmo.
+  A `Gaussian splats` settings panel exposes per-splat opacity, detail (`maxSh`) and a debug
+  tint, plus the renderer-wide 2D-splat mode and blur.
+  New modules: `components/viewers/shared/splat/*`, `components/viewers/bim/src/Splats/*`,
+  `components/viewers/bim/src/Placement/targets/splatTarget` and `useSplatTarget`.
+- `PlacementEditor.registerPickSource()` / `unregisterPickSource()`, so more than one kind of
+  scene object can offer itself to the placement raycast without the last caller of `setup()`
+  clobbering the rest.
+- **Loaded 3D models, DXF drawings and splats now hover and select in the BIM viewer**, the
+  same as a fragment element, and a click on empty space clears the selection. A new
+  `Selection` component takes ownership of the canvas pointer from the `Highlighter` (which
+  gains an `ownsPointer` flag for exactly this handoff) and picks the nearest hit across
+  fragments, scene objects and splats through one shared raycast. Point clouds are picked but
+  deliberately excluded from hover and selection. New modules: `Selection/index.ts`,
+  `Selection/sceneObjectHighlight.ts` (the cyan overlay for a model or drawing, reparented
+  under its target so it inherits root motion and skeletal animation), `Selection/selectionState.ts`,
+  `lib/pickAtPointer.ts` and `lib/highlightMaterials.ts` (the hover/selected materials shared
+  between the highlighter and the new overlay).
+- `BimSplats` gains `setHighlight()` / `highlightOf()`, tinting a splat for hover or selection
+  without disturbing the recolor the user picked, and `boundsOf()`, its world-space bounding
+  box derived from the splat's own centres (`SplatMesh` has no geometry for `Box3.setFromObject`
+  to walk).
+- **The properties panel now shows the selected model, drawing or splat's file record** as an
+  Identity Data group (name, type, extension, size, upload date, description) and an editable
+  Position section (position, rotation, and scale where the target supports it), reusing the
+  same placement gizmo as the sidebar. The element list now sits below the property groups.
+  New modules: `propertiesMenu/src/fileIdentityGroup.ts`, `propertiesMenu/src/PositionSection.tsx`
+  and `Placement/placementAxes.ts`. New `PropertiesMenu` i18n namespace in `en`, `es` and `fr`.
+- Fit now frames the selected splat or object instead of falling back to the whole scene.
+- **An attribution control in the BIM viewer**, crediting Three.js, That Open Company, Potree
+  and Spark with a link to each project, behind a `Powered by:` label that `useIsMobile()`
+  drops below 768px to keep the pill off a phone's viewport. It is a copy of MapLibre's
+  compact attribution control — same geometry, icon, typography and bottom-right placement —
+  so the two viewers credit their dependencies identically. New module
+  `components/viewers/bim/src/BimAttribution` and a new `BimAttribution` i18n namespace in
+  `en`, `es` and `fr`. The That Open renderer's own logo is switched off now that the control
+  carries the credit.
+
+### Changed
+- Turning a clipping plane into a drawing is now an explicit two-step pick. The clipping menu item
+  appears once at least one plane exists, arms a picking mode with an on-screen instruction, and the
+  next click on a plane creates the drawing; Escape cancels. The **Custom** tab under Layers ->
+  Drawings only appears once a custom drawing exists, and a custom drawing can be renamed from its
+  row — the name is session-only and reaches the DXF export. `ElevationsTool` gains
+  `rename(id, label)`, and `ViewSectionList` gains optional `renameLabel` / `onRename` props.
+- The BIM viewer's empty-state card now offers every 3D file type — BIM model, point cloud, splat,
+  3D model and CAD — instead of `.ifc` and `.frag` alone, and routes the picked file through the
+  same intake as the sidebar, so a point cloud lands in the point-cloud path and a model in the
+  model path. The accept list is generated from `ACCEPT_FOR_TYPE`, not hand-written.
+- The empty-state card is shown only when a building holds no 3D file at all. A building with a
+  point cloud or a 3D model but no BIM model now opens straight into the scene.
+- Opening a floorplan no longer waits for its vector lines. Activation now stops once the model is
+  recoloured, clipped and framed, which is immediate; the lines are generated by a new **Generate
+  lines** action on the active drawing card, and a storey whose lines already exist still shows them
+  at once. `FloorplanTool` gains `generateLines(id)`, and `ViewSectionList` gains the optional
+  `generateLinesLabel` / `canGenerateLines` / `onGenerateLines` props.
+- Opening an elevation no longer waits for its vector lines either. The clipped model is shown
+  immediately as the preview and the lines come from the same **Generate lines** action;
+  `ElevationsTool` gains `generateLines(id)`. The whole-model cull moved out of activation and into
+  the line pass, where it belongs — it exists so the projection paints onto an empty scene.
+- Section-box drag handles are now coloured by axis — X red, Y green, Z blue, following
+  three.js's own axis convention — instead of all six being blue. The wireframe shell is
+  unchanged.
+- The BIM model now starts loading before point clouds, splats, 3D models and DXF drawings.
+  The others still load in parallel with each other, they just no longer compete with the
+  fragment fetch for the first bytes. `BimState` gains `fragmentsStarted`, with the
+  `SET_FRAGMENTS_STARTED` action.
+- `resolveViewportTarget()` takes a `splat` hit and can return `kind: 'splat'`.
+- `BimState` gains `splatIds`, with the `SET_SPLAT_IDS` and `TOGGLE_SPLAT` actions.
+- `BimState` gains `sceneSelection`, with the `SET_SCENE_SELECTION` action; `SelectionSync`
+  publishes it alongside the existing fragment `selection`.
+- `FragmentHit` gains an optional `localId`, so a fragment pick can carry which element was hit.
+- `useViewportContextMenu()` now requires a `splatIds: string[]` third argument, the store's
+  splat-visibility list, so it can close the menu when its splat is switched off.
+- Splat placements persist to the existing `File.pointCloudTransform` column, whose shape
+  already matched. No schema change.
+- The canvas shows a crosshair cursor while "pick pivot" waits for its double-click, for every
+  kind of placement target rather than splats alone.
+- Gaussian splats now build a level-of-detail tree. `SparkRenderer` enabled LOD already, but
+  the meshes never opted in, so there was nothing to traverse; they are now created with
+  `lod: true`. Left unset, the budget stays Spark's own per-device target (500K on WebXR up
+  to 2.5M on desktop) rather than a hard-coded constant.
+
+### Migration
+- `SplatRenderSettings` gains an optional `lodSplatCount`. `settings()` now reports the budget
+  in force rather than `undefined`, so a consumer reading it back gets Spark's per-device
+  default until something overrides it. No action needed unless you assert on the exact object.
+- The pin for a file that is still uploading now draws a ring that fills to the upload
+  percentage, with its own icon in the middle, instead of an indeterminate spinner. Phases that
+  report no percentage (conversion) spin a short arc, so the ring never sits frozen at 0%.
+
+### Migration
+- The `BimLoadingState.noBIMLoaded` message key is renamed to `BimLoadingState.no3DLoaded`, and
+  `BimLoadingState.helpText` is reworded. A deployment overriding either key must rename its
+  override.
+
+### Changed
+- Every placement edit now reports itself the same way, whatever the object is. A finished move,
+  rotation or scale raises a toast naming the action — "Moved", "Rotated", "Scaled" — for 3D models,
+  DXF drawings, point clouds and splats alike; models and drawings previously saved and failed in
+  silence, while clouds and splats each carried their own copy of the toast and always said
+  "position" whichever handle you had dragged. A Done that moved nothing, and a Cancel, now write
+  nothing and say nothing. `PlacementEditor.accept()` and `cancel()` return a promise, skip a
+  commit that would store what is already stored, and trigger `onCommitted` once the write settles,
+  with an added `ok` telling success from failure. The `Placement.saved` message is replaced by
+  `movedFile`, `rotatedFile` and `scaledFile`.
+
+### Fixed
+- A 3D model's or DXF drawing's scale now survives a reload. It is stored in `File.scale`, which
+  nothing was writing: the placement gizmo committed only position and yaw, the upload card's scale
+  was dropped on confirm, and the API adapter left the column out of every file it returned, so a
+  scaled object came back at 1 (or, for a DXF, at its millimetre default). Point clouds and splats
+  were never affected — they carry their scale inside `pointCloudTransform`. `uploadFile` takes an
+  optional `scale`, and `useBimFileIntake().submit` takes it as a third argument, routing it into
+  the transform for a splat and into the column for everything else.
+- The 3D model now follows the camera into a floorplan or elevation instead of staying frozen behind
+  the drawing at a viewpoint that could not line up with it. The effect composer's base and
+  ambient-occlusion passes keep the camera they were built with, so switching the world camera to an
+  orthographic projection left them shading the scene through the perspective camera the controls no
+  longer drive, while the edge pass read the live camera and drew its lines somewhere else entirely.
+  The composer is now repointed at the world camera whenever the projection changes.
+- Entering a floorplan or elevation no longer leaves the 3D view frozen where it was. camera-controls
+  advances an animated move only on rendered frames and the BIM renderer draws on demand, so the
+  camera transition never ran and its promise never settled — which also left activation awaiting
+  `fitToBox` forever, so the drawing's progress bar never finished. Camera transitions in the drawing
+  views now keep the renderer awake until they complete, the way walk mode already did.
+- A file hidden from the BIM viewport right-click menu now shows as hidden in the sidebar's file
+  list. The list's row state kept a local toggle forever, so a visibility change written by anyone
+  else was ignored for any row it had already seen.
+- The model now lines up under a floorplan's or elevation's lines. First Person navigation and an
+  orthographic lens each refuse the other — `CameraNavigation.canUse` rejects First Person while
+  orthographic, and OBC's `ProjectionManager.setOrthoCamera` returns silently while in First
+  Person — so opening a drawing from walk mode left the camera in perspective. Aimed straight down
+  it draws the flat projected lines correctly while giving the model receding faces, which read as
+  the two being misaligned. A drawing view now leaves First Person through `CameraNavigation`
+  (so its walk loop and published state stay in step, rather than being changed behind its back),
+  verifies the projection actually switched, restores the previous mode on exit once the lens is
+  back to perspective, and warns instead of silently drawing a perspective plan.
+- Floorplan and elevation drawings no longer stay in the scene after switching buildings without
+  first exiting the view, including when a drawing is still being generated. Nothing was scoped to
+  the building: the viewer's components outlive it, and freeing a drawing depended on a model-delete
+  event that an in-flight projection could race past, orphaning a finished drawing that no teardown
+  path could still reach.
+- A building with no BIM model could only be given `.ifc` and `.frag` files from the viewer's
+  empty-state card, which was the only upload affordance it offered.
+- The BIM model is visible again behind a floorplan or elevation drawing, so the white slab fill and
+  the grey cut regions read under the lines. Hiding every 3D root also hid the fragment models,
+  which *are* the drawing's fill; point clouds, splats and loaded 3D models are still hidden.
+- A floorplan's projected lines no longer pick up the ceiling of the storey below. The cut volume
+  was 3 m deep from a plane 1.5 m above the floor, reaching a metre past the lower clip plane; it
+  now bottoms out exactly at that plane, and the two are derived from shared constants so they
+  cannot drift apart again.
+- Dragging the placement gizmo while placing a freshly uploaded file now updates the rotation,
+  position and scale fields live. The gizmos on the upload path never emitted a change back into
+  the placement card, so the numbers and the object diverged until Enter or Escape. Re-placing an
+  already-uploaded file was already correct and is unchanged.
+- **Fit** now frames a selected gaussian splat instead of the whole scene. Switching splats to
+  Spark's LOD moved every splat centre into `lodSplats`, leaving `getBoundingBox` reporting an
+  empty box, so `BimSplats.boundsOf` returned null and the camera fell through to fitting
+  everything. Bounds are now read from the LOD centres when the mesh's own array is empty, and an
+  empty box is no longer cached.
+- The 3D scene no longer shows through a floorplan or elevation drawing. The BIM model was only
+  clipped to a slab-thick band rather than hidden, and point clouds, splats and loaded 3D models
+  were not touched at all, so all of it stayed on screen behind the drawing — plainly in
+  perspective once the camera moved. `ChromeController` now hides every piece of 3D content while
+  a drawing is active and restores exactly the visibility each root had on exit, alongside the
+  cursor, highlighter, gizmo and lighting it already managed. The drawing carries its own cut
+  lines and fills, so the plan itself is unaffected.
+- Clipping planes and the clipping box now cut gaussian splats, which previously ignored
+  them. Splats render through Spark's own shader, outside three.js's clipping pass, so the
+  cut is applied with Spark's `SplatEdit` signed-distance fields; splat meshes are now
+  created with `editable: true`. One scene-level edit cuts every splat, including any loaded
+  after the planes were set. `SplatEngine` gains `setClippingPlanes(planes)`: Spark collects
+  an edit by `instanceof`, so the edit has to be built from the same dynamically imported
+  copy of Spark the loader already owns. The planes are reconciled by value once per frame,
+  not on `onClippingPlanesUpdated` alone — OBC drags a section plane by mutating the same
+  `THREE.Plane` in place and fires no event, so anything holding a reference follows for free
+  while a snapshot silently freezes. Unchanged planes early-out, so the per-frame cost is a
+  string compare.
+- Deleting from the viewport context menu now unloads the file from the scene and reports the
+  delete, matching the sidebar. The menu deletes four kinds of target but only ever removed the
+  one held by the scene-object registry, so a BIM model, point cloud or splat stayed on screen
+  after its record was gone; it also showed no success toast. Both paths now go through one
+  `useSceneUnload()`.
+- The hover and selection highlight on an animated 3D model no longer freezes at the bind pose
+  while the model moves. The overlay is a clone, so a node an `AnimationMixer` drives left it
+  behind; each cloned mesh now claims its source's world matrix before it renders.
+- Adding a 3D model or splat from the sidebar now opens the placement crosshair, the same as
+  adding it from the toolbar. The two entry points had separate implementations and only the
+  toolbar consulted the placement rules; both now route through one shared decision.
+- The "add file" card reappeared after dropping a file into the scene. Finishing a placement
+  cleared the tool but not the panel's own adding mode, so the drop target came straight back.
+- A file still uploading now shows a spinning placeholder pin rather than its final icon, and
+  a splat's placeholder is removed once the real splat takes over.
+- Loaded 3D models now cast and receive shadows, like BIM elements. Flat DXF drawings and
+  scene markers are deliberately excluded. Gaussian splats and point clouds still cannot cast
+  shadows — they render outside three.js's shadow pass.
+- The BIM viewer's grid no longer appears and then disappears while the scene loads. It is
+  created hidden; the Settings toggle turns it on.
+- Uploading a file whose name is already taken now stores it as `plan (1).dxf` instead of a
+  second `plan.dxf`. Duplicate names previously bound scene objects to the wrong database
+  record, because placement and the viewport menu resolve an object to its file by name.
+- The viewport context menu stayed open, still anchored to a stale screen position or file,
+  after a camera move, a file deletion, a file being hidden, or pressing Escape. It now closes
+  on all four.
+- A splat uploaded while the viewer was open stayed switched off until a reload. The seed only
+  ran once per building, so a file that appeared afterwards was never added to `splatIds`; the
+  reconcile now claims each splat id once and switches on any that arrives visible.
+- Splats failed to load with `Unknown file type`. Assets are stored under an extensionless
+  UUID, so Spark could not infer a decoder from the download URL and the streaming decoder was
+  built before any bytes arrived. The type now comes from the file's `extension` column.
+- "Edit position" on a splat switched it off instead of on: it asked the registry whether the
+  splat was loaded, then dispatched `TOGGLE_SPLAT`, so a splat that was on but still loading
+  was toggled away. It now asks the store, which is what the scene reconciles from.
+- The viewport context menu could not place a splat — it had no `'splat'` branch, so it built
+  a model target whose object lookup never resolves a splat and the gizmo never appeared.
+
+### Removed
+- **Download** is gone from the BIM file rows and the viewer context menu — it is no longer offered
+  for plain files, loaded models or splats. Download remains available elsewhere in the files UI.
+- `dropsAtOrigin` from the placement capabilities module. It was unreferenced, and its claim
+  that splats are origin-only no longer describes the viewer.
+
+### Migration
+- `resolveViewportTarget()` now requires a `splat` property on its input. Pass `splat: null`
+  where there is no splat pick.
+
 ## [0.10.1] - 2026-09-11
 
 ### Security

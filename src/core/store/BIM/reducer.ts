@@ -19,6 +19,8 @@ interface BimTypes {
     modelIds: string[];
     floorplans: Plan[];
     grid: OBC.SimpleGrid | null;
+    /** Gates the point cloud, splat, model and DXF loaders so the BIM model gets the first bytes. */
+    fragmentsStarted: boolean;
     // For now, store the file with the building
     buildingModel: {
         bimFile: DbFile | null;
@@ -32,6 +34,8 @@ interface BimTypes {
     bimModelName: string | null;
     /** Mirror of the Highlighter's selection; only SelectionSync dispatches SET_BIM_SELECTION. */
     selection: OBC.ModelIdMap;
+    /** The selected file-backed object, when the last click hit one. Only SelectionSync dispatches it. */
+    sceneSelection: { kind: 'object' | 'splat'; fileId: string } | null;
     bcfTopic: OBC.Topic | Partial<OBC.Topic> | null;
     bcfTopics: OBC.Topic[] | Partial<OBC.Topic>[];
     bcfTopicId: string | null;
@@ -43,6 +47,11 @@ interface BimTypes {
     pointCloudIds: string[];
     /** The cloud the alignment tools act on. */
     activePointCloudId: string | null;
+    /**
+     * File ids the user has switched on for the BIM scene. The desired set;
+     * `BimSplatSync` reconciles `BimSplats` against it.
+     */
+    splatIds: string[];
 }
 
 export type BimState = BimTypes;
@@ -53,6 +62,7 @@ export type BimPayload = {
     ["SET_MODEL"]: Pick<BimTypes, "modelId">;
     ["SET_FLOORPLANS"]: Pick<BimTypes, "floorplans">;
     ["SET_GRID"]: Pick<BimTypes, "grid">;
+    ["SET_FRAGMENTS_STARTED"]: Pick<BimTypes, "fragmentsStarted">;
     ["DISPOSE-BIM"]: void;
     ["TOGGLE_BIM_TO_MAP"]: Pick<BimTypes, "buildingModel">;
     ["REMOVE_BIM_FROM_MAP"]: Pick<BimTypes, "bimModelName">;
@@ -64,9 +74,12 @@ export type BimPayload = {
     ["SET_MODEL_UI_STATE"]: { fileId: number; isVisible?: boolean; isGhost?: boolean };
     ["SET_POINT_CLOUD_IDS"]: { pointCloudIds: string[] };
     ["SET_BIM_SELECTION"]: Pick<BimTypes, "selection">;
+    ["SET_SCENE_SELECTION"]: Pick<BimTypes, "sceneSelection">;
     ["SET_MODEL_IDS"]: Pick<BimTypes, "modelIds">;
     ["TOGGLE_POINT_CLOUD"]: { pointCloudId: string };
     ["SET_ACTIVE_POINT_CLOUD"]: Pick<BimTypes, "activePointCloudId">;
+    ["SET_SPLAT_IDS"]: { splatIds: string[] };
+    ["TOGGLE_SPLAT"]: { splatId: string };
 };
 
 export type BimActions = ActionMap<BimPayload>[keyof ActionMap<BimPayload>];
@@ -102,10 +115,20 @@ export const BimReducer = (state: BimState, action: BimActions) => {
                 ...state,
                 "grid": action.payload.grid,
             };
+        case "SET_FRAGMENTS_STARTED":
+            return {
+                ...state,
+                "fragmentsStarted": action.payload.fragmentsStarted,
+            };
         case "SET_BIM_SELECTION":
             return {
                 ...state,
                 "selection": action.payload.selection,
+            };
+        case "SET_SCENE_SELECTION":
+            return {
+                ...state,
+                "sceneSelection": action.payload.sceneSelection,
             };
         case "SET_MODEL_IDS":
             return {
@@ -121,8 +144,11 @@ export const BimReducer = (state: BimState, action: BimActions) => {
                 "modelId": null,
                 "modelIds": [],
                 "selection": {},
+                "sceneSelection": null,
                 "pointCloudIds": [],
                 "activePointCloudId": null,
+                "splatIds": [],
+                "fragmentsStarted": false,
             };
         case "SET_POINT_CLOUD_IDS": {
             const { pointCloudIds } = action.payload;
@@ -152,6 +178,20 @@ export const BimReducer = (state: BimState, action: BimActions) => {
                 ...state,
                 "activePointCloudId": action.payload.activePointCloudId,
             };
+        case "SET_SPLAT_IDS":
+            return {
+                ...state,
+                "splatIds": action.payload.splatIds,
+            };
+        case "TOGGLE_SPLAT": {
+            const { splatId } = action.payload;
+            return {
+                ...state,
+                "splatIds": state.splatIds.includes(splatId)
+                    ? state.splatIds.filter((id) => id !== splatId)
+                    : [...state.splatIds, splatId],
+            };
+        }
         case "TOGGLE_BIM_TO_MAP": {
 
             const { bimFile } = action.payload.buildingModel;

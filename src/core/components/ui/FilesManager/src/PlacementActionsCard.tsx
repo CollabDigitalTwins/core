@@ -9,7 +9,7 @@ import * as React from 'react'
 import { Button } from '../../Button'
 import { Card } from '../../Card'
 
-export type FileMarkerAction = 'move' | 'rotate' | 'scale' | 'animate' | 'delete'
+export type FileMarkerAction = 'move' | 'rotate' | 'scale' | 'animate' | 'hide' | 'delete'
 
 const ACTIONS: { action: FileMarkerAction; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
   { action: 'move', label: 'Move', Icon: LR.Move },
@@ -20,6 +20,7 @@ const ACTIONS: { action: FileMarkerAction; label: string; Icon: React.ComponentT
 // Opt-in only: nothing but a loaded model with clips can offer it.
 const OPTIONAL_ACTIONS = [
   { action: 'animate' as const, label: 'Animation', Icon: LR.Play },
+  { action: 'hide' as const, label: 'Hide from view', Icon: LR.EyeOff },
 ]
 
 export interface PlacementActionsCardProps {
@@ -29,14 +30,17 @@ export interface PlacementActionsCardProps {
   onClose?: () => void
   /** Which placement actions this file can actually save. Omit to offer them all. */
   actions?: FileMarkerAction[]
+  /** The card has no translations of its own, so a caller with any supplies the hide label. */
+  hideLabel?: string
 }
 
 /** The placement menu, shared by the floating marker and the viewport right-click. */
-export function PlacementActionsCard({ name, Icon, onAction, onClose, actions }: PlacementActionsCardProps) {
+export function PlacementActionsCard({ name, Icon, onAction, onClose, actions, hideLabel }: PlacementActionsCardProps) {
   const stop = (event: React.SyntheticEvent) => event.stopPropagation()
-  const offered = actions
+  const offered = (actions
     ? [...ACTIONS, ...OPTIONAL_ACTIONS].filter(({ action }) => actions.includes(action))
     : ACTIONS
+  ).map(item => (item.action === 'hide' && hideLabel ? { ...item, label: hideLabel } : item))
 
   return (
     <div className="pointer-events-auto" onPointerDown={stop}>

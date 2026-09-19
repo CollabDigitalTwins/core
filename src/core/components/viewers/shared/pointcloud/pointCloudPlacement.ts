@@ -38,3 +38,11 @@ export function parsePlacement(stored: unknown): PointCloudPlacement {
     sourceUp: raw.sourceUp === 'y' || raw.sourceUp === 'z' ? raw.sourceUp : DEFAULT_PLACEMENT.sourceUp,
   }
 }
+
+/** Whether two placements would store the same transform. */
+export function samePlacement(a: PointCloudPlacement, b: PointCloudPlacement): boolean {
+  return a.scale === b.scale
+    && a.sourceUp === b.sourceUp
+    && a.position.every((value, index) => value === b.position[index])
+    && a.rotation.every((value, index) => value === b.rotation[index])
+}

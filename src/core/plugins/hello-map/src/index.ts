@@ -11,7 +11,7 @@ import { MarkersTab } from './components/MarkersTab'
 import type { LegendRegistration } from '@collabdt/plugin-kit/types/legend'
 import type { MapToolProps, PluginContext } from '@collabdt/plugin-kit/types/map'
 
-type Ctx = PluginContext<MapToolProps, unknown, unknown, LegendRegistration>
+type Ctx = PluginContext<MapToolProps, unknown, LegendRegistration>
 
 /**
  * Six surfaces over one store and one selection, in React subtrees with no common ancestor.

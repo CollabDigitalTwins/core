@@ -12,7 +12,7 @@ vi.mock('../../../ModelManager', () => ({ ModelManager: class {} }))
 vi.mock('../../../SceneObjects', () => ({ BimSceneObjects: class {} }))
 vi.mock('./AddDxf', () => ({ AddDxf: class {} }))
 
-import { useFilePlacement } from './useFilePlacement'
+import { rotationDegreesFromGizmo, useFilePlacement } from './useFilePlacement'
 
 vi.mock('next-intl', () => ({ useTranslations: () => (key: string) => key }))
 vi.mock('sonner', () => ({ toast: { info: vi.fn(), error: vi.fn(), dismiss: vi.fn(), custom: vi.fn() } }))
@@ -90,5 +90,28 @@ describe('useFilePlacement', () => {
 
     expect(submit).not.toHaveBeenCalled()
     expect(onDone).not.toHaveBeenCalled()
+  })
+})
+
+describe('rotationDegreesFromGizmo', () => {
+  it('converts the gizmo radians the field reads as degrees', () => {
+    expect(rotationDegreesFromGizmo(0, Math.PI / 2)).toBeCloseTo(90, 9)
+  })
+
+  it('keeps the field value identical when the angle has not moved, so the write-back stops', () => {
+    const current = 45
+    const asRadians = (current * Math.PI) / 180
+    expect(rotationDegreesFromGizmo(current, asRadians)).toBe(current)
+  })
+
+  it('round-trips a typed angle into the radians the gizmo applies', () => {
+    const typed = 137.5
+    const applied = (typed * Math.PI) / 180
+    expect(rotationDegreesFromGizmo(typed, applied)).toBe(typed)
+    expect(applied).toBeCloseTo(2.39983, 5)
+  })
+
+  it('reports a negative gizmo angle rather than wrapping it', () => {
+    expect(rotationDegreesFromGizmo(0, -Math.PI / 4)).toBeCloseTo(-45, 9)
   })
 })

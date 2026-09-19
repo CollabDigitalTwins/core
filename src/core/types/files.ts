@@ -40,4 +40,4 @@ export type FileRow = {
   metadata: DbFile
 }
 
-export type FileType = 'map-file' | 'bim-file' | 'system' | 'point-cloud-file'
+export type FileType = 'map-file' | 'bim-file' | 'system' | 'point-cloud-file' | 'splat-file'

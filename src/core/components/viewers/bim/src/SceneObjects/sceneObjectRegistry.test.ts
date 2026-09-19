@@ -27,6 +27,38 @@ describe('SceneObjectRegistry', () => {
     expect(registry.has('12')).toBe(true)
   })
 
+  it('enrols a model in the shadow pass', () => {
+    const { registry } = makeRegistry()
+    const child = new THREE.Mesh()
+    const root = new THREE.Group()
+    root.add(child)
+    registry.add(input('12', { kind: 'model', root }))
+
+    expect(child.castShadow).toBe(true)
+    expect(child.receiveShadow).toBe(true)
+  })
+
+  it('leaves a flat dxf drawing out of the shadow pass', () => {
+    const { registry } = makeRegistry()
+    const child = new THREE.Mesh()
+    const root = new THREE.Group()
+    root.add(child)
+    registry.add(input('13', { kind: 'dxf', root }))
+
+    expect(child.castShadow).toBe(false)
+  })
+
+  it('leaves a marker out of the shadow pass', () => {
+    const { registry } = makeRegistry()
+    const child = new THREE.Mesh()
+    const root = new THREE.Group()
+    root.add(child)
+    registry.add(input('14', { kind: 'marker', root }))
+
+    expect(child.castShadow).toBe(false)
+    expect(child.receiveShadow).toBe(false)
+  })
+
   it('defaults fileId to null so an unplaced object is distinguishable', () => {
     const { registry } = makeRegistry()
 

@@ -16,6 +16,8 @@ export function getFileIcon(file: DbFile) {
       return IfcIcon
     case 'point-cloud-file':
       return LR.Grip
+    case 'splat-file':
+      return LR.Sparkles
     case 'cad-file':
       return LR.DraftingCompass
     case '3d-file':

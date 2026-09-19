@@ -9,7 +9,7 @@ import { SpacesTool } from './components/SpacesTool'
 import type { BimToolProps, PluginContext } from '@collabdt/plugin-kit/types/bim'
 import type { LegendRegistration } from '@collabdt/plugin-kit/types/legend'
 
-type Ctx = PluginContext<unknown, BimToolProps, unknown, LegendRegistration>
+type Ctx = PluginContext<unknown, BimToolProps, LegendRegistration>
 
 /**
  * Four surfaces over the model IfcSpaces, all reading one hook. The IFC is never written to:

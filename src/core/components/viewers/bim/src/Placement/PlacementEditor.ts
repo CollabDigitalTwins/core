@@ -5,6 +5,7 @@ import * as OBC from '@thatopen/components'
 import * as THREE from 'three'
 
 import { placementFromPivotDrag, placementWithPivot } from '../../../shared/pointcloud/pointCloudPivot'
+import { samePlacement } from '../../../shared/pointcloud/pointCloudPlacement'
 import { objectToPlacement } from '../../../shared/pointcloud/pointCloudTransform'
 import { GizmoController } from '../../utils/GizmoController'
 import { pickNearest, SCENE_PICK_WINDOW_PX } from '../lib/scenePicker'
@@ -51,6 +52,8 @@ export interface PlacementState {
   placement: PointCloudPlacement
   /** What rotation and scale turn about, or null for the target's own origin. */
   pivot: THREE.Vector3 | null
+  /** Whether the write reached storage. Absent until the commit settles. */
+  ok?: boolean
 }
 
 /**
@@ -70,6 +73,8 @@ export class PlacementEditor extends OBC.Component implements OBC.Disposable, Ex
   private createGizmo: (() => PlacementGizmo) | null = null
   private pickPoint: (() => Promise<THREE.Vector3 | null>) | null = null
   private pickSources: (() => Iterable<ScenePickSource>) | null = null
+  /** Sources that register themselves, so a second kind of object cannot clobber the first. */
+  private readonly registeredPickSources = new Set<ScenePickSource>()
   private world: OBC.World | null = null
 
   private gizmo: PlacementGizmo | null = null
@@ -95,6 +100,14 @@ export class PlacementEditor extends OBC.Component implements OBC.Disposable, Ex
     this.createGizmo = config.createGizmo ?? (() => new GizmoController(config.world))
     this.pickSources = config.pickSources ?? (() => [])
     this.pickPoint = config.pickPoint ?? (() => this.pickWorldPointOnDoubleClick())
+  }
+
+  registerPickSource(source: ScenePickSource) {
+    this.registeredPickSources.add(source)
+  }
+
+  unregisterPickSource(source: ScenePickSource) {
+    this.registeredPickSources.delete(source)
   }
 
   get activeId(): string | null {
@@ -191,31 +204,41 @@ export class PlacementEditor extends OBC.Component implements OBC.Disposable, Ex
     })
   }
 
-  accept() {
+  async accept() {
     const target = this.target
     if (!target) return
 
     const placement = this.placement()
-    const committed = placement
+    const stored = placement && narrowPlacement(placement, target.capabilities)
+    const before = this.snapshot && narrowPlacement(this.snapshot, target.capabilities)
+    // A Done that moved nothing must not write, or claim to have written.
+    const changed = !!stored && (!before || !samePlacement(stored, before))
+    const committed = stored && changed
       ? { id: target.id, name: target.name, capabilities: target.capabilities, mode: this.currentMode, placement, pivot: this.pivot }
       : null
 
     const coordinator = this.coordinator
     this.end()
     coordinator?.release(this)
-
-    if (committed) {
-      void target.commit(narrowPlacement(committed.placement, committed.capabilities))
-      this.onCommitted.trigger(committed)
-    }
     this.onChanged.trigger(null)
+
+    if (!committed || !stored) return
+
+    let ok = true
+    try {
+      await target.commit(stored)
+    } catch (error) {
+      ok = false
+      console.warn(`[placement ${target.id}] was not saved:`, error)
+    }
+    this.onCommitted.trigger({ ...committed, ok })
   }
 
-  cancel() {
+  async cancel() {
     const target = this.target
     if (!target || this.snapshot === null) return
     target.apply(this.snapshot)
-    this.accept()
+    await this.accept()
   }
 
   /** {@link ExclusiveViewTool} — another tool took the viewer, so keep the edit and let go. */
@@ -252,8 +275,8 @@ export class PlacementEditor extends OBC.Component implements OBC.Disposable, Ex
 
     this.gizmo = this.createGizmo()
     this.gizmo.onChange = this.onGizmoChange
-    this.gizmo.onAccept = () => this.accept()
-    this.gizmo.onCancel = () => this.cancel()
+    this.gizmo.onAccept = () => { void this.accept() }
+    this.gizmo.onCancel = () => { void this.cancel() }
 
     if (!this.pivotPoint) {
       this.gizmo.attach(root)
@@ -331,8 +354,12 @@ export class PlacementEditor extends OBC.Component implements OBC.Disposable, Ex
     const canvas = this.world?.renderer?.three.domElement
     if (!canvas) return Promise.resolve(null)
 
+    const restoreCursor = canvas.style.cursor
+    canvas.style.cursor = 'crosshair'
+
     return new Promise((resolve) => {
       const done = (point: THREE.Vector3 | null) => {
+        canvas.style.cursor = restoreCursor
         canvas.removeEventListener('dblclick', onDoubleClick)
         window.removeEventListener('keydown', onKeyDown)
         resolve(point)
@@ -355,7 +382,8 @@ export class PlacementEditor extends OBC.Component implements OBC.Disposable, Ex
 
     const raycaster = new THREE.Raycaster()
     raycaster.setFromCamera(caster.mouse.position, camera)
-    const sceneHit = pickNearest(this.pickSources?.() ?? [], raycaster.ray, camera, SCENE_PICK_WINDOW_PX)
+    const sources = [...(this.pickSources?.() ?? []), ...this.registeredPickSources]
+    const sceneHit = pickNearest(sources, raycaster.ray, camera, SCENE_PICK_WINDOW_PX)
 
     const fragmentHit = (await caster.castRay({ items: [] }))?.point ?? null
     if (!sceneHit) return fragmentHit

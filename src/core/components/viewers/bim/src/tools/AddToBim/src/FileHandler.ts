@@ -37,6 +37,7 @@ export const addFileToScene = async (
   addDxf: AddDxf | null,
   setCurrent3DFileId: (id: string | null) => void,
   onAction?: (action: FileMarkerAction) => void,
+  markerLoading = false,
 ): Promise<PlacedResult | null> => {
   if (!world || !modelManager || !addDxf) return null
 
@@ -78,7 +79,7 @@ export const addFileToScene = async (
     }
   }
 
-  const { marker, object3D } = createGenericFileMarker(addedFile, world, onAction)
+  const { marker, object3D } = createGenericFileMarker(addedFile, world, onAction, markerLoading)
   return {
     kind: 'generic',
     marker,

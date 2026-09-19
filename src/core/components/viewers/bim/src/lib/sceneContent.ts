@@ -29,3 +29,26 @@ export function isFileInScene(
   }
   return true
 }
+
+interface VisibleRoot {
+  visible: boolean
+}
+
+export type SceneContentVisibility = { root: VisibleRoot; visible: boolean }[]
+
+/** Hides the 3D content a drawing view replaces, remembering what each root was. */
+export function hideSceneContent(roots: readonly VisibleRoot[], saved: SceneContentVisibility): void {
+  if (saved.length > 0) return
+
+  for (const root of roots) {
+    if (!root) continue
+    saved.push({ root, visible: root.visible })
+    root.visible = false
+  }
+}
+
+/** Puts back exactly what {@link hideSceneContent} hid, and forgets it. */
+export function restoreSceneContent(saved: SceneContentVisibility): void {
+  for (const { root, visible } of saved) root.visible = visible
+  saved.length = 0
+}

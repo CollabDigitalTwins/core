@@ -14,7 +14,7 @@ import { SunPath } from "../SunPath";
 import { applyBimLighting, DEFAULT_BIM_LIGHTING } from "./bimLighting";
 import { modelBounds } from "./modelBounds";
 import { PivotIndicator } from "./PivotIndicator";
-import { applyRenderMode, enablePostproduction, excludeFromPostproduction } from "./renderMode";
+import { applyRenderMode, enablePostproduction, excludeFromPostproduction, syncPostproductionCamera } from "./renderMode";
 
 const FRAGMENTS_WORKER_URL =
     "https://thatopen.github.io/engine_fragment/resources/worker.mjs";
@@ -62,6 +62,8 @@ export async function createBimWorld(container: HTMLElement): Promise<BimWorldBo
 
     const grids = components.get(OBC.Grids);
     const grid: OBC.SimpleGrid | null = grids.create(world) ?? null;
+    // The worker fetch below runs for seconds with the renderer already live.
+    if (grid) grid.config.visible = false;
 
     const axes = new THREE.AxesHelper(5);
     world.scene.three.add(axes);
@@ -89,6 +91,7 @@ export async function createBimWorld(container: HTMLElement): Promise<BimWorldBo
     components.get(SunPath);
 
     enablePostproduction(world);
+    world.camera.projection.onChanged.add(() => syncPostproductionCamera(world));
 
     shadows.excludeFromShadows(axes);
     excludeFromPostproduction(world, axes.material);
@@ -97,7 +100,6 @@ export async function createBimWorld(container: HTMLElement): Promise<BimWorldBo
         world.scene.distanceRenderer.excludedObjects.add(grid.three);
         shadows.excludeFromShadows(grid.three);
         excludeFromPostproduction(world, grid.material);
-        grid.config.visible = false;
     }
 
     applyBimLighting(world, DEFAULT_BIM_LIGHTING, modelBounds(components));

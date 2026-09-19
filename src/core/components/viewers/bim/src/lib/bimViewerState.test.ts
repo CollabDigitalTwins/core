@@ -17,6 +17,7 @@ const ready: BimViewerStateInputs = {
   filesError: false,
   bimFileCount: 2,
   hiddenBimFileCount: 0,
+  sceneFileCount: 2,
   hasLoadedModels: false,
 }
 
@@ -28,9 +29,15 @@ describe('nextBimViewerState', () => {
   })
 
   it('still offers the upload prompt for a building with no models at all', () => {
-    const inputs = { ...ready, bimFileCount: 0, hiddenBimFileCount: 0 }
+    const inputs = { ...ready, bimFileCount: 0, hiddenBimFileCount: 0, sceneFileCount: 0 }
 
     expect(nextBimViewerState(inputs)).toEqual({ state: 'noBimFiles' })
+  })
+
+  it('settles on an empty scene when the building holds a point cloud but no BIM file', () => {
+    const inputs = { ...ready, bimFileCount: 0, hiddenBimFileCount: 0, sceneFileCount: 1 }
+
+    expect(nextBimViewerState(inputs)).toEqual({ state: 'ready' })
   })
 
   it('reports a dead files request ahead of an all-hidden scene', () => {
@@ -64,12 +71,12 @@ describe('nextBimViewerState', () => {
     expect(nextBimViewerState(ready)).toEqual({ state: 'loading', loadModels: true })
   })
 
-  it('offers an upload when the building genuinely has no BIM files', () => {
-    expect(nextBimViewerState({ ...ready, bimFileCount: 0 })).toEqual({ state: 'noBimFiles' })
+  it('offers an upload when the building genuinely has no 3D files', () => {
+    expect(nextBimViewerState({ ...ready, bimFileCount: 0, sceneFileCount: 0 })).toEqual({ state: 'noBimFiles' })
   })
 
   it('reports a failed file list as unavailable, not as an empty building', () => {
-    const inputs = { ...ready, filesError: true, bimFileCount: 0 }
+    const inputs = { ...ready, filesError: true, bimFileCount: 0, sceneFileCount: 0 }
     expect(nextBimViewerState(inputs)).toEqual({ state: 'filesUnavailable' })
   })
 

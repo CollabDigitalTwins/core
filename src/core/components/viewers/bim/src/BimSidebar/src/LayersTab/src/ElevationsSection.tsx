@@ -90,6 +90,7 @@ export function ElevationSection({
   const filteredEntries: ViewListEntry[] = React.useMemo(() => {
     const q = query.trim().toLowerCase()
     return entries
+      .filter((entry) => entry.planeKey === undefined)
       .filter((entry) => modelFilter === ALL_MODELS || entry.modelId === modelFilter)
       .map((entry) => ({ id: entry.id, label: t(entry.direction) }))
       .filter((row) => !q || row.label.toLowerCase().includes(q))
@@ -110,6 +111,11 @@ export function ElevationSection({
       setPendingId(entry.id)
       void tool.activate(entry.id)
     }
+  }
+
+  const handleGenerateLines = () => {
+    if (!bimComponents || !activeId) return
+    void bimComponents.get(ElevationsTool).generateLines(activeId)
   }
 
   const handleExit = () => {
@@ -167,6 +173,9 @@ export function ElevationSection({
         layersLabel={t('layers')}
         toggleVisibilityLabel={t('toggleVisibility')}
         chooseColorLabel={t('chooseColor')}
+        generateLinesLabel={t('generateLines')}
+        canGenerateLines={!!activeEntry && !activeEntry.projected}
+        onGenerateLines={handleGenerateLines}
         friendlyClassName={friendlyClassName}
         onSelect={handleSelect}
         onExit={handleExit}

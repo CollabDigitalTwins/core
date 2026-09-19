@@ -8,12 +8,13 @@ import * as React from "react";
 import * as THREE from "three";
 
 import { useUndoRedoShortcuts } from "../../../hooks/useUndoRedoShortcuts";
-import { ToolsContext, BimContext, MenusContext } from "../../../store";
+import { BimContext, MenusContext } from "../../../store";
 import { ViewerNames } from "../../../types/dbTypes";
 import { SensorLegend } from "../../ui/Sensors/SensorLegend";
 import { ViewerLegendHost } from "../shared/legends/ViewerLegendHost";
 import { useBimCoordinateSystem } from "../useCoordinateSystem";
 
+import { BimAttribution } from "./src/BimAttribution";
 import { BimLoadingState } from "./src/BimLoadingState";
 import { BuildingLocationSync } from "./src/BuildingLocationSync";
 import { CameraNavigation } from "./src/CameraNavigation";
@@ -31,7 +32,9 @@ import { PlacementEditorHost } from "./src/Placement/PlacementEditorHost";
 import { BimPointClouds } from "./src/PointClouds";
 import { BimPointCloudSync } from "./src/PointClouds/BimPointCloudSync";
 import { PropertiesMenu } from "./src/propertiesMenu";
+import { Selection } from "./src/Selection";
 import { SelectionSync } from "./src/SelectionSync";
+import { BimSplatSync } from "./src/Splats/BimSplatSync";
 import { ClippingPlanes } from "./src/tools/ClippingTool/ClippingPlanes";
 import { ViewportGizmo } from "./src/ViewportGizmo";
 
@@ -46,10 +49,7 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
     const locale = useLocale();
 
     const { dispatch: bimDispatch, state: bimState } = React.useContext(BimContext);
-    const { bimComponents } = bimState.bim;
-
-    const { dispatch: toolsDispatch, state: toolsState } = React.useContext(ToolsContext);
-    const { currentToolId } = toolsState.tools;
+    const { bimComponents, world } = bimState.bim;
 
     const { state: menusState } = React.useContext(MenusContext);
     const { currentViewer } = menusState.menus;
@@ -107,6 +107,8 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
 
             const container = containerRef.current;
             const { components, world, fragments, grid, workerUrl, pivot } = await createBimWorld(container);
+
+            world.renderer.showLogo = false;
             workerUrlRef.current = workerUrl;
             pivotRef.current = pivot;
 
@@ -231,6 +233,12 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
         }
     }, [bimComponents, currentViewer, locale, t]);
 
+    // Highlighter is built synchronously in createViewer, before SET_COMPONENTS dispatches — so it already exists here.
+    React.useEffect(() => {
+        if (!bimComponents || !world) return;
+        bimComponents.get(Selection).setup({ world });
+    }, [bimComponents, world]);
+
     return (
         <div
             style={{
@@ -244,6 +252,7 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
             <ModelsSync />
             <BuildingLocationSync />
             <BimPointCloudSync pointcloudApiUrl={pointcloudApiUrl} />
+            <BimSplatSync />
             <PlacementEditorHost />
             <SelectionSync />
             <div
@@ -263,6 +272,7 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
                 <SensorLegend />
                 <ViewerLegendHost viewer={ViewerNames.bim} />
             </div>
+            <BimAttribution />
             <PropertiesMenu />
         </div>
     );

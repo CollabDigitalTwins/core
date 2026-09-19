@@ -12,6 +12,7 @@ import { GridManagement } from './src/GridManagement'
 import { LightingManagement } from './src/LightingManagement'
 import { MeasurementSettings } from './src/MeasurementSettings'
 import { PointCloudSettings } from './src/PointCloudSettings'
+import { SplatSettings } from './src/SplatSettings'
 
 export function SettingsTab() {
   return (
@@ -21,6 +22,7 @@ export function SettingsTab() {
       <MeasurementSettings />
       <LightingManagement />
       <PointCloudSettings />
+      <SplatSettings />
     </ViewerSidebarPanel>
   )
 }

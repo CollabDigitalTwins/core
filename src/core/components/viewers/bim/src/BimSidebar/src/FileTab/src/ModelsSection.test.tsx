@@ -35,6 +35,7 @@ vi.mock('../../../../Placement/usePlacementSession', () => ({ usePlacementSessio
 
 // jsdom can't load @thatopen/components; these are only used as bimComponents.get() keys.
 vi.mock('../../../../PointClouds', () => ({ BimPointClouds: class {} }))
+vi.mock('../../../../Splats', () => ({ BimSplats: class {} }))
 vi.mock('../../../../ModelManager', () => ({ ModelManager: class {} }))
 vi.mock('../../../../DXFLoader', () => ({ DXFManager: class {} }))
 vi.mock('../../../../Highlighter', () => ({ Highlighter: class {} }))
@@ -66,7 +67,10 @@ const file = (id: number, name: string, extension: string): DbFile =>
   ({ id, name, extension }) as DbFile
 
 function renderSection(files: DbFile[]) {
-  const bim = { state: { bim: { bimComponents: null, fragments: null, world: null } }, dispatch: vi.fn() }
+  const bim = {
+    state: { bim: { bimComponents: null, fragments: null, world: null, splatIds: [] } },
+    dispatch: vi.fn(),
+  }
   const buildings = { state: { buildings: { building: { id: 7 } } }, dispatch: vi.fn() }
   return render(
     <BimContext.Provider value={bim as never}>
@@ -94,6 +98,27 @@ describe('ModelsSection', () => {
     ])
 
     for (const name of ['a.glb', 'b.gltf', 'c.fbx', 'd.obj', 'e.dae']) {
+      expect(screen.getByText(name)).toBeInTheDocument()
+    }
+  })
+
+  it('lists a splat in the models section rather than a section of its own', () => {
+    renderSection([file(1, 'tower.glb', 'glb'), file(2, 'courtyard.spz', 'spz')])
+
+    expect(screen.getByText('tower.glb')).toBeInTheDocument()
+    expect(screen.getByText('courtyard.spz')).toBeInTheDocument()
+  })
+
+  it('lists every splat format Spark loads', () => {
+    renderSection([
+      file(1, 'a.ply', 'ply'),
+      file(2, 'b.spz', 'spz'),
+      file(3, 'c.splat', 'splat'),
+      file(4, 'd.ksplat', 'ksplat'),
+      file(5, 'e.sog', 'sog'),
+    ])
+
+    for (const name of ['a.ply', 'b.spz', 'c.splat', 'd.ksplat', 'e.sog']) {
       expect(screen.getByText(name)).toBeInTheDocument()
     }
   })

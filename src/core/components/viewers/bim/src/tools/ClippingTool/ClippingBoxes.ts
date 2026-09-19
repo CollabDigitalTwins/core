@@ -8,7 +8,7 @@ import * as THREE from 'three'
 import { CurrentWorld } from '../../CurrentWorld'
 import { ndcFromPointer } from '../../lib/scenePicker'
 
-import { boxClipPlanes, CLIP_BOX_FACES, fittedBox, handleCentre, helperShellSize, moveFace } from './clipBox'
+import { boxClipPlanes, CLIP_BOX_FACES, colourForFace, fittedBox, handleCentre, helperShellSize, moveFace } from './clipBox'
 import { CUT_STYLE, ensureCutStyle } from './cutStyle'
 
 import type { ClipBoxFace } from './clipBox'
@@ -218,7 +218,7 @@ export class ClippingBoxes extends OBC.Component implements OBC.Disposable {
     for (const face of CLIP_BOX_FACES) {
       const handle = new THREE.Mesh(
         new THREE.BoxGeometry(1, 1, 1),
-        new THREE.MeshBasicMaterial({ color: BOX_COLOUR, depthTest: false, transparent: true, opacity: 0.9 }),
+        new THREE.MeshBasicMaterial({ color: colourForFace(face), depthTest: false, transparent: true, opacity: 0.9 }),
       )
       handle.renderOrder = 10
       root.add(handle)

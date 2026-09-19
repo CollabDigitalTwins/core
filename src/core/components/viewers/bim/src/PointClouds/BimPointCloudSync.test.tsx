@@ -101,7 +101,7 @@ const world = { scene: {}, camera: {}, renderer: {} }
 
 function renderSync(pointCloudIds: string[], pointcloudApiUrl?: string) {
   const dispatch = vi.fn()
-  const state = { bim: { bimComponents, world, pointCloudIds } }
+  const state = { bim: { bimComponents, world, pointCloudIds, fragmentsStarted: true } }
   const view = render(
     <BimContext.Provider value={{ state, dispatch } as never}>
       <BimPointCloudSync pointcloudApiUrl={pointcloudApiUrl} />
@@ -152,7 +152,7 @@ describe('BimPointCloudSync', () => {
     await waitFor(() => expect(clouds.ids()).toHaveLength(2))
 
     view.rerender(
-      <BimContext.Provider value={{ state: { bim: { bimComponents, world, pointCloudIds: ['670'] } }, dispatch } as never}>
+      <BimContext.Provider value={{ state: { bim: { bimComponents, world, pointCloudIds: ['670'], fragmentsStarted: true } }, dispatch } as never}>
         <BimPointCloudSync />
       </BimContext.Provider>,
     )
@@ -175,7 +175,7 @@ describe('BimPointCloudSync', () => {
   it('does nothing until the world is ready', () => {
     const dispatch = vi.fn()
     render(
-      <BimContext.Provider value={{ state: { bim: { bimComponents: null, world: null, pointCloudIds: ['669'] } }, dispatch } as never}>
+      <BimContext.Provider value={{ state: { bim: { bimComponents: null, world: null, pointCloudIds: ['669'], fragmentsStarted: true } }, dispatch } as never}>
         <BimPointCloudSync />
       </BimContext.Provider>,
     )
@@ -204,7 +204,26 @@ describe('BimPointCloudSync placement', () => {
     fileHooks.isLoading = false
     fileHooks.files = [stored]
     view.rerender(
-      <BimContext.Provider value={{ state: { bim: { bimComponents, world, pointCloudIds: ['669'] } }, dispatch } as never}>
+      <BimContext.Provider value={{ state: { bim: { bimComponents, world, pointCloudIds: ['669'], fragmentsStarted: true } }, dispatch } as never}>
+        <BimPointCloudSync />
+      </BimContext.Provider>,
+    )
+
+    await waitFor(() => expect(clouds.placements).toEqual([{ id: '669', placement: PLACED }]))
+  })
+
+  it('holds a cloud back until the BIM model has started loading', async () => {
+    fileHooks.files = [stored]
+    const dispatch = vi.fn()
+    const view = render(
+      <BimContext.Provider value={{ state: { bim: { bimComponents, world, pointCloudIds: ['669'], fragmentsStarted: false } }, dispatch } as never}>
+        <BimPointCloudSync />
+      </BimContext.Provider>,
+    )
+    expect(clouds.placements).toEqual([])
+
+    view.rerender(
+      <BimContext.Provider value={{ state: { bim: { bimComponents, world, pointCloudIds: ['669'], fragmentsStarted: true } }, dispatch } as never}>
         <BimPointCloudSync />
       </BimContext.Provider>,
     )

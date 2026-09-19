@@ -16,6 +16,7 @@ import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { FileItemComponent, UploadProgressBar, useFileActions, useFileDeleteHandler, useUploadTasks } from '../../../../../../../ui/FilesManager'
 import { PlacementEditor } from '../../../../Placement/PlacementEditor'
 import { usePointCloudTarget } from '../../../../Placement/targets/usePointCloudTarget'
+import { useSceneUnload } from '../../../../Placement/useSceneUnload'
 import { BimPointClouds } from '../../../../PointClouds'
 import { POINT_CLOUD_ACCEPT, isRenderablePointCloud } from '../../../../PointClouds/pointCloudFiles'
 import { useBimPointCloudOpacity } from '../../../../PointClouds/useBimPointCloudOpacity'
@@ -49,6 +50,7 @@ export function PointCloudsSection({ files, query = '', buildingId, ...chrome }:
   const { isGhosted, setGhosted } = useBimPointCloudOpacity()
   const { deleteFile } = useDeleteFile(buildingId)
   const { handleDeleteFile } = useFileDeleteHandler({ deleteFile })
+  const unloadFromScene = useSceneUnload()
 
   const { targetFor, clearMoving } = usePointCloudTarget()
 
@@ -103,13 +105,6 @@ export function PointCloudsSection({ files, query = '', buildingId, ...chrome }:
     toast.info(tAlign('editHint'), { id: TOAST_ID, duration: Infinity })
   }, [bimComponents, dispatch, tAlign, targetFor])
 
-  const forget = React.useCallback((file: DbFile) => {
-    const id = String(file.id)
-    if (pointCloudIds.includes(id)) {
-      dispatch({ type: 'TOGGLE_POINT_CLOUD', payload: { pointCloudId: id } })
-    }
-  }, [dispatch, pointCloudIds])
-
   const inFlight = React.useCallback(
     (file: DbFile) => tasks.some(task => task.name === file.name),
     [tasks],
@@ -124,7 +119,7 @@ export function PointCloudsSection({ files, query = '', buildingId, ...chrome }:
     shouldPersistVisibility: () => true,
     onGhost: ghost,
     onMove: (file) => { void editPosition(file) },
-    onDelete: forget,
+    onDelete: file => unloadFromScene(file, 'cloud'),
   })
 
   const pickFile = React.useCallback(() => {

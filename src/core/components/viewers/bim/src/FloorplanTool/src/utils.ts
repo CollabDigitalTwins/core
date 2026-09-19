@@ -51,3 +51,19 @@ export function normalizeElevation(
   if (inBoundsRaw && !inBoundsCoord) return elevation
   return elevWithCoord
 }
+
+/** Height of the plan's section cut above a storey's floor, in metres. */
+export const STOREY_CUT_HEIGHT = 1.5
+
+/** Depth the plan captures below its section cut, in metres. */
+export const STOREY_CUT_DEPTH = 2
+
+/** World Y of a storey's section cut — the drawing plane and the upper clip. */
+export function storeyCutPlaneY(elevation: number): number {
+  return elevation + STOREY_CUT_HEIGHT
+}
+
+/** World Y where a storey's cut volume bottoms out — the lower clip plane. */
+export function storeyLowerClipY(elevation: number): number {
+  return storeyCutPlaneY(elevation) - STOREY_CUT_DEPTH
+}

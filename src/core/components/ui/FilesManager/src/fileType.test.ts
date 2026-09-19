@@ -28,6 +28,9 @@ describe('typeOfRecord', () => {
       [{ extension: 'copc' }, 'point-cloud-file'],
       [{ extension: 'glb' }, '3d-file'],
       [{ extension: 'obj' }, '3d-file'],
+      [{ extension: 'spz' }, 'splat-file'],
+      [{ extension: 'ply' }, 'splat-file'],
+      [{ extension: 'ksplat' }, 'splat-file'],
       [{ extension: 'dxf' }, 'cad-file'],
       [{ extension: 'dwg' }, 'cad-file'],
       [{ extension: 'png' }, 'media-file'],
@@ -62,6 +65,7 @@ describe('typeOfFile', () => {
     expect(typeOfFile(picked('scan.laz'))).toBe('point-cloud-file')
     expect(typeOfFile(picked('scan.e57'))).toBe('point-cloud-file')
     expect(typeOfFile(picked('plan.dxf'))).toBe('cad-file')
+    expect(typeOfFile(picked('capture.spz'))).toBe('splat-file')
   })
 
   it('reads a compound copc name as a point cloud', () => {
@@ -78,6 +82,7 @@ describe('SECTION_FOR_TYPE', () => {
   it('routes every type to a section', () => {
     expect(SECTION_FOR_TYPE['bim-file']).toBe('bim')
     expect(SECTION_FOR_TYPE['3d-file']).toBe('models')
+    expect(SECTION_FOR_TYPE['splat-file']).toBe('models')
     expect(SECTION_FOR_TYPE['point-cloud-file']).toBe('pointClouds')
     expect(SECTION_FOR_TYPE['cad-file']).toBe('files')
     expect(SECTION_FOR_TYPE['media-file']).toBe('files')

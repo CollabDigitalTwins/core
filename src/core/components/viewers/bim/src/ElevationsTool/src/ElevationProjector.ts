@@ -14,6 +14,8 @@ import {
   patchModelGeometryRepresentationIds,
 } from '../../lib/drawingProjection'
 
+import { drawingNameFor } from './drawingName'
+
 import type {
   ElevationDirection,
   ElevationEntry,
@@ -128,10 +130,12 @@ export class ElevationProjector {
       viewport: {
         ...entry.viewport,
         scale: 100,
-        name: `Elevation - ${entry.direction}`,
+        name: drawingNameFor(entry),
       },
     })
     if (!drawing) return
+    // Reachable from the entry before the first await, so a teardown mid-projection can still dispose it.
+    entry.drawing = drawing
 
     const editor = this.components.get(OBF.DrawingEditor)
     editor.activeDrawing = drawing
@@ -141,7 +145,6 @@ export class ElevationProjector {
 
     const ids: number[] = await model.getItemsIdsWithGeometry()
     if (ids.length === 0) {
-      entry.drawing = drawing
       entry.projected = true
       entry.layers = []
       return
@@ -159,7 +162,6 @@ export class ElevationProjector {
       entry.modelId,
       itemIdsByClass,
     )
-    entry.drawing = drawing
     entry.projected = true
     entry.layers = layers
   }

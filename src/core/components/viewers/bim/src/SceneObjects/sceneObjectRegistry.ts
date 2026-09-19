@@ -29,6 +29,13 @@ export function sceneObjectName(key: string): string {
   return `file:${key}`
 }
 
+function enrolInShadows(root: THREE.Object3D): void {
+  root.traverse((object) => {
+    object.castShadow = true
+    object.receiveShadow = true
+  })
+}
+
 type Listener = (entry: SceneObject) => void
 
 /**
@@ -57,6 +64,8 @@ export class SceneObjectRegistry {
       dispose: input.dispose ?? (() => disposeObject3D(input.root)),
     }
     entry.root.name = sceneObjectName(entry.key)
+    // Fragments are enrolled by ShadowEnroller; a flat drawing and a billboard pin cast nothing useful.
+    if (entry.kind === 'model') enrolInShadows(entry.root)
     this.scene.add(entry.root)
     this.entries.set(entry.key, entry)
     for (const listener of this.added) listener(entry)

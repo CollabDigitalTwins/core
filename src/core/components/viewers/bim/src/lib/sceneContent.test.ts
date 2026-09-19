@@ -6,7 +6,9 @@ import { describe, expect, it } from 'vitest'
 
 import { SceneObjectRegistry } from '../SceneObjects/sceneObjectRegistry'
 
-import { isFileInScene, sceneObjectForFile } from './sceneContent'
+import { hideSceneContent, isFileInScene, restoreSceneContent, sceneObjectForFile } from './sceneContent'
+
+import type { SceneContentVisibility } from './sceneContent'
 
 const file = { id: 12 }
 
@@ -48,5 +50,69 @@ describe('isFileInScene', () => {
 
   it('is false for a file that never loaded', () => {
     expect(isFileInScene(file, makeRegistry().registry)).toBe(false)
+  })
+})
+
+const root = (visible = true) => ({ visible })
+
+describe('hideSceneContent', () => {
+  it('hides every point cloud, splat and scene object, whatever the drawing sits over', () => {
+    const clouds = [root()]
+    const splats = [root()]
+    const objects = [root()]
+    const saved: SceneContentVisibility = []
+
+    hideSceneContent([...clouds, ...splats, ...objects], saved)
+
+    expect([clouds[0].visible, splats[0].visible, objects[0].visible]).toEqual([false, false, false])
+  })
+
+  it('records what it hid, so a restore puts back exactly that', () => {
+    const roots = [root(true), root(false)]
+    const saved: SceneContentVisibility = []
+
+    hideSceneContent(roots, saved)
+
+    expect(saved).toHaveLength(2)
+  })
+})
+
+describe('restoreSceneContent', () => {
+  it('puts each root back to the visibility it had', () => {
+    const shown = root(true)
+    const alreadyHidden = root(false)
+    const saved: SceneContentVisibility = []
+
+    hideSceneContent([shown, alreadyHidden], saved)
+    restoreSceneContent(saved)
+
+    expect(shown.visible).toBe(true)
+    expect(alreadyHidden.visible).toBe(false)
+  })
+
+  it('leaves nothing recorded, so a second restore cannot re-show a deleted object', () => {
+    const saved: SceneContentVisibility = []
+    hideSceneContent([root()], saved)
+
+    restoreSceneContent(saved)
+    restoreSceneContent(saved)
+
+    expect(saved).toHaveLength(0)
+  })
+
+  it('is a no-op when activate never hid anything, so a failed activate still exits cleanly', () => {
+    const saved: SceneContentVisibility = []
+    expect(() => restoreSceneContent(saved)).not.toThrow()
+  })
+
+  it('does not re-hide on a second hide, so the saved state is never overwritten with false', () => {
+    const shown = root(true)
+    const saved: SceneContentVisibility = []
+
+    hideSceneContent([shown], saved)
+    hideSceneContent([shown], saved)
+    restoreSceneContent(saved)
+
+    expect(shown.visible).toBe(true)
   })
 })

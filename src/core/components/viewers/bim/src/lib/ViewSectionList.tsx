@@ -39,6 +39,14 @@ interface Props {
   toggleVisibilityLabel: string
   /** Translated tooltip for the color picker. */
   chooseColorLabel: string
+  /** Translated label of the "generate lines" action. Omit to hide the action. */
+  generateLinesLabel?: string
+  /** True when the active entry's drawing has not been projected yet. */
+  canGenerateLines?: boolean
+  onGenerateLines?: () => void
+  /** Translated tooltip for the rename button. Omit to hide renaming. */
+  renameLabel?: string
+  onRename?: (entry: ViewListEntry, name: string) => void
   /** Maps an IFC class name to a friendly translated label
    *  (e.g. "IFCWALL" → "Wall"). */
   friendlyClassName: (className: string) => string
@@ -67,6 +75,11 @@ export function ViewSectionList({
   layersLabel,
   toggleVisibilityLabel,
   chooseColorLabel,
+  generateLinesLabel,
+  canGenerateLines = false,
+  onGenerateLines,
+  renameLabel,
+  onRename,
   friendlyClassName,
   onSelect,
   onExit,
@@ -75,6 +88,8 @@ export function ViewSectionList({
   onChangeLayerColor,
 }: Props) {
   const [layersExpanded, setLayersExpanded] = React.useState(false)
+  const [renamingId, setRenamingId] = React.useState<string | null>(null)
+  const [draft, setDraft] = React.useState('')
   const activeEntry = entries.find((entry) => entry.id === activeId) ?? null
   const isLoading = loading.isLoading
   const targetId = activeId ?? pendingId
@@ -88,6 +103,12 @@ export function ViewSectionList({
   React.useEffect(() => {
     setLayersExpanded(false)
   }, [activeId])
+
+  const commitRename = (entry: ViewListEntry) => {
+    setRenamingId(null)
+    const next = draft.trim()
+    if (next && next !== entry.label) onRename?.(entry, next)
+  }
 
   return (
     <>
@@ -122,6 +143,17 @@ export function ViewSectionList({
               />
             </div>
           )}
+          {!isLoading && canGenerateLines && onGenerateLines && generateLinesLabel && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onGenerateLines}
+              className="mt-2 h-6 w-full text-xs px-2"
+            >
+              <LR.PenLine className="h-3 w-3 mr-1" />
+              {generateLinesLabel}
+            </Button>
+          )}
         </div>
       )}
       {entries.map((entry) => {
@@ -140,22 +172,54 @@ export function ViewSectionList({
                 isActive ? 'bg-accent' : ''
               }`}
             >
-              <div
-                title={`${goToLabel}: ${entry.label}`}
-                className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
-                onClick={() => onSelect(entry)}
-              >
-                <span className="text-sm text-foreground truncate cursor-pointer">
-                  {entry.label}
-                </span>
-                {isPending ? (
-                  <LR.Loader2 className="h-3 w-3 flex-shrink-0 text-muted-foreground animate-spin" />
-                ) : isActive ? (
-                  <LR.Eye className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
-                ) : null}
-              </div>
-              {isActive && (
+              {renamingId === entry.id ? (
+                <input
+                  autoFocus
+                  value={draft}
+                  aria-label={renameLabel}
+                  onChange={(event) => setDraft(event.target.value)}
+                  onClick={(event) => event.stopPropagation()}
+                  onBlur={() => commitRename(entry)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') commitRename(entry)
+                    if (event.key === 'Escape') setRenamingId(null)
+                  }}
+                  className="text-sm bg-background border border-gray-300 rounded-sm px-1 py-0 flex-1 min-w-0"
+                />
+              ) : (
+                <div
+                  title={`${goToLabel}: ${entry.label}`}
+                  className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
+                  onClick={() => onSelect(entry)}
+                >
+                  <span className="text-sm text-foreground truncate cursor-pointer">
+                    {entry.label}
+                  </span>
+                  {isPending ? (
+                    <LR.Loader2 className="h-3 w-3 flex-shrink-0 text-muted-foreground animate-spin" />
+                  ) : isActive ? (
+                    <LR.Eye className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+                  ) : null}
+                </div>
+              )}
+              {(isActive || !!onRename) && (
                 <div className="flex items-center gap-1">
+                  {onRename && renamingId !== entry.id && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 p-0"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setDraft(entry.label)
+                        setRenamingId(entry.id)
+                      }}
+                      title={renameLabel}
+                    >
+                      <LR.Pencil className="h-3 w-3" />
+                    </Button>
+                  )}
+                  {isActive && (
                   <Button
                     variant="ghost"
                     size="icon"
@@ -165,6 +229,8 @@ export function ViewSectionList({
                   >
                     <LR.Download className="h-3 w-3" />
                   </Button>
+                  )}
+                  {isActive && (
                   <Button
                     variant="ghost"
                     size="icon"
@@ -181,6 +247,7 @@ export function ViewSectionList({
                       <LR.ChevronRight className="h-3 w-3" />
                     )}
                   </Button>
+                  )}
                 </div>
               )}
             </div>

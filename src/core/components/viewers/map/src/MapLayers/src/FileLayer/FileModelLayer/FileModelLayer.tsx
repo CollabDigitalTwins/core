@@ -19,7 +19,7 @@ type LoadedModelFiles = {
 
 interface FileModelLayerProps {
   tempPositionsRef?: React.MutableRefObject<Record<string, { lat: number; lng: number }>>
-  editingFileNameRef?: React.MutableRefObject<string | null>
+  editingFileIdRef?: React.MutableRefObject<string | null>
   tempRotationsRef?: React.MutableRefObject<Record<string, number>>
   tempElevationsRef?: React.MutableRefObject<Record<string, number>>
   /** Called when the user right-clicks on a rendered 3D mesh. */
@@ -28,7 +28,7 @@ interface FileModelLayerProps {
 
 export const FileModelLayer = ({
   tempPositionsRef,
-  editingFileNameRef,
+  editingFileIdRef,
   tempRotationsRef,
   tempElevationsRef,
   onContextMenu,
@@ -107,7 +107,7 @@ export const FileModelLayer = ({
         map,
         rendererRef.current,
         tempPositionsRef,
-        editingFileNameRef,
+        editingFileIdRef,
         tempRotationsRef,
         tempElevationsRef,
       )

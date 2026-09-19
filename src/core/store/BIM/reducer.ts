@@ -30,8 +30,8 @@ interface BimTypes {
         "bimFile": DbFile;
         building?: Building | null;
     }[];
-    editingBimModel: string | null;
-    bimModelName: string | null;
+    editingBimModelId: string | null;
+    bimModelId: string | null;
     /** Mirror of the Highlighter's selection; only SelectionSync dispatches SET_BIM_SELECTION. */
     selection: OBC.ModelIdMap;
     /** The selected file-backed object, when the last click hit one. Only SelectionSync dispatches it. */
@@ -65,9 +65,9 @@ export type BimPayload = {
     ["SET_FRAGMENTS_STARTED"]: Pick<BimTypes, "fragmentsStarted">;
     ["DISPOSE-BIM"]: void;
     ["TOGGLE_BIM_TO_MAP"]: Pick<BimTypes, "buildingModel">;
-    ["REMOVE_BIM_FROM_MAP"]: Pick<BimTypes, "bimModelName">;
+    ["REMOVE_BIM_FROM_MAP"]: Pick<BimTypes, "bimModelId">;
     ["REMOVE_ALL_BIM_FROM_MAP"]: void;
-    ["EDIT_BIM_MODEL_BY_NAME"]: Pick<BimTypes, "editingBimModel">;
+    ["EDIT_BIM_MODEL_BY_ID"]: Pick<BimTypes, "editingBimModelId">;
     ["ADD_BCF_TOPIC"]: Pick<BimTypes, "bcfTopic">;
     ["REMOVE_BCF_TOPIC"]: Pick<BimTypes, "bcfTopicId">;
     ['EDIT_BCF_TOPIC']: Pick<BimTypes, "bcfTopic">;
@@ -214,10 +214,10 @@ export const BimReducer = (state: BimState, action: BimActions) => {
         }
         case "REMOVE_BIM_FROM_MAP": {
 
-            const removeName = action.payload.bimModelName;
+            const removeId = action.payload.bimModelId;
             return {
                 ...state,
-                bimModelsAddedToMap: state.bimModelsAddedToMap.filter((model) => model.bimFile.name !== removeName
+                bimModelsAddedToMap: state.bimModelsAddedToMap.filter((model) => String(model.bimFile.id) !== removeId
                 ),
             };
 
@@ -227,10 +227,10 @@ export const BimReducer = (state: BimState, action: BimActions) => {
                 ...state,
                 "bimModelsAddedToMap": [],
             };
-        case "EDIT_BIM_MODEL_BY_NAME": {
+        case "EDIT_BIM_MODEL_BY_ID": {
             return {
                 ...state,
-                "editingBimModel": action.payload.editingBimModel,
+                "editingBimModelId": action.payload.editingBimModelId,
             }
         }
         case "ADD_BCF_TOPIC":

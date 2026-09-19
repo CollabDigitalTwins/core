@@ -12,7 +12,7 @@ const base = {
   modelIds: [], floorplans: [], grid: null,
   buildingModel: { bimFile: null, building: null },
   bimModelsAddedToMap: [],
-  editingBimModel: null, bimModelName: null,
+  editingBimModelId: null, bimModelId: null,
   bcfTopic: null, bcfTopics: [], bcfTopicId: null,
   modelUIState: {},
   pointCloudIds: [], activePointCloudId: null,
@@ -90,11 +90,23 @@ describe('BimReducer', () => {
     logSpy.mockRestore()
   })
 
-  it('REMOVE_BIM_FROM_MAP filters by file name; REMOVE_ALL clears', () => {
+  it('REMOVE_BIM_FROM_MAP filters by file id; REMOVE_ALL clears', () => {
     const start = { ...base, bimModelsAddedToMap: [{ bimFile: { id: 1, name: 'a.ifc' } }, { bimFile: { id: 2, name: 'b.ifc' } }] } as never
-    const s = BimReducer(start, { type: 'REMOVE_BIM_FROM_MAP', payload: { bimModelName: 'a.ifc' } } as never)
+    const s = BimReducer(start, { type: 'REMOVE_BIM_FROM_MAP', payload: { bimModelId: '1' } } as never)
     expect(s.bimModelsAddedToMap.map((m: { bimFile: { name: string } }) => m.bimFile.name)).toEqual(['b.ifc'])
     expect(BimReducer(start, { type: 'REMOVE_ALL_BIM_FROM_MAP' } as never).bimModelsAddedToMap).toEqual([])
+  })
+
+  it('REMOVE_BIM_FROM_MAP leaves a same-named file from another building on the map', () => {
+    const start = { ...base, bimModelsAddedToMap: [{ bimFile: { id: 1, name: 'tower.ifc' } }, { bimFile: { id: 2, name: 'tower.ifc' } }] } as never
+    const s = BimReducer(start, { type: 'REMOVE_BIM_FROM_MAP', payload: { bimModelId: '1' } } as never)
+    expect(s.bimModelsAddedToMap.map((m: { bimFile: { id: number } }) => m.bimFile.id)).toEqual([2])
+  })
+
+  it('EDIT_BIM_MODEL_BY_ID stores the id so same-named files edit independently', () => {
+    const s = BimReducer(base, { type: 'EDIT_BIM_MODEL_BY_ID', payload: { editingBimModelId: '2' } } as never)
+    expect(s.editingBimModelId).toBe('2')
+    expect(BimReducer(s, { type: 'EDIT_BIM_MODEL_BY_ID', payload: { editingBimModelId: null } } as never).editingBimModelId).toBeNull()
   })
 
   it('BCF topics: add / edit by guid / remove by guid', () => {

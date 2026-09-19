@@ -13,7 +13,7 @@ import type { DbFile } from '../../../../../../../../types/dbTypes'
 type TempPositionsRef = React.MutableRefObject<Record<string, { lat: number; lng: number }>>
 type TempRotationsRef = React.MutableRefObject<Record<string, number>>
 type TempElevationsRef = React.MutableRefObject<Record<string, number>>
-type EditingFileNameRef = React.MutableRefObject<string | null>
+type EditingFileIdRef = React.MutableRefObject<string | null>
 
 function resolveModelCoordinates(file: DbFile): { lng: number, lat: number } {
   if (typeof file.lng === 'number' && typeof file.lat === 'number') {
@@ -48,7 +48,7 @@ export const CustomModelLayer = (
   map: Map,
   renderer: THREE.WebGLRenderer,
   tempPositionsRef?: TempPositionsRef,
-  editingFileNameRef?: EditingFileNameRef,
+  editingFileIdRef?: EditingFileIdRef,
   tempRotationsRef?: TempRotationsRef,
   tempElevationsRef?: TempElevationsRef,
 ): { cleanup: () => void, remove: () => void, hitTest: (ndcX: number, ndcY: number) => boolean } => {
@@ -58,6 +58,8 @@ export const CustomModelLayer = (
   if (!map || !modelFile) {
     return { cleanup: () => {}, remove: () => {}, hitTest: () => false }
   }
+
+  const modelFileKey = String(modelFile.id)
 
   // Refs into the layer's camera and scene so raycasting can read the last
   // rendered frame's transform without entering the render loop.
@@ -176,13 +178,13 @@ export const CustomModelLayer = (
       render(gl, args) {
         if (map.getZoom() < 15.5) return
 
-        const isEditing = editingFileNameRef?.current === modelFile.name
+        const isEditing = editingFileIdRef?.current === modelFileKey
 
         // ── Position ──────────────────────────────────────────────────────────
         let lng: number
         let lat: number
-        if (isEditing && tempPositionsRef?.current[modelFile.name]) {
-          const tp = tempPositionsRef.current[modelFile.name]
+        if (isEditing && tempPositionsRef?.current[modelFileKey]) {
+          const tp = tempPositionsRef.current[modelFileKey]
           lng = tp.lng
           lat = tp.lat
         } else {
@@ -194,8 +196,8 @@ export const CustomModelLayer = (
         if (lng === 0 && lat === 0) return
 
         // ── Rotation (delta-increment, same pattern as BimLayer) ──────────────
-        const targetRotation = (isEditing && tempRotationsRef?.current[modelFile.name] !== undefined)
-          ? tempRotationsRef.current[modelFile.name]
+        const targetRotation = (isEditing && tempRotationsRef?.current[modelFileKey] !== undefined)
+          ? tempRotationsRef.current[modelFileKey]
           : (modelFile.rotation ?? 0)
 
         if (targetRotation !== lastAppliedRotation) {
@@ -206,8 +208,8 @@ export const CustomModelLayer = (
         }
 
         // ── Elevation ─────────────────────────────────────────────────────────
-        const fileElevation = (isEditing && tempElevationsRef?.current[modelFile.name] !== undefined)
-          ? tempElevationsRef.current[modelFile.name]
+        const fileElevation = (isEditing && tempElevationsRef?.current[modelFileKey] !== undefined)
+          ? tempElevationsRef.current[modelFileKey]
           : (modelFile.elevation ?? 0)
 
         const modelOrigin = [lng, lat] as LngLatLike

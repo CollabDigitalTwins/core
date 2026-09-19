@@ -84,7 +84,7 @@ export const EditPosition: React.FC<EditPositionProps> = ({
 
     const { updateFile } = useFile(file.id);
 
-    const key = file.name;
+    const key = String(file.id);
 
     const startLat = file.lat ?? initialLat ?? 0;
     const startLng = file.lng ?? initialLng ?? 0;

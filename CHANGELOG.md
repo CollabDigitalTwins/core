@@ -133,6 +133,17 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   `BimLoadingState.helpText` is reworded. A deployment overriding either key must rename its
   override.
 
+### Changed
+- Every placement edit now reports itself the same way, whatever the object is. A finished move,
+  rotation or scale raises a toast naming the action — "Moved", "Rotated", "Scaled" — for 3D models,
+  DXF drawings, point clouds and splats alike; models and drawings previously saved and failed in
+  silence, while clouds and splats each carried their own copy of the toast and always said
+  "position" whichever handle you had dragged. A Done that moved nothing, and a Cancel, now write
+  nothing and say nothing. `PlacementEditor.accept()` and `cancel()` return a promise, skip a
+  commit that would store what is already stored, and trigger `onCommitted` once the write settles,
+  with an added `ok` telling success from failure. The `Placement.saved` message is replaced by
+  `movedFile`, `rotatedFile` and `scaledFile`.
+
 ### Fixed
 - A 3D model's or DXF drawing's scale now survives a reload. It is stored in `File.scale`, which
   nothing was writing: the placement gizmo committed only position and yaw, the upload card's scale

@@ -7,6 +7,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.11.0]
+
 ### Added
 - A clipping plane can be turned into a drawing from the clipping tool's menu. The new view appears
   under Layers -> Drawings -> **Custom**, previews instantly, generates its lines on demand and

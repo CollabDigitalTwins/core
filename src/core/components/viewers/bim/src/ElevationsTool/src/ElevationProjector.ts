@@ -14,6 +14,8 @@ import {
   patchModelGeometryRepresentationIds,
 } from '../../lib/drawingProjection'
 
+import { drawingNameFor } from './drawingName'
+
 import type {
   ElevationDirection,
   ElevationEntry,
@@ -128,7 +130,7 @@ export class ElevationProjector {
       viewport: {
         ...entry.viewport,
         scale: 100,
-        name: `Elevation - ${entry.label ?? entry.direction}`,
+        name: drawingNameFor(entry),
       },
     })
     if (!drawing) return

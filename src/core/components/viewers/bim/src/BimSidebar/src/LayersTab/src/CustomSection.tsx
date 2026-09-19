@@ -138,6 +138,11 @@ export function CustomSection({
     exportDrawingToDxf(bimComponents, custom.drawing, fileName)
   }
 
+  const handleRename = (entry: ViewListEntry, name: string) => {
+    if (!bimComponents) return
+    bimComponents.get(ElevationsTool).rename(entry.id, name)
+  }
+
   const handleToggleLayer = (className: string, visible: boolean) => {
     if (!bimComponents || !activeId) return
     bimComponents.get(ElevationsTool).setLayerVisible(activeId, className, visible)
@@ -181,6 +186,8 @@ export function CustomSection({
         generateLinesLabel={t('generateLines')}
         canGenerateLines={!!activeEntry && !activeEntry.projected}
         onGenerateLines={handleGenerateLines}
+        renameLabel={t('renameTitle')}
+        onRename={handleRename}
         friendlyClassName={friendlyClassName}
         onSelect={handleSelect}
         onExit={handleExit}

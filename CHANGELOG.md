@@ -76,6 +76,12 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   carries the credit.
 
 ### Changed
+- Turning a clipping plane into a drawing is now an explicit two-step pick. The clipping menu item
+  appears once at least one plane exists, arms a picking mode with an on-screen instruction, and the
+  next click on a plane creates the drawing; Escape cancels. The **Custom** tab under Layers ->
+  Drawings only appears once a custom drawing exists, and a custom drawing can be renamed from its
+  row — the name is session-only and reaches the DXF export. `ElevationsTool` gains
+  `rename(id, label)`, and `ViewSectionList` gains optional `renameLabel` / `onRename` props.
 - The BIM viewer's empty-state card now offers every 3D file type — BIM model, point cloud, splat,
   3D model and CAD — instead of `.ifc` and `.frag` alone, and routes the picked file through the
   same intake as the sidebar, so a point cloud lands in the point-cloud path and a model in the

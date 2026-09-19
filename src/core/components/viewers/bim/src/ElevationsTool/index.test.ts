@@ -324,6 +324,35 @@ describe('ElevationsTool custom entries', () => {
     expect(tool.elevations.map((e) => e.id)).not.toContain(dropped)
   })
 
+  it('renames a custom entry and the viewport its DXF is named after', () => {
+    const { tool } = makeTool()
+    const id = tool.addFromPlane(plane('plane-0'), 'Section 1')!
+    const entry = tool.elevations.find((e) => e.id === id)!
+    const viewport = { name: 'Elevation - Section 1' }
+    entry.drawing = {
+      viewports: new Map([['vp', viewport]]),
+    } as unknown as OBC.TechnicalDrawing
+    const seen: ElevationEntry[][] = []
+    tool.onElevationsChanged.add((entries) => seen.push(entries))
+
+    tool.rename(id, '  Roof cut  ')
+
+    expect(entry.label).toBe('Roof cut')
+    expect(viewport.name).toBe('Elevation - Roof cut')
+    expect(seen).toHaveLength(1)
+  })
+
+  it('refuses a blank name, and any rename of a cardinal elevation', () => {
+    const { tool, entry } = makeTool()
+    const id = tool.addFromPlane(plane('plane-0'), 'Section 1')!
+
+    tool.rename(id, '   ')
+    tool.rename(entry.id, 'Not an elevation')
+
+    expect(tool.elevations.find((e) => e.id === id)?.label).toBe('Section 1')
+    expect(entry.label).toBeUndefined()
+  })
+
   it('drops a custom entry with the rest on resetAll', () => {
     const { tool } = makeTool()
     tool.addFromPlane(plane('plane-0'), 'Section 1')

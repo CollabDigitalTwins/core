@@ -17,6 +17,7 @@ import { ViewModeCoordinator } from '../lib/ViewModeCoordinator'
 import { stagePercent } from '../lib/viewSection'
 import { ClippingPlanes } from '../tools/ClippingTool/ClippingPlanes'
 
+import { drawingNameFor } from './src/drawingName'
 import { ElevationProjector } from './src/ElevationProjector'
 import { planeToEntry } from './src/planeToEntry'
 import {
@@ -179,6 +180,21 @@ export class ElevationsTool extends OBC.Component {
     this._entries.set(entry.id, entry)
     this.onElevationsChanged.trigger(this.elevations)
     return entry.id
+  }
+
+  /** Session-only rename of a plane-cut drawing; cardinal elevations keep their translated name. */
+  rename(id: string, label: string): void {
+    const entry = this._entries.get(id)
+    if (!entry?.planeKey) return
+
+    const next = label.trim()
+    if (!next || next === entry.label) return
+
+    entry.label = next
+    for (const viewport of entry.drawing?.viewports.values() ?? []) {
+      viewport.name = drawingNameFor(entry)
+    }
+    this.onElevationsChanged.trigger(this.elevations)
   }
 
   private _modelForPoint(point: THREE.Vector3): { modelId: string; box: THREE.Box3 } | null {

@@ -121,8 +121,14 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   the meshes never opted in, so there was nothing to traverse; they are now created with
   `lod: true`. Left unset, the budget stays Spark's own per-device target (500K on WebXR up
   to 2.5M on desktop) rather than a hard-coded constant.
+- `camera-controls` (`>=3.1.2`) is now declared as an optional `peerDependency`. It was always
+  required at runtime by `@thatopen/components`, which imports it directly; core just never said
+  so, and a clean install without it fails to load the BIM viewer.
 
 ### Migration
+- A consumer that installs `@thatopen/components` must also install `camera-controls`. Package
+  managers that warn on unmet peers were already asking for it, so most deployments already have
+  it and need no change.
 - `SplatRenderSettings` gains an optional `lodSplatCount`. `settings()` now reports the budget
   in force rather than `undefined`, so a consumer reading it back gets Spark's per-device
   default until something overrides it. No action needed unless you assert on the exact object.

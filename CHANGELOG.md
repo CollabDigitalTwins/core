@@ -7,7 +7,10 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
-## [0.11.0]
+## [0.11.1]
+
+> 0.11.0 was left staged on the registry by a failed publish and can never be claimed. This
+> release carries its contents unchanged; no 0.11.0 exists on npm.
 
 ### Added
 - A clipping plane can be turned into a drawing from the clipping tool's menu. The new view appears

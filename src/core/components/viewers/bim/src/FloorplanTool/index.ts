@@ -7,6 +7,7 @@ import * as THREE from 'three'
 
 import { CurrentWorld } from '../CurrentWorld'
 import { CameraController } from '../lib/CameraController'
+import { pumpCameraTransition } from '../lib/cameraTransition'
 import { ChromeController } from '../lib/ChromeController'
 import { ClipController } from '../lib/ClipController'
 import { CUT_CLASSES, FILL_CLASSES } from '../lib/drawingLayers'
@@ -656,7 +657,7 @@ export class FloorplanTool extends OBC.Component {
     const controls = world.camera.controls as any
     const radians = (this._northAngle * Math.PI) / 180
     if (typeof controls.rotateAzimuthTo === 'function') {
-      void controls.rotateAzimuthTo(radians, true)
+      void pumpCameraTransition(this.components, controls.rotateAzimuthTo(radians, true))
     } else {
       controls.azimuthAngle = radians
     }
@@ -1003,7 +1004,7 @@ export class FloorplanTool extends OBC.Component {
     const world = this.components.get(CurrentWorld).world
     const controls = world?.camera?.controls
     if (!controls) return
-    await controls.fitToBox(box, true)
+    await pumpCameraTransition(this.components, controls.fitToBox(box, true))
   }
 
   private _frameCamera(entry: FloorplanEntry) {

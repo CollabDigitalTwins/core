@@ -6,6 +6,8 @@ import * as THREE from 'three'
 import { CameraNavigation } from '../CameraNavigation'
 import { CurrentWorld } from '../CurrentWorld'
 
+import { pumpCameraTransition } from './cameraTransition'
+
 import type * as OBC from '@thatopen/components'
 
 // camera-controls ACTION constants (avoid importing the package directly).
@@ -122,7 +124,7 @@ export class CameraController {
     if (this._savedPosition && this._savedTarget) {
       const p = this._savedPosition
       const t = this._savedTarget
-      void controls.setLookAt(p.x, p.y, p.z, t.x, t.y, t.z, true)
+      void pumpCameraTransition(this.components, controls.setLookAt(p.x, p.y, p.z, t.x, t.y, t.z, true))
     }
 
     this._reset()
@@ -149,7 +151,7 @@ export class CameraController {
     const dir = viewDirection.clone().normalize()
     const camPos = target.clone().sub(dir.multiplyScalar(span))
 
-    void sourceWorld.camera.controls.setLookAt(
+    void pumpCameraTransition(this.components, sourceWorld.camera.controls.setLookAt(
       camPos.x,
       camPos.y,
       camPos.z,
@@ -157,7 +159,7 @@ export class CameraController {
       target.y,
       target.z,
       true,
-    )
+    ))
   }
 
   // OBC refuses an orthographic switch silently, leaving a perspective plan the model cannot line up under.

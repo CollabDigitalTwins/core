@@ -134,6 +134,11 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   override.
 
 ### Fixed
+- Entering a floorplan or elevation no longer leaves the 3D view frozen where it was. camera-controls
+  advances an animated move only on rendered frames and the BIM renderer draws on demand, so the
+  camera transition never ran and its promise never settled — which also left activation awaiting
+  `fitToBox` forever, so the drawing's progress bar never finished. Camera transitions in the drawing
+  views now keep the renderer awake until they complete, the way walk mode already did.
 - A file hidden from the BIM viewport right-click menu now shows as hidden in the sidebar's file
   list. The list's row state kept a local toggle forever, so a visibility change written by anyone
   else was ignored for any row it had already seen.

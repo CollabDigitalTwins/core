@@ -3,6 +3,7 @@
 
 import * as THREE from 'three'
 
+import { CameraNavigation } from '../CameraNavigation'
 import { CurrentWorld } from '../CurrentWorld'
 
 import type * as OBC from '@thatopen/components'
@@ -98,14 +99,18 @@ export class CameraController {
     // Restore projection BEFORE pose so the orthographic frustum doesn't
     // fight the new perspective look-at.
     const camera = sourceWorld.camera as OBC.OrthoPerspectiveCamera
+    // First Person refuses to run under an orthographic lens, so the mode can only go back after it.
     if (this._savedProjection) {
       try {
-        void camera.projection.set(this._savedProjection)
+        void Promise.resolve(camera.projection.set(this._savedProjection))
+          .then(() => this._restoreNavMode(camera))
+          .catch(() => undefined)
       } catch {
-        // ignore
+        this._restoreNavMode(camera)
       }
+    } else {
+      this._restoreNavMode(camera)
     }
-    this._restoreNavMode(camera)
 
     controls.minPolarAngle = saved.minPolarAngle
     controls.maxPolarAngle = saved.maxPolarAngle
@@ -161,10 +166,14 @@ export class CameraController {
     this._trySetOrtho(camera)
     if (this._isOrtho(camera)) return
 
-    // The refusal OBC can recover from: it will not leave FirstPerson for an orthographic frustum.
-    const mode = (camera as any).mode
-    if (mode?.id && mode.id !== 'Orbit') {
-      this._savedNavMode = mode.id as string
+    // First Person and an orthographic lens each refuse the other, so the mode moves first — via its owner, or its walk loop survives.
+    const navigation = this._navigation()
+    if (navigation && navigation.mode !== 'Orbit') {
+      this._savedNavMode = navigation.mode
+      navigation.setMode('Orbit')
+      this._trySetOrtho(camera)
+    } else if (!navigation && (camera as any).mode?.id === 'FirstPerson') {
+      this._savedNavMode = 'FirstPerson'
       try { (camera as any).set('Orbit') } catch { /* mode not registered on this camera */ }
       this._trySetOrtho(camera)
     }
@@ -182,10 +191,22 @@ export class CameraController {
     try { void (camera as any).projection.set('Orthographic') } catch { /* no world or renderer yet */ }
   }
 
+  // Not every host registers it — SimpleBimViewer has no navigation component.
+  private _navigation(): { mode: string; setMode: (mode: any) => void } | null {
+    try {
+      const navigation = this.components.get(CameraNavigation) as any
+      return typeof navigation?.setMode === 'function' ? navigation : null
+    } catch { return null }
+  }
+
   private _restoreNavMode(camera: OBC.OrthoPerspectiveCamera) {
-    if (!this._savedNavMode) return
-    try { (camera as any).set(this._savedNavMode) } catch { /* mode no longer registered */ }
+    const mode = this._savedNavMode
+    if (!mode) return
     this._savedNavMode = null
+
+    const navigation = this._navigation()
+    if (navigation) { navigation.setMode(mode); return }
+    try { (camera as any).set(mode) } catch { /* mode no longer registered */ }
   }
 
   private _reset() {

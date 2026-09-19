@@ -131,13 +131,15 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - A file hidden from the BIM viewport right-click menu now shows as hidden in the sidebar's file
   list. The list's row state kept a local toggle forever, so a visibility change written by anyone
   else was ignored for any row it had already seen.
-- The model now lines up under a floorplan's or elevation's lines. The drawing view asks for an
-  orthographic projection, but OBC's `ProjectionManager.setOrthoCamera` returns silently — leaving
-  the camera in perspective — when the camera has no navigation mode, is in FirstPerson, or has no
-  renderer yet, and the request was fire-and-forget inside an empty `catch`. A perspective camera
-  aimed straight down draws the flat lines correctly while giving the model receding faces, so the
-  two appeared misaligned. The switch is now verified, escapes FirstPerson and restores the
-  navigation mode on exit, and warns rather than silently drawing a perspective plan.
+- The model now lines up under a floorplan's or elevation's lines. First Person navigation and an
+  orthographic lens each refuse the other — `CameraNavigation.canUse` rejects First Person while
+  orthographic, and OBC's `ProjectionManager.setOrthoCamera` returns silently while in First
+  Person — so opening a drawing from walk mode left the camera in perspective. Aimed straight down
+  it draws the flat projected lines correctly while giving the model receding faces, which read as
+  the two being misaligned. A drawing view now leaves First Person through `CameraNavigation`
+  (so its walk loop and published state stay in step, rather than being changed behind its back),
+  verifies the projection actually switched, restores the previous mode on exit once the lens is
+  back to perspective, and warns instead of silently drawing a perspective plan.
 - Floorplan and elevation drawings no longer stay in the scene after switching buildings without
   first exiting the view, including when a drawing is still being generated. Nothing was scoped to
   the building: the viewer's components outlive it, and freeing a drawing depended on a model-delete

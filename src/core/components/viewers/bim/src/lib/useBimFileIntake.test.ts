@@ -108,4 +108,36 @@ describe('useBimFileIntake', () => {
     expect(sent.pointCloudTransform).toBeUndefined()
     expect(sent.x).toBe(1)
   })
+
+  it('saves a model placed at a scale into the scale column', async () => {
+    vi.mocked(uploadFile).mockClear()
+    const { result } = renderHook(() => useBimFileIntake(options))
+    await act(async () => {
+      await result.current.submit(new File([''], 'model.glb'), { x: 1, y: 2, z: 3 } as never, 2.5)
+    })
+    expect((vi.mocked(uploadFile).mock.calls[0][0] as { scale?: number }).scale).toBe(2.5)
+  })
+
+  it('saves a drawing placed at its millimetre scale', async () => {
+    vi.mocked(uploadFile).mockClear()
+    const { result } = renderHook(() => useBimFileIntake(options))
+    await act(async () => {
+      await result.current.submit(new File([''], 'level-2.dxf'), { x: 0, y: 0, z: 0 } as never, 0.001)
+    })
+    expect((vi.mocked(uploadFile).mock.calls[0][0] as { scale?: number }).scale).toBe(0.001)
+  })
+
+  it('keeps a splat scale inside its transform, leaving the column null', async () => {
+    vi.mocked(uploadFile).mockClear()
+    const { result } = renderHook(() => useBimFileIntake(options))
+    await act(async () => {
+      await result.current.submit(new File([''], 'scan.spz'), { x: 1, y: 2, z: 3 } as never, 4)
+    })
+    const sent = vi.mocked(uploadFile).mock.calls[0][0] as {
+      scale?: number
+      pointCloudTransform?: { scale?: number }
+    }
+    expect(sent.scale).toBeUndefined()
+    expect(sent.pointCloudTransform?.scale).toBe(4)
+  })
 })

@@ -26,9 +26,6 @@ vi.mock('../../../../../../hooks/files/files', () => ({
     return { updateFile: fileHooks.updateFile }
   },
 }))
-vi.mock('next-intl', () => ({
-  useTranslations: () => (key: string, values?: { name?: string }) => `${key}:${values?.name ?? ''}`,
-}))
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
 const PLACED: PointCloudPlacement = { ...DEFAULT_PLACEMENT, position: [4, 5, 6], scale: 2 }
@@ -80,44 +77,29 @@ describe('usePointCloudTarget', () => {
     expect(fileHooks.updateFile).not.toHaveBeenCalled()
   })
 
-  it('survives a rejected write', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => { })
+  it('surfaces a rejected write instead of swallowing it, so the editor can report it', async () => {
     fileHooks.updateFile.mockRejectedValueOnce(new Error('offline'))
     const { target } = setUp()
 
-    await act(() => target.commit({ ...PLACED }))
-
-    expect(warn).toHaveBeenCalled()
-    warn.mockRestore()
+    await expect(target.commit({ ...PLACED })).rejects.toThrow('offline')
   })
 
-  it('tells the user the placement was saved, naming the cloud', async () => {
+  it('says nothing itself — the toast belongs to the editor', async () => {
     const { target } = setUp()
-
-    await act(() => target.commit({ ...PLACED }))
-
-    expect(toast.success).toHaveBeenCalledWith('saved:basement scan')
-  })
-
-  it('tells the user when the placement could not be saved', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => { })
-    fileHooks.updateFile.mockRejectedValueOnce(new Error('offline'))
-    const { target } = setUp()
-
-    await act(() => target.commit({ ...PLACED }))
-
-    expect(toast.error).toHaveBeenCalledWith('saveFailed:basement scan')
-    warn.mockRestore()
-  })
-
-  it('stays quiet when the placement did not actually change', async () => {
-    const stored = { id: 669, name: 'scan', pointCloudTransform: { version: PLACEMENT_VERSION, ...PLACED } }
-    const { target } = setUp(stored)
 
     await act(() => target.commit({ ...PLACED }))
 
     expect(toast.success).not.toHaveBeenCalled()
     expect(toast.error).not.toHaveBeenCalled()
+  })
+
+  it('writes nothing when the placement did not actually change', async () => {
+    const stored = { id: 669, name: 'scan', pointCloudTransform: { version: PLACEMENT_VERSION, ...PLACED } }
+    const { target } = setUp(stored)
+
+    await act(() => target.commit({ ...PLACED }))
+
+    expect(fileHooks.updateFile).not.toHaveBeenCalled()
   })
 
   it('keeps the in-memory file in step, so the row does not flicker before the refetch', async () => {

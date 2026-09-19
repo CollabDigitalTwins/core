@@ -2075,9 +2075,11 @@
     "pickPivotHint": "Haz doble clic para crear el punto de pivote",
     "pickPivotFailed": "No hay nada bajo el cursor para seleccionar",
     "editHint": "Arrastra el gizmo para colocarlo. La posición se guarda al pulsar Hecho.",
-    "saved": "Se guardó la posición de \"{name}\"",
-    "saveFailed": "No se pudo guardar la posición de \"{name}\"",
-    "deleteFailed": "No se pudo eliminar \"{name}\""
+    "saveFailed": "No se pudo guardar «{name}»",
+    "deleteFailed": "No se pudo eliminar \"{name}\"",
+    "movedFile": "Se movió «{name}»",
+    "rotatedFile": "Se rotó «{name}»",
+    "scaledFile": "Se escaló «{name}»"
   },
   "PointCloudSettings": {
     "title": "Nubes de puntos",

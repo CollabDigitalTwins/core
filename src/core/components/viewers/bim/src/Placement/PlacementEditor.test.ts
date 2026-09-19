@@ -154,7 +154,7 @@ describe('PlacementEditor', () => {
     await begin('669')
     editor.setPlacement({ ...DEFAULT_PLACEMENT, position: [9, 9, 9] })
 
-    editor.cancel()
+    await editor.cancel()
 
     expect(targets.get('669')?.root.position.toArray()).toEqual([0, 0, 0])
     expect(editor.activeId).toBeNull()
@@ -165,7 +165,7 @@ describe('PlacementEditor', () => {
     await begin('669')
     editor.setPlacement({ ...DEFAULT_PLACEMENT, position: [9, 9, 9] })
 
-    editor.accept()
+    await editor.accept()
 
     expect(targets.get('669')?.root.position.toArray()).toEqual([9, 9, 9])
     expect(editor.activeId).toBeNull()
@@ -178,21 +178,21 @@ describe('PlacementEditor', () => {
     await begin('669')
     editor.setPlacement({ ...DEFAULT_PLACEMENT, position: [7, 0, 0] })
 
-    editor.accept()
+    await editor.accept()
 
     expect(committed).toHaveBeenCalledWith(expect.objectContaining({ id: '669', placement: expect.objectContaining({ position: [7, 0, 0] }) }))
   })
 
-  it('commits the reverted placement on cancel, so a revert is saved too', async () => {
+  it('announces nothing on cancel, which leaves storage as it found it', async () => {
     const { editor, begin } = setUp()
     const committed = vi.fn()
     await begin('669')
     editor.setPlacement({ ...DEFAULT_PLACEMENT, position: [7, 0, 0] })
     editor.onCommitted.add(committed)
 
-    editor.cancel()
+    await editor.cancel()
 
-    expect(committed).toHaveBeenCalledWith(expect.objectContaining({ id: '669', placement: expect.objectContaining({ position: [0, 0, 0] }) }))
+    expect(committed).not.toHaveBeenCalled()
   })
 
   it('announces the end of a session with a null change', async () => {
@@ -201,7 +201,7 @@ describe('PlacementEditor', () => {
     await begin('669')
     editor.onChanged.add(changed)
 
-    editor.accept()
+    await editor.accept()
 
     expect(changed).toHaveBeenLastCalledWith(null)
   })
@@ -363,7 +363,7 @@ describe('PlacementEditor pivot', () => {
     await begin('669')
     editor.setPivot(FAR)
 
-    editor.accept()
+    await editor.accept()
     await begin('669')
 
     expect(editor.pivot).toBeNull()
@@ -422,7 +422,7 @@ describe('PlacementEditor pivot gizmo', () => {
     editor.setPivot(FAR)
     const proxy = gizmo.attached as THREE.Object3D
 
-    editor.accept()
+    await editor.accept()
 
     expect(proxy.parent).toBeNull()
   })
@@ -480,7 +480,7 @@ describe('PlacementEditor gizmo mode', () => {
     const { editor, gizmo, begin } = setUp()
     await begin('669')
     editor.setMode('rotate')
-    editor.accept()
+    await editor.accept()
 
     await begin('669')
 
@@ -540,19 +540,20 @@ describe('PlacementEditor persistence', () => {
     await begin('669')
     editor.setPlacement({ ...DEFAULT_PLACEMENT, position: [7, 8, 9] })
 
-    editor.accept()
+    await editor.accept()
 
     expect(targets.get('669')?.commits).toEqual([expect.objectContaining({ position: [7, 8, 9] })])
   })
 
-  it('stores the reverted placement on cancel, so a revert is saved too', async () => {
+  it('puts the object back on cancel without writing the revert', async () => {
     const { editor, targets, begin } = setUp()
     await begin('669')
     editor.setPlacement({ ...DEFAULT_PLACEMENT, position: [7, 8, 9] })
 
-    editor.cancel()
+    await editor.cancel()
 
-    expect(targets.get('669')?.commits).toEqual([expect.objectContaining({ position: [0, 0, 0] })])
+    expect(targets.get('669')?.placement.position).toEqual([0, 0, 0])
+    expect(targets.get('669')?.commits).toEqual([])
   })
 
   it('narrows what it stores to what the target can hold', async () => {
@@ -561,15 +562,15 @@ describe('PlacementEditor persistence', () => {
     await editor.begin(yawOnly)
     editor.setPlacement({ ...DEFAULT_PLACEMENT, rotation: [0.3, 0.7, 0.2], scale: 4 })
 
-    editor.accept()
+    await editor.accept()
 
     expect(targets.get('669')?.commits[0]).toEqual(expect.objectContaining({ rotation: [0, 0.7, 0], scale: 1 }))
   })
 
-  it('stores nothing when there was no session', () => {
+  it('stores nothing when there was no session', async () => {
     const { editor, targets } = setUp()
 
-    editor.accept()
+    await editor.accept()
 
     expect(targets.get('669')?.commits).toEqual([])
   })
@@ -686,5 +687,71 @@ describe('PlacementEditor proportional scaling', () => {
 
     const scaled = targets.get('669')!.root.scale
     expect([scaled.x, scaled.y, scaled.z]).toEqual([4, 4, 4])
+  })
+})
+
+describe('PlacementEditor commit reporting', () => {
+  it('reports the edit that landed, naming the mode it was made in', async () => {
+    const { editor, targets } = setUp()
+    const committed = vi.fn()
+    editor.onCommitted.add(committed)
+    await editor.begin(targets.target('669'), 'scale')
+
+    editor.setPlacement({ ...DEFAULT_PLACEMENT, scale: 2 })
+    await editor.accept()
+
+    expect(committed).toHaveBeenCalledOnce()
+    expect(committed.mock.calls[0][0]).toMatchObject({ id: '669', mode: 'scale', ok: true })
+  })
+
+  it('writes nothing and says nothing when the placement never moved', async () => {
+    const { editor, targets } = setUp()
+    const committed = vi.fn()
+    editor.onCommitted.add(committed)
+    await editor.begin(targets.target('669'))
+
+    await editor.accept()
+
+    expect(targets.get('669')?.commits).toEqual([])
+    expect(committed).not.toHaveBeenCalled()
+  })
+
+  it('stays silent on cancel, which puts the placement back where it started', async () => {
+    const { editor, targets } = setUp()
+    const committed = vi.fn()
+    editor.onCommitted.add(committed)
+    await editor.begin(targets.target('669'))
+
+    editor.setPlacement({ ...DEFAULT_PLACEMENT, position: [5, 0, 0] })
+    await editor.cancel()
+
+    expect(targets.get('669')?.commits).toEqual([])
+    expect(committed).not.toHaveBeenCalled()
+  })
+
+  it('ignores a change the target cannot store, so Done on a yaw-only tilt is silent', async () => {
+    const { editor, targets } = setUp()
+    const committed = vi.fn()
+    editor.onCommitted.add(committed)
+    await editor.begin(targets.target('669', YAW_ONLY_PLACEMENT))
+
+    editor.setPlacement({ ...DEFAULT_PLACEMENT, rotation: [0.4, 0, 0.2], scale: 3 })
+    await editor.accept()
+
+    expect(committed).not.toHaveBeenCalled()
+  })
+
+  it('reports a failed write instead of claiming a save', async () => {
+    const { editor, targets } = setUp()
+    const committed = vi.fn()
+    editor.onCommitted.add(committed)
+    const target = targets.target('669')
+    await editor.begin({ ...target, commit: () => Promise.reject(new Error('offline')) })
+
+    editor.setPlacement({ ...DEFAULT_PLACEMENT, position: [1, 2, 3] })
+    await editor.accept()
+
+    expect(committed).toHaveBeenCalledOnce()
+    expect(committed.mock.calls[0][0]).toMatchObject({ ok: false })
   })
 })

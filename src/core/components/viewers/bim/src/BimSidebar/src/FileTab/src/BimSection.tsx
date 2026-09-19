@@ -176,7 +176,7 @@ export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
 
     const editor = bimComponents.get(PlacementEditor)
     if (editor.activeId === String(file.id)) {
-      editor.accept()
+      void editor.accept()
       return
     }
 

@@ -52,7 +52,7 @@ export function useBimFileIntake({ buildingId, apiBase, existingNames, uploadFil
     [],
   )
 
-  const submit = React.useCallback(async (file: File, at?: THREE.Vector3): Promise<IntakeResult | null> => {
+  const submit = React.useCallback(async (file: File, at?: THREE.Vector3, scale?: number): Promise<IntakeResult | null> => {
     const fileType = typeOfFile(file)
 
     if (fileType === 'point-cloud-file') {
@@ -90,9 +90,15 @@ export function useBimFileIntake({ buildingId, apiBase, existingNames, uploadFil
         x: at?.x,
         y: at?.y,
         z: at?.z,
+        // A splat carries its scale inside the transform, so `File.scale` stays null for one.
+        scale: fileType === 'splat-file' ? undefined : scale,
         // A splat reads its placement from `pointCloudTransform`, never from x/y/z.
         pointCloudTransform: fileType === 'splat-file' && at
-          ? splatPlacementPatch({ ...DEFAULT_SPLAT_PLACEMENT, position: [at.x, at.y, at.z] }).pointCloudTransform
+          ? splatPlacementPatch({
+            ...DEFAULT_SPLAT_PLACEMENT,
+            position: [at.x, at.y, at.z],
+            scale: scale ?? DEFAULT_SPLAT_PLACEMENT.scale,
+          }).pointCloudTransform
           : undefined,
         onProgress: progress => updateTask(taskId, { progress }),
         existingNames: namesRef.current,

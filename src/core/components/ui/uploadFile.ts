@@ -19,6 +19,7 @@ interface UploadFileArgs {
   x?: number
   y?: number
   z?: number
+  scale?: number
   onProgress?: (percent: number) => void
   existingNames?: string[]
   pointCloudTransform?: unknown
@@ -36,6 +37,7 @@ export async function uploadFile({
   x,
   y,
   z,
+  scale,
   onProgress,
   existingNames,
   pointCloudTransform,
@@ -85,6 +87,7 @@ export async function uploadFile({
       x,
       y,
       z,
+      scale,
       isVisible: isVisible ?? false,
       ...(pointCloudTransform === undefined ? {} : { pointCloudTransform }),
     }

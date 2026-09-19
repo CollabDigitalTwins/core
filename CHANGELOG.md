@@ -134,6 +134,19 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   override.
 
 ### Fixed
+- A 3D model's or DXF drawing's scale now survives a reload. It is stored in `File.scale`, which
+  nothing was writing: the placement gizmo committed only position and yaw, the upload card's scale
+  was dropped on confirm, and the API adapter left the column out of every file it returned, so a
+  scaled object came back at 1 (or, for a DXF, at its millimetre default). Point clouds and splats
+  were never affected — they carry their scale inside `pointCloudTransform`. `uploadFile` takes an
+  optional `scale`, and `useBimFileIntake().submit` takes it as a third argument, routing it into
+  the transform for a splat and into the column for everything else.
+- The 3D model now follows the camera into a floorplan or elevation instead of staying frozen behind
+  the drawing at a viewpoint that could not line up with it. The effect composer's base and
+  ambient-occlusion passes keep the camera they were built with, so switching the world camera to an
+  orthographic projection left them shading the scene through the perspective camera the controls no
+  longer drive, while the edge pass read the live camera and drew its lines somewhere else entirely.
+  The composer is now repointed at the world camera whenever the projection changes.
 - Entering a floorplan or elevation no longer leaves the 3D view frozen where it was. camera-controls
   advances an animated move only on rendered frames and the BIM renderer draws on demand, so the
   camera transition never ran and its promise never settled — which also left activation awaiting

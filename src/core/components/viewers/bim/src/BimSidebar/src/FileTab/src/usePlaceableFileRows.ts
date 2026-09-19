@@ -40,6 +40,9 @@ const sameRow = (a: Row, b: Row): boolean => {
 
 const PLACE_TOAST_ID = 'bim-file-place-toast'
 
+// DXF coordinates are millimetres, so an unscaled drawing lands a thousand times too big.
+const DXF_UNPLACED_SCALE = 0.001
+
 const placedPosition = (file: DbFile): THREE.Vector3 =>
   file.x != null && file.y != null && file.z != null
     ? new THREE.Vector3(file.x as number, file.y as number, file.z as number)
@@ -162,6 +165,7 @@ export function usePlaceableFileRows({
       const info = await modelManager.load(presignedUrl, key, file.name, {
         position: position ?? placedPosition(file),
         rotation: file.bimRotation != null ? new THREE.Euler(0, file.bimRotation, 0) : undefined,
+        scale: file.scale ?? undefined,
         extension: file.extension ?? undefined,
       })
       if (info) {
@@ -188,7 +192,7 @@ export function usePlaceableFileRows({
       group.position.copy(placed
         ? new THREE.Vector3(file.x as number, file.y as number, file.z as number)
         : new THREE.Vector3())
-      group.scale.setScalar(0.001)
+      group.scale.setScalar(file.scale ?? DXF_UNPLACED_SCALE)
       if (file.bimRotation != null) group.rotation.y = file.bimRotation as number
       registry.add({ key, fileId: key, kind: 'dxf', root: group })
     } catch (err) {

@@ -44,6 +44,18 @@ export function enablePostproduction(world: OBC.World | null | undefined) {
     postproduction.excludedObjectsEnabled = true
 }
 
+/** Repoints the composer at the world's live camera. Its base and ambient-occlusion passes
+ *  keep the camera they were built with, so after a projection swap they draw the scene from
+ *  a camera the controls no longer move while the edge pass follows the new one. */
+export function syncPostproductionCamera(world: OBC.World | null | undefined) {
+    const target = asShadowedWorld(world)
+    if (!target) return
+    const postproduction = postproductionOf(target.renderer)
+    if (!postproduction) return
+    postproduction.updateCamera()
+    target.renderer.needsUpdate = true
+}
+
 /** Keeps a material out of the effect composer, so helpers do not pick up ambient occlusion. */
 export function excludeFromPostproduction(
     world: OBC.World | null | undefined,

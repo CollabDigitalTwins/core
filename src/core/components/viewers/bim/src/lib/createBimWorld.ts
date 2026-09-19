@@ -14,7 +14,7 @@ import { SunPath } from "../SunPath";
 import { applyBimLighting, DEFAULT_BIM_LIGHTING } from "./bimLighting";
 import { modelBounds } from "./modelBounds";
 import { PivotIndicator } from "./PivotIndicator";
-import { applyRenderMode, enablePostproduction, excludeFromPostproduction } from "./renderMode";
+import { applyRenderMode, enablePostproduction, excludeFromPostproduction, syncPostproductionCamera } from "./renderMode";
 
 const FRAGMENTS_WORKER_URL =
     "https://thatopen.github.io/engine_fragment/resources/worker.mjs";
@@ -91,6 +91,7 @@ export async function createBimWorld(container: HTMLElement): Promise<BimWorldBo
     components.get(SunPath);
 
     enablePostproduction(world);
+    world.camera.projection.onChanged.add(() => syncPostproductionCamera(world));
 
     shadows.excludeFromShadows(axes);
     excludeFromPostproduction(world, axes.material);

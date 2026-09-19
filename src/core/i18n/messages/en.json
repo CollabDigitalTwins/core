@@ -2078,9 +2078,11 @@
     "pickPivotHint": "Double-click to create the pivot point",
     "pickPivotFailed": "Nothing under the cursor to pick",
     "editHint": "Drag the gizmo to place it. The position is saved when you press Done.",
-    "saved": "Saved the position of \"{name}\"",
-    "saveFailed": "Could not save the position of \"{name}\"",
-    "deleteFailed": "Could not delete \"{name}\""
+    "saveFailed": "Could not save \"{name}\"",
+    "deleteFailed": "Could not delete \"{name}\"",
+    "movedFile": "Moved \"{name}\"",
+    "rotatedFile": "Rotated \"{name}\"",
+    "scaledFile": "Scaled \"{name}\""
   },
   "PointCloudSettings": {
     "title": "Point clouds",

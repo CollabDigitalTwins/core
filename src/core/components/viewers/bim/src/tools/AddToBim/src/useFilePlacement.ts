@@ -312,20 +312,21 @@ export function useFilePlacement(
 
     // Capture the final position from the placed object, then persist it.
     let finalPos: THREE.Vector3 | undefined
+    let finalScale: number | undefined
     if (current3DFileType === "dxf" && addDxf) {
       const info = addDxf.getDxf(current3DFileId)
-      if (info) finalPos = info.group.position.clone()
+      if (info) { finalPos = info.group.position.clone(); finalScale = info.group.scale.x }
       addDxf.confirmPlacement(current3DFileId)
     } else if (current3DFileType === "model" && modelManager) {
       const info = modelManager.getModel(current3DFileId)
-      if (info) finalPos = info.model.position.clone()
+      if (info) { finalPos = info.model.position.clone(); finalScale = info.model.scale.x }
       modelManager.toggleGizmo(current3DFileId, false)
     }
     // The record has to exist before the scene content can be keyed by its file id.
     if (selectedFile && finalPos) {
       const placedId = current3DFileId
       const kind = current3DFileType
-      void intake.submit(selectedFile, finalPos).then((created) => {
+      void intake.submit(selectedFile, finalPos, finalScale).then((created) => {
         if (!created?.id) { discardPlacement(placedId); return }
         // The sidebar owns the object from here; until it is keyed by file id it cannot.
         if (kind === 'dxf') addDxf?.rekey(placedId, String(created.id))

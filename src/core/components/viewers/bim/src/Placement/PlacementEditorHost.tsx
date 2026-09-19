@@ -33,6 +33,7 @@ import { usePointCloudTarget } from './targets/usePointCloudTarget'
 import { useSplatTarget } from './targets/useSplatTarget'
 import { useAnimationSession } from './useAnimationSession'
 import { usePlacementSession } from './usePlacementSession'
+import { usePlacementToasts } from './usePlacementToasts'
 import { useSceneUnload } from './useSceneUnload'
 import { useViewportContextMenu } from './useViewportContextMenu'
 
@@ -79,6 +80,7 @@ export function PlacementEditorHost() {
   const { bimComponents, fragments, pointCloudIds, splatIds } = state.bim
 
   const session = usePlacementSession()
+  usePlacementToasts(bimComponents ?? null)
 
   const { state: buildingState } = React.useContext(BuildingsContext)
   const buildingId = buildingState.buildings.building?.id ?? 0
@@ -301,8 +303,8 @@ export function PlacementEditorHost() {
         onPickPivot={pickPivot}
         onClearPivot={() => editor?.setPivot(null)}
         hasPivot={session.pivot !== null}
-        onDone={() => editor?.accept()}
-        onReset={() => editor?.cancel()}
+        onDone={() => { void editor?.accept() }}
+        onReset={() => { void editor?.cancel() }}
       />
       {deleteDialog}
     </>

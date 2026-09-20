@@ -7,6 +7,37 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Fixed
+- **A file whose name is already taken on the map now loads.** Adding the same IFC to two
+  buildings left the second model invisible: the map's BIM layer keyed its maplibre layer, its
+  fragments `modelId` and its live-edit records by file *name*, so the second model hit an
+  `if (map.getLayer(name)) return` guard and was never created. Identity on the map path is now
+  the file id throughout (`bim-model-<id>`). Dragging one of two same-named 3D models also moved
+  the other, for the same reason, in `CustomModelLayer`.
+
+### Changed
+- An uploaded file's name is now disambiguated against every file in the uploader's organization
+  rather than only the target building's, so a second `tower.ifc` is stored as `tower (1).ifc`
+  wherever it is uploaded. The BIM viewer still resolves scene objects to database records by
+  name; organization-wide uniqueness is what keeps that resolution unambiguous.
+- `BimState.editingBimModel` is now `editingBimModelId` and `BimState.bimModelName` is now
+  `bimModelId`; both hold `String(file.id)`. The `EDIT_BIM_MODEL_BY_NAME` action is renamed
+  `EDIT_BIM_MODEL_BY_ID`, and `REMOVE_BIM_FROM_MAP` takes `bimModelId`.
+
+### Added
+- `Building.buildingGeometry`, an optional drawn outline, and the `BuildingGeometry` type: a
+  WGS84 GeoJSON `Polygon`, outer ring first, every ring closed. Nothing writes it yet.
+- `isBuildingGeometry`, `ringToBuildingGeometry` and `buildingGeometryToRing` in
+  `viewers/map/src/MapLayers/src/BuildingLayers/buildingGeometry`. `isBuildingGeometry` is the
+  write guard for a column Prisma types only as `Json`, and caps ring count and positions so an
+  oversized payload cannot be stored.
+
+### Migration
+- Rename the three BIM store members if you dispatch them directly: `editingBimModel` ->
+  `editingBimModelId`, `bimModelName` -> `bimModelId`, `EDIT_BIM_MODEL_BY_NAME` ->
+  `EDIT_BIM_MODEL_BY_ID`. All three now carry a file id as a string, not a file name. Note that
+  `MapState` has its own unrelated `REMOVE_BIM_FROM_MAP` keyed on `modelId`, which is unchanged.
+
 ## [0.11.1]
 
 > 0.11.0 was left staged on the registry by a failed publish and can never be claimed. This

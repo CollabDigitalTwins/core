@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-/** Disambiguates a clash as `plan (1).dxf`. Scene objects resolve to DB records by name. */
+/** Disambiguates a clash as `plan (1).dxf`, within the uploader's organization. */
 export function uniqueFileName(name: string, existingNames: string[]): string {
   const taken = new Set(existingNames)
   if (!taken.has(name)) return name

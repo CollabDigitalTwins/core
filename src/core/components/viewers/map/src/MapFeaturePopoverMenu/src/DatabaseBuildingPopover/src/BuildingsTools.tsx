@@ -242,10 +242,10 @@ export default function BuildingTools({
     ]
   );
 
-  const handleEditClick = (fileName: string) => {
+  const handleEditClick = (fileId: number) => {
     bimDispatch({
-      type: "EDIT_BIM_MODEL_BY_NAME",
-      payload: { editingBimModel: fileName }
+      type: "EDIT_BIM_MODEL_BY_ID",
+      payload: { editingBimModelId: String(fileId) }
     });
 
     onCloseAction();
@@ -289,10 +289,10 @@ export default function BuildingTools({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         {bimFiles.map((file: DbFile) => {
-                          const isSelected = bimModelsAddedToMap.some(model => model.bimFile.name === file.name);
+                          const isSelected = bimModelsAddedToMap.some(model => model.bimFile.id === file.id);
                           return (
                             <DropdownMenuItem
-                              key={file.name}
+                              key={file.id}
                               onClick={(e) => {
                                 e.preventDefault();
                                 toggleBimToMap(file);
@@ -314,7 +314,7 @@ export default function BuildingTools({
                                   onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    handleEditClick(file.name);
+                                    handleEditClick(file.id);
                                   }}
                                   variant="ghost"
                                   size="sm"
@@ -340,7 +340,7 @@ export default function BuildingTools({
                     </Label>
                     <Switch
                       id="show-bim"
-                      checked={bimFiles.length === 1 && bimModelsAddedToMap.some(model => model.bimFile.name === bimFiles[0]?.name)}
+                      checked={bimFiles.length === 1 && bimModelsAddedToMap.some(model => model.bimFile.id === bimFiles[0]?.id)}
                       disabled={bimFiles.length === 0 || !ability.can('read', 'File')}
                       onCheckedChange={() => onLoadBIM()}
                     />
@@ -350,7 +350,7 @@ export default function BuildingTools({
                   const selectedModel = bimModelsAddedToMap.find(model => model.building.id === buildingId);
                   return true ? (
                     <Button
-                      onClick={() => handleEditClick(selectedModel.bimFile.name)}
+                      onClick={() => handleEditClick(selectedModel.bimFile.id)}
                       variant="ghost"
                       size="sm"
                       title={t('editBimButton')}

@@ -91,7 +91,7 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
       // Remove model from map
       bimDispatch({
         type: 'REMOVE_BIM_FROM_MAP',
-        payload: { bimModelName: file.name },
+        payload: { bimModelId: String(file.id) },
       })
     }
   }, [bimDispatch, buildings])
@@ -100,8 +100,8 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
     const isOnMap = bimModelsAddedToMap.some(m => m.bimFile.id === file.id)
     if (!isOnMap) return
     bimDispatch({
-      type: 'EDIT_BIM_MODEL_BY_NAME',
-      payload: { editingBimModel: file.name },
+      type: 'EDIT_BIM_MODEL_BY_ID',
+      payload: { editingBimModelId: String(file.id) },
     })
   }, [bimDispatch, bimModelsAddedToMap])
 
@@ -135,7 +135,7 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
     if (!isVisible) {
       bimDispatch({
         type: 'REMOVE_BIM_FROM_MAP',
-        payload: { bimModelName: file.name },
+        payload: { bimModelId: String(file.id) },
       })
       return
     }

@@ -82,10 +82,10 @@ export const FileLayers = () => {
   const tempPositionsRef = React.useRef<Record<string, { lat: number; lng: number }>>({})
   const tempRotationsRef = React.useRef<Record<string, number>>({})
   const tempElevationsRef = React.useRef<Record<string, number>>({})
-  const editingFileNameRef = React.useRef<string | null>(null)
+  const editingFileIdRef = React.useRef<string | null>(null)
 
   React.useEffect(() => {
-    editingFileNameRef.current = editingFile?.name ?? null
+    editingFileIdRef.current = editingFile ? String(editingFile.id) : null
   }, [editingFile])
 
   const handleExitEditFileMode = React.useCallback(() => {
@@ -144,7 +144,7 @@ export const FileLayers = () => {
     <>
       <FileModelLayer
         tempPositionsRef={tempPositionsRef}
-        editingFileNameRef={editingFileNameRef}
+        editingFileIdRef={editingFileIdRef}
         tempRotationsRef={tempRotationsRef}
         tempElevationsRef={tempElevationsRef}
         onContextMenu={(file, x, y) => setContextMenu({ x, y, file })}

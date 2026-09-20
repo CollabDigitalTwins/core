@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
 import { useBuilding } from '../../../../hooks/buildings/buildings'
-import { useFilesByBuildingId } from '../../../../hooks/files/files'
+import { useFiles } from '../../../../hooks/files/files'
 import { getFileExtension } from '../../../../utils/utils'
 import { uploadFile as performUploadFile } from '../../uploadFile'
 
@@ -49,7 +49,7 @@ export function useFileUploadHandler({
   const user = session?.user
   const t = useTranslations('useFileUploadHandler')
   const { building } = useBuilding(buildingId)
-  const existingNames = (useFilesByBuildingId(buildingId).files || []).map((file: { name: string }) => file.name)
+  const existingNames = (useFiles().files || []).map((file: { name: string }) => file.name)
 
           // Inherit building position for the uploaded fragment file
         const position = building ? {

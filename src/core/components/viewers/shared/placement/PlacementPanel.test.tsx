@@ -6,14 +6,14 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
-import { DEFAULT_PLACEMENT } from '../../../shared/pointcloud/pointCloudPlacement'
+import { DEFAULT_PLACEMENT } from '../pointcloud/pointCloudPlacement'
 
 import { PlacementPanel } from './PlacementPanel'
 import { FULL_PLACEMENT, SCALABLE_OBJECT_PLACEMENT, YAW_ONLY_PLACEMENT } from './placementTarget'
 
-import type { PlacementMode } from './PlacementEditor'
+import type { PlacementMode } from './placementTarget'
 import type { PlacementCapabilities } from './placementTarget'
-import type { PointCloudPlacement } from '../../../shared/pointcloud/pointCloudPlacement'
+import type { PointCloudPlacement } from '../pointcloud/pointCloudPlacement'
 
 const LABELS = {
   title: 'Place', position: 'Position', rotation: 'Rotation', scale: 'Scale', yaw: 'Rotation',

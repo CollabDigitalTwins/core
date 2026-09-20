@@ -7,13 +7,23 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
-### Fixed
-- **A file whose name is already taken on the map now loads.** Adding the same IFC to two
-  buildings left the second model invisible: the map's BIM layer keyed its maplibre layer, its
-  fragments `modelId` and its live-edit records by file *name*, so the second model hit an
-  `if (map.getLayer(name)) return` guard and was never created. Identity on the map path is now
-  the file id throughout (`bim-model-<id>`). Dragging one of two same-named 3D models also moved
-  the other, for the same reason, in `CustomModelLayer`.
+### Added
+- `Building.buildingGeometry`, an optional drawn outline, and the `BuildingGeometry` type: a
+  WGS84 GeoJSON `Polygon`, outer ring first, every ring closed. Nothing writes it yet.
+- `isBuildingGeometry`, `ringToBuildingGeometry` and `buildingGeometryToRing` in
+  `viewers/map/src/MapLayers/src/BuildingLayers/buildingGeometry`. `isBuildingGeometry` is the
+  write guard for a column Prisma types only as `Json`, and caps ring count and positions so an
+  oversized payload cannot be stored.
+- `@collabdt/core/core/components/viewers/shared/placement/*` — the placement editor's
+  viewer-independent half, so a second viewer can drive the same edit. `PlacementCore` is the
+  session engine with no OBC or world dependency, `TransformGizmo` is the three.js
+  `TransformControls` wrapper behind a `TransformGizmoHost` (camera, canvas, scene, drag lock),
+  `PlacementEvent` is the `OBC.Event` slice the core needs, and `usePlacementState` mirrors a
+  session into React. `PlacementPanel`, `NumberField`, `placementTarget`, `placementCapabilities`,
+  `placementAxes`, `uniformScale`, `markerActions`, `contextMenuGesture`, `placementToastMessage`
+  and `objectTarget` now live here too.
+- `PlacementPanel` accepts `positionSigns`, a per-display-axis sign for the position row, so a
+  viewer whose axis runs the other way reads the right direction. Defaults to no flip.
 
 ### Changed
 - An uploaded file's name is now disambiguated against every file in the uploader's organization
@@ -23,20 +33,34 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - `BimState.editingBimModel` is now `editingBimModelId` and `BimState.bimModelName` is now
   `bimModelId`; both hold `String(file.id)`. The `EDIT_BIM_MODEL_BY_NAME` action is renamed
   `EDIT_BIM_MODEL_BY_ID`, and `REMOVE_BIM_FROM_MAP` takes `bimModelId`.
+- `PlacementEditor` is now a thin OBC adapter over `PlacementCore`, and `GizmoController` a thin
+  world-bound subclass of `TransformGizmo`. Both keep their existing surface and behaviour;
+  `PlacementEditor` still owns the pivot raycast and pick-source registry, which need a world.
+- `PlacementMode` is declared in `placementTarget` alongside `PlacementCapabilities`, and
+  re-exported from `PlacementEditor` as before.
 
-### Added
-- `Building.buildingGeometry`, an optional drawn outline, and the `BuildingGeometry` type: a
-  WGS84 GeoJSON `Polygon`, outer ring first, every ring closed. Nothing writes it yet.
-- `isBuildingGeometry`, `ringToBuildingGeometry` and `buildingGeometryToRing` in
-  `viewers/map/src/MapLayers/src/BuildingLayers/buildingGeometry`. `isBuildingGeometry` is the
-  write guard for a column Prisma types only as `Json`, and caps ring count and positions so an
-  oversized payload cannot be stored.
+### Deprecated
+- The `viewers/bim/src/Placement/*` paths for the modules listed above now re-export from
+  `viewers/shared/placement/*`. They keep working this release.
+
+### Fixed
+- **A file whose name is already taken on the map now loads.** Adding the same IFC to two
+  buildings left the second model invisible: the map's BIM layer keyed its maplibre layer, its
+  fragments `modelId` and its live-edit records by file *name*, so the second model hit an
+  `if (map.getLayer(name)) return` guard and was never created. Identity on the map path is now
+  the file id throughout (`bim-model-<id>`). Dragging one of two same-named 3D models also moved
+  the other, for the same reason, in `CustomModelLayer`.
 
 ### Migration
 - Rename the three BIM store members if you dispatch them directly: `editingBimModel` ->
   `editingBimModelId`, `bimModelName` -> `bimModelId`, `EDIT_BIM_MODEL_BY_NAME` ->
   `EDIT_BIM_MODEL_BY_ID`. All three now carry a file id as a string, not a file name. Note that
   `MapState` has its own unrelated `REMOVE_BIM_FROM_MAP` keyed on `modelId`, which is unchanged.
+- Import the moved modules from `viewers/shared/placement/...`. `PlacementEditor`,
+  `GizmoController`, `usePlacementSession` and `PlacementEditorHost` are unchanged and need no
+  edit. `PlacementEditorSetup.createGizmo` is still optional; `PlacementCoreSetup.createGizmo`,
+  its equivalent on the new core, is required because the core has no world to build a default from.
+
 
 ## [0.11.1]
 

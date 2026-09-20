@@ -11,24 +11,17 @@ import ReactDOM from 'react-dom/client'
 import { toast } from 'sonner'
 import { mutate } from 'swr'
 
+import { useFiles } from '../../../../../../../hooks/files/files'
 import { MapContext, FilesContext } from '../../../../../../../store'
 import { acceptedFiles, isAcceptedFileType } from '../../../../../../../utils/acceptedFiles'
 import { cn } from '../../../../../../../utils/utils'
 import { AddItemDialog } from '../../../../../../ui/AddItemDialog'
 import { Input } from '../../../../../../ui/Input'
+import { useFileIntake } from '../../../../../shared/intake/useFileIntake'
 import MapFileMarker from '../../../MapLayers/src/FileLayer/components/MapFileMarker'
-
-import { uploadFileWithProgress } from './utils/uploadToPresignedURLS'
 
 import type { CursorType } from '../../../../../../../types/global'
 import type { LucideIcon } from 'lucide-react'
-
-function getFileExtension(file: File): string {
-  if (!file?.name) return ''
-  const parts = file.name.split('.')
-  if (parts.length <= 1) return ''
-  return parts.pop()!.toLowerCase()
-}
 
 type FileAdderProps = {
   isOpen: boolean
@@ -123,6 +116,24 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
   const [isUploading, setIsUploading] = React.useState(false)
 
+  const { files } = useFiles()
+  // A map file belongs to no building, so it posts itself rather than going through a building route.
+  const createMapFile = React.useCallback(async ({ fileData }: { fileData: unknown }) => {
+    const response = await fetch('/api/files/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fileData),
+    })
+    if (!response.ok) throw new Error(`Failed to save the file record: ${response.statusText}`)
+    return response.json()
+  }, [])
+
+  const intake = useFileIntake({
+    existingNames: (files ?? []).map((file: { name: string }) => file.name),
+    uploadFile: createMapFile,
+    recordType: 'map-file',
+  })
+
   // Reset state when tool is closed from outside
   React.useEffect(() => {
     if (!isOpen) {
@@ -151,7 +162,7 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
     markerEl.style.alignItems = 'center'
     markerEl.style.justifyContent = 'center'
 
-    const iconEl = MapFileMarker({ mimeType: file.type, extension: 'uploading' })
+    const iconEl = MapFileMarker({ mimeType: file.type, extension: 'uploading', fileName: file.name })
     const iconContainer = document.createElement('div')
     const root = ReactDOM.createRoot(iconContainer)
     root.render(iconEl)
@@ -206,65 +217,34 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
       const elevation = 0
 
       const temporaryFileIcon = addTemporaryFileIcon(map, selectedFile, lng, lat)
-      const toastId = toast.loading(`${t('uploading')} "${selectedFile.name}"...`)
 
       try {
-        const fileId = crypto.randomUUID()
-
-        const response = await fetch(`/api/presigned-url-upload?asset=${fileId}`)
-        if (!response.ok) throw new Error('Failed to fetch presigned URL')
-        const { presignedUrl } = await response.json()
-
-        await uploadFileWithProgress(presignedUrl, selectedFile, () => {})
-
-        const newFile = {
-          type: 'map-file',
-          url: '',
-          name: selectedFile.name?.trim() || 'file name',
-          mimeType: selectedFile.type,
-          extension: getFileExtension(selectedFile),
-          sizeBytes: selectedFile.size,
-          uploadedAt: new Date(),
-          description: '',
-          isVisible: true,
-          lat,
-          lng,
-          elevation,
-          assetId: fileId,
+        const created = await intake.submit(selectedFile, { lat, lng, elevation, rotation: 0 })
+        if (!created?.id) {
+          setIsUploading(false)
+          setSelectedFile(null)
+          return
         }
 
-        const metadataResponse = await fetch('/api/files/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newFile),
-        })
-
-        if (!metadataResponse.ok) {
-          throw new Error(`Failed to upload file metadata: ${metadataResponse.statusText}`)
-        }
-
-        const { newFile: createdFile } = await metadataResponse.json()
-
-        // Fetch with presigned URL so 3D models can load immediately
-        let fileToAdd = createdFile
+        // Re-read so a 3D model gets a presigned url and can load without a refresh.
+        let fileToAdd: unknown = { id: created.id }
         try {
-          const fileUrlRes = await fetch(`/api/files/${createdFile.id}`)
+          const fileUrlRes = await fetch(`/api/files/${created.id}`)
           if (fileUrlRes.ok) {
             const { file: fileWithUrl } = await fileUrlRes.json()
             if (fileWithUrl) fileToAdd = fileWithUrl
           }
         }
-        catch { /* fall back to createdFile without presigned URL */ }
+        catch { /* the store refresh below still picks it up */ }
 
         fileDispatch({ type: 'ADD_FILE', payload: { file: fileToAdd } })
-        fileDispatch({ type: 'ADD_TO_MAP', payload: { id: createdFile.id } })
+        fileDispatch({ type: 'ADD_TO_MAP', payload: { id: created.id } })
 
-        toast.success(t('uploadSuccess'), { id: toastId })
         void mutate(['files'])
         onClose()
       }
       catch (error) {
-        toast.error(error instanceof Error ? error.message : t('uploadError'), { id: toastId })
+        toast.error(error instanceof Error ? error.message : t('uploadError'))
         setIsUploading(false)
         setSelectedFile(null)
       }

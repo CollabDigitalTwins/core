@@ -4,6 +4,7 @@
 import * as LR from 'lucide-react'
 
 import { Button } from '../../../../../../../../components/ui/Button'
+import { UploadProgressRing } from '../../../../../../../ui/FilesManager/src/MarkerProgressRing'
 
 import FileIcon from './FileIcon'
 
@@ -13,6 +14,8 @@ interface MapFileMarkerProps {
   url?: string | null
   onClick?: () => void
   onDbClick?: () => void
+  /** Draws this pin's upload ring while a task with the same name is in flight. */
+  fileName?: string
 }
 
 export default function MapFileMarker({
@@ -21,6 +24,7 @@ export default function MapFileMarker({
   url,
   onClick,
   onDbClick,
+  fileName,
 }: MapFileMarkerProps) {
   return (
     <Button
@@ -28,9 +32,10 @@ export default function MapFileMarker({
       size="default"
       onClick={onClick}
       onDoubleClick={onDbClick}
-      className="bg-white/90 w-9 h-9 rounded-[50%] hover:bg-white pointer-events-auto cursor-pointer border border-gray-200 shadow-lg p-0 text-xs font-sans flex items-center gap-2 max-w-[200px] transition-transform duration-200 ease-in-out hover:scale-105 group"
+      className="relative bg-white/90 w-9 h-9 rounded-[50%] hover:bg-white pointer-events-auto cursor-pointer border border-gray-200 shadow-lg p-0 text-xs font-sans flex items-center gap-2 max-w-[200px] transition-transform duration-200 ease-in-out hover:scale-105 group"
     >
       <FileIcon mimeType={mimeType} extension={extension} url={url} size={18} />
+      {fileName && <UploadProgressRing fileName={fileName} tone="onSurface" />}
     </Button>
   )
 }

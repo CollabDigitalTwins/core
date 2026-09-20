@@ -11,6 +11,9 @@ const { mutateMock, uploadFileWithProgressMock } = vi.hoisted(() => ({
 }))
 
 vi.mock('swr', () => ({ mutate: (...args: unknown[]) => mutateMock(...args) }))
+vi.mock('next-auth/react', () => ({ useSession: () => ({ data: { user: { organizationId: 1 } } }) }))
+vi.mock('next-intl', () => ({ useTranslations: () => (key: string) => key }))
+vi.mock('sonner', () => ({ toast: Object.assign(vi.fn(), { error: vi.fn(), custom: vi.fn(), dismiss: vi.fn() }) }))
 vi.mock(
   '../../../viewers/map/src/tools/AddTools/AddFile/utils/uploadToPresignedURLS',
   () => ({
@@ -49,7 +52,7 @@ describe('useFileUploadWithProgress', () => {
   it('happy path: presigned URL → upload → metadata POST → onUploadSuccess', async () => {
     global.fetch = vi.fn()
       .mockResolvedValueOnce({ ok: true, json: async () => ({ presignedUrl: 'http://minio/abc' }) })
-      .mockResolvedValueOnce({ ok: true, statusText: 'OK' }) as any
+      .mockResolvedValueOnce({ ok: true, statusText: 'OK', json: async () => ({ newFile: { id: 7 } }) }) as any
 
     const onUploadSuccess = vi.fn()
     const { result } = renderHook(() => useFileUploadWithProgress({ onUploadSuccess }))
@@ -72,6 +75,7 @@ describe('useFileUploadWithProgress', () => {
       extension: 'csv',
       sizeBytes: 5,
     })
+    // The shared intake owns naming, so a clash is suffixed rather than shadowing the first file.
 
     expect(mutateMock).toHaveBeenCalledWith(['files'])
     expect(onUploadSuccess).toHaveBeenCalledTimes(1)
@@ -85,8 +89,9 @@ describe('useFileUploadWithProgress', () => {
 
     await act(async () => { await result.current.handleFileUpload(makeFile()) })
 
+    // The intake surfaces the cause on a toast; the callback just says which file failed.
     expect(onUploadError).toHaveBeenCalledWith(expect.objectContaining({
-      message: expect.stringContaining('Failed to fetch presigned URL'),
+      message: expect.stringContaining('a.csv'),
     }))
     expect(uploadFileWithProgressMock).not.toHaveBeenCalled()
     expect(mutateMock).not.toHaveBeenCalled()
@@ -95,7 +100,7 @@ describe('useFileUploadWithProgress', () => {
   it('calls onUploadError when the metadata POST fails', async () => {
     global.fetch = vi.fn()
       .mockResolvedValueOnce({ ok: true, json: async () => ({ presignedUrl: 'http://minio' }) })
-      .mockResolvedValueOnce({ ok: false, statusText: 'Internal Error' }) as any
+      .mockResolvedValueOnce({ ok: false, statusText: 'Internal Error', json: async () => ({}) }) as any
 
     const onUploadError = vi.fn()
     const { result } = renderHook(() => useFileUploadWithProgress({ onUploadError }))
@@ -103,9 +108,22 @@ describe('useFileUploadWithProgress', () => {
     await act(async () => { await result.current.handleFileUpload(makeFile()) })
 
     expect(onUploadError).toHaveBeenCalledWith(expect.objectContaining({
-      message: expect.stringContaining('Internal Error'),
+      message: expect.stringContaining('a.csv'),
     }))
     expect(mutateMock).not.toHaveBeenCalled()
+  })
+
+  it('suffixes a name that is already taken in the organization', async () => {
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ presignedUrl: 'http://minio/abc' }) })
+      .mockResolvedValueOnce({ ok: true, statusText: 'OK', json: async () => ({ newFile: { id: 8 } }) }) as any
+
+    const { result } = renderHook(() => useFileUploadWithProgress({ existingNames: ['a.csv'] }))
+
+    await act(async () => { await result.current.handleFileUpload(makeFile()) })
+
+    const body = JSON.parse((global.fetch as ReturnType<typeof vi.fn>).mock.calls[1][1].body)
+    expect(body.name).toBe('a (1).csv')
   })
 
   it('handleAddFile injects a hidden file input and clicks it', () => {

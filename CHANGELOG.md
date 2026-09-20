@@ -8,6 +8,32 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ## [Unreleased]
 
 ### Added
+- `useFileIntake` in `@collabdt/core/core/components/viewers/shared/intake/useFileIntake` — one
+  upload path for every viewer. It converts the kinds that need it, reports every phase through the
+  shared task store, and writes whichever columns the caller's placement uses: `x/y/z` in a 3D
+  scene, `lat/lng/elevation/rotation` on the map. `buildingId` is optional, so a map file can belong
+  to no building, and point clouds route to an injected converter because they upload through a
+  service rather than directly.
+- `MarkerProgressRing` and `UploadProgressRing` accept a `tone`: `onPrimary` (the default, a filled
+  pin) or `onSurface` (a light pin like the map's), so the ring is visible on both.
+- `uploadFile` accepts `lat`, `lng`, `elevation`, `rotation` and `recordType`, and no longer requires
+  a `buildingId`. Omitting it writes a record attached to no building.
+
+### Changed
+- **The map viewer uploads through the same code as the BIM viewer.** Adding a file to the map used
+  to run its own presigned-upload with no progress reporting, and the sidebar sections each tracked a
+  percentage of their own. All of it now goes through `useFileIntake` and the shared task store, so
+  one upload drives the toast, the sidebar progress bar and the ring on the pin at once — the
+  behaviour the BIM viewer already had. Uploads from the map also get organization-wide unique names,
+  which they did not before.
+- `useFileUploadWithProgress` is a thin wrapper over `useFileIntake`. Its surface is unchanged, and
+  it gains a `existingNames` option. A failure now reaches the user as a toast naming the cause,
+  and `onUploadError` receives an error naming the file rather than the transport failure.
+- `useBimFileIntake` is a thin wrapper over `useFileIntake` that supplies a scene-space placement.
+  Its surface and behaviour are unchanged.
+- `pointCloudPlacementStore` moved to `viewers/shared/pointcloud/`; the BIM path re-exports it.
+
+### Added
 - `Building.buildingGeometry`, an optional drawn outline, and the `BuildingGeometry` type: a
   WGS84 GeoJSON `Polygon`, outer ring first, every ring closed. Nothing writes it yet.
 - `isBuildingGeometry`, `ringToBuildingGeometry` and `buildingGeometryToRing` in

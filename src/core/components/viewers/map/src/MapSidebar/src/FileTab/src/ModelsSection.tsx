@@ -13,6 +13,7 @@ import { BimContext, BuildingsContext } from '../../../../../../../../store'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { useFileDeleteHandler, FileItemComponent, useFileActions, useFileUploadWithProgress, UploadProgressBar, useUploadTasks } from '../../../../../../../ui/FilesManager'
+import { IfcIcon } from '../../../../../../../ui/Icons'
 import { toggleBimToMap as dispatchToggleBimToMap } from '../../../../../utils/toggleBimToMap'
 
 import type { DbFile as DbFile } from '../../../../../../../../types/dbTypes'
@@ -44,6 +45,11 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
   const { handleDeleteFile } = useFileDeleteHandler({
     deleteFile,
   })
+
+  const tf = React.useCallback(
+    (key: string, fallback: string) => (t.has(key) ? t(key) : fallback),
+    [t],
+  )
 
   const tasks = useUploadTasks('bim')
   const { handleAddFile, uploadState } = useFileUploadWithProgress({
@@ -167,8 +173,8 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
   return (
     <div className="h-full min-h-0">
       <CollapsibleSection
-        title={t('modelsTitles')}
-        icon={LR.Box}
+        title={tf('bimTitle', 'BIM')}
+        icon={IfcIcon}
         className="h-full min-h-0 flex flex-col"
         style={{ height: '100%', minHeight: 0 }}
         itemCount={filteredModels.length}

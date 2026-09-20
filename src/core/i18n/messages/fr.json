@@ -592,7 +592,8 @@
     "addModelTitle": "Ajouter un modèle 3D ou un splat",
     "pointCloudsTitle": "Nuages de points",
     "addPointCloudTitle": "Ajouter un nuage de points",
-    "uploadingFile": "Téléchargement en cours..."
+    "uploadingFile": "Téléchargement en cours...",
+    "bimTitle": "BIM"
   },
   "FileMoreOptions": {
     "open": "Ouvrir le menu",

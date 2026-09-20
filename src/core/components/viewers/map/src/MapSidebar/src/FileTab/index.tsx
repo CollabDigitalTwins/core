@@ -53,7 +53,7 @@ export function FileTab() {
             query={searchQuery}
             section="pointClouds"
             title={tf('pointCloudsTitle', 'Point clouds')}
-            icon={LR.Scan}
+            icon={LR.Grip}
             acceptedFileTypes=".las,.laz,.copc,.copc.laz,.e57"
           />
         </div>

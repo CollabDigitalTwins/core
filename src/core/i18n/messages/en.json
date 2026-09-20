@@ -592,7 +592,8 @@
     "addModelTitle": "Add 3D model or splat",
     "pointCloudsTitle": "Point Clouds",
     "addPointCloudTitle": "Add Point Cloud",
-    "uploadingFile": "Uploading..."
+    "uploadingFile": "Uploading...",
+    "bimTitle": "BIM"
   },
   "FileMoreOptions": {
     "open": "Open menu",

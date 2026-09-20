@@ -8,6 +8,13 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ## [Unreleased]
 
 ### Added
+- `mapPlacementGeo` and `mapGizmoCamera` in
+  `@collabdt/core/core/components/viewers/map/src/Placement/*`, the two pieces a placement gizmo
+  needs on the map. `mapPlacementGeo` converts between a scene-space `PointCloudPlacement` and the
+  `lat/lng/elevation/rotation` columns a map file stores; `mapGizmoCamera` rebuilds a real
+  `PerspectiveCamera` from maplibre's per-frame clip matrix, so `TransformControls` and `Raycaster`
+  can work inside a custom layer. Also `mapPlacementTarget` and `useMapPlacementTarget`, the map's
+  `PlacementTarget`. Nothing renders a gizmo yet.
 - `useFileIntake` in `@collabdt/core/core/components/viewers/shared/intake/useFileIntake` — one
   upload path for every viewer. It converts the kinds that need it, reports every phase through the
   shared task store, and writes whichever columns the caller's placement uses: `x/y/z` in a 3D

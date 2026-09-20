@@ -18,8 +18,13 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   pin) or `onSurface` (a light pin like the map's), so the ring is visible on both.
 - `uploadFile` accepts `lat`, `lng`, `elevation`, `rotation` and `recordType`, and no longer requires
   a `buildingId`. Omitting it writes a record attached to no building.
+- `partitionBySection(files)` in `ui/FilesManager/src/fileType`, the section bucketing both sidebars
+  share. The BIM viewer's `partitionFileTab` now applies its own filter and delegates to it.
 
 ### Changed
+- The map's File tab is split into the same four sections the BIM sidebar uses — BIM, Models,
+  Point clouds and Files — instead of lumping models, scans and documents together under one
+  Files list. Each section has its own add button, accepted types and progress bar.
 - **The map viewer uploads through the same code as the BIM viewer.** Adding a file to the map used
   to run its own presigned-upload with no progress reporting, and the sidebar sections each tracked a
   percentage of their own. All of it now goes through `useFileIntake` and the shared task store, so

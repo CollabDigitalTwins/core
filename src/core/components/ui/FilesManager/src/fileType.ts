@@ -85,3 +85,10 @@ export function typeOfRecord(file: DbFile): FileType {
     ?? byMimeType(file.mimeType ?? '')
     ?? (STORED_TYPES.has(stored) ? (stored as FileType) : 'file')
 }
+
+/** Buckets files into the four sidebar sections both viewers use. Callers filter first. */
+export function partitionBySection(files: DbFile[]): Record<FileSection, DbFile[]> {
+  const buckets: Record<FileSection, DbFile[]> = { bim: [], models: [], pointClouds: [], files: [] }
+  for (const file of files) buckets[SECTION_FOR_TYPE[typeOfRecord(file)]].push(file)
+  return buckets
+}

@@ -639,7 +639,9 @@
     "toastSuccessUpFile": "fichier(s) téléchargé(s) avec succès",
     "toastErrUpFile1": "Erreur lors du téléchargement du fichier :",
     "toastErrUpFile2": "Une erreur inconnue s'est produite",
-    "uploadingFile": "Téléchargement en cours..."
+    "uploadingFile": "Téléchargement en cours...",
+    "modelsTitle": "Modèles",
+    "pointCloudsTitle": "Nuages de points"
   },
   "FileUpload": {
     "add": "Téléverser un fichier",

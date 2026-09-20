@@ -12,7 +12,7 @@ import { useDeleteFile } from '../../../../../../../../hooks/files/files'
 import { BimContext, BuildingsContext } from '../../../../../../../../store'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
-import { useFileDeleteHandler, FileItemComponent, useFileActions, useFileUploadWithProgress } from '../../../../../../../ui/FilesManager'
+import { useFileDeleteHandler, FileItemComponent, useFileActions, useFileUploadWithProgress, UploadProgressBar, useUploadTasks } from '../../../../../../../ui/FilesManager'
 import { LoadingSpinner } from '../../../../../../../ui/LoadingSpinner'
 import { toggleBimToMap as dispatchToggleBimToMap } from '../../../../../utils/toggleBimToMap'
 
@@ -46,9 +46,10 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
     deleteFile,
   })
 
-  // Use the new upload hook with progress
+  const tasks = useUploadTasks('bim')
   const { handleAddFile, uploadState } = useFileUploadWithProgress({
     acceptedFileTypes: '.ifc,.frag',
+    existingNames: files.map((file: { name: string }) => file.name),
     onUploadSuccess: () => {
       void mutate(`/api/files`)
     },
@@ -176,12 +177,11 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
         addItemTitle={uploadState.uploading ? `${t('uploadingFile')} ${uploadState.progress}%` : t('addBimTitle')}
       >
         <div className="flex-1 min-h-0 overflow-y-scroll space-y-1">
-          {uploadState.uploading && (
-            <div className="flex items-center gap-2 px-2 py-2 text-sm text-muted-foreground">
-              <LoadingSpinner className="h-4 w-4" />
-              <span>{t('uploadingFile')} {uploadState.progress}%</span>
+          {tasks.map(task => (
+            <div key={task.id} className="px-2 py-1">
+              <UploadProgressBar label={task.label} progress={task.progress} />
             </div>
-          )}
+          ))}
           {filteredModels.map((file) => (
             <div key={file.id}>
               <FileItemComponent

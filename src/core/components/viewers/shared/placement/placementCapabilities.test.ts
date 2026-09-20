@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest'
 import { capabilitiesForFile } from './placementCapabilities'
 import { FULL_PLACEMENT, SCALABLE_OBJECT_PLACEMENT, YAW_ONLY_PLACEMENT } from './placementTarget'
 
-import type { DbFile } from '../../../../../types/dbTypes'
+import type { DbFile } from '../../../../types/dbTypes'
 
 const file = (extension: string) => ({ extension }) as DbFile
 

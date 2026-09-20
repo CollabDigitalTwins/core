@@ -7,6 +7,35 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Added
+- `@collabdt/core/core/components/viewers/shared/placement/*` — the placement editor's
+  viewer-independent half, so a second viewer can drive the same edit. `PlacementCore` is the
+  session engine with no OBC or world dependency, `TransformGizmo` is the three.js
+  `TransformControls` wrapper behind a `TransformGizmoHost` (camera, canvas, scene, drag lock),
+  `PlacementEvent` is the `OBC.Event` slice the core needs, and `usePlacementState` mirrors a
+  session into React. `PlacementPanel`, `NumberField`, `placementTarget`, `placementCapabilities`,
+  `placementAxes`, `uniformScale`, `markerActions`, `contextMenuGesture`, `placementToastMessage`
+  and `objectTarget` now live here too.
+- `PlacementPanel` accepts `positionSigns`, a per-display-axis sign for the position row, so a
+  viewer whose axis runs the other way reads the right direction. Defaults to no flip.
+
+### Changed
+- `PlacementEditor` is now a thin OBC adapter over `PlacementCore`, and `GizmoController` a thin
+  world-bound subclass of `TransformGizmo`. Both keep their existing surface and behaviour;
+  `PlacementEditor` still owns the pivot raycast and pick-source registry, which need a world.
+- `PlacementMode` is declared in `placementTarget` alongside `PlacementCapabilities`, and
+  re-exported from `PlacementEditor` as before.
+
+### Deprecated
+- The `viewers/bim/src/Placement/*` paths for the modules listed above now re-export from
+  `viewers/shared/placement/*`. They keep working this release.
+
+### Migration
+- Import the moved modules from `viewers/shared/placement/...`. `PlacementEditor`,
+  `GizmoController`, `usePlacementSession` and `PlacementEditorHost` are unchanged and need no
+  edit. `PlacementEditorSetup.createGizmo` is still optional; `PlacementCoreSetup.createGizmo`,
+  its equivalent on the new core, is required because the core has no world to build a default from.
+
 ## [0.11.1]
 
 > 0.11.0 was left staged on the registry by a failed publish and can never be claimed. This

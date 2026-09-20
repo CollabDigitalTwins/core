@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 
 import { FULL_PLACEMENT, SCALABLE_OBJECT_PLACEMENT, YAW_ONLY_PLACEMENT, narrowPlacement } from './placementTarget'
 
-import type { PointCloudPlacement } from '../../../shared/pointcloud/pointCloudPlacement'
+import type { PointCloudPlacement } from '../pointcloud/pointCloudPlacement'
 
 const placement: PointCloudPlacement = {
   position: [1, 2, 3],

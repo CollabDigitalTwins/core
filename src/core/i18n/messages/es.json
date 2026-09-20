@@ -639,7 +639,9 @@
     "toastSuccessUpFile": "archivo(s) subido(s) con éxito",
     "toastErrUpFile1": "Error al subir el archivo:",
     "toastErrUpFile2": "Ocurrió un error desconocido",
-    "uploadingFile": "Subiendo..."
+    "uploadingFile": "Subiendo...",
+    "modelsTitle": "Modelos",
+    "pointCloudsTitle": "Nubes de puntos"
   },
   "FileUpload": {
     "add": "Añadir archivo",

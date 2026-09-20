@@ -13,9 +13,11 @@ import { BuildingsContext, FilesContext, MenusContext } from '../../../../../../
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { useFileDeleteHandler, FileItemComponent, useFileActions, useFileUploadWithProgress, UploadProgressBar, useUploadTasks } from '../../../../../../../ui/FilesManager'
-import { LoadingSpinner } from '../../../../../../../ui/LoadingSpinner'
+import { partitionBySection } from '../../../../../../../ui/FilesManager/src/fileType'
+
 
 import type { DbFile as IFile } from '../../../../../../../../types/dbTypes'
+import type { FileSection } from '../../../../../../../ui/FilesManager/src/fileType'
 
 
 
@@ -29,17 +31,24 @@ const shouldExcludeByTag = (tag?: string | null): boolean => {
   return tag === 'user' || tag === 'bim-file' || tag === 'fragment-file' || tag === 'bimModel'
 }
 
-const shouldExcludeByType = (type?: string | null): boolean => {
-  if (!type) return false
-  return type === 'bim-file'
-}
-
 interface FilesSectionProps {
   files: IFile[]
   query?: string
+  /** Which of the four sidebar buckets this instance shows. Defaults to the catch-all. */
+  section?: FileSection
+  title?: string
+  icon?: LucideIcon
+  acceptedFileTypes?: string
 }
 
-export function FilesSection({ files: _filesProp, query = '' }: FilesSectionProps) {
+export function FilesSection({
+  files: _filesProp,
+  query = '',
+  section = 'files',
+  title,
+  icon,
+  acceptedFileTypes = '*',
+}: FilesSectionProps) {
   const t = useTranslations('FileSelection')
 
   const { state: buildingsState } = React.useContext(BuildingsContext)
@@ -62,9 +71,9 @@ export function FilesSection({ files: _filesProp, query = '' }: FilesSectionProp
     onDeleteSuccess: () => {},
   })
 
-  const tasks = useUploadTasks('files')
+  const tasks = useUploadTasks(section)
   const { handleAddFile, uploadState } = useFileUploadWithProgress({
-    acceptedFileTypes: '*',
+    acceptedFileTypes,
     existingNames: files.map((file: IFile) => file.name),
     onUploadSuccess: () => {
       void mutate(`/api/files`)
@@ -73,10 +82,8 @@ export function FilesSection({ files: _filesProp, query = '' }: FilesSectionProp
   })
 
   const nonBimFiles = React.useMemo(() => {
-    return files
-      .filter(file => file.extension !== 'ifc' && file.extension !== 'frag')
-      .filter(file => !shouldExcludeByTag(file.tag))
-      .filter(file => !shouldExcludeByType((file as any).type))
+    const eligible = files.filter(file => !shouldExcludeByTag(file.tag))
+    return partitionBySection(eligible)[section]
       .map(file => ({ ...file, isVisible: mapFileIds.includes(file.id) }))
       .sort((a, b) => {
         const aOnMap = mapFileIds.includes(a.id)
@@ -84,7 +91,7 @@ export function FilesSection({ files: _filesProp, query = '' }: FilesSectionProp
         if (aOnMap !== bOnMap) return aOnMap ? -1 : 1
         return a.name.localeCompare(b.name)
       })
-  }, [files, mapFileIds])
+  }, [files, mapFileIds, section])
 
   const [localFiles, setLocalFiles] = React.useState(nonBimFiles)
 
@@ -143,8 +150,8 @@ export function FilesSection({ files: _filesProp, query = '' }: FilesSectionProp
   return (
     <div className="h-full min-h-0">
       <CollapsibleSection
-        title={t('filesTitle')}
-        icon={LR.FileText}
+        title={title ?? t('filesTitle')}
+        icon={icon ?? LR.FileText}
         className="h-full min-h-0 flex flex-col"
         style={{ height: '100%', minHeight: 0 }}
         itemCount={filteredFiles.length}

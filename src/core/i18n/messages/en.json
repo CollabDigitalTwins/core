@@ -639,7 +639,9 @@
     "toastSuccessUpFile": "file(s) uploaded successfully",
     "toastErrUpFile1": "Error uploading file:",
     "toastErrUpFile2": "Unknown error occurred",
-    "uploadingFile": "Uploading..."
+    "uploadingFile": "Uploading...",
+    "modelsTitle": "Models",
+    "pointCloudsTitle": "Point clouds"
   },
   "FileUpload": {
     "add": "Add File",

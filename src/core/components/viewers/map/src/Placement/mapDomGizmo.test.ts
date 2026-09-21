@@ -69,4 +69,16 @@ describe('createMapDomGizmo', () => {
 
     expect(() => gizmo.setMode('rotate')).not.toThrow()
   })
+
+  it('tells the core about a drag so the panel follows', () => {
+    const { gizmo } = setUp()
+    const onChange = vi.fn()
+    gizmo.attach(new THREE.Object3D())
+    gizmo.onChange = onChange
+
+    const onDrag = marker.on.mock.calls.find(([event]) => event === 'drag')?.[1] as () => void
+    onDrag()
+
+    expect(onChange).toHaveBeenCalledTimes(1)
+  })
 })

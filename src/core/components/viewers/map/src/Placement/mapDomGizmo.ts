@@ -23,7 +23,7 @@ export function createMapDomGizmo({ map, anchor, onDragTo, element }: MapDomGizm
     marker = null
   }
 
-  return {
+  const gizmo: PlacementGizmo = {
     attach() {
       detach()
       const start = anchor()
@@ -34,7 +34,9 @@ export function createMapDomGizmo({ map, anchor, onDragTo, element }: MapDomGizm
 
       marker.on('drag', () => {
         const at = marker?.getLngLat()
-        if (at) onDragTo({ lng: at.lng, lat: at.lat, elevation: anchor().elevation })
+        if (!at) return
+        onDragTo({ lng: at.lng, lat: at.lat, elevation: anchor().elevation })
+        gizmo.onChange?.()
       })
 
       return true
@@ -44,4 +46,6 @@ export function createMapDomGizmo({ map, anchor, onDragTo, element }: MapDomGizm
     dispose: detach,
     setMode: () => {},
   }
+
+  return gizmo
 }

@@ -32,7 +32,7 @@ interface PlaceOnMapProps {
 export const PlaceOnMap: React.FC<PlaceOnMapProps> = ({ file, gesture = "click", onPlaced, onCancel }) => {
     const { state: mapState } = React.useContext(MapContext)
     const { state: buildingsState } = React.useContext(BuildingsContext)
-    const { map } = mapState.map
+    const { map, mapClickManager } = mapState.map
     const buildingsRef = React.useRef(buildingsState.buildings.buildings)
     buildingsRef.current = buildingsState.buildings.buildings
     const { updateFile } = useFile(file.id)
@@ -43,6 +43,13 @@ export const PlaceOnMap: React.FC<PlaceOnMapProps> = ({ file, gesture = "click",
     const onCancelRef = React.useRef(onCancel)
     onPlacedRef.current = onPlaced
     onCancelRef.current = onCancel
+
+    // A popover opening on the first click would swallow the second, so nothing else answers clicks.
+    React.useEffect(() => {
+        if (!mapClickManager) return
+        mapClickManager.setSuspended(true)
+        return () => mapClickManager.setSuspended(false)
+    }, [mapClickManager])
 
     React.useEffect(() => {
         if (!map) return

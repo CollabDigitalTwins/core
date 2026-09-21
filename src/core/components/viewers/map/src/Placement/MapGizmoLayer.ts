@@ -38,6 +38,8 @@ export function createMapGizmoLayer(anchor: () => MapAnchor): MapGizmoLayer {
   let scene: THREE.Scene | null = null
   const camera = new THREE.PerspectiveCamera()
   const subject = new THREE.Object3D()
+  let terrain = 0
+  let dragging = false
 
   return {
     id: MAP_GIZMO_LAYER_ID,
@@ -57,7 +59,9 @@ export function createMapGizmoLayer(anchor: () => MapAnchor): MapGizmoLayer {
 
       const canvas = map.getCanvas()
       const at = anchor()
-      writeModelMatrix(_model, [at.lng, at.lat], at.elevation)
+      // Frozen mid-drag: a frame that re-sampled terrain under the moving anchor would chase the drag.
+      if (!dragging) terrain = map.queryTerrainElevation([at.lng, at.lat]) ?? 0
+      writeModelMatrix(_model, [at.lng, at.lat], at.elevation + terrain)
       _clip.fromArray(args.defaultProjectionData.mainMatrix).multiply(_model)
       syncGizmoCamera(camera, _clip, canvas.width / canvas.height)
       renderer.resetState()
@@ -77,9 +81,10 @@ export function createMapGizmoLayer(anchor: () => MapAnchor): MapGizmoLayer {
     scene: () => scene,
     subject: () => subject,
 
-    setDragging(dragging) {
+    setDragging(next) {
+      dragging = next
       if (!map) return
-      if (dragging) {
+      if (next) {
         map.dragPan.disable()
         map.dragRotate.disable()
         return

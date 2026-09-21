@@ -23,7 +23,6 @@ const OPTIONAL_ACTIONS = [
   { action: 'hide' as const, label: 'Hide from view', Icon: LR.EyeOff },
   { action: 'view' as const, label: 'View', Icon: LR.Eye },
   { action: 'download' as const, label: 'Download', Icon: LR.Download },
-  { action: 'delete' as const, label: 'Delete', Icon: LR.Trash2 },
 ]
 
 export interface PlacementActionsCardProps {
@@ -65,8 +64,7 @@ export function PlacementActionsCard({ name, Icon, onAction, onClose, actions, l
             <button
               key={action}
               type="button"
-              onPointerDown={stop}
-              onClick={(event) => { stop(event); onClose?.(); onAction?.(action) }}
+              onPointerDown={(event) => { stop(event); onClose?.(); onAction?.(action) }}
               className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-foreground hover:bg-accent"
             >
               <ActionIcon className="h-3.5 w-3.5" />
@@ -75,12 +73,11 @@ export function PlacementActionsCard({ name, Icon, onAction, onClose, actions, l
           ))}
           <button
             type="button"
-            onPointerDown={stop}
-            onClick={(event) => { stop(event); onClose?.(); onAction?.('delete') }}
+            onPointerDown={(event) => { stop(event); onClose?.(); onAction?.('delete') }}
             className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-destructive hover:bg-destructive/10"
           >
             <LR.Trash2 className="h-3.5 w-3.5" />
-            Delete
+            {labels?.delete ?? 'Delete'}
           </button>
         </div>
       </Card>

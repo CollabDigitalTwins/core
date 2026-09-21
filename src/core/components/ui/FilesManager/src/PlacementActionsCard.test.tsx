@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import * as LR from 'lucide-react'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -44,7 +44,7 @@ describe('PlacementActionsCard', () => {
       />,
     )
 
-    screen.getByText('Open').click()
+    fireEvent.pointerDown(screen.getByText('Open'))
     expect(onAction).toHaveBeenCalledWith('view')
   })
 })

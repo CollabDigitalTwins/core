@@ -69,6 +69,12 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   draws at the pin's size in any consumer build. It is always a ring around the pin now: the `fit`
   prop and `MarkerRingFit` are gone. The map's file pin keeps its own outline under it, and is a
   circle again (`rounded-full`, not an arbitrary radius).
+- A BIM model with no building can be put on the map, and one with nowhere to draw asks for a
+  point: a double-click places it at that ground position and elevation, and links it to the
+  building whose footprint it landed on. `PlaceOnMap` takes a `gesture`, reports the building it
+  resolved, and writes elevation alongside the coordinates.
+- Putting a BIM model on the map marks its row visible, so a viewer that gates loading on
+  `isVisible` will load it.
 - An animated model on the map offers the animation card in its menu, with the same clip, play and
   speed controls the BIM viewer has. A model with clips used to play all of them at once and had no
   controls at all; it now plays the first, as the BIM viewer does.

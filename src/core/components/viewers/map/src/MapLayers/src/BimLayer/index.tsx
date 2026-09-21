@@ -10,14 +10,16 @@ import * as React from "react";
 import { Marker } from "react-map-gl/maplibre";
 import * as THREE from "three";
 
-import { BimContext, MapContext } from "../../../../../../../store";
+import { BimContext, BuildingsContext, MapContext } from "../../../../../../../store";
 import { markerOcclusionProps } from "../../../../../../../utils/markerUtils";
 import { writeModelMatrix } from "../../../../utils/modelMatrix";
+import { toggleBimToMap } from "../../../../utils/toggleBimToMap";
 import { extractPositionAndRotation } from "../../../Placement/mapPlacementGeo";
 import { MapPlacementHost } from "../../../Placement/MapPlacementHost";
 import { MapPlacementMenu } from "../../../Placement/MapPlacementMenu";
 import { useMapContextMenu } from "../../../Placement/useMapContextMenu";
 import { disposeThreeScene } from "../disposeThreeScene";
+import { PlaceOnMap } from "../PlaceOnMap";
 
 import type { Building, DbFile } from "../../../../../../../types/dbTypes";
 import type { FileAction } from "../../../../../../../types/global";
@@ -35,6 +37,8 @@ export const BimLayer = () => {
     const { map } = mapState.map;
 
     const { state: bimState, dispatch: bimDispatch } = React.useContext(BimContext);
+    const { state: buildingsState } = React.useContext(BuildingsContext);
+    const { buildings } = buildingsState.buildings;
     const { bimModelsAddedToMap, editingBimModelId } = bimState.bim;
 
     const rendererRef = React.useRef<THREE.WebGLRenderer | null>(null);
@@ -83,6 +87,15 @@ export const BimLayer = () => {
     React.useEffect(() => {
         editingBimModelRef.current = editingBimModelId;
     }, [editingBimModelId]);
+
+    // A model with nowhere to draw asks for a point before it can be a layer at all.
+    const unplacedModel = React.useMemo(
+        () => bimModelsAddedToMap.find(model => {
+            const { lng, lat } = extractPositionAndRotation(model.bimFile, model.building ?? undefined);
+            return lng === null || lat === null;
+        }) ?? null,
+        [bimModelsAddedToMap],
+    );
 
     const handleExitEditMode = React.useCallback(() => {
         bimDispatch({ type: "EDIT_BIM_MODEL_BY_ID", payload: { editingBimModelId: null } });
@@ -440,6 +453,24 @@ export const BimLayer = () => {
 
     return (
         <>
+            {unplacedModel && (
+                <PlaceOnMap
+                    file={unplacedModel.bimFile}
+                    gesture="dblclick"
+                    onPlaced={(file, lat, lng, buildingId) => {
+                        const building = buildingId === null
+                            ? null
+                            : buildings.find(candidate => candidate.id === buildingId) ?? null;
+                        bimDispatch({ type: "REMOVE_BIM_FROM_MAP", payload: { bimModelId: String(file.id) } });
+                        toggleBimToMap(bimDispatch, file, building);
+                    }}
+                    onCancel={() => bimDispatch({
+                        type: "REMOVE_BIM_FROM_MAP",
+                        payload: { bimModelId: String(unplacedModel.bimFile.id) },
+                    })}
+                />
+            )}
+
             {bimModelsAddedToMap.map((buildingModel, index) => {
                 const { lng, lat } = extractPositionAndRotation(
                     buildingModel.bimFile, buildingModel.building

@@ -8,7 +8,9 @@ import * as React from "react"
 import { toast } from "sonner"
 
 import { useFile } from "../../../../../../hooks/files/files"
-import { MapContext } from "../../../../../../store"
+import { BuildingsContext, MapContext } from "../../../../../../store"
+
+import { resolveClickPlacement } from "../../Placement/resolveClickPlacement"
 
 import type { DbFile } from "../../../../../../types/dbTypes"
 import type * as maplibregl from "maplibre-gl"
@@ -17,18 +19,22 @@ import type * as maplibregl from "maplibre-gl"
 
 interface PlaceOnMapProps {
     file: DbFile
-    onPlaced: (file: DbFile, lat: number, lng: number) => void
+    /** Which gesture places it. A model rides on the map's own click, so it asks for a double. */
+    gesture?: "click" | "dblclick"
+    onPlaced: (file: DbFile, lat: number, lng: number, buildingId: number | null) => void
     onCancel: () => void
 }
 
 /**
- * Invisible component that puts the map into "click-to-place" mode.
- * Sets crosshair cursor, listens for a single click, saves the coords to the DB,
- * then calls onPlaced. Esc calls onCancel.
+ * Puts the map into click-to-place: the next gesture writes where the file stands,
+ * and the building under it when it lands on one. Escape cancels.
  */
-export const PlaceOnMap: React.FC<PlaceOnMapProps> = ({ file, onPlaced, onCancel }) => {
+export const PlaceOnMap: React.FC<PlaceOnMapProps> = ({ file, gesture = "click", onPlaced, onCancel }) => {
     const { state: mapState } = React.useContext(MapContext)
+    const { state: buildingsState } = React.useContext(BuildingsContext)
     const { map } = mapState.map
+    const buildingsRef = React.useRef(buildingsState.buildings.buildings)
+    buildingsRef.current = buildingsState.buildings.buildings
     const { updateFile } = useFile(file.id)
     const t = useTranslations("Placement")
 
@@ -51,18 +57,18 @@ export const PlaceOnMap: React.FC<PlaceOnMapProps> = ({ file, onPlaced, onCancel
         map.on("mousemove", keepCrosshair)
 
         const handleClick = async (e: maplibregl.MapMouseEvent) => {
-            const lat = e.lngLat.lat
-            const lng = e.lngLat.lng
+            const { lat, lng, elevation, buildingId } = resolveClickPlacement(map, e, buildingsRef.current)
 
             map.off("mousemove", keepCrosshair)
             clearCursor()
 
             try {
-                await updateFile({ lat, lng, type: 'map-file' } as Partial<DbFile>)
-                file.lat = lat
-                file.lng = lng
-                file.type = 'map-file'
-                onPlacedRef.current(file, lat, lng)
+                const patch: Partial<DbFile> = { lat, lng, elevation, type: 'map-file' }
+                // A click on a footprint adopts that building; open ground leaves the file where it was filed.
+                if (buildingId !== null) patch.attachedFilesBuildingId = buildingId
+                await updateFile(patch)
+                Object.assign(file, patch)
+                onPlacedRef.current(file, lat, lng, buildingId)
                 toast.success(t("positionAcceptedToast"))
             } catch (err) {
                 console.error("Error placing file:", err)
@@ -82,16 +88,16 @@ export const PlaceOnMap: React.FC<PlaceOnMapProps> = ({ file, onPlaced, onCancel
 
         const onClick = (e: maplibregl.MapMouseEvent) => { void handleClick(e) }
 
-        map.on("click", onClick)
+        map.on(gesture, onClick)
         document.addEventListener("keydown", handleKeyDown)
 
         return () => {
             map.off("mousemove", keepCrosshair)
-            map.off("click", onClick)
+            map.off(gesture, onClick)
             document.removeEventListener("keydown", handleKeyDown)
             clearCursor()
         }
-    }, [map, updateFile])
+    }, [map, gesture, updateFile])
 
     return null
 }

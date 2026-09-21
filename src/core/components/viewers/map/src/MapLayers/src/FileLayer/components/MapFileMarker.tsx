@@ -32,7 +32,9 @@ export default function MapFileMarker({
       size="default"
       onClick={onClick}
       onDoubleClick={onDbClick}
-      className="relative bg-white/90 w-9 h-9 rounded-full border border-gray-200 hover:bg-white pointer-events-auto cursor-pointer shadow-lg p-0 text-xs font-sans flex items-center justify-center transition-transform duration-200 ease-in-out hover:scale-105 group"
+      className="relative w-9 h-9 border border-gray-200 pointer-events-auto cursor-pointer shadow-lg p-0 text-xs font-sans flex items-center justify-center transition-transform duration-200 ease-in-out hover:scale-105 group"
+      // A consumer stylesheet may redefine a utility class; the pin's shape and surface are not its to change.
+      style={{ borderRadius: '50%', backgroundColor: 'rgba(255, 255, 255, 0.9)' }}
     >
       <FileIcon mimeType={mimeType} extension={extension} url={url} size={18} />
       {fileName && <UploadProgressRing fileName={fileName} tone="onSurface" />}

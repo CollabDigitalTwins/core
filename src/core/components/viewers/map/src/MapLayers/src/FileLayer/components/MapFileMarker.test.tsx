@@ -21,12 +21,20 @@ describe('MapFileMarker', () => {
     expect((ring(container) as SVGElement).style.width).toContain('calc(100%')
   })
 
-  it('keeps the pin a circle with a utility every build generates', () => {
+  it('draws its own circle, which no consumer stylesheet can redefine', () => {
     const { container } = render(<MapFileMarker mimeType="model/gltf-binary" extension="glb" />)
+    const pin = container.querySelector('button')!
 
-    const className = container.querySelector('button')?.className ?? ''
-    expect(className).toContain('rounded-full')
-    expect(className).not.toContain('rounded-[')
+    expect(pin.style.borderRadius).toBe('50%')
+    expect(pin.className).not.toContain('rounded-full')
+  })
+
+  it('stays white behind the ring, whatever the app does to a utility class', () => {
+    const { container } = render(<MapFileMarker mimeType="model/gltf-binary" extension="glb" fileName="tower.glb" />)
+    const pin = container.querySelector('button')!
+
+    expect(pin.style.backgroundColor).toBe('rgba(255, 255, 255, 0.9)')
+    expect(pin.className).not.toContain('bg-white')
   })
 
   it('keeps the pin outlined while it uploads, so the ring is a ring and not the rim', () => {

@@ -67,6 +67,16 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   is unchanged; the map's `lng/lat/elev` no longer crops the value or sits on top of it.
 - The map's file pin draws its upload ring around itself and keeps its own outline, matching the
   BIM viewer's marker.
+- An animated model on the map offers the animation card in its menu, with the same clip, play and
+  speed controls the BIM viewer has. A model with clips used to play all of them at once and had no
+  controls at all; it now plays the first, as the BIM viewer does.
+- `AnimationPanel` and `modelAnimation` moved to `viewers/shared/placement/`, where the new
+  `applyAnimationTo` runs one clip at its speed for every viewer. The BIM paths re-export both.
+- `SECTION_ICONS` and `iconForFile` in `ui/FilesManager/src/fileType`: one icon per file section,
+  so the sidebars and the placement menus cannot disagree. The map's BIM and Models sections now
+  read the same as the BIM viewer's.
+- `TransformControls`' rotation rings draw as whole circles, matching the pickers that were always
+  whole. The panel's yaw field stops at a full turn either way.
 
 ### Removed
 - `EditPosition` and `EditPositionProps` from `viewers/map/src/MapLayers/src/EditPosition`. The

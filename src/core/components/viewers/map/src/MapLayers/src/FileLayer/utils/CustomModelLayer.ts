@@ -5,10 +5,12 @@ import { type CustomLayerInterface, type LngLatLike, type Map } from 'maplibre-g
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
+import { applyAnimationTo, initialState, withClip, withPlaying, withSpeed } from '../../../../../../shared/placement/modelAnimation'
 import { writeModelMatrix } from '../../../../../utils/modelMatrix'
 import { disposeThreeScene } from '../../disposeThreeScene'
 
 import type { DbFile } from '../../../../../../../../types/dbTypes'
+import type { AnimationState } from '../../../../../../shared/placement/modelAnimation'
 
 type TempPositionsRef = React.MutableRefObject<Record<string, { lat: number; lng: number }>>
 type TempRotationsRef = React.MutableRefObject<Record<string, number>>
@@ -44,6 +46,22 @@ function resolveModelCoordinates(file: DbFile): { lng: number, lat: number } {
   return { lng: 0, lat: 0 }
 }
 
+/** Playback for a loaded model's clips, so the map's animation card drives the same state the BIM one does. */
+export interface ModelAnimationControls {
+  getClips(): string[]
+  getAnimation(): AnimationState | null
+  setClip(clipIndex: number): void
+  setPlaying(playing: boolean): void
+  setSpeed(speed: number): void
+}
+
+export interface ModelLayerHandle {
+  cleanup: () => void
+  remove: () => void
+  hitTest: (ndcX: number, ndcY: number) => boolean
+  animation: ModelAnimationControls
+}
+
 export const CustomModelLayer = (
   modelFile: DbFile,
   map: Map,
@@ -53,12 +71,23 @@ export const CustomModelLayer = (
   tempRotationsRef?: TempRotationsRef,
   tempElevationsRef?: TempElevationsRef,
   tempScalesRef?: TempScalesRef,
-): { cleanup: () => void, remove: () => void, hitTest: (ndcX: number, ndcY: number) => boolean } => {
+): ModelLayerHandle => {
   let components = null
   let customLayer: CustomLayerInterface | null = null
+  let clips: THREE.AnimationClip[] = []
+  let animation: AnimationState | null = null
+  let mixerRef: THREE.AnimationMixer | null = null
+
+  const noControls: ModelAnimationControls = {
+    getClips: () => [],
+    getAnimation: () => null,
+    setClip: () => {},
+    setPlaying: () => {},
+    setSpeed: () => {},
+  }
 
   if (!map || !modelFile) {
-    return { cleanup: () => {}, remove: () => {}, hitTest: () => false }
+    return { cleanup: () => {}, remove: () => {}, hitTest: () => false, animation: noControls }
   }
 
   const modelFileKey = String(modelFile.id)
@@ -149,11 +178,12 @@ export const CustomModelLayer = (
             if (disposed) return
             gltf.scene.scale.setScalar(1)
 
-            if (gltf.animations && gltf.animations.length > 0) {
+            clips = gltf.animations ?? []
+            animation = initialState(clips.length)
+            if (animation) {
               this.mixer = new THREE.AnimationMixer(gltf.scene)
-              for (const clip of gltf.animations) {
-                this.mixer!.clipAction(clip).play()
-              }
+              mixerRef = this.mixer
+              applyAnimationTo(this.mixer, clips, animation)
             }
 
             scene.add(gltf.scene)
@@ -242,7 +272,7 @@ export const CustomModelLayer = (
         // Render-on-demand: keep the frame loop alive only while an animation is
         // playing, the camera recently moved (settle window), or this model is
         // being edited. Idle static model ⇒ no self-scheduled repaints ⇒ no freeze.
-        if (this.mixer || isEditing || performance.now() - lastMoveTime < SETTLE_MS) {
+        if (animation?.playing || isEditing || performance.now() - lastMoveTime < SETTLE_MS) {
           map.triggerRepaint()
         }
       },
@@ -257,6 +287,9 @@ export const CustomModelLayer = (
           ;(this.mixer as THREE.AnimationMixer).stopAllAction()
           this.mixer = null
         }
+        mixerRef = null
+        clips = []
+        animation = null
         if (this.scene) disposeThreeScene(this.scene as THREE.Scene)
         cameraRef = null
         sceneRef = null
@@ -312,5 +345,20 @@ export const CustomModelLayer = (
     customLayer = null
   }
 
-  return { cleanup, remove: removeLayer, hitTest }
+  const commit = (next: AnimationState | null) => {
+    if (!next || !mixerRef) return
+    animation = next
+    applyAnimationTo(mixerRef, clips, next)
+    map.triggerRepaint()
+  }
+
+  const controls: ModelAnimationControls = {
+    getClips: () => clips.map((clip, index) => clip.name || `Clip ${index + 1}`),
+    getAnimation: () => animation,
+    setClip: clipIndex => commit(animation && withClip(animation, clipIndex, clips.length)),
+    setPlaying: playing => commit(animation && withPlaying(animation, playing)),
+    setSpeed: speed => commit(animation && withSpeed(animation, speed)),
+  }
+
+  return { cleanup, remove: removeLayer, hitTest, animation: controls }
 }

@@ -12,6 +12,7 @@ import type { MapAnchor } from './mapPlacementGeo'
 import type { MapCapabilities } from './useMapPlacementSession'
 import type { DbFile } from '../../../../../types/dbTypes'
 import type { FileMarkerAction } from '../../../../ui/FilesManager/src/PlacementActionsCard'
+import type { MarkerActionContext } from '../../../shared/placement/markerActions'
 import type { PlacementCapabilities, PlacementTarget } from '../../../shared/placement/placementTarget'
 import type { PointCloudPlacement } from '../../../shared/pointcloud/pointCloudPlacement'
 import type * as THREE from 'three'
@@ -23,8 +24,11 @@ export function mapCapabilitiesForFile(file: Parameters<typeof capabilitiesForFi
 }
 
 /** The map's menu, narrowed: a file with no geometry has only a drag handle, so it only moves. */
-export function mapMarkerActionsFor(capabilities: MapCapabilities): FileMarkerAction[] {
-  const actions = markerActionsFor(capabilities)
+export function mapMarkerActionsFor(
+  capabilities: MapCapabilities,
+  context?: MarkerActionContext,
+): FileMarkerAction[] {
+  const actions = markerActionsFor(capabilities, context)
   return capabilities.moveOnly ? actions.filter(action => action === 'move') : actions
 }
 

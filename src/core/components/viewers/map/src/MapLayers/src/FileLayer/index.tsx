@@ -3,14 +3,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { Marker } from 'react-map-gl/maplibre'
 
 import { useFile, useFiles, useDeleteFile } from '../../../../../../../hooks/files/files'
 import { FilesContext, MapContext } from '../../../../../../../store'
 import { markerOcclusionProps } from '../../../../../../../utils/markerUtils'
+
 import ConfirmDialog from '../../../../../../ConfirmDialog'
 import { downloadDbFile } from '../../../../../../ui/FilesManager'
+import { AnimationPanel } from '../../../../../shared/placement/AnimationPanel'
 import { MapPlacementHost } from '../../../Placement/MapPlacementHost'
 import { MapPlacementMenu } from '../../../Placement/MapPlacementMenu'
 import { PlaceOnMap } from '../PlaceOnMap'
@@ -20,9 +23,11 @@ import MapFileMarker from './components/MapFileMarker'
 import { FileModelLayer } from './FileModelLayer/FileModelLayer'
 import { openPopupWindow } from './utils/openFileInPopUpWindow'
 
+import type { ModelAnimationControls } from './utils/CustomModelLayer'
 import type { DbFile } from '../../../../../../../types/dbTypes'
 import type { FileAction } from '../../../../../../../types/global'
 import type { FileMarkerAction } from '../../../../../../ui/FilesManager/src/PlacementActionsCard'
+import type { AnimationState } from '../../../../../shared/placement/modelAnimation'
 import type { PlacementMode } from '../../../../../shared/placement/placementTarget'
 
 
@@ -107,8 +112,32 @@ export const FileLayers = () => {
 
   const { deleteFile } = useDeleteFile()
 
-  const [contextMenu, setContextMenu] = React.useState<{ x: number; y: number; file: DbFile } | null>(null)
+  const [contextMenu, setContextMenu] = React.useState<
+    { x: number; y: number; file: DbFile; animation?: ModelAnimationControls } | null
+  >(null)
+  const [animating, setAnimating] = React.useState<
+    { file: DbFile; controls: ModelAnimationControls; state: AnimationState } | null
+  >(null)
   const [pendingDelete, setPendingDelete] = React.useState<DbFile | null>(null)
+
+  const tAnimation = useTranslations('Animation')
+  const animationLabels = React.useMemo(() => ({
+    title: tAnimation('title'),
+    clip: tAnimation('clip'),
+    play: tAnimation('play'),
+    pause: tAnimation('pause'),
+    speed: tAnimation('speed'),
+    notSaved: tAnimation('notSaved'),
+  }), [tAnimation])
+
+  const updateAnimation = React.useCallback((change: (controls: ModelAnimationControls) => void) => {
+    setAnimating(current => {
+      if (!current) return current
+      change(current.controls)
+      const state = current.controls.getAnimation()
+      return state ? { ...current, state } : current
+    })
+  }, [])
 
   const handleContextMenu = React.useCallback((e: React.MouseEvent, file: DbFile) => {
     e.preventDefault()
@@ -156,6 +185,13 @@ export const FileLayers = () => {
       return
     }
 
+    if (action === 'animate') {
+      const controls = contextMenu?.animation
+      const state = controls?.getAnimation()
+      if (controls && state) setAnimating({ file, controls, state })
+      return
+    }
+
     handleContextMenuAction(action as FileAction, file)
   }, [contextMenu, fileDispatch, handleContextMenuAction])
 
@@ -167,7 +203,7 @@ export const FileLayers = () => {
         tempRotationsRef={tempRotationsRef}
         tempElevationsRef={tempElevationsRef}
         tempScalesRef={tempScalesRef}
-        onContextMenu={(file, x, y) => setContextMenu({ x, y, file })}
+        onContextMenu={(file, x, y, animation) => setContextMenu({ x, y, file, animation })}
       />
 
       {mapFileIds.map(id => (
@@ -229,8 +265,22 @@ export const FileLayers = () => {
           file={contextMenu.file}
           is3D={is3DModelFile(contextMenu.file.extension)}
           isOnMap={mapFileIds.includes(contextMenu.file.id)}
+          animated={(contextMenu.animation?.getClips().length ?? 0) > 0}
           onAction={handlePlacementMenuAction}
           onClose={() => setContextMenu(null)}
+        />
+      )}
+
+      {animating && (
+        <AnimationPanel
+          name={animating.file.name}
+          clips={animating.controls.getClips()}
+          state={animating.state}
+          labels={animationLabels}
+          onClipChange={(clipIndex) => updateAnimation(controls => controls.setClip(clipIndex))}
+          onPlayingChange={(playing) => updateAnimation(controls => controls.setPlaying(playing))}
+          onSpeedChange={(speed) => updateAnimation(controls => controls.setSpeed(speed))}
+          onClose={() => setAnimating(null)}
         />
       )}
 

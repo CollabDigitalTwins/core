@@ -16,7 +16,7 @@ const modelFile = { id: 1, name: 'tower.glb', extension: 'glb' } as DbFile
 const documentFile = { id: 2, name: 'plan.pdf', extension: 'pdf' } as DbFile
 const pointCloudFile = { id: 3, name: 'scan.las', extension: 'las' } as DbFile
 
-function renderMenu(file: DbFile, is3D: boolean, isOnMap = false) {
+function renderMenu(file: DbFile, is3D: boolean, isOnMap = false, animated = false) {
   render(
     <MapPlacementMenu
       x={0}
@@ -24,6 +24,7 @@ function renderMenu(file: DbFile, is3D: boolean, isOnMap = false) {
       file={file}
       is3D={is3D}
       isOnMap={isOnMap}
+      animated={animated}
       onAction={vi.fn()}
       onClose={vi.fn()}
     />,
@@ -80,5 +81,17 @@ describe('MapPlacementMenu', () => {
     renderMenu(modelFile, true)
 
     expect(screen.getAllByText('deleteTitle')).toHaveLength(1)
+  })
+
+  it('offers the animation card to a model that reported clips', () => {
+    renderMenu(modelFile, true, false, true)
+
+    expect(screen.getByText('Animation')).toBeTruthy()
+  })
+
+  it('offers no animation card to a model without clips', () => {
+    renderMenu(modelFile, true, false, false)
+
+    expect(screen.queryByText('Animation')).toBeNull()
   })
 })

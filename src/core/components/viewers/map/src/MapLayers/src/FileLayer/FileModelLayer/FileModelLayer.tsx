@@ -10,11 +10,13 @@ import { MapContext, FilesContext } from '../../../../../../../../store'
 import { CustomModelLayer } from '../utils/CustomModelLayer'
 
 import type { DbFile } from '../../../../../../../../types/dbTypes'
+import type { ModelAnimationControls } from '../utils/CustomModelLayer'
 
 type LoadedModelFiles = {
   file: DbFile
   cleanUpFunction: () => void
   hitTest: (ndcX: number, ndcY: number) => boolean
+  animation: ModelAnimationControls
 }
 
 interface FileModelLayerProps {
@@ -23,8 +25,8 @@ interface FileModelLayerProps {
   tempRotationsRef?: React.MutableRefObject<Record<string, number>>
   tempElevationsRef?: React.MutableRefObject<Record<string, number>>
   tempScalesRef?: React.MutableRefObject<Record<string, number>>
-  /** Called when the user right-clicks on a rendered 3D mesh. */
-  onContextMenu?: (file: DbFile, clientX: number, clientY: number) => void
+  /** Called when the user right-clicks on a rendered 3D mesh, with the model's playback if it has clips. */
+  onContextMenu?: (file: DbFile, clientX: number, clientY: number, animation: ModelAnimationControls) => void
 }
 
 export const FileModelLayer = ({
@@ -105,7 +107,7 @@ export const FileModelLayer = ({
       .filter(model => currentFileIds.has(model.file.id) && !staleIds.has(model.file.id))
 
     for (const file of filesNotLoaded) {
-      const { cleanup, hitTest } = CustomModelLayer(
+      const { cleanup, hitTest, animation } = CustomModelLayer(
         file,
         map,
         rendererRef.current,
@@ -115,7 +117,7 @@ export const FileModelLayer = ({
         tempElevationsRef,
         tempScalesRef,
       )
-      newLoadedModels.push({ file, cleanUpFunction: cleanup, hitTest })
+      newLoadedModels.push({ file, cleanUpFunction: cleanup, hitTest, animation })
     }
 
     setLoadedModels(newLoadedModels)
@@ -142,7 +144,7 @@ export const FileModelLayer = ({
         if (model.hitTest(ndcX, ndcY)) {
           e.preventDefault()
           e.stopPropagation()
-          onContextMenuRef.current?.(model.file, e.clientX, e.clientY)
+          onContextMenuRef.current?.(model.file, e.clientX, e.clientY, model.animation)
           break
         }
       }

@@ -6,6 +6,7 @@
 import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
+import { iconForFile } from '../../../../ui/FilesManager/src/fileType'
 import { PlacementActionsCard } from '../../../../ui/FilesManager/src/PlacementActionsCard'
 
 import { mapCapabilitiesForFile, mapMarkerActionsFor } from './mapPlacementTarget'
@@ -20,19 +21,21 @@ export interface MapPlacementMenuProps {
   is3D: boolean
   /** Whether the file is currently drawn, so the toggle reads Show or Hide. */
   isOnMap: boolean
+  /** Whether the loaded model carries animation clips, which no extension can tell us. */
+  animated?: boolean
   onAction: (action: FileMarkerAction) => void
   onClose: () => void
 }
 
-export function MapPlacementMenu({ x, y, file, is3D, isOnMap, onAction, onClose }: MapPlacementMenuProps) {
+export function MapPlacementMenu({ x, y, file, is3D, isOnMap, animated, onAction, onClose }: MapPlacementMenuProps) {
   const t = useTranslations('FileItemComponent')
-  const actions: FileMarkerAction[] = [...mapMarkerActionsFor(mapCapabilitiesForFile(file, is3D)), 'view']
+  const actions: FileMarkerAction[] = [...mapMarkerActionsFor(mapCapabilitiesForFile(file, is3D), { animated }), 'view']
 
   return (
     <div className="fixed z-50" style={{ left: x, top: y }}>
       <PlacementActionsCard
         name={file.name}
-        Icon={is3D ? LR.Box : LR.FileText}
+        Icon={iconForFile(file)}
         actions={actions}
         labels={{
           view: isOnMap ? t('hideTitle') : t('showTitle'),

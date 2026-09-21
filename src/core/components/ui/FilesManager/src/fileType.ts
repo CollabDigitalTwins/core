@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as LR from 'lucide-react'
+
 import { POINT_CLOUD_ACCEPT, POINT_CLOUD_EXTENSIONS } from '../../../viewers/bim/src/PointClouds/pointCloudFiles'
 import { SPLAT_ACCEPT, SPLAT_EXTENSIONS } from '../../../viewers/shared/splat/splatFiles'
 
@@ -38,6 +40,14 @@ export const SECTION_FOR_TYPE: Record<FileType, FileSection> = {
   'media-file': 'files',
   'document-file': 'files',
   file: 'files',
+}
+
+/** One icon per section, so a sidebar, a menu and a marker never name the same kind differently. */
+export const SECTION_ICONS: Record<FileSection, LR.LucideIcon> = {
+  bim: LR.Box,
+  models: LR.FileAxis3d,
+  pointClouds: LR.Grip,
+  files: LR.FileText,
 }
 
 export const ACCEPT_FOR_TYPE: Record<FileType, string> = {
@@ -93,3 +103,6 @@ export function partitionBySection(files: DbFile[]): Record<FileSection, DbFile[
   for (const file of files) buckets[SECTION_FOR_TYPE[typeOfRecord(file)]].push(file)
   return buckets
 }
+
+/** The icon for whichever section a file belongs to. */
+export const iconForFile = (file: DbFile): LR.LucideIcon => SECTION_ICONS[SECTION_FOR_TYPE[typeOfRecord(file)]]

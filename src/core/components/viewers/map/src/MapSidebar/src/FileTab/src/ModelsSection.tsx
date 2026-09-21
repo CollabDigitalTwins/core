@@ -13,6 +13,7 @@ import { BimContext, BuildingsContext } from '../../../../../../../../store'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { useFileDeleteHandler, FileItemComponent, useFileActions, useFileUploadWithProgress, UploadProgressBar, useUploadTasks } from '../../../../../../../ui/FilesManager'
+import { SECTION_ICONS } from '../../../../../../../ui/FilesManager/src/fileType'
 import { IfcIcon } from '../../../../../../../ui/Icons'
 import { toggleBimToMap as dispatchToggleBimToMap } from '../../../../../utils/toggleBimToMap'
 
@@ -174,7 +175,7 @@ export function ModelsSection({ files, query = '', open, onOpenChange }: ModelsS
     <div className="h-full min-h-0">
       <CollapsibleSection
         title={tf('bimTitle', 'BIM')}
-        icon={IfcIcon}
+        icon={SECTION_ICONS.bim}
         className="h-full min-h-0 flex flex-col"
         style={{ height: '100%', minHeight: 0 }}
         itemCount={filteredModels.length}

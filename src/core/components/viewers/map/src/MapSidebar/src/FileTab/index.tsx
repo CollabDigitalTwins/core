@@ -8,7 +8,7 @@ import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
 import { useFiles } from '../../../../../../../hooks/files/files'
-import { partitionBySection } from '../../../../../../ui/FilesManager/src/fileType'
+import { SECTION_ICONS, partitionBySection } from '../../../../../../ui/FilesManager/src/fileType'
 import { ViewerSidebarPanel } from '../../../../../../ui/ViewerSidebar/Panel'
 import { useResizableSections } from '../../../../../../ui/ViewerSidebar/useResizableSections'
 
@@ -70,7 +70,7 @@ export function FileTab() {
             query={searchQuery}
             section="models"
             title={tf('modelsTitle', 'Models')}
-            icon={LR.Box}
+            icon={SECTION_ICONS.models}
             acceptedFileTypes=".glb,.gltf,.fbx,.obj,.dae,.ply,.spz,.splat,.ksplat,.sog"
             {...chrome}
           />
@@ -82,7 +82,7 @@ export function FileTab() {
             query={searchQuery}
             section="pointClouds"
             title={tf('pointCloudsTitle', 'Point clouds')}
-            icon={LR.Grip}
+            icon={SECTION_ICONS.pointClouds}
             acceptedFileTypes=".las,.laz,.copc,.copc.laz,.e57"
             {...chrome}
           />

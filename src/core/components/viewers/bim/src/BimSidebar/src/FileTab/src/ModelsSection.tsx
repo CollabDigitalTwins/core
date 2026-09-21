@@ -12,6 +12,7 @@ import { BimContext, BuildingsContext } from '../../../../../../../../store'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { FileItemComponent, useFileActions, useFileDeleteHandler, ACCEPT_FOR_TYPE, EXTENSIONS_FOR_TYPE, UploadProgressBar, useUploadTasks } from '../../../../../../../ui/FilesManager'
+import { SECTION_ICONS } from '../../../../../../../ui/FilesManager/src/fileType'
 import { isSplatFile } from '../../../../../../shared/splat/splatFiles'
 import { acceptAttribute, pickFile, routePickedFile } from '../../../../lib/pickAndRouteFile'
 import { requestPlacement } from '../../../../lib/placementRequests'
@@ -109,7 +110,7 @@ export function ModelsSection({ files, query = '', ...chrome }: ModelsSectionPro
     <>
       <CollapsibleSection
         title={t('modelsTitles')}
-        icon={LR.FileAxis3d}
+        icon={SECTION_ICONS.models}
         className="min-h-0 overflow-y-auto"
         style={{ height: '100%', minHeight: 0 }}
         itemCount={filtered.length + filteredSplats.length}

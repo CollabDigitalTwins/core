@@ -14,6 +14,7 @@ import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { Button } from '../../../../../../../ui/Button'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { FileItemComponent, UploadProgressBar, useFileActions, useFileDeleteHandler, useUploadTasks } from '../../../../../../../ui/FilesManager'
+import { SECTION_ICONS } from '../../../../../../../ui/FilesManager/src/fileType'
 import { PlacementEditor } from '../../../../Placement/PlacementEditor'
 import { usePointCloudTarget } from '../../../../Placement/targets/usePointCloudTarget'
 import { useSceneUnload } from '../../../../Placement/useSceneUnload'
@@ -166,7 +167,7 @@ export function PointCloudsSection({ files, query = '', buildingId, ...chrome }:
     <>
       <CollapsibleSection
         title={t('title')}
-        icon={LR.Grip}
+        icon={SECTION_ICONS.pointClouds}
         className="min-h-0 overflow-y-auto"
         style={{ height: '100%', minHeight: 0 }}
         itemCount={rows.length}

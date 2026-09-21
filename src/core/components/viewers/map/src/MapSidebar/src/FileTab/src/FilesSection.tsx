@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { mutate } from 'swr'
@@ -13,11 +12,12 @@ import { BuildingsContext, FilesContext, MenusContext } from '../../../../../../
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { useFileDeleteHandler, FileItemComponent, useFileActions, useFileUploadWithProgress, UploadProgressBar, useUploadTasks } from '../../../../../../../ui/FilesManager'
-import { partitionBySection } from '../../../../../../../ui/FilesManager/src/fileType'
+import { SECTION_ICONS, partitionBySection } from '../../../../../../../ui/FilesManager/src/fileType'
 
 
 import type { DbFile as IFile } from '../../../../../../../../types/dbTypes'
 import type { FileSection } from '../../../../../../../ui/FilesManager/src/fileType'
+import type * as LR from 'lucide-react'
 
 
 
@@ -150,7 +150,7 @@ export function FilesSection({
     <div className="h-full min-h-0">
       <CollapsibleSection
         title={title ?? t('filesTitle')}
-        icon={icon ?? LR.FileText}
+        icon={icon ?? SECTION_ICONS.files}
         className="h-full min-h-0 flex flex-col"
         style={{ height: '100%', minHeight: 0 }}
         itemCount={filteredFiles.length}

@@ -4,9 +4,9 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { act, renderHook } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { DISMISSING_MAP_EVENTS, useMapContextMenu } from './useMapContextMenu'
+import { DISMISSING_MAP_EVENTS, SETTLE_MS, useMapContextMenu } from './useMapContextMenu'
 
 import type * as maplibregl from 'maplibre-gl'
 
@@ -26,6 +26,9 @@ const open = (result: { current: ReturnType<typeof useMapContextMenu<{ id: numbe
   act(() => { result.current.open({ x: 10, y: 10, item: { id } }) })
 
 describe('useMapContextMenu', () => {
+  beforeEach(() => { vi.useFakeTimers() })
+  afterEach(() => { vi.useRealTimers() })
+
   it('holds what was opened until something closes it', () => {
     const { map } = fakeMap()
     const { result } = renderHook(() => useMapContextMenu<{ id: number }>(map))
@@ -40,11 +43,22 @@ describe('useMapContextMenu', () => {
       const { map, fire } = fakeMap()
       const { result } = renderHook(() => useMapContextMenu<{ id: number }>(map))
       open(result, 1)
+      act(() => { vi.advanceTimersByTime(SETTLE_MS) })
 
       act(() => { fire(event) })
 
       expect(result.current.menu, `${event} should dismiss the menu`).toBeNull()
     }
+  })
+
+  it('survives the gesture that opened it: a right-press that nudges the map still leaves a menu', () => {
+    const { map, fire } = fakeMap()
+    const { result } = renderHook(() => useMapContextMenu<{ id: number }>(map))
+
+    open(result, 1)
+    act(() => { fire('rotatestart') })
+
+    expect(result.current.menu?.item.id).toBe(1)
   })
 
   it('closes the menu another layer had open, so only one is ever on screen', () => {

@@ -154,3 +154,60 @@ describe('applyDrag', () => {
     expect(last.scale).toBe(3)
   })
 })
+
+describe('applyDrag, turning and scaling', () => {
+  it('previews the yaw the gizmo turned the subject to', () => {
+    const { target, root, previews } = setUp()
+
+    root.rotation.y = Math.PI / 4
+    target.applyDrag?.(root)
+
+    expect(previews[previews.length - 1].rotation).toBeCloseTo(Math.PI / 4, 9)
+  })
+
+  it('reads a turn as where the subject now stands, not as one more turn on top', () => {
+    const { target, root, previews } = setUp()
+
+    root.rotation.y = Math.PI / 4
+    target.applyDrag?.(root)
+    root.rotation.y = Math.PI / 2
+    target.applyDrag?.(root)
+
+    expect(previews[previews.length - 1].rotation).toBeCloseTo(Math.PI / 2, 9)
+  })
+
+  it('previews the factor the gizmo scaled the subject by', () => {
+    const { target, root, previews } = setUp()
+
+    root.scale.setScalar(2.5)
+    target.applyDrag?.(root)
+
+    expect(previews[previews.length - 1].scale).toBeCloseTo(2.5, 9)
+  })
+
+  it('leaves the turn and the scale on the subject, which is what the gizmo measures from', () => {
+    const { target, root } = setUp()
+
+    root.rotation.y = Math.PI / 3
+    root.scale.setScalar(2)
+    target.applyDrag?.(root)
+
+    expect(root.rotation.y).toBeCloseTo(Math.PI / 3, 9)
+    expect(root.scale.x).toBeCloseTo(2, 9)
+  })
+
+  it('builds the next drag on a card edit rather than discarding it', () => {
+    const { target, root, previews } = setUp()
+
+    root.rotation.y = Math.PI / 4
+    root.scale.setScalar(2)
+    target.applyDrag?.(root)
+    target.apply({ ...target.read(), rotation: [0, Math.PI, 0], scale: 4 })
+    target.applyDrag?.(root)
+
+    const last = previews[previews.length - 1]
+    expect(last.rotation).toBeCloseTo(Math.PI, 9)
+    expect(last.scale).toBeCloseTo(4, 9)
+  })
+})
+

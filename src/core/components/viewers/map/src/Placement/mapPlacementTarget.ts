@@ -62,6 +62,9 @@ export function mapPlacementTarget({
 }: MapPlacementTargetSetup): PlacementTarget {
   let rotation = 0
   let scale = 1
+  // What the subject's own turn and scale are measured from: the gizmo never zeroes them mid-drag.
+  let baseRotation = 0
+  let baseScale = 1
 
   const read = (): PointCloudPlacement => ({
     ...DEFAULT_PLACEMENT,
@@ -84,11 +87,16 @@ export function mapPlacementTarget({
       const root = object()
       if (root) {
         root.position.set(0, 0, 0)
+        baseRotation = rotation - root.rotation.y
+        baseScale = scale / (root.scale.x || 1)
         root.updateMatrixWorld(true)
       }
     },
     applyDrag: (object) => {
+      rotation = baseRotation + object.rotation.y
+      if (capabilities.scale) scale = baseScale * object.scale.x
       preview(anchorAfterDrag(anchor(), object.position), rotation, scale)
+      // Only the position resets: the anchor moved under the subject, so the drag is spent.
       object.position.set(0, 0, 0)
       object.updateMatrixWorld(true)
     },

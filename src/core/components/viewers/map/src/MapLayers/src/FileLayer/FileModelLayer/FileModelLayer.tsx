@@ -22,6 +22,7 @@ interface FileModelLayerProps {
   editingFileIdRef?: React.MutableRefObject<string | null>
   tempRotationsRef?: React.MutableRefObject<Record<string, number>>
   tempElevationsRef?: React.MutableRefObject<Record<string, number>>
+  tempScalesRef?: React.MutableRefObject<Record<string, number>>
   /** Called when the user right-clicks on a rendered 3D mesh. */
   onContextMenu?: (file: DbFile, clientX: number, clientY: number) => void
 }
@@ -31,6 +32,7 @@ export const FileModelLayer = ({
   editingFileIdRef,
   tempRotationsRef,
   tempElevationsRef,
+  tempScalesRef,
   onContextMenu,
 }: FileModelLayerProps) => {
   const { state: mapState } = React.useContext(MapContext)
@@ -84,7 +86,8 @@ export const FileModelLayer = ({
         updated.lat !== model.file.lat ||
         updated.lng !== model.file.lng ||
         updated.rotation !== model.file.rotation ||
-        updated.elevation !== model.file.elevation
+        updated.elevation !== model.file.elevation ||
+        updated.scale !== model.file.scale
       )
     })
 
@@ -110,6 +113,7 @@ export const FileModelLayer = ({
         editingFileIdRef,
         tempRotationsRef,
         tempElevationsRef,
+        tempScalesRef,
       )
       newLoadedModels.push({ file, cleanUpFunction: cleanup, hitTest })
     }

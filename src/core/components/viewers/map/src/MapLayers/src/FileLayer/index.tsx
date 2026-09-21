@@ -86,6 +86,7 @@ export const FileLayers = () => {
   const tempPositionsRef = React.useRef<Record<string, { lat: number; lng: number }>>({})
   const tempRotationsRef = React.useRef<Record<string, number>>({})
   const tempElevationsRef = React.useRef<Record<string, number>>({})
+  const tempScalesRef = React.useRef<Record<string, number>>({})
   const editingFileIdRef = React.useRef<string | null>(null)
   const [editMode, setEditMode] = React.useState<PlacementMode>('translate')
 
@@ -165,6 +166,7 @@ export const FileLayers = () => {
         editingFileIdRef={editingFileIdRef}
         tempRotationsRef={tempRotationsRef}
         tempElevationsRef={tempElevationsRef}
+        tempScalesRef={tempScalesRef}
         onContextMenu={(file, x, y) => setContextMenu({ x, y, file })}
       />
 
@@ -204,10 +206,11 @@ export const FileLayers = () => {
               lat: tempPositionsRef.current[key]?.lat ?? editingFile.lat ?? 0,
               elevation: tempElevationsRef.current[key] ?? editingFile.elevation ?? 0,
             })}
-            preview={(next, rotation) => {
+            preview={(next, rotation, scale) => {
               tempPositionsRef.current = { ...tempPositionsRef.current, [key]: { lat: next.lat, lng: next.lng } }
               tempElevationsRef.current = { ...tempElevationsRef.current, [key]: next.elevation }
               tempRotationsRef.current = { ...tempRotationsRef.current, [key]: rotation * (180 / Math.PI) }
+              tempScalesRef.current = { ...tempScalesRef.current, [key]: scale }
             }}
             onRepaint={handleMapRepaint}
             onDone={handleExitEditFileMode}

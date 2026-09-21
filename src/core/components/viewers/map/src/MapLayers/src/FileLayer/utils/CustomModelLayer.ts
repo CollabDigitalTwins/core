@@ -13,6 +13,7 @@ import type { DbFile } from '../../../../../../../../types/dbTypes'
 type TempPositionsRef = React.MutableRefObject<Record<string, { lat: number; lng: number }>>
 type TempRotationsRef = React.MutableRefObject<Record<string, number>>
 type TempElevationsRef = React.MutableRefObject<Record<string, number>>
+type TempScalesRef = React.MutableRefObject<Record<string, number>>
 type EditingFileIdRef = React.MutableRefObject<string | null>
 
 function resolveModelCoordinates(file: DbFile): { lng: number, lat: number } {
@@ -51,6 +52,7 @@ export const CustomModelLayer = (
   editingFileIdRef?: EditingFileIdRef,
   tempRotationsRef?: TempRotationsRef,
   tempElevationsRef?: TempElevationsRef,
+  tempScalesRef?: TempScalesRef,
 ): { cleanup: () => void, remove: () => void, hitTest: (ndcX: number, ndcY: number) => boolean } => {
   let components = null
   let customLayer: CustomLayerInterface | null = null
@@ -80,6 +82,7 @@ export const CustomModelLayer = (
     let disposed = false
     const _m = new THREE.Matrix4()
     const _l = new THREE.Matrix4()
+    const _scaleVec = new THREE.Vector3()
     // Render-on-demand: cache terrain elevation off the per-frame path and only
     // keep repainting while the camera recently moved or an animation is playing,
     // so an idle map with a placed model stops re-rendering instead of pinning the
@@ -221,8 +224,12 @@ export const CustomModelLayer = (
           : cachedTerrainElev
         const altitude = terrainAltitude + fileElevation
 
+        const fileScale = (isEditing && tempScalesRef?.current[modelFileKey] !== undefined)
+          ? tempScalesRef.current[modelFileKey]
+          : (modelFile.scale ?? 1)
+
         _m.fromArray(args.defaultProjectionData.mainMatrix)
-        writeModelMatrix(_l, modelOrigin, altitude)
+        writeModelMatrix(_l, modelOrigin, altitude).scale(_scaleVec.setScalar(fileScale))
         this.camera.projectionMatrix.multiplyMatrices(_m, _l)
 
         if (this.mixer) {

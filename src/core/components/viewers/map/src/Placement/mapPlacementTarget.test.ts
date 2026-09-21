@@ -12,7 +12,7 @@ import type { MapAnchor } from './mapPlacementGeo'
 
 const ANCHOR: MapAnchor = { lng: -75.695, lat: 45.42, elevation: 74 }
 
-function setUp(anchor: MapAnchor = ANCHOR) {
+function setUp(anchor: MapAnchor = ANCHOR, stored: { rotation?: number, scale?: number } = {}) {
   const root = new THREE.Object3D()
   let current = { ...anchor }
   const previews: { anchor: MapAnchor, rotation: number, scale: number }[] = []
@@ -29,6 +29,7 @@ function setUp(anchor: MapAnchor = ANCHOR) {
     },
     updateFile,
     capabilities: SCALABLE_OBJECT_PLACEMENT,
+    ...stored,
   })
 
   return { target, root, previews, updateFile, anchorNow: () => current }
@@ -208,6 +209,37 @@ describe('applyDrag, turning and scaling', () => {
     const last = previews[previews.length - 1]
     expect(last.rotation).toBeCloseTo(Math.PI, 9)
     expect(last.scale).toBeCloseTo(4, 9)
+  })
+})
+
+describe('a target for a file that is already placed', () => {
+  it('reads the turn and the scale the file was saved with', () => {
+    const { target } = setUp(ANCHOR, { rotation: Math.PI / 3, scale: 2 })
+
+    expect(target.read().rotation[1]).toBeCloseTo(Math.PI / 3, 9)
+    expect(target.read().scale).toBeCloseTo(2, 9)
+  })
+
+  it('adds a drag to the saved turn instead of replacing it', () => {
+    const { target, root, previews } = setUp(ANCHOR, { rotation: Math.PI / 3, scale: 2 })
+
+    root.rotation.y = Math.PI / 6
+    root.scale.setScalar(1.5)
+    target.applyDrag?.(root)
+
+    const last = previews[previews.length - 1]
+    expect(last.rotation).toBeCloseTo(Math.PI / 3 + Math.PI / 6, 9)
+    expect(last.scale).toBeCloseTo(3, 9)
+  })
+
+  it('commits the saved turn unchanged when nothing was dragged', async () => {
+    const { target, updateFile } = setUp(ANCHOR, { rotation: Math.PI / 3, scale: 2 })
+
+    await target.commit(target.read())
+
+    const patch = updateFile.mock.calls[0][0] as { rotation: number, scale: number }
+    expect(patch.rotation).toBeCloseTo(60, 9)
+    expect(patch.scale).toBeCloseTo(2, 9)
   })
 })
 

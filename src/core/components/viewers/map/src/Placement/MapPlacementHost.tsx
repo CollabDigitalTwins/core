@@ -22,18 +22,21 @@ import type { PlacementMode } from '../../../shared/placement/placementTarget'
 const POSITION_LABELS = ['lng', 'lat', 'elev'] as const
 const POSITION_STEPS: [number, number, number] = [0.000_01, 0.000_01, 0.1]
 const POSITION_DECIMALS = 6
+const DEG_TO_RAD = Math.PI / 180
 
 export interface MapPlacementHostProps {
   file: DbFile | null
   mode: PlacementMode
   is3D: boolean
   anchor: () => MapAnchor
+  /** Degrees the file already stands at, for a caller whose fallback is not the file's own column. */
+  rotation?: number
   preview: (anchor: MapAnchor, rotation: number, scale: number) => void
   onRepaint: () => void
   onDone: () => void
 }
 
-export function MapPlacementHost({ file, mode, is3D, anchor, preview, onRepaint, onDone }: MapPlacementHostProps) {
+export function MapPlacementHost({ file, mode, is3D, anchor, rotation, preview, onRepaint, onDone }: MapPlacementHostProps) {
   const t = useTranslations('Placement')
   const { state: mapState } = React.useContext(MapContext)
   const { state: toolsState, dispatch: toolsDispatch } = React.useContext(ToolsContext)
@@ -73,9 +76,14 @@ export function MapPlacementHost({ file, mode, is3D, anchor, preview, onRepaint,
   usePlacementCommitToasts(core.onCommitted)
 
   const snapshot = React.useRef<MapAnchor | null>(null)
+  const stored = React.useRef({ rotation: 0, scale: 1 })
+  stored.current = {
+    rotation: (rotation ?? file?.rotation ?? 0) * DEG_TO_RAD,
+    scale: file?.scale ?? 1,
+  }
 
   React.useEffect(() => rollbackOnFailure(core, () => {
-    if (snapshot.current) previewAndRepaint(snapshot.current, 0, 1)
+    if (snapshot.current) previewAndRepaint(snapshot.current, stored.current.rotation, stored.current.scale)
   }), [core, previewAndRepaint])
 
   React.useEffect(() => {
@@ -94,10 +102,10 @@ export function MapPlacementHost({ file, mode, is3D, anchor, preview, onRepaint,
       }),
     })
     void core.begin(
-      targetFor({ file, object: () => layer.subject(), anchor: readAnchor, preview: previewAndRepaint }),
+      targetFor({ file, object: () => layer.subject(), anchor: readAnchor, preview: previewAndRepaint, rotation }),
       mode,
     )
-  }, [file, mode, map, layerReady, core, readAnchor, previewAndRepaint, targetFor, is3D, toolsDispatch])
+  }, [file, mode, map, layerReady, core, readAnchor, previewAndRepaint, targetFor, is3D, rotation, toolsDispatch])
 
   // A toolbar tool taking the cursor ends the edit rather than fighting it for pointer events.
   React.useEffect(() => {
@@ -143,8 +151,8 @@ export function MapPlacementHost({ file, mode, is3D, anchor, preview, onRepaint,
       onPickPivot={() => {}}
       onClearPivot={() => {}}
       hasPivot={false}
-      onDone={() => { void core.accept(); onDone() }}
-      onReset={() => { void core.cancel(); onDone() }}
+      onDone={() => { void core.accept().then(onDone) }}
+      onReset={() => { void core.cancel().then(onDone) }}
     />
   )
 }

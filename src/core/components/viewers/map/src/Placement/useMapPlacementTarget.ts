@@ -15,11 +15,15 @@ import type { DbFile } from '../../../../../types/dbTypes'
 import type { PlacementTarget } from '../../../shared/placement/placementTarget'
 import type * as THREE from 'three'
 
+const DEG_TO_RAD = Math.PI / 180
+
 export interface MapTargetSetup {
   file: DbFile
   object: () => THREE.Object3D | null
   anchor: () => MapAnchor
   preview: (anchor: MapAnchor, rotation: number, scale: number) => void
+  /** Degrees the file already stands at, when the caller knows better than its own column. */
+  rotation?: number
 }
 
 /** Binds a map file's row to a placement target, so a finished edit writes its geographic columns. */
@@ -30,7 +34,7 @@ export function useMapPlacementTarget() {
   React.useEffect(() => { updateFileRef.current = updateFile }, [updateFile])
 
   const targetFor = React.useCallback(
-    ({ file, object, anchor, preview }: MapTargetSetup): PlacementTarget => {
+    ({ file, object, anchor, preview, rotation }: MapTargetSetup): PlacementTarget => {
       setMovingId(file.id)
 
       return mapPlacementTarget({
@@ -40,6 +44,8 @@ export function useMapPlacementTarget() {
         anchor,
         preview,
         capabilities: capabilitiesForFile(file),
+        rotation: (rotation ?? file.rotation ?? 0) * DEG_TO_RAD,
+        scale: file.scale ?? 1,
         updateFile: async (patch) => {
           // Keeps the row in step, so it does not flicker back before the refetch lands.
           Object.assign(file, patch)

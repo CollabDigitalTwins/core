@@ -483,7 +483,7 @@ export const BimLayer = () => {
             {editingBimModelId && (() => {
                 const currentModel = bimModelsAddedToMap.find(bm => String(bm.bimFile.id) === editingBimModelId);
                 if (!currentModel) return null;
-                const { lng, lat, elevation } = extractPositionAndRotation(
+                const { lng, lat, rotation, elevation } = extractPositionAndRotation(
                     currentModel.bimFile, currentModel.building
                 );
                 return (
@@ -491,6 +491,7 @@ export const BimLayer = () => {
                         file={currentModel.bimFile}
                         mode={editMode}
                         is3D
+                        rotation={rotation}
                         anchor={() => ({
                             lng: tempPositionsRef.current[editingBimModelId]?.lng ?? lng ?? 0,
                             lat: tempPositionsRef.current[editingBimModelId]?.lat ?? lat ?? 0,

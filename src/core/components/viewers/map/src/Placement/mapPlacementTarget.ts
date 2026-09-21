@@ -42,6 +42,9 @@ export interface MapPlacementTargetSetup {
   preview: (anchor: MapAnchor, rotation: number, scale: number) => void
   updateFile: (patch: Partial<DbFile>) => Promise<unknown>
   capabilities: PlacementCapabilities
+  /** Where the file already stands, so re-opening the card does not report a fresh zero. */
+  rotation?: number
+  scale?: number
 }
 
 /** The map's placement is geography: `position` is [lng, elevation, lat], so the card reads degrees. */
@@ -63,12 +66,14 @@ export function mapPlacementTarget({
   preview,
   updateFile,
   capabilities,
+  rotation: storedRotation = 0,
+  scale: storedScale = 1,
 }: MapPlacementTargetSetup): PlacementTarget {
-  let rotation = 0
-  let scale = 1
+  let rotation = storedRotation
+  let scale = storedScale
   // What the subject's own turn and scale are measured from: the gizmo never zeroes them mid-drag.
-  let baseRotation = 0
-  let baseScale = 1
+  let baseRotation = storedRotation
+  let baseScale = storedScale
 
   const read = (): PointCloudPlacement => ({
     ...DEFAULT_PLACEMENT,

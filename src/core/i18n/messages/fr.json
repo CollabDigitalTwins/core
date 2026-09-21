@@ -129,20 +129,6 @@
   "AuthPage": {
     "footerText": "Propulsé par Collab Digital Twins"
   },
-  "BimEditPosition": {
-    "editBimButton": "Modifier la position BIM",
-    "editPositionTitle": "Modifier la position BIM (faire glisser le marqueur)",
-    "longitude": "Longitude",
-    "latitude": "Latitude",
-    "rotation": "Rotation (°)",
-    "elevation": "Élévation (m)",
-    "save": "Enregistrer",
-    "saving": "Enregistrement...",
-    "positionAcceptedToast": "La nouvelle position a été enregistrée.",
-    "cancel": "Annuler",
-    "saved": "Position sauvegardée !",
-    "editPositionTooltip": "Modifier la position, la rotation et l'élévation de ce modèle BIM"
-  },
   "BimLoadingState": {
     "openingText": "Ouverture du visualiseur BIM",
     "helpText": "Glissez-déposez ou sélectionnez n'importe quel fichier 3D : modèle BIM, nuage de points ou splat",
@@ -509,18 +495,6 @@
     "cut": "Sections coupées",
     "toggleVisibility": "Toggle visibility",
     "chooseColor": "Choose color"
-  },
-  "EditFilePosition": {
-    "editPositionTitle": "Modifier la position du fichier (faire glisser le marqueur)",
-    "longitude": "Longitude",
-    "latitude": "Latitude",
-    "rotation": "Rotation (°)",
-    "elevation": "Élévation (m)",
-    "save": "Enregistrer",
-    "saving": "Enregistrement...",
-    "positionAcceptedToast": "La position du fichier a été enregistrée.",
-    "cancel": "Annuler",
-    "saved": "Position sauvegardée !"
   },
   "ElementList": {
     "selectedElements": "Éléments sélectionnés"
@@ -2082,7 +2056,8 @@
     "deleteFailed": "Impossible de supprimer « {name} »",
     "movedFile": "« {name} » déplacé",
     "rotatedFile": "« {name} » pivoté",
-    "scaledFile": "« {name} » redimensionné"
+    "scaledFile": "« {name} » redimensionné",
+    "positionAcceptedToast": "La position du fichier a été enregistrée."
   },
   "PointCloudSettings": {
     "title": "Nuages de points",

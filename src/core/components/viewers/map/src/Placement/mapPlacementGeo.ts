@@ -3,6 +3,7 @@
 
 import { MercatorCoordinate } from 'maplibre-gl'
 
+import type { Building, DbFile } from '../../../../../types/dbTypes'
 import type { PointCloudPlacement } from '../../../shared/pointcloud/pointCloudPlacement'
 
 const RAD_TO_DEG = 180 / Math.PI
@@ -79,3 +80,11 @@ export function recordToPlacement(anchor: MapAnchor, record: MapPlacementRecord)
     sourceUp: 'y',
   }
 }
+
+/** Position, rotation and elevation of a BIM file, falling back to its building's values. */
+export const extractPositionAndRotation = (bimFile: DbFile, building?: Building) => ({
+  lng: bimFile.lng ?? building?.buildingLongitude ?? null,
+  lat: bimFile.lat ?? building?.buildingLatitude ?? null,
+  rotation: bimFile.rotation ?? building?.rotation ?? 0,
+  elevation: bimFile.elevation ?? building?.buildingElevation ?? 0,
+})

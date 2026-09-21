@@ -129,20 +129,6 @@
   "AuthPage": {
     "footerText": "Powered by Collab Digital Twins"
   },
-  "BimEditPosition": {
-    "editBimButton": "Edit BIM Position",
-    "editPositionTitle": "Edit BIM Position (drag marker)",
-    "longitude": "Longitude",
-    "latitude": "Latitude",
-    "rotation": "Rotation (°)",
-    "elevation": "Elevation (m)",
-    "save": "Save",
-    "saving": "Saving...",
-    "positionAcceptedToast": "New position has been saved.",
-    "cancel": "Cancel",
-    "saved": "Position Saved!",
-    "editPositionTooltip": "Edit the position, rotation, and elevation of this BIM model"
-  },
   "BimLoadingState": {
     "openingText": "Opening BIM viewer",
     "helpText": "Drag and drop or select any 3D file — BIM model, point cloud or splat",
@@ -509,18 +495,6 @@
     "cut": "Cut sections",
     "toggleVisibility": "Toggle visibility",
     "chooseColor": "Choose color"
-  },
-  "EditFilePosition": {
-    "editPositionTitle": "Edit File Position (drag marker)",
-    "longitude": "Longitude",
-    "latitude": "Latitude",
-    "rotation": "Rotation (°)",
-    "elevation": "Elevation (m)",
-    "save": "Save",
-    "saving": "Saving...",
-    "positionAcceptedToast": "File position has been saved.",
-    "cancel": "Cancel",
-    "saved": "Position Saved!"
   },
   "ElementList": {
     "selectedElements": "Selected Elements"
@@ -2085,7 +2059,8 @@
     "deleteFailed": "Could not delete \"{name}\"",
     "movedFile": "Moved \"{name}\"",
     "rotatedFile": "Rotated \"{name}\"",
-    "scaledFile": "Scaled \"{name}\""
+    "scaledFile": "Scaled \"{name}\"",
+    "positionAcceptedToast": "File position has been saved."
   },
   "PointCloudSettings": {
     "title": "Point clouds",

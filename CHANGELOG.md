@@ -55,9 +55,26 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - `pointCloudPlacementStore` moved to `viewers/shared/pointcloud/`; the BIM path re-exports it.
 - `PlacementActionsCard` offers `view` and `download` as opt-in actions, and takes a `labels`
   map in place of `hideLabel` so a caller translates every entry it offers.
+- The map places files and BIM models with the same stack as the BIM viewer: a right-click opens
+  the placement card, and the chosen mode opens the shared transform gizmo with a panel of typed
+  fields. The card offers only what the file can save, and never `download`, matching the BIM
+  viewer's menu.
+- The map's File tab sections are resizable, and a collapsed one shrinks to its header and sinks
+  below the open ones.
+
+### Removed
+- `EditPosition` and `EditPositionProps` from `viewers/map/src/MapLayers/src/EditPosition`. The
+  map uses the same placement stack as the BIM viewer.
+- The `BimEditPosition` and `EditFilePosition` i18n namespaces. Only `positionAcceptedToast` is
+  still used; it moved to `Placement` and the rest went with the editor.
 
 ### Migration
 - Replace `hideLabel="..."` with `labels={{ hide: '...' }}` on `PlacementActionsCard`.
+- Replace `<EditPosition file=... mode=... />` with `<MapPlacementHost file=... is3D=... anchor=...
+  preview=... onRepaint=... onDone=... />` from `viewers/map/src/Placement/MapPlacementHost`. The
+  host owns the gizmo and the card; the caller supplies the anchor and a preview sink.
+- `extractPositionAndRotation` moved to `viewers/map/src/Placement/mapPlacementGeo`.
+- Read `positionAcceptedToast` from the `Placement` namespace.
 
 ### Added
 - `Building.buildingGeometry`, an optional drawn outline, and the `BuildingGeometry` type: a

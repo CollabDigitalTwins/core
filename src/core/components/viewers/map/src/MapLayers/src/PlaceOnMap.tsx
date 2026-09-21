@@ -30,7 +30,7 @@ export const PlaceOnMap: React.FC<PlaceOnMapProps> = ({ file, onPlaced, onCancel
     const { state: mapState } = React.useContext(MapContext)
     const { map } = mapState.map
     const { updateFile } = useFile(file.id)
-    const t = useTranslations("EditFilePosition")
+    const t = useTranslations("Placement")
 
     // Stable refs so the map effect never needs to re-register
     const onPlacedRef = React.useRef(onPlaced)

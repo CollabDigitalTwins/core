@@ -13,10 +13,10 @@ import * as THREE from "three";
 import { BimContext, MapContext } from "../../../../../../../store";
 import { markerOcclusionProps } from "../../../../../../../utils/markerUtils";
 import { writeModelMatrix } from "../../../../utils/modelMatrix";
+import { extractPositionAndRotation } from "../../../Placement/mapPlacementGeo";
 import { MapPlacementHost } from "../../../Placement/MapPlacementHost";
 import { MapPlacementMenu } from "../../../Placement/MapPlacementMenu";
 import { disposeThreeScene } from "../disposeThreeScene";
-import { extractPositionAndRotation } from "../EditPosition";
 
 import type { Building, DbFile } from "../../../../../../../types/dbTypes";
 import type { FileAction } from "../../../../../../../types/global";

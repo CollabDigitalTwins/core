@@ -53,6 +53,11 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - `useBimFileIntake` is a thin wrapper over `useFileIntake` that supplies a scene-space placement.
   Its surface and behaviour are unchanged.
 - `pointCloudPlacementStore` moved to `viewers/shared/pointcloud/`; the BIM path re-exports it.
+- `PlacementActionsCard` offers `view` and `download` as opt-in actions, and takes a `labels`
+  map in place of `hideLabel` so a caller translates every entry it offers.
+
+### Migration
+- Replace `hideLabel="..."` with `labels={{ hide: '...' }}` on `PlacementActionsCard`.
 
 ### Added
 - `Building.buildingGeometry`, an optional drawn outline, and the `BuildingGeometry` type: a

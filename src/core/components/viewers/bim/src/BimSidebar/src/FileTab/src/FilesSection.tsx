@@ -250,6 +250,7 @@ export function FilesSection({ files, query = '', ...chrome }: FilesSectionProps
           bimComponents.get(AnimationSession).begin({ fileId: file.id.toString(), name: file.name })
           return
         }
+        if (action === 'view' || action === 'download') return
         editObject(file, action === 'move' ? 'translate' : action)
       }, markerActionsFor(capabilitiesForFile(file), { animated: clips.length > 0, hidable: true }))
       if (marker) markersRef.current.set(key, { marker, file })

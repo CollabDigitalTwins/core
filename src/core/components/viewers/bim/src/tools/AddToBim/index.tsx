@@ -142,7 +142,7 @@ export default function AddToBim({ tool }: AddToBimProps) {
       if (dbFile?.id) deleteFile(dbFile.id).catch(() => { })
       return
     }
-    if (action === "animate" || action === "hide") return
+    if (action === "animate" || action === "hide" || action === "view" || action === "download") return
     api.editPlacedFile(id, action === "move" ? "translate" : action)
   }, [deleteFile])
 

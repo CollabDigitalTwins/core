@@ -13,13 +13,12 @@ type BimDispatch = (action: {
   }
 }) => void
 
+/** A model with no building still belongs on the map: its own columns carry where it stands. */
 export function toggleBimToMap(
   bimDispatch: BimDispatch,
   bimFile: DbFile,
   building: Building | null,
 ) {
-  if (!building) return
-
   bimDispatch({
     type: 'TOGGLE_BIM_TO_MAP',
     payload: {

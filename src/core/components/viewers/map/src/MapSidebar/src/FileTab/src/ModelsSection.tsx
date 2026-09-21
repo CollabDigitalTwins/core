@@ -12,7 +12,7 @@ import { useDeleteFile } from '../../../../../../../../hooks/files/files'
 import { BimContext, BuildingsContext } from '../../../../../../../../store'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
-import { useFileDeleteHandler, FileItemComponent, useFileActions, useFileUploadWithProgress, UploadProgressBar, useUploadTasks } from '../../../../../../../ui/FilesManager'
+import { FileItemComponent, UploadProgressBar, useFileActions, useFileDeleteHandler, useFileUploadWithProgress, useFileVisibility, useUploadTasks } from '../../../../../../../ui/FilesManager'
 import { SECTION_ICONS } from '../../../../../../../ui/FilesManager/src/fileType'
 import { IfcIcon } from '../../../../../../../ui/Icons'
 import { toggleBimToMap as dispatchToggleBimToMap } from '../../../../../utils/toggleBimToMap'
@@ -41,6 +41,7 @@ export function ModelsSection({ files, query = '', open, onOpenChange }: ModelsS
 
   const { state: buildingsState } = React.useContext(BuildingsContext)
   const { buildings, building: currentBuilding } = buildingsState.buildings
+  const { setVisible } = useFileVisibility(currentBuilding?.id)
 
   const { deleteFile } = useDeleteFile()
 
@@ -96,6 +97,8 @@ export function ModelsSection({ files, query = '', open, onOpenChange }: ModelsS
       // Add model to map — reuse the same payload shape as the building popover
       const building = buildings.find(b => b.id === file.attachedFilesBuildingId) ?? currentBuilding ?? null
       dispatchToggleBimToMap(bimDispatch, file, building)
+      // A model on the map is a model the viewers may load, whatever the row said before.
+      void setVisible(file, true)
     } else {
       // Remove model from map
       bimDispatch({
@@ -103,7 +106,7 @@ export function ModelsSection({ files, query = '', open, onOpenChange }: ModelsS
         payload: { bimModelId: String(file.id) },
       })
     }
-  }, [bimDispatch, buildings])
+  }, [bimDispatch, buildings, currentBuilding, setVisible])
 
   const handleMoveModel = React.useCallback((file: DbFile) => {
     const isOnMap = bimModelsAddedToMap.some(m => m.bimFile.id === file.id)

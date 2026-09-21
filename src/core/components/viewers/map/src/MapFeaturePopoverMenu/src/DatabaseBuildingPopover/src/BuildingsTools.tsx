@@ -20,6 +20,7 @@ import { usePermissions } from '../../../../../../../../store'
 import { AppConfigContext, BuildingsContext, BimContext, MapContext, MenusContext, useMenusContext } from "../../../../../../../../store";
 import { ViewerNames } from "../../../../../../../../types/";
 import { hasAppContent } from "../../../../../../../../utils/appContent";
+import { useFileVisibility } from '../../../../../../../ui/FilesManager';
 import { toggleBimToMap as dispatchToggleBimToMap } from '../../../../../utils/toggleBimToMap';
 import Compare from '../../../../compare';
 
@@ -141,14 +142,18 @@ export default function BuildingTools({
     [],
   );
 
+  const { setVisible } = useFileVisibility(building?.id);
+
   const toggleBimToMap = React.useCallback(
     (bimFile: DbFile) => {
       dispatchToggleBimToMap(bimDispatch, bimFile, building);
-
+      // A model on the map is a model the viewers may load, whatever the row said before.
+      void setVisible(bimFile, true);
     },
     [
       building,
-      bimDispatch
+      bimDispatch,
+      setVisible
     ]
   );
 

@@ -2057,7 +2057,11 @@
     "movedFile": "« {name} » déplacé",
     "rotatedFile": "« {name} » pivoté",
     "scaledFile": "« {name} » redimensionné",
-    "positionAcceptedToast": "La position du fichier a été enregistrée."
+    "positionAcceptedToast": "La position du fichier a été enregistrée.",
+    "linkBuildingTitle": "Lier à ce bâtiment ?",
+    "linkBuildingBody": "« {file} » a été placé sur « {building} ». Le lier classe le modèle sous ce bâtiment. Vous pouvez le placer sans le lier s'il appartient ailleurs.",
+    "linkBuildingConfirm": "Lier",
+    "linkBuildingCancel": "Ne pas lier"
   },
   "PointCloudSettings": {
     "title": "Nuages de points",

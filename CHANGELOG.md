@@ -78,6 +78,15 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - `useFileUploadHandler` files every upload the way the viewers expect: an IFC and the fragments it
   converts into carry the `bim-file` tag, and an upload is visible unless the caller says otherwise.
   The map's building popover passed neither, so a model uploaded there never loaded itself.
+- A placement that lands on a building's footprint asks before it files the model under that
+  building, in the dialog a delete uses. Linking is the default answer; declining places the model
+  exactly where it was dropped and leaves it unattached. New `Placement` keys: `linkBuildingTitle`,
+  `linkBuildingBody`, `linkBuildingConfirm`, `linkBuildingCancel`.
+- `ConfirmDialog` takes `title`, `description`, `confirmLabel`, `cancelLabel` and `tone`, so a
+  question that destroys nothing can use it without reading as a delete. Every field defaults to
+  the delete wording, so existing callers are unchanged.
+- The map's add-file tool records the terrain elevation under the double-click, and resolves the
+  building under it, rather than placing everything at zero and unattached.
 - A file placed with the map's add-file tool joins the store that draws its kind: a converted BIM
   model goes to the BIM store, so it appears on the map instead of being filed as a plain pin that
   nothing renders. The tool also stands the popovers down while its crosshair is up.

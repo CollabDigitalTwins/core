@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { addFileToMap } from './addFileToMap'
 
-import type { DbFile } from '../../../../types/dbTypes'
+import type { Building, DbFile } from '../../../../types/dbTypes'
 
 const dispatches = () => ({ fileDispatch: vi.fn(), bimDispatch: vi.fn() })
 
@@ -51,5 +51,18 @@ describe('addFileToMap', () => {
 
     expect(bimDispatch).toHaveBeenCalled()
     expect(fileDispatch).not.toHaveBeenCalled()
+  })
+
+  it('carries the building the placement linked, so the model draws against it', () => {
+    const file = { id: 11, name: 'tower.frag', extension: 'frag' } as DbFile
+    const building = { id: 3, buildingName: 'Dunton' } as Building
+    const { fileDispatch, bimDispatch } = dispatches()
+
+    addFileToMap(file, { fileDispatch, bimDispatch }, building)
+
+    expect(bimDispatch).toHaveBeenCalledWith({
+      type: 'TOGGLE_BIM_TO_MAP',
+      payload: { buildingModel: { bimFile: file, building } },
+    })
   })
 })

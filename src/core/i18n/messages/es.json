@@ -2057,7 +2057,11 @@
     "movedFile": "Se movió «{name}»",
     "rotatedFile": "Se rotó «{name}»",
     "scaledFile": "Se escaló «{name}»",
-    "positionAcceptedToast": "La posición del archivo se ha guardado."
+    "positionAcceptedToast": "La posición del archivo se ha guardado.",
+    "linkBuildingTitle": "¿Vincular con este edificio?",
+    "linkBuildingBody": "\"{file}\" se colocó sobre \"{building}\". Al vincularlo, el modelo queda archivado en ese edificio. Puede colocarlo sin vincular si pertenece a otro sitio.",
+    "linkBuildingConfirm": "Vincular",
+    "linkBuildingCancel": "No vincular"
   },
   "PointCloudSettings": {
     "title": "Nubes de puntos",

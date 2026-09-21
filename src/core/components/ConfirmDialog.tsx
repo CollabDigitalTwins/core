@@ -25,9 +25,28 @@ interface ConfirmDialogProps {
     handleConfirm: (e: React.MouseEvent) => void | Promise<void>
     itemName?: string
     dataType?: string
+    /** Copy for a question that is not a delete. Each falls back to the delete wording. */
+    title?: string
+    description?: React.ReactNode
+    confirmLabel?: string
+    cancelLabel?: string
+    /** 'destructive' paints the confirm red; a question that destroys nothing passes 'default'. */
+    tone?: 'destructive' | 'default'
 }
 
-export default function ConfirmDialog({ isOpen, isDeleting, onOpenChange, handleConfirm, itemName, dataType }: ConfirmDialogProps) {
+export default function ConfirmDialog({
+    isOpen,
+    isDeleting,
+    onOpenChange,
+    handleConfirm,
+    itemName,
+    dataType,
+    title,
+    description,
+    confirmLabel,
+    cancelLabel,
+    tone = 'destructive',
+}: ConfirmDialogProps) {
     const t = useTranslations('ConfirmDialog')
 
     // Safety net: this dialog is often opened via onAction() from a DropdownMenuItem
@@ -47,24 +66,28 @@ export default function ConfirmDialog({ isOpen, isDeleting, onOpenChange, handle
         <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
             <AlertDialogContent>
             <AlertDialogHeader>
-                <AlertDialogTitle>{t('alertTitle')} {dataType || t('item')}?</AlertDialogTitle>
+                <AlertDialogTitle>{title ?? `${t('alertTitle')} ${dataType || t('item')}?`}</AlertDialogTitle>
                 <AlertDialogDescription>
-                {t('alertDescription')}
-                {' '}
-                <strong>{itemName || t('defaultName')}</strong>
-                ?
-                {' '}
-                {t('confirmLabel')}
+                {description ?? (
+                    <>
+                        {t('alertDescription')}
+                        {' '}
+                        <strong>{itemName || t('defaultName')}</strong>
+                        ?
+                        {' '}
+                        {t('confirmLabel')}
+                    </>
+                )}
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-                <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+                <AlertDialogCancel>{cancelLabel ?? t('cancel')}</AlertDialogCancel>
                 <AlertDialogAction
                 onClick={(e) => { void handleConfirm(e) }}
-                className="bg-red-600 hover:bg-red-700"
+                className={tone === 'destructive' ? 'bg-red-600 hover:bg-red-700' : undefined}
                 disabled={isDeleting}
                 >
-                {isDeleting ? <LoadingSpinner /> : t('delete')}
+                {isDeleting ? <LoadingSpinner /> : confirmLabel ?? t('delete')}
                 </AlertDialogAction>
             </AlertDialogFooter>
             </AlertDialogContent>

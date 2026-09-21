@@ -11,8 +11,8 @@ import ReactDOM from 'react-dom/client'
 import { toast } from 'sonner'
 import { mutate } from 'swr'
 
-import { useFiles } from '../../../../../../../hooks/files/files'
-import { BimContext, MapContext, FilesContext } from '../../../../../../../store'
+import { useFiles, useUpdateFile } from '../../../../../../../hooks/files/files'
+import { BimContext, BuildingsContext, MapContext, FilesContext } from '../../../../../../../store'
 import { acceptedFiles, isAcceptedFileType } from '../../../../../../../utils/acceptedFiles'
 import { cn } from '../../../../../../../utils/utils'
 import { AddItemDialog } from '../../../../../../ui/AddItemDialog'
@@ -21,6 +21,8 @@ import { Input } from '../../../../../../ui/Input'
 import { useFileIntake } from '../../../../../shared/intake/useFileIntake'
 import { addFileToMap } from '../../../../utils/addFileToMap'
 import MapFileMarker from '../../../MapLayers/src/FileLayer/components/MapFileMarker'
+import { resolveClickPlacement } from '../../../Placement/resolveClickPlacement'
+import { useBuildingLinkConfirm } from '../../../Placement/useBuildingLinkConfirm'
 
 import type { DbFile } from '../../../../../../../types/dbTypes'
 import type { CursorType } from '../../../../../../../types/global'
@@ -116,6 +118,10 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
   const { map, mapClickManager } = mapState.map
   const { dispatch: fileDispatch } = React.useContext(FilesContext)
   const { dispatch: bimDispatch } = React.useContext(BimContext)
+  const { state: buildingsState } = React.useContext(BuildingsContext)
+  const { buildings } = buildingsState.buildings
+  const updateFileById = useUpdateFile()
+  const { confirmLink, dialog: linkDialog } = useBuildingLinkConfirm()
 
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
   const [isUploading, setIsUploading] = React.useState(false)
@@ -209,9 +215,12 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
       setCursor(null)
       toast.dismiss('place-file-toast')
 
-      const lng = e.lngLat.lng
-      const lat = e.lngLat.lat
-      const elevation = 0
+      const { lng, lat, elevation, buildingId } = resolveClickPlacement(map, e, buildings)
+      const building = buildingId === null
+        ? null
+        : buildings.find(candidate => candidate.id === buildingId) ?? null
+      const linked = building !== null
+        && await confirmLink(building.buildingName ?? String(building.id), selectedFile.name)
 
       const temporaryFileIcon = addTemporaryFileIcon(map, selectedFile, lng, lat)
 
@@ -238,7 +247,11 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
         // A model is drawn from the BIM store; only its own store makes it appear.
         const placed = fileToAdd
           ?? ({ id: created.id, name: selectedFile.name, extension: extensionOfName(selectedFile.name) } as DbFile)
-        addFileToMap(placed, { fileDispatch, bimDispatch })
+        if (linked && buildingId !== null) {
+          placed.attachedFilesBuildingId = buildingId
+          await updateFileById(created.id, { attachedFilesBuildingId: buildingId })
+        }
+        addFileToMap(placed, { fileDispatch, bimDispatch }, linked ? building : null)
 
         void mutate(['files'])
         onClose()
@@ -275,7 +288,7 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
         map.off('dblclick', onDblClick)
       }
     }
-  }, [selectedFile, isUploading, map, fileDispatch, bimDispatch])
+  }, [selectedFile, isUploading, map, buildings, confirmLink, updateFileById, fileDispatch, bimDispatch])
 
   // A popover opened by the first click would cover the point the second one needs.
   React.useEffect(() => {
@@ -311,17 +324,20 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
   if (selectedFile) return null
 
   return (
-    <FileAdderDialog
-      isOpen={isOpen}
-      onClose={onClose}
-      title={t('title')}
-      icon={LR.FilePlus}
-      accept={acceptedFiles}
-      onFileSelect={handleFileSelect}
-      onFileDrop={processFile}
-      disabled={isUploading}
-      dropZoneTitle={t('dropZoneTitle')}
-      dropZoneSubtext={t('dropZoneSubtext')}
-    />
+    <>
+      <FileAdderDialog
+        isOpen={isOpen}
+        onClose={onClose}
+        title={t('title')}
+        icon={LR.FilePlus}
+        accept={acceptedFiles}
+        onFileSelect={handleFileSelect}
+        onFileDrop={processFile}
+        disabled={isUploading}
+        dropZoneTitle={t('dropZoneTitle')}
+        dropZoneSubtext={t('dropZoneSubtext')}
+      />
+      {linkDialog}
+    </>
   )
 }

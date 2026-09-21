@@ -2060,7 +2060,11 @@
     "movedFile": "Moved \"{name}\"",
     "rotatedFile": "Rotated \"{name}\"",
     "scaledFile": "Scaled \"{name}\"",
-    "positionAcceptedToast": "File position has been saved."
+    "positionAcceptedToast": "File position has been saved.",
+    "linkBuildingTitle": "Link to this building?",
+    "linkBuildingBody": "\"{file}\" was placed on \"{building}\". Linking it files the model under that building. You can place it without linking if it belongs somewhere else.",
+    "linkBuildingConfirm": "Link",
+    "linkBuildingCancel": "Don't link"
   },
   "PointCloudSettings": {
     "title": "Point clouds",

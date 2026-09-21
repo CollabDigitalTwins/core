@@ -16,6 +16,7 @@ import { writeModelMatrix } from "../../../../utils/modelMatrix";
 import { extractPositionAndRotation } from "../../../Placement/mapPlacementGeo";
 import { MapPlacementHost } from "../../../Placement/MapPlacementHost";
 import { MapPlacementMenu } from "../../../Placement/MapPlacementMenu";
+import { useMapContextMenu } from "../../../Placement/useMapContextMenu";
 import { disposeThreeScene } from "../disposeThreeScene";
 
 import type { Building, DbFile } from "../../../../../../../types/dbTypes";
@@ -47,9 +48,8 @@ export const BimLayer = () => {
     } | null>(null);
 
     const [loadingBuildings, setLoadingBuildings] = React.useState<Set<number>>(new Set());
-    const [contextMenu, setContextMenu] = React.useState<{
-        x: number; y: number; bimFile: DbFile
-    } | null>(null);
+    const { menu: contextMenu, open: openContextMenu, close: closeContextMenu } =
+        useMapContextMenu<{ bimFile: DbFile }>(map);
 
     const handleContextMenuAction = React.useCallback((action: FileAction, file: DbFile) => {
         if (action === 'view') {
@@ -62,8 +62,8 @@ export const BimLayer = () => {
     const [editMode, setEditMode] = React.useState<PlacementMode>('translate');
 
     const handlePlacementMenuAction = React.useCallback((action: FileMarkerAction) => {
-        const file = contextMenu?.bimFile;
-        setContextMenu(null);
+        const file = contextMenu?.item.bimFile;
+        closeContextMenu();
         if (!file) return;
 
         if (action === 'move' || action === 'rotate' || action === 'scale') {
@@ -73,7 +73,7 @@ export const BimLayer = () => {
         }
 
         handleContextMenuAction(action as FileAction, file);
-    }, [contextMenu, bimDispatch, handleContextMenuAction]);
+    }, [contextMenu, closeContextMenu, bimDispatch, handleContextMenuAction]);
 
     const tempPositionsRef = React.useRef<Record<string, { lat: number; lng: number }>>({});
     const tempRotationsRef = React.useRef<Record<string, number>>({});
@@ -472,7 +472,7 @@ export const BimLayer = () => {
                                     className="w-10 h-10 opacity-0 cursor-context-menu"
                                     onContextMenu={(e) => {
                                         e.preventDefault();
-                                        setContextMenu({ x: e.clientX, y: e.clientY, bimFile: buildingModel.bimFile });
+                                        openContextMenu({ x: e.clientX, y: e.clientY, item: { bimFile: buildingModel.bimFile } });
                                     }}
                                 />
                             </Marker>
@@ -518,11 +518,11 @@ export const BimLayer = () => {
                 <MapPlacementMenu
                     x={contextMenu.x}
                     y={contextMenu.y}
-                    file={contextMenu.bimFile}
+                    file={contextMenu.item.bimFile}
                     is3D
                     isOnMap
                     onAction={handlePlacementMenuAction}
-                    onClose={() => setContextMenu(null)}
+                    onClose={closeContextMenu}
                 />
             )}
         </>

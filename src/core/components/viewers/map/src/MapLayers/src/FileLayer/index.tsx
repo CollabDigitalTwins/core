@@ -16,6 +16,7 @@ import { downloadDbFile } from '../../../../../../ui/FilesManager'
 import { AnimationPanel } from '../../../../../shared/placement/AnimationPanel'
 import { MapPlacementHost } from '../../../Placement/MapPlacementHost'
 import { MapPlacementMenu } from '../../../Placement/MapPlacementMenu'
+import { useMapContextMenu } from '../../../Placement/useMapContextMenu'
 import { PlaceOnMap } from '../PlaceOnMap'
 
 import MapFileManager from './components/MapFileManager'
@@ -112,9 +113,8 @@ export const FileLayers = () => {
 
   const { deleteFile } = useDeleteFile()
 
-  const [contextMenu, setContextMenu] = React.useState<
-    { x: number; y: number; file: DbFile; animation?: ModelAnimationControls } | null
-  >(null)
+  const { menu: contextMenu, open: openContextMenu, close: closeContextMenu } =
+    useMapContextMenu<{ file: DbFile; animation?: ModelAnimationControls }>(map)
   const [animating, setAnimating] = React.useState<
     { file: DbFile; controls: ModelAnimationControls; state: AnimationState } | null
   >(null)
@@ -141,8 +141,8 @@ export const FileLayers = () => {
 
   const handleContextMenu = React.useCallback((e: React.MouseEvent, file: DbFile) => {
     e.preventDefault()
-    setContextMenu({ x: e.clientX, y: e.clientY, file })
-  }, [])
+    openContextMenu({ x: e.clientX, y: e.clientY, item: { file } })
+  }, [openContextMenu])
 
   const handleContextMenuAction = React.useCallback((action: FileAction, file: DbFile) => {
     if (action === 'view') {
@@ -170,8 +170,8 @@ export const FileLayers = () => {
   }, [fileDispatch, mapFileIds, deleteFile])
 
   const handlePlacementMenuAction = React.useCallback((action: FileMarkerAction) => {
-    const file = contextMenu?.file
-    setContextMenu(null)
+    const file = contextMenu?.item.file
+    closeContextMenu()
     if (!file) return
 
     if (action === 'move' || action === 'rotate' || action === 'scale') {
@@ -186,14 +186,14 @@ export const FileLayers = () => {
     }
 
     if (action === 'animate') {
-      const controls = contextMenu?.animation
+      const controls = contextMenu?.item.animation
       const state = controls?.getAnimation()
       if (controls && state) setAnimating({ file, controls, state })
       return
     }
 
     handleContextMenuAction(action as FileAction, file)
-  }, [contextMenu, fileDispatch, handleContextMenuAction])
+  }, [contextMenu, closeContextMenu, fileDispatch, handleContextMenuAction])
 
   return (
     <>
@@ -203,7 +203,7 @@ export const FileLayers = () => {
         tempRotationsRef={tempRotationsRef}
         tempElevationsRef={tempElevationsRef}
         tempScalesRef={tempScalesRef}
-        onContextMenu={(file, x, y, animation) => setContextMenu({ x, y, file, animation })}
+        onContextMenu={(file, x, y, animation) => openContextMenu({ x, y, item: { file, animation } })}
       />
 
       {mapFileIds.map(id => (
@@ -262,12 +262,12 @@ export const FileLayers = () => {
         <MapPlacementMenu
           x={contextMenu.x}
           y={contextMenu.y}
-          file={contextMenu.file}
-          is3D={is3DModelFile(contextMenu.file.extension)}
-          isOnMap={mapFileIds.includes(contextMenu.file.id)}
-          animated={(contextMenu.animation?.getClips().length ?? 0) > 0}
+          file={contextMenu.item.file}
+          is3D={is3DModelFile(contextMenu.item.file.extension)}
+          isOnMap={mapFileIds.includes(contextMenu.item.file.id)}
+          animated={(contextMenu.item.animation?.getClips().length ?? 0) > 0}
           onAction={handlePlacementMenuAction}
-          onClose={() => setContextMenu(null)}
+          onClose={closeContextMenu}
         />
       )}
 

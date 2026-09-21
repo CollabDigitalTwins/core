@@ -3,10 +3,12 @@
 
 import * as THREE from 'three'
 
+import { writeModelMatrix } from '../../utils/modelMatrix'
 import { disposeThreeScene } from '../MapLayers/src/disposeThreeScene'
 
 import { syncGizmoCamera } from './mapGizmoCamera'
 
+import type { MapAnchor } from './mapPlacementGeo'
 import type { TransformGizmoHost } from '../../../shared/placement/transformGizmo'
 import type * as maplibregl from 'maplibre-gl'
 
@@ -27,9 +29,10 @@ type MapGizmoLayer = MapGizmoLayerHandle & maplibregl.CustomLayerInterface & {
 }
 
 const _clip = new THREE.Matrix4()
+const _model = new THREE.Matrix4()
 
-/** The gizmo's own overlay: one scene above every other layer, drawn with maplibre's own camera. */
-export function createMapGizmoLayer(): MapGizmoLayer {
+/** The gizmo's own overlay: a scene of metres about the anchor, above every other layer. */
+export function createMapGizmoLayer(anchor: () => MapAnchor): MapGizmoLayer {
   let map: maplibregl.Map | null = null
   let renderer: THREE.WebGLRenderer | null = null
   let scene: THREE.Scene | null = null
@@ -53,7 +56,10 @@ export function createMapGizmoLayer(): MapGizmoLayer {
       if (!renderer || !scene || !map) return
 
       const canvas = map.getCanvas()
-      syncGizmoCamera(camera, _clip.fromArray(args.defaultProjectionData.mainMatrix), canvas.width / canvas.height)
+      const at = anchor()
+      writeModelMatrix(_model, [at.lng, at.lat], at.elevation)
+      _clip.fromArray(args.defaultProjectionData.mainMatrix).multiply(_model)
+      syncGizmoCamera(camera, _clip, canvas.width / canvas.height)
       renderer.resetState()
       renderer.render(scene, camera)
     },

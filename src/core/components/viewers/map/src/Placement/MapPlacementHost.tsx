@@ -43,9 +43,14 @@ export function MapPlacementHost({ file, mode, is3D, anchor, preview, onRepaint,
   const [layerReady, setLayerReady] = React.useState(false)
   const { targetFor } = useMapPlacementTarget()
 
+  const live = React.useRef({ anchor, preview, onRepaint })
+  live.current = { anchor, preview, onRepaint }
+
+  const readAnchor = React.useCallback(() => live.current.anchor(), [])
+
   React.useEffect(() => {
     if (!map) return
-    const layer = createMapGizmoLayer()
+    const layer = createMapGizmoLayer(readAnchor)
     layerRef.current = layer
     map.addLayer(layer)
     setLayerReady(true)
@@ -55,19 +60,15 @@ export function MapPlacementHost({ file, mode, is3D, anchor, preview, onRepaint,
       layerRef.current = null
       setLayerReady(false)
     }
-  }, [map])
+  }, [map, readAnchor])
 
   const { core, state } = useMapPlacementSession(layerReady ? layerRef.current : null)
-
-  const live = React.useRef({ anchor, preview, onRepaint })
-  live.current = { anchor, preview, onRepaint }
 
   const previewAndRepaint = React.useCallback((next: MapAnchor, rotation: number, scale: number) => {
     live.current.preview(next, rotation, scale)
     live.current.onRepaint()
   }, [])
 
-  const readAnchor = React.useCallback(() => live.current.anchor(), [])
   const snapshot = React.useRef<MapAnchor | null>(null)
 
   React.useEffect(() => rollbackOnFailure(core, () => {

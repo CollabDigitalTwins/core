@@ -19,6 +19,7 @@ import type { PlacementCapabilities } from './placementTarget'
 import type { PointCloudPlacement } from '../pointcloud/pointCloudPlacement'
 
 const YAW_AXIS = 1
+const FULL_TURN_DEGREES = 360
 
 // Drawing units, as a metre-scale factor. The same presets the old DXF card offered.
 const UNIT_PRESETS = [
@@ -258,6 +259,8 @@ export function PlacementPanel({
                     label={labels.yaw}
                     value={toDegrees(placement.rotation[YAW_AXIS])}
                     step={1}
+                    min={-FULL_TURN_DEGREES}
+                    max={FULL_TURN_DEGREES}
                     onCommit={(next) => setAxis('rotation', YAW_AXIS, next)}
                     className="h-7 text-xs"
                   />

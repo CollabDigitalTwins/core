@@ -4,6 +4,8 @@
 import * as THREE from 'three'
 import { TransformControls } from 'three/examples/jsm/Addons.js'
 
+import { completeRotationRings } from './rotationRings'
+
 import type { PlacementGizmo } from './placementCore'
 import type { PlacementMode } from './placementTarget'
 
@@ -61,6 +63,7 @@ export class TransformGizmo implements PlacementGizmo {
 
     // r169+: TransformControls is not an Object3D; only getHelper() goes into the scene.
     const helper = controls.getHelper()
+    completeRotationRings(helper)
     scene.add(helper)
 
     this._controls = controls

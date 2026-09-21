@@ -2,6 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 
+import { capabilitiesForFile } from '../../../shared/placement/placementCapabilities'
 import { DEFAULT_PLACEMENT } from '../../../shared/pointcloud/pointCloudPlacement'
 
 import { metresToAnchor } from './mapPlacementGeo'
@@ -11,6 +12,12 @@ import type { DbFile } from '../../../../../types/dbTypes'
 import type { PlacementCapabilities, PlacementTarget } from '../../../shared/placement/placementTarget'
 import type { PointCloudPlacement } from '../../../shared/pointcloud/pointCloudPlacement'
 import type * as THREE from 'three'
+
+/** A map file with no geometry moves and nothing else; rotating a flat overlay is not stored yet. */
+export function mapCapabilitiesForFile(file: Parameters<typeof capabilitiesForFile>[0], is3D: boolean) {
+  const capabilities = capabilitiesForFile(file)
+  return is3D ? capabilities : { ...capabilities, rotation: 'yaw' as const, scale: false, moveOnly: true }
+}
 
 export interface MapPlacementTargetSetup {
   id: string

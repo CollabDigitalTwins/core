@@ -351,9 +351,10 @@ export default function BuildingTools({
                     />
                   </div>
                 )}
-                {bimFiles.length === 1 && bimModelsAddedToMap.some(model => model.building.id === buildingId) && (() => {
-                  const selectedModel = bimModelsAddedToMap.find(model => model.building.id === buildingId);
-                  return true ? (
+                {bimFiles.length === 1 && bimModelsAddedToMap.some(model => model.building?.id === buildingId) && (() => {
+                  // A model placed on open ground carries no building, so neither lookup can assume one.
+                  const selectedModel = bimModelsAddedToMap.find(model => model.building?.id === buildingId);
+                  return selectedModel ? (
                     <Button
                       onClick={() => handleEditClick(selectedModel.bimFile.id)}
                       variant="ghost"

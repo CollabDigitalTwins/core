@@ -4,7 +4,6 @@
 import * as LR from 'lucide-react'
 
 import { Button } from '../../../../../../../../components/ui/Button'
-import { cn } from '../../../../../../../../utils/utils'
 import { UploadProgressRing } from '../../../../../../../ui/FilesManager/src/MarkerProgressRing'
 
 import FileIcon from './FileIcon'
@@ -33,14 +32,10 @@ export default function MapFileMarker({
       size="default"
       onClick={onClick}
       onDoubleClick={onDbClick}
-      className={cn(
-        'relative bg-white/90 w-9 h-9 rounded-[50%] hover:bg-white pointer-events-auto cursor-pointer shadow-lg p-0 text-xs font-sans flex items-center gap-2 max-w-[200px] transition-transform duration-200 ease-in-out hover:scale-105 group',
-        // The progress ring is the outline while uploading, so the pin does not draw a second one.
-        fileName ? 'border-0' : 'border border-gray-200',
-      )}
+      className="relative bg-white/90 w-9 h-9 rounded-[50%] border border-gray-200 hover:bg-white pointer-events-auto cursor-pointer shadow-lg p-0 text-xs font-sans flex items-center gap-2 max-w-[200px] transition-transform duration-200 ease-in-out hover:scale-105 group"
     >
       <FileIcon mimeType={mimeType} extension={extension} url={url} size={18} />
-      {fileName && <UploadProgressRing fileName={fileName} tone="onSurface" fit="within" />}
+      {fileName && <UploadProgressRing fileName={fileName} tone="onSurface" />}
     </Button>
   )
 }

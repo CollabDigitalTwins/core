@@ -8,6 +8,7 @@ import * as React from 'react'
 
 import { MapContext, ToolsContext } from '../../../../../store'
 import { PlacementPanel } from '../../../shared/placement/PlacementPanel'
+import { usePlacementCommitToasts } from '../../../shared/placement/usePlacementCommitToasts'
 
 import { createMapGizmoLayer, MAP_GIZMO_LAYER_ID } from './MapGizmoLayer'
 import { mapCapabilitiesForFile } from './mapPlacementTarget'
@@ -68,6 +69,8 @@ export function MapPlacementHost({ file, mode, is3D, anchor, preview, onRepaint,
     live.current.preview(next, rotation, scale)
     live.current.onRepaint()
   }, [])
+
+  usePlacementCommitToasts(core.onCommitted)
 
   const snapshot = React.useRef<MapAnchor | null>(null)
 

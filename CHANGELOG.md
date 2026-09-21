@@ -61,6 +61,12 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   viewer's menu.
 - The map's File tab sections are resizable, and a collapsed one shrinks to its header and sinks
   below the open ones.
+- A finished placement on the map reports itself in a toast, the same message the BIM viewer
+  already showed, through the new `usePlacementCommitToasts`.
+- `PlacementPanel` lifts a worded axis caption above its field instead of overlaying it. `X/Y/Z`
+  is unchanged; the map's `lng/lat/elev` no longer crops the value or sits on top of it.
+- The map's file pin draws its upload ring around itself and keeps its own outline, matching the
+  BIM viewer's marker.
 
 ### Removed
 - `EditPosition` and `EditPositionProps` from `viewers/map/src/MapLayers/src/EditPosition`. The

@@ -87,13 +87,20 @@ function NumberRow({
   steps?: [number, number, number]
   maxDecimals?: number
 }) {
+  // A worded caption needs the whole field width for its digits, so it sits above rather than in it.
+  const inside = axisLabels.every(axis => axis.length <= 1)
+
   return (
     <div className="space-y-1.5">
       <Label className="text-xs text-muted-foreground">{label}</Label>
       <div className="grid grid-cols-3 gap-1.5">
         {axisLabels.map((axis, index) => (
-          <div key={axis} className="relative">
-            <span className="pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground/70">
+          <div key={axis} className={inside ? 'relative' : 'space-y-0.5'}>
+            <span
+              className={inside
+                ? 'pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground/70'
+                : 'block pl-0.5 text-[10px] text-muted-foreground/70'}
+            >
               {axis}
             </span>
             <NumberField
@@ -102,7 +109,7 @@ function NumberRow({
               step={steps?.[index] ?? step}
               maxDecimals={maxDecimals}
               onCommit={(next) => onChange(WORLD_AXIS[index], next)}
-              className="h-7 pl-5 text-xs"
+              className={inside ? 'h-7 pl-5 text-xs' : 'h-7 px-1.5 text-xs'}
             />
           </div>
         ))}

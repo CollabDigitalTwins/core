@@ -214,3 +214,42 @@ describe('PlacementPanel while placing a new file', () => {
     expect(screen.getByText('in')).toBeTruthy()
   })
 })
+
+describe('PlacementPanel axis captions', () => {
+  const positionField = (axis: string) =>
+    screen.getByLabelText(`Position ${axis}`) as HTMLInputElement
+
+  it('keeps a one-letter caption inside the field', () => {
+    renderPanel(FULL_PLACEMENT)
+
+    expect(positionField('X').className).toContain('pl-5')
+  })
+
+  it('lifts a worded caption above the field, so it crowds neither the digits nor itself', () => {
+    render(
+      <PlacementPanel
+        name="tower.glb"
+        capabilities={SCALABLE_OBJECT_PLACEMENT}
+        placement={{ ...DEFAULT_PLACEMENT, position: [-75.695123, 0, 45.38] }}
+        mode="translate"
+        labels={LABELS}
+        positionLabels={['lng', 'lat', 'elev']}
+        positionDecimals={6}
+        hasPivot={false}
+        onDone={vi.fn()}
+        onReset={vi.fn()}
+        onPlacementChange={vi.fn()}
+        onModeChange={vi.fn()}
+        onCentre={vi.fn()}
+        onPickPivot={vi.fn()}
+        onClearPivot={vi.fn()}
+      />,
+    )
+
+    const field = screen.getByLabelText('Position lng') as HTMLInputElement
+    expect(field.className).not.toContain('pl-5')
+    expect(field.value).toBe('-75.695123')
+    expect(screen.getByText('lng').className).not.toContain('absolute')
+  })
+})
+

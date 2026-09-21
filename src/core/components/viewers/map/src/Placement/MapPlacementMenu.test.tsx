@@ -14,6 +14,7 @@ import type { DbFile } from '../../../../../types/dbTypes'
 
 const modelFile = { id: 1, name: 'tower.glb', extension: 'glb' } as DbFile
 const documentFile = { id: 2, name: 'plan.pdf', extension: 'pdf' } as DbFile
+const pointCloudFile = { id: 3, name: 'scan.las', extension: 'las' } as DbFile
 
 function renderMenu(file: DbFile, is3D: boolean, isOnMap = false) {
   render(
@@ -38,11 +39,20 @@ describe('MapPlacementMenu', () => {
     expect(screen.getByText('Scale')).toBeTruthy()
   })
 
-  it('withholds scale from a non-3D file', () => {
+  it('offers only move for a non-3D file, which has no gizmo to rotate or scale with', () => {
     renderMenu(documentFile, false)
 
     expect(screen.getByText('Move')).toBeTruthy()
+    expect(screen.queryByText('Rotate')).toBeNull()
     expect(screen.queryByText('Scale')).toBeNull()
+  })
+
+  it('does not narrow a point cloud, whose capabilities carry no moveOnly flag', () => {
+    renderMenu(pointCloudFile, true)
+
+    expect(screen.getByText('Move')).toBeTruthy()
+    expect(screen.getByText('Rotate')).toBeTruthy()
+    expect(screen.getByText('Scale')).toBeTruthy()
   })
 
   it('reads the hide label when the file is on the map', () => {

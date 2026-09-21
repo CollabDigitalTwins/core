@@ -7,9 +7,8 @@ import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 import { PlacementActionsCard } from '../../../../ui/FilesManager/src/PlacementActionsCard'
-import { markerActionsFor } from '../../../shared/placement/markerActions'
 
-import { mapCapabilitiesForFile } from './mapPlacementTarget'
+import { mapCapabilitiesForFile, mapMarkerActionsFor } from './mapPlacementTarget'
 
 import type { DbFile } from '../../../../../types/dbTypes'
 import type { FileMarkerAction } from '../../../../ui/FilesManager/src/PlacementActionsCard'
@@ -28,7 +27,7 @@ export interface MapPlacementMenuProps {
 export function MapPlacementMenu({ x, y, file, is3D, isOnMap, onAction, onClose }: MapPlacementMenuProps) {
   const t = useTranslations('FileItemComponent')
   const actions: FileMarkerAction[] = [
-    ...markerActionsFor(mapCapabilitiesForFile(file, is3D)),
+    ...mapMarkerActionsFor(mapCapabilitiesForFile(file, is3D)),
     'view',
     'download',
   ]

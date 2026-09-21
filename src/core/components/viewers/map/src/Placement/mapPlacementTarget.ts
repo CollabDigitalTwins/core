@@ -2,13 +2,16 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 
+import { markerActionsFor } from '../../../shared/placement/markerActions'
 import { capabilitiesForFile } from '../../../shared/placement/placementCapabilities'
 import { DEFAULT_PLACEMENT } from '../../../shared/pointcloud/pointCloudPlacement'
 
 import { metresToAnchor } from './mapPlacementGeo'
 
 import type { MapAnchor } from './mapPlacementGeo'
+import type { MapCapabilities } from './useMapPlacementSession'
 import type { DbFile } from '../../../../../types/dbTypes'
+import type { FileMarkerAction } from '../../../../ui/FilesManager/src/PlacementActionsCard'
 import type { PlacementCapabilities, PlacementTarget } from '../../../shared/placement/placementTarget'
 import type { PointCloudPlacement } from '../../../shared/pointcloud/pointCloudPlacement'
 import type * as THREE from 'three'
@@ -17,6 +20,12 @@ import type * as THREE from 'three'
 export function mapCapabilitiesForFile(file: Parameters<typeof capabilitiesForFile>[0], is3D: boolean) {
   const capabilities = capabilitiesForFile(file)
   return is3D ? capabilities : { ...capabilities, rotation: 'yaw' as const, scale: false, moveOnly: true }
+}
+
+/** The map's menu, narrowed: a file with no geometry has only a drag handle, so it only moves. */
+export function mapMarkerActionsFor(capabilities: MapCapabilities): FileMarkerAction[] {
+  const actions = markerActionsFor(capabilities)
+  return capabilities.moveOnly ? actions.filter(action => action === 'move') : actions
 }
 
 export interface MapPlacementTargetSetup {

@@ -21,9 +21,7 @@ import type { FileSection } from '../../../../../../../ui/FilesManager/src/fileT
 
 
 
-// Hoisted out of the JSX so the array reference is stable across renders.
-// Inline `options={['view','move','info','delete']}` gets a new array identity
-// on every render, defeating React.memo on FileItemComponent.
+// Hoisted so the array identity stays stable and React.memo on FileItemComponent still holds.
 const FILE_OPTIONS: import('../../../../../../../../types/global').FileAction[] = ['view', 'move', 'info', 'delete']
 
 const shouldExcludeByTag = (tag?: string | null): boolean => {
@@ -37,7 +35,7 @@ interface FilesSectionProps {
   /** Which of the four sidebar buckets this instance shows. Defaults to the catch-all. */
   section?: FileSection
   title?: string
-  icon?: LucideIcon
+  icon?: LR.LucideIcon
   acceptedFileTypes?: string
 }
 
@@ -103,10 +101,7 @@ export function FilesSection({
     fileDispatch({ type: 'EDIT_FILE', payload: { file } })
   }, [fileDispatch])
 
-  // useCallback so the onView prop identity stays stable across renders.
-  // Otherwise useFileActions' internal useCallback dep on onView re-fires every
-  // render, producing a new handleAction identity, which defeats React.memo on
-  // FileItemComponent.
+  // A stable identity here is what keeps React.memo on FileItemComponent effective.
   const handleViewFile = React.useCallback((file: IFile, newVisibility: boolean) => {
     fileDispatch({
       type: newVisibility ? 'ADD_TO_MAP' : 'REMOVE_FROM_MAP',

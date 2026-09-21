@@ -16,10 +16,12 @@ import { MapContext, FilesContext } from '../../../../../../../store'
 import { acceptedFiles, isAcceptedFileType } from '../../../../../../../utils/acceptedFiles'
 import { cn } from '../../../../../../../utils/utils'
 import { AddItemDialog } from '../../../../../../ui/AddItemDialog'
+import { extensionOfName } from '../../../../../../ui/FilesManager/src/fileType'
 import { Input } from '../../../../../../ui/Input'
 import { useFileIntake } from '../../../../../shared/intake/useFileIntake'
 import MapFileMarker from '../../../MapLayers/src/FileLayer/components/MapFileMarker'
 
+import type { DbFile } from '../../../../../../../types/dbTypes'
 import type { CursorType } from '../../../../../../../types/global'
 import type { LucideIcon } from 'lucide-react'
 
@@ -155,18 +157,11 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
     lng: number,
     lat: number,
   ): maplibregl.Marker {
+    // No explicit size: the pin is 36px and a smaller box would clip the ring drawn around it.
     const markerEl = document.createElement('div')
-    markerEl.style.width = '24px'
-    markerEl.style.height = '24px'
-    markerEl.style.display = 'flex'
-    markerEl.style.alignItems = 'center'
-    markerEl.style.justifyContent = 'center'
-
-    const iconEl = MapFileMarker({ mimeType: file.type, extension: 'uploading', fileName: file.name })
-    const iconContainer = document.createElement('div')
-    const root = ReactDOM.createRoot(iconContainer)
-    root.render(iconEl)
-    markerEl.append(iconContainer)
+    ReactDOM.createRoot(markerEl).render(
+      MapFileMarker({ mimeType: file.type, extension: extensionOfName(file.name), fileName: file.name }),
+    )
 
     return new maplibregl.Marker({ element: markerEl, draggable: false })
       .setLngLat([lng, lat])
@@ -227,17 +222,17 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
         }
 
         // Re-read so a 3D model gets a presigned url and can load without a refresh.
-        let fileToAdd: unknown = { id: created.id }
+        let fileToAdd: DbFile | null = null
         try {
           const fileUrlRes = await fetch(`/api/files/${created.id}`)
           if (fileUrlRes.ok) {
-            const { file: fileWithUrl } = await fileUrlRes.json()
+            const { file: fileWithUrl } = await fileUrlRes.json() as { file?: DbFile }
             if (fileWithUrl) fileToAdd = fileWithUrl
           }
         }
         catch { /* the store refresh below still picks it up */ }
 
-        fileDispatch({ type: 'ADD_FILE', payload: { file: fileToAdd } })
+        if (fileToAdd) fileDispatch({ type: 'ADD_FILE', payload: { file: fileToAdd } })
         fileDispatch({ type: 'ADD_TO_MAP', payload: { id: created.id } })
 
         void mutate(['files'])

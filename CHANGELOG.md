@@ -29,6 +29,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   a `buildingId`. Omitting it writes a record attached to no building.
 - `partitionBySection(files)` in `ui/FilesManager/src/fileType`, the section bucketing both sidebars
   share. The BIM viewer's `partitionFileTab` now applies its own filter and delegates to it.
+- `extensionOfName(name)` in `ui/FilesManager/src/fileType`, the lowercased trailing extension of
+  a file name, keeping `.copc.laz` whole.
 
 ### Changed
 - The map's File tab is split into the same four sections the BIM sidebar uses — BIM, Models,
@@ -93,6 +95,14 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   `if (map.getLayer(name)) return` guard and was never created. Identity on the map path is now
   the file id throughout (`bim-model-<id>`). Dragging one of two same-named 3D models also moved
   the other, for the same reason, in `CustomModelLayer`.
+- **A file added to the map no longer leaves a nameless ghost row in the sidebar.** When the
+  re-read of the new record failed, `FileAdder` still dispatched `ADD_FILE` with an id-only
+  object, which reached the store as a `DbFile` with no name, type or size. It now dispatches
+  only the real record and otherwise lets the `files` revalidation bring it in.
+- **The pin for a file being placed on the map now shows the upload ring and the file's own
+  icon.** It rendered `LoadingSpinner` instead of an icon, inside a hard-coded 24px box that a
+  36px pin and its ring overflowed, so the old spinner and a displaced ring were drawn at once.
+  `FileIcon` no longer accepts `'uploading'` as an extension; pass the real one.
 
 ### Migration
 - Rename the three BIM store members if you dispatch them directly: `editingBimModel` ->

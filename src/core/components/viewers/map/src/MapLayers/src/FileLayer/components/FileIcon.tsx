@@ -3,8 +3,6 @@
 
 import * as LR from 'lucide-react'
 
-import { LoadingSpinner } from '../../../../../../../../components/ui/LoadingSpinner'
-
 interface FileIconProps {
   mimeType?: string
   extension?: string
@@ -13,10 +11,6 @@ interface FileIconProps {
 }
 
 export default function FileIcon({ mimeType, extension, url, size }: FileIconProps) {
-  if (extension === 'uploading') {
-    return <LoadingSpinner />
-  }
-
   if (mimeType?.startsWith('image/')) {
     if (url) {
       return <img src={url} width={28} height={28} alt="File preview" className="rounded object-cover" />
@@ -29,13 +23,7 @@ export default function FileIcon({ mimeType, extension, url, size }: FileIconPro
   if (mimeType === 'application/pdf') {
     return <LR.FileText size={size} />
   }
-  // if (mimeType?.startsWith('model/')) {
-  //   return <LR.Box size={size} />
-  // }
-
-  // using extension for fall back
-  const ext = extension?.toLowerCase()
-  switch (ext?.toLowerCase()) {
+  switch (extension?.toLowerCase()) {
     // documents
     case 'doc':
     case 'docx':

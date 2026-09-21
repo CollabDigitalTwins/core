@@ -68,7 +68,8 @@ const byMimeType = (mimeType: string): FileType | null => {
   return null
 }
 
-const extensionOfName = (name: string): string => {
+/** The last extension of a file name, lowercased, with `.copc.laz` kept whole. */
+export const extensionOfName = (name: string): string => {
   const lower = name.toLowerCase()
   if (lower.endsWith('.copc.laz')) return 'copc'
   const parts = lower.split('.')

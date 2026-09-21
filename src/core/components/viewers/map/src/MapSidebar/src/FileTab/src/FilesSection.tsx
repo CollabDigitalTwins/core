@@ -37,6 +37,8 @@ interface FilesSectionProps {
   title?: string
   icon?: LR.LucideIcon
   acceptedFileTypes?: string
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 export function FilesSection({
@@ -46,6 +48,8 @@ export function FilesSection({
   title,
   icon,
   acceptedFileTypes = '*',
+  open,
+  onOpenChange,
 }: FilesSectionProps) {
   const t = useTranslations('FileSelection')
 
@@ -153,6 +157,8 @@ export function FilesSection({
         onAddItem={uploadState.uploading ? undefined : handleAddFile}
         addItemTitle={uploadState.uploading ? `${t('uploadingFile')} ${uploadState.progress}%` : t('addFileTitle')}
         switchVariant={handleSwitchVariant()}
+        open={open}
+        onOpenChange={onOpenChange}
       >
         <div className="flex-1 min-h-0 overflow-y-auto space-y-1">
           {tasks.map(task => (

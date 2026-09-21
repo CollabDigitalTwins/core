@@ -26,9 +26,11 @@ const OPTIONS_OFF_MAP: FileAction[] = ['download', 'view', 'info', 'delete']
 interface ModelsSectionProps {
   files: DbFile[]
   query?: string
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
+export function ModelsSection({ files, query = '', open, onOpenChange }: ModelsSectionProps) {
   // Translation
   const t = useTranslations('FileItemComponent')
 
@@ -160,9 +162,7 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
     onMove: handleMoveModel,
   })
 
-  // Filter models based on search query — use sortedModels directly so the
-  // sidebar always reflects the current BimContext state without waiting for
-  // the loadedModels sync effect (which lags one render behind).
+  // Reads sortedModels directly: the loadedModels sync effect lags a render behind.
   const filteredModels = React.useMemo(() => {
     if (!query.trim()) return sortedModels
     return sortedModels.filter(file =>
@@ -180,6 +180,8 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
         itemCount={filteredModels.length}
         onAddItem={uploadState.uploading ? undefined : handleAddFile}
         addItemTitle={uploadState.uploading ? `${t('uploadingFile')} ${uploadState.progress}%` : t('addBimTitle')}
+        open={open}
+        onOpenChange={onOpenChange}
       >
         <div className="flex-1 min-h-0 overflow-y-scroll space-y-1">
           {tasks.map(task => (

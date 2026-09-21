@@ -14,7 +14,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   `lat/lng/elevation/rotation` columns a map file stores; `mapGizmoCamera` rebuilds a real
   `PerspectiveCamera` from maplibre's per-frame clip matrix, so `TransformControls` and `Raycaster`
   can work inside a custom layer. Also `mapPlacementTarget` and `useMapPlacementTarget`, the map's
-  `PlacementTarget`. Nothing renders a gizmo yet.
+  `PlacementTarget`: unlike the BIM one it moves the layer's own anchor — the file's
+  `lng/lat/elevation` — and returns the subject to the scene origin, because that is what a map
+  file's columns store. Nothing renders a gizmo yet.
 - `useFileIntake` in `@collabdt/core/core/components/viewers/shared/intake/useFileIntake` — one
   upload path for every viewer. It converts the kinds that need it, reports every phase through the
   shared task store, and writes whichever columns the caller's placement uses: `x/y/z` in a 3D
@@ -62,8 +64,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   session into React. `PlacementPanel`, `NumberField`, `placementTarget`, `placementCapabilities`,
   `placementAxes`, `uniformScale`, `markerActions`, `contextMenuGesture`, `placementToastMessage`
   and `objectTarget` now live here too.
-- `PlacementPanel` accepts `positionSigns`, a per-display-axis sign for the position row, so a
-  viewer whose axis runs the other way reads the right direction. Defaults to no flip.
+- `PlacementPanel` accepts `positionLabels`, `positionSteps` and `positionDecimals`, so a viewer
+  whose position is not scene metres can caption the row and give it a workable step. The map reads
+  the row as lng/lat/elevation, where a tenth-of-a-metre step and three decimals are useless.
 
 ### Changed
 - An uploaded file's name is now disambiguated against every file in the uploader's organization

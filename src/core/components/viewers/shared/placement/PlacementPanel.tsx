@@ -54,41 +54,54 @@ export interface PlacementPanelProps {
   availableModes?: PlacementMode[]
   /** False while placing a new file, which has no pivot to turn about yet. */
   allowPivot?: boolean
-  /** Per-display-axis sign for the position row, so a viewer whose axis runs the other way reads right. */
-  positionSigns?: [number, number, number]
+  /** Axis captions for the position row. Defaults to X/Y/Z; the map reads them as lng/lat/elevation. */
+  positionLabels?: readonly [string, string, string]
+  /** Per-axis step for the position row, for a unit far finer than a metre. */
+  positionSteps?: [number, number, number]
+  /** Decimal places the position fields keep. Degrees need more than metres do. */
+  positionDecimals?: number
 }
 
 const round = (value: number) => Math.round(value * 1000) / 1000
 
-const NO_FLIP: [number, number, number] = [1, 1, 1]
+// Degrees need far more places than metres, so the position row rounds to its own precision.
+const roundTo = (value: number, decimals: number) => {
+  const factor = 10 ** decimals
+  return Math.round(value * factor) / factor
+}
 
 function NumberRow({
   label,
   values,
   step,
   onChange,
-  signs = NO_FLIP,
+  axisLabels = AXES,
+  steps,
+  maxDecimals,
 }: {
   label: string
   values: [number, number, number]
   step: number
   onChange: (index: number, value: number) => void
-  signs?: [number, number, number]
+  axisLabels?: readonly [string, string, string] | typeof AXES
+  steps?: [number, number, number]
+  maxDecimals?: number
 }) {
   return (
     <div className="space-y-1.5">
       <Label className="text-xs text-muted-foreground">{label}</Label>
       <div className="grid grid-cols-3 gap-1.5">
-        {AXES.map((axis, index) => (
+        {axisLabels.map((axis, index) => (
           <div key={axis} className="relative">
             <span className="pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground/70">
               {axis}
             </span>
             <NumberField
               label={`${label} ${axis}`}
-              value={values[WORLD_AXIS[index]] * signs[index]}
-              step={step}
-              onCommit={(next) => onChange(WORLD_AXIS[index], next * signs[index])}
+              value={values[WORLD_AXIS[index]]}
+              step={steps?.[index] ?? step}
+              maxDecimals={maxDecimals}
+              onCommit={(next) => onChange(WORLD_AXIS[index], next)}
               className="h-7 pl-5 text-xs"
             />
           </div>
@@ -148,7 +161,9 @@ export function PlacementPanel({
   hint,
   availableModes,
   allowPivot = true,
-  positionSigns,
+  positionLabels,
+  positionSteps,
+  positionDecimals,
 }: PlacementPanelProps) {
   const modes = MODES
     .filter(({ mode: value }) => value !== 'scale' || capabilities.scale)
@@ -204,9 +219,11 @@ export function PlacementPanel({
             <div className="space-y-1.5">
               <NumberRow
                 label={labels.position}
-                values={placement.position.map(round) as [number, number, number]}
+                values={placement.position.map(v => roundTo(v, positionDecimals ?? 3)) as [number, number, number]}
                 step={0.1}
-                signs={positionSigns}
+                axisLabels={positionLabels}
+                steps={positionSteps}
+                maxDecimals={positionDecimals}
                 onChange={(index, value) => setAxis('position', index, value)}
               />
               {allowPivot && (

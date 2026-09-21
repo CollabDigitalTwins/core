@@ -8,6 +8,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ## [Unreleased]
 
 ### Added
+- `PlacementTarget.applyDrag(object)`, an optional hook a target implements when a gizmo drag
+  arrives in different units from its own placement. `PlacementCore` calls it in place of
+  `apply(objectToPlacement(root))`. Targets that omit it are unaffected.
 - `mapPlacementGeo` and `mapGizmoCamera` in
   `@collabdt/core/core/components/viewers/map/src/Placement/*`, the two pieces a placement gizmo
   needs on the map. `mapPlacementGeo` converts between a scene-space `PointCloudPlacement` and the

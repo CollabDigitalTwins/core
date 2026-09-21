@@ -115,3 +115,42 @@ describe('anchorAfterDrag', () => {
     expect(anchorAfterDrag(ANCHOR, new THREE.Vector3(0, 0, 100)).lat).toBeLessThan(ANCHOR.lat)
   })
 })
+
+describe('applyDrag', () => {
+  it('reads the dragged object as metres and previews the anchor it lands on', () => {
+    const { target, root, previews } = setUp()
+
+    root.position.set(100, 10, 0)
+    target.applyDrag?.(root)
+
+    expect(previews).toHaveLength(1)
+    expect(previews[0].anchor.lng).toBeGreaterThan(ANCHOR.lng)
+    expect(previews[0].anchor.elevation).toBeCloseTo(84, 9)
+    expect(previews[0].anchor.lat).toBeCloseTo(ANCHOR.lat, 9)
+  })
+
+  it('returns the subject to the origin so the next drag is measured from scratch', () => {
+    const { target, root } = setUp()
+
+    root.position.set(50, 0, 50)
+    target.applyDrag?.(root)
+
+    expect(root.position.toArray()).toEqual([0, 0, 0])
+  })
+
+  it('keeps the rotation and scale a card edit already applied', () => {
+    const { target, root, previews } = setUp()
+
+    target.apply({
+      ...target.read(),
+      rotation: [0, Math.PI / 2, 0],
+      scale: 3,
+    })
+    root.position.set(10, 0, 0)
+    target.applyDrag?.(root)
+
+    const last = previews[previews.length - 1]
+    expect(last.rotation).toBeCloseTo(Math.PI / 2, 9)
+    expect(last.scale).toBe(3)
+  })
+})

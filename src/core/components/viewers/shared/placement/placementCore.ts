@@ -312,6 +312,12 @@ export class PlacementCore implements PlacementExclusiveTool {
     // The gizmo writes only the dragged axis; scaling is proportional, so resolve it to one number.
     root.scale.setScalar(uniformScale(root.scale.x, root.scale.y, root.scale.z))
 
+    if (target.applyDrag) {
+      target.applyDrag(root)
+      this.publish()
+      return
+    }
+
     const read = objectToPlacement(root, target.read().sourceUp)
     target.apply(narrowPlacement(read, target.capabilities))
     this.publish()

@@ -71,6 +71,11 @@ export function mapPlacementTarget({
         root.updateMatrixWorld(true)
       }
     },
+    applyDrag: (object) => {
+      preview(anchorAfterDrag(anchor(), object.position), rotation, scale)
+      object.position.set(0, 0, 0)
+      object.updateMatrixWorld(true)
+    },
     bounds: () => null,
     commit: async (placement) => {
       const next = positionToAnchor(placement.position)

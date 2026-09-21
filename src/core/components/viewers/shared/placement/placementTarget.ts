@@ -28,6 +28,8 @@ export interface PlacementTarget {
   object(): THREE.Object3D | null
   read(): PointCloudPlacement
   apply(placement: PointCloudPlacement): void
+  /** A gizmo drag in scene metres, for a target whose own placement is in other units. */
+  applyDrag?(object: THREE.Object3D): void
   bounds(): THREE.Vector3 | null
   commit(placement: PointCloudPlacement): Promise<void>
 }

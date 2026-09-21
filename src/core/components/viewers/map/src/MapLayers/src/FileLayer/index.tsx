@@ -9,8 +9,10 @@ import { Marker } from 'react-map-gl/maplibre'
 import { useFile, useFiles, useDeleteFile } from '../../../../../../../hooks/files/files'
 import { FilesContext, MapContext } from '../../../../../../../store'
 import { markerOcclusionProps } from '../../../../../../../utils/markerUtils'
-import { downloadDbFile, ViewerContextMenu } from '../../../../../../ui/FilesManager'
-import { EditPosition } from '../EditPosition'
+import ConfirmDialog from '../../../../../../ConfirmDialog'
+import { downloadDbFile } from '../../../../../../ui/FilesManager'
+import { MapPlacementHost } from '../../../Placement/MapPlacementHost'
+import { MapPlacementMenu } from '../../../Placement/MapPlacementMenu'
 import { PlaceOnMap } from '../PlaceOnMap'
 
 import MapFileManager from './components/MapFileManager'
@@ -20,6 +22,8 @@ import { openPopupWindow } from './utils/openFileInPopUpWindow'
 
 import type { DbFile } from '../../../../../../../types/dbTypes'
 import type { FileAction } from '../../../../../../../types/global'
+import type { FileMarkerAction } from '../../../../../../ui/FilesManager/src/PlacementActionsCard'
+import type { PlacementMode } from '../../../../../shared/placement/placementTarget'
 
 
 const is3DModelFile = (extension?: string | null): boolean => {
@@ -83,6 +87,7 @@ export const FileLayers = () => {
   const tempRotationsRef = React.useRef<Record<string, number>>({})
   const tempElevationsRef = React.useRef<Record<string, number>>({})
   const editingFileIdRef = React.useRef<string | null>(null)
+  const [editMode, setEditMode] = React.useState<PlacementMode>('translate')
 
   React.useEffect(() => {
     editingFileIdRef.current = editingFile ? String(editingFile.id) : null
@@ -90,13 +95,6 @@ export const FileLayers = () => {
 
   const handleExitEditFileMode = React.useCallback(() => {
     fileDispatch({ type: 'EDIT_FILE', payload: { file: null } })
-  }, [fileDispatch])
-
-  const handleFileSaveSuccess = React.useCallback((file: DbFile, lat: number, lng: number, elevation?: number, rotation?: number) => {
-    fileDispatch({
-      type: 'UPDATE_FILE_COORDS',
-      payload: { id: file.id, lat, lng, elevation, rotation },
-    })
   }, [fileDispatch])
 
   // Sync SWR files into the store (for FileModelLayer and other consumers)
@@ -109,6 +107,7 @@ export const FileLayers = () => {
   const { deleteFile } = useDeleteFile()
 
   const [contextMenu, setContextMenu] = React.useState<{ x: number; y: number; file: DbFile } | null>(null)
+  const [pendingDelete, setPendingDelete] = React.useState<DbFile | null>(null)
 
   const handleContextMenu = React.useCallback((e: React.MouseEvent, file: DbFile) => {
     e.preventDefault()
@@ -139,6 +138,25 @@ export const FileLayers = () => {
       })
     }
   }, [fileDispatch, mapFileIds, deleteFile])
+
+  const handlePlacementMenuAction = React.useCallback((action: FileMarkerAction) => {
+    const file = contextMenu?.file
+    setContextMenu(null)
+    if (!file) return
+
+    if (action === 'move' || action === 'rotate' || action === 'scale') {
+      setEditMode(action === 'move' ? 'translate' : action)
+      fileDispatch({ type: 'EDIT_FILE', payload: { file } })
+      return
+    }
+
+    if (action === 'delete') {
+      setPendingDelete(file)
+      return
+    }
+
+    handleContextMenuAction(action as FileAction, file)
+  }, [contextMenu, fileDispatch, handleContextMenuAction])
 
   return (
     <>
@@ -175,22 +193,24 @@ export const FileLayers = () => {
         }
 
         const editing3D = is3DModelFile(editingFile.extension)
+        const key = String(editingFile.id)
         return (
-          <EditPosition
+          <MapPlacementHost
             file={editingFile}
-            mode={editing3D ? '3d' : '2d'}
-            onExitEditMode={handleExitEditFileMode}
-            onSaveSuccess={handleFileSaveSuccess}
-            tempPositionsRef={tempPositionsRef}
-            tempRotationsRef={editing3D ? tempRotationsRef : undefined}
-            tempElevationsRef={editing3D ? tempElevationsRef : undefined}
-            onMapRepaint={handleMapRepaint}
-            dragHandle={!editing3D ? (
-              <MapFileMarker
-                mimeType={editingFile.mimeType}
-                extension={editingFile.extension}
-              />
-            ) : undefined}
+            mode={editMode}
+            is3D={editing3D}
+            anchor={() => ({
+              lng: tempPositionsRef.current[key]?.lng ?? editingFile.lng ?? 0,
+              lat: tempPositionsRef.current[key]?.lat ?? editingFile.lat ?? 0,
+              elevation: tempElevationsRef.current[key] ?? editingFile.elevation ?? 0,
+            })}
+            preview={(next, rotation) => {
+              tempPositionsRef.current = { ...tempPositionsRef.current, [key]: { lat: next.lat, lng: next.lng } }
+              tempElevationsRef.current = { ...tempElevationsRef.current, [key]: next.elevation }
+              tempRotationsRef.current = { ...tempRotationsRef.current, [key]: rotation * (180 / Math.PI) }
+            }}
+            onRepaint={handleMapRepaint}
+            onDone={handleExitEditFileMode}
           />
         )
       })()}
@@ -200,15 +220,27 @@ export const FileLayers = () => {
       </div>
 
       {contextMenu && (
-        <ViewerContextMenu
+        <MapPlacementMenu
           x={contextMenu.x}
           y={contextMenu.y}
           file={contextMenu.file}
-          options={['view', 'move', 'download', 'delete']}
-          onAction={handleContextMenuAction}
+          is3D={is3DModelFile(contextMenu.file.extension)}
+          isOnMap={mapFileIds.includes(contextMenu.file.id)}
+          onAction={handlePlacementMenuAction}
           onClose={() => setContextMenu(null)}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={pendingDelete !== null}
+        isDeleting={false}
+        onOpenChange={(open: boolean) => { if (!open) setPendingDelete(null) }}
+        handleConfirm={() => {
+          if (pendingDelete) handleContextMenuAction('delete', pendingDelete)
+          setPendingDelete(null)
+        }}
+        itemName={pendingDelete?.name ?? ''}
+      />
     </>
   )
 }

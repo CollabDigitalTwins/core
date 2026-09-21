@@ -78,6 +78,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - `useFileUploadHandler` files every upload the way the viewers expect: an IFC and the fragments it
   converts into carry the `bim-file` tag, and an upload is visible unless the caller says otherwise.
   The map's building popover passed neither, so a model uploaded there never loaded itself.
+- A file placed with the map's add-file tool joins the store that draws its kind: a converted BIM
+  model goes to the BIM store, so it appears on the map instead of being filed as a plain pin that
+  nothing renders. The tool also stands the popovers down while its crosshair is up.
 - The map's popovers close when the map is panned, orbited or zoomed under them, and
   `MapClickManager.setSuspended` silences them while another gesture owns the map — without it the
   popover a first click opened swallowed the second click of a placement.

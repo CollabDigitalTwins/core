@@ -12,13 +12,14 @@ import { toast } from 'sonner'
 import { mutate } from 'swr'
 
 import { useFiles } from '../../../../../../../hooks/files/files'
-import { MapContext, FilesContext } from '../../../../../../../store'
+import { BimContext, MapContext, FilesContext } from '../../../../../../../store'
 import { acceptedFiles, isAcceptedFileType } from '../../../../../../../utils/acceptedFiles'
 import { cn } from '../../../../../../../utils/utils'
 import { AddItemDialog } from '../../../../../../ui/AddItemDialog'
 import { extensionOfName } from '../../../../../../ui/FilesManager/src/fileType'
 import { Input } from '../../../../../../ui/Input'
 import { useFileIntake } from '../../../../../shared/intake/useFileIntake'
+import { addFileToMap } from '../../../../utils/addFileToMap'
 import MapFileMarker from '../../../MapLayers/src/FileLayer/components/MapFileMarker'
 
 import type { DbFile } from '../../../../../../../types/dbTypes'
@@ -112,8 +113,9 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
   const t = useTranslations('FileAdder')
 
   const { state: mapState } = React.useContext(MapContext)
-  const { map } = mapState.map
+  const { map, mapClickManager } = mapState.map
   const { dispatch: fileDispatch } = React.useContext(FilesContext)
+  const { dispatch: bimDispatch } = React.useContext(BimContext)
 
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
   const [isUploading, setIsUploading] = React.useState(false)
@@ -233,7 +235,10 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
         catch { /* the store refresh below still picks it up */ }
 
         if (fileToAdd) fileDispatch({ type: 'ADD_FILE', payload: { file: fileToAdd } })
-        fileDispatch({ type: 'ADD_TO_MAP', payload: { id: created.id } })
+        // A model is drawn from the BIM store; only its own store makes it appear.
+        const placed = fileToAdd
+          ?? ({ id: created.id, name: selectedFile.name, extension: extensionOfName(selectedFile.name) } as DbFile)
+        addFileToMap(placed, { fileDispatch, bimDispatch })
 
         void mutate(['files'])
         onClose()
@@ -270,7 +275,14 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
         map.off('dblclick', onDblClick)
       }
     }
-  }, [selectedFile, isUploading, map])
+  }, [selectedFile, isUploading, map, fileDispatch, bimDispatch])
+
+  // A popover opened by the first click would cover the point the second one needs.
+  React.useEffect(() => {
+    if (!mapClickManager || !selectedFile) return
+    mapClickManager.setSuspended(true)
+    return () => mapClickManager.setSuspended(false)
+  }, [mapClickManager, selectedFile])
 
   // Prevent page navigation while uploading
   React.useEffect(() => {

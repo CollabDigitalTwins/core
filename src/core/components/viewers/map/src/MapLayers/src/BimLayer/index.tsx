@@ -12,13 +12,16 @@ import * as THREE from "three";
 
 import { BimContext, MapContext } from "../../../../../../../store";
 import { markerOcclusionProps } from "../../../../../../../utils/markerUtils";
-import { ViewerContextMenu } from '../../../../../../ui/FilesManager';
 import { writeModelMatrix } from "../../../../utils/modelMatrix";
+import { MapPlacementHost } from "../../../Placement/MapPlacementHost";
+import { MapPlacementMenu } from "../../../Placement/MapPlacementMenu";
 import { disposeThreeScene } from "../disposeThreeScene";
-import { EditPosition, extractPositionAndRotation } from "../EditPosition";
+import { extractPositionAndRotation } from "../EditPosition";
 
 import type { Building, DbFile } from "../../../../../../../types/dbTypes";
 import type { FileAction } from "../../../../../../../types/global";
+import type { FileMarkerAction } from "../../../../../../ui/FilesManager/src/PlacementActionsCard";
+import type { PlacementMode } from "../../../../../shared/placement/placementTarget";
 import type * as FRAGS from "@thatopen/fragments";
 import type { Map } from "maplibre-gl";
 
@@ -55,6 +58,22 @@ export const BimLayer = () => {
             bimDispatch({ type: 'EDIT_BIM_MODEL_BY_ID', payload: { editingBimModelId: String(file.id) } });
         }
     }, [bimDispatch]);
+
+    const [editMode, setEditMode] = React.useState<PlacementMode>('translate');
+
+    const handlePlacementMenuAction = React.useCallback((action: FileMarkerAction) => {
+        const file = contextMenu?.bimFile;
+        setContextMenu(null);
+        if (!file) return;
+
+        if (action === 'move' || action === 'rotate' || action === 'scale') {
+            setEditMode(action === 'move' ? 'translate' : action);
+            bimDispatch({ type: 'EDIT_BIM_MODEL_BY_ID', payload: { editingBimModelId: String(file.id) } });
+            return;
+        }
+
+        handleContextMenuAction(action as FileAction, file);
+    }, [contextMenu, bimDispatch, handleContextMenuAction]);
 
     const tempPositionsRef = React.useRef<Record<string, { lat: number; lng: number }>>({});
     const tempRotationsRef = React.useRef<Record<string, number>>({});
@@ -464,34 +483,44 @@ export const BimLayer = () => {
             {editingBimModelId && (() => {
                 const currentModel = bimModelsAddedToMap.find(bm => String(bm.bimFile.id) === editingBimModelId);
                 if (!currentModel) return null;
-                const { lng, lat, rotation, elevation } = extractPositionAndRotation(
+                const { lng, lat, elevation } = extractPositionAndRotation(
                     currentModel.bimFile, currentModel.building
                 );
                 return (
-                    <EditPosition
+                    <MapPlacementHost
                         file={currentModel.bimFile}
-                        displayName={currentModel.building?.buildingName || currentModel.bimFile.name}
-                        mode="3d"
-                        initialLat={lat}
-                        initialLng={lng}
-                        initialRotation={rotation}
-                        initialElevation={elevation}
-                        onExitEditMode={handleExitEditMode}
-                        tempPositionsRef={tempPositionsRef}
-                        tempRotationsRef={tempRotationsRef}
-                        tempElevationsRef={tempElevationsRef}
-                        onMapRepaint={handleMapRepaint}
+                        mode={editMode}
+                        is3D
+                        anchor={() => ({
+                            lng: tempPositionsRef.current[editingBimModelId]?.lng ?? lng ?? 0,
+                            lat: tempPositionsRef.current[editingBimModelId]?.lat ?? lat ?? 0,
+                            elevation: tempElevationsRef.current[editingBimModelId] ?? elevation ?? 0,
+                        })}
+                        preview={(next, nextRotation) => {
+                            tempPositionsRef.current = {
+                                ...tempPositionsRef.current,
+                                [editingBimModelId]: { lat: next.lat, lng: next.lng },
+                            };
+                            tempElevationsRef.current = { ...tempElevationsRef.current, [editingBimModelId]: next.elevation };
+                            tempRotationsRef.current = {
+                                ...tempRotationsRef.current,
+                                [editingBimModelId]: nextRotation * (180 / Math.PI),
+                            };
+                        }}
+                        onRepaint={handleMapRepaint}
+                        onDone={handleExitEditMode}
                     />
                 );
             })()}
 
             {contextMenu && (
-                <ViewerContextMenu
+                <MapPlacementMenu
                     x={contextMenu.x}
                     y={contextMenu.y}
-                    file={{ ...contextMenu.bimFile, isVisible: true }}
-                    options={['view', 'move']}
-                    onAction={handleContextMenuAction}
+                    file={contextMenu.bimFile}
+                    is3D
+                    isOnMap
+                    onAction={handlePlacementMenuAction}
                     onClose={() => setContextMenu(null)}
                 />
             )}

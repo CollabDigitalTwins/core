@@ -69,6 +69,13 @@ describe('MapPlacementMenu', () => {
     expect(screen.queryByText('hideTitle')).toBeNull()
   })
 
+  it('never offers download, matching the BIM viewer menu', () => {
+    renderMenu(modelFile, true)
+
+    expect(screen.queryByText('downloadTitle')).toBeNull()
+    expect(screen.queryByText('Download')).toBeNull()
+  })
+
   it('renders exactly one delete row', () => {
     renderMenu(modelFile, true)
 

@@ -26,11 +26,7 @@ export interface MapPlacementMenuProps {
 
 export function MapPlacementMenu({ x, y, file, is3D, isOnMap, onAction, onClose }: MapPlacementMenuProps) {
   const t = useTranslations('FileItemComponent')
-  const actions: FileMarkerAction[] = [
-    ...mapMarkerActionsFor(mapCapabilitiesForFile(file, is3D)),
-    'view',
-    'download',
-  ]
+  const actions: FileMarkerAction[] = [...mapMarkerActionsFor(mapCapabilitiesForFile(file, is3D)), 'view']
 
   return (
     <div className="fixed z-50" style={{ left: x, top: y }}>
@@ -40,7 +36,6 @@ export function MapPlacementMenu({ x, y, file, is3D, isOnMap, onAction, onClose 
         actions={actions}
         labels={{
           view: isOnMap ? t('hideTitle') : t('showTitle'),
-          download: t('downloadTitle'),
           delete: t('deleteTitle'),
         }}
         onAction={onAction}

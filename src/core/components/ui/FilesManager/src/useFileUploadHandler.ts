@@ -10,6 +10,8 @@ import { useFiles } from '../../../../hooks/files/files'
 import { getFileExtension } from '../../../../utils/utils'
 import { uploadFile as performUploadFile } from '../../uploadFile'
 
+import { uploadFiling } from './uploadFiling'
+
 // @thatopen/IfcToFragments are imported dynamically in the IFC branch below
 // (not statically) to keep ~456 KB out of the eager bundle.
 
@@ -72,6 +74,7 @@ export function useFileUploadHandler({
 
     try {
       const ext = getFileExtension(file)?.toLowerCase()
+      const filing = uploadFiling(file.name, tag, isVisible)
 
       if (ext === 'ifc') {
         const { convertIfcToFragmentsFile } = await import('./convertIfcToFragmentsFile')
@@ -86,8 +89,8 @@ export function useFileUploadHandler({
           await performUploadFile({
             files: [fragFile], // Upload only fragments
             buildingId: buildingId || 0,
-            tag,
-            isVisible,
+            tag: filing.tag,
+            isVisible: filing.isVisible,
             user,
             uploadFile,
             position: { ...position },
@@ -104,11 +107,11 @@ export function useFileUploadHandler({
         await performUploadFile({
           file,
           buildingId: buildingId || 0,
-          tag,
+          tag: filing.tag,
           user,
           uploadFile,
-          isVisible,
-          position: position !== undefined || isVisible !== undefined ? { ...position } : undefined,
+          isVisible: filing.isVisible,
+          position: { ...position },
           existingNames,
         })
 

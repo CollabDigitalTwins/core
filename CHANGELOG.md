@@ -75,6 +75,12 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   resolved, and writes elevation alongside the coordinates.
 - Putting a BIM model on the map marks its row visible, so a viewer that gates loading on
   `isVisible` will load it.
+- `useFileUploadHandler` files every upload the way the viewers expect: an IFC and the fragments it
+  converts into carry the `bim-file` tag, and an upload is visible unless the caller says otherwise.
+  The map's building popover passed neither, so a model uploaded there never loaded itself.
+- The map's popovers close when the map is panned, orbited or zoomed under them, and
+  `MapClickManager.setSuspended` silences them while another gesture owns the map — without it the
+  popover a first click opened swallowed the second click of a placement.
 - An animated model on the map offers the animation card in its menu, with the same clip, play and
   speed controls the BIM viewer has. A model with clips used to play all of them at once and had no
   controls at all; it now plays the first, as the BIM viewer does.

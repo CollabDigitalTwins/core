@@ -7,13 +7,14 @@ import { useTranslations } from "next-intl"
 import * as React from "react"
 import { toast } from "sonner"
 
+import { useBuildings } from "../../../../../../hooks/buildings/buildings"
 import { useFile } from "../../../../../../hooks/files/files"
-import { BuildingsContext, MapContext } from "../../../../../../store"
+import { MapContext } from "../../../../../../store"
 
 import { resolveClickPlacement } from "../../Placement/resolveClickPlacement"
 import { useBuildingLinkConfirm } from "../../Placement/useBuildingLinkConfirm"
 
-import type { DbFile } from "../../../../../../types/dbTypes"
+import type { Building, DbFile } from "../../../../../../types/dbTypes"
 import type * as maplibregl from "maplibre-gl"
 
 
@@ -32,10 +33,11 @@ interface PlaceOnMapProps {
  */
 export const PlaceOnMap: React.FC<PlaceOnMapProps> = ({ file, gesture = "click", onPlaced, onCancel }) => {
     const { state: mapState } = React.useContext(MapContext)
-    const { state: buildingsState } = React.useContext(BuildingsContext)
     const { map, mapClickManager } = mapState.map
-    const buildingsRef = React.useRef(buildingsState.buildings.buildings)
-    buildingsRef.current = buildingsState.buildings.buildings
+    // The organization's buildings, not the store's: nothing fills that list.
+    const { buildings } = useBuildings()
+    const buildingsRef = React.useRef<Building[]>(buildings ?? [])
+    buildingsRef.current = buildings ?? []
     const { updateFile } = useFile(file.id)
     const t = useTranslations("Placement")
     const { confirmLink, dialog } = useBuildingLinkConfirm()

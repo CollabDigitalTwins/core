@@ -11,8 +11,9 @@ import ReactDOM from 'react-dom/client'
 import { toast } from 'sonner'
 import { mutate } from 'swr'
 
+import { useBuildings } from '../../../../../../../hooks/buildings/buildings'
 import { useFiles, useUpdateFile } from '../../../../../../../hooks/files/files'
-import { BimContext, BuildingsContext, MapContext, FilesContext } from '../../../../../../../store'
+import { BimContext, MapContext, FilesContext } from '../../../../../../../store'
 import { acceptedFiles, isAcceptedFileType } from '../../../../../../../utils/acceptedFiles'
 import { cn } from '../../../../../../../utils/utils'
 import { AddItemDialog } from '../../../../../../ui/AddItemDialog'
@@ -118,8 +119,8 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
   const { map, mapClickManager } = mapState.map
   const { dispatch: fileDispatch } = React.useContext(FilesContext)
   const { dispatch: bimDispatch } = React.useContext(BimContext)
-  const { state: buildingsState } = React.useContext(BuildingsContext)
-  const { buildings } = buildingsState.buildings
+  // The organization's buildings, not the store's: nothing fills that list.
+  const { buildings } = useBuildings()
   const updateFileById = useUpdateFile()
   const { confirmLink, dialog: linkDialog } = useBuildingLinkConfirm()
 
@@ -215,10 +216,10 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
       setCursor(null)
       toast.dismiss('place-file-toast')
 
-      const { lng, lat, elevation, buildingId } = resolveClickPlacement(map, e, buildings)
+      const { lng, lat, elevation, buildingId } = resolveClickPlacement(map, e, buildings ?? [])
       const building = buildingId === null
         ? null
-        : buildings.find(candidate => candidate.id === buildingId) ?? null
+        : (buildings ?? []).find(candidate => candidate.id === buildingId) ?? null
       const linked = building !== null
         && await confirmLink(building.buildingName ?? String(building.id), selectedFile.name)
 

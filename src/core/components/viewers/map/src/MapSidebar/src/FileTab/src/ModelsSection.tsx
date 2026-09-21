@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { mutate } from 'swr'
 
+import { useBuildings } from '../../../../../../../../hooks/buildings/buildings'
 import { useDeleteFile } from '../../../../../../../../hooks/files/files'
 import { BimContext, BuildingsContext } from '../../../../../../../../store'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
@@ -40,7 +41,9 @@ export function ModelsSection({ files, query = '', open, onOpenChange }: ModelsS
   const { bimModelsAddedToMap } = bimState.bim
 
   const { state: buildingsState } = React.useContext(BuildingsContext)
-  const { buildings, building: currentBuilding } = buildingsState.buildings
+  const { building: currentBuilding } = buildingsState.buildings
+  // The organization's buildings, not the store's: nothing fills that list.
+  const { buildings } = useBuildings()
   const { setVisible } = useFileVisibility(currentBuilding?.id)
 
   const { deleteFile } = useDeleteFile()
@@ -95,7 +98,7 @@ export function ModelsSection({ files, query = '', open, onOpenChange }: ModelsS
   const handleToggleModelOnMap = React.useCallback((file: DbFile, isVisible: boolean) => {
     if (isVisible) {
       // Add model to map — reuse the same payload shape as the building popover
-      const building = buildings.find(b => b.id === file.attachedFilesBuildingId) ?? currentBuilding ?? null
+      const building = (buildings ?? []).find(b => b.id === file.attachedFilesBuildingId) ?? currentBuilding ?? null
       dispatchToggleBimToMap(bimDispatch, file, building)
       // A model on the map is a model the viewers may load, whatever the row said before.
       void setVisible(file, true)

@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { PlacementCore } from '../../../shared/placement/placementCore'
 import { SCALABLE_OBJECT_PLACEMENT } from '../../../shared/placement/placementTarget'
+import { TransformGizmo } from '../../../shared/placement/transformGizmo'
 
 import { createMapGizmoFactory, mapToolCoordinator, rollbackOnFailure } from './useMapPlacementSession'
 
@@ -40,12 +41,12 @@ describe('createMapGizmoFactory', () => {
   it('builds a WebGL gizmo for a target that can rotate', () => {
     const gizmo = createMapGizmoFactory(deps())()
     expect(typeof gizmo.setMode).toBe('function')
-    expect((gizmo as { isAttached?: () => boolean }).isAttached).toBeTypeOf('function')
+    expect(gizmo).toBeInstanceOf(TransformGizmo)
   })
 
   it('builds the DOM gizmo for a move-only target', () => {
     const gizmo = createMapGizmoFactory({ ...deps(), capabilities: () => ({ rotation: 'yaw' as const, scale: false, moveOnly: true }) })()
-    expect((gizmo as { isAttached?: () => boolean }).isAttached).toBeUndefined()
+    expect(gizmo).not.toBeInstanceOf(TransformGizmo)
   })
 })
 
@@ -96,5 +97,28 @@ describe('rollbackOnFailure', () => {
 
     expect(restore).not.toHaveBeenCalled()
     stop()
+  })
+
+  it('stops rolling back once the caller has unsubscribed', async () => {
+    const core = new PlacementCore()
+    const restore = vi.fn()
+    const stop = rollbackOnFailure(core, restore)
+    core.setup({ createGizmo: () => ({ attach: () => true, detach: vi.fn(), dispose: vi.fn(), setMode: vi.fn() }) })
+
+    const first = targetFor()
+    first.commit = vi.fn().mockRejectedValue(new Error('offline'))
+    await core.begin(first, 'translate')
+    core.setPlacement({ position: [5, 0, 0], rotation: [0, 0, 0], scale: 1, sourceUp: 'y' })
+    await core.accept()
+    expect(restore).toHaveBeenCalledTimes(1)
+
+    stop()
+
+    const second = targetFor()
+    second.commit = vi.fn().mockRejectedValue(new Error('offline'))
+    await core.begin(second, 'translate')
+    core.setPlacement({ position: [9, 0, 0], rotation: [0, 0, 0], scale: 1, sourceUp: 'y' })
+    await core.accept()
+    expect(restore).toHaveBeenCalledTimes(1)
   })
 })

@@ -15,10 +15,18 @@ import MapFileMarker from './MapFileMarker'
 const ring = (container: HTMLElement) => container.querySelector('svg[viewBox="0 0 40 40"]')
 
 describe('MapFileMarker', () => {
-  it('draws the upload ring around the pin, the size the BIM viewer draws it', () => {
+  it('draws the upload ring at the pin own size', () => {
     const { container } = render(<MapFileMarker mimeType="model/gltf-binary" extension="glb" fileName="tower.glb" />)
 
-    expect(ring(container)?.getAttribute('class')).toContain('h-[42px]')
+    expect((ring(container) as SVGElement).style.width).toContain('calc(100%')
+  })
+
+  it('keeps the pin a circle with a utility every build generates', () => {
+    const { container } = render(<MapFileMarker mimeType="model/gltf-binary" extension="glb" />)
+
+    const className = container.querySelector('button')?.className ?? ''
+    expect(className).toContain('rounded-full')
+    expect(className).not.toContain('rounded-[')
   })
 
   it('keeps the pin outlined while it uploads, so the ring is a ring and not the rim', () => {

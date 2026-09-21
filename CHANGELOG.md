@@ -65,8 +65,10 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   already showed, through the new `usePlacementCommitToasts`.
 - `PlacementPanel` lifts a worded axis caption above its field instead of overlaying it. `X/Y/Z`
   is unchanged; the map's `lng/lat/elev` no longer crops the value or sits on top of it.
-- The map's file pin draws its upload ring around itself and keeps its own outline, matching the
-  BIM viewer's marker.
+- The upload ring sizes and places itself with inline styles rather than utility classes, so it
+  draws at the pin's size in any consumer build. It is always a ring around the pin now: the `fit`
+  prop and `MarkerRingFit` are gone. The map's file pin keeps its own outline under it, and is a
+  circle again (`rounded-full`, not an arbitrary radius).
 - An animated model on the map offers the animation card in its menu, with the same clip, play and
   speed controls the BIM viewer has. A model with clips used to play all of them at once and had no
   controls at all; it now plays the first, as the BIM viewer does.
@@ -79,6 +81,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   whole. The panel's yaw field stops at a full turn either way.
 
 ### Removed
+- `MarkerProgressRing`'s `fit` prop and the `MarkerRingFit` type. The ring has one size.
 - `EditPosition` and `EditPositionProps` from `viewers/map/src/MapLayers/src/EditPosition`. The
   map uses the same placement stack as the BIM viewer.
 - The `BimEditPosition` and `EditFilePosition` i18n namespaces. Only `positionAcceptedToast` is
@@ -91,6 +94,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   host owns the gizmo and the card; the caller supplies the anchor and a preview sink.
 - `extractPositionAndRotation` moved to `viewers/map/src/Placement/mapPlacementGeo`.
 - Read `positionAcceptedToast` from the `Placement` namespace.
+- Drop `fit` from `MarkerProgressRing` and `UploadProgressRing`; the ring is always drawn around
+  the marker.
 
 ### Added
 - `Building.buildingGeometry`, an optional drawn outline, and the `BuildingGeometry` type: a

@@ -78,6 +78,12 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - `useFileUploadHandler` files every upload the way the viewers expect: an IFC and the fragments it
   converts into carry the `bim-file` tag, and an upload is visible unless the caller says otherwise.
   The map's building popover passed neither, so a model uploaded there never loaded itself.
+- `iconForFile` in `utils/fileIconsUtils` is the one rule for which icon a file gets. `getFileIcon`
+  and the map's `FileIcon` were two overlapping tables that disagreed; both now read it, and each
+  has gained what only the other knew: GIS vectors, energy files, the rest of the media extensions,
+  and the openBIM sidecars. Where they disagreed, a loaded model reads as an axis rather than a box
+  (the box is the BIM section's), a drawing as a drafting compass, and a spreadsheet as a
+  spreadsheet rather than a table.
 - A placement that lands on a building's footprint asks before it files the model under that
   building, in the dialog a delete uses. Linking is the default answer; declining places the model
   exactly where it was dropped and leaves it unattached. New `Placement` keys: `linkBuildingTitle`,

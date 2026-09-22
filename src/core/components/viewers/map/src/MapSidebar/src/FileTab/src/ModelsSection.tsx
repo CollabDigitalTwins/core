@@ -15,7 +15,6 @@ import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { FileItemComponent, UploadProgressBar, useFileActions, useFileDeleteHandler, useFileUploadWithProgress, useFileVisibility, useUploadTasks } from '../../../../../../../ui/FilesManager'
 import { SECTION_ICONS } from '../../../../../../../ui/FilesManager/src/fileType'
-import { IfcIcon } from '../../../../../../../ui/Icons'
 import { toggleBimToMap as dispatchToggleBimToMap } from '../../../../../utils/toggleBimToMap'
 
 import type { DbFile as DbFile } from '../../../../../../../../types/dbTypes'

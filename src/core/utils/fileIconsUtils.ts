@@ -28,6 +28,8 @@ const BY_KIND: Partial<Record<FileType, FileIconComponent>> = {
 }
 
 const BY_EXTENSION: Record<string, FileIconComponent> = {
+
+  ifc: IfcIcon, frag: IfcIcon,
   ids: IdsIcon,
   bcf: BcfIcon,
 
@@ -48,6 +50,12 @@ const BY_EXTENSION: Record<string, FileIconComponent> = {
   shp: LR.Map, shx: LR.Map, prj: LR.Map, cpg: LR.Map, geojson: LR.Map,
 
   h2k: LR.Zap,
+
+  glb: LR.FileAxis3d, gltf: LR.FileAxis3d, fbx: LR.FileAxis3d, obj: LR.FileAxis3d, dae: LR.FileAxis3d,
+
+  las: LR.Grip, laz: LR.Grip, e57: LR.Grip,
+
+  ply: LR.Sparkles, spl: LR.Sparkles, splat: LR.Sparkles, ksplat: LR.Sparkles, sog: LR.Sparkles
 }
 
 const BY_MIME_FAMILY: [string, FileIconComponent][] = [

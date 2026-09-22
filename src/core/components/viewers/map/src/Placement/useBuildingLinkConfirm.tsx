@@ -26,6 +26,9 @@ export function useBuildingLinkConfirm(): BuildingLinkConfirm {
     setAsking(null)
   }, [])
 
+  // A caller that stops rendering the dialog must not be left awaiting an answer forever.
+  React.useEffect(() => () => { answer.current?.(false); answer.current = null }, [])
+
   const confirmLink = React.useCallback((buildingName: string, fileName: string) => {
     setAsking({ building: buildingName, file: fileName })
     return new Promise<boolean>((resolve) => { answer.current = resolve })

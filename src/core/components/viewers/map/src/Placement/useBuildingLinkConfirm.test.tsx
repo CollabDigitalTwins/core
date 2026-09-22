@@ -64,4 +64,14 @@ describe('useBuildingLinkConfirm', () => {
 
     expect(screen.getByText(/Dunton Tower/)).toBeTruthy()
   })
+
+  it('answers no rather than hanging when its dialog goes away unanswered', async () => {
+    const onAnswer = vi.fn()
+    const { unmount } = render(<Harness onAnswer={onAnswer} />)
+    await ask()
+
+    await act(async () => { unmount() })
+
+    expect(onAnswer).toHaveBeenCalledWith(false)
+  })
 })

@@ -123,9 +123,12 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
   const { buildings } = useBuildings()
   const updateFileById = useUpdateFile()
   const { confirmLink, dialog: linkDialog } = useBuildingLinkConfirm()
+  const tPlacement = useTranslations('Placement')
 
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
   const [isUploading, setIsUploading] = React.useState(false)
+  // One placement at a time: the question about a building is answered before the upload starts.
+  const placingRef = React.useRef(false)
 
   const { files } = useFiles()
   // A map file belongs to no building, so it posts itself rather than going through a building route.
@@ -210,9 +213,9 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
   React.useEffect(() => {
     const dblclickHandler = async (e: maplibregl.MapMouseEvent): Promise<void> => {
       if (!selectedFile) return
-      if (isUploading) return
+      if (isUploading || placingRef.current) return
 
-      setIsUploading(true)
+      placingRef.current = true
       setCursor(null)
       toast.dismiss('place-file-toast')
 
@@ -223,6 +226,7 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
       const linked = building !== null
         && await confirmLink(building.buildingName ?? String(building.id), selectedFile.name)
 
+      setIsUploading(true)
       const temporaryFileIcon = addTemporaryFileIcon(map, selectedFile, lng, lat)
 
       try {
@@ -248,9 +252,18 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
         // A model is drawn from the BIM store; only its own store makes it appear.
         const placed = fileToAdd
           ?? ({ id: created.id, name: selectedFile.name, extension: extensionOfName(selectedFile.name) } as DbFile)
-        if (linked && buildingId !== null) {
-          placed.attachedFilesBuildingId = buildingId
-          await updateFileById(created.id, { attachedFilesBuildingId: buildingId })
+        if (linked && building && buildingId !== null) {
+          const buildingName = building.buildingName ?? String(building.id)
+          try {
+            // The link is its own write, so it reports itself rather than failing under the upload.
+            await updateFileById(created.id, { attachedFilesBuildingId: buildingId })
+            placed.attachedFilesBuildingId = buildingId
+            toast.success(tPlacement('linkedToBuilding', { file: selectedFile.name, building: buildingName }))
+          }
+          catch (error) {
+            console.error('Could not link the file to its building:', error)
+            toast.error(tPlacement('linkFailed', { file: selectedFile.name, building: buildingName }))
+          }
         }
         addFileToMap(placed, { fileDispatch, bimDispatch }, linked ? building : null)
 
@@ -263,6 +276,7 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
         setSelectedFile(null)
       }
       finally {
+        placingRef.current = false
         temporaryFileIcon.remove()
       }
     }
@@ -289,7 +303,7 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
         map.off('dblclick', onDblClick)
       }
     }
-  }, [selectedFile, isUploading, map, buildings, confirmLink, updateFileById, fileDispatch, bimDispatch])
+  }, [selectedFile, isUploading, map, buildings, confirmLink, updateFileById, tPlacement, fileDispatch, bimDispatch])
 
   // A popover opened by the first click would cover the point the second one needs.
   React.useEffect(() => {
@@ -321,8 +335,8 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
     processFile(selected)
   }
 
-  // When a file is selected (or uploading), dialog closes but component stays mounted
-  if (selectedFile) return null
+  // Placing, so the picker is gone — but the link question still has to be able to reach the screen.
+  if (selectedFile) return <>{linkDialog}</>
 
   return (
     <>

@@ -186,7 +186,9 @@
     "openBIMTitle": "Abrir menú de edificio",
     "OpenBIMViewerTitle": "Abrir visor BIM",
     "editBimButton": "Editar posición BIM",
-    "buildingIdRequired": "El ID del edificio es obligatorio para subir archivos."
+    "buildingIdRequired": "El ID del edificio es obligatorio para subir archivos.",
+    "noBimFile": "Este edificio aún no tiene un modelo BIM",
+    "bimFilesUnavailable": "No se pudieron cargar los archivos de este edificio"
   },
   "CameraSettings": {
     "title": "Configuración de la cámara",

@@ -186,7 +186,9 @@
     "openBIMTitle": "Ouvrir le menu BIM",
     "OpenBIMViewerTitle": "Ouvrir le visualiseur BIM",
     "editBimButton": "Modifier la position BIM",
-    "buildingIdRequired": "L'identifiant du bâtiment est requis pour le téléchargement de fichier."
+    "buildingIdRequired": "L'identifiant du bâtiment est requis pour le téléchargement de fichier.",
+    "noBimFile": "Ce bâtiment n'a pas encore de modèle BIM",
+    "bimFilesUnavailable": "Les fichiers de ce bâtiment n’ont pas pu être chargés"
   },
   "CameraSettings": {
     "title": "Paramètres de caméra",

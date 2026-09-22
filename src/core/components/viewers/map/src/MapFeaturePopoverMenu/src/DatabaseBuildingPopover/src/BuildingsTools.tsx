@@ -268,8 +268,7 @@ export default function BuildingTools({
       />
 
       {/* BIM Controls */}
-      {!isError &&
-        <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2">
           {isLoading
             ? <>
               <Skeleton className="h-4 w-20" />
@@ -338,15 +337,18 @@ export default function BuildingTools({
                 ) : (
                   <div className="flex items-center space-x-2">
                     <Label
-                      className={`font-semibold ${bimFiles.length === 0 ? 'text-muted-foreground' : ''}`}
+                      className={`font-semibold ${isError || bimFiles.length === 0 ? 'text-muted-foreground' : ''}`}
                       htmlFor="show-bim"
+                      title={isError ? t('bimFilesUnavailable') : bimFiles.length === 0 ? t('noBimFile') : undefined}
                     >
                       {bimAdded ? t('hideBIM') : t('showBIM')}
                     </Label>
                     <Switch
                       id="show-bim"
+                      // A switch that cannot be flipped says why, rather than sitting there grey.
+                      title={isError ? t('bimFilesUnavailable') : bimFiles.length === 0 ? t('noBimFile') : undefined}
                       checked={bimFiles.length === 1 && bimModelsAddedToMap.some(model => model.bimFile.id === bimFiles[0]?.id)}
-                      disabled={bimFiles.length === 0 || !ability.can('read', 'File')}
+                      disabled={isError || bimFiles.length === 0 || !ability.can('read', 'File')}
                       onCheckedChange={() => onLoadBIM()}
                     />
                   </div>
@@ -369,7 +371,7 @@ export default function BuildingTools({
               </div>
             )
           }
-        </div>}
+        </div>
 
       {/* Tool Buttons */}
       <div className="flex items-center gap-3">

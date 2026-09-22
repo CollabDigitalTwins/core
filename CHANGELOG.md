@@ -84,6 +84,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   and the openBIM sidecars. Where they disagreed, a loaded model reads as an axis rather than a box
   (the box is the BIM section's), a drawing as a drafting compass, and a spreadsheet as a
   spreadsheet rather than a table.
+- The building popover always shows its BIM toggle, and a toggle that cannot be flipped says why:
+  the building has no model yet, or its files could not be loaded. The row used to disappear
+  entirely when that fetch failed. New `BuildingTools` keys: `noBimFile`, `bimFilesUnavailable`.
 - A finished link says so: "Linked …" on success, and a failure says the model was placed but not
   linked rather than passing in silence. New `Placement` keys: `linkedToBuilding`, `linkFailed`.
 - A right-click reaches a BIM model through its own geometry, the way it already reached a 3D

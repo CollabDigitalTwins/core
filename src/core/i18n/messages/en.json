@@ -186,7 +186,9 @@
     "openBIMTitle": "Open Building Menu",
     "OpenBIMViewerTitle": "Open BIM Viewer",
     "editBimButton": "Edit BIM Position",
-    "buildingIdRequired": "Building ID is required for file upload."
+    "buildingIdRequired": "Building ID is required for file upload.",
+    "noBimFile": "This building has no BIM model yet",
+    "bimFilesUnavailable": "This building's files could not be loaded"
   },
   "CameraSettings": {
     "title": "Camera Settings",

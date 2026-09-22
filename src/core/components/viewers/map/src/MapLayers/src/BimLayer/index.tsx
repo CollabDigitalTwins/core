@@ -12,6 +12,7 @@ import * as THREE from "three";
 
 import { BimContext, BuildingsContext, MapContext } from "../../../../../../../store";
 import { markerOcclusionProps } from "../../../../../../../utils/markerUtils";
+import { hitTestLayerScene, ndcOfEvent } from "../../../../utils/layerRaycast";
 import { writeModelMatrix } from "../../../../utils/modelMatrix";
 import { toggleBimToMap } from "../../../../utils/toggleBimToMap";
 import { extractPositionAndRotation } from "../../../Placement/mapPlacementGeo";
@@ -44,6 +45,8 @@ export const BimLayer = () => {
     const rendererRef = React.useRef<THREE.WebGLRenderer | null>(null);
 
     const addedLayersRef = React.useRef<Set<string>>(new Set());
+    // What a right-click is tested against: the geometry itself, as the model layers draw it.
+    const hitTargetsRef = React.useRef<Record<string, { file: DbFile; camera: THREE.Camera; scene: THREE.Object3D }>>({});
     const prevModelsRef = React.useRef<Set<string>>(new Set());
 
     const sharedRef = React.useRef<{
@@ -264,6 +267,7 @@ export const BimLayer = () => {
                 onAdd(map, gl) {
                     scene.rotateY(originalRotation * (Math.PI / 180));
                     this.scene = scene;
+                    hitTargetsRef.current[bimFileKey] = { file: bimFile, camera: renderCamera, scene };
 
                     void loadModel(buildingModel, fragments, scene, map, lodCamera).then(loaded => {
                         model = loaded;
@@ -394,6 +398,7 @@ export const BimLayer = () => {
                 },
 
                 onRemove() {
+                    delete hitTargetsRef.current[bimFileKey];
                     if (onMapMove)    map.off("move",    onMapMove);
                     if (onMapMoveEnd) map.off("moveend", onMapMoveEnd);
                     if (model) {
@@ -430,6 +435,28 @@ export const BimLayer = () => {
         }));
 
     }, [map, bimModelsAddedToMap]);
+
+    // Right-click hits the model, not a square at its anchor: two models never cover each other.
+    React.useEffect(() => {
+        if (!map) return;
+        const canvas = map.getCanvas();
+
+        const handleContextMenu = (e: MouseEvent) => {
+            if (e.target !== canvas) return;
+
+            const { ndcX, ndcY } = ndcOfEvent(e, canvas.getBoundingClientRect());
+            for (const target of Object.values(hitTargetsRef.current)) {
+                if (!hitTestLayerScene(target.camera, target.scene, ndcX, ndcY)) continue;
+                e.preventDefault();
+                e.stopPropagation();
+                openContextMenu({ x: e.clientX, y: e.clientY, item: { bimFile: target.file } });
+                return;
+            }
+        };
+
+        canvas.addEventListener("contextmenu", handleContextMenu, true);
+        return () => canvas.removeEventListener("contextmenu", handleContextMenu, true);
+    }, [map, openContextMenu]);
 
     // Cleanup on unmount — dispose shared components and renderer
     React.useEffect(() => {
@@ -489,23 +516,6 @@ export const BimLayer = () => {
                                 {...markerOcclusionProps}
                             >
                                 <LR.Loader className="animate-spin w-6 h-6 text-gray-700" />
-                            </Marker>
-                        )}
-                        {/* Invisible hit-target for right-click context menu on WebGL-rendered BIM models */}
-                        {String(buildingModel.bimFile.id) !== editingBimModelId && (
-                            <Marker
-                                key={buildingModel.bimFile.id + "-ctx-target-" + index}
-                                latitude={lat}
-                                longitude={lng}
-                                {...markerOcclusionProps}
-                            >
-                                <div
-                                    className="w-10 h-10 opacity-0 cursor-context-menu"
-                                    onContextMenu={(e) => {
-                                        e.preventDefault();
-                                        openContextMenu({ x: e.clientX, y: e.clientY, item: { bimFile: buildingModel.bimFile } });
-                                    }}
-                                />
                             </Marker>
                         )}
                     </React.Fragment>

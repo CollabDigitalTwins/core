@@ -7,6 +7,7 @@ import * as React from 'react'
 import * as THREE from 'three'
 
 import { MapContext, FilesContext } from '../../../../../../../../store'
+import { ndcOfEvent } from '../../../../../utils/layerRaycast'
 import { CustomModelLayer } from '../utils/CustomModelLayer'
 
 import type { DbFile } from '../../../../../../../../types/dbTypes'
@@ -136,9 +137,7 @@ export const FileModelLayer = ({
       const models = loadedModelsRef.current
       if (models.length === 0) return
 
-      const rect = canvas.getBoundingClientRect()
-      const ndcX =  ((e.clientX - rect.left) / rect.width)  * 2 - 1
-      const ndcY = -((e.clientY - rect.top)  / rect.height) * 2 + 1
+      const { ndcX, ndcY } = ndcOfEvent(e, canvas.getBoundingClientRect())
 
       for (const model of models) {
         if (model.hitTest(ndcX, ndcY)) {

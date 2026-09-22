@@ -6,6 +6,7 @@ import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 import { applyAnimationTo, initialState, withClip, withPlaying, withSpeed } from '../../../../../../shared/placement/modelAnimation'
+import { hitTestLayerScene } from '../../../../../utils/layerRaycast'
 import { writeModelMatrix } from '../../../../../utils/modelMatrix'
 import { disposeThreeScene } from '../../disposeThreeScene'
 
@@ -97,12 +98,6 @@ export const CustomModelLayer = (
   let cameraRef: THREE.Camera | null = null
   let sceneRef: THREE.Scene | null = null
 
-  // Reused temps for hitTest raycasting — avoid per-call allocation.
-  const _hitInv = new THREE.Matrix4()
-  const _hitNear = new THREE.Vector3()
-  const _hitFar = new THREE.Vector3()
-  const _hitDir = new THREE.Vector3()
-  const _raycaster = new THREE.Raycaster()
 
   const createCustomLayer = (): CustomLayerInterface => {
     // Track last applied rotation so we can apply delta increments (same as BimLayer)
@@ -300,32 +295,7 @@ export const CustomModelLayer = (
     }
   }
 
-  /**
-   * Raycast against this model using the last rendered frame's camera matrix.
-   *
-   * The camera.projectionMatrix = VP * M (view-projection × model-to-world),
-   * so its inverse transforms clip-space → model-space, which is exactly the
-   * coordinate system the Three.js scene lives in. We manually unproject near/far
-   * clip-space points through that inverse to build the ray.
-   */
-  const hitTest = (ndcX: number, ndcY: number): boolean => {
-    if (!cameraRef || !sceneRef) return false
-
-    // Invert the combined VP*M matrix to go clip-space → model-space.
-    // Reuses module-scope temps + a singleton raycaster.
-    _hitInv.copy(cameraRef.projectionMatrix).invert()
-
-    // Unproject near and far clip-space points into model space
-    _hitNear.set(ndcX, ndcY, -1).applyMatrix4(_hitInv)
-    _hitFar.set(ndcX, ndcY, 1).applyMatrix4(_hitInv)
-
-    _hitDir.copy(_hitFar).sub(_hitNear).normalize()
-
-    _raycaster.set(_hitNear, _hitDir)
-
-    const intersects = _raycaster.intersectObjects(sceneRef.children, true)
-    return intersects.length > 0
-  }
+  const hitTest = (ndcX: number, ndcY: number): boolean => hitTestLayerScene(cameraRef, sceneRef, ndcX, ndcY)
 
   customLayer = createCustomLayer()
 

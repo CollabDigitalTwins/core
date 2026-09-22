@@ -2064,7 +2064,9 @@
     "linkBuildingTitle": "Link to this building?",
     "linkBuildingBody": "\"{file}\" was placed on \"{building}\". Linking it files the model under that building. You can place it without linking if it belongs somewhere else.",
     "linkBuildingConfirm": "Link",
-    "linkBuildingCancel": "Don't link"
+    "linkBuildingCancel": "Don't link",
+    "linkedToBuilding": "Linked \"{file}\" to \"{building}\"",
+    "linkFailed": "Placed \"{file}\", but it could not be linked to \"{building}\""
   },
   "PointCloudSettings": {
     "title": "Point clouds",

@@ -88,9 +88,12 @@ export const PlaceOnMap: React.FC<PlaceOnMapProps> = ({ file, gesture = "click",
                 await updateFile(patch)
                 Object.assign(file, patch)
                 onPlacedRef.current(file, lat, lng, linked ? buildingId : null)
-                toast.success(t("positionAcceptedToast"))
+                toast.success(linked && building
+                    ? t("linkedToBuilding", { file: file.name, building: building.buildingName ?? String(building.id) })
+                    : t("positionAcceptedToast"))
             } catch (err) {
                 console.error("Error placing file:", err)
+                toast.error(t("saveFailed", { name: file.name }))
                 // Restore on failure
                 map.on("mousemove", keepCrosshair)
                 canvas.style.cursor = "crosshair"

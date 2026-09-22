@@ -84,6 +84,12 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   and the openBIM sidecars. Where they disagreed, a loaded model reads as an axis rather than a box
   (the box is the BIM section's), a drawing as a drafting compass, and a spreadsheet as a
   spreadsheet rather than a table.
+- A finished link says so: "Linked …" on success, and a failure says the model was placed but not
+  linked rather than passing in silence. New `Placement` keys: `linkedToBuilding`, `linkFailed`.
+- A right-click reaches a BIM model through its own geometry, the way it already reached a 3D
+  model: `hitTestLayerScene` and `ndcOfEvent` in `viewers/map/utils/layerRaycast` are the one
+  raycast both layers use. The BIM layer's invisible 40px squares at each model's anchor are gone —
+  a second model's square covered the first's, so its menu became unreachable.
 - A placement that lands on a building's footprint asks before it files the model under that
   building, in the dialog a delete uses. Linking is the default answer; declining places the model
   exactly where it was dropped and leaves it unattached. New `Placement` keys: `linkBuildingTitle`,

@@ -2061,7 +2061,9 @@
     "linkBuildingTitle": "Lier à ce bâtiment ?",
     "linkBuildingBody": "« {file} » a été placé sur « {building} ». Le lier classe le modèle sous ce bâtiment. Vous pouvez le placer sans le lier s'il appartient ailleurs.",
     "linkBuildingConfirm": "Lier",
-    "linkBuildingCancel": "Ne pas lier"
+    "linkBuildingCancel": "Ne pas lier",
+    "linkedToBuilding": "« {file} » a été lié à « {building} »",
+    "linkFailed": "« {file} » a été placé, mais n'a pas pu être lié à « {building} »"
   },
   "PointCloudSettings": {
     "title": "Nuages de points",

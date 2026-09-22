@@ -4,10 +4,11 @@
 import * as THREE from 'three'
 import { describe, expect, it, vi } from 'vitest'
 
-import { DEFAULT_PLACEMENT } from '../../../../shared/pointcloud/pointCloudPlacement'
-import { SCALABLE_OBJECT_PLACEMENT } from '../placementTarget'
+import { DEFAULT_PLACEMENT } from '../pointcloud/pointCloudPlacement'
 
 import { objectTarget } from './objectTarget'
+import { SCALABLE_OBJECT_PLACEMENT } from './placementTarget'
+
 
 function stubModel() {
   const object = new THREE.Group()

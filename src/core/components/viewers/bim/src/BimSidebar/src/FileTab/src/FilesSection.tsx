@@ -11,6 +11,7 @@ import { BimContext, BuildingsContext, MenusContext, ToolsContext } from '../../
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { useFileDeleteHandler, FileItemComponent, useFileActions, UploadProgressBar, useUploadTasks } from '../../../../../../../ui/FilesManager'
+import { SECTION_ICONS } from '../../../../../../../ui/FilesManager/src/fileType'
 import { BCFTopicsManager } from '../../../../BCFTopicsManager'
 import { CurrentWorld } from '../../../../CurrentWorld'
 import { IDSManager } from '../../../../IDSManager'
@@ -250,6 +251,7 @@ export function FilesSection({ files, query = '', ...chrome }: FilesSectionProps
           bimComponents.get(AnimationSession).begin({ fileId: file.id.toString(), name: file.name })
           return
         }
+        if (action === 'view' || action === 'download') return
         editObject(file, action === 'move' ? 'translate' : action)
       }, markerActionsFor(capabilitiesForFile(file), { animated: clips.length > 0, hidable: true }))
       if (marker) markersRef.current.set(key, { marker, file })
@@ -295,7 +297,7 @@ export function FilesSection({ files, query = '', ...chrome }: FilesSectionProps
     <>
       <CollapsibleSection
         title={t('filesTitle')}
-        icon={LR.FileText}
+        icon={SECTION_ICONS.files}
         className="min-h-0 overflow-y-auto"
         style={{ height: '100%', minHeight: 0 }}
         itemCount={filteredFiles.length}

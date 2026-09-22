@@ -8,12 +8,13 @@ import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { mutate } from 'swr'
 
+import { useBuildings } from '../../../../../../../../hooks/buildings/buildings'
 import { useDeleteFile } from '../../../../../../../../hooks/files/files'
 import { BimContext, BuildingsContext } from '../../../../../../../../store'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
-import { useFileDeleteHandler, FileItemComponent, useFileActions, useFileUploadWithProgress } from '../../../../../../../ui/FilesManager'
-import { LoadingSpinner } from '../../../../../../../ui/LoadingSpinner'
+import { FileItemComponent, UploadProgressBar, useFileActions, useFileDeleteHandler, useFileUploadWithProgress, useFileVisibility, useUploadTasks } from '../../../../../../../ui/FilesManager'
+import { SECTION_ICONS } from '../../../../../../../ui/FilesManager/src/fileType'
 import { toggleBimToMap as dispatchToggleBimToMap } from '../../../../../utils/toggleBimToMap'
 
 import type { DbFile as DbFile } from '../../../../../../../../types/dbTypes'
@@ -26,9 +27,11 @@ const OPTIONS_OFF_MAP: FileAction[] = ['download', 'view', 'info', 'delete']
 interface ModelsSectionProps {
   files: DbFile[]
   query?: string
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
+export function ModelsSection({ files, query = '', open, onOpenChange }: ModelsSectionProps) {
   // Translation
   const t = useTranslations('FileItemComponent')
 
@@ -37,7 +40,10 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
   const { bimModelsAddedToMap } = bimState.bim
 
   const { state: buildingsState } = React.useContext(BuildingsContext)
-  const { buildings, building: currentBuilding } = buildingsState.buildings
+  const { building: currentBuilding } = buildingsState.buildings
+  // The organization's buildings, not the store's: nothing fills that list.
+  const { buildings } = useBuildings()
+  const { setVisible } = useFileVisibility(currentBuilding?.id)
 
   const { deleteFile } = useDeleteFile()
 
@@ -46,9 +52,15 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
     deleteFile,
   })
 
-  // Use the new upload hook with progress
+  const tf = React.useCallback(
+    (key: string, fallback: string) => (t.has(key) ? t(key) : fallback),
+    [t],
+  )
+
+  const tasks = useUploadTasks('bim')
   const { handleAddFile, uploadState } = useFileUploadWithProgress({
     acceptedFileTypes: '.ifc,.frag',
+    existingNames: files.map((file: { name: string }) => file.name),
     onUploadSuccess: () => {
       void mutate(`/api/files`)
     },
@@ -85,23 +97,25 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
   const handleToggleModelOnMap = React.useCallback((file: DbFile, isVisible: boolean) => {
     if (isVisible) {
       // Add model to map — reuse the same payload shape as the building popover
-      const building = buildings.find(b => b.id === file.attachedFilesBuildingId) ?? currentBuilding ?? null
+      const building = (buildings ?? []).find(b => b.id === file.attachedFilesBuildingId) ?? currentBuilding ?? null
       dispatchToggleBimToMap(bimDispatch, file, building)
+      // A model on the map is a model the viewers may load, whatever the row said before.
+      void setVisible(file, true)
     } else {
       // Remove model from map
       bimDispatch({
         type: 'REMOVE_BIM_FROM_MAP',
-        payload: { bimModelName: file.name },
+        payload: { bimModelId: String(file.id) },
       })
     }
-  }, [bimDispatch, buildings])
+  }, [bimDispatch, buildings, currentBuilding, setVisible])
 
   const handleMoveModel = React.useCallback((file: DbFile) => {
     const isOnMap = bimModelsAddedToMap.some(m => m.bimFile.id === file.id)
     if (!isOnMap) return
     bimDispatch({
-      type: 'EDIT_BIM_MODEL_BY_NAME',
-      payload: { editingBimModel: file.name },
+      type: 'EDIT_BIM_MODEL_BY_ID',
+      payload: { editingBimModelId: String(file.id) },
     })
   }, [bimDispatch, bimModelsAddedToMap])
 
@@ -135,7 +149,7 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
     if (!isVisible) {
       bimDispatch({
         type: 'REMOVE_BIM_FROM_MAP',
-        payload: { bimModelName: file.name },
+        payload: { bimModelId: String(file.id) },
       })
       return
     }
@@ -154,9 +168,7 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
     onMove: handleMoveModel,
   })
 
-  // Filter models based on search query — use sortedModels directly so the
-  // sidebar always reflects the current BimContext state without waiting for
-  // the loadedModels sync effect (which lags one render behind).
+  // Reads sortedModels directly: the loadedModels sync effect lags a render behind.
   const filteredModels = React.useMemo(() => {
     if (!query.trim()) return sortedModels
     return sortedModels.filter(file =>
@@ -167,21 +179,22 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
   return (
     <div className="h-full min-h-0">
       <CollapsibleSection
-        title={t('modelsTitles')}
-        icon={LR.Box}
+        title={tf('bimTitle', 'BIM')}
+        icon={SECTION_ICONS.bim}
         className="h-full min-h-0 flex flex-col"
         style={{ height: '100%', minHeight: 0 }}
         itemCount={filteredModels.length}
         onAddItem={uploadState.uploading ? undefined : handleAddFile}
         addItemTitle={uploadState.uploading ? `${t('uploadingFile')} ${uploadState.progress}%` : t('addBimTitle')}
+        open={open}
+        onOpenChange={onOpenChange}
       >
         <div className="flex-1 min-h-0 overflow-y-scroll space-y-1">
-          {uploadState.uploading && (
-            <div className="flex items-center gap-2 px-2 py-2 text-sm text-muted-foreground">
-              <LoadingSpinner className="h-4 w-4" />
-              <span>{t('uploadingFile')} {uploadState.progress}%</span>
+          {tasks.map(task => (
+            <div key={task.id} className="px-2 py-1">
+              <UploadProgressBar label={task.label} progress={task.progress} />
             </div>
-          )}
+          ))}
           {filteredModels.map((file) => (
             <div key={file.id}>
               <FileItemComponent

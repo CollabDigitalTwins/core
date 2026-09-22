@@ -129,20 +129,6 @@
   "AuthPage": {
     "footerText": "Powered by Collab Digital Twins"
   },
-  "BimEditPosition": {
-    "editBimButton": "Edit BIM Position",
-    "editPositionTitle": "Edit BIM Position (drag marker)",
-    "longitude": "Longitude",
-    "latitude": "Latitude",
-    "rotation": "Rotation (°)",
-    "elevation": "Elevation (m)",
-    "save": "Save",
-    "saving": "Saving...",
-    "positionAcceptedToast": "New position has been saved.",
-    "cancel": "Cancel",
-    "saved": "Position Saved!",
-    "editPositionTooltip": "Edit the position, rotation, and elevation of this BIM model"
-  },
   "BimLoadingState": {
     "openingText": "Opening BIM viewer",
     "helpText": "Drag and drop or select any 3D file — BIM model, point cloud or splat",
@@ -200,7 +186,9 @@
     "openBIMTitle": "Open Building Menu",
     "OpenBIMViewerTitle": "Open BIM Viewer",
     "editBimButton": "Edit BIM Position",
-    "buildingIdRequired": "Building ID is required for file upload."
+    "buildingIdRequired": "Building ID is required for file upload.",
+    "noBimFile": "This building has no BIM model yet",
+    "bimFilesUnavailable": "This building's files could not be loaded"
   },
   "CameraSettings": {
     "title": "Camera Settings",
@@ -510,18 +498,6 @@
     "toggleVisibility": "Toggle visibility",
     "chooseColor": "Choose color"
   },
-  "EditFilePosition": {
-    "editPositionTitle": "Edit File Position (drag marker)",
-    "longitude": "Longitude",
-    "latitude": "Latitude",
-    "rotation": "Rotation (°)",
-    "elevation": "Elevation (m)",
-    "save": "Save",
-    "saving": "Saving...",
-    "positionAcceptedToast": "File position has been saved.",
-    "cancel": "Cancel",
-    "saved": "Position Saved!"
-  },
   "ElementList": {
     "selectedElements": "Selected Elements"
   },
@@ -592,7 +568,8 @@
     "addModelTitle": "Add 3D model or splat",
     "pointCloudsTitle": "Point Clouds",
     "addPointCloudTitle": "Add Point Cloud",
-    "uploadingFile": "Uploading..."
+    "uploadingFile": "Uploading...",
+    "bimTitle": "BIM"
   },
   "FileMoreOptions": {
     "open": "Open menu",
@@ -639,7 +616,9 @@
     "toastSuccessUpFile": "file(s) uploaded successfully",
     "toastErrUpFile1": "Error uploading file:",
     "toastErrUpFile2": "Unknown error occurred",
-    "uploadingFile": "Uploading..."
+    "uploadingFile": "Uploading...",
+    "modelsTitle": "Models",
+    "pointCloudsTitle": "Point clouds"
   },
   "FileUpload": {
     "add": "Add File",
@@ -2082,7 +2061,14 @@
     "deleteFailed": "Could not delete \"{name}\"",
     "movedFile": "Moved \"{name}\"",
     "rotatedFile": "Rotated \"{name}\"",
-    "scaledFile": "Scaled \"{name}\""
+    "scaledFile": "Scaled \"{name}\"",
+    "positionAcceptedToast": "File position has been saved.",
+    "linkBuildingTitle": "Link to this building?",
+    "linkBuildingBody": "\"{file}\" was placed on \"{building}\". Linking it files the model under that building. You can place it without linking if it belongs somewhere else.",
+    "linkBuildingConfirm": "Link",
+    "linkBuildingCancel": "Don't link",
+    "linkedToBuilding": "Linked \"{file}\" to \"{building}\"",
+    "linkFailed": "Placed \"{file}\", but it could not be linked to \"{building}\""
   },
   "PointCloudSettings": {
     "title": "Point clouds",

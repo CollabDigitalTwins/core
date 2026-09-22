@@ -5,15 +5,19 @@ import { type CustomLayerInterface, type LngLatLike, type Map } from 'maplibre-g
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
+import { applyAnimationTo, initialState, withClip, withPlaying, withSpeed } from '../../../../../../shared/placement/modelAnimation'
+import { hitTestLayerScene } from '../../../../../utils/layerRaycast'
 import { writeModelMatrix } from '../../../../../utils/modelMatrix'
 import { disposeThreeScene } from '../../disposeThreeScene'
 
 import type { DbFile } from '../../../../../../../../types/dbTypes'
+import type { AnimationState } from '../../../../../../shared/placement/modelAnimation'
 
 type TempPositionsRef = React.MutableRefObject<Record<string, { lat: number; lng: number }>>
 type TempRotationsRef = React.MutableRefObject<Record<string, number>>
 type TempElevationsRef = React.MutableRefObject<Record<string, number>>
-type EditingFileNameRef = React.MutableRefObject<string | null>
+type TempScalesRef = React.MutableRefObject<Record<string, number>>
+type EditingFileIdRef = React.MutableRefObject<string | null>
 
 function resolveModelCoordinates(file: DbFile): { lng: number, lat: number } {
   if (typeof file.lng === 'number' && typeof file.lat === 'number') {
@@ -43,33 +47,57 @@ function resolveModelCoordinates(file: DbFile): { lng: number, lat: number } {
   return { lng: 0, lat: 0 }
 }
 
+/** Playback for a loaded model's clips, so the map's animation card drives the same state the BIM one does. */
+export interface ModelAnimationControls {
+  getClips(): string[]
+  getAnimation(): AnimationState | null
+  setClip(clipIndex: number): void
+  setPlaying(playing: boolean): void
+  setSpeed(speed: number): void
+}
+
+export interface ModelLayerHandle {
+  cleanup: () => void
+  remove: () => void
+  hitTest: (ndcX: number, ndcY: number) => boolean
+  animation: ModelAnimationControls
+}
+
 export const CustomModelLayer = (
   modelFile: DbFile,
   map: Map,
   renderer: THREE.WebGLRenderer,
   tempPositionsRef?: TempPositionsRef,
-  editingFileNameRef?: EditingFileNameRef,
+  editingFileIdRef?: EditingFileIdRef,
   tempRotationsRef?: TempRotationsRef,
   tempElevationsRef?: TempElevationsRef,
-): { cleanup: () => void, remove: () => void, hitTest: (ndcX: number, ndcY: number) => boolean } => {
+  tempScalesRef?: TempScalesRef,
+): ModelLayerHandle => {
   let components = null
   let customLayer: CustomLayerInterface | null = null
+  let clips: THREE.AnimationClip[] = []
+  let animation: AnimationState | null = null
+  let mixerRef: THREE.AnimationMixer | null = null
+
+  const noControls: ModelAnimationControls = {
+    getClips: () => [],
+    getAnimation: () => null,
+    setClip: () => {},
+    setPlaying: () => {},
+    setSpeed: () => {},
+  }
 
   if (!map || !modelFile) {
-    return { cleanup: () => {}, remove: () => {}, hitTest: () => false }
+    return { cleanup: () => {}, remove: () => {}, hitTest: () => false, animation: noControls }
   }
+
+  const modelFileKey = String(modelFile.id)
 
   // Refs into the layer's camera and scene so raycasting can read the last
   // rendered frame's transform without entering the render loop.
   let cameraRef: THREE.Camera | null = null
   let sceneRef: THREE.Scene | null = null
 
-  // Reused temps for hitTest raycasting — avoid per-call allocation.
-  const _hitInv = new THREE.Matrix4()
-  const _hitNear = new THREE.Vector3()
-  const _hitFar = new THREE.Vector3()
-  const _hitDir = new THREE.Vector3()
-  const _raycaster = new THREE.Raycaster()
 
   const createCustomLayer = (): CustomLayerInterface => {
     // Track last applied rotation so we can apply delta increments (same as BimLayer)
@@ -78,6 +106,7 @@ export const CustomModelLayer = (
     let disposed = false
     const _m = new THREE.Matrix4()
     const _l = new THREE.Matrix4()
+    const _scaleVec = new THREE.Vector3()
     // Render-on-demand: cache terrain elevation off the per-frame path and only
     // keep repainting while the camera recently moved or an animation is playing,
     // so an idle map with a placed model stops re-rendering instead of pinning the
@@ -144,11 +173,12 @@ export const CustomModelLayer = (
             if (disposed) return
             gltf.scene.scale.setScalar(1)
 
-            if (gltf.animations && gltf.animations.length > 0) {
+            clips = gltf.animations ?? []
+            animation = initialState(clips.length)
+            if (animation) {
               this.mixer = new THREE.AnimationMixer(gltf.scene)
-              for (const clip of gltf.animations) {
-                this.mixer!.clipAction(clip).play()
-              }
+              mixerRef = this.mixer
+              applyAnimationTo(this.mixer, clips, animation)
             }
 
             scene.add(gltf.scene)
@@ -176,13 +206,13 @@ export const CustomModelLayer = (
       render(gl, args) {
         if (map.getZoom() < 15.5) return
 
-        const isEditing = editingFileNameRef?.current === modelFile.name
+        const isEditing = editingFileIdRef?.current === modelFileKey
 
         // ── Position ──────────────────────────────────────────────────────────
         let lng: number
         let lat: number
-        if (isEditing && tempPositionsRef?.current[modelFile.name]) {
-          const tp = tempPositionsRef.current[modelFile.name]
+        if (isEditing && tempPositionsRef?.current[modelFileKey]) {
+          const tp = tempPositionsRef.current[modelFileKey]
           lng = tp.lng
           lat = tp.lat
         } else {
@@ -194,8 +224,8 @@ export const CustomModelLayer = (
         if (lng === 0 && lat === 0) return
 
         // ── Rotation (delta-increment, same pattern as BimLayer) ──────────────
-        const targetRotation = (isEditing && tempRotationsRef?.current[modelFile.name] !== undefined)
-          ? tempRotationsRef.current[modelFile.name]
+        const targetRotation = (isEditing && tempRotationsRef?.current[modelFileKey] !== undefined)
+          ? tempRotationsRef.current[modelFileKey]
           : (modelFile.rotation ?? 0)
 
         if (targetRotation !== lastAppliedRotation) {
@@ -206,8 +236,8 @@ export const CustomModelLayer = (
         }
 
         // ── Elevation ─────────────────────────────────────────────────────────
-        const fileElevation = (isEditing && tempElevationsRef?.current[modelFile.name] !== undefined)
-          ? tempElevationsRef.current[modelFile.name]
+        const fileElevation = (isEditing && tempElevationsRef?.current[modelFileKey] !== undefined)
+          ? tempElevationsRef.current[modelFileKey]
           : (modelFile.elevation ?? 0)
 
         const modelOrigin = [lng, lat] as LngLatLike
@@ -219,8 +249,12 @@ export const CustomModelLayer = (
           : cachedTerrainElev
         const altitude = terrainAltitude + fileElevation
 
+        const fileScale = (isEditing && tempScalesRef?.current[modelFileKey] !== undefined)
+          ? tempScalesRef.current[modelFileKey]
+          : (modelFile.scale ?? 1)
+
         _m.fromArray(args.defaultProjectionData.mainMatrix)
-        writeModelMatrix(_l, modelOrigin, altitude)
+        writeModelMatrix(_l, modelOrigin, altitude).scale(_scaleVec.setScalar(fileScale))
         this.camera.projectionMatrix.multiplyMatrices(_m, _l)
 
         if (this.mixer) {
@@ -233,7 +267,7 @@ export const CustomModelLayer = (
         // Render-on-demand: keep the frame loop alive only while an animation is
         // playing, the camera recently moved (settle window), or this model is
         // being edited. Idle static model ⇒ no self-scheduled repaints ⇒ no freeze.
-        if (this.mixer || isEditing || performance.now() - lastMoveTime < SETTLE_MS) {
+        if (animation?.playing || isEditing || performance.now() - lastMoveTime < SETTLE_MS) {
           map.triggerRepaint()
         }
       },
@@ -248,6 +282,9 @@ export const CustomModelLayer = (
           ;(this.mixer as THREE.AnimationMixer).stopAllAction()
           this.mixer = null
         }
+        mixerRef = null
+        clips = []
+        animation = null
         if (this.scene) disposeThreeScene(this.scene as THREE.Scene)
         cameraRef = null
         sceneRef = null
@@ -258,32 +295,7 @@ export const CustomModelLayer = (
     }
   }
 
-  /**
-   * Raycast against this model using the last rendered frame's camera matrix.
-   *
-   * The camera.projectionMatrix = VP * M (view-projection × model-to-world),
-   * so its inverse transforms clip-space → model-space, which is exactly the
-   * coordinate system the Three.js scene lives in. We manually unproject near/far
-   * clip-space points through that inverse to build the ray.
-   */
-  const hitTest = (ndcX: number, ndcY: number): boolean => {
-    if (!cameraRef || !sceneRef) return false
-
-    // Invert the combined VP*M matrix to go clip-space → model-space.
-    // Reuses module-scope temps + a singleton raycaster.
-    _hitInv.copy(cameraRef.projectionMatrix).invert()
-
-    // Unproject near and far clip-space points into model space
-    _hitNear.set(ndcX, ndcY, -1).applyMatrix4(_hitInv)
-    _hitFar.set(ndcX, ndcY, 1).applyMatrix4(_hitInv)
-
-    _hitDir.copy(_hitFar).sub(_hitNear).normalize()
-
-    _raycaster.set(_hitNear, _hitDir)
-
-    const intersects = _raycaster.intersectObjects(sceneRef.children, true)
-    return intersects.length > 0
-  }
+  const hitTest = (ndcX: number, ndcY: number): boolean => hitTestLayerScene(cameraRef, sceneRef, ndcX, ndcY)
 
   customLayer = createCustomLayer()
 
@@ -303,5 +315,20 @@ export const CustomModelLayer = (
     customLayer = null
   }
 
-  return { cleanup, remove: removeLayer, hitTest }
+  const commit = (next: AnimationState | null) => {
+    if (!next || !mixerRef) return
+    animation = next
+    applyAnimationTo(mixerRef, clips, next)
+    map.triggerRepaint()
+  }
+
+  const controls: ModelAnimationControls = {
+    getClips: () => clips.map((clip, index) => clip.name || `Clip ${index + 1}`),
+    getAnimation: () => animation,
+    setClip: clipIndex => commit(animation && withClip(animation, clipIndex, clips.length)),
+    setPlaying: playing => commit(animation && withPlaying(animation, playing)),
+    setSpeed: speed => commit(animation && withSpeed(animation, speed)),
+  }
+
+  return { cleanup, remove: removeLayer, hitTest, animation: controls }
 }

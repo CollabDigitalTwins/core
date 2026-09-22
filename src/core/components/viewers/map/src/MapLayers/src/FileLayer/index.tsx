@@ -3,14 +3,20 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { Marker } from 'react-map-gl/maplibre'
 
 import { useFile, useFiles, useDeleteFile } from '../../../../../../../hooks/files/files'
 import { FilesContext, MapContext } from '../../../../../../../store'
 import { markerOcclusionProps } from '../../../../../../../utils/markerUtils'
-import { downloadDbFile, ViewerContextMenu } from '../../../../../../ui/FilesManager'
-import { EditPosition } from '../EditPosition'
+
+import ConfirmDialog from '../../../../../../ConfirmDialog'
+import { downloadDbFile } from '../../../../../../ui/FilesManager'
+import { AnimationPanel } from '../../../../../shared/placement/AnimationPanel'
+import { MapPlacementHost } from '../../../Placement/MapPlacementHost'
+import { MapPlacementMenu } from '../../../Placement/MapPlacementMenu'
+import { useMapContextMenu } from '../../../Placement/useMapContextMenu'
 import { PlaceOnMap } from '../PlaceOnMap'
 
 import MapFileManager from './components/MapFileManager'
@@ -18,8 +24,12 @@ import MapFileMarker from './components/MapFileMarker'
 import { FileModelLayer } from './FileModelLayer/FileModelLayer'
 import { openPopupWindow } from './utils/openFileInPopUpWindow'
 
+import type { ModelAnimationControls } from './utils/CustomModelLayer'
 import type { DbFile } from '../../../../../../../types/dbTypes'
 import type { FileAction } from '../../../../../../../types/global'
+import type { FileMarkerAction } from '../../../../../../ui/FilesManager/src/PlacementActionsCard'
+import type { AnimationState } from '../../../../../shared/placement/modelAnimation'
+import type { PlacementMode } from '../../../../../shared/placement/placementTarget'
 
 
 const is3DModelFile = (extension?: string | null): boolean => {
@@ -82,21 +92,16 @@ export const FileLayers = () => {
   const tempPositionsRef = React.useRef<Record<string, { lat: number; lng: number }>>({})
   const tempRotationsRef = React.useRef<Record<string, number>>({})
   const tempElevationsRef = React.useRef<Record<string, number>>({})
-  const editingFileNameRef = React.useRef<string | null>(null)
+  const tempScalesRef = React.useRef<Record<string, number>>({})
+  const editingFileIdRef = React.useRef<string | null>(null)
+  const [editMode, setEditMode] = React.useState<PlacementMode>('translate')
 
   React.useEffect(() => {
-    editingFileNameRef.current = editingFile?.name ?? null
+    editingFileIdRef.current = editingFile ? String(editingFile.id) : null
   }, [editingFile])
 
   const handleExitEditFileMode = React.useCallback(() => {
     fileDispatch({ type: 'EDIT_FILE', payload: { file: null } })
-  }, [fileDispatch])
-
-  const handleFileSaveSuccess = React.useCallback((file: DbFile, lat: number, lng: number, elevation?: number, rotation?: number) => {
-    fileDispatch({
-      type: 'UPDATE_FILE_COORDS',
-      payload: { id: file.id, lat, lng, elevation, rotation },
-    })
   }, [fileDispatch])
 
   // Sync SWR files into the store (for FileModelLayer and other consumers)
@@ -108,12 +113,36 @@ export const FileLayers = () => {
 
   const { deleteFile } = useDeleteFile()
 
-  const [contextMenu, setContextMenu] = React.useState<{ x: number; y: number; file: DbFile } | null>(null)
+  const { menu: contextMenu, open: openContextMenu, close: closeContextMenu } =
+    useMapContextMenu<{ file: DbFile; animation?: ModelAnimationControls }>(map)
+  const [animating, setAnimating] = React.useState<
+    { file: DbFile; controls: ModelAnimationControls; state: AnimationState } | null
+  >(null)
+  const [pendingDelete, setPendingDelete] = React.useState<DbFile | null>(null)
+
+  const tAnimation = useTranslations('Animation')
+  const animationLabels = React.useMemo(() => ({
+    title: tAnimation('title'),
+    clip: tAnimation('clip'),
+    play: tAnimation('play'),
+    pause: tAnimation('pause'),
+    speed: tAnimation('speed'),
+    notSaved: tAnimation('notSaved'),
+  }), [tAnimation])
+
+  const updateAnimation = React.useCallback((change: (controls: ModelAnimationControls) => void) => {
+    setAnimating(current => {
+      if (!current) return current
+      change(current.controls)
+      const state = current.controls.getAnimation()
+      return state ? { ...current, state } : current
+    })
+  }, [])
 
   const handleContextMenu = React.useCallback((e: React.MouseEvent, file: DbFile) => {
     e.preventDefault()
-    setContextMenu({ x: e.clientX, y: e.clientY, file })
-  }, [])
+    openContextMenu({ x: e.clientX, y: e.clientY, item: { file } })
+  }, [openContextMenu])
 
   const handleContextMenuAction = React.useCallback((action: FileAction, file: DbFile) => {
     if (action === 'view') {
@@ -140,14 +169,41 @@ export const FileLayers = () => {
     }
   }, [fileDispatch, mapFileIds, deleteFile])
 
+  const handlePlacementMenuAction = React.useCallback((action: FileMarkerAction) => {
+    const file = contextMenu?.item.file
+    closeContextMenu()
+    if (!file) return
+
+    if (action === 'move' || action === 'rotate' || action === 'scale') {
+      setEditMode(action === 'move' ? 'translate' : action)
+      fileDispatch({ type: 'EDIT_FILE', payload: { file } })
+      return
+    }
+
+    if (action === 'delete') {
+      setPendingDelete(file)
+      return
+    }
+
+    if (action === 'animate') {
+      const controls = contextMenu?.item.animation
+      const state = controls?.getAnimation()
+      if (controls && state) setAnimating({ file, controls, state })
+      return
+    }
+
+    handleContextMenuAction(action as FileAction, file)
+  }, [contextMenu, closeContextMenu, fileDispatch, handleContextMenuAction])
+
   return (
     <>
       <FileModelLayer
         tempPositionsRef={tempPositionsRef}
-        editingFileNameRef={editingFileNameRef}
+        editingFileIdRef={editingFileIdRef}
         tempRotationsRef={tempRotationsRef}
         tempElevationsRef={tempElevationsRef}
-        onContextMenu={(file, x, y) => setContextMenu({ x, y, file })}
+        tempScalesRef={tempScalesRef}
+        onContextMenu={(file, x, y, animation) => openContextMenu({ x, y, item: { file, animation } })}
       />
 
       {mapFileIds.map(id => (
@@ -175,22 +231,25 @@ export const FileLayers = () => {
         }
 
         const editing3D = is3DModelFile(editingFile.extension)
+        const key = String(editingFile.id)
         return (
-          <EditPosition
+          <MapPlacementHost
             file={editingFile}
-            mode={editing3D ? '3d' : '2d'}
-            onExitEditMode={handleExitEditFileMode}
-            onSaveSuccess={handleFileSaveSuccess}
-            tempPositionsRef={tempPositionsRef}
-            tempRotationsRef={editing3D ? tempRotationsRef : undefined}
-            tempElevationsRef={editing3D ? tempElevationsRef : undefined}
-            onMapRepaint={handleMapRepaint}
-            dragHandle={!editing3D ? (
-              <MapFileMarker
-                mimeType={editingFile.mimeType}
-                extension={editingFile.extension}
-              />
-            ) : undefined}
+            mode={editMode}
+            is3D={editing3D}
+            anchor={() => ({
+              lng: tempPositionsRef.current[key]?.lng ?? editingFile.lng ?? 0,
+              lat: tempPositionsRef.current[key]?.lat ?? editingFile.lat ?? 0,
+              elevation: tempElevationsRef.current[key] ?? editingFile.elevation ?? 0,
+            })}
+            preview={(next, rotation, scale) => {
+              tempPositionsRef.current = { ...tempPositionsRef.current, [key]: { lat: next.lat, lng: next.lng } }
+              tempElevationsRef.current = { ...tempElevationsRef.current, [key]: next.elevation }
+              tempRotationsRef.current = { ...tempRotationsRef.current, [key]: rotation * (180 / Math.PI) }
+              tempScalesRef.current = { ...tempScalesRef.current, [key]: scale }
+            }}
+            onRepaint={handleMapRepaint}
+            onDone={handleExitEditFileMode}
           />
         )
       })()}
@@ -200,15 +259,41 @@ export const FileLayers = () => {
       </div>
 
       {contextMenu && (
-        <ViewerContextMenu
+        <MapPlacementMenu
           x={contextMenu.x}
           y={contextMenu.y}
-          file={contextMenu.file}
-          options={['view', 'move', 'download', 'delete']}
-          onAction={handleContextMenuAction}
-          onClose={() => setContextMenu(null)}
+          file={contextMenu.item.file}
+          is3D={is3DModelFile(contextMenu.item.file.extension)}
+          isOnMap={mapFileIds.includes(contextMenu.item.file.id)}
+          animated={(contextMenu.item.animation?.getClips().length ?? 0) > 0}
+          onAction={handlePlacementMenuAction}
+          onClose={closeContextMenu}
         />
       )}
+
+      {animating && (
+        <AnimationPanel
+          name={animating.file.name}
+          clips={animating.controls.getClips()}
+          state={animating.state}
+          labels={animationLabels}
+          onClipChange={(clipIndex) => updateAnimation(controls => controls.setClip(clipIndex))}
+          onPlayingChange={(playing) => updateAnimation(controls => controls.setPlaying(playing))}
+          onSpeedChange={(speed) => updateAnimation(controls => controls.setSpeed(speed))}
+          onClose={() => setAnimating(null)}
+        />
+      )}
+
+      <ConfirmDialog
+        isOpen={pendingDelete !== null}
+        isDeleting={false}
+        onOpenChange={(open: boolean) => { if (!open) setPendingDelete(null) }}
+        handleConfirm={() => {
+          if (pendingDelete) handleContextMenuAction('delete', pendingDelete)
+          setPendingDelete(null)
+        }}
+        itemName={pendingDelete?.name ?? ''}
+      />
     </>
   )
 }

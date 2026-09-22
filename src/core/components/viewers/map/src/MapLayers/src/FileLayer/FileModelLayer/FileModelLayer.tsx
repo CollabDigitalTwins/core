@@ -7,30 +7,35 @@ import * as React from 'react'
 import * as THREE from 'three'
 
 import { MapContext, FilesContext } from '../../../../../../../../store'
+import { ndcOfEvent } from '../../../../../utils/layerRaycast'
 import { CustomModelLayer } from '../utils/CustomModelLayer'
 
 import type { DbFile } from '../../../../../../../../types/dbTypes'
+import type { ModelAnimationControls } from '../utils/CustomModelLayer'
 
 type LoadedModelFiles = {
   file: DbFile
   cleanUpFunction: () => void
   hitTest: (ndcX: number, ndcY: number) => boolean
+  animation: ModelAnimationControls
 }
 
 interface FileModelLayerProps {
   tempPositionsRef?: React.MutableRefObject<Record<string, { lat: number; lng: number }>>
-  editingFileNameRef?: React.MutableRefObject<string | null>
+  editingFileIdRef?: React.MutableRefObject<string | null>
   tempRotationsRef?: React.MutableRefObject<Record<string, number>>
   tempElevationsRef?: React.MutableRefObject<Record<string, number>>
-  /** Called when the user right-clicks on a rendered 3D mesh. */
-  onContextMenu?: (file: DbFile, clientX: number, clientY: number) => void
+  tempScalesRef?: React.MutableRefObject<Record<string, number>>
+  /** Called when the user right-clicks on a rendered 3D mesh, with the model's playback if it has clips. */
+  onContextMenu?: (file: DbFile, clientX: number, clientY: number, animation: ModelAnimationControls) => void
 }
 
 export const FileModelLayer = ({
   tempPositionsRef,
-  editingFileNameRef,
+  editingFileIdRef,
   tempRotationsRef,
   tempElevationsRef,
+  tempScalesRef,
   onContextMenu,
 }: FileModelLayerProps) => {
   const { state: mapState } = React.useContext(MapContext)
@@ -84,7 +89,8 @@ export const FileModelLayer = ({
         updated.lat !== model.file.lat ||
         updated.lng !== model.file.lng ||
         updated.rotation !== model.file.rotation ||
-        updated.elevation !== model.file.elevation
+        updated.elevation !== model.file.elevation ||
+        updated.scale !== model.file.scale
       )
     })
 
@@ -102,16 +108,17 @@ export const FileModelLayer = ({
       .filter(model => currentFileIds.has(model.file.id) && !staleIds.has(model.file.id))
 
     for (const file of filesNotLoaded) {
-      const { cleanup, hitTest } = CustomModelLayer(
+      const { cleanup, hitTest, animation } = CustomModelLayer(
         file,
         map,
         rendererRef.current,
         tempPositionsRef,
-        editingFileNameRef,
+        editingFileIdRef,
         tempRotationsRef,
         tempElevationsRef,
+        tempScalesRef,
       )
-      newLoadedModels.push({ file, cleanUpFunction: cleanup, hitTest })
+      newLoadedModels.push({ file, cleanUpFunction: cleanup, hitTest, animation })
     }
 
     setLoadedModels(newLoadedModels)
@@ -130,15 +137,13 @@ export const FileModelLayer = ({
       const models = loadedModelsRef.current
       if (models.length === 0) return
 
-      const rect = canvas.getBoundingClientRect()
-      const ndcX =  ((e.clientX - rect.left) / rect.width)  * 2 - 1
-      const ndcY = -((e.clientY - rect.top)  / rect.height) * 2 + 1
+      const { ndcX, ndcY } = ndcOfEvent(e, canvas.getBoundingClientRect())
 
       for (const model of models) {
         if (model.hitTest(ndcX, ndcY)) {
           e.preventDefault()
           e.stopPropagation()
-          onContextMenuRef.current?.(model.file, e.clientX, e.clientY)
+          onContextMenuRef.current?.(model.file, e.clientX, e.clientY, model.animation)
           break
         }
       }

@@ -10,18 +10,27 @@ import * as React from "react";
 import { Marker } from "react-map-gl/maplibre";
 import * as THREE from "three";
 
-import { BimContext, MapContext } from "../../../../../../../store";
+import { BimContext, BuildingsContext, MapContext } from "../../../../../../../store";
 import { markerOcclusionProps } from "../../../../../../../utils/markerUtils";
-import { ViewerContextMenu } from '../../../../../../ui/FilesManager';
 import { writeModelMatrix } from "../../../../utils/modelMatrix";
+import { toggleBimToMap } from "../../../../utils/toggleBimToMap";
+import { syncGizmoCamera } from "../../../Placement/mapGizmoCamera";
+import { extractPositionAndRotation } from "../../../Placement/mapPlacementGeo";
+import { MapPlacementHost } from "../../../Placement/MapPlacementHost";
+import { MapPlacementMenu } from "../../../Placement/MapPlacementMenu";
+import { useMapContextMenu } from "../../../Placement/useMapContextMenu";
 import { disposeThreeScene } from "../disposeThreeScene";
-import { EditPosition, extractPositionAndRotation } from "../EditPosition";
+import { PlaceOnMap } from "../PlaceOnMap";
 
 import type { Building, DbFile } from "../../../../../../../types/dbTypes";
 import type { FileAction } from "../../../../../../../types/global";
+import type { FileMarkerAction } from "../../../../../../ui/FilesManager/src/PlacementActionsCard";
+import type { PlacementMode } from "../../../../../shared/placement/placementTarget";
 import type * as FRAGS from "@thatopen/fragments";
 import type { Map } from "maplibre-gl";
 
+
+const bimLayerId = (fileId: number | string) => `bim-model-${fileId}`;
 
 export const BimLayer = () => {
 
@@ -29,11 +38,20 @@ export const BimLayer = () => {
     const { map } = mapState.map;
 
     const { state: bimState, dispatch: bimDispatch } = React.useContext(BimContext);
-    const { bimModelsAddedToMap, editingBimModel } = bimState.bim;
+    const { state: buildingsState } = React.useContext(BuildingsContext);
+    const { buildings } = buildingsState.buildings;
+    const { bimModelsAddedToMap, editingBimModelId } = bimState.bim;
 
     const rendererRef = React.useRef<THREE.WebGLRenderer | null>(null);
 
     const addedLayersRef = React.useRef<Set<string>>(new Set());
+    // What a right-click is tested against: the geometry itself, as the model layers draw it.
+    const hitTargetsRef = React.useRef<Record<string, {
+        file: DbFile;
+        camera: THREE.PerspectiveCamera;
+        model: () => FRAGS.FragmentsModel | null;
+    }>>({});
+    const pickMouse = React.useRef(new THREE.Vector2());
     const prevModelsRef = React.useRef<Set<string>>(new Set());
 
     const sharedRef = React.useRef<{
@@ -42,29 +60,53 @@ export const BimLayer = () => {
     } | null>(null);
 
     const [loadingBuildings, setLoadingBuildings] = React.useState<Set<number>>(new Set());
-    const [contextMenu, setContextMenu] = React.useState<{
-        x: number; y: number; bimFile: DbFile
-    } | null>(null);
+    const { menu: contextMenu, open: openContextMenu, close: closeContextMenu } =
+        useMapContextMenu<{ bimFile: DbFile }>(map);
 
     const handleContextMenuAction = React.useCallback((action: FileAction, file: DbFile) => {
         if (action === 'view') {
-            bimDispatch({ type: 'REMOVE_BIM_FROM_MAP', payload: { bimModelName: file.name } });
+            bimDispatch({ type: 'REMOVE_BIM_FROM_MAP', payload: { bimModelId: String(file.id) } });
         } else if (action === 'move') {
-            bimDispatch({ type: 'EDIT_BIM_MODEL_BY_NAME', payload: { editingBimModel: file.name } });
+            bimDispatch({ type: 'EDIT_BIM_MODEL_BY_ID', payload: { editingBimModelId: String(file.id) } });
         }
     }, [bimDispatch]);
+
+    const [editMode, setEditMode] = React.useState<PlacementMode>('translate');
+
+    const handlePlacementMenuAction = React.useCallback((action: FileMarkerAction) => {
+        const file = contextMenu?.item.bimFile;
+        closeContextMenu();
+        if (!file) return;
+
+        if (action === 'move' || action === 'rotate' || action === 'scale') {
+            setEditMode(action === 'move' ? 'translate' : action);
+            bimDispatch({ type: 'EDIT_BIM_MODEL_BY_ID', payload: { editingBimModelId: String(file.id) } });
+            return;
+        }
+
+        handleContextMenuAction(action as FileAction, file);
+    }, [contextMenu, closeContextMenu, bimDispatch, handleContextMenuAction]);
 
     const tempPositionsRef = React.useRef<Record<string, { lat: number; lng: number }>>({});
     const tempRotationsRef = React.useRef<Record<string, number>>({});
     const tempElevationsRef = React.useRef<Record<string, number>>({});
 
-    const editingBimModelRef = React.useRef<string | null>(editingBimModel);
+    const editingBimModelRef = React.useRef<string | null>(editingBimModelId);
     React.useEffect(() => {
-        editingBimModelRef.current = editingBimModel;
-    }, [editingBimModel]);
+        editingBimModelRef.current = editingBimModelId;
+    }, [editingBimModelId]);
+
+    // A model with nowhere to draw asks for a point before it can be a layer at all.
+    const unplacedModel = React.useMemo(
+        () => bimModelsAddedToMap.find(model => {
+            const { lng, lat } = extractPositionAndRotation(model.bimFile, model.building ?? undefined);
+            return lng === null || lat === null;
+        }) ?? null,
+        [bimModelsAddedToMap],
+    );
 
     const handleExitEditMode = React.useCallback(() => {
-        bimDispatch({ type: "EDIT_BIM_MODEL_BY_NAME", payload: { editingBimModel: null } });
+        bimDispatch({ type: "EDIT_BIM_MODEL_BY_ID", payload: { editingBimModelId: null } });
     }, [bimDispatch]);
 
     const handleMapRepaint = React.useCallback(() => {
@@ -97,23 +139,24 @@ export const BimLayer = () => {
     React.useEffect(() => {
         if (!map) return;
 
-        const currentModelNames = new Set(bimModelsAddedToMap.map(bm => bm.bimFile.name));
+        const currentModelIds = new Set(bimModelsAddedToMap.map(bm => String(bm.bimFile.id)));
 
         const modelsToRemove = Array.from(prevModelsRef.current).filter(
-            name => !currentModelNames.has(name)
+            id => !currentModelIds.has(id)
         );
         const modelsToAdd = bimModelsAddedToMap.filter(
-            bm => !prevModelsRef.current.has(bm.bimFile.name)
+            bm => !prevModelsRef.current.has(String(bm.bimFile.id))
         );
 
-        modelsToRemove.forEach(layerName => {
-            if (map.getLayer(layerName)) {
-                map.removeLayer(layerName);
-                addedLayersRef.current.delete(layerName);
+        modelsToRemove.forEach(id => {
+            const layerId = bimLayerId(id);
+            if (map.getLayer(layerId)) {
+                map.removeLayer(layerId);
+                addedLayersRef.current.delete(layerId);
             }
         });
 
-        prevModelsRef.current = currentModelNames;
+        prevModelsRef.current = currentModelIds;
 
         if (modelsToAdd.length === 0) return;
 
@@ -137,7 +180,7 @@ export const BimLayer = () => {
                 if (!file.ok) throw new Error(`Fetch failed: ${file.status} ${file.statusText}`);
 
                 const buffer = await file.arrayBuffer();
-                const model = await fragments.core.load(buffer, { modelId: bimFile.name });
+                const model = await fragments.core.load(buffer, { modelId: String(bimFile.id) });
 
                 if (!model.box.isEmpty()) {
                     const center = model.box.getCenter(new THREE.Vector3());
@@ -181,6 +224,7 @@ export const BimLayer = () => {
         ): CustomLayerInterface | undefined => {
 
             const { bimFile, building } = buildingModel;
+            const bimFileKey = String(bimFile.id);
             const {
                 lng: baseLng, lat: baseLat,
                 rotation: originalRotation,
@@ -209,6 +253,8 @@ export const BimLayer = () => {
             let onMapMove: () => void;
             let onMapMoveEnd: () => void;
             const renderCamera = new THREE.PerspectiveCamera();
+            // A real camera in the model's own space, which is what the fragments engine raycasts with.
+            const pickCamera = new THREE.PerspectiveCamera();
             const lodCamera    = new THREE.PerspectiveCamera();
             // Reused per-frame matrices/vectors — render() must not allocate.
             const _vp = new THREE.Matrix4();
@@ -221,13 +267,14 @@ export const BimLayer = () => {
             const _scaleVec = new THREE.Vector3(1, 1, 1);
 
             return {
-                id: bimFile.name,
+                id: bimLayerId(bimFile.id),
                 type: "custom",
                 renderingMode: "3d",
 
                 onAdd(map, gl) {
                     scene.rotateY(originalRotation * (Math.PI / 180));
                     this.scene = scene;
+                    hitTargetsRef.current[bimFileKey] = { file: bimFile, camera: pickCamera, model: () => model };
 
                     void loadModel(buildingModel, fragments, scene, map, lodCamera).then(loaded => {
                         model = loaded;
@@ -263,10 +310,10 @@ export const BimLayer = () => {
 
                 render(_, args) {
                     if (
-                        editingBimModelRef.current === bimFile.name &&
-                        tempRotationsRef.current[bimFile.name] !== undefined
+                        editingBimModelRef.current === bimFileKey &&
+                        tempRotationsRef.current[bimFileKey] !== undefined
                     ) {
-                        const cur = tempRotationsRef.current[bimFile.name];
+                        const cur = tempRotationsRef.current[bimFileKey];
                         if (cur !== lastAppliedRotation) {
                             scene.rotateY((cur - lastAppliedRotation) * (Math.PI / 180));
                             lastAppliedRotation = cur;
@@ -290,10 +337,10 @@ export const BimLayer = () => {
                     let modelLatitude  = baseLatNow;
                     let modelElevation = baseElevNow;
 
-                    if (editingBimModelRef.current === bimFile.name) {
-                        const tp = tempPositionsRef.current[bimFile.name];
+                    if (editingBimModelRef.current === bimFileKey) {
+                        const tp = tempPositionsRef.current[bimFileKey];
                         if (tp) { modelLongitude = tp.lng; modelLatitude = tp.lat; }
-                        const te = tempElevationsRef.current[bimFile.name];
+                        const te = tempElevationsRef.current[bimFileKey];
                         if (te !== undefined) modelElevation = te;
                     }
 
@@ -302,7 +349,7 @@ export const BimLayer = () => {
                     // live only while actively editing this model's position. Keeps
                     // the expensive queryTerrainElevation off the hot path — the
                     // per-frame query was a main driver of the high-zoom freeze.
-                    const terrainElev   = editingBimModelRef.current === bimFile.name
+                    const terrainElev   = editingBimModelRef.current === bimFileKey
                         ? (map.queryTerrainElevation([modelLongitude, modelLatitude]) ?? cachedTerrainElev)
                         : cachedTerrainElev;
                     const modelAltitude = modelElevation + terrainElev;
@@ -315,6 +362,8 @@ export const BimLayer = () => {
                     _vp.fromArray(args.defaultProjectionData.mainMatrix);
                     writeModelMatrix(_m, modelOrigin, modelAltitude).scale(_scaleVec);
                     renderCamera.projectionMatrix.multiplyMatrices(_vp, _m);   // VP × M, into the camera's own matrix
+                    const pickCanvas = map.getCanvas();
+                    syncGizmoCamera(pickCamera, renderCamera.projectionMatrix, pickCanvas.width / pickCanvas.height);
 
                     // camIFCPos = translation of (P⁻¹ · (VP×M))⁻¹
                     _p.fromArray(args.projectionMatrix).invert();              // _p = P⁻¹
@@ -346,7 +395,7 @@ export const BimLayer = () => {
                         // streaming) or this model is being edited. Idle map ⇒ no
                         // self-scheduled repaints ⇒ main thread freed (no freeze).
                         if (
-                            editingBimModelRef.current === bimFile.name ||
+                            editingBimModelRef.current === bimFileKey ||
                             now - lastMoveTime < SETTLE_MS
                         ) {
                             map.triggerRepaint();
@@ -358,6 +407,7 @@ export const BimLayer = () => {
                 },
 
                 onRemove() {
+                    delete hitTargetsRef.current[bimFileKey];
                     if (onMapMove)    map.off("move",    onMapMove);
                     if (onMapMoveEnd) map.off("moveend", onMapMoveEnd);
                     if (model) {
@@ -374,8 +424,8 @@ export const BimLayer = () => {
             try {
                 const { fragments } = await getOrCreateShared();
 
-                const layerName = buildingModel.bimFile.name;
-                if (map.getLayer(layerName)) return;
+                const layerId = bimLayerId(buildingModel.bimFile.id);
+                if (map.getLayer(layerId)) return;
                 const scene = new THREE.Scene();
                 scene.add(new THREE.AmbientLight(0xffffff, 0.8));
                 const sun = new THREE.DirectionalLight(0xffffff, 1.0);
@@ -386,7 +436,7 @@ export const BimLayer = () => {
                 if (!customLayer) return;
 
                 map.addLayer(customLayer);
-                addedLayersRef.current.add(layerName);
+                addedLayersRef.current.add(layerId);
 
             } catch (err) {
                 console.error("Error adding BIM layer:", err);
@@ -395,12 +445,44 @@ export const BimLayer = () => {
 
     }, [map, bimModelsAddedToMap]);
 
+    // Right-click hits the model, not a square at its anchor: two models never cover each other.
+    React.useEffect(() => {
+        if (!map) return;
+        const canvas = map.getCanvas();
+
+        const handleContextMenu = (e: MouseEvent) => {
+            if (e.target !== canvas) return;
+            const targets = Object.values(hitTargetsRef.current);
+            if (targets.length === 0) return;
+
+            // The engine answers asynchronously, so the browser's own menu has to go before we know.
+            e.preventDefault();
+            e.stopPropagation();
+            pickMouse.current.set(e.clientX, e.clientY);
+
+            void (async () => {
+                for (const target of targets) {
+                    const model = target.model();
+                    const hit = model
+                        ? await model.raycast({ camera: target.camera, mouse: pickMouse.current, dom: canvas })
+                        : null;
+                    if (!hit) continue;
+                    openContextMenu({ x: e.clientX, y: e.clientY, item: { bimFile: target.file } });
+                    return;
+                }
+            })();
+        };
+
+        canvas.addEventListener("contextmenu", handleContextMenu, true);
+        return () => canvas.removeEventListener("contextmenu", handleContextMenu, true);
+    }, [map, openContextMenu]);
+
     // Cleanup on unmount — dispose shared components and renderer
     React.useEffect(() => {
         return () => {
             if (map) {
-                addedLayersRef.current.forEach(layerName => {
-                    if (map.getLayer(layerName)) map.removeLayer(layerName);
+                addedLayersRef.current.forEach(layerId => {
+                    if (map.getLayer(layerId)) map.removeLayer(layerId);
                 });
                 addedLayersRef.current.clear();
             }
@@ -417,6 +499,24 @@ export const BimLayer = () => {
 
     return (
         <>
+            {unplacedModel && (
+                <PlaceOnMap
+                    file={unplacedModel.bimFile}
+                    gesture="dblclick"
+                    onPlaced={(file, lat, lng, buildingId) => {
+                        const building = buildingId === null
+                            ? null
+                            : buildings.find(candidate => candidate.id === buildingId) ?? null;
+                        bimDispatch({ type: "REMOVE_BIM_FROM_MAP", payload: { bimModelId: String(file.id) } });
+                        toggleBimToMap(bimDispatch, file, building);
+                    }}
+                    onCancel={() => bimDispatch({
+                        type: "REMOVE_BIM_FROM_MAP",
+                        payload: { bimModelId: String(unplacedModel.bimFile.id) },
+                    })}
+                />
+            )}
+
             {bimModelsAddedToMap.map((buildingModel, index) => {
                 const { lng, lat } = extractPositionAndRotation(
                     buildingModel.bimFile, buildingModel.building
@@ -437,58 +537,52 @@ export const BimLayer = () => {
                                 <LR.Loader className="animate-spin w-6 h-6 text-gray-700" />
                             </Marker>
                         )}
-                        {/* Invisible hit-target for right-click context menu on WebGL-rendered BIM models */}
-                        {buildingModel.bimFile.name !== editingBimModel && (
-                            <Marker
-                                key={buildingModel.bimFile.id + "-ctx-target-" + index}
-                                latitude={lat}
-                                longitude={lng}
-                                {...markerOcclusionProps}
-                            >
-                                <div
-                                    className="w-10 h-10 opacity-0 cursor-context-menu"
-                                    onContextMenu={(e) => {
-                                        e.preventDefault();
-                                        setContextMenu({ x: e.clientX, y: e.clientY, bimFile: buildingModel.bimFile });
-                                    }}
-                                />
-                            </Marker>
-                        )}
                     </React.Fragment>
                 );
             })}
-            {editingBimModel && (() => {
-                const currentModel = bimModelsAddedToMap.find(bm => bm.bimFile.name === editingBimModel);
+            {editingBimModelId && (() => {
+                const currentModel = bimModelsAddedToMap.find(bm => String(bm.bimFile.id) === editingBimModelId);
                 if (!currentModel) return null;
                 const { lng, lat, rotation, elevation } = extractPositionAndRotation(
                     currentModel.bimFile, currentModel.building
                 );
                 return (
-                    <EditPosition
+                    <MapPlacementHost
                         file={currentModel.bimFile}
-                        displayName={currentModel.building?.buildingName || currentModel.bimFile.name}
-                        mode="3d"
-                        initialLat={lat}
-                        initialLng={lng}
-                        initialRotation={rotation}
-                        initialElevation={elevation}
-                        onExitEditMode={handleExitEditMode}
-                        tempPositionsRef={tempPositionsRef}
-                        tempRotationsRef={tempRotationsRef}
-                        tempElevationsRef={tempElevationsRef}
-                        onMapRepaint={handleMapRepaint}
+                        mode={editMode}
+                        is3D
+                        rotation={rotation}
+                        anchor={() => ({
+                            lng: tempPositionsRef.current[editingBimModelId]?.lng ?? lng ?? 0,
+                            lat: tempPositionsRef.current[editingBimModelId]?.lat ?? lat ?? 0,
+                            elevation: tempElevationsRef.current[editingBimModelId] ?? elevation ?? 0,
+                        })}
+                        preview={(next, nextRotation) => {
+                            tempPositionsRef.current = {
+                                ...tempPositionsRef.current,
+                                [editingBimModelId]: { lat: next.lat, lng: next.lng },
+                            };
+                            tempElevationsRef.current = { ...tempElevationsRef.current, [editingBimModelId]: next.elevation };
+                            tempRotationsRef.current = {
+                                ...tempRotationsRef.current,
+                                [editingBimModelId]: nextRotation * (180 / Math.PI),
+                            };
+                        }}
+                        onRepaint={handleMapRepaint}
+                        onDone={handleExitEditMode}
                     />
                 );
             })()}
 
             {contextMenu && (
-                <ViewerContextMenu
+                <MapPlacementMenu
                     x={contextMenu.x}
                     y={contextMenu.y}
-                    file={{ ...contextMenu.bimFile, isVisible: true }}
-                    options={['view', 'move']}
-                    onAction={handleContextMenuAction}
-                    onClose={() => setContextMenu(null)}
+                    file={contextMenu.item.bimFile}
+                    is3D
+                    isOnMap
+                    onAction={handlePlacementMenuAction}
+                    onClose={closeContextMenu}
                 />
             )}
         </>

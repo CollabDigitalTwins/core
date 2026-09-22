@@ -6,7 +6,7 @@
 import { render } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import { arcOffset, CIRCUMFERENCE, MarkerProgressRing } from './MarkerProgressRing'
+import { arcOffset, CIRCUMFERENCE, MarkerProgressRing, OVERHANG, RING_STROKE, VIEWBOX } from './MarkerProgressRing'
 
 describe('arcOffset', () => {
   it('leaves the whole ring empty at nothing done', () => {
@@ -44,6 +44,36 @@ describe('MarkerProgressRing', () => {
 
   it('stops spinning once a real percentage arrives, so the fill reads as progress', () => {
     const { container } = render(<MarkerProgressRing progress={40} />)
-    expect(ring(container).getAttribute('class')).not.toContain('animate-spin')
+    expect(ring(container).getAttribute('class') ?? '').not.toContain('animate-spin')
   })
 })
+
+describe('MarkerProgressRing geometry', () => {
+  const ring = (container: HTMLElement) => container.querySelector('svg')!
+
+  it('sizes and places itself inline, because a consumer build may not ship our utility classes', () => {
+    const { container } = render(<MarkerProgressRing progress={40} />)
+    const { style } = ring(container)
+
+    expect(style.position).toBe('absolute')
+    expect(style.width).toBe(`calc(100% + ${OVERHANG * 2}px)`)
+    expect(style.height).toBe(`calc(100% + ${OVERHANG * 2}px)`)
+    expect(style.top).toBe(`${-OVERHANG}px`)
+    expect(style.left).toBe(`${-OVERHANG}px`)
+  })
+
+  it('traces the marker own circle, stroke edge flush with the viewBox edge', () => {
+    const { container } = render(<MarkerProgressRing progress={40} />)
+    const circle = ring(container).querySelector('circle')!
+
+    const radius = Number(circle.getAttribute('r'))
+    expect(radius + RING_STROKE / 2).toBeCloseTo(VIEWBOX / 2, 9)
+  })
+
+  it('turns the arc to start at the top without a utility class', () => {
+    const { container } = render(<MarkerProgressRing progress={40} />)
+
+    expect(ring(container).style.transform).toContain('rotate(-90deg)')
+  })
+})
+

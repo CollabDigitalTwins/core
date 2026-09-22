@@ -129,20 +129,6 @@
   "AuthPage": {
     "footerText": "Propulsé par Collab Digital Twins"
   },
-  "BimEditPosition": {
-    "editBimButton": "Modifier la position BIM",
-    "editPositionTitle": "Modifier la position BIM (faire glisser le marqueur)",
-    "longitude": "Longitude",
-    "latitude": "Latitude",
-    "rotation": "Rotation (°)",
-    "elevation": "Élévation (m)",
-    "save": "Enregistrer",
-    "saving": "Enregistrement...",
-    "positionAcceptedToast": "La nouvelle position a été enregistrée.",
-    "cancel": "Annuler",
-    "saved": "Position sauvegardée !",
-    "editPositionTooltip": "Modifier la position, la rotation et l'élévation de ce modèle BIM"
-  },
   "BimLoadingState": {
     "openingText": "Ouverture du visualiseur BIM",
     "helpText": "Glissez-déposez ou sélectionnez n'importe quel fichier 3D : modèle BIM, nuage de points ou splat",
@@ -200,7 +186,9 @@
     "openBIMTitle": "Ouvrir le menu BIM",
     "OpenBIMViewerTitle": "Ouvrir le visualiseur BIM",
     "editBimButton": "Modifier la position BIM",
-    "buildingIdRequired": "L'identifiant du bâtiment est requis pour le téléchargement de fichier."
+    "buildingIdRequired": "L'identifiant du bâtiment est requis pour le téléchargement de fichier.",
+    "noBimFile": "Ce bâtiment n'a pas encore de modèle BIM",
+    "bimFilesUnavailable": "Les fichiers de ce bâtiment n’ont pas pu être chargés"
   },
   "CameraSettings": {
     "title": "Paramètres de caméra",
@@ -510,18 +498,6 @@
     "toggleVisibility": "Toggle visibility",
     "chooseColor": "Choose color"
   },
-  "EditFilePosition": {
-    "editPositionTitle": "Modifier la position du fichier (faire glisser le marqueur)",
-    "longitude": "Longitude",
-    "latitude": "Latitude",
-    "rotation": "Rotation (°)",
-    "elevation": "Élévation (m)",
-    "save": "Enregistrer",
-    "saving": "Enregistrement...",
-    "positionAcceptedToast": "La position du fichier a été enregistrée.",
-    "cancel": "Annuler",
-    "saved": "Position sauvegardée !"
-  },
   "ElementList": {
     "selectedElements": "Éléments sélectionnés"
   },
@@ -592,7 +568,8 @@
     "addModelTitle": "Ajouter un modèle 3D ou un splat",
     "pointCloudsTitle": "Nuages de points",
     "addPointCloudTitle": "Ajouter un nuage de points",
-    "uploadingFile": "Téléchargement en cours..."
+    "uploadingFile": "Téléchargement en cours...",
+    "bimTitle": "BIM"
   },
   "FileMoreOptions": {
     "open": "Ouvrir le menu",
@@ -639,7 +616,9 @@
     "toastSuccessUpFile": "fichier(s) téléchargé(s) avec succès",
     "toastErrUpFile1": "Erreur lors du téléchargement du fichier :",
     "toastErrUpFile2": "Une erreur inconnue s'est produite",
-    "uploadingFile": "Téléchargement en cours..."
+    "uploadingFile": "Téléchargement en cours...",
+    "modelsTitle": "Modèles",
+    "pointCloudsTitle": "Nuages de points"
   },
   "FileUpload": {
     "add": "Téléverser un fichier",
@@ -2079,7 +2058,14 @@
     "deleteFailed": "Impossible de supprimer « {name} »",
     "movedFile": "« {name} » déplacé",
     "rotatedFile": "« {name} » pivoté",
-    "scaledFile": "« {name} » redimensionné"
+    "scaledFile": "« {name} » redimensionné",
+    "positionAcceptedToast": "La position du fichier a été enregistrée.",
+    "linkBuildingTitle": "Lier à ce bâtiment ?",
+    "linkBuildingBody": "« {file} » a été placé sur « {building} ». Le lier classe le modèle sous ce bâtiment. Vous pouvez le placer sans le lier s'il appartient ailleurs.",
+    "linkBuildingConfirm": "Lier",
+    "linkBuildingCancel": "Ne pas lier",
+    "linkedToBuilding": "« {file} » a été lié à « {building} »",
+    "linkFailed": "« {file} » a été placé, mais n'a pas pu être lié à « {building} »"
   },
   "PointCloudSettings": {
     "title": "Nuages de points",

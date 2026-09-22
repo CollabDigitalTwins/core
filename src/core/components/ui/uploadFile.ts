@@ -10,16 +10,23 @@ interface UploadFileArgs {
   // Support both single and multiple files; prefer `files` when passing many
   file?: File
   files?: File[]
-  buildingId: number
+  /** Omitted for a map file that belongs to no building. */
+  buildingId?: number
   tag?: string
   user: any
   isVisible?: boolean
-  uploadFile: (args: { fileData: any, buildingId: number }) => Promise<any>
+  uploadFile: (args: { fileData: any, buildingId?: number }) => Promise<any>
   position?: { lng?: number, lat?: number, rotation?: number, elevation?: number, isVisible?: boolean }
   x?: number
   y?: number
   z?: number
+  lat?: number
+  lng?: number
+  elevation?: number
+  rotation?: number
   scale?: number
+  /** The File record's `type`. Defaults to 'system'; a buildingless map file is a 'map-file'. */
+  recordType?: string
   onProgress?: (percent: number) => void
   existingNames?: string[]
   pointCloudTransform?: unknown
@@ -37,12 +44,17 @@ export async function uploadFile({
   x,
   y,
   z,
+  lat,
+  lng,
+  elevation,
+  rotation,
   scale,
+  recordType,
   onProgress,
   existingNames,
   pointCloudTransform,
 }: UploadFileArgs) {
-  if ((!file && (!files || files.length === 0)) || !buildingId) return null
+  if (!file && (!files || files.length === 0)) return null
 
   const filesToProcess: File[] = files ?? (file ? [file] : [])
 
@@ -67,12 +79,14 @@ export async function uploadFile({
       if (!uploadResponse.ok) throw new Error(`Failed to upload file to storage: ${uploadResponse.status}`)
     }
 
-    const attachmentFieldName = getAttachmentFieldName(tag as string)
     const name = uniqueFileName(currentFile.name, [...taken])
     taken.add(name)
+    const attachment = buildingId === undefined
+      ? {}
+      : { [getAttachmentFieldName(tag as string)]: buildingId }
     const fileData = {
       name,
-      type: 'system',
+      type: recordType ?? 'system',
       mimeType: currentFile.type,
       extension: getFileExtension(currentFile),
       sizeBytes: currentFile.size,
@@ -81,12 +95,16 @@ export async function uploadFile({
       url: '',
       assetId: fileId,
       description: '',
-      [attachmentFieldName]: buildingId,
+      ...attachment,
       fileOrganizationId: user?.organizationId || null,
       position: JSON.stringify(position) || null,
       x,
       y,
       z,
+      lat,
+      lng,
+      elevation,
+      rotation,
       scale,
       isVisible: isVisible ?? false,
       ...(pointCloudTransform === undefined ? {} : { pointCloudTransform }),

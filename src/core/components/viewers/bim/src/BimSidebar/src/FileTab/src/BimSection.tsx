@@ -12,6 +12,7 @@ import { BimContext, BuildingsContext } from '../../../../../../../../store'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { FileItemComponent, useFileActions, useFileDeleteHandler, useFileVisibility, UploadProgressBar, useUploadTasks } from '../../../../../../../ui/FilesManager'
+import { SECTION_ICONS } from '../../../../../../../ui/FilesManager/src/fileType'
 import { BIMManager } from '../../../../BIMManager'
 import { GhostMode } from '../../../../GhostMode'
 import { Highlighter } from '../../../../Highlighter'
@@ -271,7 +272,7 @@ export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
     <>
       <CollapsibleSection
         title={t('title')}
-        icon={LR.Box}
+        icon={SECTION_ICONS.bim}
         className="min-h-0 overflow-y-auto"
         style={{ height: '100%', minHeight: 0 }}
         itemCount={filteredModels.length}

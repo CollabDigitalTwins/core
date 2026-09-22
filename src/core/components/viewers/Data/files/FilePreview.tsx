@@ -8,14 +8,10 @@ import React from 'react'
 
 // Shadcn Components
 import { Card, CardContent } from '../../../../components/ui/Card'
-import {DialogContent, DialogTitle, DialogTrigger } from '../../../../components/ui/Dialog'
+import { DialogContent, DialogTitle, DialogTrigger } from '../../../../components/ui/Dialog'
 
 // Icons
 
-import { MenusContext, BimContext } from '../../../../store'
-import { ViewerNames } from '../../../../types/'
-import { IfcIcon } from '../../../ui/Icons'
-import { BimViewer } from '../../bim/BimViewer'
 import { SimpleBimViewer } from '../../bim/src/SimpleBimViewer'
 
 import type { DbFile } from '../../../../types/dbTypes'
@@ -44,7 +40,7 @@ export default function FilePreview({ file, showTrigger = true, disableDialogFor
 
   const source = file?.metadata?.url
 
-    const previewHeight= '500px'
+  const previewHeight = '500px'
 
   const previewComponent = () => {
     switch (true) {
@@ -99,7 +95,7 @@ export default function FilePreview({ file, showTrigger = true, disableDialogFor
       case is3dModel:
       case isBIM:
         return (
-        <SimpleBimViewer file={file.metadata} height={previewHeight} />
+          <SimpleBimViewer file={file.metadata} height={previewHeight} />
         )
       default:
         return (
@@ -132,28 +128,28 @@ export default function FilePreview({ file, showTrigger = true, disableDialogFor
           )}
         </>
       )}
-        <>
-          <DialogTitle className="hidden">{t('title')}</DialogTitle>
-          <DialogContent className="w-auto p-0 h-screen sm:max-w-[95vw] sm:h-[90vh] flex justify-center items-center" closeClass="hidden">
-            {(isPowerPoint || isExcel || isWordDoc) ? (
-              <iframe
-                className="max-w-screen h-screen sm:max-w-[95vw] sm:h-[90vh] aspect-square pointer-events-auto rounded-xl"
-                src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(source)}`}
-                title={`${isPowerPoint ? t('pptTitle') : t('xlsxTitle')} ${t('preview')}`}
-                style={{ border: 'none' }}
-              />
-            ) : (isBIM || is3dModel) ? (
-              <SimpleBimViewer file={file.metadata} height="65vh" width='60vw' />
-            ) : (
-              <iframe
-                className="max-w-screen h-screen sm:max-w-[95vw] sm:h-[90vh] aspect-square pointer-events-auto rounded-xl"
-                src={source}
-                title={t('filePreview')}
-                style={{ border: 'none' }}
-              />
-            )}
-          </DialogContent>
-        </>
+      <>
+        <DialogTitle className="hidden">{t('title')}</DialogTitle>
+        <DialogContent className="w-auto p-0 h-screen sm:max-w-[95vw] sm:h-[90vh] flex justify-center items-center" closeClass="hidden">
+          {(isPowerPoint || isExcel || isWordDoc) ? (
+            <iframe
+              className="max-w-screen h-screen sm:max-w-[95vw] sm:h-[90vh] aspect-square pointer-events-auto rounded-xl"
+              src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(source)}`}
+              title={`${isPowerPoint ? t('pptTitle') : t('xlsxTitle')} ${t('preview')}`}
+              style={{ border: 'none' }}
+            />
+          ) : (isBIM || is3dModel) ? (
+            <SimpleBimViewer file={file.metadata} height="65vh" width='60vw' />
+          ) : (
+            <iframe
+              className="max-w-screen h-screen sm:max-w-[95vw] sm:h-[90vh] aspect-square pointer-events-auto rounded-xl"
+              src={source}
+              title={t('filePreview')}
+              style={{ border: 'none' }}
+            />
+          )}
+        </DialogContent>
+      </>
     </>
   )
 }

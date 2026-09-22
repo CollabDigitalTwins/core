@@ -3,9 +3,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as React from 'react'
+
 import { useUploadTasks } from './uploadProgress'
 
-const RADIUS = 18
+export const VIEWBOX = 40
+export const RING_STROKE = 3
+
+/** Pixels the ring reaches past the pin's own box, so it reads as a ring and not as the pin's rim. */
+export const OVERHANG = 3
+
+/** Flush with the ring box's edge: half the stroke sits either side of the circle. */
+const RADIUS = VIEWBOX / 2 - RING_STROKE / 2
 
 export const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 
@@ -19,38 +28,64 @@ export function arcOffset(progress: number | null): number {
   return CIRCUMFERENCE * (1 - clamped / 100)
 }
 
-interface MarkerProgressRingProps {
-  progress: number | null
+/** Which pin the ring sits on: a filled primary pin, or a light surface one like the map's. */
+export type MarkerRingTone = 'onPrimary' | 'onSurface'
+
+const TONE: Record<MarkerRingTone, { track: string, arc: string }> = {
+  onPrimary: { track: 'stroke-primary-foreground/25', arc: 'stroke-primary-foreground' },
+  onSurface: { track: 'stroke-primary/20', arc: 'stroke-primary' },
 }
 
-/** The ring around an uploading pin: fills to the percentage, or spins while there is none. */
-export function MarkerProgressRing({ progress }: MarkerProgressRingProps) {
+interface MarkerProgressRingProps {
+  progress: number | null
+  tone?: MarkerRingTone
+}
+
+/**
+ * The ring around an uploading pin, the size of the pin itself. Its box is inline because a
+ * consumer's Tailwind build may never generate a utility class only this package uses.
+ */
+export function MarkerProgressRing({ progress, tone = 'onPrimary' }: MarkerProgressRingProps) {
   const spinning = progress == null
+  const { track, arc } = TONE[tone]
+
+  const box: React.CSSProperties = {
+    position: 'absolute',
+    top: -OVERHANG,
+    left: -OVERHANG,
+    width: `calc(100% + ${OVERHANG * 2}px)`,
+    height: `calc(100% + ${OVERHANG * 2}px)`,
+    pointerEvents: 'none',
+  }
 
   return (
     <svg
-      viewBox="0 0 40 40"
+      viewBox={`0 0 ${VIEWBOX} ${VIEWBOX}`}
+      width="100%"
+      height="100%"
       aria-hidden="true"
-      className={`pointer-events-none absolute inset-[-3px] h-[42px] w-[42px] ${spinning ? 'animate-spin' : '-rotate-90'}`}
+      className={spinning ? 'animate-spin' : undefined}
+      style={spinning ? box : { ...box, transform: 'rotate(-90deg)' }}
     >
-      <circle cx="20" cy="20" r={RADIUS} fill="none" strokeWidth="3" className="stroke-primary-foreground/25" />
+      <circle cx={VIEWBOX / 2} cy={VIEWBOX / 2} r={RADIUS} fill="none" strokeWidth={RING_STROKE} className={track} />
       <circle
-        cx="20"
-        cy="20"
+        cx={VIEWBOX / 2}
+        cy={VIEWBOX / 2}
         r={RADIUS}
         fill="none"
-        strokeWidth="3"
+        strokeWidth={RING_STROKE}
         strokeLinecap="round"
         strokeDasharray={CIRCUMFERENCE}
         strokeDashoffset={arcOffset(progress)}
-        className="stroke-primary-foreground transition-[stroke-dashoffset] duration-200 ease-out"
+        className={arc}
+        style={{ transition: 'stroke-dashoffset 200ms ease-out' }}
       />
     </svg>
   )
 }
 
 /** Finds the pin's own upload task by name, so only a pin that is loading subscribes to the store. */
-export function UploadProgressRing({ fileName }: { fileName: string }) {
+export function UploadProgressRing({ fileName, tone }: { fileName: string, tone?: MarkerRingTone }) {
   const tasks = useUploadTasks()
-  return <MarkerProgressRing progress={tasks.find(task => task.name === fileName)?.progress ?? null} />
+  return <MarkerProgressRing progress={tasks.find(task => task.name === fileName)?.progress ?? null} tone={tone} />
 }

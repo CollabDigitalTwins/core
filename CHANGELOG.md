@@ -7,6 +7,200 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Added
+- `PlacementTarget.applyDrag(object)`, an optional hook a target implements when a gizmo drag
+  arrives in different units from its own placement. `PlacementCore` calls it in place of
+  `apply(objectToPlacement(root))`. Targets that omit it are unaffected.
+- `mapPlacementGeo` and `mapGizmoCamera` in
+  `@collabdt/core/core/components/viewers/map/src/Placement/*`, the two pieces a placement gizmo
+  needs on the map. `mapPlacementGeo` converts between a scene-space `PointCloudPlacement` and the
+  `lat/lng/elevation/rotation` columns a map file stores; `mapGizmoCamera` rebuilds a real
+  `PerspectiveCamera` from maplibre's per-frame clip matrix, so `TransformControls` and `Raycaster`
+  can work inside a custom layer. Also `mapPlacementTarget` and `useMapPlacementTarget`, the map's
+  `PlacementTarget`: unlike the BIM one it moves the layer's own anchor — the file's
+  `lng/lat/elevation` — and returns the subject to the scene origin, because that is what a map
+  file's columns store. Nothing renders a gizmo yet.
+- `useFileIntake` in `@collabdt/core/core/components/viewers/shared/intake/useFileIntake` — one
+  upload path for every viewer. It converts the kinds that need it, reports every phase through the
+  shared task store, and writes whichever columns the caller's placement uses: `x/y/z` in a 3D
+  scene, `lat/lng/elevation/rotation` on the map. `buildingId` is optional, so a map file can belong
+  to no building, and point clouds route to an injected converter because they upload through a
+  service rather than directly.
+- `MarkerProgressRing` and `UploadProgressRing` accept a `tone`: `onPrimary` (the default, a filled
+  pin) or `onSurface` (a light pin like the map's), so the ring is visible on both.
+- `uploadFile` accepts `lat`, `lng`, `elevation`, `rotation` and `recordType`, and no longer requires
+  a `buildingId`. Omitting it writes a record attached to no building.
+- `partitionBySection(files)` in `ui/FilesManager/src/fileType`, the section bucketing both sidebars
+  share. The BIM viewer's `partitionFileTab` now applies its own filter and delegates to it.
+- `extensionOfName(name)` in `ui/FilesManager/src/fileType`, the lowercased trailing extension of
+  a file name, keeping `.copc.laz` whole.
+
+### Changed
+- The map's File tab is split into the same four sections the BIM sidebar uses — BIM, Models,
+  Point clouds and Files — instead of lumping models, scans and documents together under one
+  Files list. Each section has its own add button, accepted types and progress bar. The BIM
+  section carries the IFC logo and the point clouds section a point grid, so the three 3D
+  sections are told apart at a glance rather than all showing a cube.
+- **The map viewer uploads through the same code as the BIM viewer.** Adding a file to the map used
+  to run its own presigned-upload with no progress reporting, and the sidebar sections each tracked a
+  percentage of their own. All of it now goes through `useFileIntake` and the shared task store, so
+  one upload drives the toast, the sidebar progress bar and the ring on the pin at once — the
+  behaviour the BIM viewer already had. Uploads from the map also get organization-wide unique names,
+  which they did not before.
+- `useFileUploadWithProgress` is a thin wrapper over `useFileIntake`. Its surface is unchanged, and
+  it gains a `existingNames` option. A failure now reaches the user as a toast naming the cause,
+  and `onUploadError` receives an error naming the file rather than the transport failure.
+- `useBimFileIntake` is a thin wrapper over `useFileIntake` that supplies a scene-space placement.
+  Its surface and behaviour are unchanged.
+- `pointCloudPlacementStore` moved to `viewers/shared/pointcloud/`; the BIM path re-exports it.
+- `PlacementActionsCard` offers `view` and `download` as opt-in actions, and takes a `labels`
+  map in place of `hideLabel` so a caller translates every entry it offers.
+- The map places files and BIM models with the same stack as the BIM viewer: a right-click opens
+  the placement card, and the chosen mode opens the shared transform gizmo with a panel of typed
+  fields. The card offers only what the file can save, and never `download`, matching the BIM
+  viewer's menu.
+- The map's File tab sections are resizable, and a collapsed one shrinks to its header and sinks
+  below the open ones.
+- A finished placement on the map reports itself in a toast, the same message the BIM viewer
+  already showed, through the new `usePlacementCommitToasts`.
+- `PlacementPanel` lifts a worded axis caption above its field instead of overlaying it. `X/Y/Z`
+  is unchanged; the map's `lng/lat/elev` no longer crops the value or sits on top of it.
+- The upload ring sizes and places itself with inline styles rather than utility classes, so it
+  draws at the pin's size in any consumer build. It is always a ring around the pin now: the `fit`
+  prop and `MarkerRingFit` are gone. The map's file pin keeps its own outline under it, and is a
+  circle again (`rounded-full`, not an arbitrary radius).
+- A BIM model with no building can be put on the map, and one with nowhere to draw asks for a
+  point: a double-click places it at that ground position and elevation, and links it to the
+  building whose footprint it landed on. `PlaceOnMap` takes a `gesture`, reports the building it
+  resolved, and writes elevation alongside the coordinates.
+- Putting a BIM model on the map marks its row visible, so a viewer that gates loading on
+  `isVisible` will load it.
+- `useFileUploadHandler` files every upload the way the viewers expect: an IFC and the fragments it
+  converts into carry the `bim-file` tag, and an upload is visible unless the caller says otherwise.
+  The map's building popover passed neither, so a model uploaded there never loaded itself.
+- `iconForFile` in `utils/fileIconsUtils` is the one rule for which icon a file gets. `getFileIcon`
+  and the map's `FileIcon` were two overlapping tables that disagreed; both now read it, and each
+  has gained what only the other knew: GIS vectors, energy files, the rest of the media extensions,
+  and the openBIM sidecars. Where they disagreed, a loaded model reads as an axis rather than a box
+  (the box is the BIM section's), a drawing as a drafting compass, and a spreadsheet as a
+  spreadsheet rather than a table.
+- The building popover always shows its BIM toggle, and a toggle that cannot be flipped says why:
+  the building has no model yet, or its files could not be loaded. The row used to disappear
+  entirely when that fetch failed. New `BuildingTools` keys: `noBimFile`, `bimFilesUnavailable`.
+- A finished link says so: "Linked …" on success, and a failure says the model was placed but not
+  linked rather than passing in silence. New `Placement` keys: `linkedToBuilding`, `linkFailed`.
+- A right-click reaches a BIM model through the model itself. The invisible 40px square at each
+  model's anchor is gone — a second model's square covered the first's, so that menu became
+  unreachable. A BIM model is picked by the fragments engine, which is the only thing that knows
+  its streamed geometry; `hitTestLayerScene` and `ndcOfEvent` in `viewers/map/utils/layerRaycast`
+  are the shared raycast for a plain 3D model.
+- A placement that lands on a building's footprint asks before it files the model under that
+  building, in the dialog a delete uses. Linking is the default answer; declining places the model
+  exactly where it was dropped and leaves it unattached. New `Placement` keys: `linkBuildingTitle`,
+  `linkBuildingBody`, `linkBuildingConfirm`, `linkBuildingCancel`.
+- `ConfirmDialog` takes `title`, `description`, `confirmLabel`, `cancelLabel` and `tone`, so a
+  question that destroys nothing can use it without reading as a delete. Every field defaults to
+  the delete wording, so existing callers are unchanged.
+- The map's add-file tool records the terrain elevation under the double-click, and resolves the
+  building under it, rather than placing everything at zero and unattached.
+- A file placed with the map's add-file tool joins the store that draws its kind: a converted BIM
+  model goes to the BIM store, so it appears on the map instead of being filed as a plain pin that
+  nothing renders. The tool also stands the popovers down while its crosshair is up.
+- The map's popovers close when the map is panned, orbited or zoomed under them, and
+  `MapClickManager.setSuspended` silences them while another gesture owns the map — without it the
+  popover a first click opened swallowed the second click of a placement.
+- An animated model on the map offers the animation card in its menu, with the same clip, play and
+  speed controls the BIM viewer has. A model with clips used to play all of them at once and had no
+  controls at all; it now plays the first, as the BIM viewer does.
+- `AnimationPanel` and `modelAnimation` moved to `viewers/shared/placement/`, where the new
+  `applyAnimationTo` runs one clip at its speed for every viewer. The BIM paths re-export both.
+- `SECTION_ICONS` and `iconForFile` in `ui/FilesManager/src/fileType`: one icon per file section,
+  so the sidebars and the placement menus cannot disagree. The map's BIM and Models sections now
+  read the same as the BIM viewer's.
+- `TransformControls`' rotation rings draw as whole circles, matching the pickers that were always
+  whole. The panel's yaw field stops at a full turn either way.
+
+### Removed
+- `MarkerProgressRing`'s `fit` prop and the `MarkerRingFit` type. The ring has one size.
+- `EditPosition` and `EditPositionProps` from `viewers/map/src/MapLayers/src/EditPosition`. The
+  map uses the same placement stack as the BIM viewer.
+- The `BimEditPosition` and `EditFilePosition` i18n namespaces. Only `positionAcceptedToast` is
+  still used; it moved to `Placement` and the rest went with the editor.
+
+### Migration
+- Replace `hideLabel="..."` with `labels={{ hide: '...' }}` on `PlacementActionsCard`.
+- Replace `<EditPosition file=... mode=... />` with `<MapPlacementHost file=... is3D=... anchor=...
+  preview=... onRepaint=... onDone=... />` from `viewers/map/src/Placement/MapPlacementHost`. The
+  host owns the gizmo and the card; the caller supplies the anchor and a preview sink.
+- `extractPositionAndRotation` moved to `viewers/map/src/Placement/mapPlacementGeo`.
+- Read `positionAcceptedToast` from the `Placement` namespace.
+- Drop `fit` from `MarkerProgressRing` and `UploadProgressRing`; the ring is always drawn around
+  the marker.
+
+### Added
+- `Building.buildingGeometry`, an optional drawn outline, and the `BuildingGeometry` type: a
+  WGS84 GeoJSON `Polygon`, outer ring first, every ring closed. Nothing writes it yet.
+- `isBuildingGeometry`, `ringToBuildingGeometry` and `buildingGeometryToRing` in
+  `viewers/map/src/MapLayers/src/BuildingLayers/buildingGeometry`. `isBuildingGeometry` is the
+  write guard for a column Prisma types only as `Json`, and caps ring count and positions so an
+  oversized payload cannot be stored.
+- `@collabdt/core/core/components/viewers/shared/placement/*` — the placement editor's
+  viewer-independent half, so a second viewer can drive the same edit. `PlacementCore` is the
+  session engine with no OBC or world dependency, `TransformGizmo` is the three.js
+  `TransformControls` wrapper behind a `TransformGizmoHost` (camera, canvas, scene, drag lock),
+  `PlacementEvent` is the `OBC.Event` slice the core needs, and `usePlacementState` mirrors a
+  session into React. `PlacementPanel`, `NumberField`, `placementTarget`, `placementCapabilities`,
+  `placementAxes`, `uniformScale`, `markerActions`, `contextMenuGesture`, `placementToastMessage`
+  and `objectTarget` now live here too.
+- `PlacementPanel` accepts `positionLabels`, `positionSteps` and `positionDecimals`, so a viewer
+  whose position is not scene metres can caption the row and give it a workable step. The map reads
+  the row as lng/lat/elevation, where a tenth-of-a-metre step and three decimals are useless.
+
+### Changed
+- An uploaded file's name is now disambiguated against every file in the uploader's organization
+  rather than only the target building's, so a second `tower.ifc` is stored as `tower (1).ifc`
+  wherever it is uploaded. The BIM viewer still resolves scene objects to database records by
+  name; organization-wide uniqueness is what keeps that resolution unambiguous.
+- `BimState.editingBimModel` is now `editingBimModelId` and `BimState.bimModelName` is now
+  `bimModelId`; both hold `String(file.id)`. The `EDIT_BIM_MODEL_BY_NAME` action is renamed
+  `EDIT_BIM_MODEL_BY_ID`, and `REMOVE_BIM_FROM_MAP` takes `bimModelId`.
+- `PlacementEditor` is now a thin OBC adapter over `PlacementCore`, and `GizmoController` a thin
+  world-bound subclass of `TransformGizmo`. Both keep their existing surface and behaviour;
+  `PlacementEditor` still owns the pivot raycast and pick-source registry, which need a world.
+- `PlacementMode` is declared in `placementTarget` alongside `PlacementCapabilities`, and
+  re-exported from `PlacementEditor` as before.
+
+### Deprecated
+- The `viewers/bim/src/Placement/*` paths for the modules listed above now re-export from
+  `viewers/shared/placement/*`. They keep working this release.
+
+### Fixed
+- **A file whose name is already taken on the map now loads.** Adding the same IFC to two
+  buildings left the second model invisible: the map's BIM layer keyed its maplibre layer, its
+  fragments `modelId` and its live-edit records by file *name*, so the second model hit an
+  `if (map.getLayer(name)) return` guard and was never created. Identity on the map path is now
+  the file id throughout (`bim-model-<id>`). Dragging one of two same-named 3D models also moved
+  the other, for the same reason, in `CustomModelLayer`.
+- **A file added to the map no longer leaves a nameless ghost row in the sidebar.** When the
+  re-read of the new record failed, `FileAdder` still dispatched `ADD_FILE` with an id-only
+  object, which reached the store as a `DbFile` with no name, type or size. It now dispatches
+  only the real record and otherwise lets the `files` revalidation bring it in.
+- **The pin for a file being placed on the map now shows the upload ring and the file's own
+  icon.** It rendered `LoadingSpinner` instead of an icon, inside a hard-coded 24px box that a
+  36px pin and its ring overflowed, so the old spinner and a displaced ring were drawn at once.
+  `FileIcon` no longer accepts `'uploading'` as an extension; pass the real one.
+
+### Migration
+- Rename the three BIM store members if you dispatch them directly: `editingBimModel` ->
+  `editingBimModelId`, `bimModelName` -> `bimModelId`, `EDIT_BIM_MODEL_BY_NAME` ->
+  `EDIT_BIM_MODEL_BY_ID`. All three now carry a file id as a string, not a file name. Note that
+  `MapState` has its own unrelated `REMOVE_BIM_FROM_MAP` keyed on `modelId`, which is unchanged.
+- Import the moved modules from `viewers/shared/placement/...`. `PlacementEditor`,
+  `GizmoController`, `usePlacementSession` and `PlacementEditorHost` are unchanged and need no
+  edit. `PlacementEditorSetup.createGizmo` is still optional; `PlacementCoreSetup.createGizmo`,
+  its equivalent on the new core, is required because the core has no world to build a default from.
+
+
 ## [0.11.1]
 
 > 0.11.0 was left staged on the registry by a failed publish and can never be claimed. This

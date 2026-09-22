@@ -34,7 +34,7 @@ describe('getFileIcon', () => {
   })
 
   it('distinguishes a spreadsheet within document-file', () => {
-    expect(getFileIcon(record({ extension: 'xlsx' }))).toBe(LR.Table)
+    expect(getFileIcon(record({ extension: 'xlsx' }))).toBe(LR.FileSpreadsheet)
   })
 
   it('falls back to the generic icon for anything unrecognized', () => {

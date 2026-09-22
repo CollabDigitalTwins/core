@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as LR from 'lucide-react'
 import { describe, expect, it } from 'vitest'
 
-import { SECTION_FOR_TYPE, typeOfFile, typeOfRecord } from './fileType'
+import { iconForFile, SECTION_FOR_TYPE, SECTION_ICONS, typeOfFile, typeOfRecord } from './fileType'
 
 import type { FileType } from './fileType'
 import type { DbFile } from '../../../../types/dbTypes'
@@ -88,5 +89,27 @@ describe('SECTION_FOR_TYPE', () => {
     expect(SECTION_FOR_TYPE['media-file']).toBe('files')
     expect(SECTION_FOR_TYPE['document-file']).toBe('files')
     expect(SECTION_FOR_TYPE.file).toBe('files')
+  })
+})
+
+describe('section icons', () => {
+  it('gives each section its own icon, so no two sections read alike', () => {
+    const icons = Object.values(SECTION_ICONS)
+
+    expect(new Set(icons).size).toBe(icons.length)
+  })
+
+  it('names the sections the sidebars draw', () => {
+    expect(SECTION_ICONS.bim).toBe(LR.Box)
+    expect(SECTION_ICONS.models).toBe(LR.FileAxis3d)
+    expect(SECTION_ICONS.pointClouds).toBe(LR.Grip)
+    expect(SECTION_ICONS.files).toBe(LR.FileText)
+  })
+
+  it('reads a file its section icon, so a menu and a sidebar cannot disagree', () => {
+    expect(iconForFile({ extension: 'ifc' } as DbFile)).toBe(SECTION_ICONS.bim)
+    expect(iconForFile({ extension: 'glb' } as DbFile)).toBe(SECTION_ICONS.models)
+    expect(iconForFile({ extension: 'las' } as DbFile)).toBe(SECTION_ICONS.pointClouds)
+    expect(iconForFile({ extension: 'pdf' } as DbFile)).toBe(SECTION_ICONS.files)
   })
 })

@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { mutate } from 'swr'
@@ -12,16 +11,17 @@ import { useDeleteFile } from '../../../../../../../../hooks/files/files'
 import { BuildingsContext, FilesContext, MenusContext } from '../../../../../../../../store'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
-import { useFileDeleteHandler, FileItemComponent, useFileActions, useFileUploadWithProgress } from '../../../../../../../ui/FilesManager'
-import { LoadingSpinner } from '../../../../../../../ui/LoadingSpinner'
+import { useFileDeleteHandler, FileItemComponent, useFileActions, useFileUploadWithProgress, UploadProgressBar, useUploadTasks } from '../../../../../../../ui/FilesManager'
+import { SECTION_ICONS, partitionBySection } from '../../../../../../../ui/FilesManager/src/fileType'
+
 
 import type { DbFile as IFile } from '../../../../../../../../types/dbTypes'
+import type { FileSection } from '../../../../../../../ui/FilesManager/src/fileType'
+import type * as LR from 'lucide-react'
 
 
 
-// Hoisted out of the JSX so the array reference is stable across renders.
-// Inline `options={['view','move','info','delete']}` gets a new array identity
-// on every render, defeating React.memo on FileItemComponent.
+// Hoisted so the array identity stays stable and React.memo on FileItemComponent still holds.
 const FILE_OPTIONS: import('../../../../../../../../types/global').FileAction[] = ['view', 'move', 'info', 'delete']
 
 const shouldExcludeByTag = (tag?: string | null): boolean => {
@@ -29,17 +29,28 @@ const shouldExcludeByTag = (tag?: string | null): boolean => {
   return tag === 'user' || tag === 'bim-file' || tag === 'fragment-file' || tag === 'bimModel'
 }
 
-const shouldExcludeByType = (type?: string | null): boolean => {
-  if (!type) return false
-  return type === 'bim-file'
-}
-
 interface FilesSectionProps {
   files: IFile[]
   query?: string
+  /** Which of the four sidebar buckets this instance shows. Defaults to the catch-all. */
+  section?: FileSection
+  title?: string
+  icon?: LR.LucideIcon
+  acceptedFileTypes?: string
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function FilesSection({ files: _filesProp, query = '' }: FilesSectionProps) {
+export function FilesSection({
+  files: _filesProp,
+  query = '',
+  section = 'files',
+  title,
+  icon,
+  acceptedFileTypes = '*',
+  open,
+  onOpenChange,
+}: FilesSectionProps) {
   const t = useTranslations('FileSelection')
 
   const { state: buildingsState } = React.useContext(BuildingsContext)
@@ -62,8 +73,10 @@ export function FilesSection({ files: _filesProp, query = '' }: FilesSectionProp
     onDeleteSuccess: () => {},
   })
 
+  const tasks = useUploadTasks(section)
   const { handleAddFile, uploadState } = useFileUploadWithProgress({
-    acceptedFileTypes: '*',
+    acceptedFileTypes,
+    existingNames: files.map((file: IFile) => file.name),
     onUploadSuccess: () => {
       void mutate(`/api/files`)
     },
@@ -71,10 +84,8 @@ export function FilesSection({ files: _filesProp, query = '' }: FilesSectionProp
   })
 
   const nonBimFiles = React.useMemo(() => {
-    return files
-      .filter(file => file.extension !== 'ifc' && file.extension !== 'frag')
-      .filter(file => !shouldExcludeByTag(file.tag))
-      .filter(file => !shouldExcludeByType((file as any).type))
+    const eligible = files.filter(file => !shouldExcludeByTag(file.tag))
+    return partitionBySection(eligible)[section]
       .map(file => ({ ...file, isVisible: mapFileIds.includes(file.id) }))
       .sort((a, b) => {
         const aOnMap = mapFileIds.includes(a.id)
@@ -82,7 +93,7 @@ export function FilesSection({ files: _filesProp, query = '' }: FilesSectionProp
         if (aOnMap !== bOnMap) return aOnMap ? -1 : 1
         return a.name.localeCompare(b.name)
       })
-  }, [files, mapFileIds])
+  }, [files, mapFileIds, section])
 
   const [localFiles, setLocalFiles] = React.useState(nonBimFiles)
 
@@ -94,10 +105,7 @@ export function FilesSection({ files: _filesProp, query = '' }: FilesSectionProp
     fileDispatch({ type: 'EDIT_FILE', payload: { file } })
   }, [fileDispatch])
 
-  // useCallback so the onView prop identity stays stable across renders.
-  // Otherwise useFileActions' internal useCallback dep on onView re-fires every
-  // render, producing a new handleAction identity, which defeats React.memo on
-  // FileItemComponent.
+  // A stable identity here is what keeps React.memo on FileItemComponent effective.
   const handleViewFile = React.useCallback((file: IFile, newVisibility: boolean) => {
     fileDispatch({
       type: newVisibility ? 'ADD_TO_MAP' : 'REMOVE_FROM_MAP',
@@ -141,22 +149,23 @@ export function FilesSection({ files: _filesProp, query = '' }: FilesSectionProp
   return (
     <div className="h-full min-h-0">
       <CollapsibleSection
-        title={t('filesTitle')}
-        icon={LR.FileText}
+        title={title ?? t('filesTitle')}
+        icon={icon ?? SECTION_ICONS.files}
         className="h-full min-h-0 flex flex-col"
         style={{ height: '100%', minHeight: 0 }}
         itemCount={filteredFiles.length}
         onAddItem={uploadState.uploading ? undefined : handleAddFile}
         addItemTitle={uploadState.uploading ? `${t('uploadingFile')} ${uploadState.progress}%` : t('addFileTitle')}
         switchVariant={handleSwitchVariant()}
+        open={open}
+        onOpenChange={onOpenChange}
       >
         <div className="flex-1 min-h-0 overflow-y-auto space-y-1">
-          {uploadState.uploading && (
-            <div className="flex items-center gap-2 px-2 py-2 text-sm text-muted-foreground">
-              <LoadingSpinner className="h-4 w-4" />
-              <span>{t('uploadingFile')} {uploadState.progress}%</span>
+          {tasks.map(task => (
+            <div key={task.id} className="px-2 py-1">
+              <UploadProgressBar label={task.label} progress={task.progress} />
             </div>
-          )}
+          ))}
           {filteredFiles.map((item) => (
             <FileItemComponent
               key={item.id}

@@ -24,6 +24,9 @@ export enum MapLayerClickPriority {
 
 export const MAX_POPUP_ENTRIES = 10
 
+/** Anything that moves the map out from under an open popover. */
+const DISMISSING_EVENTS = ['dragstart', 'rotatestart', 'pitchstart', 'zoomstart'] as const
+
 export type ClickCallback = (
   event: maplibregl.MapMouseEvent,
   features: maplibregl.MapGeoJSONFeature[],
@@ -45,13 +48,23 @@ export class MapClickManager {
   private map: maplibregl.Map // the instance of the map
   private clickHandlers: LayerClickHandler[] // all click handlers for layers that has been registered
   private boundedClickHandler: (e: maplibregl.MapMouseEvent) => void // clickHandler has "this" object binded to it, so inside the handleClick private function, we can still access this.map.
+  private boundedDismissHandler: () => void
   private publish: (entries: PopupEntry[]) => void = () => {}
+  private suspended = false
 
   constructor(map: maplibregl.Map) {
     this.map = map
     this.boundedClickHandler = this.handleMapClick.bind(this)
+    this.boundedDismissHandler = () => this.publish([])
     this.clickHandlers = []
     this.map.on('click', this.boundedClickHandler)
+    for (const event of DISMISSING_EVENTS) this.map.on(event, this.boundedDismissHandler)
+  }
+
+  /** Suspended while another gesture owns the map, such as placing a file by clicking the ground. */
+  public setSuspended(suspended: boolean) {
+    this.suspended = suspended
+    if (suspended) this.publish([])
   }
 
   public onPopupStack(publish: (entries: PopupEntry[]) => void) {
@@ -86,6 +99,8 @@ export class MapClickManager {
   }
 
   private handleMapClick(e: maplibregl.MapMouseEvent) {
+    if (this.suspended) return
+
     // for active tools
     for (const handler of this.clickHandlers) {
       if (handler.priority === MapLayerClickPriority.ActiveTool) {
@@ -123,6 +138,7 @@ export class MapClickManager {
 
   destroy() {
     this.map.off('click', this.boundedClickHandler)
+    for (const event of DISMISSING_EVENTS) this.map.off(event, this.boundedDismissHandler)
     this.clickHandlers = []
     this.publish = () => {}
   }

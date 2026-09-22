@@ -11,24 +11,23 @@ import ReactDOM from 'react-dom/client'
 import { toast } from 'sonner'
 import { mutate } from 'swr'
 
-import { MapContext, FilesContext } from '../../../../../../../store'
+import { useBuildings } from '../../../../../../../hooks/buildings/buildings'
+import { useFiles, useUpdateFile } from '../../../../../../../hooks/files/files'
+import { BimContext, MapContext, FilesContext } from '../../../../../../../store'
 import { acceptedFiles, isAcceptedFileType } from '../../../../../../../utils/acceptedFiles'
 import { cn } from '../../../../../../../utils/utils'
 import { AddItemDialog } from '../../../../../../ui/AddItemDialog'
+import { extensionOfName } from '../../../../../../ui/FilesManager/src/fileType'
 import { Input } from '../../../../../../ui/Input'
+import { useFileIntake } from '../../../../../shared/intake/useFileIntake'
+import { addFileToMap } from '../../../../utils/addFileToMap'
 import MapFileMarker from '../../../MapLayers/src/FileLayer/components/MapFileMarker'
+import { resolveClickPlacement } from '../../../Placement/resolveClickPlacement'
+import { useBuildingLinkConfirm } from '../../../Placement/useBuildingLinkConfirm'
 
-import { uploadFileWithProgress } from './utils/uploadToPresignedURLS'
-
+import type { DbFile } from '../../../../../../../types/dbTypes'
 import type { CursorType } from '../../../../../../../types/global'
 import type { LucideIcon } from 'lucide-react'
-
-function getFileExtension(file: File): string {
-  if (!file?.name) return ''
-  const parts = file.name.split('.')
-  if (parts.length <= 1) return ''
-  return parts.pop()!.toLowerCase()
-}
 
 type FileAdderProps = {
   isOpen: boolean
@@ -117,11 +116,37 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
   const t = useTranslations('FileAdder')
 
   const { state: mapState } = React.useContext(MapContext)
-  const { map } = mapState.map
+  const { map, mapClickManager } = mapState.map
   const { dispatch: fileDispatch } = React.useContext(FilesContext)
+  const { dispatch: bimDispatch } = React.useContext(BimContext)
+  // The organization's buildings, not the store's: nothing fills that list.
+  const { buildings } = useBuildings()
+  const updateFileById = useUpdateFile()
+  const { confirmLink, dialog: linkDialog } = useBuildingLinkConfirm()
+  const tPlacement = useTranslations('Placement')
 
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
   const [isUploading, setIsUploading] = React.useState(false)
+  // One placement at a time: the question about a building is answered before the upload starts.
+  const placingRef = React.useRef(false)
+
+  const { files } = useFiles()
+  // A map file belongs to no building, so it posts itself rather than going through a building route.
+  const createMapFile = React.useCallback(async ({ fileData }: { fileData: unknown }) => {
+    const response = await fetch('/api/files/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fileData),
+    })
+    if (!response.ok) throw new Error(`Failed to save the file record: ${response.statusText}`)
+    return response.json()
+  }, [])
+
+  const intake = useFileIntake({
+    existingNames: (files ?? []).map((file: { name: string }) => file.name),
+    uploadFile: createMapFile,
+    recordType: 'map-file',
+  })
 
   // Reset state when tool is closed from outside
   React.useEffect(() => {
@@ -144,18 +169,11 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
     lng: number,
     lat: number,
   ): maplibregl.Marker {
+    // No explicit size: the pin is 36px and a smaller box would clip the ring drawn around it.
     const markerEl = document.createElement('div')
-    markerEl.style.width = '24px'
-    markerEl.style.height = '24px'
-    markerEl.style.display = 'flex'
-    markerEl.style.alignItems = 'center'
-    markerEl.style.justifyContent = 'center'
-
-    const iconEl = MapFileMarker({ mimeType: file.type, extension: 'uploading' })
-    const iconContainer = document.createElement('div')
-    const root = ReactDOM.createRoot(iconContainer)
-    root.render(iconEl)
-    markerEl.append(iconContainer)
+    ReactDOM.createRoot(markerEl).render(
+      MapFileMarker({ mimeType: file.type, extension: extensionOfName(file.name), fileName: file.name }),
+    )
 
     return new maplibregl.Marker({ element: markerEl, draggable: false })
       .setLngLat([lng, lat])
@@ -195,80 +213,70 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
   React.useEffect(() => {
     const dblclickHandler = async (e: maplibregl.MapMouseEvent): Promise<void> => {
       if (!selectedFile) return
-      if (isUploading) return
+      if (isUploading || placingRef.current) return
 
-      setIsUploading(true)
+      placingRef.current = true
       setCursor(null)
       toast.dismiss('place-file-toast')
 
-      const lng = e.lngLat.lng
-      const lat = e.lngLat.lat
-      const elevation = 0
+      const { lng, lat, elevation, buildingId } = resolveClickPlacement(map, e, buildings ?? [])
+      const building = buildingId === null
+        ? null
+        : (buildings ?? []).find(candidate => candidate.id === buildingId) ?? null
+      const linked = building !== null
+        && await confirmLink(building.buildingName ?? String(building.id), selectedFile.name)
 
+      setIsUploading(true)
       const temporaryFileIcon = addTemporaryFileIcon(map, selectedFile, lng, lat)
-      const toastId = toast.loading(`${t('uploading')} "${selectedFile.name}"...`)
 
       try {
-        const fileId = crypto.randomUUID()
-
-        const response = await fetch(`/api/presigned-url-upload?asset=${fileId}`)
-        if (!response.ok) throw new Error('Failed to fetch presigned URL')
-        const { presignedUrl } = await response.json()
-
-        await uploadFileWithProgress(presignedUrl, selectedFile, () => {})
-
-        const newFile = {
-          type: 'map-file',
-          url: '',
-          name: selectedFile.name?.trim() || 'file name',
-          mimeType: selectedFile.type,
-          extension: getFileExtension(selectedFile),
-          sizeBytes: selectedFile.size,
-          uploadedAt: new Date(),
-          description: '',
-          isVisible: true,
-          lat,
-          lng,
-          elevation,
-          assetId: fileId,
+        const created = await intake.submit(selectedFile, { lat, lng, elevation, rotation: 0 })
+        if (!created?.id) {
+          setIsUploading(false)
+          setSelectedFile(null)
+          return
         }
 
-        const metadataResponse = await fetch('/api/files/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newFile),
-        })
-
-        if (!metadataResponse.ok) {
-          throw new Error(`Failed to upload file metadata: ${metadataResponse.statusText}`)
-        }
-
-        const { newFile: createdFile } = await metadataResponse.json()
-
-        // Fetch with presigned URL so 3D models can load immediately
-        let fileToAdd = createdFile
+        // Re-read so a 3D model gets a presigned url and can load without a refresh.
+        let fileToAdd: DbFile | null = null
         try {
-          const fileUrlRes = await fetch(`/api/files/${createdFile.id}`)
+          const fileUrlRes = await fetch(`/api/files/${created.id}`)
           if (fileUrlRes.ok) {
-            const { file: fileWithUrl } = await fileUrlRes.json()
+            const { file: fileWithUrl } = await fileUrlRes.json() as { file?: DbFile }
             if (fileWithUrl) fileToAdd = fileWithUrl
           }
         }
-        catch { /* fall back to createdFile without presigned URL */ }
+        catch { /* the store refresh below still picks it up */ }
 
-        fileDispatch({ type: 'ADD_FILE', payload: { file: fileToAdd } })
-        fileDispatch({ type: 'ADD_TO_MAP', payload: { id: createdFile.id } })
+        if (fileToAdd) fileDispatch({ type: 'ADD_FILE', payload: { file: fileToAdd } })
+        // A model is drawn from the BIM store; only its own store makes it appear.
+        const placed = fileToAdd
+          ?? ({ id: created.id, name: selectedFile.name, extension: extensionOfName(selectedFile.name) } as DbFile)
+        if (linked && building && buildingId !== null) {
+          const buildingName = building.buildingName ?? String(building.id)
+          try {
+            // The link is its own write, so it reports itself rather than failing under the upload.
+            await updateFileById(created.id, { attachedFilesBuildingId: buildingId })
+            placed.attachedFilesBuildingId = buildingId
+            toast.success(tPlacement('linkedToBuilding', { file: selectedFile.name, building: buildingName }))
+          }
+          catch (error) {
+            console.error('Could not link the file to its building:', error)
+            toast.error(tPlacement('linkFailed', { file: selectedFile.name, building: buildingName }))
+          }
+        }
+        addFileToMap(placed, { fileDispatch, bimDispatch }, linked ? building : null)
 
-        toast.success(t('uploadSuccess'), { id: toastId })
         void mutate(['files'])
         onClose()
       }
       catch (error) {
-        toast.error(error instanceof Error ? error.message : t('uploadError'), { id: toastId })
+        toast.error(error instanceof Error ? error.message : t('uploadError'))
         setIsUploading(false)
         setSelectedFile(null)
       }
       finally {
+        placingRef.current = false
         temporaryFileIcon.remove()
       }
     }
@@ -295,7 +303,14 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
         map.off('dblclick', onDblClick)
       }
     }
-  }, [selectedFile, isUploading, map])
+  }, [selectedFile, isUploading, map, buildings, confirmLink, updateFileById, tPlacement, fileDispatch, bimDispatch])
+
+  // A popover opened by the first click would cover the point the second one needs.
+  React.useEffect(() => {
+    if (!mapClickManager || !selectedFile) return
+    mapClickManager.setSuspended(true)
+    return () => mapClickManager.setSuspended(false)
+  }, [mapClickManager, selectedFile])
 
   // Prevent page navigation while uploading
   React.useEffect(() => {
@@ -320,21 +335,24 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
     processFile(selected)
   }
 
-  // When a file is selected (or uploading), dialog closes but component stays mounted
-  if (selectedFile) return null
+  // Placing, so the picker is gone — but the link question still has to be able to reach the screen.
+  if (selectedFile) return <>{linkDialog}</>
 
   return (
-    <FileAdderDialog
-      isOpen={isOpen}
-      onClose={onClose}
-      title={t('title')}
-      icon={LR.FilePlus}
-      accept={acceptedFiles}
-      onFileSelect={handleFileSelect}
-      onFileDrop={processFile}
-      disabled={isUploading}
-      dropZoneTitle={t('dropZoneTitle')}
-      dropZoneSubtext={t('dropZoneSubtext')}
-    />
+    <>
+      <FileAdderDialog
+        isOpen={isOpen}
+        onClose={onClose}
+        title={t('title')}
+        icon={LR.FilePlus}
+        accept={acceptedFiles}
+        onFileSelect={handleFileSelect}
+        onFileDrop={processFile}
+        disabled={isUploading}
+        dropZoneTitle={t('dropZoneTitle')}
+        dropZoneSubtext={t('dropZoneSubtext')}
+      />
+      {linkDialog}
+    </>
   )
 }

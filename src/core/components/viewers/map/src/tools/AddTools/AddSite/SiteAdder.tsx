@@ -19,10 +19,10 @@ import { polygonCentroid, filterPointsInRing } from '../../../MapLayers/src/Site
 import { AssociateBuildingsDialog } from './AssociateBuildingsDialog'
 import { persistDrawnSite } from './persistSite'
 
-import type * as maplibregl from 'maplibre-gl'
 
 import type { Building } from '../../../../../../../types/dbTypes'
 import type { CursorType } from '../../../../../../../types/global'
+import type * as maplibregl from 'maplibre-gl'
 
 interface SiteAdderProps {
   isOpen?: boolean

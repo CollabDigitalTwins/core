@@ -20,6 +20,7 @@ import { usePermissions } from '../../../../../../../../store'
 import { AppConfigContext, BuildingsContext, BimContext, MapContext, MenusContext, useMenusContext } from "../../../../../../../../store";
 import { ViewerNames } from "../../../../../../../../types/";
 import { hasAppContent } from "../../../../../../../../utils/appContent";
+import { useFileVisibility } from '../../../../../../../ui/FilesManager';
 import { toggleBimToMap as dispatchToggleBimToMap } from '../../../../../utils/toggleBimToMap';
 import Compare from '../../../../compare';
 
@@ -141,14 +142,18 @@ export default function BuildingTools({
     [],
   );
 
+  const { setVisible } = useFileVisibility(building?.id);
+
   const toggleBimToMap = React.useCallback(
     (bimFile: DbFile) => {
       dispatchToggleBimToMap(bimDispatch, bimFile, building);
-
+      // A model on the map is a model the viewers may load, whatever the row said before.
+      void setVisible(bimFile, true);
     },
     [
       building,
-      bimDispatch
+      bimDispatch,
+      setVisible
     ]
   );
 
@@ -242,10 +247,10 @@ export default function BuildingTools({
     ]
   );
 
-  const handleEditClick = (fileName: string) => {
+  const handleEditClick = (fileId: number) => {
     bimDispatch({
-      type: "EDIT_BIM_MODEL_BY_NAME",
-      payload: { editingBimModel: fileName }
+      type: "EDIT_BIM_MODEL_BY_ID",
+      payload: { editingBimModelId: String(fileId) }
     });
 
     onCloseAction();
@@ -263,8 +268,7 @@ export default function BuildingTools({
       />
 
       {/* BIM Controls */}
-      {!isError &&
-        <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2">
           {isLoading
             ? <>
               <Skeleton className="h-4 w-20" />
@@ -289,10 +293,10 @@ export default function BuildingTools({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         {bimFiles.map((file: DbFile) => {
-                          const isSelected = bimModelsAddedToMap.some(model => model.bimFile.name === file.name);
+                          const isSelected = bimModelsAddedToMap.some(model => model.bimFile.id === file.id);
                           return (
                             <DropdownMenuItem
-                              key={file.name}
+                              key={file.id}
                               onClick={(e) => {
                                 e.preventDefault();
                                 toggleBimToMap(file);
@@ -314,7 +318,7 @@ export default function BuildingTools({
                                   onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    handleEditClick(file.name);
+                                    handleEditClick(file.id);
                                   }}
                                   variant="ghost"
                                   size="sm"
@@ -333,24 +337,28 @@ export default function BuildingTools({
                 ) : (
                   <div className="flex items-center space-x-2">
                     <Label
-                      className={`font-semibold ${bimFiles.length === 0 ? 'text-muted-foreground' : ''}`}
+                      className={`font-semibold ${isError || bimFiles.length === 0 ? 'text-muted-foreground' : ''}`}
                       htmlFor="show-bim"
+                      title={isError ? t('bimFilesUnavailable') : bimFiles.length === 0 ? t('noBimFile') : undefined}
                     >
                       {bimAdded ? t('hideBIM') : t('showBIM')}
                     </Label>
                     <Switch
                       id="show-bim"
-                      checked={bimFiles.length === 1 && bimModelsAddedToMap.some(model => model.bimFile.name === bimFiles[0]?.name)}
-                      disabled={bimFiles.length === 0 || !ability.can('read', 'File')}
+                      // A switch that cannot be flipped says why, rather than sitting there grey.
+                      title={isError ? t('bimFilesUnavailable') : bimFiles.length === 0 ? t('noBimFile') : undefined}
+                      checked={bimFiles.length === 1 && bimModelsAddedToMap.some(model => model.bimFile.id === bimFiles[0]?.id)}
+                      disabled={isError || bimFiles.length === 0 || !ability.can('read', 'File')}
                       onCheckedChange={() => onLoadBIM()}
                     />
                   </div>
                 )}
-                {bimFiles.length === 1 && bimModelsAddedToMap.some(model => model.building.id === buildingId) && (() => {
-                  const selectedModel = bimModelsAddedToMap.find(model => model.building.id === buildingId);
-                  return true ? (
+                {bimFiles.length === 1 && bimModelsAddedToMap.some(model => model.building?.id === buildingId) && (() => {
+                  // A model placed on open ground carries no building, so neither lookup can assume one.
+                  const selectedModel = bimModelsAddedToMap.find(model => model.building?.id === buildingId);
+                  return selectedModel ? (
                     <Button
-                      onClick={() => handleEditClick(selectedModel.bimFile.name)}
+                      onClick={() => handleEditClick(selectedModel.bimFile.id)}
                       variant="ghost"
                       size="sm"
                       title={t('editBimButton')}
@@ -363,7 +371,7 @@ export default function BuildingTools({
               </div>
             )
           }
-        </div>}
+        </div>
 
       {/* Tool Buttons */}
       <div className="flex items-center gap-3">

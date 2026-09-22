@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
@@ -6,18 +6,16 @@
 import * as React from 'react'
 import { mutate } from 'swr'
 
-import { uploadFileWithProgress } from '../../../viewers/map/src/tools/AddTools/AddFile/utils/uploadToPresignedURLS'
+import { useFileIntake } from '../../../viewers/shared/intake/useFileIntake'
 
-function getFileExtension(file: File): string {
-  const parts = file.name.split('.')
-  if (parts.length <= 1) return ''
-  return parts.pop()!.toLowerCase()
-}
+import { useUploadTasks } from './uploadProgress'
 
 export interface UseFileUploadWithProgressProps {
   acceptedFileTypes?: string
   onUploadSuccess?: () => void
   onUploadError?: (error: Error) => void
+  /** Names already taken, so a clash is stored with a numeric suffix rather than shadowing. */
+  existingNames?: string[]
 }
 
 export interface UploadState {
@@ -25,82 +23,60 @@ export interface UploadState {
   progress: number
 }
 
+const IDLE: UploadState = { uploading: false, progress: 0 }
+
+/**
+ * The sidebar's add-file button, on the shared intake: one task store drives the toast, the
+ * section's progress bar and the marker ring, so no surface tracks progress of its own.
+ */
 export function useFileUploadWithProgress({
   acceptedFileTypes = '*',
   onUploadSuccess,
-  onUploadError
+  onUploadError,
+  existingNames = [],
 }: UseFileUploadWithProgressProps = {}) {
-
-  const [uploadState, setUploadState] = React.useState<UploadState>({
-    uploading: false,
-    progress: 0
-  })
-
+  const [pendingName, setPendingName] = React.useState<string | null>(null)
   const inputRef = React.useRef<HTMLInputElement | null>(null)
+  const tasks = useUploadTasks()
+
+  const createFile = React.useCallback(async ({ fileData }: { fileData: unknown }) => {
+    const response = await fetch('/api/files/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fileData),
+    })
+    if (!response.ok) throw new Error(`Failed to upload file: ${response.statusText}`)
+    return response.json()
+  }, [])
+
+  const intake = useFileIntake({ existingNames, uploadFile: createFile })
+
+  const uploadState: UploadState = React.useMemo(() => {
+    if (!pendingName) return IDLE
+    const task = tasks.find(item => item.name === pendingName)
+    return { uploading: true, progress: task?.progress ?? 0 }
+  }, [pendingName, tasks])
 
   const handleFileUpload = React.useCallback(async (file: File) => {
-    setUploadState({ uploading: true, progress: 0 })
-
+    setPendingName(file.name)
     try {
-      // Generate a unique fileID for minio
-      const fileId = crypto.randomUUID()
-
-      // Get presigned upload URL for bucket
-      const response = await fetch(`/api/presigned-url-upload?asset=${fileId}`)
-      if (!response.ok) {
-        throw new Error('Failed to fetch presigned URL')
-      }
-      const { presignedUrl } = await response.json()
-
-      // Upload file to bucket with progress tracking
-      await uploadFileWithProgress(presignedUrl, file,
-        (progress: number) => {
-          setUploadState({ uploading: true, progress })
-        },
-      )
-
-      // Create a new file object with the unique id
-      const newFile = {
-        type: 'system',
-        name: file.name,
-        url: '',
-        mimeType: file.type,
-        extension: getFileExtension(file),
-        sizeBytes: file.size,
-        uploadedAt: new Date(),
-        description: '',
-        assetId: fileId,
-      }
-
-      // Upload metadata to API
-      const metadataResponse = await fetch('/api/files/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newFile),
-      })
-
-      if (!metadataResponse.ok) {
-        throw new Error(`Failed to upload file: ${metadataResponse.statusText}`)
-      }
-
-      // Revalidate files list
+      const created = await intake.submit(file)
+      if (!created) throw new Error(`Failed to upload file: ${file.name}`)
       void mutate(['files'])
-
       onUploadSuccess?.()
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Error uploading file:', error)
       onUploadError?.(error as Error)
-    } finally {
-      setUploadState({ uploading: false, progress: 0 })
     }
-  }, [onUploadSuccess, onUploadError])
+    finally {
+      setPendingName(null)
+    }
+  }, [intake, onUploadSuccess, onUploadError])
 
   const handleAddFile = React.useCallback(() => {
-    if (uploadState.uploading) return
+    if (pendingName) return
 
-    // Create or use existing file input element
     if (!inputRef.current) {
       const input = document.createElement('input')
       input.type = 'file'
@@ -115,14 +91,14 @@ export function useFileUploadWithProgress({
 
       inputRef.current = input
       document.body.appendChild(input)
-    } else {
+    }
+    else {
       inputRef.current.accept = acceptedFileTypes
     }
 
     inputRef.current.click()
-  }, [acceptedFileTypes, handleFileUpload, uploadState.uploading])
+  }, [acceptedFileTypes, handleFileUpload, pendingName])
 
-  // Cleanup on unmount
   React.useEffect(() => {
     return () => {
       if (inputRef.current && document.body.contains(inputRef.current)) {
@@ -134,6 +110,6 @@ export function useFileUploadWithProgress({
   return {
     handleAddFile,
     handleFileUpload,
-    uploadState
+    uploadState,
   }
 }

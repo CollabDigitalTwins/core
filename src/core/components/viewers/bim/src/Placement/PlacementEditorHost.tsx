@@ -242,6 +242,7 @@ export function PlacementEditorHost() {
       bimComponents.get(AnimationSession).begin({ fileId: String(menu.file.id), name: menu.file.name })
       return
     }
+    if (action === 'view' || action === 'download') return
 
     const mode = action === 'move' ? 'translate' : action
     void editor?.begin(targetFromMenu(menu, bimComponents), mode)
@@ -266,7 +267,7 @@ export function PlacementEditorHost() {
               name={menu.file.name}
               Icon={MENU_ICONS[menu.kind] ?? LR.Box}
               actions={markerActionsFor(menu.capabilities, { animated: menu.animated, hidable: true })}
-              hideLabel={tFile('hideTitle')}
+              labels={{ hide: tFile('hideTitle') }}
               onAction={beginFromMenu}
               onClose={close}
             />

@@ -10,13 +10,17 @@ import type { PopupEntry } from '../../../../../types/map'
 const event = { point: { x: 0, y: 0 } } as never
 
 function makeMap(hitLayerIds: string[]) {
-  const listeners: ((e: unknown) => void)[] = []
+  const byEvent = new Map<string, ((e: unknown) => void)[]>()
   return {
-    listeners,
-    on: (_: string, fn: (e: unknown) => void) => listeners.push(fn),
+    byEvent,
+    on: (name: string, fn: (e: unknown) => void) => {
+      if (!byEvent.has(name)) byEvent.set(name, [])
+      byEvent.get(name)!.push(fn)
+    },
     off: vi.fn(),
     queryRenderedFeatures: () => hitLayerIds.map(id => ({ layer: { id } })),
-    click: () => listeners.forEach(fn => fn(event)),
+    click: () => byEvent.get('click')?.forEach(fn => fn(event)),
+    fire: (name: string) => byEvent.get(name)?.forEach(fn => fn(event)),
   }
 }
 
@@ -154,5 +158,61 @@ describe('MapClickManager', () => {
       expect(legacy).not.toHaveBeenCalled()
       expect(published.at(-1)?.map(e => e.id)).toEqual(['b1'])
     })
+  })
+})
+
+describe('MapClickManager dismissal and suspension', () => {
+  let published: PopupEntry[][]
+
+  beforeEach(() => { published = [] })
+
+  function managerFor(hitLayerIds: string[]) {
+    const map = makeMap(hitLayerIds)
+    const manager = new MapClickManager(map as never)
+    manager.onPopupStack(entries => published.push(entries))
+    manager.register('buildings', MapLayerClickPriority.BuildingLayersClickPriority,
+      () => [entry('b1', 'buildings', 1)])
+    return { map, manager }
+  }
+
+  it('drops the popup stack when the map is panned, orbited or zoomed under it', () => {
+    for (const moved of ['dragstart', 'rotatestart', 'pitchstart', 'zoomstart']) {
+      published = []
+      const { map } = managerFor(['buildings'])
+      map.click()
+      expect(published[published.length - 1]).toHaveLength(1)
+
+      map.fire(moved)
+
+      expect(published[published.length - 1], `${moved} should close the popovers`).toEqual([])
+    }
+  })
+
+  it('opens nothing while suspended, so a placement gesture reaches the map', () => {
+    const { map, manager } = managerFor(['buildings'])
+
+    manager.setSuspended(true)
+    map.click()
+
+    expect(published[published.length - 1]).toEqual([])
+  })
+
+  it('closes what was open the moment it is suspended', () => {
+    const { map, manager } = managerFor(['buildings'])
+    map.click()
+
+    manager.setSuspended(true)
+
+    expect(published[published.length - 1]).toEqual([])
+  })
+
+  it('answers clicks again once resumed', () => {
+    const { map, manager } = managerFor(['buildings'])
+    manager.setSuspended(true)
+
+    manager.setSuspended(false)
+    map.click()
+
+    expect(published[published.length - 1]).toHaveLength(1)
   })
 })

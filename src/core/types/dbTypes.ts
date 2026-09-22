@@ -201,6 +201,12 @@ export interface SensorType {
     maxColour: string;
 }
 
+/** A drawn building outline: a WGS84 GeoJSON Polygon, outer ring first, each ring closed. */
+export interface BuildingGeometry {
+    type: 'Polygon'
+    coordinates: [number, number][][]
+}
+
 export interface Building {
     id: number
     buildingEmail?: string
@@ -372,6 +378,7 @@ export interface Building {
     buildingWaterUseIntensity?: number
     buildingZoning?: string
     featureId?: string | null
+    buildingGeometry?: BuildingGeometry | null
     buildingParentSiteId?: number | null
 }
 

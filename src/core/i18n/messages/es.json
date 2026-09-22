@@ -129,20 +129,6 @@
   "AuthPage": {
     "footerText": "Desarrollado por Collab Digital Twins"
   },
-  "BimEditPosition": {
-    "editBimButton": "Editar posición BIM",
-    "editPositionTitle": "Editar posición BIM (arrastre el marcador)",
-    "longitude": "Longitud",
-    "latitude": "Latitud",
-    "rotation": "Rotación (°)",
-    "elevation": "Elevación (m)",
-    "save": "Guardar",
-    "saving": "Guardando...",
-    "positionAcceptedToast": "La nueva posición se ha guardado.",
-    "cancel": "Cancelar",
-    "saved": "¡Posición guardada!",
-    "editPositionTooltip": "Edite la posición, rotación y elevación de este modelo BIM"
-  },
   "BimLoadingState": {
     "openingText": "Abriendo visor BIM",
     "helpText": "Arrastre y suelte o seleccione cualquier archivo 3D: modelo BIM, nube de puntos o splat",
@@ -200,7 +186,9 @@
     "openBIMTitle": "Abrir menú de edificio",
     "OpenBIMViewerTitle": "Abrir visor BIM",
     "editBimButton": "Editar posición BIM",
-    "buildingIdRequired": "El ID del edificio es obligatorio para subir archivos."
+    "buildingIdRequired": "El ID del edificio es obligatorio para subir archivos.",
+    "noBimFile": "Este edificio aún no tiene un modelo BIM",
+    "bimFilesUnavailable": "No se pudieron cargar los archivos de este edificio"
   },
   "CameraSettings": {
     "title": "Configuración de la cámara",
@@ -510,18 +498,6 @@
     "toggleVisibility": "Toggle visibility",
     "chooseColor": "Choose color"
   },
-  "EditFilePosition": {
-    "editPositionTitle": "Editar posición del archivo (arrastre el marcador)",
-    "longitude": "Longitud",
-    "latitude": "Latitud",
-    "rotation": "Rotación (°)",
-    "elevation": "Elevación (m)",
-    "save": "Guardar",
-    "saving": "Guardando...",
-    "positionAcceptedToast": "La posición del archivo se ha guardado.",
-    "cancel": "Cancelar",
-    "saved": "¡Posición guardada!"
-  },
   "ElementList": {
     "selectedElements": "Elementos seleccionados"
   },
@@ -592,7 +568,8 @@
     "addModelTitle": "Añadir modelo 3D o splat",
     "pointCloudsTitle": "Nubes de puntos",
     "addPointCloudTitle": "Añadir nube de puntos",
-    "uploadingFile": "Subiendo..."
+    "uploadingFile": "Subiendo...",
+    "bimTitle": "BIM"
   },
   "FileMoreOptions": {
     "open": "Abrir menú",
@@ -639,7 +616,9 @@
     "toastSuccessUpFile": "archivo(s) subido(s) con éxito",
     "toastErrUpFile1": "Error al subir el archivo:",
     "toastErrUpFile2": "Ocurrió un error desconocido",
-    "uploadingFile": "Subiendo..."
+    "uploadingFile": "Subiendo...",
+    "modelsTitle": "Modelos",
+    "pointCloudsTitle": "Nubes de puntos"
   },
   "FileUpload": {
     "add": "Añadir archivo",
@@ -2079,7 +2058,14 @@
     "deleteFailed": "No se pudo eliminar \"{name}\"",
     "movedFile": "Se movió «{name}»",
     "rotatedFile": "Se rotó «{name}»",
-    "scaledFile": "Se escaló «{name}»"
+    "scaledFile": "Se escaló «{name}»",
+    "positionAcceptedToast": "La posición del archivo se ha guardado.",
+    "linkBuildingTitle": "¿Vincular con este edificio?",
+    "linkBuildingBody": "\"{file}\" se colocó sobre \"{building}\". Al vincularlo, el modelo queda archivado en ese edificio. Puede colocarlo sin vincular si pertenece a otro sitio.",
+    "linkBuildingConfirm": "Vincular",
+    "linkBuildingCancel": "No vincular",
+    "linkedToBuilding": "\"{file}\" se vinculó con \"{building}\"",
+    "linkFailed": "\"{file}\" se colocó, pero no se pudo vincular con \"{building}\""
   },
   "PointCloudSettings": {
     "title": "Nubes de puntos",

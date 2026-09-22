@@ -7,7 +7,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
-## [2026-09-21]
+## [2026-09-22]
 
 ### Added
 - `PlacementTarget.applyDrag(object)`, an optional hook a target implements when a gizmo drag

@@ -89,10 +89,11 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   entirely when that fetch failed. New `BuildingTools` keys: `noBimFile`, `bimFilesUnavailable`.
 - A finished link says so: "Linked …" on success, and a failure says the model was placed but not
   linked rather than passing in silence. New `Placement` keys: `linkedToBuilding`, `linkFailed`.
-- A right-click reaches a BIM model through its own geometry, the way it already reached a 3D
-  model: `hitTestLayerScene` and `ndcOfEvent` in `viewers/map/utils/layerRaycast` are the one
-  raycast both layers use. The BIM layer's invisible 40px squares at each model's anchor are gone —
-  a second model's square covered the first's, so its menu became unreachable.
+- A right-click reaches a BIM model through the model itself. The invisible 40px square at each
+  model's anchor is gone — a second model's square covered the first's, so that menu became
+  unreachable. A BIM model is picked by the fragments engine, which is the only thing that knows
+  its streamed geometry; `hitTestLayerScene` and `ndcOfEvent` in `viewers/map/utils/layerRaycast`
+  are the shared raycast for a plain 3D model.
 - A placement that lands on a building's footprint asks before it files the model under that
   building, in the dialog a delete uses. Linking is the default answer; declining places the model
   exactly where it was dropped and leaves it unattached. New `Placement` keys: `linkBuildingTitle`,

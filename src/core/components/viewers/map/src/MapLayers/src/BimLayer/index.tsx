@@ -12,9 +12,9 @@ import * as THREE from "three";
 
 import { BimContext, BuildingsContext, MapContext } from "../../../../../../../store";
 import { markerOcclusionProps } from "../../../../../../../utils/markerUtils";
-import { hitTestLayerScene, ndcOfEvent } from "../../../../utils/layerRaycast";
 import { writeModelMatrix } from "../../../../utils/modelMatrix";
 import { toggleBimToMap } from "../../../../utils/toggleBimToMap";
+import { syncGizmoCamera } from "../../../Placement/mapGizmoCamera";
 import { extractPositionAndRotation } from "../../../Placement/mapPlacementGeo";
 import { MapPlacementHost } from "../../../Placement/MapPlacementHost";
 import { MapPlacementMenu } from "../../../Placement/MapPlacementMenu";
@@ -46,7 +46,12 @@ export const BimLayer = () => {
 
     const addedLayersRef = React.useRef<Set<string>>(new Set());
     // What a right-click is tested against: the geometry itself, as the model layers draw it.
-    const hitTargetsRef = React.useRef<Record<string, { file: DbFile; camera: THREE.Camera; scene: THREE.Object3D }>>({});
+    const hitTargetsRef = React.useRef<Record<string, {
+        file: DbFile;
+        camera: THREE.PerspectiveCamera;
+        model: () => FRAGS.FragmentsModel | null;
+    }>>({});
+    const pickMouse = React.useRef(new THREE.Vector2());
     const prevModelsRef = React.useRef<Set<string>>(new Set());
 
     const sharedRef = React.useRef<{
@@ -248,6 +253,8 @@ export const BimLayer = () => {
             let onMapMove: () => void;
             let onMapMoveEnd: () => void;
             const renderCamera = new THREE.PerspectiveCamera();
+            // A real camera in the model's own space, which is what the fragments engine raycasts with.
+            const pickCamera = new THREE.PerspectiveCamera();
             const lodCamera    = new THREE.PerspectiveCamera();
             // Reused per-frame matrices/vectors — render() must not allocate.
             const _vp = new THREE.Matrix4();
@@ -267,7 +274,7 @@ export const BimLayer = () => {
                 onAdd(map, gl) {
                     scene.rotateY(originalRotation * (Math.PI / 180));
                     this.scene = scene;
-                    hitTargetsRef.current[bimFileKey] = { file: bimFile, camera: renderCamera, scene };
+                    hitTargetsRef.current[bimFileKey] = { file: bimFile, camera: pickCamera, model: () => model };
 
                     void loadModel(buildingModel, fragments, scene, map, lodCamera).then(loaded => {
                         model = loaded;
@@ -355,6 +362,8 @@ export const BimLayer = () => {
                     _vp.fromArray(args.defaultProjectionData.mainMatrix);
                     writeModelMatrix(_m, modelOrigin, modelAltitude).scale(_scaleVec);
                     renderCamera.projectionMatrix.multiplyMatrices(_vp, _m);   // VP × M, into the camera's own matrix
+                    const pickCanvas = map.getCanvas();
+                    syncGizmoCamera(pickCamera, renderCamera.projectionMatrix, pickCanvas.width / pickCanvas.height);
 
                     // camIFCPos = translation of (P⁻¹ · (VP×M))⁻¹
                     _p.fromArray(args.projectionMatrix).invert();              // _p = P⁻¹
@@ -443,15 +452,25 @@ export const BimLayer = () => {
 
         const handleContextMenu = (e: MouseEvent) => {
             if (e.target !== canvas) return;
+            const targets = Object.values(hitTargetsRef.current);
+            if (targets.length === 0) return;
 
-            const { ndcX, ndcY } = ndcOfEvent(e, canvas.getBoundingClientRect());
-            for (const target of Object.values(hitTargetsRef.current)) {
-                if (!hitTestLayerScene(target.camera, target.scene, ndcX, ndcY)) continue;
-                e.preventDefault();
-                e.stopPropagation();
-                openContextMenu({ x: e.clientX, y: e.clientY, item: { bimFile: target.file } });
-                return;
-            }
+            // The engine answers asynchronously, so the browser's own menu has to go before we know.
+            e.preventDefault();
+            e.stopPropagation();
+            pickMouse.current.set(e.clientX, e.clientY);
+
+            void (async () => {
+                for (const target of targets) {
+                    const model = target.model();
+                    const hit = model
+                        ? await model.raycast({ camera: target.camera, mouse: pickMouse.current, dom: canvas })
+                        : null;
+                    if (!hit) continue;
+                    openContextMenu({ x: e.clientX, y: e.clientY, item: { bimFile: target.file } });
+                    return;
+                }
+            })();
         };
 
         canvas.addEventListener("contextmenu", handleContextMenu, true);

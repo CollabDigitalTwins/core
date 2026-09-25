@@ -22,7 +22,7 @@ export interface MapPlacementRecord {
   lat: number
   elevation: number
   rotation: number
-  scale: number
+  fileScale: number
 }
 
 interface MercatorFrame {
@@ -60,7 +60,7 @@ export function placementToRecord(anchor: MapAnchor, placement: PointCloudPlacem
     lat: moved.lat,
     elevation: moved.elevation,
     rotation: placement.rotation[1] * RAD_TO_DEG,
-    scale: placement.scale,
+    fileScale: placement.scale,
   }
 }
 
@@ -76,7 +76,7 @@ export function recordToPlacement(anchor: MapAnchor, record: MapPlacementRecord)
       (target.y - frame.y) / frame.unit,
     ],
     rotation: [0, record.rotation * DEG_TO_RAD, 0],
-    scale: record.scale,
+    scale: record.fileScale,
     sourceUp: 'y',
   }
 }

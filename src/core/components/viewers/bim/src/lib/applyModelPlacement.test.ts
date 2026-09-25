@@ -10,7 +10,7 @@ describe('applyModelPlacement', () => {
   it('moves the model to its stored coordinates', () => {
     const object = new THREE.Object3D()
 
-    applyModelPlacement(object, { x: 1, y: 2, z: 3, bimRotation: null })
+    applyModelPlacement(object, { fileTransformX: 1, fileTransformY: 2, fileTransformZ: 3, fileRotationY: null })
 
     expect(object.position.toArray()).toEqual([1, 2, 3])
   })
@@ -19,7 +19,7 @@ describe('applyModelPlacement', () => {
     const object = new THREE.Object3D()
     object.position.set(9, 9, 9)
 
-    applyModelPlacement(object, { x: null, y: null, z: null, bimRotation: null })
+    applyModelPlacement(object, { fileTransformX: null, fileTransformY: null, fileTransformZ: null, fileRotationY: null })
 
     expect(object.position.toArray()).toEqual([0, 0, 0])
   })
@@ -27,7 +27,7 @@ describe('applyModelPlacement', () => {
   it('applies the yaw stored for the BIM scene', () => {
     const object = new THREE.Object3D()
 
-    applyModelPlacement(object, { x: 0, y: 0, z: 0, bimRotation: Math.PI / 2 })
+    applyModelPlacement(object, { fileTransformX: 0, fileTransformY: 0, fileTransformZ: 0, fileRotationY: Math.PI / 2 })
 
     expect(object.rotation.y).toBeCloseTo(Math.PI / 2)
   })
@@ -36,7 +36,7 @@ describe('applyModelPlacement', () => {
     const object = new THREE.Object3D()
     object.rotation.y = 0.5
 
-    applyModelPlacement(object, { x: 0, y: 0, z: 0, bimRotation: null })
+    applyModelPlacement(object, { fileTransformX: 0, fileTransformY: 0, fileTransformZ: 0, fileRotationY: null })
 
     expect(object.rotation.y).toBe(0.5)
   })
@@ -45,7 +45,7 @@ describe('applyModelPlacement', () => {
     const object = new THREE.Object3D()
     const update = vi.spyOn(object, 'updateMatrixWorld')
 
-    applyModelPlacement(object, { x: 1, y: 0, z: 0, bimRotation: null })
+    applyModelPlacement(object, { fileTransformX: 1, fileTransformY: 0, fileTransformZ: 0, fileRotationY: null })
 
     expect(update).toHaveBeenCalledWith(true)
   })

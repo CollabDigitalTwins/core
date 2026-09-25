@@ -50,7 +50,7 @@ describe('useModelTarget', () => {
 
     await act(() => target.commit({ ...DEFAULT_PLACEMENT, position: [1, 2, 3], rotation: [0, 0.5, 0] }))
 
-    expect(fileHooks.updateFile).toHaveBeenCalledWith({ x: 1, y: 2, z: 3, bimRotation: 0.5 })
+    expect(fileHooks.updateFile).toHaveBeenCalledWith({ fileTransformX: 1, fileTransformY: 2, fileTransformZ: 3, fileRotationY: 0.5 })
   })
 
   it('keeps the in-memory file in step, so the row does not flicker', async () => {
@@ -58,8 +58,8 @@ describe('useModelTarget', () => {
 
     await act(() => target.commit({ ...DEFAULT_PLACEMENT, position: [4, 5, 6] }))
 
-    expect(file.x).toBe(4)
-    expect(file.z).toBe(6)
+    expect(file.fileTransformX).toBe(4)
+    expect(file.fileTransformZ).toBe(6)
   })
 
   it('drives the object it was given', () => {

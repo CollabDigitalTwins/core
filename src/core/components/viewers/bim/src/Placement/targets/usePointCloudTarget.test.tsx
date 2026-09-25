@@ -8,7 +8,7 @@ import * as THREE from 'three'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DEFAULT_PLACEMENT } from '../../../../shared/pointcloud/pointCloudPlacement'
-import { PLACEMENT_VERSION } from '../../PointClouds/pointCloudPlacementStore'
+import { placementPatch } from '../../PointClouds/pointCloudPlacementStore'
 
 import { usePointCloudTarget } from './usePointCloudTarget'
 
@@ -63,13 +63,11 @@ describe('usePointCloudTarget', () => {
 
     await act(() => target.commit({ ...PLACED }))
 
-    expect(fileHooks.updateFile).toHaveBeenCalledWith({
-      pointCloudTransform: { version: PLACEMENT_VERSION, ...PLACED },
-    })
+    expect(fileHooks.updateFile).toHaveBeenCalledWith(placementPatch(PLACED))
   })
 
   it('writes nothing when the committed placement matches what is stored', async () => {
-    const stored = { id: 669, name: 'scan', pointCloudTransform: { version: PLACEMENT_VERSION, ...PLACED } }
+    const stored = { id: 669, name: 'scan', ...placementPatch(PLACED) }
     const { target } = setUp(stored)
 
     await act(() => target.commit({ ...PLACED }))
@@ -94,7 +92,7 @@ describe('usePointCloudTarget', () => {
   })
 
   it('writes nothing when the placement did not actually change', async () => {
-    const stored = { id: 669, name: 'scan', pointCloudTransform: { version: PLACEMENT_VERSION, ...PLACED } }
+    const stored = { id: 669, name: 'scan', ...placementPatch(PLACED) }
     const { target } = setUp(stored)
 
     await act(() => target.commit({ ...PLACED }))
@@ -107,6 +105,6 @@ describe('usePointCloudTarget', () => {
 
     await act(() => target.commit({ ...PLACED }))
 
-    expect(file.pointCloudTransform).toEqual({ version: PLACEMENT_VERSION, ...PLACED })
+    expect(file).toMatchObject(placementPatch(PLACED))
   })
 })

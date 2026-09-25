@@ -81,13 +81,13 @@ describe('placementToRecord / recordToPlacement', () => {
   })
 
   it('returns a Y-up placement because the map scene is Y-up', () => {
-    const back = recordToPlacement(OTTAWA, { ...OTTAWA, rotation: 0, scale: 1 })
+    const back = recordToPlacement(OTTAWA, { ...OTTAWA, rotation: 0, fileScale: 1 })
 
     expect(back.sourceUp).toBe('y')
   })
 
   it('carries scale through unchanged', () => {
-    expect(placementToRecord(OTTAWA, placement([0, 0, 0], [0, 0, 0], 3.25)).scale).toBe(3.25)
+    expect(placementToRecord(OTTAWA, placement([0, 0, 0], [0, 0, 0], 3.25)).fileScale).toBe(3.25)
   })
 })
 

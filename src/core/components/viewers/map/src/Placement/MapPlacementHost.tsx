@@ -79,7 +79,7 @@ export function MapPlacementHost({ file, mode, is3D, anchor, rotation, preview, 
   const stored = React.useRef({ rotation: 0, scale: 1 })
   stored.current = {
     rotation: (rotation ?? file?.rotation ?? 0) * DEG_TO_RAD,
-    scale: file?.scale ?? 1,
+    scale: file?.fileScale ?? 1,
   }
 
   React.useEffect(() => rollbackOnFailure(core, () => {

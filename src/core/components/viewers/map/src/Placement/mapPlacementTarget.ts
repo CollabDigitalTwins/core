@@ -118,7 +118,7 @@ export function mapPlacementTarget({
         elevation: next.elevation,
         rotation: placement.rotation[1] * (180 / Math.PI),
       }
-      if (capabilities.scale) patch.scale = placement.scale
+      if (capabilities.scale) patch.fileScale = placement.scale
       await updateFile(patch)
     },
   }

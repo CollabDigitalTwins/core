@@ -6,6 +6,8 @@ import { getFileExtension } from '../../utils/utils'
 import { getAttachmentFieldName } from '../viewers/Data/details/getAttachmentFileName'
 import { uploadFileWithProgress } from '../viewers/map/src/tools/AddTools/AddFile/utils/uploadToPresignedURLS'
 
+import type { SourceUpAxis } from '../../types/dbTypes'
+
 interface UploadFileArgs {
   // Support both single and multiple files; prefer `files` when passing many
   file?: File
@@ -29,7 +31,7 @@ interface UploadFileArgs {
   recordType?: string
   onProgress?: (percent: number) => void
   existingNames?: string[]
-  pointCloudTransform?: unknown
+  sourceUp?: SourceUpAxis
 }
 
 export async function uploadFile({
@@ -52,7 +54,7 @@ export async function uploadFile({
   recordType,
   onProgress,
   existingNames,
-  pointCloudTransform,
+  sourceUp,
 }: UploadFileArgs) {
   if (!file && (!files || files.length === 0)) return null
 
@@ -98,16 +100,16 @@ export async function uploadFile({
       ...attachment,
       fileOrganizationId: user?.organizationId || null,
       position: JSON.stringify(position) || null,
-      x,
-      y,
-      z,
+      fileTransformX: x,
+      fileTransformY: y,
+      fileTransformZ: z,
       lat,
       lng,
       elevation,
       rotation,
-      scale,
+      fileScale: scale,
+      fileSourceUp: sourceUp,
       isVisible: isVisible ?? false,
-      ...(pointCloudTransform === undefined ? {} : { pointCloudTransform }),
     }
 
     const result = await uploadFile({ fileData, buildingId })

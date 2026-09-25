@@ -76,7 +76,7 @@ describe('mapPlacementTarget', () => {
       lat: 45.43,
       elevation: 80,
       rotation: 90,
-      scale: 2,
+      fileScale: 2,
     })
   })
 
@@ -95,7 +95,7 @@ describe('mapPlacementTarget', () => {
 
     await target.commit({ position: anchorToPosition(ANCHOR), rotation: [0, 0, 0], scale: 5, sourceUp: 'y' })
 
-    expect(updateFile.mock.calls[0][0]).not.toHaveProperty('scale')
+    expect(updateFile.mock.calls[0][0]).not.toHaveProperty('fileScale')
   })
 
   it('round-trips an anchor through the position ordering the card reads', () => {
@@ -237,9 +237,9 @@ describe('a target for a file that is already placed', () => {
 
     await target.commit(target.read())
 
-    const patch = updateFile.mock.calls[0][0] as { rotation: number, scale: number }
+    const patch = updateFile.mock.calls[0][0] as { rotation: number, fileScale: number }
     expect(patch.rotation).toBeCloseTo(60, 9)
-    expect(patch.scale).toBeCloseTo(2, 9)
+    expect(patch.fileScale).toBeCloseTo(2, 9)
   })
 })
 

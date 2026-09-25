@@ -11,9 +11,9 @@ import { typeOfFile } from '../../../ui/FilesManager/src/fileType'
 import { beginTask, endTask, updateTask } from '../../../ui/FilesManager/src/uploadProgress'
 import { useUploadLabels } from '../../../ui/FilesManager/src/UploadProgressBar'
 import { uploadFile as performUploadFile } from '../../../ui/uploadFile'
-import { placementPatch as splatPlacementPatch } from '../pointcloud/pointCloudPlacementStore'
 import { DEFAULT_SPLAT_PLACEMENT } from '../splat/splatUpAxis'
 
+import type { SourceUpAxis } from '../../../../types/dbTypes'
 import type { FileType } from '../../../ui/FilesManager/src/fileType'
 
 /** Where a freshly uploaded file lands: scene metres in a 3D viewer, degrees on the map. */
@@ -102,8 +102,9 @@ export function useFileIntake({
       }
 
       updateTask(taskId, { phase: 'uploading', label: labelFor('uploading', name), progress: 0 })
-      // A splat placed in scene space carries its transform in a blob; on the map it is geolocated.
+      // A splat placed in scene space gets a scene transform; on the map it is geolocated.
       const splatInScene = fileType === 'splat-file' && at?.x !== undefined
+      const splatScale = splatInScene ? at?.scale ?? DEFAULT_SPLAT_PLACEMENT.scale : undefined
       const result = await performUploadFile({
         file: toUpload,
         buildingId,
@@ -119,15 +120,8 @@ export function useFileIntake({
         lng: at?.lng,
         elevation: at?.elevation,
         rotation: at?.rotation,
-        // A splat carries its scale inside the transform, so `File.scale` stays null for one.
-        scale: fileType === 'splat-file' ? undefined : at?.scale,
-        pointCloudTransform: splatInScene
-          ? splatPlacementPatch({
-            ...DEFAULT_SPLAT_PLACEMENT,
-            position: [at!.x!, at!.y!, at!.z!],
-            scale: at?.scale ?? DEFAULT_SPLAT_PLACEMENT.scale,
-          }).pointCloudTransform
-          : undefined,
+        scale: fileType === 'splat-file' ? splatScale : at?.scale,
+        sourceUp: splatInScene ? DEFAULT_SPLAT_PLACEMENT.sourceUp as SourceUpAxis : undefined,
         onProgress: progress => updateTask(taskId, { progress }),
         existingNames: namesRef.current,
       })

@@ -24,6 +24,9 @@ export enum SiteLandUse { Residential = 'Residential', Industry_And_Business = '
 export enum SiteProjectPhase { Inception_Phase = 'Inception_Phase', Conceptualization_Phase = 'Conceptualization_Phase', Criteria_Definition_Phase = 'Criteria_Definition_Phase', Design_Phase = 'Design_Phase', Coordination_Phase = 'Coordination_Phase', Implementation_Phase = 'Implementation_Phase', Handover_Phase = 'Handover_Phase', Operations_Phase = 'Operations_Phase' }
 export enum SiteProjectType { Modification = 'Modification', New_Build = 'New_Build', Renovation = 'Renovation', Repair = 'Repair', Operation_Maintenance = 'Operation_Maintenance', Retrofit = 'Retrofit' }
 export enum DatasetGroup { Organizational = 'Organizational', Municipal = 'Municipal', National = 'National', Provincial = 'Provincial' }
+export enum DatasetProvider { evergreen = 'evergreen' }
+export enum SourceUpAxis { y = 'y', z = 'z' }
+export enum GeoreferenceSource { ifc = 'ifc', lasHeader = 'lasHeader', manual = 'manual' }
 export enum DataManagementSystem { Ckan = 'Ckan', Arcgis = 'Arcgis', Opendatasoft = 'Opendatasoft', Socrata = 'Socrata', Other = 'Other' }
 export enum ViewerNames { auth = 'auth', map = 'map', bim = 'bim', buildings = 'buildings', sites = 'sites', files = 'files', land = 'land', infrastructure = 'infrastructure', extensions = 'extensions', settings = 'settings', users = 'users' }
 /**
@@ -395,15 +398,21 @@ export interface DbFile {
     description?: string | null
     tag?: string | null
     position?: Position
+    /** @deprecated Use `fileTransformX`; kept until the column is dropped. */
     x?: number | null
+    /** @deprecated Use `fileTransformY`. */
     y?: number | null
+    /** @deprecated Use `fileTransformZ`. */
     z?: number | null
     lat?: number | null
     lng?: number | null
     elevation?: number | null
     rotation?: number | null
+    /** @deprecated Use `fileRotationY`. */
     bimRotation?: number | null
+    /** @deprecated Use the `fileTransform*`, `fileRotation*`, `fileScale` and `fileSourceUp` fields. */
     pointCloudTransform?: unknown
+    /** @deprecated Use `fileScale`. */
     scale?: number | null
     isVisible?: boolean
     lazFileKey?: string | null
@@ -412,6 +421,26 @@ export interface DbFile {
     pointCloudUploaded?: boolean | null
     pointCloudPotreeConverted?: boolean | null
     bucket?: string | null
+    fileTransformX?: number | null
+    fileTransformY?: number | null
+    fileTransformZ?: number | null
+    fileRotationX?: number | null
+    fileRotationY?: number | null
+    fileRotationZ?: number | null
+    fileScale?: number | null
+    fileSourceUp?: SourceUpAxis | null
+    fileProjectedCRS?: string | null
+    sourceProj4Def?: string | null
+    mapConversionEastings?: number | null
+    mapConversionNorthings?: number | null
+    mapConversionOrthogonalHeight?: number | null
+    mapConversionXAxisAbscissa?: number | null
+    mapConversionXAxisOrdinate?: number | null
+    mapConversionScale?: number | null
+    pointCloudProjection?: string | null
+    georeferenceSource?: GeoreferenceSource | null
+    datasetProvider?: DatasetProvider | null
+    datasetSource?: string | null
     fileCommentId?: number | null
     fileOrganizationId: number
     attachedFilesBuildingId?: number | null

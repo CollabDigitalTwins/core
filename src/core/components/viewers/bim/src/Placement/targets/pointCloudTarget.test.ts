@@ -5,7 +5,6 @@ import * as THREE from 'three'
 import { describe, expect, it, vi } from 'vitest'
 
 import { DEFAULT_PLACEMENT } from '../../../../shared/pointcloud/pointCloudPlacement'
-import { PLACEMENT_VERSION } from '../../PointClouds/pointCloudPlacementStore'
 
 import { pointCloudTarget } from './pointCloudTarget'
 
@@ -78,13 +77,12 @@ describe('pointCloudTarget', () => {
 
     await target.commit({ ...DEFAULT_PLACEMENT, position: [1, 1, 1], scale: 2 })
 
-    expect(updateFile).toHaveBeenCalledWith({
-      pointCloudTransform: expect.objectContaining({
-        version: PLACEMENT_VERSION,
-        position: [1, 1, 1],
-        scale: 2,
-      }),
-    })
+    expect(updateFile).toHaveBeenCalledWith(expect.objectContaining({
+      fileTransformX: 1,
+      fileTransformY: 1,
+      fileTransformZ: 1,
+      fileScale: 2,
+    }))
   })
   it('skips the write when nothing actually moved', async () => {
     const clouds = stubClouds()

@@ -22,6 +22,14 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   (`GeoreferenceSource`), `datasetProvider` (`DatasetProvider`) and `datasetSource`. The existing `x/y/z`,
   `bimRotation`, `scale` and `pointCloudTransform` fields are unchanged.
 - Enums `DatasetProvider`, `SourceUpAxis` and `GeoreferenceSource`, also exported from `@collabdt/core/core/types`.
+- `DbFile.countrySubdivision` (ISO 3166-2, e.g. `CA-NS`) and `DbFile.municipality`, both optional.
+  An organizational dataset row that sets them fills the dataset's `countrySubdivision` and `municipality`,
+  so the Layers tab's Subdivision and Municipality filters apply to it.
+- `Dataset.viewport` (`DatasetViewport`, `{ minZoom }`, also exported from `@collabdt/core/core/types`) marks a
+  dataset too large to load whole. The map fetches it per view with `getFeatures({ bbox, zoom })` after every
+  settled pan or zoom, fetches nothing below `minZoom`, and shows a short "zoom in" or load-error toast. An
+  organizational dataset row opts in with `minZoom` in its description JSON; its URL then gets `?bbox=w,s,e,n`.
+- i18n namespace `ViewportDatasetNotice` (`zoomIn`, `loadFailed`) in en, es and fr.
 - `viewers/shared/placement/fileTransform`: `readFileTransform`, `fileTransformPatch`, `hasFileTransform` and
   `FileTransformColumns`, the one mapping between a scene placement and the transform columns.
 

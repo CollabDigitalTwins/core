@@ -83,6 +83,32 @@ describe('fetchOrganizationalMinioDatasets', () => {
     expect(ds.organization).toBe(42)
   })
 
+  it('reads the subdivision and municipality filters from the row', async () => {
+    mockFilesFetch([
+      { ...validRow, countrySubdivision: 'CA-NS', municipality: 'Halifax' },
+      { ...validRow, id: 2 },
+    ])
+    const datasets = await fetchOrganizationalMinioDatasets(42)
+    expect(datasets.map(ds => [ds.countrySubdivision, ds.municipality])).toEqual([['CA-NS', 'Halifax'], ['', '']])
+  })
+
+  it('fetches a row with a minZoom per view, adding the bbox to its URL', async () => {
+    const row = { ...validRow, url: '/api/datasets/evergreen/9', description: JSON.stringify({ geometryType: 'points', minZoom: 13 }) }
+    mockFilesFetch([row])
+    const [ds] = await fetchOrganizationalMinioDatasets(42)
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ type: 'FeatureCollection', features: [] }) })
+    global.fetch = fetchMock as unknown as typeof fetch
+
+    await ds.getFeatures({ bbox: [-63.6, 44.6, -63.5, 44.7], zoom: 14 })
+    await ds.getFeatures({ bbox: [-63.7, 44.6, -63.6, 44.7], zoom: 14 })
+
+    expect(ds.viewport).toEqual({ minZoom: 13 })
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      '/api/datasets/evergreen/9?bbox=-63.600000,44.600000,-63.500000,44.700000',
+      '/api/datasets/evergreen/9?bbox=-63.700000,44.600000,-63.600000,44.700000',
+    ])
+  })
+
   it('strips .geojson from the name and falls back to "Dataset {id}"', async () => {
     mockFilesFetch([
       validRow,

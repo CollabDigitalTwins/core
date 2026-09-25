@@ -441,6 +441,8 @@ export interface DbFile {
     georeferenceSource?: GeoreferenceSource | null
     datasetProvider?: DatasetProvider | null
     datasetSource?: string | null
+    countrySubdivision?: string | null
+    municipality?: string | null
     fileCommentId?: number | null
     fileOrganizationId: number
     attachedFilesBuildingId?: number | null

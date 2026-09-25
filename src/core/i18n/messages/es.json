@@ -910,6 +910,10 @@
     "showing": "Mostrando",
     "properties": "propiedades"
   },
+  "ViewportDatasetNotice": {
+    "zoomIn": "Acerque el mapa para ver este conjunto de datos.",
+    "loadFailed": "No se pudo cargar este conjunto de datos: {reason}"
+  },
   "OrganizationConfig": {
     "title": "Configuración de la organización",
     "description": "Configure su organización",

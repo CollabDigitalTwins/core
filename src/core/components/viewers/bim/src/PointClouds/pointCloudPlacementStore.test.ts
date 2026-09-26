@@ -3,35 +3,37 @@
 
 import { describe, expect, it } from 'vitest'
 
+import { SourceUpAxis } from '../../../../../types/dbTypes'
 import { DEFAULT_PLACEMENT } from '../../../shared/pointcloud/pointCloudPlacement'
 
+import { placementPatch, readPlacement, samePlacement } from './pointCloudPlacementStore'
 
-import { placementPatch, PLACEMENT_VERSION, readPlacement, samePlacement } from './pointCloudPlacementStore'
-
-import type { DbFile } from '../../../../../types/dbTypes'
 import type { PointCloudPlacement } from '../../../shared/pointcloud/pointCloudPlacement'
 
-const file = (pointCloudTransform: unknown) => ({ pointCloudTransform } as Pick<DbFile, 'pointCloudTransform'>)
-
 const PLACED: PointCloudPlacement = { position: [1, 2, 3], rotation: [0, 0.5, 0], scale: 2, sourceUp: 'z' }
+const PLACED_COLUMNS = {
+  fileTransformX: 1,
+  fileTransformY: 2,
+  fileTransformZ: 3,
+  fileRotationX: 0,
+  fileRotationY: 0.5,
+  fileRotationZ: 0,
+  fileScale: 2,
+  fileSourceUp: SourceUpAxis.z,
+}
 
 describe('readPlacement', () => {
-  it('reads a stored placement back', () => {
-    expect(readPlacement(file({ version: 1, ...PLACED }))).toEqual(PLACED)
+  it('reads a stored placement back from the typed columns', () => {
+    expect(readPlacement(PLACED_COLUMNS)).toEqual(PLACED)
   })
 
-  it('accepts the blob as a JSON string, which is how some drivers hand back Json columns', () => {
-    expect(readPlacement(file(JSON.stringify(PLACED)))).toEqual(PLACED)
-  })
-
-  it('falls back to the default for a null column, a missing file or unparseable text', () => {
-    expect(readPlacement(file(null))).toEqual(DEFAULT_PLACEMENT)
+  it('falls back to the default for empty columns or a missing file', () => {
+    expect(readPlacement({})).toEqual(DEFAULT_PLACEMENT)
     expect(readPlacement(undefined)).toEqual(DEFAULT_PLACEMENT)
-    expect(readPlacement(file('not json'))).toEqual(DEFAULT_PLACEMENT)
   })
 
-  it('keeps the fields it understands when the blob is partly wrong', () => {
-    const read = readPlacement(file({ position: [4, 5, 6], rotation: 'nope', scale: -1 }))
+  it('keeps the columns it understands when others are null or invalid', () => {
+    const read = readPlacement({ fileTransformX: 4, fileTransformY: 5, fileTransformZ: 6, fileRotationY: null, fileScale: -1 })
 
     expect(read.position).toEqual([4, 5, 6])
     expect(read.rotation).toEqual(DEFAULT_PLACEMENT.rotation)
@@ -40,22 +42,19 @@ describe('readPlacement', () => {
 })
 
 describe('placementPatch', () => {
-  it('stamps a version so a later format can be told apart', () => {
-    expect(placementPatch({ ...PLACED })).toEqual({
-      pointCloudTransform: { version: PLACEMENT_VERSION, ...PLACED },
-    })
+  it('writes every transform column', () => {
+    expect(placementPatch({ ...PLACED })).toEqual(PLACED_COLUMNS)
   })
 
   it('round-trips through readPlacement', () => {
-    const patch = placementPatch({ ...PLACED })
-    expect(readPlacement(file(patch.pointCloudTransform))).toEqual(PLACED)
+    expect(readPlacement(placementPatch({ ...PLACED }))).toEqual(PLACED)
   })
 })
 
 describe('samePlacement', () => {
   it('matches an untouched placement so a no-op alignment writes nothing', () => {
     expect(samePlacement({ ...DEFAULT_PLACEMENT }, { ...DEFAULT_PLACEMENT })).toBe(true)
-    expect(samePlacement({ ...PLACED }, readPlacement(file({ version: 1, ...PLACED })))).toBe(true)
+    expect(samePlacement({ ...PLACED }, readPlacement(PLACED_COLUMNS))).toBe(true)
   })
 
   it('separates placements that differ in any field', () => {

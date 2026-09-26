@@ -90,7 +90,7 @@ export const FileModelLayer = ({
         updated.lng !== model.file.lng ||
         updated.rotation !== model.file.rotation ||
         updated.elevation !== model.file.elevation ||
-        updated.scale !== model.file.scale
+        updated.fileScale !== model.file.fileScale
       )
     })
 

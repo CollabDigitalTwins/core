@@ -15,7 +15,7 @@ export interface ViewerLocation {
     label: string
     /**
      * Degrees the map places the site at, from `building.rotation`. This is the only link between
-     * the model and geographic north; `bimRotation` is project north and never contributes.
+     * the model and geographic north; `fileRotationY` is project north and never contributes.
      */
     northOffset: number
 }

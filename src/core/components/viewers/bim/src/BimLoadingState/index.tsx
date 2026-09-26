@@ -198,7 +198,7 @@ export function BimLoadingState() {
       try {
         await loadModels.load(bimFile.url, bimFile.name)
         loaded.push(bimFile)
-        if ((bimFile.x != null || bimFile.y != null || bimFile.z != null) && fragments) {
+        if ((bimFile.fileTransformX != null || bimFile.fileTransformY != null || bimFile.fileTransformZ != null) && fragments) {
           const fragModel = fragments.core.models.list.get(bimFile.name)
           if (fragModel) applyModelPlacement(fragModel.object, bimFile)
         }

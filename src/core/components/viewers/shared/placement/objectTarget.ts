@@ -62,8 +62,8 @@ export function objectTarget({
     },
     commit: async (placement) => {
       const [x, y, z] = placement.position
-      const patch: Partial<DbFile> = { x, y, z, bimRotation: placement.rotation[1] }
-      if (capabilities.scale) patch.scale = placement.scale
+      const patch: Partial<DbFile> = { fileTransformX: x, fileTransformY: y, fileTransformZ: z, fileRotationY: placement.rotation[1] }
+      if (capabilities.scale) patch.fileScale = placement.scale
       await updateFile(patch)
     },
   }

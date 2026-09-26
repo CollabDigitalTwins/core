@@ -68,12 +68,12 @@ describe('objectTarget', () => {
     expect(target.bounds()?.x).toBeCloseTo(3)
   })
 
-  it('commits position and yaw as typed columns, never a transform blob', async () => {
+  it('commits position and yaw as typed columns, never the legacy columns', async () => {
     const { target, updateFile } = setUp()
 
     await target.commit({ ...DEFAULT_PLACEMENT, position: [1, 2, 3], rotation: [0, 0.8, 0] })
 
-    expect(updateFile).toHaveBeenCalledWith({ x: 1, y: 2, z: 3, bimRotation: 0.8 })
+    expect(updateFile).toHaveBeenCalledWith({ fileTransformX: 1, fileTransformY: 2, fileTransformZ: 3, fileRotationY: 0.8 })
   })
 
   it('sends no scale for a target that cannot be scaled', async () => {
@@ -81,7 +81,7 @@ describe('objectTarget', () => {
 
     await target.commit({ ...DEFAULT_PLACEMENT, scale: 3 })
 
-    expect(updateFile.mock.calls[0][0]).not.toHaveProperty('scale')
+    expect(updateFile.mock.calls[0][0]).not.toHaveProperty('fileScale')
   })
 })
 
@@ -122,7 +122,7 @@ describe('objectTarget for a scalable object', () => {
 
     await target.commit({ ...DEFAULT_PLACEMENT, position: [1, 2, 3], rotation: [0, 0.8, 0], scale: 2.5 })
 
-    expect(updateFile).toHaveBeenCalledWith({ x: 1, y: 2, z: 3, bimRotation: 0.8, scale: 2.5 })
+    expect(updateFile).toHaveBeenCalledWith({ fileTransformX: 1, fileTransformY: 2, fileTransformZ: 3, fileRotationY: 0.8, fileScale: 2.5 })
   })
 
   it('leaves a yaw-only target at scale 1, so nothing shifts under it', () => {

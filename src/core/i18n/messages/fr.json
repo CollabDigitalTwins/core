@@ -910,6 +910,10 @@
     "showing": "Affichage de",
     "properties": "propriétés"
   },
+  "ViewportDatasetNotice": {
+    "zoomIn": "Zoomez pour voir ce jeu de données.",
+    "loadFailed": "Impossible de charger ce jeu de données : {reason}"
+  },
   "OrganizationConfig": {
     "title": "Configuration de l’organisation",
     "description": "Configurez votre organisation",

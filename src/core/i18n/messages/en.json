@@ -910,6 +910,10 @@
     "showing": "Showing",
     "properties": "properties"
   },
+  "ViewportDatasetNotice": {
+    "zoomIn": "Zoom in to see this dataset.",
+    "loadFailed": "Could not load this dataset: {reason}"
+  },
   "OrganizationConfig": {
     "title": "Organization Setup",
     "description": "Set up your organization",

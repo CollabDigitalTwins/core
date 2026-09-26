@@ -251,7 +251,7 @@ export const CustomModelLayer = (
 
         const fileScale = (isEditing && tempScalesRef?.current[modelFileKey] !== undefined)
           ? tempScalesRef.current[modelFileKey]
-          : (modelFile.scale ?? 1)
+          : (modelFile.fileScale ?? 1)
 
         _m.fromArray(args.defaultProjectionData.mainMatrix)
         writeModelMatrix(_l, modelOrigin, altitude).scale(_scaleVec.setScalar(fileScale))

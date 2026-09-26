@@ -6,6 +6,8 @@
 import { act, renderHook } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
+import { DEFAULT_SPLAT_PLACEMENT } from '../../../shared/splat/splatUpAxis'
+
 import { useBimFileIntake } from './useBimFileIntake'
 
 vi.mock('next-intl', () => ({ useTranslations: () => (key: string) => key }))
@@ -88,28 +90,29 @@ describe('useBimFileIntake', () => {
     expect(result.current.needsPlacement(new File([''], 'scan.ply'))).toBe(true)
   })
 
-  it('persists a placed splat into pointCloudTransform, not x/y/z', async () => {
+  it('places a splat with its own up axis', async () => {
     vi.mocked(uploadFile).mockClear()
     const { result } = renderHook(() => useBimFileIntake(options))
     await act(async () => {
       await result.current.submit(new File([''], 'scan.spz'), { x: 1, y: 2, z: 3 } as never)
     })
-    const sent = vi.mocked(uploadFile).mock.calls[0][0] as { pointCloudTransform?: { position?: number[] } }
-    expect(sent.pointCloudTransform?.position).toEqual([1, 2, 3])
+    const sent = vi.mocked(uploadFile).mock.calls[0][0] as { x?: number, y?: number, z?: number, sourceUp?: string }
+    expect([sent.x, sent.y, sent.z]).toEqual([1, 2, 3])
+    expect(sent.sourceUp).toBe(DEFAULT_SPLAT_PLACEMENT.sourceUp)
   })
 
-  it('leaves pointCloudTransform unset for a model, which uses x/y/z', async () => {
+  it('sends no up axis for a model', async () => {
     vi.mocked(uploadFile).mockClear()
     const { result } = renderHook(() => useBimFileIntake(options))
     await act(async () => {
       await result.current.submit(new File([''], 'model.glb'), { x: 1, y: 2, z: 3 } as never)
     })
-    const sent = vi.mocked(uploadFile).mock.calls[0][0] as { pointCloudTransform?: unknown, x?: number }
-    expect(sent.pointCloudTransform).toBeUndefined()
+    const sent = vi.mocked(uploadFile).mock.calls[0][0] as { sourceUp?: unknown, x?: number }
+    expect(sent.sourceUp).toBeUndefined()
     expect(sent.x).toBe(1)
   })
 
-  it('saves a model placed at a scale into the scale column', async () => {
+  it('saves a model placed at a scale as its fileScale', async () => {
     vi.mocked(uploadFile).mockClear()
     const { result } = renderHook(() => useBimFileIntake(options))
     await act(async () => {
@@ -127,17 +130,12 @@ describe('useBimFileIntake', () => {
     expect((vi.mocked(uploadFile).mock.calls[0][0] as { scale?: number }).scale).toBe(0.001)
   })
 
-  it('keeps a splat scale inside its transform, leaving the column null', async () => {
+  it('saves a placed splat scale', async () => {
     vi.mocked(uploadFile).mockClear()
     const { result } = renderHook(() => useBimFileIntake(options))
     await act(async () => {
       await result.current.submit(new File([''], 'scan.spz'), { x: 1, y: 2, z: 3 } as never, 4)
     })
-    const sent = vi.mocked(uploadFile).mock.calls[0][0] as {
-      scale?: number
-      pointCloudTransform?: { scale?: number }
-    }
-    expect(sent.scale).toBeUndefined()
-    expect(sent.pointCloudTransform?.scale).toBe(4)
+    expect((vi.mocked(uploadFile).mock.calls[0][0] as { scale?: number }).scale).toBe(4)
   })
 })

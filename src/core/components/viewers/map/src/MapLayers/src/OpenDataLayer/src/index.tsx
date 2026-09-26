@@ -17,6 +17,8 @@ import { MapLayerClickPriority } from "../../../../../utils/MapEventManager/MapC
 import MapFeaturePopoverMenu from "../../../../MapFeaturePopoverMenu";
 
 import { groupFeaturesByGeometry } from "./geometryGroups";
+import { useDatasetFeatures } from "./useDatasetFeatures";
+import { useViewportDatasetToast } from "./useViewportDatasetToast";
 import { WmsTimeControl } from "./WmsTimeControl";
 
 import type { Building } from '../../../../../../../../types/dbTypes';
@@ -67,6 +69,15 @@ const computeMinMax = (
 //   • unmounting a dataset cancels only ITS fetch
 //   • re-renders of one dataset never cancel fetches for another
 
+// Resolved in an effect so the slot MapViewer renders exists before anything portals into it.
+function useOverlaySlot(enabled: boolean): HTMLElement | null {
+    const [slot, setSlot] = React.useState<HTMLElement | null>(null);
+    React.useEffect(() => {
+        setSlot(enabled ? document.getElementById('wms-time-slot') : null);
+    }, [enabled]);
+    return slot;
+}
+
 interface GeoJsonDatasetLayerProps {
     dataset: any;
     index: number;
@@ -78,33 +89,9 @@ const GeoJsonDatasetLayer = React.memo(({ dataset, index, onLayerReady, onLayerR
     const { state: mapState } = React.useContext(MapContext);
     const { map } = mapState.map;
 
-    const [featureCollection, setFeatureCollection] = React.useState<import('geojson').FeatureCollection | null>(null);
     const fitBoundsAppliedRef = React.useRef(false);
-
-    // Fetch features once when the component mounts (or dataset identity changes)
-    React.useEffect(() => {
-        if (!map) return;
-        let cancelled = false;
-
-        const load = async () => {
-            try {
-                const fetched = await dataset.getFeatures();
-                if (cancelled) return;
-
-                const fc: import('geojson').FeatureCollection =
-                    fetched?.type === 'FeatureCollection'
-                        ? fetched
-                        : { type: 'FeatureCollection', features: [] };
-
-                setFeatureCollection(fc);
-            } catch (error) {
-                console.error(`OpenDataLayers: Error fetching features for "${dataset.name}":`, error);
-            }
-        };
-
-        void load();
-        return () => { cancelled = true; };
-    }, [map, dataset.name]);
+    const { featureCollection, status } = useDatasetFeatures(map, dataset);
+    useViewportDatasetToast(dataset.name, status);
 
     // Build the layer JSX from the loaded feature collection
     const layerContent = React.useMemo(() => {
@@ -409,12 +396,7 @@ const WMSDatasetLayer = React.memo(({ dataset, index, onLayerReady, onLayerRemov
     const timeEnabled = !!dataset.timeEnabled && !!dataset.wms;
     const [frames, setFrames] = React.useState<string[]>([]);
     const [activeTime, setActiveTime] = React.useState<string | null>(null);
-    // The bottom-left overlay stack's portal slot (MapViewer renders it). Resolved
-    // in an effect so the node exists (post-commit) before we portal into it.
-    const [controlSlot, setControlSlot] = React.useState<HTMLElement | null>(null);
-    React.useEffect(() => {
-        if (timeEnabled) setControlSlot(document.getElementById('wms-time-slot'));
-    }, [timeEnabled]);
+    const controlSlot = useOverlaySlot(timeEnabled);
 
     // Register with no interactive layer ids — a raster has no queryable features.
     React.useEffect(() => {

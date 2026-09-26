@@ -23,6 +23,9 @@ export {
   SensorTypes,
   SensorDataFormat,
   DatasetGroup,
+  DatasetProvider,
+  GeoreferenceSource,
   Language,
+  SourceUpAxis,
 } from './dbTypes'
-export type { Dataset, LayerGeometryType } from './datasetTypes'
+export type { Dataset, DatasetViewport, LayerGeometryType } from './datasetTypes'

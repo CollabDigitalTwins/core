@@ -45,7 +45,7 @@ export function useMapPlacementTarget() {
         preview,
         capabilities: capabilitiesForFile(file),
         rotation: (rotation ?? file.rotation ?? 0) * DEG_TO_RAD,
-        scale: file.scale ?? 1,
+        scale: file.fileScale ?? 1,
         updateFile: async (patch) => {
           // Keeps the row in step, so it does not flicker back before the refetch lands.
           Object.assign(file, patch)

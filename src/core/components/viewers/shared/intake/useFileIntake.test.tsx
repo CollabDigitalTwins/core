@@ -77,7 +77,7 @@ describe('useFileIntake', () => {
       })
     })
 
-    expect(bodyOf(uploadFile)).toMatchObject({ x: 1, y: 2, z: 3, scale: 0.5 })
+    expect(bodyOf(uploadFile)).toMatchObject({ fileTransformX: 1, fileTransformY: 2, fileTransformZ: 3, fileScale: 0.5 })
   })
 
   it('suffixes a name that is already taken', async () => {

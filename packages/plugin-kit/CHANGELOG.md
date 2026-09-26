@@ -8,6 +8,15 @@ repository root.
 
 ## [Unreleased]
 
+### Added
+- **`PluginFile` carries a file's placement:** `fileTransformX` / `Y` / `Z` (metres),
+  `fileRotationX` / `Y` / `Z` (radians), `fileScale` (uniform) and `fileSourceUp` (`'y' | 'z'`).
+
+### Deprecated
+- **`PluginFile.x`, `y` and `z`.** Core no longer writes them, so for any file uploaded or moved
+  since `@collabdt/core` switched to the transform columns they are `null` or stale. Read
+  `fileTransformX` / `Y` / `Z` instead; the old fields will be removed in a later release.
+
 ## [0.6.0] - 2026-09-14
 
 ### Removed

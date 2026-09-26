@@ -7,6 +7,55 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Added
+- `@collabdt/core/core/utils/geo/wktToGeometry`: `wktToGeometry(wkt)` parses 2D WKT (Point, LineString,
+  Polygon and their Multi forms; Z/M dropped) into GeoJSON, or returns `null` for EMPTY, collections and
+  malformed text. Server-safe.
+- `@collabdt/core/core/utils/geo/reprojectGeometry`: `createLonLatProjector({ sourceCrs, sourceProj4Def })`
+  builds a projector to EPSG:4326 (a proj4 definition wins over the code; neither means lon/lat) and throws
+  `UnknownCrsError` for a code proj4 does not ship. `reprojectGeometry(geometry, project)` returns `null` when
+  a position lands outside lon/lat range. Server-safe.
+- `DbFile` georeferencing and transform fields, all optional: `fileTransformX/Y/Z`, `fileRotationX/Y/Z`,
+  `fileScale`, `fileSourceUp` (`SourceUpAxis`), `fileProjectedCRS`, `sourceProj4Def`, `mapConversionEastings`,
+  `mapConversionNorthings`, `mapConversionOrthogonalHeight`, `mapConversionXAxisAbscissa`,
+  `mapConversionXAxisOrdinate`, `mapConversionScale`, `pointCloudProjection`, `georeferenceSource`
+  (`GeoreferenceSource`), `datasetProvider` (`DatasetProvider`) and `datasetSource`. The existing `x/y/z`,
+  `bimRotation`, `scale` and `pointCloudTransform` fields are unchanged.
+- Enums `DatasetProvider`, `SourceUpAxis` and `GeoreferenceSource`, also exported from `@collabdt/core/core/types`.
+- `DbFile.countrySubdivision` (ISO 3166-2, e.g. `CA-NS`) and `DbFile.municipality`, both optional.
+  An organizational dataset row that sets them fills the dataset's `countrySubdivision` and `municipality`,
+  so the Layers tab's Subdivision and Municipality filters apply to it.
+- `Dataset.viewport` (`DatasetViewport`, `{ minZoom }`, also exported from `@collabdt/core/core/types`) marks a
+  dataset too large to load whole. The map fetches it per view with `getFeatures({ bbox, zoom })` after every
+  settled pan or zoom, fetches nothing below `minZoom`, and shows a short "zoom in" or load-error toast. An
+  organizational dataset row opts in with `minZoom` in its description JSON; its URL then gets `?bbox=w,s,e,n`.
+- i18n namespace `ViewportDatasetNotice` (`zoomIn`, `loadFailed`) in en, es and fr.
+- `viewers/shared/placement/fileTransform`: `readFileTransform`, `fileTransformPatch`, `hasFileTransform` and
+  `FileTransformColumns`, the one mapping between a scene placement and the transform columns.
+
+### Changed
+- BIM and map placement now read and write the typed transform columns. Models, DXFs and fragment models
+  persist `fileTransformX/Y/Z`, `fileRotationY` (yaw) and `fileScale`, and point clouds and splats persist all
+  transform columns plus `fileSourceUp`. The map viewer's model scale is `fileScale`. `MapPlacementRecord.scale`
+  is renamed `fileScale`.
+- `readPlacement`, `readSplatPlacement` and `applyModelPlacement` take the transform columns instead of
+  `pointCloudTransform` / `x`, `y`, `z`, `bimRotation`, and `placementPatch` returns column fields.
+- `uploadFile` writes its `x`, `y`, `z` and `scale` arguments to `fileTransformX/Y/Z` and `fileScale`, and takes
+  `sourceUp` in place of `pointCloudTransform`.
+
+### Deprecated
+- `DbFile.x`, `y`, `z`, `bimRotation`, `scale` and `pointCloudTransform`. Core no longer reads or writes them.
+
+### Removed
+- `PLACEMENT_VERSION` from `pointCloudPlacementStore`; the columns need no format version.
+
+### Migration
+- The host database needs the new File columns, backfilled from the legacy ones, before upgrading, or every
+  placed file loads at the origin.
+- Code that read `file.x/y/z`, `bimRotation`, `scale` or `pointCloudTransform` reads the matching
+  `fileTransform*`, `fileRotationY`, `fileScale` or `readPlacement(file)` instead. A caller passing
+  `pointCloudTransform` to `uploadFile` passes `x`, `y`, `z`, `scale` and `sourceUp`.
+
 ## [0.11.2] - 2026-09-21
 
 ### Added

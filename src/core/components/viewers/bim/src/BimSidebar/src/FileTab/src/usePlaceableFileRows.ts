@@ -10,6 +10,7 @@ import * as THREE from 'three'
 import { useFile } from '../../../../../../../../hooks/files/files'
 import { BimContext } from '../../../../../../../../store'
 import { EXTENSIONS_FOR_TYPE } from '../../../../../../../ui/FilesManager/src/fileType'
+import { hasFileTransform } from '../../../../../../shared/placement/fileTransform'
 import { CurrentWorld } from '../../../../CurrentWorld'
 import { Cursor } from '../../../../Cursor'
 import { DXFManager } from '../../../../DXFLoader'
@@ -44,8 +45,8 @@ const PLACE_TOAST_ID = 'bim-file-place-toast'
 const DXF_UNPLACED_SCALE = 0.001
 
 const placedPosition = (file: DbFile): THREE.Vector3 =>
-  file.x != null && file.y != null && file.z != null
-    ? new THREE.Vector3(file.x as number, file.y as number, file.z as number)
+  hasFileTransform(file)
+    ? new THREE.Vector3(file.fileTransformX as number, file.fileTransformY as number, file.fileTransformZ as number)
     : new THREE.Vector3()
 
 export interface PlaceableRowsOptions {
@@ -164,8 +165,8 @@ export function usePlaceableFileRows({
       const { presignedUrl } = await res.json()
       const info = await modelManager.load(presignedUrl, key, file.name, {
         position: position ?? placedPosition(file),
-        rotation: file.bimRotation != null ? new THREE.Euler(0, file.bimRotation, 0) : undefined,
-        scale: file.scale ?? undefined,
+        rotation: file.fileRotationY != null ? new THREE.Euler(0, file.fileRotationY, 0) : undefined,
+        scale: file.fileScale ?? undefined,
         extension: file.extension ?? undefined,
       })
       if (info) {
@@ -188,12 +189,9 @@ export function usePlaceableFileRows({
       if (!res.ok) throw new Error(`Failed to get download URL: ${res.status}`)
       const { presignedUrl } = await res.json()
       const group = await dxfManager.parse(presignedUrl)
-      const placed = file.x != null && file.y != null && file.z != null
-      group.position.copy(placed
-        ? new THREE.Vector3(file.x as number, file.y as number, file.z as number)
-        : new THREE.Vector3())
-      group.scale.setScalar(file.scale ?? DXF_UNPLACED_SCALE)
-      if (file.bimRotation != null) group.rotation.y = file.bimRotation as number
+      group.position.copy(placedPosition(file))
+      group.scale.setScalar(file.fileScale ?? DXF_UNPLACED_SCALE)
+      if (file.fileRotationY != null) group.rotation.y = file.fileRotationY
       registry.add({ key, fileId: key, kind: 'dxf', root: group })
     } catch (err) {
       console.error(`[FilesSection] Failed to load DXF "${file.name}":`, err)
@@ -287,20 +285,19 @@ export function usePlaceableFileRows({
 
     const placeAt = (point: THREE.Vector3) => {
       const { x, y, z } = point
+      const placed = { fileTransformX: x, fileTransformY: y, fileTransformZ: z }
       setMoveFileId(placingFile.id)
       // Save coordinates to DB
       setTimeout(() => {
-        updateFileRef.current({ x, y, z } as any)
+        updateFileRef.current(placed)
           .catch((err: unknown) => console.error(`Failed to save placement for "${placingFile.name}":`, err))
       }, 50)
       if (is3DFile(placingFile.extension)) {
         void toggleModelVisibility(placingFile, true, new THREE.Vector3(x, y, z))
       }
       // Update local state so it shows as placed and visible
-      placingFile.x = x
-      placingFile.y = y
-      placingFile.z = z
-      setRows(prev => prev.map(f => f.id === placingFile.id ? { ...f, x, y, z, isVisible: true } : f))
+      Object.assign(placingFile, placed)
+      setRows(prev => prev.map(f => f.id === placingFile.id ? { ...f, ...placed, isVisible: true } : f))
       setPlacingFile(null)
       if (cursor) cursor.cursor = ''
     }
@@ -363,7 +360,7 @@ export function usePlaceableFileRows({
 
   // Move handler: unplaced files → click-to-place; placed files → gizmo (load DXF first if needed)
   const handleMove = React.useCallback((file: DbFile) => {
-    const isPlaced = file.x != null && file.y != null && file.z != null
+    const isPlaced = hasFileTransform(file)
     if (!isPlaced) {
       setPlacingFile(file)
       setMoveFileId(file.id)

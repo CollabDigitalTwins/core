@@ -108,6 +108,12 @@ export interface Dataset {
   // The raw WMS coordinates the time control needs to rebuild GetMap/GetCapabilities
   // URLs (the composed `url` already baked LAYERS into a tile template).
   wms?: { baseUrl: string; layers: string }
+  viewport?: DatasetViewport
+}
+
+/** Marks a dataset too large to load whole: features are fetched per map view, and only at or above `minZoom`. */
+export interface DatasetViewport {
+  minZoom: number
 }
 export interface AllDatasets {
   nationalDatasets: OpenDataPortal[]

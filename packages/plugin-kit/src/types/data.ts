@@ -90,12 +90,27 @@ export interface PluginFile {
   uploadedAt: string
   description?: string | null
   tag?: string | null
+  /** @deprecated Use `fileTransformX`; no longer written, so it is stale or null. */
   x?: number | null
+  /** @deprecated Use `fileTransformY`. */
   y?: number | null
+  /** @deprecated Use `fileTransformZ`. */
   z?: number | null
   lat?: number | null
   lng?: number | null
   elevation?: number | null
+  /** Scene-local position in the BIM viewer, metres. */
+  fileTransformX?: number | null
+  fileTransformY?: number | null
+  fileTransformZ?: number | null
+  /** Rotation in the BIM viewer, radians, XYZ Euler. */
+  fileRotationX?: number | null
+  fileRotationY?: number | null
+  fileRotationZ?: number | null
+  /** Uniform scale, never per axis. */
+  fileScale?: number | null
+  /** Up axis of the source data. */
+  fileSourceUp?: 'y' | 'z' | null
   isVisible?: boolean
   fileOrganizationId: number
 }

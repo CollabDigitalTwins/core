@@ -52,12 +52,13 @@ describe('uploadFile', () => {
     expect(record).toHaveBeenCalledOnce()
   })
 
-  it('writes a placement point into the typed columns, not the deprecated position json', async () => {
+  it('writes a placement point into the transform columns, not the deprecated position json or x/y/z', async () => {
     const record = vi.fn(async (_args: { fileData: any, buildingId: number }) => ({ id: 11 }))
     await uploadFile({ ...args, uploadFile: record, x: 1.5, y: 2.5, z: -3.5 })
     const sent = record.mock.calls[0][0].fileData
-    expect(sent).toMatchObject({ x: 1.5, y: 2.5, z: -3.5 })
-    expect(sent.bimRotation).toBeUndefined()
-    expect(sent.scale).toBeUndefined()
+    expect(sent).toMatchObject({ fileTransformX: 1.5, fileTransformY: 2.5, fileTransformZ: -3.5 })
+    expect(sent).not.toHaveProperty('x')
+    expect(sent.fileRotationY).toBeUndefined()
+    expect(sent.fileScale).toBeUndefined()
   })
 })

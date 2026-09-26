@@ -16,7 +16,7 @@ import { PlacementEditor } from '../Placement/PlacementEditor'
 
 import { BimPointCloudSync } from './BimPointCloudSync'
 
-import { PLACEMENT_VERSION } from './pointCloudPlacementStore'
+import { placementPatch } from './pointCloudPlacementStore'
 
 import type { PointCloudPlacement } from '../../../shared/pointcloud/pointCloudPlacement'
 
@@ -186,7 +186,7 @@ describe('BimPointCloudSync', () => {
 
 describe('BimPointCloudSync placement', () => {
   const PLACED: PointCloudPlacement = { position: [1, 2, 3], rotation: [0, 0.5, 0], scale: 2, sourceUp: 'z' }
-  const stored = { id: 669, name: 'basement scan', pointCloudTransform: { version: PLACEMENT_VERSION, ...PLACED } }
+  const stored = { id: 669, name: 'basement scan', ...placementPatch(PLACED) }
 
   it('loads a cloud at its stored placement', async () => {
     fileHooks.files = [stored]

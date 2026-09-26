@@ -21,6 +21,7 @@ interface OrgDatasetDescription {
   tiledAt?: string
   featuresIngested?: number
   featuresSkipped?: number
+  minZoom?: number
 }
 
 interface RawFileRow {
@@ -32,6 +33,8 @@ interface RawFileRow {
   url?: string | null
   description?: string | null
   uploadedAt?: string | Date | null
+  countrySubdivision?: string | null
+  municipality?: string | null
 }
 
 const TAG = 'organizational-dataset'
@@ -45,6 +48,10 @@ function parseDescription(value: string | null | undefined): OrgDatasetDescripti
   catch {
     return null
   }
+}
+
+function withBbox(url: string, bbox: [number, number, number, number]): string {
+  return `${url}${url.includes('?') ? '&' : '?'}bbox=${bbox.map(value => value.toFixed(6)).join(',')}`
 }
 
 export async function fetchOrganizationalMinioDatasets(
@@ -85,15 +92,20 @@ export async function fetchOrganizationalMinioDatasets(
 
     const name = row.name?.replace(/\.geojson$/i, '') || `Dataset ${row.id}`
     const id = `org-minio-${row.id}`
+    const viewport = typeof meta?.minZoom === 'number' ? { minZoom: meta.minZoom } : undefined
     let cached: AllGeoJSON | null = null
 
-    const getFeatures = async (): Promise<AllGeoJSON> => {
-      if (cached) return cached
-      const response = await fetch(sourceUrl)
+    const fetchGeoJson = async (url: string): Promise<AllGeoJSON> => {
+      const response = await fetch(url)
       if (!response.ok) {
-        throw new Error(`Failed to fetch GeoJSON from ${sourceUrl}: ${response.status}`)
+        throw new Error(`Failed to fetch GeoJSON from ${url}: ${response.status}`)
       }
-      cached = await response.json() as AllGeoJSON
+      return await response.json() as AllGeoJSON
+    }
+
+    const getFeatures: Dataset['getFeatures'] = async (options) => {
+      if (viewport && options?.bbox) return fetchGeoJson(withBbox(sourceUrl, options.bbox))
+      cached ??= await fetchGeoJson(sourceUrl)
       return cached
     }
 
@@ -112,14 +124,15 @@ export async function fetchOrganizationalMinioDatasets(
       description: `Uploaded ${row.uploadedAt ?? ''}`.trim(),
       dateReleased: typeof row.uploadedAt === 'string' ? row.uploadedAt : '',
       dateUpdated: typeof row.uploadedAt === 'string' ? row.uploadedAt : '',
-      countrySubdivision: '',
-      municipality: '',
+      countrySubdivision: row.countrySubdivision ?? '',
+      municipality: row.municipality ?? '',
       sourceUrl,
       url: sourceUrl,
       clickable: true,
       properties: {},
       getFeatures,
       getFields,
+      viewport,
       dataManagementSystem: 'other',
       datasetType: 'GeoJSON',
       group: DatasetGroup.Organizational,

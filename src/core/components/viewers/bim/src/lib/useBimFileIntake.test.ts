@@ -112,7 +112,7 @@ describe('useBimFileIntake', () => {
     expect(sent.x).toBe(1)
   })
 
-  it('saves a model placed at a scale into the scale column', async () => {
+  it('saves a model placed at a scale as its fileScale', async () => {
     vi.mocked(uploadFile).mockClear()
     const { result } = renderHook(() => useBimFileIntake(options))
     await act(async () => {

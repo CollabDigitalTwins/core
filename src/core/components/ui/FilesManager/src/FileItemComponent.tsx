@@ -45,7 +45,7 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
   const { currentViewer } = menusState.menus
 
   const isPlaced = currentViewer === 'bim'
-    ? true // BIM models are always placed — null x/y/z means origin (0,0,0), use move to reposition
+    ? true // BIM models are always placed — null fileTransformX/Y/Z means origin (0,0,0), use move to reposition
     : currentViewer === 'map'
       ? file.lat != null && file.lng != null
       : false

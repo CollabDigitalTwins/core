@@ -8,6 +8,8 @@ repository root.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-26
+
 ## [0.6.0] - 2026-09-14
 
 ### Changed

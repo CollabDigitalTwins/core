@@ -8,6 +8,8 @@ repository root.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-26
+
 ### Added
 - **`PluginFile` carries a file's placement:** `fileTransformX` / `Y` / `Z` (metres),
   `fileRotationX` / `Y` / `Z` (radians), `fileScale` (uniform) and `fileSourceUp` (`'y' | 'z'`).

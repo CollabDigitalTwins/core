@@ -7,6 +7,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-09-26
+
 ### Added
 - `@collabdt/core/core/utils/geo/wktToGeometry`: `wktToGeometry(wkt)` parses 2D WKT (Point, LineString,
   Polygon and their Multi forms; Z/M dropped) into GeoJSON, or returns `null` for EMPTY, collections and

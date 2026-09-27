@@ -13,6 +13,7 @@ import { MapContext } from '../../../../../store'
 // Custom components
 import { ShareToolSubmenu } from '../../../../ui/ShareFeature'
 import { getMunicipalityAndProvince } from '../../utils/geocoder'
+import { cameraSnapshot, labelsFromParams, toQueryString, withLocationParams } from '../../utils/urlLocation/locationParams'
 
 import type { Tool } from '../../../../../types/tools'
 import type { Map } from 'maplibre-gl'
@@ -33,24 +34,15 @@ export const ShareMapTool: React.FC<ShareToolProps> = ({ tool }) => {
       return origin + pathname
     }
     else {
-      // get map info
-      const latitude = map.getCenter().lat.toFixed(7)
-      const longitude = map.getCenter().lng.toFixed(7)
+      const camera = cameraSnapshot(map)
+      const shareLocation = await getMunicipalityAndProvince(camera.lat.toFixed(7), camera.lng.toFixed(7), organizationCountry)
 
-      const shareLocation = await getMunicipalityAndProvince(latitude, longitude, organizationCountry)
+      const current = new URLSearchParams(window.location.search)
+      const { country } = labelsFromParams(current)
+      const params = withLocationParams(current, camera, { country, ...shareLocation })
+      params.set('viewer', 'map')
 
-      const params = new URLSearchParams({
-        viewer: 'map',
-        lat: latitude,
-        lng: longitude,
-        zoom: map.getZoom().toFixed(3),
-        bearing: map.getBearing().toFixed(1),
-        pitch: map.getPitch().toFixed(1),
-        municipality: shareLocation.municipality,
-        countrySubdivision: shareLocation.countrySubdivision,
-      })
-
-      const shareUrl = `${origin}${pathname}?${params.toString()}`
+      const shareUrl = `${origin}${pathname}?${toQueryString(params)}`
       return shareUrl
     }
   }

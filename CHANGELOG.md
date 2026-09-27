@@ -24,11 +24,18 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ### Changed
 - After a URL fly, a geocoder pick or a Location Settings pick, the URL is rewritten with the full location:
   `lat`, `lng`, `zoom`, `bearing`, `pitch`, `bbox`, and `country` / `countrySubdivision` / `municipality` /
-  `address` / `site` / `buildingId`. Labels finer than the level flown to are removed. The geocoder no longer hardcodes
+  `address`. Every other param (`buildingId`, `site`, `viewer`, the BIM `camX`…`tarZ`) is left untouched, and commas
+  stay literal (`bbox=w,s,e,n`, not `%2C`). Place names finer than the level flown to are removed. The geocoder no longer hardcodes
   `zoom=18`, and it now writes the URL even when the result has no municipality.
 - A map URL without `lat`/`lng` starts from the organization's default view, then flies to its target.
 
 ### Fixed
+- Map share links (`shareMapTool`, `useShareUrl`) start from the current URL and replace only the map-location
+  params, so `buildingId` and the BIM camera survive sharing.
+- A shared BIM camera (`camX`…`tarZ`) is applied even when a coordinate is `0`. It used to fall back to the
+  default view.
+- Changing `buildingId` (selecting a building or switching viewer) drops `camX`…`tarZ`, so one building's camera
+  never positions another. `withBuildingId(params, id)` is exported from `viewers/bim/src/lib/buildingLocationParams`.
 - Camera subdivision tracking no longer reverts the URL about a second after a fly. It writes `countrySubdivision`
   into the live URL with `history.replaceState` instead of `router.replace`, which used to re-render the page on the
   server on every subdivision change.

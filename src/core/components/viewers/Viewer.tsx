@@ -20,6 +20,7 @@ import { Toolbar } from '../Toolbar'
 import { UploadProgressToasts } from '../ui/FilesManager/src/UploadProgressBar'
 import { SidebarTrigger } from '../ui/Sidebar'
 
+import { withBuildingId } from './bim/src/lib/buildingLocationParams'
 import { MapViewer } from './map/MapViewer'
 import { isViewerAllowed } from './viewerAccess'
 
@@ -98,11 +99,9 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
   // Update URL if viewer was not available for the organization
   React.useEffect(() => {
     if (isMounted && !isViewerValid && viewer !== ViewerNames.map) {
-      const newSearchParams = new URLSearchParams(searchParams.toString())
-      newSearchParams.delete('viewer')
-      if (building?.id) {
-        newSearchParams.set('buildingId', String(building.id))
-      }
+      const current = new URLSearchParams(searchParams.toString())
+      current.delete('viewer')
+      const newSearchParams = building?.id ? withBuildingId(current, building.id) : current
       router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false })
     }
   }, [isMounted, isViewerValid, viewer, searchParams, pathname, router, building?.id])
@@ -134,11 +133,9 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
 
     // Create URLSearchParams to preserve existing search params
 
-    const newSearchParams = new URLSearchParams(searchParams.toString())
-    newSearchParams.set('viewer', currentViewer)
-    if (building?.id) {
-      newSearchParams.set('buildingId', String(building.id))
-    }
+    const current = new URLSearchParams(searchParams.toString())
+    current.set('viewer', currentViewer)
+    const newSearchParams = building?.id ? withBuildingId(current, building.id) : current
 
 
     router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false })

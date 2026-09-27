@@ -33,7 +33,7 @@ const fakeMap = (overrides: Record<string, unknown> = {}) => ({
 
 describe('withLocationParams', () => {
   it('writes the camera and labels, deletes empty labels and keeps unrelated params', () => {
-    const next = withLocationParams(new URLSearchParams('viewer=map&address=old&site=3'), camera, { municipality: 'Québec', countrySubdivision: 'QC' })
+    const next = withLocationParams(new URLSearchParams('viewer=map&address=old'), camera, { municipality: 'Québec', countrySubdivision: 'QC' })
 
     expect(Object.fromEntries(next)).toEqual({
       viewer: 'map',
@@ -46,6 +46,21 @@ describe('withLocationParams', () => {
       municipality: 'Québec',
       countrySubdivision: 'QC',
     })
+  })
+})
+
+describe('withLocationParams on a shared BIM or building URL', () => {
+  it('replaces only map-location params and keeps buildingId, site and the BIM camera', () => {
+    const current = new URLSearchParams('viewer=bim&buildingId=9&site=4&camX=0&camY=12.5&camZ=-3&tarX=0&tarY=0&tarZ=0&lat=1&lng=2&address=old')
+
+    const next = withLocationParams(current, camera, { municipality: 'Québec' })
+
+    expect(Object.fromEntries(next)).toMatchObject({
+      viewer: 'bim', buildingId: '9', site: '4',
+      camX: '0', camY: '12.5', camZ: '-3', tarX: '0', tarY: '0', tarZ: '0',
+      lat: '46.8123457', municipality: 'Québec',
+    })
+    expect(next.has('address')).toBe(false)
   })
 })
 
@@ -85,5 +100,6 @@ describe('flyAndSyncUrl', () => {
     expect(url.get('municipality')).toBe('Québec')
     expect(url.get('zoom')).toBe('12.35')
     expect(url.get('bbox')).toBe('-71.5,46.7,-71.1,46.9')
+    expect(window.location.search).toContain('bbox=-71.5,46.7,-71.1,46.9')
   })
 })

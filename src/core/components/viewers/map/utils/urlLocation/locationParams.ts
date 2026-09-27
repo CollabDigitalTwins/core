@@ -12,6 +12,9 @@ export type LabelKey = typeof LABEL_KEYS[number]
 
 export type LocationLabels = Partial<Record<LabelKey, string>>
 
+/** Place names the map owns in the URL. `site`, `buildingId` and every other param are read but never rewritten. */
+const MAP_LABEL_KEYS = ['country', 'countrySubdivision', 'municipality', 'address'] as const
+
 export interface CameraSnapshot {
   lat: number
   lng: number
@@ -67,7 +70,7 @@ export function withLocationParams(params: URLSearchParams, camera: CameraSnapsh
   next.set('bearing', round(camera.bearing, 1))
   next.set('pitch', round(camera.pitch, 1))
   next.set('bbox', camera.bounds.map(value => round(value, 6)).join(','))
-  for (const key of LABEL_KEYS) {
+  for (const key of MAP_LABEL_KEYS) {
     const value = labels[key]
     if (value) next.set(key, value)
     else next.delete(key)
@@ -88,10 +91,13 @@ export function cameraSnapshot(map: MapLibreMap): CameraSnapshot {
   }
 }
 
+/** `URLSearchParams` escapes commas, which are legal in a query; keep them readable so `bbox=w,s,e,n` stays legible. */
+export const toQueryString = (params: URLSearchParams) => params.toString().replace(/%2C/gi, ',')
+
 /** Rewrites the live URL's params in place: no server round trip, and Next's router adopts the result. */
 export function replaceUrlParams(update: (params: URLSearchParams) => URLSearchParams) {
   const url = new URL(window.location.href)
-  url.search = update(url.searchParams).toString()
+  url.search = toQueryString(update(url.searchParams))
   // Forwarding history.state would carry Next's __NA marker, and Next then skips syncing its router to this URL.
   window.history.replaceState({}, '', url.toString())
 }

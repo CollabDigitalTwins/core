@@ -25,6 +25,8 @@ import { MapClickManager } from './utils/MapEventManager/MapClickManager'
 import { MapHoverManager } from './utils/MapEventManager/MapHoverManager'
 import { DEFAULT_MAP_STYLE } from './utils/mapStyleCatalog'
 import { resolveStyleSpec, TERRAIN_SPEC } from './utils/mapStyleSpec'
+import { presentLevels } from './utils/urlLocation/locationTarget'
+import { useUrlFlyTo } from './utils/urlLocation/useUrlFlyTo'
 import { resolveBounds } from './utils/validateBounds'
 
 
@@ -57,7 +59,7 @@ export function MapViewer({ width = '100%', height = '100%', organization, mapti
   const [isMapLoaded, setIsMapLoaded] = React.useState(false)
 
   const viewState = React.useMemo(() => {
-    return searchParams.size === 0
+    return presentLevels(searchParams)[0] !== 'latlng'
       ? {
         zoom: organization.zoom ?? CANADA_DEFAULTS.zoom,
         bearing: organization.bearing ?? 0,
@@ -96,6 +98,7 @@ export function MapViewer({ width = '100%', height = '100%', organization, mapti
   // map-settings sidebar is mounted. The globe projection degrades past
   // MAX_GLOBE_ZOOM, so we force mercator regardless of which panels are open.
   const activeMap = mapState?.map?.map
+  useUrlFlyTo(isMapLoaded ? activeMap : undefined, organization.country ?? undefined)
 
   React.useEffect(() => {
     if (!activeMap) return

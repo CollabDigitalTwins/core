@@ -12,6 +12,10 @@ import { MapContext } from '../../../../../../../../store';
 import { Input } from '../../../../../../../ui/';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../../../ui/Select'
 import { SettingsSection } from '../../../../../../../ui/ViewerSidebar/SettingsSection';
+import { searchPlace } from '../../../../../utils/geocoding';
+import { clearFinerLabels, flyAndSyncUrl, labelsFromParams } from '../../../../../utils/urlLocation/locationParams';
+import { DEFAULT_LEVEL_ZOOM } from '../../../../../utils/urlLocation/locationTarget';
+import { resolveLocationTarget } from '../../../../../utils/urlLocation/resolveLocationTarget';
 
 
 export function LocationSettings({ countryCode }: { countryCode?: string }) {
@@ -43,28 +47,6 @@ export function LocationSettings({ countryCode }: { countryCode?: string }) {
   }, [currentLocation]);
 
 
-  // Geocode helper
-  const geocodeLocation = async (query: string) => {
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?` +
-        `format=json&q=${encodeURIComponent(query)}&limit=1&countrycodes=${orgCountryCode}`
-      );
-      const data = await response.json();
-      if (data && data.length > 0) {
-        const result = data[0];
-        return {
-          lat: parseFloat(result.lat),
-          lng: parseFloat(result.lon)
-        };
-      }
-      return null;
-    } catch (error) {
-      console.error('Geocoding error:', error);
-      return null;
-    }
-  };
-
   // Country subdivision change handler with geocoding
   const onCountrySubdivisionChange = async (value: string) => {
     // Clear municipality input and state
@@ -82,15 +64,12 @@ export function LocationSettings({ countryCode }: { countryCode?: string }) {
       }
     });
 
-    // Geocode and navigate to country subdivision
-    const location = await geocodeLocation(value);
-    if (location && map) {
-      map.flyTo({
-        center: [location.lng, location.lat],
-        zoom: 6,
-        essential: true
-      });
-    }
+    if (!map) return;
+    const params = new URLSearchParams(window.location.search);
+    params.set('countrySubdivision', value);
+    params.delete('municipality');
+    const resolved = await resolveLocationTarget(params, { searchPlace, countryCode: orgCountryCode });
+    if (resolved?.level === 'countrySubdivision') void flyAndSyncUrl(map, resolved.target, resolved.labels);
   };
 
   // Municipality change handler with geocoding
@@ -146,11 +125,8 @@ export function LocationSettings({ countryCode }: { countryCode?: string }) {
     });
     setShowSuggestions(false);
     if (map) {
-      map.flyTo({
-        center: [suggestion.lng, suggestion.lat],
-        zoom: 12,
-        essential: true
-      });
+      const labels = clearFinerLabels({ ...labelsFromParams(new URLSearchParams(window.location.search)), municipality: suggestion.name }, 'municipality');
+      void flyAndSyncUrl(map, { center: [suggestion.lng, suggestion.lat], zoom: DEFAULT_LEVEL_ZOOM.municipality }, labels);
     }
   };
 

@@ -29,8 +29,21 @@ import { Separator } from '../../../ui/Separator'
 
 
 import { fetchSuggestions, parseLocation, handleLocationSelect, buildingToFeature } from '../utils/geocoder'
+import { labelsFromParams, labelsFromPlace, writeLocationParams } from '../utils/urlLocation/locationParams'
 
 import type { CurrentLocation } from '../../../../types/map'
+import type { LocationLabels } from '../utils/urlLocation/locationParams'
+import type { Feature } from 'geojson'
+
+function labelsFor(feature: Feature, type: string): LocationLabels {
+  const props = feature.properties ?? {}
+  const address = String(props.label ?? '').split(',')[0].trim()
+  const place = type === 'dbBuilding'
+    ? { municipality: props.municipality, countrySubdivision: props.countrySubdivision, address }
+    : labelsFromPlace(props, address)
+  const { country } = labelsFromParams(new URL(window.location.href).searchParams)
+  return { country, ...Object.fromEntries(Object.entries(place).filter(([, value]) => value)) }
+}
 
 
 interface GeocoderProps {
@@ -176,8 +189,9 @@ export default function Geocoder({
       setFocused(false)
     }
 
+    const syncUrl = () => { if (map) writeLocationParams(map, labelsFor(feature, type)) }
     // handleLocationSelect will automatically remove any existing marker and add a new one
-    const addressData = handleLocationSelect(feature, map, type)
+    const addressData = handleLocationSelect(feature, map, type, { onMoveEnd: syncUrl })
 
     const address = addressData.formatted_address || feature.properties?.label || ''
     setAddress(address)
@@ -185,32 +199,18 @@ export default function Geocoder({
 
     if (onSelect) onSelect(addressData)
 
-    if (mapDispatch && currentLocation) {
+    if (mapDispatch && currentLocation && addressData.coordinates) {
       const [lng, lat] = addressData.coordinates
-      const props = addressData.properties || {}
-      const parts = address.split(',').map(p => p.trim())
-      // Read structured properties (provider-agnostic) instead of parsing label tokens,
-      // which only matched Geocode Earth's "…, ON, Canada" abbreviation format and broke
-      // on the Photon/Nominatim fallback.
-      const countrySubdivision: string = props.region_a || props.region || ''
-      const municipality: string = props.locality || props.neighbourhood || props.county || ''
-
-      const newCurrentLocation: CurrentLocation = { ...currentLocation, municipality, countrySubdivision, longitude: lng, latitude: lat, address: parts[0] }
-      mapDispatch({ type: 'UPDATE_LOCATION', payload: { currentLocation: newCurrentLocation } })
-      if (municipality || countrySubdivision) {
-        const url = new URL(window.location.href)
-        // Write each field only when present, so an empty param doesn't shadow the
-        // organization fallback MapViewer applies on reload.
-        if (municipality) url.searchParams.set('municipality', municipality)
-        else url.searchParams.delete('municipality')
-        if (countrySubdivision) url.searchParams.set('countrySubdivision', countrySubdivision)
-        else url.searchParams.delete('countrySubdivision')
-        url.searchParams.set('address', parts[0])
-        url.searchParams.set('lng', lng.toString())
-        url.searchParams.set('lat', lat.toString())
-        url.searchParams.set('zoom', '18')
-        window.history.replaceState({}, '', url.toString())
+      const labels = labelsFor(feature, type)
+      const newCurrentLocation: CurrentLocation = {
+        ...currentLocation,
+        municipality: labels.municipality ?? '',
+        countrySubdivision: labels.countrySubdivision ?? '',
+        address: labels.address ?? '',
+        lng,
+        lat,
       }
+      mapDispatch({ type: 'UPDATE_LOCATION', payload: { currentLocation: newCurrentLocation } })
     }
   }
 

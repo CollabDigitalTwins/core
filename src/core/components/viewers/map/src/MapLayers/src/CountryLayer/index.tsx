@@ -3,13 +3,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import * as React from 'react'
 import { Source, Layer } from 'react-map-gl/maplibre'
 
 import { MapContext } from '../../../../../../../store/Map/context'
 
 import { maptilerKeyForRequest } from '../../../../utils/mapStyleSpec'
+
+import { replaceUrlParams } from '../../../../utils/urlLocation/locationParams'
 
 import { hexToRgba, buildSubdivisionUrl } from './countryLayerUtils'
 import { useCameraSubdivision } from './useCameraSubdivision'
@@ -161,7 +163,6 @@ export const CountryLayer = ({ organization, maptilerKey }: { organization?: Org
   const { state: mapState, dispatch: mapDispatch } = React.useContext(MapContext)
   const { map, currentLocation } = mapState.map
   const searchParams = useSearchParams()
-  const router = useRouter()
 
   const countryCode = (organization?.country || 'CA').toUpperCase()
   const borderColor = hexToRgba((organization?.mainColor as string) || DEFAULT_BORDER_COLOR, 0.7)
@@ -217,10 +218,11 @@ export const CountryLayer = ({ organization, maptilerKey }: { organization?: Org
       },
     })
 
-    const params = new URLSearchParams(searchParams.toString())
-    params.set('countrySubdivision', code)
-    router.replace(`?${params.toString()}`, { scroll: false })
-  }, [currentLocation, mapDispatch, router, searchParams])
+    replaceUrlParams(params => {
+      params.set('countrySubdivision', code)
+      return params
+    })
+  }, [currentLocation, mapDispatch])
 
   useCameraSubdivision({
     map,

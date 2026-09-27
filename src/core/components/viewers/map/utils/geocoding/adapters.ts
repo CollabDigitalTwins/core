@@ -57,6 +57,13 @@ const subdivisionAbbreviation = (countryCode: string, state?: string): string =>
   return (table && table[state.trim().toLowerCase()]) || ''
 }
 
+/** Full subdivision name for a Pelias-style code (`QC` → `quebec`), or '' when unknown. */
+export const subdivisionName = (countryCode: string, code: string): string => {
+  const table = SUBDIVISION_ABBREVIATIONS[(countryCode || '').toUpperCase()] ?? {}
+  const upper = code.trim().toUpperCase()
+  return Object.keys(table).find(name => table[name] === upper) ?? ''
+}
+
 // Normalize a Photon autocomplete feature into the Pelias feature shape.
 export const normalizePhotonFeature = (feature: any): Feature => {
   const p = feature.properties || {}

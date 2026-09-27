@@ -94,8 +94,9 @@ export const parseLocation = (feature: Feature) => {
 }
 
 // Handle suggestion selection and map movement
-export const handleLocationSelect = (feature: Feature, map: any, type: string, options?: { editing?: boolean }) => {
+export const handleLocationSelect = (feature: Feature, map: any, type: string, options?: { editing?: boolean; onMoveEnd?: () => void }) => {
   const editing = options?.editing || false
+  const listenForMoveEnd = () => { if (options?.onMoveEnd) map.once('moveend', options.onMoveEnd) }
   const markerManager = getGeocoderMarkerManager()
 
   // Handle feature with is_database_building flag
@@ -114,6 +115,7 @@ export const handleLocationSelect = (feature: Feature, map: any, type: string, o
       // Add marker to the center with editing capability
       // markerManager.create(center as [number, number], map)
 
+      listenForMoveEnd()
       map.flyTo({
         center: addressData.coordinates,
         zoom: 18,
@@ -166,6 +168,7 @@ export const handleLocationSelect = (feature: Feature, map: any, type: string, o
     // Add marker to the center with editing capability
     // markerManager.create(center as [number, number], map, { editing })
 
+    listenForMoveEnd()
     if (feature.bbox) {
       map.fitBounds(feature.bbox, { speed: 2 })
     }

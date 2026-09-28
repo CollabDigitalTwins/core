@@ -12,7 +12,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ### Added
 - The map viewer flies to the most specific location in its URL, in this order:
   `lat`+`lng` > `bbox` > `buildingId` > `address` > `site` > `municipality` > `countrySubdivision` > `country`.
-  A level that is missing, invalid or unresolvable falls back to the next broader one. `asset` is reserved and not yet resolved.
+  A level that is missing, invalid or unresolvable falls back to the next broader one.
 - `@collabdt/core/core/components/viewers/map/utils/geocoding`: `searchPlace(level, name, context)` returns
   the first result restricted to that level's category (Pelias structured search, falling back to Nominatim),
   so `municipality=quebec` finds Québec City rather than the province. Parent values disambiguate: the country comes

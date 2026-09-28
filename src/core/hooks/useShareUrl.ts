@@ -3,6 +3,7 @@
 import * as React from 'react'
 import * as THREE from 'three'
 
+import { cameraSnapshot, labelsFromParams, toQueryString, withLocationParams } from '../components/viewers/map/utils/urlLocation/locationParams'
 import { MenusContext, MapContext, BimContext, BuildingsContext } from '../store'
 import { ViewerNames } from '../types'
 
@@ -25,15 +26,10 @@ export function useShareUrl(): () => Promise<string> {
     const fallback = window.location.href
 
     if (currentViewer === ViewerNames.map && map) {
-      const params = new URLSearchParams({
-        viewer: 'map',
-        lat: map.getCenter().lat.toFixed(7),
-        lng: map.getCenter().lng.toFixed(7),
-        zoom: map.getZoom().toFixed(3),
-        bearing: map.getBearing().toFixed(1),
-        pitch: map.getPitch().toFixed(1),
-      })
-      return `${origin}${pathname}?${params.toString()}`
+      const current = new URLSearchParams(window.location.search)
+      const params = withLocationParams(current, cameraSnapshot(map), labelsFromParams(current))
+      params.set('viewer', 'map')
+      return `${origin}${pathname}?${toQueryString(params)}`
     }
 
     if (currentViewer === ViewerNames.bim && world?.camera) {

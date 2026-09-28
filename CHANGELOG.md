@@ -7,6 +7,39 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Added
+- The map viewer flies to the most specific location in its URL, in this order:
+  `lat`+`lng` > `bbox` > `buildingId` > `address` > `site` > `municipality` > `countrySubdivision` > `country`.
+  A level that is missing, invalid or unresolvable falls back to the next broader one. `asset` is reserved and not yet resolved.
+- `@collabdt/core/core/components/viewers/map/utils/geocoding`: `searchPlace(level, name, context)` returns
+  the first result restricted to that level's category (Pelias structured search, falling back to Nominatim),
+  so `municipality=quebec` finds Québec City rather than the province. Parent values disambiguate: the country comes
+  from `country`, else the `countrySubdivision` prefix (`CA-ON` → `CA`), else the organization. The first of up to five
+  candidates that lies inside the requested subdivision wins, so `municipality=London&countrySubdivision=CA-ON` never
+  lands in England. When no candidate fits, the map moves up a level.
+- `@collabdt/core/core/components/viewers/map/utils/urlLocation/*`: `presentLevels`, `resolveLocationTarget`,
+  `flyAndSyncUrl`, `writeLocationParams` and `useUrlFlyTo`.
+- `handleLocationSelect` accepts an `onMoveEnd` option, called once the fly it starts has settled.
+
+### Changed
+- After a URL fly, a geocoder pick or a Location Settings pick, the URL is rewritten with the full location:
+  `lat`, `lng`, `zoom`, `bearing`, `pitch`, `bbox`, and `country` / `countrySubdivision` / `municipality` /
+  `address`. Every other param (`buildingId`, `site`, `viewer`, the BIM `camX`…`tarZ`) is left untouched, and commas
+  stay literal (`bbox=w,s,e,n`, not `%2C`). Place names finer than the level flown to are removed. The geocoder no longer hardcodes
+  `zoom=18`, and it now writes the URL even when the result has no municipality.
+- A map URL without `lat`/`lng` starts from the organization's default view, then flies to its target.
+
+### Fixed
+- Map share links (`shareMapTool`, `useShareUrl`) start from the current URL and replace only the map-location
+  params, so `buildingId` and the BIM camera survive sharing.
+- A shared BIM camera (`camX`…`tarZ`) is applied even when a coordinate is `0`. It used to fall back to the
+  default view.
+- Changing `buildingId` (selecting a building or switching viewer) drops `camX`…`tarZ`, so one building's camera
+  never positions another. `withBuildingId(params, id)` is exported from `viewers/bim/src/lib/buildingLocationParams`.
+- Camera subdivision tracking no longer reverts the URL about a second after a fly. It writes `countrySubdivision`
+  into the live URL with `history.replaceState` instead of `router.replace`, which used to re-render the page on the
+  server on every subdivision change.
+
 ## [0.12.0] - 2026-09-26
 
 ### Added

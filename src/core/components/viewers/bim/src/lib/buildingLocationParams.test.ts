@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { withBuildingLocation } from './buildingLocationParams'
+import { withBuildingId, withBuildingLocation } from './buildingLocationParams'
 
 import type { Building } from '../../../../../types/dbTypes'
 
@@ -85,5 +85,26 @@ describe('withBuildingLocation', () => {
 
         expect(params.get('municipality')).toBe('Toronto')
         expect(params.has('buildingId')).toBe(false)
+    })
+})
+
+describe('withBuildingId', () => {
+    const camera = 'camX=1&camY=2&camZ=3&tarX=0&tarY=0&tarZ=0'
+
+    it('drops the BIM camera when the building changes', () => {
+        const next = withBuildingId(new URLSearchParams(`viewer=bim&buildingId=7&${camera}`), 8)
+
+        expect(next.toString()).toBe('viewer=bim&buildingId=8')
+    })
+
+    it('keeps the BIM camera when the building is the same', () => {
+        const next = withBuildingId(new URLSearchParams(`buildingId=7&${camera}`), 7)
+
+        expect(next.get('camX')).toBe('1')
+        expect(next.get('tarZ')).toBe('0')
+    })
+
+    it('drops the camera when a building is set on a URL that had none', () => {
+        expect(withBuildingId(new URLSearchParams(camera), 7).toString()).toBe('buildingId=7')
     })
 })

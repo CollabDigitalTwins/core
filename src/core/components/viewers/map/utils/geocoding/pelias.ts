@@ -2,7 +2,9 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { getGeocodingConfig } from './config'
+import { isCountryCode, PLACE_CANDIDATES } from './placeSearch'
 
+import type { PlaceContext, PlaceLevel } from './placeSearch'
 import type { Feature } from 'geojson'
 
 // Geocode Earth and self-hosted Pelias share this dialect; only the base URL and
@@ -48,4 +50,36 @@ export const peliasReverse = async (
 
   const data = await response.json()
   return data.features?.length ? data.features : []
+}
+
+const PELIAS_LAYERS: Record<PlaceLevel, string> = {
+  country: 'country',
+  countrySubdivision: 'region',
+  municipality: 'locality,localadmin',
+  address: 'address',
+}
+
+const PELIAS_FIELDS: Record<PlaceLevel, string> = {
+  country: 'country',
+  countrySubdivision: 'region',
+  municipality: 'locality',
+  address: 'address',
+}
+
+export const peliasSearchPlace = async (level: PlaceLevel, name: string, context: PlaceContext): Promise<Feature[]> => {
+  const { geocodeEarthApiKey, peliasBase } = getGeocodingConfig()
+
+  const params = new URLSearchParams({ size: String(PLACE_CANDIDATES), layers: PELIAS_LAYERS[level] })
+  if (context.country) params.set('country', context.country)
+  if (context.countrySubdivision) params.set('region', context.countrySubdivision)
+  if (context.municipality) params.set('locality', context.municipality)
+  params.set(PELIAS_FIELDS[level], name)
+  if (level !== 'country' && isCountryCode(context.country)) params.set('boundary.country', context.country.toUpperCase())
+  if (geocodeEarthApiKey) params.set('api_key', geocodeEarthApiKey)
+
+  const response = await fetch(`${peliasBase}/v1/search/structured?${params}`)
+  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+
+  const data = await response.json()
+  return data.features ?? []
 }

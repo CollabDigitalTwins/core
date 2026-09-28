@@ -4,9 +4,12 @@
 import { toDisplayString } from '../../../../../utils/utils'
 
 import { getGeocodingConfig } from './config'
-import { photonAutocomplete, nominatimReverse } from './osm'
-import { peliasAutocomplete, peliasReverse } from './pelias'
+import { photonAutocomplete, nominatimReverse, nominatimSearchPlace } from './osm'
+import { peliasAutocomplete, peliasReverse, peliasSearchPlace } from './pelias'
 
+import { matchesContext } from './placeSearch'
+
+import type { PlaceContext, PlaceLevel } from './placeSearch'
 import type { Feature } from 'geojson'
 
 // Provider-agnostic entry points. The preferred provider (Geocode Earth or a
@@ -65,4 +68,22 @@ export const reverseGeocode = async (
     }
   }
   return nominatimReverse(latitude, longitude, { coarse })
+}
+
+const searchPlaceCandidates = async (level: PlaceLevel, name: string, context: PlaceContext): Promise<Feature[]> => {
+  if (peliasActive()) {
+    try {
+      return await peliasSearchPlace(level, name, context)
+    }
+    catch (error) {
+      handlePeliasFailure(error, 'Nominatim')
+    }
+  }
+  return nominatimSearchPlace(level, name, context)
+}
+
+/** First result in `level`'s category that lies inside the parent subdivision, or null to go up a level. */
+export const searchPlace = async (level: PlaceLevel, name: string, context: PlaceContext = {}): Promise<Feature | null> => {
+  const candidates = await searchPlaceCandidates(level, name, context)
+  return candidates.find(feature => matchesContext(feature.properties, context)) ?? null
 }

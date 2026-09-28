@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { normalizePhotonFeature, normalizeNominatimResult } from './adapters'
+import { normalizePhotonFeature, normalizeNominatimResult, subdivisionName } from './adapters'
 import { getGeocodingConfig } from './config'
+import { isCountryCode, PLACE_CANDIDATES } from './placeSearch'
 
+import type { PlaceContext, PlaceLevel } from './placeSearch'
 import type { Feature } from 'geojson'
 
 // Free, no-key public OSM fallbacks. Photon serves autocomplete (it is built for
@@ -54,4 +56,43 @@ export const nominatimReverse = async (
   const data = await response.json()
   if (!data || data.error || data.lat == null) return []
   return [normalizeNominatimResult(data)]
+}
+
+const NOMINATIM_FIELDS: Record<PlaceLevel, string> = {
+  country: 'country',
+  countrySubdivision: 'state',
+  municipality: 'city',
+  address: 'street',
+}
+
+const NOMINATIM_FEATURE_TYPES: Partial<Record<PlaceLevel, string>> = {
+  country: 'country',
+  countrySubdivision: 'state',
+  municipality: 'settlement',
+}
+
+// Nominatim matches `state=Quebec` but not `state=QC`, so known codes are expanded to names.
+const nominatimSubdivision = (value: string, country?: string): string =>
+  (isCountryCode(country) && subdivisionName(country, value)) || value
+
+export const nominatimSearchPlace = async (level: PlaceLevel, name: string, context: PlaceContext): Promise<Feature[]> => {
+  const { nominatimUrl } = getGeocodingConfig()
+
+  const params = new URLSearchParams({ format: 'jsonv2', addressdetails: '1', limit: String(PLACE_CANDIDATES) })
+  if (isCountryCode(context.country)) params.set('countrycodes', context.country.toLowerCase())
+  else if (context.country) params.set('country', context.country)
+  if (context.countrySubdivision) params.set('state', nominatimSubdivision(context.countrySubdivision, context.country))
+  if (context.municipality) params.set('city', context.municipality)
+
+  const value = level === 'countrySubdivision' ? nominatimSubdivision(name, context.country) : name
+  params.set(NOMINATIM_FIELDS[level], value)
+  if (level === 'country' && isCountryCode(name)) params.set('countrycodes', name.toLowerCase())
+  const featureType = NOMINATIM_FEATURE_TYPES[level]
+  if (featureType) params.set('featureType', featureType)
+
+  const response = await fetch(`${nominatimUrl}/search?${params}`)
+  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+
+  const data = await response.json()
+  return Array.isArray(data) ? data.map(normalizeNominatimResult) : []
 }

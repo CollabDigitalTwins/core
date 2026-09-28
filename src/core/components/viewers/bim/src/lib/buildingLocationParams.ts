@@ -15,6 +15,17 @@ const BUILDING_LOCATION_PARAMS = [
 
 const BUILDING_ZOOM = '18'
 
+/** A shared BIM camera is in one building's coordinates, so it must not survive a switch to another. */
+const BIM_CAMERA_PARAMS = ['camX', 'camY', 'camZ', 'tarX', 'tarY', 'tarZ'] as const
+
+export function withBuildingId(params: URLSearchParams, buildingId: number | string) {
+    const next = new URLSearchParams(params.toString())
+    const id = String(buildingId)
+    if (next.get('buildingId') !== id) BIM_CAMERA_PARAMS.forEach(key => next.delete(key))
+    next.set('buildingId', id)
+    return next
+}
+
 function locationOf(building: Building) {
     const { buildingLatitude: lat, buildingLongitude: lng } = building
     const located = typeof lat === 'number' && typeof lng === 'number'
@@ -30,8 +41,7 @@ function locationOf(building: Building) {
 }
 
 export function withBuildingLocation(params: URLSearchParams, building: Building) {
-    const next = new URLSearchParams(params.toString())
-    next.set('buildingId', String(building.id))
+    const next = withBuildingId(params, building.id)
 
     const location = locationOf(building)
     for (const key of BUILDING_LOCATION_PARAMS) {

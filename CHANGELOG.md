@@ -7,6 +7,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.12.1] - 2026-09-28
+
 ### Added
 - The map viewer flies to the most specific location in its URL, in this order:
   `lat`+`lng` > `bbox` > `buildingId` > `address` > `site` > `municipality` > `countrySubdivision` > `country`.

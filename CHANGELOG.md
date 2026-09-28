@@ -7,6 +7,15 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.12.2] - 2026-09-28
+
+### Changed
+- `lucide-react` peer dependency raised from `>=0.500.0` to `>=1.45.0`, so plugins can name any icon up to 1.45
+  by string (e.g. `Houses`). A name missing from the installed version still renders the `Puzzle` fallback.
+
+### Migration
+- Upgrade `lucide-react` to `>=1.45.0` in the consuming app.
+
 ## [0.12.1] - 2026-09-28
 
 ### Added

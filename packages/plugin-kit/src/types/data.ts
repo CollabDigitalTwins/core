@@ -14,7 +14,7 @@
 /** Mirrors core's `ViewerNames`, as the union the records carry. */
 export type PluginViewerName =
   | 'auth' | 'map' | 'bim' | 'buildings' | 'sites' | 'files'
-  | 'land' | 'infrastructure' | 'extensions' | 'settings' | 'users'
+  | 'land' | 'infrastructure' | 'plugins' | 'settings' | 'users'
 
 export interface PluginBuilding {
   id: number

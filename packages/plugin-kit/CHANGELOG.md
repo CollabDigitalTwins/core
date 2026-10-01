@@ -8,6 +8,12 @@ repository root.
 
 ## [Unreleased]
 
+### Changed
+- **`PluginViewerName` and `ViewerNames` say `'plugins'` instead of `'extensions'`**, matching `@collabdt/core`.
+
+### Migration
+- Replace `ViewerNames.extensions` or `'extensions'` with `ViewerNames.plugins` / `'plugins'`.
+
 ## [0.7.0] - 2026-09-26
 
 ### Added

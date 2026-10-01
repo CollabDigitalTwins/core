@@ -49,7 +49,7 @@ export const VIEWER_CONFIG: Partial<Record<ViewerNames, ViewerConfig>> = {
     icon: GalleryVerticalEnd,
     dataType: DataTypes.file,
   },
-  [ViewerNames.extensions]: {
+  [ViewerNames.plugins]: {
     titleKey: 'pluginsHeader',
     icon: Blocks,
     dataType: undefined,

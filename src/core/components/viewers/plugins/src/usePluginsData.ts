@@ -14,6 +14,8 @@ import { useMountedPlugins } from './useMountedPlugins'
 import type { PluginInstallation, PluginUserSetting } from '../../../../types/plugins'
 import type { PluginListing, PluginsActions } from '../types'
 
+type ListingSource = Pick<PluginListing, 'manifest' | 'bundled' | 'mountPath' | 'registryVersion'>
+
 /**
  * Everything the plugins page needs. Core's `Viewer` renders the page with no
  * props, so it reads through the same `ApiAdapter` port every other domain uses.
@@ -50,13 +52,18 @@ export function usePluginsData(override?: PluginListing[]): {
     // server's scan refuses a folder whose manifest declares a different slug.
     const compiledSlugs = new Set(PLUGIN_MANIFESTS.map(manifest => manifest.slug))
     const sources = [
-      ...PLUGIN_MANIFESTS.map(manifest => ({ manifest, bundled: true, mountPath: undefined as string | undefined })),
+      ...PLUGIN_MANIFESTS.map(manifest => ({ manifest, bundled: true } as ListingSource)),
       ...mounted
         .filter(entry => !compiledSlugs.has(entry.manifest.slug))
-        .map(entry => ({ manifest: entry.manifest, bundled: false, mountPath: entry.mountPath })),
+        .map((entry): ListingSource => ({
+          manifest: entry.manifest,
+          bundled: false,
+          mountPath: entry.mountPath,
+          registryVersion: entry.registryVersion,
+        })),
     ]
 
-    return sources.map(({ manifest, bundled, mountPath }) => {
+    return sources.map(({ manifest, bundled, mountPath, registryVersion }) => {
       const install = byPlugin.get(manifest.slug)
       const setting = settingsByPlugin.get(manifest.slug)
       const live = statuses.get(manifest.slug)
@@ -71,6 +78,7 @@ export function usePluginsData(override?: PluginListing[]): {
         userEnabled: setting ? setting.enabled : null,
         bundled,
         ...(mountPath ? { mountPath } : {}),
+        ...(registryVersion ? { registryVersion } : {}),
       } satisfies PluginListing
     })
   }, [override, installations, userSettings, mounted, host, ready])

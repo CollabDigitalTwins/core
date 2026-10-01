@@ -11,8 +11,11 @@ import type { PluginManifest } from '../../../../plugins/sdk/types'
 export interface MountedPlugin {
   manifest: PluginManifest
   bundleUrl: string
-  /** Shown to an administrator before they add it, so they can see what they are trusting. */
-  mountPath: string
+  /** Shown to an administrator before they add it, so they can see what they are trusting. Absent for registry plugins. */
+  mountPath?: string
+  source?: 'mounted' | 'registry'
+  /** The registry version granted to this organization, when `source` is `registry`. */
+  registryVersion?: string
 }
 
 interface MountedResponse {

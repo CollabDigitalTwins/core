@@ -182,7 +182,7 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
         )}
         {/* `plugins` used to route through DataMenu, which rendered nothing:
             VIEWER_CONFIG gives it no dataType. It has its own page now. */}
-        {builtInViewer === ViewerNames.extensions && (
+        {builtInViewer === ViewerNames.plugins && (
           <div className="h-full w-full overflow-y-auto">
             <PluginsManager />
           </div>

@@ -2,7 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // @vitest-environment jsdom
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import * as React from 'react'
 
 import { PluginsManager } from './PluginsManager'
@@ -97,7 +97,14 @@ function listing(overrides: Partial<PluginListing> = {}): PluginListing {
 }
 
 function card() {
-  return screen.getByTestId('plugin-space-planning')
+  const row = screen.getByTestId('plugin-space-planning')
+  const toggle = within(row).getByRole('button', { name: 'toggleDetails' })
+  if (toggle.getAttribute('aria-expanded') === 'false') fireEvent.click(toggle)
+  return row
+}
+
+function openTab(label: string) {
+  fireEvent.mouseDown(screen.getByRole('tab', { name: new RegExp(`^${label}`) }))
 }
 
 afterEach(() => {
@@ -179,8 +186,9 @@ describe('controls by role', () => {
     installed.click()
 
     await vi.waitFor(() => expect(setInstalled).toHaveBeenCalledWith('space-planning', false))
-    // Back to the section it came from, rather than stuck in the organization's list.
-    expect(within(card()).getByText('statusAvailable')).toBeInTheDocument()
+    await vi.waitFor(() => expect(within(card()).getByText('statusAvailable')).toBeInTheDocument())
+    openTab('sectionAvailable')
+    expect(screen.queryByTestId('plugin-space-planning')).not.toBeInTheDocument()
   })
 
   it('shows an admin the trust prompt before they add a discovered plugin', () => {
@@ -192,10 +200,89 @@ describe('controls by role', () => {
       manifest: { ...listing().manifest, requiredPermissions: ['read Building'] },
     })]} />)
 
+    openTab('sectionFound')
     const scope = within(card())
     expect(scope.getByText('trustHeading')).toBeInTheDocument()
     expect(scope.getByText('trustWarning')).toBeInTheDocument()
     expect(scope.getByRole('button', { name: 'addToOrg' })).toBeInTheDocument()
+  })
+})
+
+describe('the collapsed row', () => {
+  function collapsedRow() {
+    return within(screen.getByTestId('plugin-space-planning'))
+  }
+
+  it('lets a member run a plugin for themselves without expanding it', async () => {
+    permissions.current = MEMBER
+    const setUserEnabled = vi.fn().mockResolvedValue(undefined)
+    render(<PluginsManager listings={[listing({ userEnabled: false })]} actions={{ ...boundActions, setUserEnabled }} />)
+
+    fireEvent.click(collapsedRow().getByRole('checkbox', { name: 'quickUserRun' }))
+
+    await vi.waitFor(() => expect(setUserEnabled).toHaveBeenCalledWith('space-planning', true))
+    expect(collapsedRow().getByRole('button', { name: 'toggleDetails' })).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('gives an admin the install and enable columns, and a member only run', () => {
+    permissions.current = ADMIN
+    const { unmount } = render(<PluginsManager listings={[listing()]} />)
+    expect(collapsedRow().getByRole('checkbox', { name: 'quickOrgEnabled' })).toBeEnabled()
+    expect(collapsedRow().getByRole('checkbox', { name: 'quickInstalled' })).toBeChecked()
+    unmount()
+
+    permissions.current = MEMBER
+    render(<PluginsManager listings={[listing()]} />)
+    expect(screen.getByRole('columnheader', { name: /columnRun/ })).toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: /columnEnable/ })).not.toBeInTheDocument()
+    expect(collapsedRow().queryByRole('checkbox', { name: 'quickOrgEnabled' })).not.toBeInTheDocument()
+    expect(collapsedRow().queryByRole('checkbox', { name: 'quickInstalled' })).not.toBeInTheDocument()
+  })
+
+  it('sorts rows from the column headers, ascending then descending', () => {
+    permissions.current = MEMBER
+    const other = listing({ manifest: { ...listing().manifest, slug: 'acoustics', name: 'Acoustics' } })
+    render(<PluginsManager listings={[listing(), other]} />)
+    const order = () => screen.getAllByTestId(/^plugin-(space-planning|acoustics)$/).map(row => row.dataset.testid)
+
+    const sortByName = () => fireEvent.click(screen.getAllByRole('button', { name: 'sortBy' })[0])
+
+    sortByName()
+    expect(order()).toEqual(['plugin-acoustics', 'plugin-space-planning'])
+    expect(screen.getAllByRole('columnheader')[0]).toHaveAttribute('aria-sort', 'ascending')
+
+    sortByName()
+    expect(order()).toEqual(['plugin-space-planning', 'plugin-acoustics'])
+    expect(screen.getAllByRole('columnheader')[0]).toHaveAttribute('aria-sort', 'descending')
+  })
+
+  it('shows a locked choice as a disabled checkbox', () => {
+    permissions.current = MEMBER
+    render(<PluginsManager listings={[listing({ allowUserOverride: false })]} />)
+
+    expect(collapsedRow().getByRole('checkbox', { name: 'quickUserRun' })).toBeDisabled()
+  })
+
+  it('opens a discovered plugin for review instead of adding it unseen', () => {
+    permissions.current = ADMIN
+    render(<PluginsManager listings={[listing({ status: 'available', installed: false })]} />)
+
+    fireEvent.click(collapsedRow().getByRole('checkbox', { name: 'quickInstalled' }))
+
+    expect(collapsedRow().getByText('trustHeading')).toBeInTheDocument()
+    expect(boundActions.setInstalled).not.toHaveBeenCalled()
+  })
+})
+
+describe('tabs', () => {
+  it('lists only running plugins under running', () => {
+    permissions.current = MEMBER
+    const off = listing({ orgEnabled: false, manifest: { ...listing().manifest, slug: 'off-plugin', name: 'Off' } })
+    render(<PluginsManager listings={[listing(), off]} />)
+
+    openTab('tabRunning')
+    expect(screen.getByTestId('plugin-space-planning')).toBeInTheDocument()
+    expect(screen.queryByTestId('plugin-off-plugin')).not.toBeInTheDocument()
   })
 })
 

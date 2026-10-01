@@ -7,6 +7,47 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Added
+- Shared plugin registry on the Plugins page, for the dev team. The host app answers `GET /api/plugins/registry`
+  with `configured: true` for dev-team members only, and everyone else sees the page as before.
+  - Each plugin's row shows its registry state (not published, update ready, published, registry ahead, name
+    taken). Expanding a mounted plugin's row publishes it, or says why it can't.
+  - A "Registry" tab lists the published registry plugins, including ones this organization has no copy of,
+    with a Mine filter. Owners can remove a version or a plugin.
+  - Platform admins get a "Visible to" column: a searchable organization picker that grants the latest version.
+    The expanded row lists the organizations with access, pins each to a version or the latest, and revokes.
+- New types in `@collabdt/core/core/components/viewers/plugins/types`: `RegistryPlugin`, `RegistryVersion`,
+  `RegistryGrant`, `RegistryState`, `RegistryOrganization` and the `RegistryActions` port.
+  `RegistryActions.setGrant(slug, organizationId, pinnedVersion)` takes `null` for the latest version.
+- `PluginsManager` takes an optional `registryActions` prop. It defaults to the host's `/api/plugins/registry/*` routes.
+- `PluginListing.registryVersion`. A plugin shared with the organization through the registry shows a
+  "From the registry" badge and its granted version.
+- `PluginRegistry` i18n namespace (en/es/fr), plus `PluginsPage.fromRegistry`, `trustRegistry`, `emptyFound`,
+  `columnPlugin`, `columnVersion`, `columnStatus`, `columnRun`, `columnInstall`, `columnEnable`,
+  `columnVisibleTo`, `columnRegistry`, `visibleToCount`, `sortBy`, `toggleDetails`, `notInOrg`, `tabAll`,
+  `tabRunning`, `emptyRunning`, `quickInstalled`, `quickOrgEnabled` and `quickUserRun`.
+- Sortable Plugins table headers: Name, Status, Run, Install, Enable and Visible to cycle ascending, descending
+  and unsorted.
+
+### Changed
+- **`ViewerNames.extensions` is renamed `ViewerNames.plugins`** (value `'plugins'`), so the Plugins page is
+  `?viewer=plugins`. The host database renames the enum value in place.
+- The Plugins page shows one compact row per plugin, expanded for its details and controls, so a plugin that is
+  both in the organization and in the registry appears once. Tabs filter the rows into "All", "Running",
+  "Available in this organization", "Found on this server" (admins) and "Registry" (dev team), each with a count.
+  A collapsed row has a Run checkbox for everyone, Install and Enable checkboxes for organization admins, and a
+  running plugin's name is bold.
+- `MountedPlugin.mountPath` is optional, and `MountedPlugin` gains `source` and `registryVersion`, because
+  `/api/plugins/mounted` also lists registry plugins granted to the organization.
+- `PluginsPage.sectionFoundHint` now covers plugins shared with the organization as well as mounted ones.
+
+### Removed
+- `PluginsPage.intro`: the Plugins page no longer shows an intro line under its title.
+
+### Migration
+- Replace `ViewerNames.extensions` with `ViewerNames.plugins`, and any stored or linked `'extensions'` viewer
+  value with `'plugins'`.
+
 ## [0.12.2] - 2026-09-28
 
 ### Changed

@@ -7,7 +7,7 @@ import type { Organization } from '../types/dbTypes'
 
 /** Everything an organization can switch on. The map is always available and is not listed. */
 const OPTIONAL_VIEWERS: ViewerNames[] = [
-  ViewerNames.extensions,
+  ViewerNames.plugins,
   ViewerNames.bim,
   ViewerNames.sites,
   ViewerNames.infrastructure,

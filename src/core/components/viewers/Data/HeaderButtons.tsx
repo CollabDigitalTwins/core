@@ -277,7 +277,7 @@ export default function HeaderButtons({
         : (
             <Button
               variant="secondary"
-              className={`max-sm:hidden ${(currentViewer === ViewerNames.files || currentViewer === ViewerNames.extensions || currentViewer === ViewerNames.users) ? 'hidden' : ''}`}
+              className={`max-sm:hidden ${(currentViewer === ViewerNames.files || currentViewer === ViewerNames.plugins || currentViewer === ViewerNames.users) ? 'hidden' : ''}`}
               onClick={() => setComparing(true)}
             >
               <LR.GitCompare />

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { toast } from 'sonner'
@@ -12,6 +13,7 @@ import { INSTALLED_PLUGINS } from '../../../plugins/installed'
 import { resolvePluginEntry } from '../../../plugins/sdk/types'
 import { usePermissions } from '../../../store/Permissions/context'
 import { ViewerNames } from '../../../types/dbTypes'
+import { Badge } from '../../ui/Badge'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -19,52 +21,66 @@ import {
   BreadcrumbPage,
 } from '../../ui/Breadcrumb'
 import { Input } from '../../ui/Input'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/Tabs'
 import { VIEWER_CONFIG } from '../Data/utils/viewerConfig'
 
 
-import { PluginCard } from './src/PluginCard'
+import { visibleColumns } from './src/pluginColumns'
+import { PluginDetails } from './src/PluginDetails'
+import { InstallQuickControl, OrgQuickControl, UserQuickControl } from './src/PluginQuickControls'
+import { PLUGIN_ROW_GRID, PluginRow, pluginRowStyle } from './src/PluginRow'
+import { isInTab, isMine, matchesSearch, mergePluginRows, registryStanding } from './src/pluginRows'
 import { effectiveStatus } from './src/pluginStatus'
+import { RegistryDetails } from './src/RegistryDetails'
+import { RegistryToolbar } from './src/RegistryToolbar'
+import { nextSort, rowName, SORT_KEYS, sortPluginRows } from './src/sortPluginRows'
 import { usePluginsActions, usePluginsData } from './src/usePluginsData'
+import { useRegistryActions, useRegistryPlugins } from './src/useRegistryPlugins'
+import { VisibleToPicker } from './src/VisibleToPicker'
 
 
-import type { PluginListing, PluginsAbility, PluginsActions } from './types'
+import type { PluginColumn } from './src/pluginColumns'
+import type { PluginRowData, PluginsTab } from './src/pluginRows'
+import type { RegistryScope } from './src/RegistryToolbar'
+import type { PluginSort, SortKey } from './src/sortPluginRows'
+import type { PluginListing, PluginsAbility, PluginsActions, RegistryActions, RegistryState } from './types'
 
 interface Props {
   /** Override the rows. Normally omitted; the page reads them through the `ApiAdapter`. */
   listings?: PluginListing[]
   /** Override the writes. Normally omitted; they bind to the API by default. */
   actions?: PluginsActions
+  /** Override the shared-registry writes. Normally omitted; they bind to `/api/plugins/registry`. */
+  registryActions?: RegistryActions
 }
 
 /**
- * The Plugins page: what plugins this deployment has, and who decided they run.
- *
- * The frame mirrors `DataMenu`, since this belongs to the same management group.
- * Two levels of control rather than one switch (see `plugins/enablement.ts`): an
- * admin sets what is available and its default, then anyone chooses for themselves
- * unless the admin locked it. CASL only decides which controls render — every write
- * is re-checked server-side.
+ * The Plugins page: one row per plugin, holding its organization state and its registry state.
+ * Tabs only filter those rows. CASL decides which controls render; every write is re-checked server-side.
  */
-export function PluginsManager({ listings, actions }: Props) {
+export function PluginsManager({ listings, actions, registryActions }: Props) {
   const t = useTranslations('PluginsPage')
   const tData = useTranslations('DataMenu')
+  const tRegistry = useTranslations('PluginRegistry')
   const { ability } = usePermissions()
   const [searchTerm, setSearchTerm] = React.useState('')
+  const [tab, setTab] = React.useState<PluginsTab>('all')
+  const [scope, setScope] = React.useState<RegistryScope>('all')
 
-  const viewerConfig = VIEWER_CONFIG[ViewerNames.extensions]
+  const viewerConfig = VIEWER_CONFIG[ViewerNames.plugins]
   const headerTitle = t('title')
   const MenuIcon = viewerConfig?.icon
 
   const { listings: resolved, isLoading } = usePluginsData(listings)
   const boundActions = usePluginsActions(actions)
   const host = usePluginHost()
+  const { registry } = useRegistryPlugins()
+  const boundRegistryActions = useRegistryActions(registryActions)
 
-  // Optimistic overrides on top of the resolved rows: the switch moves at once and
-  // reverts if the write fails, so it never looks successful while the server said
-  // no. Cleared by the next fetch.
+  // Optimistic overrides: the switch moves at once, reverts if the write fails, and the next fetch clears it.
   const [overrides, setOverrides] = React.useState<Record<string, Partial<PluginListing>>>({})
 
-  const rows = React.useMemo(
+  const listingRows = React.useMemo(
     () => resolved.map(row => {
       const patch = overrides[row.manifest.slug]
       return patch ? { ...row, ...patch } : row
@@ -73,10 +89,7 @@ export function PluginsManager({ listings, actions }: Props) {
   )
 
   const canManage: PluginsAbility = React.useMemo(() => {
-    // Orgs seeded before the `PluginInstallation`/`PluginUserSetting` subjects
-    // existed hold neither, which left this page read-only even for an admin.
-    // `update Organization` reproduces the same split (Admin and User hold it,
-    // Viewer does not). Drop both fallbacks once role rows are back-filled.
+    // Orgs seeded before the plugin subjects existed hold neither; drop this once role rows are back-filled.
     const legacyWriter = ability.can('update', 'Organization')
 
     const orgAdmin = ability.can('update', 'PluginInstallation') || legacyWriter
@@ -88,32 +101,35 @@ export function PluginsManager({ listings, actions }: Props) {
     }
   }, [ability])
 
-  const filtered = React.useMemo(() => {
-    const needle = searchTerm.trim().toLowerCase()
-    if (!needle) return rows
+  const rows = React.useMemo(
+    () => mergePluginRows(listingRows, registry.configured ? registry.plugins : []),
+    [listingRows, registry],
+  )
 
-    return rows.filter(({ manifest }) =>
-      manifest.name.toLowerCase().includes(needle)
-      || manifest.slug.toLowerCase().includes(needle)
-      || (manifest.description ?? '').toLowerCase().includes(needle)
-      || manifest.capabilities.some(capability => capability.toLowerCase().includes(needle)),
-    )
-  }, [rows, searchTerm])
+  const canGrant = registry.viewer?.canGrant ?? false
+  const columns = React.useMemo(() => visibleColumns(canManage, canGrant), [canManage, canGrant])
+  const [sort, setSort] = React.useState<PluginSort | null>(null)
 
-  // Plugins not added yet are their own decision, so they get their own section.
-  const inOrg = filtered.filter(row => effectiveStatus(row) !== 'available')
-  const found = canManage.canInstall
-    ? filtered.filter(row => effectiveStatus(row) === 'available')
-    : []
+  const tabs: PluginsTab[] = [
+    'all',
+    'running',
+    'organization',
+    ...(canManage.canInstall ? ['available' as const] : []),
+    ...(registry.configured ? ['registry' as const] : []),
+  ]
 
-  // Reflect a saved change in the running viewer at once, so turning a plugin off
-  // removes its toolbar button without a reload. `PluginHostProvider` reconciles
-  // from `enabledSlugs` too, but only on fresh props; both converge on the same
-  // target state, so agreeing is the normal case rather than a race.
+  const needle = searchTerm.trim().toLowerCase()
+  const rowsFor = (target: PluginsTab) => rows.filter(row =>
+    isInTab(row, target, tabs)
+    && matchesSearch(row, needle)
+    && (target !== 'registry' || scope === 'all' || isMine(row)))
+  const sortedRowsFor = (target: PluginsTab) => sortPluginRows(rowsFor(target), sort)
+
+  // Reflect a saved change in the running viewer at once; `PluginHostProvider` converges on the same state.
   React.useEffect(() => {
     if (!host) return
 
-    for (const row of rows) {
+    for (const row of listingRows) {
       const { slug } = row.manifest
       const shouldRun = effectiveStatus(row) === 'running'
       const isRunning = host.getStatus(slug) === 'active'
@@ -130,10 +146,9 @@ export function PluginsManager({ listings, actions }: Props) {
         void host.unloadPlugin(slug)
       }
     }
-  }, [rows, host])
+  }, [listingRows, host])
 
-  // Every control routes through here, so the optimistic update, the revert and the
-  // toasts are written once rather than per switch.
+  // Every control routes through here, so the optimistic update, the revert and the toasts are written once.
   const commit = React.useCallback(
     async (
       slug: string,
@@ -159,6 +174,23 @@ export function PluginsManager({ listings, actions }: Props) {
     [t],
   )
 
+  const tabLabel: Record<PluginsTab, string> = {
+    all: t('tabAll'),
+    running: t('tabRunning'),
+    organization: t('sectionAvailable'),
+    available: t('sectionFound'),
+    registry: tRegistry('tabLabel'),
+  }
+
+  const emptyText = (target: PluginsTab): string => {
+    if (needle) return t('noResults', { query: searchTerm.trim() })
+    if (target === 'registry') return scope === 'mine' ? tRegistry('emptyMine') : tRegistry('empty')
+    if (target === 'available') return t('emptyFound')
+    if (target === 'running') return t('emptyRunning')
+    if (isLoading && resolved.length === 0) return t('loading')
+    return canManage.canInstall ? t('emptyAdmin') : t('empty')
+  }
+
   return (
     <div className="sm:p-2 overflow-hidden bg-[#fafafa] h-full">
       <div className="bg-background rounded-xl shadow h-full min-h-0">
@@ -177,74 +209,161 @@ export function PluginsManager({ listings, actions }: Props) {
 
           {/* Title Row */}
           <div className="flex flex-row justify-between items-center px-6 py-6">
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center gap-2">
-                {MenuIcon && <MenuIcon className="h-8 w-8" />}
-                <h1 className="text-2xl text-foreground">{headerTitle}</h1>
+            <div className="flex items-center gap-2">
+              {MenuIcon && <MenuIcon className="h-8 w-8" />}
+              <h1 className="text-2xl text-foreground">{headerTitle}</h1>
+            </div>
+          </div>
+
+          <Tabs
+            value={tab}
+            onValueChange={value => setTab(value as PluginsTab)}
+            className="flex flex-1 min-h-0 flex-col"
+          >
+            {/* Tabs and Search Row */}
+            <div className="flex flex-col sm:flex-row sm:justify-between items-stretch sm:items-end px-3 sm:px-6 py-4 gap-3 sm:gap-4">
+              {tabs.length > 1 ? (
+                <TabsList className="w-auto sm:flex-1">
+                  {tabs.map(target => (
+                    <TabsTrigger key={target} value={target}>
+                      {tabLabel[target]}
+                      <Badge className="ml-1 tabular-nums">{rowsFor(target).length}</Badge>
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              ) : <span />}
+              <div className="w-full sm:w-80">
+                <Input
+                  placeholder={`${tData('searchPlaceholder')} ${headerTitle}...`}
+                  value={searchTerm}
+                  onChange={event => setSearchTerm(event.target.value)}
+                  aria-label={t('searchPlaceholder')}
+                />
               </div>
-              <h2 className="text-sm text-muted-foreground font-normal max-w-[70ch]">
-                {t('intro')}
-              </h2>
             </div>
-          </div>
 
-          {/* Search Row */}
-          <div className="flex flex-col sm:flex-row sm:justify-end items-stretch sm:items-center px-3 sm:px-6 py-4 gap-3 sm:gap-4">
-            <div className="w-full sm:w-96">
-              <Input
-                placeholder={`${tData('searchPlaceholder')} ${headerTitle}...`}
-                value={searchTerm}
-                onChange={event => setSearchTerm(event.target.value)}
-                aria-label={t('searchPlaceholder')}
-              />
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-6 pb-8">
-            {isLoading && rows.length === 0 ? (
-              <Empty text={t('loading')} />
-            ) : rows.length === 0 ? (
-              <Empty text={canManage.canInstall ? t('emptyAdmin') : t('empty')} />
-            ) : filtered.length === 0 ? (
-              <Empty text={t('noResults', { query: searchTerm.trim() })} />
-            ) : (
-              <>
-                {inOrg.length > 0 && (
-                  <Section
-                    title={t('sectionAvailable')}
-                    hint={t('countPlugins', { count: inOrg.length })}
-                  >
-                    {inOrg.map(row => (
-                      <Row
-                        key={row.manifest.slug}
-                        listing={row}
-                        ability={canManage}
-                        actions={boundActions}
-                        commit={commit}
-                      />
-                    ))}
-                  </Section>
+            {tabs.map(target => (
+              <TabsContent
+                key={target}
+                value={target}
+                className="mt-0 flex-1 min-h-0 overflow-y-auto px-3 sm:px-6 pb-8"
+                data-testid={target === 'registry' ? 'plugin-registry' : `plugins-tab-${target}`}
+              >
+                {target === 'registry' && (
+                  <RegistryToolbar
+                    registry={registry}
+                    scope={scope}
+                    onScopeChange={setScope}
+                  />
+                )}
+                {target === 'available' && (
+                  <p className="mb-3 text-sm text-muted-foreground">{t('sectionFoundHint')}</p>
                 )}
 
-                {found.length > 0 && (
-                  <Section title={t('sectionFound')} hint={t('sectionFoundHint')}>
-                    {found.map(row => (
-                      <Row
-                        key={row.manifest.slug}
-                        listing={row}
-                        ability={canManage}
-                        actions={boundActions}
-                        commit={commit}
-                      />
-                    ))}
-                  </Section>
-                )}
-              </>
-            )}
-          </div>
+                <PluginTable
+                  rows={sortedRowsFor(target)}
+                  columns={columns}
+                  sort={sort}
+                  onSort={key => setSort(current => nextSort(current, key))}
+                  emptyText={emptyText(target)}
+                >
+                  {row => (
+                    <Row
+                      key={row.slug}
+                      row={row}
+                      columns={columns}
+                      ability={canManage}
+                      actions={boundActions}
+                      commit={commit}
+                      registry={registry}
+                      registryActions={boundRegistryActions}
+                    />
+                  )}
+                </PluginTable>
+              </TabsContent>
+            ))}
+          </Tabs>
 
         </div>
+      </div>
+    </div>
+  )
+}
+
+const COLUMN_LABEL_KEY = {
+  name: 'columnPlugin',
+  version: 'columnVersion',
+  status: 'columnStatus',
+  run: 'columnRun',
+  install: 'columnInstall',
+  enable: 'columnEnable',
+  visibleTo: 'columnVisibleTo',
+  registry: 'columnRegistry',
+} as const satisfies Record<PluginColumn, string>
+
+const isSortKey = (column: PluginColumn): column is SortKey => (SORT_KEYS as readonly string[]).includes(column)
+
+function PluginTable({
+  rows,
+  columns,
+  sort,
+  onSort,
+  emptyText,
+  children,
+}: {
+  rows: PluginRowData[]
+  columns: readonly PluginColumn[]
+  sort: PluginSort | null
+  onSort: (key: SortKey) => void
+  emptyText: string
+  children: (row: PluginRowData) => React.ReactNode
+}) {
+  const t = useTranslations('PluginsPage')
+
+  if (rows.length === 0) {
+    return (
+      <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+        {emptyText}
+      </p>
+    )
+  }
+
+  return (
+    <div className="overflow-x-auto rounded-xl border">
+      <div className="min-w-max">
+        <div
+          role="row"
+          className={`${PLUGIN_ROW_GRID} border-b bg-muted/30 px-3 py-1 text-xs text-muted-foreground`}
+          style={pluginRowStyle(columns)}
+        >
+          {columns.map(column => {
+            const label = t(COLUMN_LABEL_KEY[column])
+            const className = column === 'name' ? 'pl-6' : undefined
+            if (!isSortKey(column)) return <span key={column} role="columnheader" className={className}>{label}</span>
+
+            const direction = sort?.key === column ? sort.direction : null
+            const SortIcon = direction === 'asc' ? LR.ArrowUp : direction === 'desc' ? LR.ArrowDown : LR.ArrowUpDown
+            return (
+              <span
+                key={column}
+                role="columnheader"
+                aria-sort={direction === 'asc' ? 'ascending' : direction === 'desc' ? 'descending' : 'none'}
+                className={className}
+              >
+                <button
+                  type="button"
+                  className="-mx-1 inline-flex items-center gap-1 rounded px-1 py-1 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  onClick={() => onSort(column)}
+                  aria-label={t('sortBy', { column: label })}
+                >
+                  {label}
+                  <SortIcon aria-hidden className={direction ? 'h-3.5 w-3.5' : 'h-3.5 w-3.5 opacity-40'} />
+                </button>
+              </span>
+            )
+          })}
+        </div>
+        <ul>{rows.map(children)}</ul>
       </div>
     </div>
   )
@@ -258,87 +377,107 @@ type Commit = (
   success: string,
 ) => Promise<void>
 
-/** Binds one listing's controls to the shared commit path. */
+/** Binds one row's controls to the shared commit path and the registry. */
 function Row({
-  listing,
+  row,
+  columns,
   ability,
   actions,
   commit,
+  registry,
+  registryActions,
 }: {
-  listing: PluginListing
+  row: PluginRowData
+  columns: readonly PluginColumn[]
   ability: PluginsAbility
   actions: PluginsActions
   commit: Commit
+  registry: RegistryState
+  registryActions: RegistryActions
 }) {
   const t = useTranslations('PluginsPage')
-  const { slug } = listing.manifest
-  const name = listing.manifest.name
+  const { slug, listing, entry } = row
+  const name = rowName(row)
+  const canGrant = registry.viewer?.canGrant ?? false
+  const devTeam = registry.configured ? { canGrant } : null
+  const showRegistry = Boolean(devTeam && (entry || listing?.mountPath))
+  const [open, setOpen] = React.useState(false)
+
+  const setOrgEnabled = (enabled: boolean) => void commit(
+    slug,
+    name,
+    { orgEnabled: enabled },
+    () => actions.setOrgEnabled(slug, enabled),
+    enabled ? t('toastOrgEnabled', { name }) : t('toastOrgDisabled', { name }),
+  )
+  const setUserEnabled = (enabled: boolean) => void commit(
+    slug,
+    name,
+    { userEnabled: enabled },
+    () => actions.setUserEnabled(slug, enabled),
+    enabled ? t('toastUserEnabled', { name }) : t('toastUserDisabled', { name }),
+  )
+  const setInstalled = (installed: boolean) => void commit(
+    slug,
+    name,
+    { installed, status: installed ? 'off' : 'available' },
+    () => actions.setInstalled(slug, installed),
+    installed ? t('toastInstalled', { name }) : t('toastUninstalled', { name }),
+  )
 
   return (
-    <PluginCard
-      listing={listing}
-      ability={ability}
-      onSetInstalled={installed => void commit(
-        slug,
-        name,
-        { installed, status: installed ? 'off' : 'available' },
-        () => actions.setInstalled(slug, installed),
-        installed ? t('toastInstalled', { name }) : t('toastUninstalled', { name }),
-      )}
-      onSetOrgEnabled={enabled => void commit(
-        slug,
-        name,
-        { orgEnabled: enabled },
-        () => actions.setOrgEnabled(slug, enabled),
-        enabled ? t('toastOrgEnabled', { name }) : t('toastOrgDisabled', { name }),
-      )}
-      onSetAllowUserOverride={allow => void commit(
-        slug,
-        name,
-        { allowUserOverride: allow },
-        () => actions.setAllowUserOverride(slug, allow),
-        allow ? t('toastOverrideAllowed', { name }) : t('toastOverrideBlocked', { name }),
-      )}
-      onSetUserEnabled={enabled => void commit(
-        slug,
-        name,
-        { userEnabled: enabled },
-        () => actions.setUserEnabled(slug, enabled),
-        enabled ? t('toastUserEnabled', { name }) : t('toastUserDisabled', { name }),
-      )}
-      onCopyError={() => {
-        void navigator.clipboard?.writeText(listing.error ?? '')
-          .then(() => toast.success(t('errorCopied')))
-          .catch(() => toast.error(t('toastFailed', { name })))
+    <PluginRow
+      open={open}
+      onOpenChange={setOpen}
+      columns={columns}
+      cells={{
+        run: <UserQuickControl listing={listing} ability={ability} name={name} onSetUserEnabled={setUserEnabled} />,
+        install: <InstallQuickControl listing={listing} ability={ability} name={name} onSetInstalled={setInstalled} onReview={() => setOpen(true)} />,
+        enable: <OrgQuickControl listing={listing} ability={ability} name={name} onSetOrgEnabled={setOrgEnabled} />,
+        visibleTo: entry && canGrant ? <VisibleToPicker plugin={entry} actions={registryActions} /> : null,
       }}
-    />
-  )
-}
+      slug={slug}
+      name={name}
+      icon={listing?.manifest.icon ?? entry?.icon}
+      version={listing?.manifest.version ?? entry?.latestVersion ?? null}
+      status={listing ? effectiveStatus(listing) : undefined}
+      standing={registryStanding(row, devTeam)}
+    >
+      {listing ? (
+        <PluginDetails
+          listing={listing}
+          ability={ability}
+          onSetInstalled={setInstalled}
+          onSetOrgEnabled={setOrgEnabled}
+          onSetAllowUserOverride={allow => void commit(
+            slug,
+            name,
+            { allowUserOverride: allow },
+            () => actions.setAllowUserOverride(slug, allow),
+            allow ? t('toastOverrideAllowed', { name }) : t('toastOverrideBlocked', { name }),
+          )}
+          onSetUserEnabled={setUserEnabled}
+          onCopyError={() => {
+            void navigator.clipboard?.writeText(listing.error ?? '')
+              .then(() => toast.success(t('errorCopied')))
+              .catch(() => toast.error(t('toastFailed', { name })))
+          }}
+        />
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          {entry?.description && <span className="mb-1 block text-foreground">{entry.description}</span>}
+          {t('notInOrg')}
+        </p>
+      )}
 
-function Section({
-  title,
-  hint,
-  children,
-}: {
-  title: string
-  hint: string
-  children: React.ReactNode
-}) {
-  return (
-    <section className="mb-8 last:mb-0">
-      <div className="flex items-baseline gap-2 mb-3">
-        <h2 className="text-sm text-foreground">{title}</h2>
-        <span className="text-sm text-muted-foreground">{hint}</span>
-      </div>
-      <div className="flex flex-col gap-3">{children}</div>
-    </section>
-  )
-}
-
-function Empty({ text }: { text: string }) {
-  return (
-    <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-      {text}
-    </p>
+      {showRegistry && (
+        <RegistryDetails
+          entry={entry}
+          mounted={listing?.mountPath ? listing.manifest : undefined}
+          canGrant={canGrant}
+          actions={registryActions}
+        />
+      )}
+    </PluginRow>
   )
 }

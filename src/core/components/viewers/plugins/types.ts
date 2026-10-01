@@ -42,6 +42,8 @@ export interface PluginListing {
   bundled: boolean
   /** Where a mounted plugin was found, shown before an admin adds it. */
   mountPath?: string
+  /** Set when the plugin comes from the shared plugin registry: the version granted to this organization. */
+  registryVersion?: string
 }
 
 /**
@@ -71,4 +73,60 @@ export interface PluginsAbility {
   canConfigureOrg: boolean
   /** `update PluginUserSetting` — choose for oneself. */
   canChooseForSelf: boolean
+}
+
+export interface RegistryVersion {
+  version: string
+  status: 'PUBLISHED' | 'YANKED'
+  hostApi: number
+  sizeBytes: number
+  sha256: string
+  publishedAt: string
+  publishedBy: string
+}
+
+export interface RegistryGrant {
+  organizationId: number
+  organizationName: string
+  /** Null runs the newest published version. */
+  pinnedVersion: string | null
+  resolvedVersion: string | null
+}
+
+/** One plugin in the shared registry, as the dev team sees it. `grants` is present for platform admins only. */
+export interface RegistryPlugin {
+  slug: string
+  name: string
+  description: string | null
+  icon: string | null
+  owner: { name: string; email: string }
+  ownedByMe: boolean
+  latestVersion: string | null
+  versions: RegistryVersion[]
+  grants?: RegistryGrant[]
+}
+
+export interface RegistryState {
+  /** False for anyone outside the dev team: the page then shows no registry controls at all. */
+  configured: boolean
+  viewer?: { email: string; canPublish: boolean; canGrant: boolean }
+  plugins: RegistryPlugin[]
+  error?: { code: string; message: string }
+}
+
+export interface RegistryOrganization {
+  id: number
+  name: string
+  title: string | null
+}
+
+/** Registry writes, a port like `PluginsActions`. Every one is re-checked by the registry. */
+export interface RegistryActions {
+  publishMounted(slug: string): Promise<{ version: string; claimed: boolean }>
+  removeVersion(slug: string, version: string): Promise<{ outcome: 'deleted' | 'yanked' }>
+  removePlugin(slug: string): Promise<void>
+  listOrganizations(): Promise<RegistryOrganization[]>
+  /** Grants or re-pins access; `pinnedVersion` null runs the newest published version. */
+  setGrant(slug: string, organizationId: number, pinnedVersion: string | null): Promise<void>
+  revokeGrant(slug: string, organizationId: number): Promise<void>
 }

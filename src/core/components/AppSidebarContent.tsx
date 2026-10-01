@@ -214,9 +214,9 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
     // },
     {
       title: t('addPlugins'),
-      id: ViewerNames.extensions,
+      id: ViewerNames.plugins,
       icon: LR.Blocks,
-      onClick: () => changeViewer(ViewerNames.extensions),
+      onClick: () => changeViewer(ViewerNames.plugins),
     }
   ]
 

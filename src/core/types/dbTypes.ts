@@ -28,7 +28,7 @@ export enum DatasetProvider { evergreen = 'evergreen' }
 export enum SourceUpAxis { y = 'y', z = 'z' }
 export enum GeoreferenceSource { ifc = 'ifc', lasHeader = 'lasHeader', manual = 'manual' }
 export enum DataManagementSystem { Ckan = 'Ckan', Arcgis = 'Arcgis', Opendatasoft = 'Opendatasoft', Socrata = 'Socrata', Other = 'Other' }
-export enum ViewerNames { auth = 'auth', map = 'map', bim = 'bim', buildings = 'buildings', sites = 'sites', files = 'files', land = 'land', infrastructure = 'infrastructure', extensions = 'extensions', settings = 'settings', users = 'users' }
+export enum ViewerNames { auth = 'auth', map = 'map', bim = 'bim', buildings = 'buildings', sites = 'sites', files = 'files', land = 'land', infrastructure = 'infrastructure', plugins = 'plugins', settings = 'settings', users = 'users' }
 /**
  * A built-in viewer or a plugin page, as `plugin:<pluginId>:<pageId>`. Widened rather than
  * adding enum members: `ViewerNames` mirrors the Prisma `appContent` enum.

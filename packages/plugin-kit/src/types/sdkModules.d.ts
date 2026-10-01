@@ -36,7 +36,7 @@ declare module '@collabdt/core/plugins-sdk' {
     files: 'files'
     land: 'land'
     infrastructure: 'infrastructure'
-    extensions: 'extensions'
+    plugins: 'plugins'
     settings: 'settings'
     users: 'users'
   }

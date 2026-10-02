@@ -187,7 +187,7 @@ describe('controls by role', () => {
     permissions.current = MEMBER
     render(<PluginsManager listings={[listing({ status: 'available', installed: false })]} />)
 
-    expect(screen.queryByText('sectionFound')).not.toBeInTheDocument()
+    expect(screen.queryByText('tabNotInstalled')).not.toBeInTheDocument()
     expect(screen.queryByTestId('plugin-space-planning')).not.toBeInTheDocument()
   })
 
@@ -202,11 +202,25 @@ describe('controls by role', () => {
     expect(installed).toBeEnabled()
 
     installed.click()
+    ;(await screen.findByRole('button', { name: 'uninstallConfirm' })).click()
 
     await vi.waitFor(() => expect(setInstalled).toHaveBeenCalledWith('space-planning', false))
     await vi.waitFor(() => expect(within(card()).getByText('statusAvailable')).toBeInTheDocument())
-    openTab('sectionAvailable')
+    openTab('tabInstalled')
     expect(screen.queryByTestId('plugin-space-planning')).not.toBeInTheDocument()
+  })
+
+  it('asks before uninstalling from the collapsed row, and keeps the plugin when cancelled', async () => {
+    permissions.current = ADMIN
+    const setInstalled = vi.fn().mockResolvedValue(undefined)
+    render(<PluginsManager listings={[listing()]} actions={{ ...boundActions, setInstalled }} />)
+
+    fireEvent.click(within(screen.getByTestId('plugin-space-planning')).getByRole('checkbox', { name: 'quickInstalled' }))
+    expect(await screen.findByText('uninstallTitle')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'cancel' }))
+
+    await vi.waitFor(() => expect(screen.queryByText('uninstallTitle')).not.toBeInTheDocument())
+    expect(setInstalled).not.toHaveBeenCalled()
   })
 
   it('shows an admin the trust prompt before they add a discovered plugin', () => {
@@ -218,7 +232,7 @@ describe('controls by role', () => {
       manifest: { ...listing().manifest, requiredPermissions: ['read Building'] },
     })]} />)
 
-    openTab('sectionFound')
+    openTab('tabNotInstalled')
     const scope = within(card())
     expect(scope.getByText('trustHeading')).toBeInTheDocument()
     expect(scope.getByText('trustWarning')).toBeInTheDocument()
@@ -267,13 +281,13 @@ describe('the collapsed row', () => {
     width.mockRestore()
   })
 
-  it('shows the registry column only when a plugin is mounted locally', () => {
+  it('shows the registry column only when some plugin has a registry state', () => {
     permissions.current = ADMIN
-    const { unmount } = render(<PluginsManager listings={[listing()]} />)
+    const { unmount } = render(<PluginsManager listings={[listing({ mountPath: '/plugins/space-planning' })]} />)
     expect(screen.queryByRole('columnheader', { name: /columnRegistry/ })).not.toBeInTheDocument()
     unmount()
 
-    render(<PluginsManager listings={[listing({ mountPath: '/plugins/space-planning' })]} />)
+    render(<PluginsManager listings={[listing({ registryVersion: '0.2.0' })]} />)
     expect(screen.getByRole('columnheader', { name: /columnRegistry/ })).toBeInTheDocument()
   })
 

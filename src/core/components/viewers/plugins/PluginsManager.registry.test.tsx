@@ -119,28 +119,30 @@ afterEach(() => {
 describe('shared registry on the Plugins page', () => {
   it('shows nothing extra to someone outside the dev team', () => {
     render(<PluginsManager listings={[mounted()]} registryActions={actions()} />)
-    fireEvent.mouseDown(screen.getByRole('tab', { name: /^sectionFound/ }))
+    fireEvent.mouseDown(screen.getByRole('tab', { name: /^tabNotInstalled/ }))
 
     expect(screen.queryByRole('tab', { name: /^tabLabel/ })).not.toBeInTheDocument()
     expect(row('ifc-checker').queryByRole('button', { name: 'publishFirst' })).not.toBeInTheDocument()
   })
 
-  it('shows an org admin the plugins shared with them, read-only', () => {
-    registryState.current = {
-      configured: true,
-      viewer: { email: 'admin@carleton.ca', canPublish: false, canGrant: false },
-      plugins: [registryPlugin({ ownedByMe: false })],
-    }
+  it('shows an org admin outside the dev team which version is shared with them, and nothing else', () => {
     const granted = { ...mounted(), mountPath: undefined, registryVersion: '1.0.0' }
     render(<PluginsManager listings={[granted]} registryActions={actions()} />)
+    fireEvent.mouseDown(screen.getByRole('tab', { name: /^tabNotInstalled/ }))
+
+    expect(screen.getByRole('columnheader', { name: /columnRegistry/ })).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: /^tabLabel/ })).not.toBeInTheDocument()
+    expect(row('ifc-checker').getByText('badgeShared')).toBeInTheDocument()
+    expect(screen.queryByTestId('registry-details-ifc-checker')).not.toBeInTheDocument()
+  })
+
+  it('shows the dev team why the registry failed to load instead of hiding the tab', () => {
+    registryState.current = { ...devTeam([]), error: { code: 'unavailable', message: 'The registry database did not answer' } }
+    render(<PluginsManager listings={[]} registryActions={actions()} />)
     openRegistry()
 
-    const scope = row('ifc-checker')
-    expect(screen.getByText('sectionHintGranted')).toBeInTheDocument()
-    expect(screen.queryByRole('radio', { name: 'filterMine' })).not.toBeInTheDocument()
-    expect(scope.queryByText('badgeShared')).not.toBeInTheDocument()
-    expect(scope.queryByRole('button', { name: /removePlugin/ })).not.toBeInTheDocument()
-    expect(screen.queryByTestId('registry-details-ifc-checker')).not.toBeInTheDocument()
+    expect(screen.getByText('errorHeading')).toBeInTheDocument()
+    expect(screen.getByText('The registry database did not answer')).toBeInTheDocument()
   })
 
   it('lists only published plugins in the registry tab', () => {
@@ -155,7 +157,7 @@ describe('shared registry on the Plugins page', () => {
     registryState.current = devTeam([])
     const publishMounted = vi.fn().mockResolvedValue({ version: '1.0.0', claimed: true })
     render(<PluginsManager listings={[mounted()]} registryActions={actions({ publishMounted })} />)
-    fireEvent.mouseDown(screen.getByRole('tab', { name: /^sectionFound/ }))
+    fireEvent.mouseDown(screen.getByRole('tab', { name: /^tabNotInstalled/ }))
 
     row('ifc-checker').getByRole('button', { name: 'publishFirst' }).click()
     ;(await screen.findByRole('button', { name: 'publishConfirm' })).click()
@@ -168,7 +170,7 @@ describe('shared registry on the Plugins page', () => {
     registryState.current = devTeam([])
     const publishMounted = vi.fn()
     render(<PluginsManager listings={[mounted()]} registryActions={actions({ publishMounted })} />)
-    fireEvent.mouseDown(screen.getByRole('tab', { name: /^sectionFound/ }))
+    fireEvent.mouseDown(screen.getByRole('tab', { name: /^tabNotInstalled/ }))
 
     row('ifc-checker').getByRole('button', { name: 'publishFirst' }).click()
     fireEvent.click(await screen.findByRole('button', { name: 'cancel' }))
@@ -266,6 +268,21 @@ describe('shared registry on the Plugins page', () => {
     expect(toast.success).toHaveBeenCalledWith('toastVersionYanked')
   })
 
+  it('lets the owner delete a retired version, saying it is gone for good', async () => {
+    const retired = { ...registryPlugin().versions[0], status: 'YANKED' as const }
+    registryState.current = devTeam([registryPlugin({ versions: [retired], latestVersion: null })])
+    const removeVersion = vi.fn().mockResolvedValue({ outcome: 'deleted' })
+    render(<PluginsManager listings={[]} registryActions={actions({ removeVersion })} />)
+    openRegistry()
+
+    row('ifc-checker').getByRole('button', { name: 'removeVersionLabel' }).click()
+    expect(await screen.findByText('removeRetiredVersionDescription')).toBeInTheDocument()
+    screen.getByRole('button', { name: 'removeConfirm' }).click()
+
+    await vi.waitFor(() => expect(removeVersion).toHaveBeenCalledWith('ifc-checker', '1.0.0'))
+    expect(toast.success).toHaveBeenCalledWith('toastVersionDeleted')
+  })
+
   it('shows a published plugin once, with its registry state on the organization row', () => {
     registryState.current = devTeam([registryPlugin()])
     render(<PluginsManager listings={[{ ...mounted(), status: 'running', installed: true, orgEnabled: true }]} registryActions={actions()} />)
@@ -280,7 +297,7 @@ describe('shared registry on the Plugins page', () => {
   it('never offers publishing from disk where the server turns it off', () => {
     registryState.current = productionAdmin([])
     render(<PluginsManager listings={[mounted()]} registryActions={actions()} />)
-    fireEvent.mouseDown(screen.getByRole('tab', { name: /^sectionFound/ }))
+    fireEvent.mouseDown(screen.getByRole('tab', { name: /^tabNotInstalled/ }))
 
     expect(row('ifc-checker').queryByRole('button', { name: 'publishFirst' })).not.toBeInTheDocument()
     expect(screen.queryByTestId('registry-strip-ifc-checker')).not.toBeInTheDocument()
@@ -303,6 +320,15 @@ describe('shared registry on the Plugins page', () => {
     openRegistry()
 
     expect(screen.getByText('emptyImport')).toBeInTheDocument()
+  })
+
+  it('does not point a publisher who cannot import at importing', () => {
+    registryState.current = { ...productionAdmin([]), viewer: { email: 'dev@example.org', canPublish: true, canGrant: false, canPublishFromDisk: false } }
+    render(<PluginsManager listings={[]} registryActions={actions()} />)
+    openRegistry()
+
+    expect(screen.getByText('emptyAwaitingImport')).toBeInTheDocument()
+    expect(screen.queryByText('emptyImport')).not.toBeInTheDocument()
   })
 
   it('offers importing a package to platform admins only', () => {
@@ -352,7 +378,7 @@ describe('shared registry on the Plugins page', () => {
     Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:x'), revokeObjectURL: vi.fn() })
     const save = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
     render(<PluginsManager listings={[mounted()]} registryActions={actions({ exportMountedPackage, publishMounted })} />)
-    fireEvent.mouseDown(screen.getByRole('tab', { name: /^sectionFound/ }))
+    fireEvent.mouseDown(screen.getByRole('tab', { name: /^tabNotInstalled/ }))
 
     within(screen.getByTestId('plugin-ifc-checker')).getByRole('button', { name: 'toggleDetails' }).click()
     within(await screen.findByTestId('registry-strip-ifc-checker')).getByRole('button', { name: 'exportPackageLabel' }).click()
@@ -367,7 +393,7 @@ describe('shared registry on the Plugins page', () => {
   it('never offers exporting from disk where the server turns it off', () => {
     registryState.current = productionAdmin([])
     render(<PluginsManager listings={[mounted()]} registryActions={actions()} />)
-    fireEvent.mouseDown(screen.getByRole('tab', { name: /^sectionFound/ }))
+    fireEvent.mouseDown(screen.getByRole('tab', { name: /^tabNotInstalled/ }))
 
     expect(row('ifc-checker').queryByRole('button', { name: 'exportPackageLabel' })).not.toBeInTheDocument()
   })

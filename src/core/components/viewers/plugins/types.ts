@@ -107,11 +107,12 @@ export interface RegistryPlugin {
 }
 
 export interface RegistryState {
-  /** True for the dev team, and for an org admin with grants; `viewer.canPublish` tells them apart. */
+  /** True only for the dev team (publishers and platform admins); everyone else gets the page without a registry. */
   configured: boolean
   /** `canPublishFromDisk` is false on any deployment without `PLUGINS_DEV`, so staging and production never offer it. */
   viewer?: { email: string; canPublish: boolean; canGrant: boolean; canPublishFromDisk?: boolean }
   plugins: RegistryPlugin[]
+  /** Set when the registry failed to load for the dev team; `plugins` is then empty. */
   error?: { code: string; message: string }
 }
 

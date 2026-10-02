@@ -26,8 +26,8 @@ const GAP_REM = 0.75
 // Dropped first to last; each holds nothing the expanded details do not show again.
 const DROP_ORDER: readonly PluginColumn[] = ['version', 'registry', 'visibleTo', 'enable', 'install', 'status']
 
-/** Run is everyone's; Install and Enable are the organization admin's; Visible to is the platform admin's; Registry only matters beside a local copy. */
-export function visibleColumns(ability: PluginsAbility, canGrant: boolean, hasLocalPlugins: boolean): PluginColumn[] {
+/** Run is everyone's; Install and Enable are the organization admin's; Visible to is the platform admin's; Registry only once some row has a registry state. */
+export function visibleColumns(ability: PluginsAbility, canGrant: boolean, hasRegistryStanding: boolean): PluginColumn[] {
   return [
     'name',
     'version',
@@ -36,7 +36,7 @@ export function visibleColumns(ability: PluginsAbility, canGrant: boolean, hasLo
     ...(ability.canInstall ? ['install' as const] : []),
     ...(ability.canConfigureOrg ? ['enable' as const] : []),
     ...(canGrant ? ['visibleTo' as const] : []),
-    ...(hasLocalPlugins ? ['registry' as const] : []),
+    ...(hasRegistryStanding ? ['registry' as const] : []),
   ]
 }
 

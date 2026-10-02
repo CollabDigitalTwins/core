@@ -14,7 +14,13 @@ export interface PluginRowData {
   entry?: RegistryPlugin
 }
 
-export type PluginsTab = 'all' | 'running' | 'organization' | 'available' | 'registry'
+export type PluginsTab = 'all' | 'running' | 'installed' | 'notInstalled' | 'registry'
+
+/** What the registry viewer may do here; null for anyone outside the dev team. */
+export interface DevTeamView {
+  canGrant: boolean
+  canPublishFromDisk: boolean
+}
 
 export type RegistryStanding =
   | PublishState
@@ -33,8 +39,8 @@ export function isInTab(row: PluginRowData, tab: PluginsTab, shown: readonly Plu
   const status = row.listing ? effectiveStatus(row.listing) : null
   if (tab === 'all') return shown.some(other => other !== 'all' && isInTab(row, other, shown))
   if (tab === 'running') return status === 'running'
-  if (tab === 'organization') return status !== null && status !== 'available'
-  if (tab === 'available') return status === 'available'
+  if (tab === 'installed') return status !== null && status !== 'available'
+  if (tab === 'notInstalled') return status === 'available'
   return Boolean(row.entry)
 }
 
@@ -57,7 +63,7 @@ export function matchesSearch(row: PluginRowData, needle: string): boolean {
 /** Where the plugin stands with the registry, from the dev team's view when they have one. */
 export function registryStanding(
   row: PluginRowData,
-  devTeam: { canGrant: boolean; canPublishFromDisk: boolean } | null,
+  devTeam: DevTeamView | null,
 ): RegistryStanding | null {
   if (devTeam?.canPublishFromDisk && row.listing?.mountPath) return publishState(row.listing.manifest, row.entry, devTeam.canGrant)
   if (devTeam && row.entry) return { kind: 'published', version: row.entry.latestVersion }

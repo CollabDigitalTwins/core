@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as React from 'react'
 import useSWR from 'swr'
 
 import type { PluginManifest } from '../../../../plugins/sdk/types'
@@ -29,8 +30,13 @@ interface MountedResponse {
 // empty list a failed request yields here is the right answer for it.
 //
 // `enabled` tells "none mounted" from "runtime loading not turned on".
-export function useMountedPlugins(): { mounted: MountedPlugin[]; enabled: boolean; isLoading: boolean } {
-  const { data, isLoading } = useSWR<MountedResponse>(
+export function useMountedPlugins(): {
+  mounted: MountedPlugin[]
+  enabled: boolean
+  isLoading: boolean
+  refresh: () => Promise<MountedPlugin[]>
+} {
+  const { data, isLoading, mutate } = useSWR<MountedResponse>(
     ['mountedPlugins'],
     async () => {
       const response = await fetch('/api/plugins/mounted')
@@ -42,9 +48,12 @@ export function useMountedPlugins(): { mounted: MountedPlugin[]; enabled: boolea
     { revalidateOnFocus: false },
   )
 
+  const refresh = React.useCallback(async () => (await mutate())?.mountedPlugins ?? [], [mutate])
+
   return {
     mounted: data?.mountedPlugins ?? [],
     enabled: data?.enabled ?? false,
     isLoading,
+    refresh,
   }
 }

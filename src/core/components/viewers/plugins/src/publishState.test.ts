@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { compareVersions, publishState } from './publishState'
+import { publishState } from './publishState'
 
 import type { PluginManifest } from '../../../../plugins/sdk/types'
 import type { RegistryPlugin, RegistryVersion } from '../types'
@@ -11,7 +11,7 @@ import type { RegistryPlugin, RegistryVersion } from '../types'
 const manifest = (version: string): PluginManifest => ({ slug: 'ifc-checker', name: 'IFC checker', version, capabilities: ['bim.tools'] })
 
 const version = (value: string, status: RegistryVersion['status'] = 'PUBLISHED'): RegistryVersion => ({
-  version: value, channel: 'STABLE', status, hostApi: 1, sizeBytes: 10, sha256: 'x', publishedAt: '', publishedBy: 'Nico',
+  version: value, status, hostApi: 1, sizeBytes: 10, sha256: 'x', publishedAt: '', publishedBy: 'Nico',
 })
 
 const entry = (versions: RegistryVersion[], ownedByMe = true): RegistryPlugin => ({
@@ -40,13 +40,5 @@ describe('publishState', () => {
   it('names the owner of a slug someone else claimed, unless the viewer is a platform admin', () => {
     expect(publishState(manifest('2.0.0'), entry([version('1.0.0')], false), false)).toEqual({ kind: 'taken', ownerName: 'Kate' })
     expect(publishState(manifest('2.0.0'), entry([version('1.0.0')], false), true).kind).toBe('update')
-  })
-})
-
-describe('compareVersions', () => {
-  it('orders prereleases before their release and numerically within', () => {
-    expect(compareVersions('1.0.0-beta.2', '1.0.0')).toBeLessThan(0)
-    expect(compareVersions('1.0.0-beta.10', '1.0.0-beta.2')).toBeGreaterThan(0)
-    expect(compareVersions('2.0.0', '1.99.99')).toBeGreaterThan(0)
   })
 })

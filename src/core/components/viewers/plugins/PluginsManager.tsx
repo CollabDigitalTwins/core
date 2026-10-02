@@ -13,6 +13,7 @@ import { INSTALLED_PLUGINS } from '../../../plugins/installed'
 import { resolvePluginEntry } from '../../../plugins/sdk/types'
 import { usePermissions } from '../../../store/Permissions/context'
 import { ViewerNames } from '../../../types/dbTypes'
+import ConfirmDialog from '../../ConfirmDialog'
 import { Badge } from '../../ui/Badge'
 import {
   Breadcrumb,
@@ -31,20 +32,21 @@ import { InstallQuickControl, OrgQuickControl, UserQuickControl } from './src/Pl
 import { PLUGIN_ROW_GRID, PluginRow, pluginRowStyle } from './src/PluginRow'
 import { isInTab, isMine, matchesSearch, mergePluginRows, registryStanding } from './src/pluginRows'
 import { effectiveStatus } from './src/pluginStatus'
+import { isPublishState } from './src/publishState'
 import { RegistryDetails } from './src/RegistryDetails'
 import { RegistryToolbar } from './src/RegistryToolbar'
 import { nextSort, rowName, SORT_KEYS, sortPluginRows } from './src/sortPluginRows'
-import { usePluginsActions, usePluginsData } from './src/usePluginsData'
 import { useFittedColumns } from './src/useFittedColumns'
+import { usePluginsActions, usePluginsData } from './src/usePluginsData'
 import { useRegistryActions, useRegistryPlugins } from './src/useRegistryPlugins'
 import { VisibleToPicker } from './src/VisibleToPicker'
 
 
 import type { PluginColumn } from './src/pluginColumns'
-import type { PluginRowData, PluginsTab } from './src/pluginRows'
+import type { DevTeamView, PluginRowData, PluginsTab } from './src/pluginRows'
 import type { RegistryScope } from './src/RegistryToolbar'
 import type { PluginSort, SortKey } from './src/sortPluginRows'
-import type { PluginListing, PluginsAbility, PluginsActions, RegistryActions, RegistryState } from './types'
+import type { PluginListing, PluginsAbility, PluginsActions, RegistryActions } from './types'
 
 interface Props {
   /** Override the rows. Normally omitted; the page reads them through the `ApiAdapter`. */
@@ -61,9 +63,8 @@ interface Props {
  */
 export function PluginsManager({ listings, actions, registryActions }: Props) {
   const t = useTranslations('PluginsPage')
-  const tData = useTranslations('DataMenu')
   const tRegistry = useTranslations('PluginRegistry')
-  const { ability } = usePermissions()
+  const { ability: casl } = usePermissions()
   const [searchTerm, setSearchTerm] = React.useState('')
   const [tab, setTab] = React.useState<PluginsTab>('all')
   const [scope, setScope] = React.useState<RegistryScope>('all')
@@ -90,34 +91,40 @@ export function PluginsManager({ listings, actions, registryActions }: Props) {
   )
 
   // Mirrors the checks the plugin routes make: granting more here only shows controls the server refuses.
-  const canManage: PluginsAbility = React.useMemo(() => {
-    const orgAdmin = ability.can('update', 'PluginInstallation')
+  const ability: PluginsAbility = React.useMemo(() => {
+    const orgAdmin = casl.can('update', 'PluginInstallation')
 
     return {
-      canInstall: ability.can('create', 'PluginInstallation') || orgAdmin,
+      canInstall: casl.can('create', 'PluginInstallation') || orgAdmin,
       canConfigureOrg: orgAdmin,
-      canChooseForSelf: ability.can('update', 'PluginUserSetting'),
+      canChooseForSelf: casl.can('update', 'PluginUserSetting'),
     }
-  }, [ability])
+  }, [casl])
 
   const rows = React.useMemo(
     () => mergePluginRows(listingRows, registry.configured ? registry.plugins : []),
     [listingRows, registry],
   )
 
-  const canGrant = registry.viewer?.canGrant ?? false
-  const hasLocalPlugins = listingRows.some(listing => Boolean(listing.mountPath))
+  const devTeam: DevTeamView | null = React.useMemo(
+    () => (registry.configured && registry.viewer
+      ? { canGrant: registry.viewer.canGrant, canPublishFromDisk: registry.viewer.canPublishFromDisk ?? false }
+      : null),
+    [registry],
+  )
+  const canGrant = devTeam?.canGrant ?? false
+  const hasRegistryStanding = rows.some(row => registryStanding(row, devTeam) !== null)
   const columns = React.useMemo(
-    () => visibleColumns(canManage, canGrant, hasLocalPlugins),
-    [canManage, canGrant, hasLocalPlugins],
+    () => visibleColumns(ability, canGrant, hasRegistryStanding),
+    [ability, canGrant, hasRegistryStanding],
   )
   const [sort, setSort] = React.useState<PluginSort | null>(null)
 
   const tabs: PluginsTab[] = [
     'all',
     'running',
-    'organization',
-    ...(canManage.canInstall ? ['available' as const] : []),
+    'installed',
+    ...(ability.canInstall ? ['notInstalled' as const] : []),
     ...(registry.configured ? ['registry' as const] : []),
   ]
 
@@ -180,19 +187,24 @@ export function PluginsManager({ listings, actions, registryActions }: Props) {
   const tabLabel: Record<PluginsTab, string> = {
     all: t('tabAll'),
     running: t('tabRunning'),
-    organization: t('sectionAvailable'),
-    available: t('sectionFound'),
+    installed: t('tabInstalled'),
+    notInstalled: t('tabNotInstalled'),
     registry: tRegistry('tabLabel'),
   }
 
   const emptyText = (target: PluginsTab): string => {
     if (needle) return t('noResults', { query: searchTerm.trim() })
-    if (target === 'registry' && scope === 'mine') return tRegistry('emptyMine')
-    if (target === 'registry') return registry.viewer?.canPublishFromDisk ? tRegistry('empty') : tRegistry('emptyImport')
-    if (target === 'available') return t('emptyFound')
+    if (target === 'registry') return emptyRegistryText()
+    if (target === 'notInstalled') return t('emptyNotInstalled')
     if (target === 'running') return t('emptyRunning')
     if (isLoading && resolved.length === 0) return t('loading')
-    return canManage.canInstall ? t('emptyAdmin') : t('empty')
+    return ability.canInstall ? t('emptyAdmin') : t('empty')
+  }
+
+  const emptyRegistryText = (): string => {
+    if (scope === 'mine') return tRegistry('emptyMine')
+    if (devTeam?.canPublishFromDisk) return tRegistry('empty')
+    return canGrant ? tRegistry('emptyImport') : tRegistry('emptyAwaitingImport')
   }
 
   return (
@@ -238,7 +250,7 @@ export function PluginsManager({ listings, actions, registryActions }: Props) {
               ) : <span />}
               <div className="w-full sm:w-80">
                 <Input
-                  placeholder={`${tData('searchPlaceholder')} ${headerTitle}...`}
+                  placeholder={t('searchPlaceholder')}
                   value={searchTerm}
                   onChange={event => setSearchTerm(event.target.value)}
                   aria-label={t('searchPlaceholder')}
@@ -261,8 +273,8 @@ export function PluginsManager({ listings, actions, registryActions }: Props) {
                     onScopeChange={setScope}
                   />
                 )}
-                {target === 'available' && (
-                  <p className="mb-3 text-sm text-muted-foreground">{t('sectionFoundHint')}</p>
+                {target === 'notInstalled' && (
+                  <p className="mb-3 text-sm text-muted-foreground">{t('tabNotInstalledHint')}</p>
                 )}
 
                 <PluginTable
@@ -277,10 +289,10 @@ export function PluginsManager({ listings, actions, registryActions }: Props) {
                       key={row.slug}
                       row={row}
                       columns={fittedColumns}
-                      ability={canManage}
+                      ability={ability}
                       actions={boundActions}
                       commit={commit}
-                      registry={registry}
+                      devTeam={devTeam}
                       registryActions={boundRegistryActions}
                     />
                   )}
@@ -388,7 +400,7 @@ function Row({
   ability,
   actions,
   commit,
-  registry,
+  devTeam,
   registryActions,
 }: {
   row: PluginRowData
@@ -396,19 +408,18 @@ function Row({
   ability: PluginsAbility
   actions: PluginsActions
   commit: Commit
-  registry: RegistryState
+  devTeam: DevTeamView | null
   registryActions: RegistryActions
 }) {
   const t = useTranslations('PluginsPage')
   const { slug, listing, entry } = row
   const name = rowName(row)
-  const canGrant = registry.viewer?.canGrant ?? false
-  const devTeam = registry.viewer?.canPublish
-    ? { canGrant, canPublishFromDisk: registry.viewer.canPublishFromDisk ?? false }
-    : null
-  const publishable = Boolean(devTeam?.canPublishFromDisk && listing?.mountPath)
-  const showRegistry = Boolean(devTeam && (entry || publishable))
+  const canGrant = devTeam?.canGrant ?? false
+  const standing = registryStanding(row, devTeam)
+  const publishing = listing && standing && isPublishState(standing) ? { manifest: listing.manifest, state: standing } : undefined
+  const showRegistry = Boolean(devTeam && (entry || publishing))
   const [open, setOpen] = React.useState(false)
+  const [confirmingUninstall, setConfirmingUninstall] = React.useState(false)
 
   const setOrgEnabled = (enabled: boolean) => void commit(
     slug,
@@ -424,67 +435,85 @@ function Row({
     () => actions.setUserEnabled(slug, enabled),
     enabled ? t('toastUserEnabled', { name }) : t('toastUserDisabled', { name }),
   )
-  const setInstalled = (installed: boolean) => void commit(
+  const writeInstalled = (installed: boolean) => void commit(
     slug,
     name,
     { installed, status: installed ? 'off' : 'available' },
     () => actions.setInstalled(slug, installed),
     installed ? t('toastInstalled', { name }) : t('toastUninstalled', { name }),
   )
+  const setInstalled = (installed: boolean) => (installed ? writeInstalled(true) : setConfirmingUninstall(true))
 
   return (
-    <PluginRow
-      open={open}
-      onOpenChange={setOpen}
-      columns={columns}
-      cells={{
-        run: <UserQuickControl listing={listing} ability={ability} name={name} onSetUserEnabled={setUserEnabled} />,
-        install: <InstallQuickControl listing={listing} ability={ability} name={name} onSetInstalled={setInstalled} onReview={() => setOpen(true)} />,
-        enable: <OrgQuickControl listing={listing} ability={ability} name={name} onSetOrgEnabled={setOrgEnabled} />,
-        visibleTo: entry && canGrant ? <VisibleToPicker plugin={entry} actions={registryActions} /> : null,
-      }}
-      slug={slug}
-      name={name}
-      icon={listing?.manifest.icon ?? entry?.icon}
-      version={listing?.manifest.version ?? entry?.latestVersion ?? null}
-      status={listing ? effectiveStatus(listing) : undefined}
-      standing={registryStanding(row, devTeam)}
-    >
-      {listing ? (
-        <PluginDetails
-          listing={listing}
-          ability={ability}
-          onSetInstalled={setInstalled}
-          onSetOrgEnabled={setOrgEnabled}
-          onSetAllowUserOverride={allow => void commit(
-            slug,
-            name,
-            { allowUserOverride: allow },
-            () => actions.setAllowUserOverride(slug, allow),
-            allow ? t('toastOverrideAllowed', { name }) : t('toastOverrideBlocked', { name }),
-          )}
-          onSetUserEnabled={setUserEnabled}
-          onCopyError={() => {
-            void navigator.clipboard?.writeText(listing.error ?? '')
-              .then(() => toast.success(t('errorCopied')))
-              .catch(() => toast.error(t('toastFailed', { name })))
-          }}
-        />
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          {entry?.description && <span className="mb-1 block text-foreground">{entry.description}</span>}
-          {t('notInOrg')}
-        </p>
-      )}
+    <>
+      <PluginRow
+        open={open}
+        onOpenChange={setOpen}
+        columns={columns}
+        cells={{
+          run: <UserQuickControl listing={listing} ability={ability} name={name} onSetUserEnabled={setUserEnabled} />,
+          install: <InstallQuickControl listing={listing} ability={ability} name={name} onSetInstalled={setInstalled} onReview={() => setOpen(true)} />,
+          enable: <OrgQuickControl listing={listing} ability={ability} name={name} onSetOrgEnabled={setOrgEnabled} />,
+          visibleTo: entry && canGrant ? <VisibleToPicker plugin={entry} actions={registryActions} /> : null,
+        }}
+        slug={slug}
+        name={name}
+        icon={listing?.manifest.icon ?? entry?.icon}
+        version={listing?.manifest.version ?? entry?.latestVersion ?? null}
+        status={listing ? effectiveStatus(listing) : undefined}
+        standing={standing}
+      >
+        {listing ? (
+          <PluginDetails
+            listing={listing}
+            ability={ability}
+            onSetInstalled={setInstalled}
+            onSetOrgEnabled={setOrgEnabled}
+            onSetAllowUserOverride={allow => void commit(
+              slug,
+              name,
+              { allowUserOverride: allow },
+              () => actions.setAllowUserOverride(slug, allow),
+              allow ? t('toastOverrideAllowed', { name }) : t('toastOverrideBlocked', { name }),
+            )}
+            onSetUserEnabled={setUserEnabled}
+            onCopyError={() => {
+              void navigator.clipboard?.writeText(listing.error ?? '')
+                .then(() => toast.success(t('errorCopied')))
+                .catch(() => toast.error(t('toastFailed', { name })))
+            }}
+          />
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            {entry?.description && <span className="mb-1 block text-foreground">{entry.description}</span>}
+            {t('notInOrg')}
+          </p>
+        )}
 
-      {showRegistry && (
-        <RegistryDetails
-          entry={entry}
-          mounted={publishable ? listing?.manifest : undefined}
-          canGrant={canGrant}
-          actions={registryActions}
-        />
-      )}
-    </PluginRow>
+        {showRegistry && (
+          <RegistryDetails
+            entry={entry}
+            publishing={publishing}
+            canGrant={canGrant}
+            actions={registryActions}
+          />
+        )}
+      </PluginRow>
+
+      <ConfirmDialog
+        isOpen={confirmingUninstall}
+        isDeleting={false}
+        onOpenChange={setConfirmingUninstall}
+        handleConfirm={event => {
+          event.preventDefault()
+          setConfirmingUninstall(false)
+          writeInstalled(false)
+        }}
+        title={t('uninstallTitle', { name })}
+        description={t('uninstallDescription')}
+        confirmLabel={t('uninstallConfirm')}
+        cancelLabel={t('cancel')}
+      />
+    </>
   )
 }

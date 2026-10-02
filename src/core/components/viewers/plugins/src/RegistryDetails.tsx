@@ -12,30 +12,30 @@ import ConfirmDialog from '../../../ConfirmDialog'
 import { Badge } from '../../../ui/Badge'
 import { Button } from '../../../ui/Button'
 
-import { publishState } from './publishState'
 import { RegistryAccessList } from './RegistryAccessList'
 import { registryErrorMessage } from './registryErrorMessage'
 import { RegistryPublishStrip } from './RegistryPublishStrip'
 
+import type { PublishState } from './publishState'
 import type { PluginManifest } from '../../../../plugins/sdk/types'
 import type { RegistryActions, RegistryPlugin, RegistryVersion } from '../types'
 
-type Pending = { kind: 'version'; version: string } | { kind: 'plugin' } | null
+type Pending = { kind: 'version'; version: string; retired: boolean } | { kind: 'plugin' } | null
 
 interface Props {
   /** The registry's copy, when there is one. */
   entry?: RegistryPlugin
-  /** The build mounted on this server, when there is one: it can be published. */
-  mounted?: PluginManifest
+  /** The build mounted on this server and what publishing it would do, when it can be published. */
+  publishing?: { manifest: PluginManifest; state: PublishState }
   canGrant: boolean
   actions: RegistryActions
 }
 
 /** The registry half of an expanded row: publishing, versions, who has access, and the owner's controls. */
-export function RegistryDetails({ entry, mounted, canGrant, actions }: Props) {
+export function RegistryDetails({ entry, publishing, canGrant, actions }: Props) {
   return (
-    <section className="flex flex-col gap-3" data-testid={`registry-details-${entry?.slug ?? mounted?.slug}`}>
-      {mounted && <MountedPublish manifest={mounted} entry={entry} canGrant={canGrant} actions={actions} />}
+    <section className="flex flex-col gap-3" data-testid={`registry-details-${entry?.slug ?? publishing?.manifest.slug}`}>
+      {publishing && <MountedPublish manifest={publishing.manifest} state={publishing.state} actions={actions} />}
       {entry && <RegistryEntry plugin={entry} canGrant={canGrant} actions={actions} />}
     </section>
   )
@@ -43,13 +43,11 @@ export function RegistryDetails({ entry, mounted, canGrant, actions }: Props) {
 
 function MountedPublish({
   manifest,
-  entry,
-  canGrant,
+  state,
   actions,
 }: {
   manifest: PluginManifest
-  entry?: RegistryPlugin
-  canGrant: boolean
+  state: PublishState
   actions: RegistryActions
 }) {
   const t = useTranslations('PluginRegistry')
@@ -80,7 +78,7 @@ function MountedPublish({
   return (
     <RegistryPublishStrip
       manifest={manifest}
-      state={publishState(manifest, entry, canGrant)}
+      state={state}
       onPublish={publish}
       onExport={() => void exportBuild()}
     />
@@ -92,7 +90,7 @@ function RegistryEntry({ plugin, canGrant, actions }: { plugin: RegistryPlugin; 
   const [pending, setPending] = React.useState<Pending>(null)
   const [busy, setBusy] = React.useState(false)
 
-  const canManage = plugin.ownedByMe || canGrant
+  const canEdit = plugin.ownedByMe || canGrant
 
   const exportVersion = async (version: string) => {
     try {
@@ -136,7 +134,7 @@ function RegistryEntry({ plugin, canGrant, actions }: { plugin: RegistryPlugin; 
           {plugin.ownedByMe && <Badge variant="secondary" className="font-normal">{t('ownerYouBadge')}</Badge>}
         </p>
 
-        {canManage && (
+        {canEdit && (
           <Button size="sm" variant="ghost" onClick={() => setPending({ kind: 'plugin' })}>
             <LR.Trash className="h-4 w-4" />
             {t('removePlugin')}
@@ -152,8 +150,8 @@ function RegistryEntry({ plugin, canGrant, actions }: { plugin: RegistryPlugin; 
               <VersionRow
                 key={version.version}
                 version={version}
-                canRemove={canManage && version.status === 'PUBLISHED'}
-                onRemove={() => setPending({ kind: 'version', version: version.version })}
+                canRemove={canEdit}
+                onRemove={() => setPending({ kind: 'version', version: version.version, retired: version.status === 'YANKED' })}
                 onExport={() => void exportVersion(version.version)}
               />
             ))}
@@ -171,14 +169,21 @@ function RegistryEntry({ plugin, canGrant, actions }: { plugin: RegistryPlugin; 
         title={pending?.kind === 'version'
           ? t('removeVersionTitle', { name: plugin.name, version: pending.version })
           : t('removePluginTitle', { name: plugin.name })}
-        description={pending?.kind === 'version'
-          ? t('removeVersionDescription')
-          : t('removePluginDescription', { slug: plugin.slug })}
+        description={removalDescription(pending, plugin.slug, t)}
         confirmLabel={t('removeConfirm')}
         cancelLabel={t('cancel')}
       />
     </div>
   )
+}
+
+function removalDescription(
+  pending: Pending,
+  slug: string,
+  t: ReturnType<typeof useTranslations<'PluginRegistry'>>,
+): string {
+  if (pending?.kind !== 'version') return t('removePluginDescription', { slug })
+  return pending.retired ? t('removeRetiredVersionDescription') : t('removeVersionDescription')
 }
 
 function saveFile(fileName: string, contents: Blob): void {

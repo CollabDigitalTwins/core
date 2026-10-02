@@ -82,6 +82,7 @@ function GrantRow({
   onRevoke: () => void
 }) {
   const t = useTranslations('PluginRegistry')
+  const retiredPin = grant.pinnedVersion && !versions.includes(grant.pinnedVersion) ? grant.pinnedVersion : null
 
   return (
     <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5">
@@ -102,6 +103,7 @@ function GrantRow({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={LATEST}>{t('grantPinLatest')}</SelectItem>
+            {retiredPin && <SelectItem value={retiredPin} disabled>{t('grantPinnedRetired', { version: retiredPin })}</SelectItem>}
             {versions.map(version => (
               <SelectItem key={version} value={version}>{t('grantPinned', { version })}</SelectItem>
             ))}

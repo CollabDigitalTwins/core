@@ -3,9 +3,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { useTranslations } from 'next-intl'
 import * as React from 'react'
+import { toast } from 'sonner'
 import useSWR from 'swr'
 
+import { sharedPluginChanges } from './sharedPluginChanges'
+import { useMountedPlugins } from './useMountedPlugins'
+
+import type { SharedPluginChange } from './sharedPluginChanges'
 import type { RegistryActions, RegistryState } from '../types'
 
 const REGISTRY_KEY = ['pluginRegistry']
@@ -57,9 +63,32 @@ export function useRegistryPlugins(): { registry: RegistryState; isLoading: bool
   return { registry: data ?? EMPTY, isLoading, refresh }
 }
 
-/** The registry writes bound to the app's `/api/plugins/registry` routes, refreshing the catalog after each. */
+/** Re-reads what this organization is shared, and says so when a registry write changed it. */
+function useRefreshSharedPlugins(): () => Promise<void> {
+  const t = useTranslations('PluginRegistry')
+  const { mounted, refresh } = useMountedPlugins()
+  const latest = React.useRef(mounted)
+  React.useEffect(() => {
+    latest.current = mounted
+  }, [mounted])
+
+  return React.useCallback(async () => {
+    const message = (change: SharedPluginChange): string => {
+      switch (change.kind) {
+        case 'added': return t('toastSharedAdded', { name: change.name })
+        case 'updated': return t('toastSharedUpdated', { name: change.name, version: change.version })
+        case 'removed': return t('toastSharedRemoved', { name: change.name })
+      }
+    }
+    const before = latest.current
+    for (const change of sharedPluginChanges(before, await refresh())) toast.info(message(change))
+  }, [refresh, t])
+}
+
+/** The registry writes bound to the app's `/api/plugins/registry` routes, refreshing the catalog and this organization's plugins after each. */
 export function useRegistryActions(override?: RegistryActions): RegistryActions {
   const { refresh } = useRegistryPlugins()
+  const refreshShared = useRefreshSharedPlugins()
 
   return React.useMemo<RegistryActions>(() => {
     if (override) return override
@@ -67,7 +96,7 @@ export function useRegistryActions(override?: RegistryActions): RegistryActions 
     const plugin = (slug: string) => `/plugins/${encodeURIComponent(slug)}`
     const thenRefresh = async <T,>(work: Promise<T>) => {
       const result = await work
-      await refresh()
+      await Promise.allSettled([refresh(), refreshShared()])
       return result
     }
 
@@ -87,5 +116,5 @@ export function useRegistryActions(override?: RegistryActions): RegistryActions 
         download(`/mounted/${encodeURIComponent(slug)}/package`, `${slug}.cdtplugin.json`),
       importPackage: pkg => thenRefresh(call('POST', '/import', pkg)),
     }
-  }, [override, refresh])
+  }, [override, refresh, refreshShared])
 }

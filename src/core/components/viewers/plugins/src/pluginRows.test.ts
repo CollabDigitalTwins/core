@@ -43,14 +43,14 @@ describe('mergePluginRows', () => {
 })
 
 describe('isInTab', () => {
-  const ALL_TABS: PluginsTab[] = ['all', 'running', 'organization', 'available', 'registry']
+  const ALL_TABS: PluginsTab[] = ['all', 'running', 'installed', 'notInstalled', 'registry']
 
   it('puts each organization state in exactly one of the first two tabs', () => {
     const added = { slug: 'a', listing: listing() }
     const notAdded = { slug: 'b', listing: listing({ installed: false, status: 'available' }) }
 
-    expect([isInTab(added, 'organization', ALL_TABS), isInTab(added, 'available', ALL_TABS)]).toEqual([true, false])
-    expect([isInTab(notAdded, 'organization', ALL_TABS), isInTab(notAdded, 'available', ALL_TABS)]).toEqual([false, true])
+    expect([isInTab(added, 'installed', ALL_TABS), isInTab(added, 'notInstalled', ALL_TABS)]).toEqual([true, false])
+    expect([isInTab(notAdded, 'installed', ALL_TABS), isInTab(notAdded, 'notInstalled', ALL_TABS)]).toEqual([false, true])
   })
 
   it('lists only what runs for the viewer under running, and everything under all', () => {
@@ -64,7 +64,7 @@ describe('isInTab', () => {
 
   it('keeps out of all what no other shown tab lists', () => {
     const notAdded = { slug: 'b', listing: listing({ installed: false, status: 'available' }) }
-    expect(isInTab(notAdded, 'all', ['all', 'running', 'organization'])).toBe(false)
+    expect(isInTab(notAdded, 'all', ['all', 'running', 'installed'])).toBe(false)
   })
 
   it('lists only published plugins under the registry, not unpublished mounted builds', () => {

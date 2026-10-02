@@ -16,7 +16,11 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
     with a Mine filter. Owners can remove a version or a plugin.
   - Platform admins get a "Visible to" column: a searchable organization picker that grants the latest version.
     The expanded row lists the organizations with access, pins each to a version or the latest, and revokes.
-  - Publishing and removing a version or plugin each ask for confirmation.
+  - Publishing and removing a version or plugin each ask for confirmation. A retired version can be deleted for
+    good, which frees its version number.
+  - If the registry fails to load, the dev team sees the Registry tab with the reason instead of losing the tab.
+  - After a registry write, the page re-reads the plugins shared with this organization and says what changed
+    ("… is now shared with your organization", a re-pinned version, a revoked share), so nothing waits for a reload.
 - New types in `@collabdt/core/core/components/viewers/plugins/types`: `RegistryPlugin`, `RegistryVersion`,
   `RegistryGrant`, `RegistryState`, `RegistryOrganization` and the `RegistryActions` port.
   `RegistryActions.setGrant(slug, organizationId, pinnedVersion)` takes `null` for the latest version.
@@ -36,9 +40,13 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
     `importFacts`, `importConfirm`, `toastImported` and `toastImportFailed` (en/es/fr).
 - `PluginsManager` takes an optional `registryActions` prop. It defaults to the host's `/api/plugins/registry/*` routes.
 - `PluginListing.registryVersion`. A plugin shared with the organization through the registry shows a
-  "From the registry" badge and its granted version.
-- `PluginRegistry` i18n namespace (en/es/fr), plus `PluginsPage.fromRegistry`, `trustRegistry`, `emptyFound`,
-  `columnPlugin`, `columnVersion`, `columnStatus`, `columnRun`, `columnInstall`, `columnEnable`,
+  "Shared v{version}" badge in the Registry column.
+- `@collabdt/core/plugins-sdk/semver`: `compareVersions`, `highestVersion` and `isValidVersion`, the semver rules
+  the registry applies. Use them anywhere a version is compared, so the page and the host never disagree.
+- Uninstalling a plugin asks for confirmation, from the expanded row and from the collapsed row's Install checkbox.
+- `PluginRegistry` i18n namespace (en/es/fr), plus `PluginsPage.trustRegistry`, `tabInstalled`, `tabNotInstalled`,
+  `tabNotInstalledHint`, `emptyNotInstalled`, `uninstallTitle`, `uninstallDescription`, `uninstallConfirm`,
+  `cancel`, `columnPlugin`, `columnVersion`, `columnStatus`, `columnRun`, `columnInstall`, `columnEnable`,
   `columnVisibleTo`, `columnRegistry`, `visibleToCount`, `sortBy`, `toggleDetails`, `notInOrg`, `tabAll`,
   `tabRunning`, `emptyRunning`, `quickInstalled`, `quickOrgEnabled` and `quickUserRun`.
 - Sortable Plugins table headers: Name, Status, Run, Install, Enable and Visible to cycle ascending, descending
@@ -49,22 +57,27 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   `?viewer=plugins`. The host database renames the enum value in place.
 - The Plugins page shows one compact row per plugin, expanded for its details and controls, so a plugin that is
   both in the organization and in the registry appears once. Tabs filter the rows into "All", "Running",
-  "Available in this organization", "Found on this server" (admins) and "Registry" (dev team), each with a count.
+  "Installed", "Not installed" (admins) and "Registry" (dev team), each with a count.
   A collapsed row has a Run checkbox for everyone, Install and Enable checkboxes for organization admins, and a
   running plugin's name is bold. A Run checkbox the viewer can't change is disabled, with the reason as its
-  tooltip. The Registry column appears only when a plugin is mounted on this server. The table always fits its
+  tooltip. The Registry column appears only when some plugin has a registry state to show. The table always fits its
   container: when it is too narrow, the Version, Registry, Visible to, Enable, Install and Status columns drop in
   that order, leaving the name and Run, and their controls stay in the expanded row.
 - `MountedPlugin.mountPath` is optional, and `MountedPlugin` gains `source` and `registryVersion`, because
   `/api/plugins/mounted` also lists registry plugins granted to the organization.
-- `PluginsPage.sectionFoundHint` now covers plugins shared with the organization as well as mounted ones.
+- The "Not installed" tab's hint covers plugins shared with the organization as well as mounted ones.
+- `RegistryState.configured` is true only for the dev team. The type no longer suggests an organization admin
+  gets a read-only registry, and `RegistryState.error` is documented as the dev team's load failure.
 - The Plugins page says "install" instead of "add", to match the Install column. The button now reads
   "Install to organization", the status badge reads "Not installed", and `PluginsPage.trustHeading`,
-  `trustWarning`, `toastInstalled`, `toastUninstalled`, `quickInstalled`, `sectionFoundHint` and `emptyAdmin`
-  follow suit (en/es/fr). The keys are unchanged.
+  `trustWarning`, `toastInstalled`, `toastUninstalled`, `quickInstalled`, `tabNotInstalledHint` and `emptyAdmin`
+  follow suit (en/es/fr).
 
 ### Removed
 - `PluginsPage.intro`: the Plugins page no longer shows an intro line under its title.
+- `PluginsPage.countPlugins`, which nothing rendered.
+- `PluginsPage.sectionAvailable`, `sectionFound` and `sectionFoundHint`, renamed `tabInstalled`, `tabNotInstalled`
+  and `tabNotInstalledHint` to match the tabs they label.
 
 ### Fixed
 - The Plugins page no longer shows organization controls (Add to organization, Install, Enable, Let people
@@ -76,6 +89,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ### Migration
 - Replace `ViewerNames.extensions` with `ViewerNames.plugins`, and any stored or linked `'extensions'` viewer
   value with `'plugins'`.
+- If you override Plugins page messages, rename `PluginsPage.sectionAvailable` to `tabInstalled`,
+  `sectionFound` to `tabNotInstalled` and `sectionFoundHint` to `tabNotInstalledHint`, and drop `countPlugins`.
 
 ## [0.12.2] - 2026-09-28
 

@@ -107,7 +107,7 @@ export interface RegistryPlugin {
 }
 
 export interface RegistryState {
-  /** False for anyone outside the dev team: the page then shows no registry controls at all. */
+  /** True for the dev team, and for an org admin with grants; `viewer.canPublish` tells them apart. */
   configured: boolean
   viewer?: { email: string; canPublish: boolean; canGrant: boolean }
   plugins: RegistryPlugin[]

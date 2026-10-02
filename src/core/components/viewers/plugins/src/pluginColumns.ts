@@ -19,8 +19,8 @@ const WIDTH: Record<PluginColumn, string> = {
   registry: '12rem',
 }
 
-/** Run is everyone's; Install and Enable are the organization admin's; Visible to is the platform admin's. */
-export function visibleColumns(ability: PluginsAbility, canGrant: boolean): PluginColumn[] {
+/** Run is everyone's; Install and Enable are the organization admin's; Visible to is the platform admin's; Registry only matters beside a local copy. */
+export function visibleColumns(ability: PluginsAbility, canGrant: boolean, hasLocalPlugins: boolean): PluginColumn[] {
   return [
     'name',
     'version',
@@ -29,7 +29,7 @@ export function visibleColumns(ability: PluginsAbility, canGrant: boolean): Plug
     ...(ability.canInstall ? ['install' as const] : []),
     ...(ability.canConfigureOrg ? ['enable' as const] : []),
     ...(canGrant ? ['visibleTo' as const] : []),
-    'registry',
+    ...(hasLocalPlugins ? ['registry' as const] : []),
   ]
 }
 

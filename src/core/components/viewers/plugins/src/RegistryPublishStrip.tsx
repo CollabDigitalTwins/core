@@ -7,15 +7,8 @@ import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
+import ConfirmDialog from '../../../ConfirmDialog'
 import { Button } from '../../../ui/Button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../../../ui/Dialog'
 
 import type { PublishState } from './publishState'
 import type { PluginManifest } from '../../../../plugins/sdk/types'
@@ -42,7 +35,8 @@ export function RegistryPublishStrip({ manifest, state, onPublish }: Props) {
     taken: state.kind === 'taken' ? t('hintTaken', { slug: manifest.slug, owner: state.ownerName }) : '',
   }[state.kind]
 
-  const confirm = async () => {
+  const confirm = async (e: React.MouseEvent) => {
+    e.preventDefault()
     setBusy(true)
     const published = await onPublish()
     setBusy(false)
@@ -72,22 +66,17 @@ export function RegistryPublishStrip({ manifest, state, onPublish }: Props) {
         </Button>
       )}
 
-      <Dialog open={open} onOpenChange={next => !busy && setOpen(next)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t('publishTitle', { name: manifest.name, version: manifest.version })}</DialogTitle>
-            <DialogDescription>{t('publishDescription')}</DialogDescription>
-          </DialogHeader>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={busy}>{t('cancel')}</Button>
-            <Button onClick={() => void confirm()} disabled={busy}>
-              {busy ? <LR.LoaderCircle className="h-4 w-4 animate-spin" /> : <LR.CloudUpload className="h-4 w-4" />}
-              {t('publishConfirm')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        isOpen={open}
+        isDeleting={busy}
+        onOpenChange={next => !busy && setOpen(next)}
+        handleConfirm={confirm}
+        title={t('publishTitle', { name: manifest.name, version: manifest.version })}
+        description={t('publishDescription')}
+        confirmLabel={t('publishConfirm')}
+        cancelLabel={t('cancel')}
+        tone="default"
+      />
     </div>
   )
 }

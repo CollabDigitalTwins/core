@@ -20,21 +20,26 @@ interface Props {
 /** Above the registry tab: what the registry is and the Mine filter. */
 export function RegistryToolbar({ registry, scope, onScopeChange }: Props) {
   const t = useTranslations('PluginRegistry')
+  const canPublish = registry.viewer?.canPublish ?? false
 
   return (
     <div className="mb-3 flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="max-w-[70ch] text-sm text-muted-foreground">{t('sectionHint')}</p>
+        <p className="max-w-[70ch] text-sm text-muted-foreground">
+          {canPublish ? t('sectionHint') : t('sectionHintGranted')}
+        </p>
 
-        <ToggleGroup
-          type="single"
-          value={scope}
-          onValueChange={value => value && onScopeChange(value as RegistryScope)}
-          aria-label={t('filterLabel')}
-        >
-          <ToggleGroupItem value="all" size="sm">{t('filterAll')}</ToggleGroupItem>
-          <ToggleGroupItem value="mine" size="sm">{t('filterMine')}</ToggleGroupItem>
-        </ToggleGroup>
+        {canPublish && (
+          <ToggleGroup
+            type="single"
+            value={scope}
+            onValueChange={value => value && onScopeChange(value as RegistryScope)}
+            aria-label={t('filterLabel')}
+          >
+            <ToggleGroupItem value="all" size="sm">{t('filterAll')}</ToggleGroupItem>
+            <ToggleGroupItem value="mine" size="sm">{t('filterMine')}</ToggleGroupItem>
+          </ToggleGroup>
+        )}
       </div>
 
       {registry.error && (

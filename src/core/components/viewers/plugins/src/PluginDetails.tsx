@@ -174,7 +174,7 @@ export function PluginDetails({
               </ControlGroup>
             ) : (
               <ControlGroup label={t('orgGroup')}>
-                <p className="py-1 text-sm text-muted-foreground">{orgSummary(listing, t)}</p>
+                <p className="py-1 text-sm text-muted-foreground">{orgSummary(listing, ability, t)}</p>
               </ControlGroup>
             )}
 
@@ -272,10 +272,14 @@ function Note({ icon: Icon, text }: { icon: LucideIcon; text: string }) {
 /** What a non-admin is told about the organization's decision. */
 function orgSummary(
   listing: PluginListing,
+  ability: PluginsAbility,
   t: ReturnType<typeof useTranslations<'PluginsPage'>>,
 ): string {
   if (!listing.allowUserOverride) {
     return listing.orgEnabled ? t('orgReadOnlyForced') : t('orgReadOnlyBlocked')
+  }
+  if (!ability.canChooseForSelf) {
+    return listing.orgEnabled ? t('orgReadOnlyOnAskAdmin') : t('orgReadOnlyOffAskAdmin')
   }
   return listing.orgEnabled ? t('orgReadOnlyOnOptional') : t('orgReadOnlyOffOptional')
 }

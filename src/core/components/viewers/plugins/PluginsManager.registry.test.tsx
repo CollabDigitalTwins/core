@@ -111,6 +111,24 @@ describe('shared registry on the Plugins page', () => {
     expect(row('ifc-checker').queryByRole('button', { name: 'publishFirst' })).not.toBeInTheDocument()
   })
 
+  it('shows an org admin the plugins shared with them, read-only', () => {
+    registryState.current = {
+      configured: true,
+      viewer: { email: 'admin@carleton.ca', canPublish: false, canGrant: false },
+      plugins: [registryPlugin({ ownedByMe: false })],
+    }
+    const granted = { ...mounted(), mountPath: undefined, registryVersion: '1.0.0' }
+    render(<PluginsManager listings={[granted]} registryActions={actions()} />)
+    openRegistry()
+
+    const scope = row('ifc-checker')
+    expect(screen.getByText('sectionHintGranted')).toBeInTheDocument()
+    expect(screen.queryByRole('radio', { name: 'filterMine' })).not.toBeInTheDocument()
+    expect(scope.queryByText('badgeShared')).not.toBeInTheDocument()
+    expect(scope.queryByRole('button', { name: /removePlugin/ })).not.toBeInTheDocument()
+    expect(screen.queryByTestId('registry-details-ifc-checker')).not.toBeInTheDocument()
+  })
+
   it('lists only published plugins in the registry tab', () => {
     registryState.current = devTeam([])
     render(<PluginsManager listings={[mounted()]} registryActions={actions()} />)
@@ -130,6 +148,19 @@ describe('shared registry on the Plugins page', () => {
 
     await vi.waitFor(() => expect(publishMounted).toHaveBeenCalledWith('ifc-checker'))
     expect(toast.success).toHaveBeenCalledWith('toastClaimed')
+  })
+
+  it('does not publish when the confirmation is cancelled', async () => {
+    registryState.current = devTeam([])
+    const publishMounted = vi.fn()
+    render(<PluginsManager listings={[mounted()]} registryActions={actions({ publishMounted })} />)
+    fireEvent.mouseDown(screen.getByRole('tab', { name: /^sectionFound/ }))
+
+    row('ifc-checker').getByRole('button', { name: 'publishFirst' }).click()
+    fireEvent.click(await screen.findByRole('button', { name: 'cancel' }))
+
+    await vi.waitFor(() => expect(screen.queryByRole('button', { name: 'publishConfirm' })).not.toBeInTheDocument())
+    expect(publishMounted).not.toHaveBeenCalled()
   })
 
   it('offers an update only when the mounted build is newer', () => {

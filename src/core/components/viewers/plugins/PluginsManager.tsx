@@ -88,16 +88,14 @@ export function PluginsManager({ listings, actions, registryActions }: Props) {
     [resolved, overrides],
   )
 
+  // Mirrors the checks the plugin routes make: granting more here only shows controls the server refuses.
   const canManage: PluginsAbility = React.useMemo(() => {
-    // Orgs seeded before the plugin subjects existed hold neither; drop this once role rows are back-filled.
-    const legacyWriter = ability.can('update', 'Organization')
-
-    const orgAdmin = ability.can('update', 'PluginInstallation') || legacyWriter
+    const orgAdmin = ability.can('update', 'PluginInstallation')
 
     return {
       canInstall: ability.can('create', 'PluginInstallation') || orgAdmin,
       canConfigureOrg: orgAdmin,
-      canChooseForSelf: ability.can('update', 'PluginUserSetting') || legacyWriter,
+      canChooseForSelf: ability.can('update', 'PluginUserSetting'),
     }
   }, [ability])
 
@@ -107,7 +105,11 @@ export function PluginsManager({ listings, actions, registryActions }: Props) {
   )
 
   const canGrant = registry.viewer?.canGrant ?? false
-  const columns = React.useMemo(() => visibleColumns(canManage, canGrant), [canManage, canGrant])
+  const hasLocalPlugins = listingRows.some(listing => Boolean(listing.mountPath))
+  const columns = React.useMemo(
+    () => visibleColumns(canManage, canGrant, hasLocalPlugins),
+    [canManage, canGrant, hasLocalPlugins],
+  )
   const [sort, setSort] = React.useState<PluginSort | null>(null)
 
   const tabs: PluginsTab[] = [
@@ -399,7 +401,7 @@ function Row({
   const { slug, listing, entry } = row
   const name = rowName(row)
   const canGrant = registry.viewer?.canGrant ?? false
-  const devTeam = registry.configured ? { canGrant } : null
+  const devTeam = registry.viewer?.canPublish ? { canGrant } : null
   const showRegistry = Boolean(devTeam && (entry || listing?.mountPath))
   const [open, setOpen] = React.useState(false)
 

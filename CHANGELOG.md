@@ -16,6 +16,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
     with a Mine filter. Owners can remove a version or a plugin.
   - Platform admins get a "Visible to" column: a searchable organization picker that grants the latest version.
     The expanded row lists the organizations with access, pins each to a version or the latest, and revokes.
+  - Publishing and removing a version or plugin each ask for confirmation.
 - New types in `@collabdt/core/core/components/viewers/plugins/types`: `RegistryPlugin`, `RegistryVersion`,
   `RegistryGrant`, `RegistryState`, `RegistryOrganization` and the `RegistryActions` port.
   `RegistryActions.setGrant(slug, organizationId, pinnedVersion)` takes `null` for the latest version.
@@ -36,13 +37,21 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   both in the organization and in the registry appears once. Tabs filter the rows into "All", "Running",
   "Available in this organization", "Found on this server" (admins) and "Registry" (dev team), each with a count.
   A collapsed row has a Run checkbox for everyone, Install and Enable checkboxes for organization admins, and a
-  running plugin's name is bold.
+  running plugin's name is bold. A Run checkbox the viewer can't change is disabled, with the reason as its
+  tooltip. The Registry column appears only when a plugin is mounted on this server.
 - `MountedPlugin.mountPath` is optional, and `MountedPlugin` gains `source` and `registryVersion`, because
   `/api/plugins/mounted` also lists registry plugins granted to the organization.
 - `PluginsPage.sectionFoundHint` now covers plugins shared with the organization as well as mounted ones.
 
 ### Removed
 - `PluginsPage.intro`: the Plugins page no longer shows an intro line under its title.
+
+### Fixed
+- The Plugins page no longer shows organization controls (Add to organization, Install, Enable, Let people
+  choose) to roles that can edit the organization but not its plugins, such as User. They failed on save.
+  Controls now follow the `PluginInstallation` and `PluginUserSetting` permissions only, as the API does.
+- A Viewer is no longer told they can turn an optional plugin on or off themselves. New
+  `PluginsPage.orgReadOnlyOnAskAdmin` and `orgReadOnlyOffAskAdmin` strings tell them to ask an administrator.
 
 ### Migration
 - Replace `ViewerNames.extensions` with `ViewerNames.plugins`, and any stored or linked `'extensions'` viewer

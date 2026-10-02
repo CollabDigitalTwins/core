@@ -67,7 +67,9 @@ const ADMIN = [
   { action: 'update', subject: 'PluginInstallation' },
   { action: 'update', subject: 'PluginUserSetting' },
 ]
+// The User role as seeded in the app: it may edit the organization, but not its plugins.
 const MEMBER = [
+  { action: 'update', subject: 'Organization' },
   { action: 'read', subject: 'PluginInstallation' },
   { action: 'update', subject: 'PluginUserSetting' },
 ]
@@ -156,6 +158,22 @@ describe('controls by role', () => {
     expect(scope.getByText('userReadOnly')).toBeInTheDocument()
   })
 
+  it('does not tell a viewer they can turn an optional plugin off themselves', () => {
+    permissions.current = VIEWER
+    render(<PluginsManager listings={[listing({ allowUserOverride: true })]} />)
+
+    const scope = within(card())
+    expect(scope.queryByText('orgReadOnlyOnOptional')).not.toBeInTheDocument()
+    expect(scope.getByText('orgReadOnlyOnAskAdmin')).toBeInTheDocument()
+  })
+
+  it('gives a non-admin no add button for a plugin the organization has not added', () => {
+    permissions.current = MEMBER
+    render(<PluginsManager listings={[listing({ status: 'available', installed: false })]} />)
+
+    expect(screen.queryByRole('button', { name: /addToOrg/ })).not.toBeInTheDocument()
+  })
+
   it('replaces the personal switch with an explanation when an admin locked it', () => {
     permissions.current = MEMBER
     render(<PluginsManager listings={[listing({ allowUserOverride: false })]} />)
@@ -237,6 +255,16 @@ describe('the collapsed row', () => {
     expect(screen.queryByRole('columnheader', { name: /columnEnable/ })).not.toBeInTheDocument()
     expect(collapsedRow().queryByRole('checkbox', { name: 'quickOrgEnabled' })).not.toBeInTheDocument()
     expect(collapsedRow().queryByRole('checkbox', { name: 'quickInstalled' })).not.toBeInTheDocument()
+  })
+
+  it('shows the registry column only when a plugin is mounted locally', () => {
+    permissions.current = ADMIN
+    const { unmount } = render(<PluginsManager listings={[listing()]} />)
+    expect(screen.queryByRole('columnheader', { name: /columnRegistry/ })).not.toBeInTheDocument()
+    unmount()
+
+    render(<PluginsManager listings={[listing({ mountPath: '/plugins/space-planning' })]} />)
+    expect(screen.getByRole('columnheader', { name: /columnRegistry/ })).toBeInTheDocument()
   })
 
   it('sorts rows from the column headers, ascending then descending', () => {

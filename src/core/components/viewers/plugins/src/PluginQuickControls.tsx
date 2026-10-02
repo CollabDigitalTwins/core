@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
@@ -90,7 +89,6 @@ export function UserQuickControl({
   if (choice === 'choose') {
     return (
       <Checkbox
-  __DEL__
         checked={listing.userEnabled ?? listing.orgEnabled}
         onCheckedChange={checked => onSetUserEnabled(checked === true)}
         aria-label={t('quickUserRun', { name })}
@@ -100,12 +98,5 @@ export function UserQuickControl({
   }
 
   const reason = t(USER_CHOICE_KEY[choice])
-  const Icon = choice === 'readOnly' ? LR.Eye : LR.Lock
-
-  return (
-    <span className="flex items-center gap-1 text-muted-foreground" title={reason}>
-      <Checkbox checked={effectiveStatus(listing) === 'running'} disabled aria-label={t('quickUserRun', { name })} title={reason} />
-      <Icon aria-hidden className="h-3.5 w-3.5" />
-    </span>
-  )
+  return <Checkbox checked={effectiveStatus(listing) === 'running'} disabled aria-label={t('quickUserRun', { name })} title={reason} />
 }

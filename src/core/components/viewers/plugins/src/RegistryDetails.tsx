@@ -139,7 +139,7 @@ function RegistryEntry({ plugin, canGrant, actions }: { plugin: RegistryPlugin; 
         isOpen={pending !== null}
         isDeleting={busy}
         onOpenChange={open => !open && !busy && setPending(null)}
-        handleConfirm={() => void confirmRemoval()}
+        handleConfirm={e => { e.preventDefault(); void confirmRemoval() }}
         title={pending?.kind === 'version'
           ? t('removeVersionTitle', { name: plugin.name, version: pending.version })
           : t('removePluginTitle', { name: plugin.name })}

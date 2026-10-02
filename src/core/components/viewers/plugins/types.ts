@@ -109,7 +109,8 @@ export interface RegistryPlugin {
 export interface RegistryState {
   /** True for the dev team, and for an org admin with grants; `viewer.canPublish` tells them apart. */
   configured: boolean
-  viewer?: { email: string; canPublish: boolean; canGrant: boolean }
+  /** `canPublishFromDisk` is false on any deployment without `PLUGINS_DEV`, so staging and production never offer it. */
+  viewer?: { email: string; canPublish: boolean; canGrant: boolean; canPublishFromDisk?: boolean }
   plugins: RegistryPlugin[]
   error?: { code: string; message: string }
 }
@@ -129,4 +130,10 @@ export interface RegistryActions {
   /** Grants or re-pins access; `pinnedVersion` null runs the newest published version. */
   setGrant(slug: string, organizationId: number, pinnedVersion: string | null): Promise<void>
   revokeGrant(slug: string, organizationId: number): Promise<void>
+  /** A published version as a package file, to import into another deployment's registry. */
+  exportPackage(slug: string, version: string): Promise<{ fileName: string; contents: Blob }>
+  /** The build mounted on this server as a package file, without publishing it here. Only where `canPublishFromDisk`. */
+  exportMountedPackage(slug: string): Promise<{ fileName: string; contents: Blob }>
+  /** Publishes a parsed package file. Platform admins only; resolves with the sha256 the registry verified. */
+  importPackage(pkg: unknown): Promise<{ slug: string; version: string; claimed: boolean; sha256: string }>
 }

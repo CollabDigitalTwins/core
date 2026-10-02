@@ -57,9 +57,9 @@ export function matchesSearch(row: PluginRowData, needle: string): boolean {
 /** Where the plugin stands with the registry, from the dev team's view when they have one. */
 export function registryStanding(
   row: PluginRowData,
-  devTeam: { canGrant: boolean } | null,
+  devTeam: { canGrant: boolean; canPublishFromDisk: boolean } | null,
 ): RegistryStanding | null {
-  if (devTeam && row.listing?.mountPath) return publishState(row.listing.manifest, row.entry, devTeam.canGrant)
+  if (devTeam?.canPublishFromDisk && row.listing?.mountPath) return publishState(row.listing.manifest, row.entry, devTeam.canGrant)
   if (devTeam && row.entry) return { kind: 'published', version: row.entry.latestVersion }
   if (row.listing?.registryVersion) return { kind: 'shared', version: row.listing.registryVersion }
   return null

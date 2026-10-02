@@ -92,7 +92,13 @@ describe('matchesSearch', () => {
 describe('registryStanding', () => {
   it('reports a mounted build against what the registry holds', () => {
     const row = { slug: 'ifc-checker', listing: listing({ mountPath: '/plugins/ifc-checker' }), entry: entry() }
-    expect(registryStanding(row, { canGrant: false })).toEqual({ kind: 'alreadyPublished' })
+    expect(registryStanding(row, { canGrant: false, canPublishFromDisk: true })).toEqual({ kind: 'alreadyPublished' })
+  })
+
+  it('shows a mounted build as published, not publishable, where publishing from disk is off', () => {
+    const row = { slug: 'ifc-checker', listing: listing({ mountPath: '/plugins/ifc-checker' }), entry: entry() }
+    expect(registryStanding(row, { canGrant: true, canPublishFromDisk: false }))
+      .toEqual({ kind: 'published', version: row.entry.latestVersion })
   })
 
   it('tells an organization which granted version it runs', () => {
@@ -101,6 +107,6 @@ describe('registryStanding', () => {
   })
 
   it('says nothing about a plugin the registry does not know', () => {
-    expect(registryStanding({ slug: 'a', listing: listing({ bundled: true }) }, { canGrant: true })).toBeNull()
+    expect(registryStanding({ slug: 'a', listing: listing({ bundled: true }) }, { canGrant: true, canPublishFromDisk: true })).toBeNull()
   })
 })

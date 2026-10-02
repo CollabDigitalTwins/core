@@ -257,6 +257,16 @@ describe('the collapsed row', () => {
     expect(collapsedRow().queryByRole('checkbox', { name: 'quickInstalled' })).not.toBeInTheDocument()
   })
 
+  it('drops columns on a narrow screen instead of scrolling sideways, keeping the name and Run', () => {
+    permissions.current = ADMIN
+    const width = vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(320)
+    render(<PluginsManager listings={[listing({ mountPath: '/plugins/space-planning' })]} />)
+
+    expect(screen.getAllByRole('columnheader').map(header => header.textContent)).toEqual(['columnPlugin', 'columnRun'])
+    expect(collapsedRow().getByRole('checkbox', { name: 'quickUserRun' })).toBeInTheDocument()
+    width.mockRestore()
+  })
+
   it('shows the registry column only when a plugin is mounted locally', () => {
     permissions.current = ADMIN
     const { unmount } = render(<PluginsManager listings={[listing()]} />)

@@ -19,17 +19,26 @@ export class RegistryRequestError extends Error {
   }
 }
 
-async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
+async function send(method: string, path: string, body?: unknown): Promise<Response> {
   const response = await fetch(`/api/plugins/registry${path}`, {
     method,
     headers: body === undefined ? undefined : { 'content-type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
   })
+  if (response.ok) return response
   const payload = (await response.json().catch(() => ({}))) as { error?: string; message?: string; details?: string[] }
-  if (!response.ok) {
-    throw new RegistryRequestError(payload.error ?? 'unknown', payload.message ?? `Request failed (${response.status})`, payload.details)
-  }
-  return payload as T
+  throw new RegistryRequestError(payload.error ?? 'unknown', payload.message ?? `Request failed (${response.status})`, payload.details)
+}
+
+async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const response = await send(method, path, body)
+  return (await response.json().catch(() => ({}))) as T
+}
+
+async function download(path: string, fallbackName: string): Promise<{ fileName: string; contents: Blob }> {
+  const response = await send('GET', path)
+  const fileName = /filename="([^"]+)"/.exec(response.headers.get('content-disposition') ?? '')?.[1] ?? fallbackName
+  return { fileName, contents: await response.blob() }
 }
 
 // Fetched directly, like mounted plugins: a deployment without a registry answers `configured: false`.
@@ -72,6 +81,11 @@ export function useRegistryActions(override?: RegistryActions): RegistryActions 
       setGrant: (slug, organizationId, pinnedVersion) =>
         thenRefresh(call<void>('PUT', `${plugin(slug)}/grants/${organizationId}`, { pinnedVersion })),
       revokeGrant: (slug, organizationId) => thenRefresh(call<void>('DELETE', `${plugin(slug)}/grants/${organizationId}`)),
+      exportPackage: (slug, version) =>
+        download(`${plugin(slug)}/versions/${encodeURIComponent(version)}/package`, `${slug}-${version}.cdtplugin.json`),
+      exportMountedPackage: slug =>
+        download(`/mounted/${encodeURIComponent(slug)}/package`, `${slug}.cdtplugin.json`),
+      importPackage: pkg => thenRefresh(call('POST', '/import', pkg)),
     }
   }, [override, refresh])
 }

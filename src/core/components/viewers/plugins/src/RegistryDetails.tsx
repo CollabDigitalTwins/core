@@ -67,7 +67,24 @@ function MountedPublish({
     }
   }
 
-  return <RegistryPublishStrip manifest={manifest} state={publishState(manifest, entry, canGrant)} onPublish={publish} />
+  const exportBuild = async () => {
+    try {
+      const { fileName, contents } = await actions.exportMountedPackage(manifest.slug)
+      saveFile(fileName, contents)
+      toast.success(t('toastExported', { file: fileName }))
+    } catch (error) {
+      toast.error(t('toastExportFailed', { version: manifest.version, message: registryErrorMessage(error) }))
+    }
+  }
+
+  return (
+    <RegistryPublishStrip
+      manifest={manifest}
+      state={publishState(manifest, entry, canGrant)}
+      onPublish={publish}
+      onExport={() => void exportBuild()}
+    />
+  )
 }
 
 function RegistryEntry({ plugin, canGrant, actions }: { plugin: RegistryPlugin; canGrant: boolean; actions: RegistryActions }) {
@@ -76,6 +93,16 @@ function RegistryEntry({ plugin, canGrant, actions }: { plugin: RegistryPlugin; 
   const [busy, setBusy] = React.useState(false)
 
   const canManage = plugin.ownedByMe || canGrant
+
+  const exportVersion = async (version: string) => {
+    try {
+      const { fileName, contents } = await actions.exportPackage(plugin.slug, version)
+      saveFile(fileName, contents)
+      toast.success(t('toastExported', { file: fileName }))
+    } catch (error) {
+      toast.error(t('toastExportFailed', { version, message: registryErrorMessage(error) }))
+    }
+  }
 
   const confirmRemoval = async () => {
     if (!pending) return
@@ -127,6 +154,7 @@ function RegistryEntry({ plugin, canGrant, actions }: { plugin: RegistryPlugin; 
                 version={version}
                 canRemove={canManage && version.status === 'PUBLISHED'}
                 onRemove={() => setPending({ kind: 'version', version: version.version })}
+                onExport={() => void exportVersion(version.version)}
               />
             ))}
           </ul>
@@ -153,7 +181,19 @@ function RegistryEntry({ plugin, canGrant, actions }: { plugin: RegistryPlugin; 
   )
 }
 
-function VersionRow({ version, canRemove, onRemove }: { version: RegistryVersion; canRemove: boolean; onRemove: () => void }) {
+function saveFile(fileName: string, contents: Blob): void {
+  const url = URL.createObjectURL(contents)
+  const link = Object.assign(document.createElement('a'), { href: url, download: fileName })
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+function VersionRow({ version, canRemove, onRemove, onExport }: {
+  version: RegistryVersion
+  canRemove: boolean
+  onRemove: () => void
+  onExport: () => void
+}) {
   const t = useTranslations('PluginRegistry')
   const retired = version.status === 'YANKED'
 
@@ -166,11 +206,19 @@ function VersionRow({ version, canRemove, onRemove }: { version: RegistryVersion
           {t('publishedBy', { name: version.publishedBy, date: new Date(version.publishedAt).toLocaleDateString() })}
         </small>
       </span>
-      {canRemove && (
-        <Button size="sm" variant="ghost" onClick={onRemove} aria-label={t('removeVersionLabel', { version: version.version })}>
-          {t('removeVersion')}
-        </Button>
-      )}
+      <span className="flex shrink-0 items-center gap-1">
+        {!retired && (
+          <Button size="sm" variant="ghost" onClick={onExport} aria-label={t('exportPackageLabel', { version: version.version })}>
+            <LR.FileDown className="h-4 w-4" />
+            {t('exportPackage')}
+          </Button>
+        )}
+        {canRemove && (
+          <Button size="sm" variant="ghost" onClick={onRemove} aria-label={t('removeVersionLabel', { version: version.version })}>
+            {t('removeVersion')}
+          </Button>
+        )}
+      </span>
     </li>
   )
 }

@@ -20,6 +20,20 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - New types in `@collabdt/core/core/components/viewers/plugins/types`: `RegistryPlugin`, `RegistryVersion`,
   `RegistryGrant`, `RegistryState`, `RegistryOrganization` and the `RegistryActions` port.
   `RegistryActions.setGrant(slug, organizationId, pinnedVersion)` takes `null` for the latest version.
+- Promoting registry plugins between deployments by package file.
+  - Each published version has an **Export** button that downloads `<slug>-<version>.cdtplugin.json`.
+  - Platform admins get an **Import package** button on the Registry tab. Its confirmation shows the version,
+    `hostApi` and sha256 before publishing.
+  - `RegistryActions.exportPackage(slug, version)` and `RegistryActions.importPackage(pkg)` back them.
+    They default to the host's `GET …/versions/<version>/package` and `POST /api/plugins/registry/import`.
+  - A mounted plugin's publish strip has an **Export** button too, so a local build can be promoted without
+    publishing it to the dev registry first. `RegistryActions.exportMountedPackage(slug)` backs it and defaults
+    to the host's `GET /api/plugins/registry/mounted/<slug>/package`. It shows only where `canPublishFromDisk` is set.
+  - `RegistryState.viewer.canPublishFromDisk`: publishing a mounted build is offered only when the host sets it,
+    so staging and production never show it. If it is missing, publishing from disk is off.
+  - `PluginRegistry` i18n keys `emptyImport`, `exportPackage`, `exportPackageLabel`, `toastExported`,
+    `toastExportFailed`, `importPackage`, `importInvalidFile`, `importTitle`, `importDescription`,
+    `importFacts`, `importConfirm`, `toastImported` and `toastImportFailed` (en/es/fr).
 - `PluginsManager` takes an optional `registryActions` prop. It defaults to the host's `/api/plugins/registry/*` routes.
 - `PluginListing.registryVersion`. A plugin shared with the organization through the registry shows a
   "From the registry" badge and its granted version.
@@ -38,10 +52,16 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   "Available in this organization", "Found on this server" (admins) and "Registry" (dev team), each with a count.
   A collapsed row has a Run checkbox for everyone, Install and Enable checkboxes for organization admins, and a
   running plugin's name is bold. A Run checkbox the viewer can't change is disabled, with the reason as its
-  tooltip. The Registry column appears only when a plugin is mounted on this server.
+  tooltip. The Registry column appears only when a plugin is mounted on this server. The table always fits its
+  container: when it is too narrow, the Version, Registry, Visible to, Enable, Install and Status columns drop in
+  that order, leaving the name and Run, and their controls stay in the expanded row.
 - `MountedPlugin.mountPath` is optional, and `MountedPlugin` gains `source` and `registryVersion`, because
   `/api/plugins/mounted` also lists registry plugins granted to the organization.
 - `PluginsPage.sectionFoundHint` now covers plugins shared with the organization as well as mounted ones.
+- The Plugins page says "install" instead of "add", to match the Install column. The button now reads
+  "Install to organization", the status badge reads "Not installed", and `PluginsPage.trustHeading`,
+  `trustWarning`, `toastInstalled`, `toastUninstalled`, `quickInstalled`, `sectionFoundHint` and `emptyAdmin`
+  follow suit (en/es/fr). The keys are unchanged.
 
 ### Removed
 - `PluginsPage.intro`: the Plugins page no longer shows an intro line under its title.

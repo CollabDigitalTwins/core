@@ -35,6 +35,7 @@ import { RegistryDetails } from './src/RegistryDetails'
 import { RegistryToolbar } from './src/RegistryToolbar'
 import { nextSort, rowName, SORT_KEYS, sortPluginRows } from './src/sortPluginRows'
 import { usePluginsActions, usePluginsData } from './src/usePluginsData'
+import { useFittedColumns } from './src/useFittedColumns'
 import { useRegistryActions, useRegistryPlugins } from './src/useRegistryPlugins'
 import { VisibleToPicker } from './src/VisibleToPicker'
 
@@ -186,7 +187,8 @@ export function PluginsManager({ listings, actions, registryActions }: Props) {
 
   const emptyText = (target: PluginsTab): string => {
     if (needle) return t('noResults', { query: searchTerm.trim() })
-    if (target === 'registry') return scope === 'mine' ? tRegistry('emptyMine') : tRegistry('empty')
+    if (target === 'registry' && scope === 'mine') return tRegistry('emptyMine')
+    if (target === 'registry') return registry.viewer?.canPublishFromDisk ? tRegistry('empty') : tRegistry('emptyImport')
     if (target === 'available') return t('emptyFound')
     if (target === 'running') return t('emptyRunning')
     if (isLoading && resolved.length === 0) return t('loading')
@@ -254,6 +256,7 @@ export function PluginsManager({ listings, actions, registryActions }: Props) {
                 {target === 'registry' && (
                   <RegistryToolbar
                     registry={registry}
+                    actions={boundRegistryActions}
                     scope={scope}
                     onScopeChange={setScope}
                   />
@@ -269,11 +272,11 @@ export function PluginsManager({ listings, actions, registryActions }: Props) {
                   onSort={key => setSort(current => nextSort(current, key))}
                   emptyText={emptyText(target)}
                 >
-                  {row => (
+                  {(row, fittedColumns) => (
                     <Row
                       key={row.slug}
                       row={row}
-                      columns={columns}
+                      columns={fittedColumns}
                       ability={canManage}
                       actions={boundActions}
                       commit={commit}
@@ -318,9 +321,10 @@ function PluginTable({
   sort: PluginSort | null
   onSort: (key: SortKey) => void
   emptyText: string
-  children: (row: PluginRowData) => React.ReactNode
+  children: (row: PluginRowData, columns: readonly PluginColumn[]) => React.ReactNode
 }) {
   const t = useTranslations('PluginsPage')
+  const [tableRef, fitted] = useFittedColumns(columns)
 
   if (rows.length === 0) {
     return (
@@ -331,42 +335,40 @@ function PluginTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border">
-      <div className="min-w-max">
-        <div
-          role="row"
-          className={`${PLUGIN_ROW_GRID} border-b bg-muted/30 px-3 py-1 text-xs text-muted-foreground`}
-          style={pluginRowStyle(columns)}
-        >
-          {columns.map(column => {
-            const label = t(COLUMN_LABEL_KEY[column])
-            const className = column === 'name' ? 'pl-6' : undefined
-            if (!isSortKey(column)) return <span key={column} role="columnheader" className={className}>{label}</span>
+    <div ref={tableRef} className="min-w-0 overflow-hidden rounded-xl border">
+      <div
+        role="row"
+        className={`${PLUGIN_ROW_GRID} border-b bg-muted/30 px-3 py-1 text-xs text-muted-foreground`}
+        style={pluginRowStyle(fitted)}
+      >
+        {fitted.map(column => {
+          const label = t(COLUMN_LABEL_KEY[column])
+          const className = column === 'name' ? 'pl-6' : undefined
+          if (!isSortKey(column)) return <span key={column} role="columnheader" className={className}>{label}</span>
 
-            const direction = sort?.key === column ? sort.direction : null
-            const SortIcon = direction === 'asc' ? LR.ArrowUp : direction === 'desc' ? LR.ArrowDown : LR.ArrowUpDown
-            return (
-              <span
-                key={column}
-                role="columnheader"
-                aria-sort={direction === 'asc' ? 'ascending' : direction === 'desc' ? 'descending' : 'none'}
-                className={className}
+          const direction = sort?.key === column ? sort.direction : null
+          const SortIcon = direction === 'asc' ? LR.ArrowUp : direction === 'desc' ? LR.ArrowDown : LR.ArrowUpDown
+          return (
+            <span
+              key={column}
+              role="columnheader"
+              aria-sort={direction === 'asc' ? 'ascending' : direction === 'desc' ? 'descending' : 'none'}
+              className={className}
+            >
+              <button
+                type="button"
+                className="-mx-1 inline-flex items-center gap-1 rounded px-1 py-1 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => onSort(column)}
+                aria-label={t('sortBy', { column: label })}
               >
-                <button
-                  type="button"
-                  className="-mx-1 inline-flex items-center gap-1 rounded px-1 py-1 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  onClick={() => onSort(column)}
-                  aria-label={t('sortBy', { column: label })}
-                >
-                  {label}
-                  <SortIcon aria-hidden className={direction ? 'h-3.5 w-3.5' : 'h-3.5 w-3.5 opacity-40'} />
-                </button>
-              </span>
-            )
-          })}
-        </div>
-        <ul>{rows.map(children)}</ul>
+                {label}
+                <SortIcon aria-hidden className={direction ? 'h-3.5 w-3.5' : 'h-3.5 w-3.5 opacity-40'} />
+              </button>
+            </span>
+          )
+        })}
       </div>
+      <ul>{rows.map(row => children(row, fitted))}</ul>
     </div>
   )
 }
@@ -401,8 +403,11 @@ function Row({
   const { slug, listing, entry } = row
   const name = rowName(row)
   const canGrant = registry.viewer?.canGrant ?? false
-  const devTeam = registry.viewer?.canPublish ? { canGrant } : null
-  const showRegistry = Boolean(devTeam && (entry || listing?.mountPath))
+  const devTeam = registry.viewer?.canPublish
+    ? { canGrant, canPublishFromDisk: registry.viewer.canPublishFromDisk ?? false }
+    : null
+  const publishable = Boolean(devTeam?.canPublishFromDisk && listing?.mountPath)
+  const showRegistry = Boolean(devTeam && (entry || publishable))
   const [open, setOpen] = React.useState(false)
 
   const setOrgEnabled = (enabled: boolean) => void commit(
@@ -475,7 +480,7 @@ function Row({
       {showRegistry && (
         <RegistryDetails
           entry={entry}
-          mounted={listing?.mountPath ? listing.manifest : undefined}
+          mounted={publishable ? listing?.manifest : undefined}
           canGrant={canGrant}
           actions={registryActions}
         />

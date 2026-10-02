@@ -18,10 +18,11 @@ interface Props {
   state: PublishState
   /** Resolves true once published; the caller reports failures. */
   onPublish: () => Promise<boolean>
+  onExport: () => void
 }
 
-/** Publish a mounted build to the registry, or say why this build cannot be. */
-export function RegistryPublishStrip({ manifest, state, onPublish }: Props) {
+/** Publish a mounted build to the registry, or say why this build cannot be; either way it can be exported. */
+export function RegistryPublishStrip({ manifest, state, onPublish, onExport }: Props) {
   const t = useTranslations('PluginRegistry')
   const [open, setOpen] = React.useState(false)
   const [busy, setBusy] = React.useState(false)
@@ -59,12 +60,18 @@ export function RegistryPublishStrip({ manifest, state, onPublish }: Props) {
         </span>
       </p>
 
-      {canPublish && (
-        <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-          <LR.CloudUpload className="h-4 w-4" />
-          {state.kind === 'update' ? t('publishUpdate', { version: manifest.version }) : t('publishFirst')}
+      <span className="flex flex-wrap items-center gap-1">
+        <Button size="sm" variant="ghost" onClick={onExport} aria-label={t('exportPackageLabel', { version: manifest.version })}>
+          <LR.FileDown className="h-4 w-4" />
+          {t('exportPackage')}
         </Button>
-      )}
+        {canPublish && (
+          <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+            <LR.CloudUpload className="h-4 w-4" />
+            {state.kind === 'update' ? t('publishUpdate', { version: manifest.version }) : t('publishFirst')}
+          </Button>
+        )}
+      </span>
 
       <ConfirmDialog
         isOpen={open}

@@ -140,7 +140,12 @@ export function PluginDetails({
             {isAdmin ? (
               <ControlGroup label={t('orgGroup')} who={t('orgGroupWho')}>
                 {ability.canInstall && (
-                  <ControlRow label={t('orgInstalled')}>
+                  <ControlRow
+                    label={t('orgInstalled')}
+                    hint={listing.installed
+                      ? t('orgInstalledOnHint')
+                      : t('orgInstalledOffHint')}
+                  >
                     <Switch
                       checked={listing.installed}
                       onCheckedChange={onSetInstalled}
@@ -150,7 +155,12 @@ export function PluginDetails({
                 )}
                 {ability.canConfigureOrg && (
                   <>
-                    <ControlRow label={t('orgEnabled')}>
+                    <ControlRow
+                      label={t('orgEnabled')}
+                      hint={listing.orgEnabled
+                        ? t('orgEnabledOnHint')
+                        : t('orgEnabledOffHint')}
+                    >
                       <Switch
                         checked={listing.orgEnabled}
                         onCheckedChange={onSetOrgEnabled}

@@ -64,7 +64,13 @@ const registryPlugin = (overrides: Partial<RegistryPlugin> = {}): RegistryPlugin
 
 const devTeam = (plugins: RegistryPlugin[], canGrant = false): RegistryState => ({
   configured: true,
-  viewer: { email: 'nico@example.org', canPublish: true, canGrant },
+  viewer: { email: 'nico@example.org', canPublish: true, canGrant, canPublishFromDisk: true },
+  plugins,
+})
+
+const productionAdmin = (plugins: RegistryPlugin[]): RegistryState => ({
+  configured: true,
+  viewer: { email: 'admin@example.org', canPublish: true, canGrant: true, canPublishFromDisk: false },
   plugins,
 })
 
@@ -76,8 +82,16 @@ function actions(overrides: Partial<RegistryActions> = {}): RegistryActions {
     listOrganizations: vi.fn().mockResolvedValue([]),
     setGrant: vi.fn(),
     revokeGrant: vi.fn(),
+    exportPackage: vi.fn().mockResolvedValue({ fileName: 'ifc-checker-1.0.0.cdtplugin.json', contents: new Blob(['{}']) }),
+    importPackage: vi.fn().mockResolvedValue({ slug: 'ifc-checker', version: '1.0.0', claimed: true, sha256: 'abc' }),
+    exportMountedPackage: vi.fn().mockResolvedValue({ fileName: 'ifc-checker-1.0.0.cdtplugin.json', contents: new Blob(['{}']) }),
     ...overrides,
   }
+}
+
+// jsdom's File has no text().
+function packageFile(text: string): File {
+  return Object.assign(new File([text], 'package.cdtplugin.json', { type: 'application/json' }), { text: () => Promise.resolve(text) })
 }
 
 function openRegistry() {
@@ -168,7 +182,7 @@ describe('shared registry on the Plugins page', () => {
     const { rerender } = render(<PluginsManager listings={[mounted('1.0.0')]} registryActions={actions()} />)
     openRegistry()
     row('ifc-checker')
-    expect(within(screen.getByTestId('registry-strip-ifc-checker')).queryByRole('button')).not.toBeInTheDocument()
+    expect(within(screen.getByTestId('registry-strip-ifc-checker')).queryByRole('button', { name: /^publish/ })).not.toBeInTheDocument()
 
     rerender(<PluginsManager listings={[mounted('1.1.0')]} registryActions={actions()} />)
     expect(screen.getByRole('button', { name: 'publishUpdate' })).toBeInTheDocument()
@@ -261,5 +275,116 @@ describe('shared registry on the Plugins page', () => {
     expect(scope.getByText('badgePublished')).toBeInTheDocument()
     expect(scope.getByRole('switch', { name: 'orgEnabled' })).toBeInTheDocument()
     expect(scope.getByText('hintAlreadyPublished')).toBeInTheDocument()
+  })
+
+  it('never offers publishing from disk where the server turns it off', () => {
+    registryState.current = productionAdmin([])
+    render(<PluginsManager listings={[mounted()]} registryActions={actions()} />)
+    fireEvent.mouseDown(screen.getByRole('tab', { name: /^sectionFound/ }))
+
+    expect(row('ifc-checker').queryByRole('button', { name: 'publishFirst' })).not.toBeInTheDocument()
+    expect(screen.queryByTestId('registry-strip-ifc-checker')).not.toBeInTheDocument()
+  })
+
+  it('lets a production platform admin share an imported plugin with no local copy', () => {
+    registryState.current = productionAdmin([registryPlugin({ ownedByMe: false })])
+    render(<PluginsManager listings={[]} registryActions={actions()} />)
+    openRegistry()
+
+    const card = row('ifc-checker')
+    expect(screen.getByRole('columnheader', { name: /columnVisibleTo/ })).toBeInTheDocument()
+    expect(card.getAllByRole('combobox', { name: 'grantTitle' }).length).toBeGreaterThan(0)
+    expect(screen.queryByTestId('registry-strip-ifc-checker')).not.toBeInTheDocument()
+  })
+
+  it('points an empty production registry at importing rather than publishing from disk', () => {
+    registryState.current = productionAdmin([])
+    render(<PluginsManager listings={[]} registryActions={actions()} />)
+    openRegistry()
+
+    expect(screen.getByText('emptyImport')).toBeInTheDocument()
+  })
+
+  it('offers importing a package to platform admins only', () => {
+    registryState.current = devTeam([registryPlugin()])
+    const { rerender } = render(<PluginsManager listings={[]} registryActions={actions()} />)
+    openRegistry()
+    expect(screen.queryByRole('button', { name: 'importPackage' })).not.toBeInTheDocument()
+
+    registryState.current = productionAdmin([registryPlugin()])
+    rerender(<PluginsManager listings={[]} registryActions={actions()} />)
+    expect(screen.getByRole('button', { name: 'importPackage' })).toBeInTheDocument()
+  })
+
+  it('imports a chosen package file after confirming its sha256', async () => {
+    registryState.current = productionAdmin([])
+    const importPackage = vi.fn().mockResolvedValue({ slug: 'ifc-checker', version: '1.0.0', claimed: true, sha256: 'abc' })
+    render(<PluginsManager listings={[]} registryActions={actions({ importPackage })} />)
+    openRegistry()
+
+    const pkg = { format: 1, manifest: { slug: 'ifc-checker', name: 'IFC checker', version: '1.0.0', hostApi: 1 }, bundle: 'eA==', sha256: 'abc' }
+    const file = packageFile(JSON.stringify(pkg))
+    fireEvent.change(screen.getByTestId('registry-import-file'), { target: { files: [file] } })
+    expect(await screen.findByText('importFacts')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'importConfirm' }))
+
+    await vi.waitFor(() => expect(importPackage).toHaveBeenCalledWith(pkg))
+    expect(toast.success).toHaveBeenCalledWith('toastImported')
+  })
+
+  it('rejects a file that is not a package without calling the registry', async () => {
+    registryState.current = productionAdmin([])
+    const importPackage = vi.fn()
+    render(<PluginsManager listings={[]} registryActions={actions({ importPackage })} />)
+    openRegistry()
+
+    const file = packageFile('not json')
+    fireEvent.change(screen.getByTestId('registry-import-file'), { target: { files: [file] } })
+
+    await vi.waitFor(() => expect(toast.error).toHaveBeenCalledWith('importInvalidFile'))
+    expect(importPackage).not.toHaveBeenCalled()
+  })
+
+  it('exports a mounted build as a package file without publishing it', async () => {
+    registryState.current = devTeam([])
+    const exportMountedPackage = vi.fn().mockResolvedValue({ fileName: 'ifc-checker-1.0.0.cdtplugin.json', contents: new Blob(['{}']) })
+    const publishMounted = vi.fn()
+    Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:x'), revokeObjectURL: vi.fn() })
+    const save = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    render(<PluginsManager listings={[mounted()]} registryActions={actions({ exportMountedPackage, publishMounted })} />)
+    fireEvent.mouseDown(screen.getByRole('tab', { name: /^sectionFound/ }))
+
+    within(screen.getByTestId('plugin-ifc-checker')).getByRole('button', { name: 'toggleDetails' }).click()
+    within(await screen.findByTestId('registry-strip-ifc-checker')).getByRole('button', { name: 'exportPackageLabel' }).click()
+
+    await vi.waitFor(() => expect(exportMountedPackage).toHaveBeenCalledWith('ifc-checker'))
+    expect(toast.success).toHaveBeenCalledWith('toastExported')
+    expect(save).toHaveBeenCalledOnce()
+    expect(publishMounted).not.toHaveBeenCalled()
+    save.mockRestore()
+  })
+
+  it('never offers exporting from disk where the server turns it off', () => {
+    registryState.current = productionAdmin([])
+    render(<PluginsManager listings={[mounted()]} registryActions={actions()} />)
+    fireEvent.mouseDown(screen.getByRole('tab', { name: /^sectionFound/ }))
+
+    expect(row('ifc-checker').queryByRole('button', { name: 'exportPackageLabel' })).not.toBeInTheDocument()
+  })
+
+  it('exports a published version as a package file', async () => {
+    registryState.current = devTeam([registryPlugin()])
+    const exportPackage = vi.fn().mockResolvedValue({ fileName: 'ifc-checker-1.0.0.cdtplugin.json', contents: new Blob(['{}']) })
+    Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:x'), revokeObjectURL: vi.fn() })
+    const save = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    render(<PluginsManager listings={[]} registryActions={actions({ exportPackage })} />)
+    openRegistry()
+
+    row('ifc-checker').getByRole('button', { name: 'exportPackageLabel' }).click()
+
+    await vi.waitFor(() => expect(exportPackage).toHaveBeenCalledWith('ifc-checker', '1.0.0'))
+    expect(toast.success).toHaveBeenCalledWith('toastExported')
+    expect(save).toHaveBeenCalledOnce()
+    save.mockRestore()
   })
 })

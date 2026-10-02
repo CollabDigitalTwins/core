@@ -8,6 +8,8 @@ repository root.
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-02
+
 ### Fixed
 - **The example data page type-checks.** Its `Row` was an interface extending `Record<string, unknown>`, so
   `Omit<Row, 'key'>` erased `name` and `floor` and the scaffolded plugin failed `tsc`. `Row` is now a type alias

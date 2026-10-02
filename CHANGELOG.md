@@ -7,6 +7,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-10-02.
+
 ### Added
 - Shared plugin registry on the Plugins page, for the dev team. The host app answers `GET /api/plugins/registry`
   with `configured: true` for dev-team members only, and everyone else sees the page as before.

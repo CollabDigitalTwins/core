@@ -8,6 +8,8 @@ repository root.
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-02
+
 ### Changed
 - **`PluginViewerName` and `ViewerNames` say `'plugins'` instead of `'extensions'`**, matching `@collabdt/core`.
 

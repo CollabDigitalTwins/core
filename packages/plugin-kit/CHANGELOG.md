@@ -6,7 +6,7 @@ The format is based on Keep a Changelog, and this package adheres to Semantic Ve
 It versions and publishes independently of `@collabdt/core`; the core changelog is at the
 repository root.
 
-## [Unreleased]
+## [0.9.0] - 2026-10-03
 
 ### Added
 - **`map.datasets` capability** with `DatasetRegistration`, `PluginDatasetSource` and `PluginFeatureCollection`,

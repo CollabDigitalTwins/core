@@ -1,6 +1,6 @@
 {
   "name": "create-cdt-plugin",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Scaffold a CDT plugin.",
   "license": "AGPL-3.0-or-later",
   "type": "module",

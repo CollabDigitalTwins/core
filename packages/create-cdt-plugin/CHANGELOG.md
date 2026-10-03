@@ -8,6 +8,8 @@ repository root.
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-03
+
 ### Added
 - **A Dataset surface (`--surface map.datasets`)**, whose example lists two GeoJSON points under Organizational
   data in the Datasets menu.

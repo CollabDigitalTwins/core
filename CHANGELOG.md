@@ -7,6 +7,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.13.2] - 2026-10-03.
+
 ### Added
 - **`map.datasets` plugin capability.** A plugin lists a dataset in the Datasets menu and the map sidebar's
   Layers tab: under Live Data with `live: true`, otherwise under Organizational for the viewer's own

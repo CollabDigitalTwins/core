@@ -7,6 +7,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-10-02.
+
 ### Added
 - `ALWAYS_AVAILABLE_VIEWERS` in `@collabdt/core/core/utils/appContent`: the map, plugins and settings viewers,
   which every organization has whatever its `appContent` lists.

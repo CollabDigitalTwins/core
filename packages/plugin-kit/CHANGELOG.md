@@ -8,6 +8,13 @@ repository root.
 
 ## [Unreleased]
 
+### Added
+- **`map.datasets` capability** with `DatasetRegistration`, `PluginDatasetSource` and `PluginFeatureCollection`,
+  for a dataset listed in the platform's Datasets menu under Organizational or Live Data.
+- `usePluginDataset(id)` and `PluginDatasetState` in the `@collabdt/core/plugins-sdk/data` declarations.
+- `LegendRegistration.dataset`, `LegendRow.visible` / `onVisibleChange`, `controls` in the `useLegend` result,
+  and `PluginNode`.
+
 ## [0.8.0] - 2026-10-02
 
 ### Changed

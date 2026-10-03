@@ -11,11 +11,9 @@ import Map, { NavigationControl } from 'react-map-gl/maplibre'
 
 import { PluginMapLayerHost } from '../../../plugins/host/PluginMapLayerHost'
 import { MapContext } from '../../../store'
-import { ViewerNames } from '../../../types/dbTypes'
 import { SensorLegend } from '../../ui/Sensors/SensorLegend'
 import SettingsButton from '../../ui/SettingsButton'
 import { StatsOverlay } from '../../ui/stats'
-import { ViewerLegendHost } from '../shared/legends/ViewerLegendHost'
 
 import DatasetManagerMenu from './datasets/DatasetManager'
 
@@ -239,13 +237,8 @@ export function MapViewer({ width = '100%', height = '100%', organization, mapti
                   Lifted clear of the toolbar below the md breakpoint: the toolbar is centred and
                   on a phone that centre reaches all the way to this corner. */}
               <div className="absolute bottom-20 md:bottom-[10px] left-3 z-10 flex max-w-[calc(100vw-1.5rem)] flex-col gap-2 pointer-events-none">
-                {/* Portal slot for on-map WMS time controls; display:contents so an
-                    empty slot adds no flex item / gap, but a mounted control stacks
-                    above the legend + dataset-manager cards. */}
-                <div id="wms-time-slot" style={{ display: 'contents' }} />
                 <MapTilerKeyNotice maptilerKey={maptilerKey} />
                 <SensorLegend />
-                <ViewerLegendHost viewer={ViewerNames.map} />
                 <DatasetManagerMenu />
               </div>
             </>

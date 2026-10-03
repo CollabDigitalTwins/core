@@ -55,21 +55,27 @@ export default function DatasetDetails({ selectedDataset }: DatasetDetailsProps)
 
   // console.log("Features Data:", featuresData);
 
+  if (!selectedDataset) return null
+
+  const link = selectedDataset.url || selectedDataset.information
+
   return (
     <div className="flex flex-col p-6 sm:h-[718px] overflow-y-auto max-h-[80vh]">
       {/* 2 column headers */}
-      <div className="grid grid-cols-1 gap-3 md:gap-6 py-3 border-t border-border">
-        <DescriptionListItem label="Url">
-          <Link
-            href={selectedDataset.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline text-blue-600"
-          >
-            {selectedDataset.url}
-          </Link>
-        </DescriptionListItem>
-      </div>
+      {link && (
+        <div className="grid grid-cols-1 gap-3 md:gap-6 py-3 border-t border-border">
+          <DescriptionListItem label="Url">
+            <Link
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline text-blue-600 break-all"
+            >
+              {link}
+            </Link>
+          </DescriptionListItem>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 py-3 border-t border-border">
         <DescriptionListItem label={t('publisherLabel')}>
           {selectedDataset.publisher || t('noPublisher')}

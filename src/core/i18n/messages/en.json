@@ -447,7 +447,8 @@
   "MapLegend": {
     "title": "Legend",
     "titlePlural": "Legends",
-    "feedUnavailable": "Feed unavailable"
+    "feedUnavailable": "Feed unavailable",
+    "feedUnavailableToast": "{title}: the live feed is unreachable right now, so the layer may be missing or out of date."
   },
   "Datasets": {
     "failedFetchError": "Failed to fetch datasets.",

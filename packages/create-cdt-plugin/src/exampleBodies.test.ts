@@ -77,8 +77,9 @@ describe('every example body', () => {
       const translates = source.includes('usePluginTranslations')
       const contributesKeys = source.includes('labelKey')
       const rendersNothing = /return null\s*$/m.test(source)
+      const isDataNotUi = surface === 'map.datasets'
 
-      expect(translates || contributesKeys || rendersNothing).toBe(true)
+      expect(translates || contributesKeys || rendersNothing || isDataNotUi).toBe(true)
     })
 
     it(`leaves no unrendered token for ${surface}`, () => {

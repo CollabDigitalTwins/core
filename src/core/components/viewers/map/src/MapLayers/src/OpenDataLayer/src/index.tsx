@@ -5,13 +5,13 @@
 
 import { useTranslations } from "next-intl";
 import * as React from "react";
-import { createPortal } from "react-dom";
 import { Source, Layer } from "react-map-gl/maplibre";
 
 
 import { DatasetsContext } from '../../../../../../../../store';
 import { MapContext } from "../../../../../../../../store/Map/context";
-import { fetchWmsFrames, buildWmsTimeUrl, wmsLegendUrl } from "../../../../../datasets/src/wmsTime";
+import { useWmsActiveTime } from "../../../../../datasets/src/wmsActiveTime";
+import { buildWmsTimeUrl } from "../../../../../datasets/src/wmsTime";
 import { fitGeoJsonBounds } from "../../../../../utils/fitGeojsonBounds";
 import { MapLayerClickPriority } from "../../../../../utils/MapEventManager/MapClickManager";
 import MapFeaturePopoverMenu from "../../../../MapFeaturePopoverMenu";
@@ -19,7 +19,6 @@ import MapFeaturePopoverMenu from "../../../../MapFeaturePopoverMenu";
 import { groupFeaturesByGeometry } from "./geometryGroups";
 import { useDatasetFeatures } from "./useDatasetFeatures";
 import { useViewportDatasetToast } from "./useViewportDatasetToast";
-import { WmsTimeControl } from "./WmsTimeControl";
 
 import type { Building } from '../../../../../../../../types/dbTypes';
 import type { PopupEntry } from "../../../../../../../../types/map";
@@ -68,15 +67,6 @@ const computeMinMax = (
 //   • datasets render PROGRESSIVELY as each one loads (no blocking)
 //   • unmounting a dataset cancels only ITS fetch
 //   • re-renders of one dataset never cancel fetches for another
-
-// Resolved in an effect so the slot MapViewer renders exists before anything portals into it.
-function useOverlaySlot(enabled: boolean): HTMLElement | null {
-    const [slot, setSlot] = React.useState<HTMLElement | null>(null);
-    React.useEffect(() => {
-        setSlot(enabled ? document.getElementById('wms-time-slot') : null);
-    }, [enabled]);
-    return slot;
-}
 
 interface GeoJsonDatasetLayerProps {
     dataset: any;
@@ -373,7 +363,7 @@ MVTDatasetLayer.displayName = 'MVTDatasetLayer';
 
 
 // ─── Per-dataset WMS raster layer ─────────────────────────────────────
-// Live/federated WMS overlays (e.g. the GeoMet weather radar). The dataset's
+// Live/federated WMS overlays. The dataset's
 // `url` is a MapLibre raster tile template (GetMap with a literal
 // {bbox-epsg-3857}); MapLibre fetches tiles directly, so there's nothing to
 // parse and no features to query (raster → not interactive).
@@ -393,26 +383,13 @@ const WMSDatasetLayer = React.memo(({ dataset, index, onLayerReady, onLayerRemov
     const layerId = `${dataset.name}-wms`;
     const sourceId = `${dataset.name}-source`;
 
-    const timeEnabled = !!dataset.timeEnabled && !!dataset.wms;
-    const [frames, setFrames] = React.useState<string[]>([]);
-    const [activeTime, setActiveTime] = React.useState<string | null>(null);
-    const controlSlot = useOverlaySlot(timeEnabled);
+    const activeTime = useWmsActiveTime(dataset.name);
 
     // Register with no interactive layer ids — a raster has no queryable features.
     React.useEffect(() => {
         onLayerReady(dataset.name, []);
         return () => { onLayerRemoved(dataset.name); };
     }, [dataset.name, onLayerReady, onLayerRemoved]);
-
-    // Load the WMS time extent once (time-enabled datasets only).
-    React.useEffect(() => {
-        if (!timeEnabled || !dataset.wms) return;
-        let cancelled = false;
-        fetchWmsFrames(dataset.wms.baseUrl, dataset.wms.layers)
-            .then(f => { if (!cancelled) setFrames(f); })
-            .catch(() => { /* fetchWmsFrames already swallows; keep static */ });
-        return () => { cancelled = true; };
-    }, [timeEnabled, dataset.wms?.baseUrl, dataset.wms?.layers]);
 
     // Imperatively swap the raster source's tiles per frame. The <Source tiles>
     // prop below never changes after mount, so there's no react-map-gl tug-of-war
@@ -430,23 +407,10 @@ const WMSDatasetLayer = React.memo(({ dataset, index, onLayerReady, onLayerRemov
         return null;
     }
 
-    const showControl = timeEnabled && frames.length > 1 && map && controlSlot;
-
     return (
-        <>
-            <Source id={sourceId} key={`${index}-${dataset.name}-source`} type="raster" tiles={[tileUrl]} tileSize={256}>
-                <Layer id={layerId} type="raster" paint={{ 'raster-opacity': 0.85 }} />
-            </Source>
-            {showControl && createPortal(
-                <WmsTimeControl
-                    frames={frames}
-                    onTimeChange={setActiveTime}
-                    label={dataset.name}
-                    legendUrl={dataset.wms ? wmsLegendUrl(dataset.wms.baseUrl, dataset.wms.layers) : undefined}
-                />,
-                controlSlot,
-            )}
-        </>
+        <Source id={sourceId} key={`${index}-${dataset.name}-source`} type="raster" tiles={[tileUrl]} tileSize={256}>
+            <Layer id={layerId} type="raster" paint={{ 'raster-opacity': 0.85 }} />
+        </Source>
     );
 });
 WMSDatasetLayer.displayName = 'WMSDatasetLayer';
@@ -591,6 +555,7 @@ export const OpenDataLayers = () => {
             {sortedDatasets.map((dataset, index) => {
                 if (dataset.visible === false) return null;
                 if (isBuildingDataset(dataset)) return null;
+                if (dataset.drawnByPlugin) return null;
 
                 if (dataset.type === 'WMS' || dataset.datasetType === 'WMS') {
                     return (

@@ -33,11 +33,16 @@ import {
   TableCell,
   TableRow,
 } from '../../../../../components/ui/Table'
+import { pluginDatasetId } from '../../../../../plugins/host/pluginDatasetId'
 import { MapContext, DatasetsContext } from '../../../../../store'
+import { ViewerNames } from '../../../../../types/dbTypes'
 import { useSidebar } from '../../../../ui/Sidebar'
+import { legendKey, PluginLegendSection } from '../../../shared/legends/PluginLegendSection'
+import { usePluginLegends } from '../../../shared/legends/usePluginLegends'
 import { ClusterManager } from '../../utils/ClusterManager'
 
 import { FieldsTable } from './src/FieldsTable'
+import { hasWmsTimeControl, WmsDatasetControls } from './src/WmsDatasetControls'
 
 import type { Dataset, BuildingDataset as RawBuildingDataset } from '../../../../../types/datasetTypes'
 import type {
@@ -56,6 +61,7 @@ interface SortableTableRowProps {
   onToggleDataset: (dataset: Dataset) => void
   openDatasetDetails: (datasetName: string) => void
   expandedDatasets: Set<string>
+  legend?: React.ReactNode
 }
 
 const SortableTableRow: React.FC<SortableTableRowProps> = ({
@@ -63,6 +69,7 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
   onToggleDataset,
   openDatasetDetails,
   expandedDatasets,
+  legend,
 }) => {
   const {
     attributes,
@@ -82,6 +89,7 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
   // Raster (WMS) layers are server-rendered images with no fields and a server-fixed
   // colour ramp, so the field-styling table + colour swatch are meaningless — hide them.
   const isRaster = dataset.datasetType === 'WMS' || dataset.type === 'WMS'
+  const hasFields = !isRaster && !dataset.drawnByPlugin
 
   return (
     <>
@@ -114,7 +122,7 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
           )}
         </TableCell>
         <TableCell>
-          {!isRaster && (
+          {hasFields && (
             <Button
               variant="ghost"
               size="icon"
@@ -128,7 +136,12 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
           )}
         </TableCell>
       </TableRow>
-      {!isRaster && expandedDatasets.has(dataset.name) && (
+      {legend && (
+        <TableRow className="hover:bg-transparent">
+          <TableCell colSpan={4} className="p-0">{legend}</TableCell>
+        </TableRow>
+      )}
+      {hasFields && expandedDatasets.has(dataset.name) && (
         <TableRow>
           <TableCell colSpan={4} className="p-0 pb-1">
             <FieldsTable
@@ -154,6 +167,27 @@ export default function DatasetManagerMenu() {
   const [open, setOpen] = React.useState(false)
   const [menuOpen, setMenuOpen] = React.useState(false)
   const [expandedDatasets, setExpandedDatasets] = React.useState<Set<string>>(new Set())
+
+  const legends = usePluginLegends(ViewerNames.map)
+  const datasetLegends = legends.registrations.filter(registration => registration.dataset)
+  const standaloneLegends = legends.registrations.filter(registration => !registration.dataset && legends.isActive(registration))
+  const cardCount = addedDatasets.length + standaloneLegends.length
+
+  const pluginLegendFor = (dataset: Dataset) =>
+    datasetLegends.find(candidate => pluginDatasetId(candidate.pluginId, candidate.dataset ?? '') === dataset.id)
+
+  const legendFor = (dataset: Dataset) => {
+    if (hasWmsTimeControl(dataset)) return <WmsDatasetControls dataset={dataset} />
+    const registration = pluginLegendFor(dataset)
+    if (!registration) return undefined
+    return (
+      <PluginLegendSection
+        registration={registration}
+        config={legends.configs[registration.pluginId]}
+        showTitle={false}
+      />
+    )
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -261,8 +295,15 @@ export default function DatasetManagerMenu() {
   `
 
   React.useEffect(() => {
-    setMenuOpen(addedDatasets.length > 0)
-  }, [addedDatasets.length])
+    setMenuOpen(cardCount > 0)
+  }, [cardCount])
+
+  const showsLegend = standaloneLegends.length > 0
+    || addedDatasets.some(dataset => hasWmsTimeControl(dataset) || pluginLegendFor(dataset) !== undefined)
+
+  React.useEffect(() => {
+    if (showsLegend) setOpen(true)
+  }, [showsLegend])
 
   const openDatasetDetails = (datasetName: string) => {
     toggleDatasetExpansion(datasetName)
@@ -272,17 +313,18 @@ export default function DatasetManagerMenu() {
 
   return (
     <>
-      {!openInfo && addedDatasets.length > 0 && (
+      {legends.probes}
+      {!openInfo && cardCount > 0 && (
         <div data-state={menuOpen ? 'open' : 'closed'} className={openAnimation}>
           <Menubar className="pointer-events-auto w-96 h-auto">
             <Command>
               <div>
                 <div className={`flex items-center justify-between gap-3 ${open ? 'p-3' : 'pl-1 py-0'}`}>
                   <div className="flex items-center gap-2">
-                    <Badge>{addedDatasets.length}</Badge>
+                    <Badge>{cardCount}</Badge>
                     <div className="text-sm font-medium">
                       {t('appliedLayer')}
-                      {addedDatasets.length === 1 ? '' : 's'}
+                      {cardCount === 1 ? '' : 's'}
                     </div>
                   </div>
                   <Button
@@ -317,12 +359,20 @@ export default function DatasetManagerMenu() {
                                 onToggleDataset={onToggleDataset}
                                 openDatasetDetails={openDatasetDetails}
                                 expandedDatasets={expandedDatasets}
+                                legend={legendFor(dataset)}
                               />
                             ))}
                           </TableBody>
                         </Table>
                       </SortableContext>
                     </DndContext>
+                    {standaloneLegends.map(registration => (
+                      <PluginLegendSection
+                        key={legendKey(registration)}
+                        registration={registration}
+                        config={legends.configs[registration.pluginId]}
+                      />
+                    ))}
                   </div>
                 )}
               </div>

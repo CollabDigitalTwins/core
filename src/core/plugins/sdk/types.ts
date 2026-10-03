@@ -29,6 +29,7 @@ export const VALID_CAPABILITIES = [
   'bim.tools',
   'viewer.legends',
   'map.layers',
+  'map.datasets',
 ] as const
 
 export type PluginCapability = typeof VALID_CAPABILITIES[number]
@@ -165,10 +166,44 @@ export interface MapLayerRegistration {
   component: React.ComponentType<MapToolProps>
 }
 
+/** The least of a GeoJSON FeatureCollection core needs, so a typed `geojson` one satisfies it. */
+export interface PluginFeatureCollection {
+  type: 'FeatureCollection'
+  features: Array<{
+    type: 'Feature'
+    id?: string | number
+    geometry: { type: string; coordinates?: unknown; geometries?: unknown } | null
+    properties: Record<string, unknown> | null
+  }>
+}
+
+/** How core draws a plugin dataset. Absent, the plugin draws it from its own `map.layers`. */
+export type PluginDatasetSource =
+  | { type: 'wms'; baseUrl: string; layers: string; timeEnabled?: boolean }
+  | { type: 'geojson'; getFeatures: () => Promise<PluginFeatureCollection> }
+
+/**
+ * A dataset listed in the Datasets menu: under Live Data when `live`, otherwise under
+ * Organizational. Applying it is the user's choice; `usePluginDataset(id)` reports it.
+ */
+export interface DatasetRegistration {
+  id: string
+  name: string
+  description?: string
+  publisher?: string
+  /** A link to the dataset's documentation, shown in its details. */
+  information?: string
+  live?: boolean
+  source?: PluginDatasetSource
+}
+
 export interface LegendRow {
   label: string
   color: string
   count?: number
+  /** With `onVisibleChange`, the row gets a switch; false dims it. */
+  visible?: boolean
+  onVisibleChange?: (visible: boolean) => void
 }
 
 export interface LegendRegistration {
@@ -176,13 +211,17 @@ export interface LegendRegistration {
   title: string
   /** Which viewers this legend appears in. Omit for all of them. */
   viewers?: Array<PluginViewerTarget | ViewerNames>
-  // Called by <MapLegendHost> on each render; active:false omits the section.
+  /** A `map.datasets` id of the same plugin: the map nests this legend under that applied dataset. */
+  dataset?: string
+  // Called by the legend host on each render; active:false omits the section.
   useLegend: () => {
     active: boolean
     // Overrides registration.title when set, e.g. a city-scoped label.
     title?: string
     unavailable?: boolean
     rows: LegendRow[]
+    /** The plugin's own inputs under the rows, such as a date slider filtering what is drawn. */
+    controls?: React.ReactNode
   }
 }
 
@@ -198,6 +237,7 @@ export interface CapabilityRegistry {
   'bim.tools': ToolbarRegistration<BimToolProps>
   'viewer.legends': LegendRegistration
   'map.layers': MapLayerRegistration
+  'map.datasets': DatasetRegistration
 }
 
 // Errors if VALID_CAPABILITIES and keyof CapabilityRegistry drift apart.

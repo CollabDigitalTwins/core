@@ -120,6 +120,19 @@ const FACTS: Record<Surface, SurfaceFacts> = {
     allowsEmpty: false,
     usesReadoutRow: false,
   },
+  'map.datasets': {
+    // A registration object rather than a component, so it takes no props.
+    entry: '@collabdt/plugin-kit/types/ui',
+    propsType: '',
+    contextType: 'UiPluginContext',
+    typeDependency: null,
+    icon: 'Database',
+    indexTemplate: 'indexDataset',
+    entryImports: 'dataset',
+    example: 'ExampleDataset',
+    allowsEmpty: false,
+    usesReadoutRow: false,
+  },
 }
 
 export function factsFor(surface: Surface): SurfaceFacts {

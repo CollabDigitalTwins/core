@@ -11,6 +11,7 @@ import {
   useOpenDataPortalsByGroup,
   useOpenDataPortalsByMunicipality,
 } from '../../../../../../../hooks/openDataPortals/openDataPortals'
+import { usePluginDatasets } from '../../../../../../../plugins/host/pluginDatasets'
 import { DatasetsContext, MenusContext, useMapContext } from '../../../../../../../store'
 import { DatasetGroup } from '../../../../../../../types/dbTypes'
 import { ViewerSidebarPanel } from '../../../../../../ui/ViewerSidebar/Panel'
@@ -148,15 +149,17 @@ export function LayersTab({ martinBaseUrl, organization }: { martinBaseUrl?: str
     () => sanitizeDatasets(municipal.datasets.filter(ds => datasetVisibleForOrg(ds, orgVisibility))),
     [municipal.datasets, orgVisibility],
   )
+  const pluginDatasets = usePluginDatasets(orgVisibility.currentOrgId)
   const orgDatasets = React.useMemo(
-    () => sanitizeDatasets((datasetState.datasets.datasets || []).filter(ds => datasetVisibleForOrg(ds, orgVisibility))),
-    [datasetState.datasets.datasets, orgVisibility],
+    () => sanitizeDatasets([...(datasetState.datasets.datasets || []), ...pluginDatasets.filter(ds => !ds.portal?.live)]
+      .filter(ds => datasetVisibleForOrg(ds, orgVisibility))),
+    [datasetState.datasets.datasets, pluginDatasets, orgVisibility],
   )
 
   const allDatasets = React.useMemo(() => {
-    const combined = [...nationalDatasets, ...subdivisionDatasets, ...municipalDatasets, ...orgDatasets]
+    const combined = [...pluginDatasets, ...nationalDatasets, ...subdivisionDatasets, ...municipalDatasets, ...orgDatasets]
     return sanitizeDatasets(combined)
-  }, [nationalDatasets, subdivisionDatasets, municipalDatasets, orgDatasets])
+  }, [pluginDatasets, nationalDatasets, subdivisionDatasets, municipalDatasets, orgDatasets])
 
   const liveDatasets = React.useMemo(
     () => allDatasets.filter(ds => ds.portal?.live === true),

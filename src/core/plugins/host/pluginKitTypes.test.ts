@@ -28,6 +28,7 @@ import { PLUGIN_HOST_API } from '../sdk/version'
 import { runTsc, type TscRun } from './__tests__/tscProbe'
 
 import type * as Kit from '../../../../packages/plugin-kit/src/types/base'
+import type * as KitLegend from '../../../../packages/plugin-kit/src/types/legend'
 import type * as Core from '../sdk/types'
 
 // --- Compile-time assertions ---
@@ -58,11 +59,13 @@ const _iconIsStillValid: Accepts<
 // allowed to be narrower and `icon` above is exactly that.
 const _manifest: Accepts<Kit.PluginManifest, Core.PluginManifest> = true
 const _registration: Accepts<Kit.ToolbarRegistration, Core.ToolbarRegistration> = true
+const _dataset: Accepts<Kit.DatasetRegistration, Core.DatasetRegistration> = true
+const _legend: Accepts<KitLegend.LegendRegistration, Core.LegendRegistration> = true
 
 void [
   _capabilities,
   _iconIsOnlyAString, _iconIsStillValid,
-  _manifest, _registration,
+  _manifest, _registration, _dataset, _legend,
 ]
 
 // --- The kit's source, as TypeScript parses it ---

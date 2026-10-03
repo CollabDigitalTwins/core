@@ -23,6 +23,7 @@ export const VALID_CAPABILITIES = [
   'bim.tools',
   'viewer.legends',
   'map.layers',
+  'map.datasets',
 ] as const
 
 export type PluginCapability = typeof VALID_CAPABILITIES[number]
@@ -43,6 +44,9 @@ export interface PluginManifest {
   /** Strings by locale then key, folded into the app's tree under `plugins.<slug>`. May nest. */
   messages?: Record<string, Record<string, unknown>>
 }
+
+/** Anything React renders, named here so the surface files need no import of their own. */
+export type PluginNode = React.ReactNode
 
 /** Every toolbar component receives the toolbar entry core built for it. */
 export interface ToolbarToolProps {
@@ -65,6 +69,37 @@ export interface ToolbarRegistration<P = Record<string, unknown>> {
 export interface MapLayerRegistration<P = unknown> {
   id: string
   component: React.ComponentType<P>
+}
+
+/** The least of a GeoJSON FeatureCollection core needs, so a typed `geojson` one satisfies it. */
+export interface PluginFeatureCollection {
+  type: 'FeatureCollection'
+  features: Array<{
+    type: 'Feature'
+    id?: string | number
+    geometry: { type: string; coordinates?: unknown; geometries?: unknown } | null
+    properties: Record<string, unknown> | null
+  }>
+}
+
+/** How core draws a plugin dataset. Absent, the plugin draws it from its own `map.layers`. */
+export type PluginDatasetSource =
+  | { type: 'wms'; baseUrl: string; layers: string; timeEnabled?: boolean }
+  | { type: 'geojson'; getFeatures: () => Promise<PluginFeatureCollection> }
+
+/**
+ * A dataset listed in the Datasets menu: under Live Data when `live`, otherwise under
+ * Organizational. Applying it is the user's choice; `usePluginDataset(id)` reports it.
+ */
+export interface DatasetRegistration {
+  id: string
+  name: string
+  description?: string
+  publisher?: string
+  /** A link to the dataset's documentation, shown in its details. */
+  information?: string
+  live?: boolean
+  source?: PluginDatasetSource
 }
 
 export interface DataPageColumn<Row> {
@@ -122,6 +157,7 @@ export interface CapabilityRegistry<
   'bim.tools': ToolbarRegistration<BimProps>
   'viewer.legends': Legend
   'map.layers': MapLayerRegistration<MapProps>
+  'map.datasets': DatasetRegistration
 }
 
 // The surface parameters must be bound for `register` to accept a component typed against a

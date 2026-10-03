@@ -19,6 +19,7 @@ describe('SURFACES', () => {
       'data.pages',
       'viewer.tabs',
       'ui.dialogs',
+      'map.datasets',
     ])
   })
 })

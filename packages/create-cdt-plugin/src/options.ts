@@ -13,6 +13,7 @@ export const SURFACES = [
   'data.pages',
   'viewer.tabs',
   'ui.dialogs',
+  'map.datasets',
 ] as const
 
 export type Surface = typeof SURFACES[number]

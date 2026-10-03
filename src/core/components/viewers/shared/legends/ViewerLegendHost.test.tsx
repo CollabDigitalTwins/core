@@ -2,7 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 
 import { usePluginConfig, usePluginId } from '../../../../plugins/host/scope'
@@ -13,6 +13,9 @@ import { ViewerLegendHost } from './ViewerLegendHost'
 
 import type { LegendRegistration } from '../../../../plugins/sdk/types'
 
+
+const { mockToastWarning } = vi.hoisted(() => ({ mockToastWarning: vi.fn() }))
+vi.mock('sonner', () => ({ toast: { warning: mockToastWarning } }))
 
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
@@ -35,7 +38,10 @@ function makeLegend(
   return { id, title: id, pluginId: 'test-plugin', useLegend: () => result }
 }
 
-afterEach(() => mockContributions.mockReset())
+afterEach(() => {
+  mockContributions.mockReset()
+  mockToastWarning.mockReset()
+})
 
 test('renders one section per active legend with a count badge', () => {
   mockContributions.mockReturnValue([
@@ -117,6 +123,58 @@ describe('the plugin scope around a legend', () => {
 
     expect(screen.getByText('alpha')).toBeInTheDocument()
     expect(screen.getByText('beta')).toBeInTheDocument()
+  })
+})
+
+describe('an unreachable feed', () => {
+  test('warns with a toast keyed to the legend', () => {
+    mockContributions.mockReturnValue([
+      makeLegend('fires', { active: true, unavailable: true, rows: [] }),
+    ])
+    render(<ViewerLegendHost viewer={ViewerNames.map} />)
+
+    expect(mockToastWarning).toHaveBeenCalledWith('feedUnavailableToast', { id: 'legend-unavailable-test-plugin:fires' })
+  })
+
+  test('stays quiet for a legend that is not active', () => {
+    mockContributions.mockReturnValue([
+      makeLegend('fires', { active: false, unavailable: true, rows: [] }),
+    ])
+    render(<ViewerLegendHost viewer={ViewerNames.map} />)
+
+    expect(mockToastWarning).not.toHaveBeenCalled()
+  })
+})
+
+describe('row switches and controls', () => {
+  test('gives a row with onVisibleChange a switch that reports the new state', () => {
+    const onVisibleChange = vi.fn()
+    mockContributions.mockReturnValue([
+      makeLegend('fires', { active: true, rows: [{ label: 'Large', color: '#f00', visible: true, onVisibleChange }] }),
+    ])
+    render(<ViewerLegendHost viewer={ViewerNames.map} />)
+
+    fireEvent.click(screen.getByRole('switch', { name: 'Large' }))
+
+    expect(onVisibleChange).toHaveBeenCalledWith(false)
+  })
+
+  test('leaves a row without onVisibleChange switchless', () => {
+    mockContributions.mockReturnValue([
+      makeLegend('fires', { active: true, rows: [{ label: 'Large', color: '#f00' }] }),
+    ])
+    render(<ViewerLegendHost viewer={ViewerNames.map} />)
+
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument()
+  })
+
+  test("renders a plugin's own controls under its rows", () => {
+    mockContributions.mockReturnValue([
+      makeLegend('fires', { active: true, rows: [], controls: <input aria-label="Month" type="range" /> }),
+    ])
+    render(<ViewerLegendHost viewer={ViewerNames.map} />)
+
+    expect(screen.getByRole('slider', { name: 'Month' })).toBeInTheDocument()
   })
 })
 

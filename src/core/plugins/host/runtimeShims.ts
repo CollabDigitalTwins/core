@@ -94,6 +94,7 @@ export const PLUGIN_RUNTIME_SHIMS: readonly RuntimeShim[] = [
       'useCreateComment', 'useDeleteComments',
       // Re-exported by the module, so a plugin reaching for data finds both here too.
       'usePluginConfig', 'usePluginPermissions',
+      'usePluginDataset',
     ],
   },
   {

@@ -92,6 +92,7 @@ const _useCreateSensor: Provides<typeof SdkData.useCreateSensor, DeclaredData['u
 const _useCreateComment: Provides<typeof SdkData.useCreateComment, DeclaredData['useCreateComment']> = true
 const _useDeleteComments: Provides<typeof SdkData.useDeleteComments, DeclaredData['useDeleteComments']> = true
 const _useDownloadFile: Provides<typeof SdkData.useDownloadFile, DeclaredData['useDownloadFile']> = true
+const _usePluginDataset: Provides<typeof SdkData.usePluginDataset, DeclaredData['usePluginDataset']> = true
 
 const _validCapabilities: Provides<typeof SdkIndex.VALID_CAPABILITIES, DeclaredSdk['VALID_CAPABILITIES']> = true
 const _hostApi: Provides<typeof SdkIndex.PLUGIN_HOST_API, DeclaredSdk['PLUGIN_HOST_API']> = true
@@ -134,7 +135,7 @@ void [
   _useSensorTypes, _useSensorType,
   _useComments, _useComment, _useCommentsByBuilding, _useCommentsByAuthor,
   _usePluginPermissions,
-  _useCreateSensor, _useCreateComment, _useDeleteComments, _useDownloadFile,
+  _useCreateSensor, _useCreateComment, _useDeleteComments, _useDownloadFile, _usePluginDataset,
   _usePluginConfig, _usePluginId,
   _usePluginMessage, _usePluginTranslations, _pluginTranslator,
   _usePluginStore,

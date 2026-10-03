@@ -8,6 +8,10 @@ repository root.
 
 ## [Unreleased]
 
+### Added
+- **A Dataset surface (`--surface map.datasets`)**, whose example lists two GeoJSON points under Organizational
+  data in the Datasets menu.
+
 ### Changed
 - The external template's README calls the page where administrators add plugins the Plugins page, its name in
   the app, instead of the extensions page.

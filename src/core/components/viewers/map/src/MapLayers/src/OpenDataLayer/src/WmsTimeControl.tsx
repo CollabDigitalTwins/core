@@ -3,8 +3,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import * as LR from "lucide-react";
 import * as React from "react";
 
+import { Button } from "../../../../../../../ui/Button";
 import { formatFrameTime } from "../../../../../datasets/src/wmsTime";
 
 interface WmsTimeControlProps {
@@ -12,18 +14,24 @@ interface WmsTimeControlProps {
   frames: string[];
   /** Called with the active frame timestamp whenever it changes. */
   onTimeChange: (time: string) => void;
-  /** Card title (e.g. the dataset name). */
+  /** Heading beside the play button. Omit when the surrounding row already names the dataset. */
   label?: string;
   /** Frame advance interval while playing, ms. */
   stepMs?: number;
   /** WMS GetLegendGraphic image URL; shown under the slider when it loads. */
   legendUrl?: string;
+  /** Frame to resume on when the first frames arrive, if it is among them. Defaults to the latest. */
+  initialTime?: string;
 }
 
+const seatIndex = (frames: string[], time?: string): number => {
+  const resumed = time ? frames.indexOf(time) : -1;
+  return resumed >= 0 ? resumed : Math.max(0, frames.length - 1);
+};
+
 /**
- * Floating scrub + play/pause control for a WMS time dimension. Defaults to the
- * latest frame; play advances oldest→newest on a loop. Purely presentational —
- * it owns only the current index + playing state and reports the active time up.
+ * Scrub + play/pause control for a WMS time dimension, nested under its dataset in the
+ * applied-layers card. Play advances oldest→newest on a loop; the active time is reported up.
  */
 export const WmsTimeControl: React.FC<WmsTimeControlProps> = ({
   frames,
@@ -31,26 +39,25 @@ export const WmsTimeControl: React.FC<WmsTimeControlProps> = ({
   label,
   stepMs = 500,
   legendUrl,
+  initialTime,
 }) => {
-  const [index, setIndex] = React.useState(Math.max(0, frames.length - 1));
+  const resumeTime = React.useRef(initialTime);
+  const [index, setIndex] = React.useState(() => seatIndex(frames, initialTime));
   const [playing, setPlaying] = React.useState(false);
   const [legendOk, setLegendOk] = React.useState(true);
 
-  // Reset legend visibility if the URL changes (different layer).
   React.useEffect(() => { setLegendOk(true); }, [legendUrl]);
 
-  // Clamp + re-seat at the latest frame whenever the frame list changes.
   React.useEffect(() => {
-    setIndex(Math.max(0, frames.length - 1));
-  }, [frames.length]);
+    setIndex(seatIndex(frames, resumeTime.current));
+    if (frames.length > 0) resumeTime.current = undefined;
+  }, [frames]);
 
-  // Report the active frame up whenever the index (or frame list) changes.
   React.useEffect(() => {
     const time = frames[index];
     if (time) onTimeChange(time);
   }, [index, frames, onTimeChange]);
 
-  // Play loop.
   React.useEffect(() => {
     if (!playing || frames.length < 2) return;
     const timer = setInterval(() => {
@@ -64,45 +71,20 @@ export const WmsTimeControl: React.FC<WmsTimeControlProps> = ({
   const activeTime = frames[index];
 
   return (
-    <div
-      style={{
-        // Laid out by the bottom-left flex stack it portals into (see MapViewer),
-        // so no absolute positioning — it sits above the legend / dataset-manager cards.
-        background: "#ffffff",
-        borderRadius: 8,
-        boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
-        padding: "10px 12px",
-        width: 260,
-        font: "13px/1.3 system-ui, sans-serif",
-        color: "#1a1a1a",
-        pointerEvents: "auto",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-        <button
+    <div className="px-3 py-2 text-xs">
+      <div className="mb-1 flex items-center gap-2">
+        <Button
           type="button"
+          variant="outline"
+          size="icon"
           onClick={() => setPlaying(p => !p)}
           aria-label={playing ? "Pause" : "Play"}
-          style={{
-            cursor: "pointer",
-            border: "none",
-            background: "#0d9488",
-            color: "#fff",
-            borderRadius: 4,
-            width: 28,
-            height: 28,
-            fontSize: 14,
-            lineHeight: 1,
-          }}
+          className="h-6 w-6 shrink-0"
         >
-          {playing ? "❚❚" : "▶"}
-        </button>
-        <div style={{ fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {label ?? "WMS time"}
-        </div>
-        <div style={{ fontVariantNumeric: "tabular-nums", color: "#475569" }}>
-          {formatFrameTime(activeTime)}
-        </div>
+          {playing ? <LR.Pause size={12} /> : <LR.Play size={12} />}
+        </Button>
+        <span className="flex-1 truncate text-muted-foreground">{label}</span>
+        <span className="font-medium tabular-nums">{formatFrameTime(activeTime)}</span>
       </div>
       <input
         type="range"
@@ -113,20 +95,15 @@ export const WmsTimeControl: React.FC<WmsTimeControlProps> = ({
           setPlaying(false);
           setIndex(Number(e.target.value));
         }}
-        style={{ width: "100%", display: "block", accentColor: "#0d9488" }}
+        aria-label={label}
+        className="block w-full accent-current"
       />
       {legendUrl && legendOk && (
         <img
           src={legendUrl}
           alt="Legend"
           onError={() => setLegendOk(false)}
-          style={{
-            display: "block",
-            marginTop: 8,
-            maxWidth: "100%",
-            maxHeight: 220,
-            objectFit: "contain",
-          }}
+          className="mt-2 block max-h-56 max-w-full object-contain"
         />
       )}
     </div>

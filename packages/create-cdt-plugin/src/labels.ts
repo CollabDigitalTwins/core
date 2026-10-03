@@ -40,4 +40,8 @@ export const SURFACE_LABELS: Record<Surface, SurfaceLabel> = {
     label: 'Dialog',
     description: 'Opened by id from any of your other surfaces, and outlives whatever opened it.',
   },
+  'map.datasets': {
+    label: 'Datasets menu',
+    description: 'Listed in the Datasets menu, under Organizational or Live Data, and applied like any other.',
+  },
 }

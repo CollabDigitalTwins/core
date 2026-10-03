@@ -447,7 +447,8 @@
   "MapLegend": {
     "title": "Légende",
     "titlePlural": "Légendes",
-    "feedUnavailable": "Flux indisponible"
+    "feedUnavailable": "Flux indisponible",
+    "feedUnavailableToast": "{title} : le flux en direct est inaccessible pour le moment; la couche peut être absente ou périmée."
   },
   "Datasets": {
     "failedFetchError": "Échec de la récupération des ensembles de données.",

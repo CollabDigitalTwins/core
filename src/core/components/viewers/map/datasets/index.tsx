@@ -34,6 +34,7 @@ import { Input } from '../../../../components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/Select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../components/ui/Tabs'
 import { useOpenDataPortalsByCountrySubdivision, useOpenDataPortalsByGroup, useOpenDataPortalsByMunicipality } from '../../../../hooks/openDataPortals/openDataPortals'
+import { usePluginDatasets } from '../../../../plugins/host/pluginDatasets'
 import { DatasetsContext, MenusContext, useMapContext } from '../../../../store'
 import { usePermissions } from '../../../../store'
 
@@ -47,7 +48,6 @@ import DatasetDetails from './DatasetDetails'
 import DatasetSkeleton from './DatasetSkeleton'
 import Filters from './Filters'
 import RowActions from './RowActions'
-import { builtinLiveDatasets } from './src/builtinLiveDatasets'
 import { datasetVisibleForOrg } from './src/orgVisibility'
 import { stampPublished } from './src/publishedTiles'
 import { useDatasetsForPortals } from './src/useDatasetsForPortals'
@@ -140,6 +140,7 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
     return filtered
   }, [nationalPortals, orgCountry, matchesOrgCountry])
 
+  const pluginDatasets = usePluginDatasets(orgVisibility.currentOrgId)
   const municipal = useDatasetsForPortals(filteredMunicipalPortals, { rowsPerPage })
   const subdivision = useDatasetsForPortals(filteredSubdivisionPortals, { rowsPerPage })
   const national = useDatasetsForPortals(filteredNationalPortals, { rowsPerPage })
@@ -164,7 +165,7 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
 
   const allDatasets = React.useMemo(() => {
     const unfiltered = [
-      ...builtinLiveDatasets, // curated live feeds (e.g. GeoMet weather radar) → Live Data tab
+      ...pluginDatasets,
       ...nationalDatasets,
       ...subdivisionDatasets,
       ...municipalDatasets,
@@ -178,7 +179,7 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
     // conversion) and any org-list entries pick up published identity on the
     // Applied/All tabs. Already-stamped portal entries are unchanged.
     return stampPublished(filtered, publishedCatalog)
-  }, [nationalDatasets, subdivisionDatasets, municipalDatasets, datasetState.datasets.datasets, addedDatasets, orgVisibility, publishedCatalog])
+  }, [pluginDatasets, nationalDatasets, subdivisionDatasets, municipalDatasets, datasetState.datasets.datasets, addedDatasets, orgVisibility, publishedCatalog])
 
   const currentTabLoading = React.useMemo(() => {
     switch (currentTab) {

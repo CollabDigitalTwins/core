@@ -101,7 +101,7 @@ export interface Dataset {
   publishedTable?: string // the org_<orgId>_file_<fileId> Martin table name
   publishedFileId?: number // the (synthetic) File row id backing that table
   // ── WMS time animation ──
-  // Set on time-enabled WMS live datasets (e.g. the GeoMet radar). When true,
+  // Set on time-enabled WMS live datasets. When true,
   // WMSDatasetLayer fetches the layer's GetCapabilities time extent and shows a
   // scrub/play control that animates the WMS TIME dimension.
   timeEnabled?: boolean
@@ -109,6 +109,8 @@ export interface Dataset {
   // URLs (the composed `url` already baked LAYERS into a tile template).
   wms?: { baseUrl: string; layers: string }
   viewport?: DatasetViewport
+  // The slug of the plugin whose own `map.layers` draws this dataset, so core draws nothing.
+  drawnByPlugin?: string
 }
 
 /** Marks a dataset too large to load whole: features are fetched per map view, and only at or above `minZoom`. */

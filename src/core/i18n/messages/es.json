@@ -447,7 +447,8 @@
   "MapLegend": {
     "title": "Leyenda",
     "titlePlural": "Leyendas",
-    "feedUnavailable": "Fuente no disponible"
+    "feedUnavailable": "Fuente no disponible",
+    "feedUnavailableToast": "{title}: la fuente en vivo no está disponible en este momento; la capa puede faltar o estar desactualizada."
   },
   "Datasets": {
     "failedFetchError": "Error al obtener conjuntos de datos.",

@@ -22,6 +22,7 @@ declare module '@collabdt/core/plugins-sdk' {
     'bim.tools',
     'viewer.legends',
     'map.layers',
+    'map.datasets',
   ]
 
   export const PLUGIN_HOST_API: 1
@@ -165,6 +166,16 @@ declare module '@collabdt/core/plugins-sdk/data' {
     T extends Record<string, unknown> = Record<string, unknown>,
   >(): T
   export function usePluginPermissions(): import('./data').PluginPermissions
+
+  export interface PluginDatasetState {
+    /** The user added it from the Datasets menu. */
+    applied: boolean
+    /** Applied and not hidden with its eye toggle: draw it only when this is true. */
+    visible: boolean
+  }
+
+  /** Whether one of this plugin's `map.datasets`, by its registration id, is on the map. */
+  export function usePluginDataset(id: string): PluginDatasetState
 }
 
 declare module '@collabdt/core/plugins-sdk/state' {

@@ -24,6 +24,7 @@ const SURFACE_ENTRY: Record<Surface, string> = {
   'data.pages': 'ui',
   'viewer.tabs': 'ui',
   'ui.dialogs': 'ui',
+  'map.datasets': 'ui',
 }
 
 export function capabilityConstant(surface: Surface): string {

@@ -60,3 +60,6 @@ export {
 export { usePluginConfig } from './config'
 
 export { usePluginPermissions } from './permissions'
+
+export { usePluginDataset } from './datasets'
+export type { PluginDatasetState } from './datasets'

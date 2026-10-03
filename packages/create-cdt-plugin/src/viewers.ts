@@ -12,6 +12,7 @@ export const ALL_VIEWERS: readonly ViewerTarget[] = ['map', 'bim']
 const SURFACE_VIEWER: Partial<Record<Surface, ViewerTarget>> = {
   'map.tools': 'map',
   'map.layers': 'map',
+  'map.datasets': 'map',
   'bim.tools': 'bim',
 }
 

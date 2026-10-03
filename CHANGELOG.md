@@ -7,6 +7,40 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Added
+- **`map.datasets` plugin capability.** A plugin lists a dataset in the Datasets menu and the map sidebar's
+  Layers tab: under Live Data with `live: true`, otherwise under Organizational for the viewer's own
+  organization. Core draws a `wms` or `geojson` `source`; without one, the plugin's own `map.layers` draws it.
+  Types: `DatasetRegistration`, `PluginDatasetSource`, `PluginFeatureCollection` in `@collabdt/core/plugins-sdk`.
+- `usePluginDataset(id)` in `@collabdt/core/plugins-sdk/data`: whether a plugin's dataset is applied and visible,
+  so its layer and legend draw only while a user has it on the map.
+- `Dataset.drawnByPlugin`: the slug of the plugin drawing a dataset, which core's open-data layers skip.
+- `LegendRegistration.dataset`: names one of the plugin's `map.datasets`, and the legend then nests under that
+  dataset's row in the applied-layers card, where the row's switch shows and hides the layer.
+- `LegendRow.visible` and `LegendRow.onVisibleChange`: a row with the callback gets a switch.
+- `controls` in a legend's `useLegend` result: the plugin's own inputs, rendered under its rows.
+
+### Changed
+- **Map legends live in the applied-layers card.** Plugin legends on the map stack inside the bottom-left
+  applied-layers card, which now also appears when only a legend is active; the separate map legend card is gone.
+  The BIM viewer keeps its `ViewerLegendHost` card.
+- A legend flagged `unavailable` keeps its rows under the banner, so the last counts stay readable.
+- A legend flagged `unavailable` also raises a warning toast (`MapLegend.feedUnavailableToast`), once per legend,
+  so an unreachable feed is not just an empty layer.
+- A time-enabled WMS dataset's play button, scrubber and legend image nest under its row in the applied-layers
+  card instead of a separate floating card, styled with the UI kit. `WmsTimeControl` takes `initialTime`.
+
+### Fixed
+- Opening a plugin dataset's details in the Datasets menu no longer errors: the Url row falls back to
+  `information`, and is left out when a dataset has neither.
+
+### Removed
+- **The built-in Live Weather Radar dataset** and `NEXT_PUBLIC_GEOMET_WMS_URL`. The Live Data tab lists only portals
+  marked live and plugin datasets; the radar ships as the `weather-radar` plugin.
+
+### Migration
+- A deployment that relied on the radar enables the `weather-radar` plugin for its organizations.
+
 ## [0.13.1] - 2026-10-02.
 
 ### Added

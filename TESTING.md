@@ -48,7 +48,7 @@ Pure `(state, action) => state` functions with branching (dedupe, filter, cascad
 
 ### 6. Plugin-host / registry
 
-The plugin SDK and host: manifest validation, capability-gated registration, load/unload lifecycle, and the registry's per-extension-point storage. `MapLegendHost` is the reference for a component that subscribes to the registry and conditionally renders.
+The plugin SDK and host: manifest validation, capability-gated registration, load/unload lifecycle, and the registry's per-capability storage. `MapLegendHost` is the reference for a component that subscribes to the registry and conditionally renders.
 
 ---
 
@@ -91,7 +91,7 @@ Expect roughly **30–60% of component test files to need touch-ups annually** f
 
 - `src/core/plugins/host/host.test.ts` — `PluginHost.loadPlugin` activates and sets status, errors are caught and status flips to `errored`, capability enforcement via `context.register`, `unloadPlugin` calls `deactivate` and deregisters from the registry, `listPlugins` enumerates loaded entries, config is forwarded into context.
 - `src/core/plugins/host/context.test.ts` — `createPluginContext` exposes `pluginId`/`config`/`register`; `register` is gated on declared capabilities and merges `pluginId` into entries.
-- `src/core/plugins/host/registry.test.ts` — `PluginRegistry.register` stores entries by extension point; `getAll` returns the list; `deregisterAll` removes a plugin's entries from every extension point.
+- `src/core/plugins/host/registry.test.ts` — `PluginRegistry.register` stores entries by capability; `getAll` returns the list; `deregisterAll` removes a plugin's entries from every capability.
 - `src/core/plugins/sdk/types.test.ts` — `validateManifest` accepts a valid manifest; rejects missing slug, missing name, missing version, missing capabilities, and unknown capability strings.
 
 ### Hooks

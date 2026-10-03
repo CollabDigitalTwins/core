@@ -20,21 +20,17 @@ function CheckboxCard({
   value,
   label,
   defaultChecked = false,
-  locked = false,
 }: {
   name: string
   value: string
   label: string
   defaultChecked?: boolean
-  locked?: boolean
 }) {
-  const [checked, setChecked] = useState(defaultChecked)
-  const isChecked = locked ? true : checked
+  const [isChecked, setChecked] = useState(defaultChecked)
 
   return (
     <label
-      className={`flex items-center gap-2.5 rounded-md border p-3 select-none transition-colors ${locked ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'
-        } ${isChecked
+      className={`flex items-center gap-2.5 rounded-md border p-3 select-none transition-colors cursor-pointer ${isChecked
           ? 'border-primary bg-primary/5 text-foreground'
           : 'border-input hover:bg-muted/50 text-muted-foreground'
         }`}
@@ -44,7 +40,7 @@ function CheckboxCard({
         name={name}
         value={value}
         checked={isChecked}
-        onChange={(e) => { if (!locked) setChecked(e.target.checked) }}
+        onChange={(e) => setChecked(e.target.checked)}
         className="sr-only"
       />
       <span
@@ -124,7 +120,6 @@ export default function OrganizationConfigContent() {
   ]
 
   const viewerOptions = [
-    { value: 'map', label: t('viewerMap'), defaultChecked: true, locked: true },
     { value: 'bim', label: t('viewerBIM'), defaultChecked: true },
   ]
 
@@ -241,7 +236,6 @@ export default function OrganizationConfigContent() {
                             value={opt.value}
                             label={opt.label}
                             defaultChecked={opt.defaultChecked}
-                            locked={opt.locked}
                           />
                         ))}
                       </div>

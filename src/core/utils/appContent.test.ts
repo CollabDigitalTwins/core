@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 
 import { ViewerNames } from '../types/dbTypes'
 
-import { hasAppContent, resolveAppContent } from './appContent'
+import { ALWAYS_AVAILABLE_VIEWERS, hasAppContent, resolveAppContent } from './appContent'
 
 import type { Organization } from '../types/dbTypes'
 
@@ -25,13 +25,27 @@ describe('resolveAppContent', () => {
     expect(resolveAppContent(undefined)).toContain(ViewerNames.bim)
   })
 
-  it('grants only what is configured, plus the map', () => {
+  it('grants only what is configured, plus the always-available viewers', () => {
     expect(resolveAppContent(org([ViewerNames.bim])))
-      .toEqual([ViewerNames.map, ViewerNames.bim])
+      .toEqual([ViewerNames.map, ViewerNames.plugins, ViewerNames.settings, ViewerNames.bim])
   })
 
-  it('always includes the map even when it is not listed', () => {
-    expect(resolveAppContent(org([ViewerNames.files]))).toContain(ViewerNames.map)
+  it.each([ViewerNames.map, ViewerNames.plugins, ViewerNames.settings])(
+    'always includes %s even when it is not listed',
+    viewer => {
+      expect(resolveAppContent(org([ViewerNames.files]))).toContain(viewer)
+    },
+  )
+
+  it('lists an always-available viewer once when appContent also stores it', () => {
+    const resolved = resolveAppContent(org([ViewerNames.plugins, ViewerNames.bim]))
+    expect(resolved.filter(viewer => viewer === ViewerNames.plugins)).toHaveLength(1)
+  })
+})
+
+describe('ALWAYS_AVAILABLE_VIEWERS', () => {
+  it('is exactly the map, plugins and settings', () => {
+    expect([...ALWAYS_AVAILABLE_VIEWERS]).toEqual([ViewerNames.map, ViewerNames.plugins, ViewerNames.settings])
   })
 })
 

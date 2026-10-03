@@ -24,6 +24,15 @@ describe('isViewerAllowed', () => {
     })
   })
 
+  describe('an always-available viewer', () => {
+    it.each([ViewerNames.map, ViewerNames.plugins, ViewerNames.settings])(
+      '%s is allowed when appContent omits it',
+      viewer => {
+        expect(isViewerAllowed(viewer, [ViewerNames.bim])).toBe(true)
+      },
+    )
+  })
+
   // appContent is a Prisma enum and can never hold a plugin key.
   describe('a plugin page', () => {
     it('is allowed against a restrictive appContent', () => {

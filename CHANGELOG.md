@@ -7,6 +7,23 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Added
+- `ALWAYS_AVAILABLE_VIEWERS` in `@collabdt/core/core/utils/appContent`: the map, plugins and settings viewers,
+  which every organization has whatever its `appContent` lists.
+
+### Changed
+- `resolveAppContent` always includes the map, plugins and settings viewers, not only the map.
+- The organization setup form no longer shows a locked Map checkbox, so `map` is no longer submitted in
+  `appContent`.
+
+### Removed
+- The `OrganizationConfig.viewerMap` message, which only labelled that checkbox.
+
+### Fixed
+- **The Plugins page and Settings open for every organization.** `isViewerAllowed` refused any viewer missing
+  from a non-empty `appContent`. Organizations whose list predates `plugins` or `settings` saw the sidebar entry,
+  but clicking it left them on the map, sometimes with the `?viewer=` parameter flipping back and forth.
+
 ## [0.13.0] - 2026-10-02.
 
 ### Added

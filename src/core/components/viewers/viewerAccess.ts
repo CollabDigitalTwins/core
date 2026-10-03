@@ -2,6 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { parsePluginViewerKey } from '../../plugins/host/pluginViewerKey'
+import { ALWAYS_AVAILABLE_VIEWERS } from '../../utils/appContent'
 
 import type { Organization, ViewerKey, ViewerNames } from '../../types/dbTypes'
 
@@ -11,6 +12,7 @@ import type { Organization, ViewerKey, ViewerNames } from '../../types/dbTypes'
  */
 export function isViewerAllowed(viewer: ViewerKey, appContent: Organization['appContent']): boolean {
   if (parsePluginViewerKey(viewer) !== null) return true
+  if (ALWAYS_AVAILABLE_VIEWERS.includes(viewer as ViewerNames)) return true
 
   return appContent.length === 0 || appContent.includes(viewer as ViewerNames)
 }

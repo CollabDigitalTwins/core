@@ -8,6 +8,10 @@ repository root.
 
 ## [Unreleased]
 
+### Changed
+- The external template's README calls the page where administrators add plugins the Plugins page, its name in
+  the app, instead of the extensions page.
+
 ## [0.8.0] - 2026-10-02
 
 ### Fixed

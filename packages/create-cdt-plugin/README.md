@@ -190,7 +190,7 @@ Node 22 or newer. The generated plugin needs no runtime dependencies: its `devDe
 
 ## A warning worth reading
 
-A mounted plugin runs with the same access as the CDT platform itself. **There is no sandbox.** It is not isolated from the application, its data, or the browser session of whoever has it enabled. Loading mounted plugins is off unless a deployment deliberately enables it, and the extensions page shows what a plugin asks for before an administrator adds it.
+A mounted plugin runs with the same access as the CDT platform itself. **There is no sandbox.** It is not isolated from the application, its data, or the browser session of whoever has it enabled. Loading mounted plugins is off unless a deployment deliberately enables it, and the Plugins page shows what a plugin asks for before an administrator adds it.
 
 Only mount plugins you trust, and read the code of any you did not write. This matters most for generated code, since the usual reason to trust a plugin is having read it.
 

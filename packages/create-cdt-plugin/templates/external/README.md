@@ -111,7 +111,7 @@ a rebuild. There is no hot reloading: save, `npm run build`, refresh.
 ## Enable it
 
 A mounted plugin is not running yet. An administrator makes it available to an organization
-on the extensions page, and then each person chooses whether it runs for them. It is
+on the Plugins page, and then each person chooses whether it runs for them. It is
 working when it appears under **Found on this server**, and rendering once enabled. Nothing
 short of that last step proves it works.
 

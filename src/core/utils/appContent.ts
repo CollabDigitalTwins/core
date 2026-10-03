@@ -5,9 +5,14 @@ import { ViewerNames } from '../types/dbTypes'
 
 import type { Organization } from '../types/dbTypes'
 
-/** Everything an organization can switch on. The map is always available and is not listed. */
-const OPTIONAL_VIEWERS: ViewerNames[] = [
+/** Viewers every organization has, whatever its `appContent` says, so they are never stored in it. */
+export const ALWAYS_AVAILABLE_VIEWERS: readonly ViewerNames[] = [
+  ViewerNames.map,
   ViewerNames.plugins,
+  ViewerNames.settings,
+]
+
+const OPTIONAL_VIEWERS: ViewerNames[] = [
   ViewerNames.bim,
   ViewerNames.sites,
   ViewerNames.infrastructure,
@@ -16,18 +21,13 @@ const OPTIONAL_VIEWERS: ViewerNames[] = [
 ]
 
 /**
- * The viewers an organization has switched on.
- *
- * An empty `appContent` means "not configured", which grants everything rather than nothing, so
- * an organization that never set the field keeps the full app. The map is always included.
- *
- * Shared so every entry point into a viewer agrees: the sidebar and the map popover's tool row
- * were drifting, and a tool that navigates somewhere the sidebar hides is a dead end.
+ * The viewers an organization can reach. An empty `appContent` means "not configured" and grants
+ * every optional viewer; the always-available ones are included either way.
  */
 export function resolveAppContent(organization?: Organization | null): ViewerNames[] {
   const configured = organization?.appContent ?? []
-  if (configured.length === 0) return [ViewerNames.map, ...OPTIONAL_VIEWERS]
-  return [ViewerNames.map, ...(configured as ViewerNames[])]
+  const optional = configured.length === 0 ? OPTIONAL_VIEWERS : (configured as ViewerNames[])
+  return [...new Set([...ALWAYS_AVAILABLE_VIEWERS, ...optional])]
 }
 
 /** Whether an organization can reach a viewer at all. */

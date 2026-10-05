@@ -7,6 +7,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.13.2] - 2026-10-05.
+
 ### Added
 - `apply()` and `remove()` on `usePluginDataset(id)` in `@collabdt/core/plugins-sdk/data`: the Datasets menu's
   own tick and untick for one of the calling plugin's `map.datasets`, so a plugin's own switch and the menu

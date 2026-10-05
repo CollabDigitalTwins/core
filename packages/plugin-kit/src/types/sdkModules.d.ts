@@ -172,9 +172,13 @@ declare module '@collabdt/core/plugins-sdk/data' {
     applied: boolean
     /** Applied and not hidden with its eye toggle: draw it only when this is true. */
     visible: boolean
+    /** What ticking it in the Datasets menu does: adds it to the map, or shows it again if hidden. */
+    apply: () => void
+    /** What unticking it in the Datasets menu does: takes it off the map. */
+    remove: () => void
   }
 
-  /** Whether one of this plugin's `map.datasets`, by its registration id, is on the map. */
+  /** Whether one of this plugin's `map.datasets`, by its registration id, is on the map, and the menu's actions for it. */
   export function usePluginDataset(id: string): PluginDatasetState
 }
 

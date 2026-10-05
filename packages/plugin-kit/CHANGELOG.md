@@ -6,6 +6,12 @@ The format is based on Keep a Changelog, and this package adheres to Semantic Ve
 It versions and publishes independently of `@collabdt/core`; the core changelog is at the
 repository root.
 
+## [Unreleased]
+
+### Added
+- `apply()` and `remove()` on `PluginDatasetState` in the `@collabdt/core/plugins-sdk/data` declarations.
+  They need a platform running `@collabdt/core` with the same addition.
+
 ## [0.9.0] - 2026-10-03
 
 ### Added

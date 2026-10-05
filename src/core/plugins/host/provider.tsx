@@ -11,7 +11,9 @@ import { resolvePluginEntry } from '../sdk/types'
 
 import { PluginDialogProvider } from './dialogs'
 import { PluginHost } from './host'
+import { PluginDatasetLookupContext, type PluginDatasetLookup } from './pluginDatasetLookup'
 import { PluginRegistry } from './registry'
+import { toPluginDataset } from './toPluginDataset'
 
 
 import type { CapabilityRegistry, PluginSource, PluginsInput } from '../sdk/types'
@@ -146,11 +148,19 @@ export function PluginHostProvider({
     [registry, host, ready, resolvedConfigs],
   )
 
+  const findDataset = React.useCallback<PluginDatasetLookup>((pluginId, id) => {
+    const registration = (registry.getAll('map.datasets') as unknown as PluginContribution<'map.datasets'>[])
+      .find(candidate => candidate.pluginId === pluginId && candidate.id === id)
+    return registration && toPluginDataset(registration)
+  }, [registry])
+
   return (
     <PluginHostContext.Provider value={value}>
-      <PluginDialogProvider>
-        {children}
-      </PluginDialogProvider>
+      <PluginDatasetLookupContext.Provider value={findDataset}>
+        <PluginDialogProvider>
+          {children}
+        </PluginDialogProvider>
+      </PluginDatasetLookupContext.Provider>
     </PluginHostContext.Provider>
   )
 }

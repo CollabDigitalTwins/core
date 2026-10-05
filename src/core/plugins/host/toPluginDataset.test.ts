@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 
 import { DatasetGroup } from '../../types/dbTypes'
 
-import { toPluginDataset } from './pluginDatasets'
+import { toPluginDataset } from './toPluginDataset'
 
 import type { PluginContribution } from './provider'
 

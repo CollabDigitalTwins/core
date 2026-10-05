@@ -7,6 +7,7 @@ import * as React from 'react'
 
 import { PLUGIN_HOST_API } from '../sdk/version'
 
+import { PluginDatasetLookupContext } from './pluginDatasetLookup'
 import { PluginHostProvider, usePluginContributions } from './provider'
 
 import type { PluginManifest, PluginSource } from '../sdk/types'
@@ -191,4 +192,27 @@ test('a plugin that throws during activation does not stop the next one', async 
 
   expect(await screen.findByText('Healthy')).toBeInTheDocument()
   consoleSpy.mockRestore()
+})
+
+function DatasetProbe({ pluginId, id }: { pluginId: string; id: string }) {
+  const findDataset = React.useContext(PluginDatasetLookupContext)
+  usePluginContributions('map.datasets')
+  return <p>{findDataset(pluginId, id)?.id ?? 'none'}</p>
+}
+
+test('looks up a registered plugin dataset for the SDK, and only that plugin’s', async () => {
+  const plugins: PluginSource[] = [{
+    manifest: { slug: 'fires', name: 'fires', version: '1.0.0', hostApi: PLUGIN_HOST_API, capabilities: ['map.datasets'] },
+    entry: { activate(ctx) { ctx.register('map.datasets', { id: 'active', name: 'Active fires', live: true }) } },
+  }]
+
+  render(
+    <PluginHostProvider plugins={plugins}>
+      <DatasetProbe pluginId="fires" id="active" />
+      <DatasetProbe pluginId="other" id="active" />
+    </PluginHostProvider>,
+  )
+
+  expect(await screen.findByText('plugin:fires:active')).toBeInTheDocument()
+  expect(screen.getByText('none')).toBeInTheDocument()
 })

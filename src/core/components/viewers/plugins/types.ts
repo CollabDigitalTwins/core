@@ -126,7 +126,10 @@ export interface RegistryOrganization {
 export interface RegistryActions {
   publishMounted(slug: string): Promise<{ version: string; claimed: boolean }>
   removeVersion(slug: string, version: string): Promise<{ outcome: 'deleted' | 'yanked' }>
-  removePlugin(slug: string): Promise<void>
+  /** `force` also removes a shared plugin, wiping its organizations' data; the wiped rows come back as a CSV. */
+  removePlugin(slug: string, options?: { force?: boolean }): Promise<{ backup?: { fileName: string; contents: Blob } }>
+  /** Shares the plugin with the viewer's own organization and switches it on there. Platform admins only. */
+  installHere(slug: string): Promise<void>
   listOrganizations(): Promise<RegistryOrganization[]>
   /** Grants or re-pins access; `pinnedVersion` null runs the newest published version. */
   setGrant(slug: string, organizationId: number, pinnedVersion: string | null): Promise<void>

@@ -11,6 +11,7 @@ import type { PluginListing, PluginsActions } from './types'
 
 // Translate to the key so assertions name the string being shown, not its wording.
 vi.mock('next-intl', () => ({
+  useLocale: () => 'en',
   useTranslations: () => {
     const t = (key: string) => key
     return t

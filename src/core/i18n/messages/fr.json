@@ -560,6 +560,7 @@
     "ghostTitle": "Fantôme",
     "unghostTitle": "Normal",
     "moveTitle": "Modifier la position",
+    "projectNorthTitle": "Définir le nord du projet",
     "editTitle": "Modifier",
     "infoTitle": "Plus d'informations",
     "deleteTitle": "Supprimer",
@@ -1423,8 +1424,8 @@
     "toggleVisibility": "Afficher/masquer",
     "generateLines": "Générer les lignes",
     "chooseColor": "Choisir la couleur",
-    "trueNorthTitle": "Nord géographique",
-    "trueNorthAngleLabel": "Angle de rotation (0–360°)",
+    "trueNorthTitle": "Nord du projet",
+    "trueNorthAngleLabel": "Rotation (°)",
     "trueNorthPickLine": "Tracer une ligne (deux points)",
     "trueNorthPicking": "Cliquez sur deux points pour tracer une ligne…",
     "trueNorthCancelPick": "Annuler la sélection",
@@ -2058,7 +2059,10 @@
     "uninstallTitle": "Désinstaller {name} ?",
     "uninstallDescription": "Il cesse de s’exécuter pour tout le monde dans cette organisation. Vous pourrez le réinstaller plus tard.",
     "uninstallConfirm": "Désinstaller",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "installHere": "Installer dans cette organisation",
+    "toastInstalledHere": "{name} est partagé avec cette organisation et activé.",
+    "toastInstallHereFailed": "Impossible d’installer {name} : {message}"
   },
   "PluginRegistry": {
     "tabLabel": "Registre",
@@ -2142,7 +2146,10 @@
     "grantPinnedRetired": "Figée sur v{version} (retirée)",
     "toastSharedAdded": "{name} est maintenant partagé avec votre organisation. Installez-le depuis l’onglet Non installés.",
     "toastSharedUpdated": "Votre organisation reçoit maintenant {name} v{version}.",
-    "toastSharedRemoved": "{name} n’est plus partagé avec votre organisation."
+    "toastSharedRemoved": "{name} n’est plus partagé avec votre organisation.",
+    "removeSharedPluginDescription": "Partagé avec {count, plural, one {# organisation} other {# organisations}}. Le retirer les en prive toutes et supprime définitivement les données qu’elles y ont enregistrées. Une sauvegarde CSV de ces données est téléchargée d’abord. Le nom « {slug} » reste réservé à son propriétaire.",
+    "removeSharedConfirm": "Retirer et télécharger la sauvegarde",
+    "toastSharedPluginRemoved": "{name} retiré de {count, plural, one {# organisation} other {# organisations}} ; leurs données sont enregistrées dans {file}."
   },
   "Placement": {
     "cancel": "Annuler",
@@ -2174,6 +2181,11 @@
     "deleteFailed": "Impossible de supprimer « {name} »",
     "movedFile": "« {name} » déplacé",
     "rotatedFile": "« {name} » pivoté",
+    "projectNorthSaved": "Nord du projet défini pour « {name} »",
+    "projectNorthFailed": "Impossible d'enregistrer le nord du projet de « {name} »",
+    "turnModelTitle": "Faire pivoter « {name} » ?",
+    "turnModelBody": "Faire pivoter ce modèle fait aussi pivoter ce que les plugins y ont placé :",
+    "turnModelConfirm": "Faire pivoter",
     "scaledFile": "« {name} » redimensionné",
     "positionAcceptedToast": "La position du fichier a été enregistrée.",
     "linkBuildingTitle": "Lier à ce bâtiment ?",

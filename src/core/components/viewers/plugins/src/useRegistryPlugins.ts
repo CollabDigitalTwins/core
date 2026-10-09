@@ -6,7 +6,9 @@
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { toast } from 'sonner'
-import useSWR from 'swr'
+import useSWR, { mutate } from 'swr'
+
+import { PLUGIN_INSTALLATIONS_KEY } from '../../../../hooks/plugins/createPluginHooks'
 
 import { sharedPluginChanges } from './sharedPluginChanges'
 import { useMountedPlugins } from './useMountedPlugins'
@@ -41,10 +43,19 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<T>
   return (await response.json().catch(() => ({}))) as T
 }
 
-async function download(path: string, fallbackName: string): Promise<{ fileName: string; contents: Blob }> {
-  const response = await send('GET', path)
+async function asFile(response: Response, fallbackName: string): Promise<{ fileName: string; contents: Blob }> {
   const fileName = /filename="([^"]+)"/.exec(response.headers.get('content-disposition') ?? '')?.[1] ?? fallbackName
   return { fileName, contents: await response.blob() }
+}
+
+async function download(path: string, fallbackName: string): Promise<{ fileName: string; contents: Blob }> {
+  return asFile(await send('GET', path), fallbackName)
+}
+
+async function deleteRegistryPlugin(path: string, slug: string, force: boolean): Promise<{ backup?: { fileName: string; contents: Blob } }> {
+  const response = await send('DELETE', force ? `${path}?force=1` : path)
+  if (!response.headers.get('content-type')?.startsWith('text/csv')) return {}
+  return { backup: await asFile(response, `${slug}-data.csv`) }
 }
 
 // Fetched directly, like mounted plugins: a deployment without a registry answers `configured: false`.
@@ -96,7 +107,7 @@ export function useRegistryActions(override?: RegistryActions): RegistryActions 
     const plugin = (slug: string) => `/plugins/${encodeURIComponent(slug)}`
     const thenRefresh = async <T,>(work: Promise<T>) => {
       const result = await work
-      await Promise.allSettled([refresh(), refreshShared()])
+      await Promise.allSettled([refresh(), refreshShared(), mutate(PLUGIN_INSTALLATIONS_KEY)])
       return result
     }
 
@@ -105,7 +116,8 @@ export function useRegistryActions(override?: RegistryActions): RegistryActions 
         thenRefresh(call<{ version: string; claimed: boolean }>('POST', `/publish/${encodeURIComponent(slug)}`)),
       removeVersion: (slug, version) =>
         thenRefresh(call<{ outcome: 'deleted' | 'yanked' }>('DELETE', `${plugin(slug)}/versions/${encodeURIComponent(version)}`)),
-      removePlugin: slug => thenRefresh(call<void>('DELETE', plugin(slug))),
+      removePlugin: (slug, options) => thenRefresh(deleteRegistryPlugin(plugin(slug), slug, options?.force ?? false)),
+      installHere: slug => thenRefresh(call<void>('POST', `${plugin(slug)}/install`)),
       listOrganizations: () => call('GET', '/organizations'),
       setGrant: (slug, organizationId, pinnedVersion) =>
         thenRefresh(call<void>('PUT', `${plugin(slug)}/grants/${organizationId}`, { pinnedVersion })),

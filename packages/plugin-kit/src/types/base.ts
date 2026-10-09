@@ -115,15 +115,30 @@ export interface DataPageRows<Row> {
   onRowClick?: (row: Row) => void
 }
 
-export interface DataPageRegistration<Row = Record<string, unknown>> {
+interface DataPageBase {
   id: string
   titleKey: string
   icon: string
+}
+
+/** Core renders a searchable table from the plugin's rows and columns. */
+export interface DataPageTable<Row = Record<string, unknown>> extends DataPageBase {
   useRows: () => DataPageRows<Row>
   columns: DataPageColumn<Row>[]
+  /** Column keys the search box filters on. Omit to search every column. */
   searchKeys?: string[]
   emptyKey?: string
+  component?: never
 }
+
+/** Core keeps the page frame and title; the plugin renders everything below them. */
+export interface DataPageCustom extends DataPageBase {
+  component: React.ComponentType
+  useRows?: never
+  columns?: never
+}
+
+export type DataPageRegistration<Row = Record<string, unknown>> = DataPageTable<Row> | DataPageCustom
 
 /** The viewers that host a tab or a legend. Core spells them exactly this way. */
 export type PluginViewerTarget = 'map' | 'bim'

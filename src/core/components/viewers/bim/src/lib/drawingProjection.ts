@@ -174,55 +174,6 @@ export async function addItemsProjection(
 }
 
 /**
- * Project items grouped by IFC class into per-class drawing layers. Each
- * class gets its own visible layer with a default color (cut classes black,
- * everything else mid-gray); the hidden side of every class shares the
- * standard `HIDDEN_LAYER`.
- *
- * Returns metadata used by the sidebar UI (visibility toggles + color
- * pickers) and the future DXF export. Skipping classes whose projection
- * fails — one broken class shouldn't strand the rest of the drawing.
- */
-export async function addItemsProjectionByClass(
-  drawing: OBC.TechnicalDrawing,
-  modelId: string,
-  itemIdsByClass: Map<string, number[]>,
-  onClassDone?: (className: string) => void,
-): Promise<DrawingLayerInfo[]> {
-  const layers: DrawingLayerInfo[] = []
-  for (const [className, ids] of itemIdsByClass) {
-    if (ids.length === 0) continue
-    const color = defaultLayerColor(className)
-    if (!drawing.layers.has(className)) {
-      drawing.layers.create(className, {
-        material: new THREE.LineBasicMaterial({ color }),
-      })
-    }
-    const modelIdMap: OBC.ModelIdMap = { [modelId]: new Set(ids) }
-    try {
-      await drawing.addProjectionFromItems(modelIdMap, {
-        layers: { visible: className, hidden: HIDDEN_LAYER },
-      })
-    } catch (error) {
-      console.warn(
-        `[drawingProjection] projection for ${className} failed:`,
-        error,
-      )
-      continue
-    }
-    layers.push({
-      className,
-      layerName: className,
-      visible: true,
-      color,
-      itemCount: ids.length,
-    })
-    onClassDone?.(className)
-  }
-  return layers
-}
-
-/**
  * Group a model's geometric item ids by IFC class. Optional `idFilter`
  * narrows the result to a specific subset (e.g. items in a single storey).
  */
@@ -245,25 +196,15 @@ export async function getItemIdsByClass(
 }
 
 /**
- * Project items into per-IFC-class drawing layers using a SINGLE
- * EdgeProjector pass. The visibility culler then sees the union of all
- * meshes and classifies each edge against the full scene — so a wall in
- * front of a chair correctly hides the chair's edges, even though they
- * end up on different layers.
- *
- * Use this for elevation drawings, where the entire building depth is
- * visible. {@link addItemsProjectionByClass} stays appropriate for
- * floorplans, where the section clip already limits depth and the per-
- * class path is faster.
- *
- * Hidden edges are intentionally discarded — the elevation should only
- * show the lines of objects immediately visible to the camera.
+ * Projects items into per-class layers in one EdgeProjector pass, so any item hides the edges behind it.
+ * `occluderIds` hide edges without drawing lines of their own. Hidden edges are discarded.
  */
 export async function addItemsProjectionByClassOccluded(
   drawing: OBC.TechnicalDrawing,
   components: OBC.Components,
   modelId: string,
   itemIdsByClass: Map<string, number[]>,
+  occluderIds: Iterable<number> = [],
 ): Promise<DrawingLayerInfo[]> {
   const world = components.get(CurrentWorld).world
   if (!world) return []
@@ -279,6 +220,7 @@ export async function addItemsProjectionByClassOccluded(
     }
   }
   if (allIds.size === 0) return []
+  for (const id of occluderIds) allIds.add(id)
 
   const projector = components.get(OBC.EdgeProjector)
   ;(projector as any).generator.useWebGPU = false

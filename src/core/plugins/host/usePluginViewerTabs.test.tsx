@@ -14,6 +14,7 @@ import { usePluginViewerTabs } from './usePluginViewerTabs'
 import type { PluginManifest, PluginSource } from '../sdk/types'
 
 vi.mock('next-intl', () => ({
+  useLocale: () => 'en',
   useMessages: () => ({}),
   useTranslations: () => (key: string) => key,
 }))

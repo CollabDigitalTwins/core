@@ -16,11 +16,11 @@ import {
 } from '../../../../ui/Popover'
 
 interface Props {
-  /** Current rotation in degrees (0-360, clockwise from default screen-up). */
+  /** The open plan's model project north, in degrees (-180, 180]. */
   northAngle: number
   /** Whether the floorplan tool is currently waiting for a line click. */
   pickingNorth: boolean
-  /** Disabled when no floorplan is active (rotation makes no sense yet). */
+  /** Disabled when no floorplan is open, or its model has no file to save to. */
   disabled: boolean
   onChangeAngle: (degrees: number) => void
   onStartPick: () => void
@@ -28,16 +28,8 @@ interface Props {
 }
 
 /**
- * Compass-icon button + popover that lets the user set the building's
- * true north for floorplan views. Two ways to set it:
- *  1. Type a value 0-360 °.
- *  2. Click "Pick line", then draw a line by clicking two points on the
- *     active floorplan — each point snaps to the nearest geometry vertex,
- *     and the bearing between them becomes the new north (Esc cancels).
- *
- * The popover closes when the user starts a pick (so the canvas isn't
- * obscured) and stays in sync via the `northAngle` / `pickingNorth` props
- * coming from FloorplanTool.
+ * Compass button whose popover sets the open plan's model project north: a typed angle, or a line
+ * drawn with two clicks on the plan that the model then turns square to. Esc cancels the line.
  */
 export function TrueNorthPopover({
   northAngle,
@@ -51,8 +43,7 @@ export function TrueNorthPopover({
   const [open, setOpen] = React.useState(false)
   const [draft, setDraft] = React.useState<string>(formatAngle(northAngle))
 
-  // Keep the input in sync when the angle changes from outside (e.g. line
-  // pick committed a new value).
+  // A line pick changes the angle from outside the input.
   React.useEffect(() => {
     setDraft(formatAngle(northAngle))
   }, [northAngle])
@@ -97,8 +88,8 @@ export function TrueNorthPopover({
             <div className="flex items-center gap-2">
               <Input
                 type="number"
-                min={0}
-                max={360}
+                min={-180}
+                max={180}
                 step={1}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
@@ -155,8 +146,7 @@ export function TrueNorthPopover({
 }
 
 function formatAngle(degrees: number): string {
-  // Show 0 decimals for whole numbers, 1 decimal otherwise — keeps the
-  // input clean for typed values but readable after a line pick.
+  // Whole numbers stay clean when typed; a picked angle keeps one decimal.
   const rounded = Math.round(degrees * 10) / 10
   return Number.isInteger(rounded) ? rounded.toFixed(0) : rounded.toFixed(1)
 }

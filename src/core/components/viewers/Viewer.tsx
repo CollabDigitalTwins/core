@@ -61,6 +61,23 @@ function ViewerLoadingFallback({ label }: { label: string }) {
   )
 }
 
+// Once shown, a view stays mounted and is only hidden, so its camera, open plan and loaded models survive a page switch.
+function useKeptAlive<T>(shown: T | null): T[] {
+  const [kept, setKept] = React.useState<T[]>([])
+  if (shown !== null && !kept.includes(shown)) {
+    setKept([...kept, shown])
+    return [...kept, shown]
+  }
+  return kept
+}
+
+// Hidden without `display: none`: a 0×0 container makes OBC resize its camera to a NaN aspect it never recovers from.
+const hiddenInPlace = (visible: boolean): React.CSSProperties => (visible
+  ? { width: '100%', height: '100%' }
+  : { position: 'absolute', inset: 0, visibility: 'hidden', pointerEvents: 'none' })
+
+const shownWhen = (visible: boolean): React.CSSProperties => ({ display: visible ? 'block' : 'none', width: '100%', height: '100%' })
+
 interface ViewerProps {
   organization: Organization
   minioBaseUrl?: string
@@ -165,6 +182,8 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
 
   // Null while a plugin page shows, so the branches below stay exhaustive over ViewerNames.
   const builtInViewer = pluginPage ? null : (validViewer as ViewerNames)
+  const keptBim = useKeptAlive(builtInViewer === ViewerNames.bim ? ViewerNames.bim : null).length > 0
+  const keptPluginPages = useKeptAlive(pluginPage ? validViewer : null)
 
   const selectedViewer = (
     <>
@@ -172,10 +191,14 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
         && [ViewerNames.map, ViewerNames.bim].includes(builtInViewer)
         && <SidebarTrigger />}
       <div style={{ height: '100%', width: '100%', position: 'relative' }}>
-        <div style={{ display: builtInViewer === ViewerNames.map ? 'block' : 'none', width: '100%', height: '100%' }}>
+        <div style={shownWhen(builtInViewer === ViewerNames.map)}>
           <MapViewer organization={organization} maptilerKey={maptilerKey} />
         </div>
-        {builtInViewer === ViewerNames.bim && <BimViewer pointcloudApiUrl={pointcloudApiUrl} />}
+        {keptBim && (
+          <div style={hiddenInPlace(builtInViewer === ViewerNames.bim)} aria-hidden={builtInViewer !== ViewerNames.bim}>
+            <BimViewer pointcloudApiUrl={pointcloudApiUrl} />
+          </div>
+        )}
         {builtInViewer !== null
           && [ViewerNames.buildings, ViewerNames.sites, ViewerNames.files, ViewerNames.land, ViewerNames.infrastructure, ViewerNames.users].includes(builtInViewer) && (
           <DataMenu currentViewer={builtInViewer} organization={organization} geocodeEarthApiKey={geocodeEarthApiKey} geocoderUrl={geocoderUrl} />
@@ -190,11 +213,11 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
         {builtInViewer === ViewerNames.settings && (
           <UserSettings minioBaseUrl={minioBaseUrl} />
         )}
-        {pluginPage && (
-          <div className="h-full w-full overflow-y-auto">
-            <PluginDataPageHost viewer={validViewer} />
+        {keptPluginPages.map(page => (
+          <div key={page} className="h-full w-full overflow-y-auto" style={{ display: page === validViewer ? 'block' : 'none' }}>
+            <PluginDataPageHost viewer={page} />
           </div>
-        )}
+        ))}
       </div>
     </>
   )

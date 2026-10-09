@@ -20,13 +20,13 @@ export interface UseFileActionsProps {
   files: (DbFile & { isVisible?: boolean })[]
   setFiles: React.Dispatch<React.SetStateAction<(DbFile & { isVisible?: boolean })[]>>
   buildingId: number
-  // Deletion is awaited, visibility toggling is fire-and-forget; both accept
-  // async callbacks, which several viewers pass.
+  // Deletion is awaited, visibility toggling is fire-and-forget; both accept async callbacks.
   handleDeleteFile: (file: DbFile) => void | Promise<void>
   onDownload?: (file: DbFile) => void
   onView?: (file: DbFile, newVisibility: boolean) => void | Promise<void>
   onDelete?: (file: DbFile) => void
   onMove?: (file: DbFile) => void
+  onProjectNorth?: (file: DbFile) => void
   onGhost?: (file: DbFile, ghostState: boolean) => void
   onInfo?: (file: DbFile) => void
   // Files whose `view` means "in the scene"; an IDS run or a BCF import is session state.
@@ -42,6 +42,7 @@ export function useFileActions({
   onView,
   onDelete,
   onMove,
+  onProjectNorth,
   onGhost,
   onInfo,
   shouldPersistVisibility
@@ -134,6 +135,9 @@ export function useFileActions({
         // Call custom handlers for move and place actions
         onMove?.(file)
     }
+    else if (action === 'projectNorth') {
+        onProjectNorth?.(file)
+    }
     else if (action === 'ghost') {
         const newGhostState = !(file as any).isGhost
         setFiles(prev => prev.map(f => f.id === file.id ? { ...f, isGhost: newGhostState } as any : f))
@@ -152,7 +156,7 @@ export function useFileActions({
     else if (action === 'info') {
       handleInfo(file)
     }
-  }, [setFiles, updateItems, onDownload, onView, onMove, onGhost, handleInfo, shouldPersistVisibility, setVisible, setLocalVisibility])
+  }, [setFiles, updateItems, onDownload, onView, onMove, onProjectNorth, onGhost, handleInfo, shouldPersistVisibility, setVisible, setLocalVisibility])
 
   const onDeleteDialogOpenChange = React.useCallback((open: boolean) => {
     if (!open) setDeleteTarget(null)
@@ -163,8 +167,7 @@ export function useFileActions({
     await confirmDelete()
   }, [confirmDelete])
 
-  // Both stay awaitable (callers and tests await them); the consumers that hand
-  // them to void-returning props ignore the promise at the call site.
+  // Both stay awaitable; consumers handing them to void-returning props ignore the promise.
   return {
     handleAction,
     deleteDialog: {

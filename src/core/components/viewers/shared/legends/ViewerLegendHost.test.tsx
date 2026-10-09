@@ -18,6 +18,7 @@ const { mockToastWarning } = vi.hoisted(() => ({ mockToastWarning: vi.fn() }))
 vi.mock('sonner', () => ({ toast: { warning: mockToastWarning } }))
 
 vi.mock('next-intl', () => ({
+  useLocale: () => 'en',
   useTranslations: () => (key: string) => key,
   useMessages: () => ({}),
 }))

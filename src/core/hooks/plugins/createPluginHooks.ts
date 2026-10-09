@@ -6,7 +6,7 @@ import useSWR, { mutate } from 'swr'
 import type { PluginInstallation, PluginRecord, PluginUserSetting } from '../../types/plugins'
 import type { ApiAdapter } from '../ports/apiAdapter'
 
-const INSTALLATIONS = ['pluginInstallations'] as const
+export const PLUGIN_INSTALLATIONS_KEY = ['pluginInstallations'] as const
 const USER_SETTINGS = ['pluginUserSettings'] as const
 
 /**
@@ -16,7 +16,7 @@ const USER_SETTINGS = ['pluginUserSettings'] as const
 export function createPluginHooks(adapter: ApiAdapter) {
   const usePluginInstallations = () => {
     const { data, error, isLoading } = useSWR<PluginInstallation[]>(
-      INSTALLATIONS,
+      PLUGIN_INSTALLATIONS_KEY,
       () => adapter.listPluginInstallations(),
     )
 
@@ -44,11 +44,11 @@ export function createPluginHooks(adapter: ApiAdapter) {
   const pluginActions = {
     async setInstallation(pluginId: string, patch: Partial<PluginInstallation>) {
       await adapter.upsertPluginInstallation(pluginId, patch)
-      await mutate(INSTALLATIONS)
+      await mutate(PLUGIN_INSTALLATIONS_KEY)
     },
     async removeInstallation(pluginId: string) {
       await adapter.deletePluginInstallation(pluginId)
-      await mutate(INSTALLATIONS)
+      await mutate(PLUGIN_INSTALLATIONS_KEY)
     },
     async setUserSetting(pluginId: string, patch: Partial<PluginUserSetting>) {
       await adapter.upsertPluginUserSetting(pluginId, patch)

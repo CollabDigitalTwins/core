@@ -16,12 +16,12 @@ import {
 } from '../components/ui/AlertDialog'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 
-interface ConfirmDialogProps {
+export interface ConfirmDialogProps {
     isOpen: boolean
-    isDeleting: boolean
+    /** Shows a spinner on the confirm button and disables it. */
+    isDeleting?: boolean
     onOpenChange: (open: boolean) => void
-    // Confirm handlers are usually async (delete then revalidate); the dialog
-    // does not await them, it just closes when the caller flips `isOpen`.
+    // Not awaited: the dialog closes when the caller flips `isOpen`.
     handleConfirm: (e: React.MouseEvent) => void | Promise<void>
     itemName?: string
     dataType?: string
@@ -36,7 +36,7 @@ interface ConfirmDialogProps {
 
 export default function ConfirmDialog({
     isOpen,
-    isDeleting,
+    isDeleting = false,
     onOpenChange,
     handleConfirm,
     itemName,
@@ -49,11 +49,7 @@ export default function ConfirmDialog({
 }: ConfirmDialogProps) {
     const t = useTranslations('ConfirmDialog')
 
-    // Safety net: this dialog is often opened via onAction() from a DropdownMenuItem
-    // rather than a direct Trigger. Radix's DropdownMenu and AlertDialog each lock
-    // document.body.style.pointerEvents while open and unlock it on close; nesting/
-    // overlapping the two can race that lock so it never gets cleared, leaving the
-    // whole page unclickable after this dialog closes. Force-clear it once closed.
+    // Opened from a DropdownMenuItem, Radix's two body pointer-events locks can race and leave the page unclickable.
     React.useEffect(() => {
       if (isOpen) return
       const id = window.setTimeout(() => {

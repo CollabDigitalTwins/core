@@ -18,6 +18,7 @@ import { GhostMode } from '../../../../GhostMode'
 import { Highlighter } from '../../../../Highlighter'
 import { applyModelPlacement } from '../../../../lib/applyModelPlacement'
 import { useBimFileIntake } from '../../../../lib/useBimFileIntake'
+import { useProjectNorth } from '../../../../lib/useProjectNorth'
 import { LoadModels } from '../../../../LoadModels'
 import { ModelManager } from '../../../../ModelManager'
 import { PlacementEditor } from '../../../../Placement/PlacementEditor'
@@ -30,7 +31,7 @@ import { SpatialStructure } from '../../../../SpatialStructure'
 import type { FileTabSectionChrome } from './sectionChrome'
 import type { DbFile as DbFile } from '../../../../../../../../types/dbTypes'
 
-const BIM_MODEL_OPTIONS: import('../../../../../../../../types/global').FileAction[] = ['view', 'ghost', 'move', 'info', 'delete']
+const BIM_MODEL_OPTIONS: import('../../../../../../../../types/global').FileAction[] = ['view', 'ghost', 'move', 'projectNorth', 'info', 'delete']
 const BIM_ACCEPT = '.ifc,.frag'
 
 interface BimSectionProps extends FileTabSectionChrome {
@@ -105,6 +106,7 @@ export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
   }, [bimComponents])
 
   const { targetFor, clearMoving } = useModelTarget()
+  const { pickProjectNorth } = useProjectNorth()
 
   const placementSession = usePlacementSession()
   React.useEffect(() => { if (!placementSession) clearMoving() }, [placementSession, clearMoving])
@@ -158,7 +160,7 @@ export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
     try {
       // A toggle must not reframe the scene the way a first load does.
       loadModels.sharing = true
-      const model = fragments.core.models.list.get(file.name) ?? await loadModels.load(file.url, file.name)
+      const model = fragments.core.models.list.get(file.name) ?? await loadModels.load(file.url, file.name, file)
       if (!model) throw new Error('the model could not be loaded')
 
       applyModelPlacement(model.object, file)
@@ -220,6 +222,7 @@ export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
     shouldPersistVisibility: () => true,
     onDelete: file => unloadFromScene(file, 'model'),
     onMove: handleBimMove,
+    onProjectNorth: file => void pickProjectNorth(file),
     onGhost: handleBimGhost
   })
 

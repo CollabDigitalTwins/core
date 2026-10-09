@@ -10,10 +10,12 @@ import { PLUGIN_HOST_API } from '../sdk/version'
 import { PluginDataPageHost } from './PluginDataPageHost'
 import { pluginViewerKey } from './pluginViewerKey'
 import { PluginHostProvider } from './provider'
+import { usePluginId } from './scope'
 
 import type { DataPageRegistration, PluginManifest, PluginSource } from '../sdk/types'
 
 vi.mock('next-intl', () => ({
+  useLocale: () => 'en',
   useMessages: () => ({}),
   useTranslations: () => (key: string, values?: Record<string, unknown>) =>
     values ? `${key}:${JSON.stringify(values)}` : key,
@@ -149,5 +151,34 @@ describe('PluginDataPageHost', () => {
     )
 
     expect(await screen.findByText('empty')).toBeInTheDocument()
+  })
+})
+
+describe('PluginDataPageHost with a custom component', () => {
+  function CustomPage() {
+    return <p>custom page of {usePluginId()}</p>
+  }
+
+  const customSource: PluginSource = {
+    manifest: {
+      slug: 'planner',
+      name: 'planner',
+      version: '1.0.0',
+      hostApi: PLUGIN_HOST_API,
+      capabilities: ['data.pages'],
+    },
+    entry: {
+      activate(ctx) {
+        ctx.register('data.pages', { id: 'board', titleKey: 'Planner board', icon: 'Table', component: CustomPage })
+      },
+    },
+  }
+
+  it("renders the plugin component in its scope, inside core's frame and without the table search", async () => {
+    renderPage([customSource], pluginViewerKey('planner', 'board'))
+
+    expect(await screen.findByRole('heading', { name: 'Planner board' })).toBeInTheDocument()
+    expect(screen.getByText('custom page of planner')).toBeInTheDocument()
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
   })
 })

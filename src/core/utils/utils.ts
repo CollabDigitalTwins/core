@@ -6,6 +6,11 @@ import { twMerge } from 'tailwind-merge'
 
 import type { Language } from '../types/dbTypes'
 
+/** True when a keystroke is aimed at a text field rather than the page. */
+export function isEditableTarget(target: EventTarget | null): boolean {
+  return target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))
+}
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }

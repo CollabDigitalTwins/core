@@ -11,6 +11,7 @@ import {
   FILL_COLOR,
   FLOORPLAN_CUT_CATEGORIES,
   FLOORPLAN_FILL_CATEGORIES,
+  FLOORPLAN_FURNISHING_CATEGORIES,
 } from './types'
 
 import type { StoreyProjector } from './StoreyProjector'
@@ -23,15 +24,7 @@ import type * as OBC from '@thatopen/components'
 
 export type RenderStage = 'resolve' | 'cull' | 'switching' | 'cut' | 'fill'
 
-/**
- * Floorplan-flavor wrapper around the generic CategoryHighlighter:
- *  - "cut" stage paints walls / curtain-wall panels & mullions / columns
- *    in dark gray.
- *  - "fill" stage paints slabs / roofs white. Applied LAST so that an item
- *    matched by both groups (e.g. an IFCSLAB encoded with a category that
- *    overlaps the cut regex set) ends up white instead of gray.
- * Per-storey filtering via StoreyProjector's storey-id cache.
- */
+/** Paints a storey's cut group, then its fill group last, so an item matching both ends up filled. */
 export class FloorplanRenderer {
   private _highlighter: CategoryHighlighter
 
@@ -47,7 +40,7 @@ export class FloorplanRenderer {
           stage: 'cut',
         },
         {
-          categories: FLOORPLAN_FILL_CATEGORIES,
+          categories: [...FLOORPLAN_FILL_CATEGORIES, ...FLOORPLAN_FURNISHING_CATEGORIES],
           color: FILL_COLOR,
           stage: 'fill',
         },
@@ -81,13 +74,10 @@ export class FloorplanRenderer {
     )
   }
 
-  /** Repaint the CUT group (walls/columns/curtain walls) with a new color.
-   *  Updates both the cached highlight and the config for future activations. */
   setCutColor(entryKey: string, color: number) {
     return this._highlighter.reapplyGroupColor(entryKey, 0, color)
   }
 
-  /** Repaint the FILL group (slabs/roofs) with a new color. */
   setFillColor(entryKey: string, color: number) {
     return this._highlighter.reapplyGroupColor(entryKey, 1, color)
   }

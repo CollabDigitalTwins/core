@@ -10,6 +10,7 @@ import { PluginsManager } from './PluginsManager'
 import type { PluginListing, RegistryActions, RegistryPlugin, RegistryState } from './types'
 
 vi.mock('next-intl', () => ({
+  useLocale: () => 'en',
   useTranslations: () => (key: string) => key,
   useMessages: () => ({}),
 }))
@@ -78,7 +79,8 @@ function actions(overrides: Partial<RegistryActions> = {}): RegistryActions {
   return {
     publishMounted: vi.fn().mockResolvedValue({ version: '1.0.0', claimed: true }),
     removeVersion: vi.fn(),
-    removePlugin: vi.fn(),
+    removePlugin: vi.fn().mockResolvedValue({}),
+    installHere: vi.fn().mockResolvedValue(undefined),
     listOrganizations: vi.fn().mockResolvedValue([]),
     setGrant: vi.fn(),
     revokeGrant: vi.fn(),
@@ -253,6 +255,60 @@ describe('shared registry on the Plugins page', () => {
     fireEvent.click(details.getByRole('button', { name: 'grantRevokeFor' }))
 
     await vi.waitFor(() => expect(revokeGrant).toHaveBeenCalledWith('ifc-checker', 5))
+  })
+
+  it('removes an unshared plugin without touching any organization', async () => {
+    registryState.current = devTeam([registryPlugin({ grants: [] })], true)
+    const removePlugin = vi.fn().mockResolvedValue({})
+    render(<PluginsManager listings={[]} registryActions={actions({ removePlugin })} />)
+    openRegistry()
+
+    row('ifc-checker').getByRole('button', { name: 'removePlugin' }).click()
+    expect(await screen.findByText('removePluginDescription')).toBeInTheDocument()
+    screen.getByRole('button', { name: 'removeConfirm' }).click()
+
+    await vi.waitFor(() => expect(removePlugin).toHaveBeenCalledWith('ifc-checker', { force: false }))
+    expect(toast.success).toHaveBeenCalledWith('toastPluginRemoved')
+  })
+
+  it('warns before removing a shared plugin, then saves the backup of the wiped data', async () => {
+    const grant = { organizationId: 5, organizationName: 'Acme', pinnedVersion: null, resolvedVersion: '1.0.0' }
+    registryState.current = devTeam([registryPlugin({ grants: [grant, { ...grant, organizationId: 6 }] })], true)
+    const backup = { fileName: 'ifc-checker-data-2026-10-08.csv', contents: new Blob(['table']) }
+    const removePlugin = vi.fn().mockResolvedValue({ backup })
+    Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:x'), revokeObjectURL: vi.fn() })
+    const save = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    render(<PluginsManager listings={[]} registryActions={actions({ removePlugin })} />)
+    openRegistry()
+
+    row('ifc-checker').getByRole('button', { name: 'removePlugin' }).click()
+    expect(await screen.findByText('removeSharedPluginDescription')).toBeInTheDocument()
+    screen.getByRole('button', { name: 'removeSharedConfirm' }).click()
+
+    await vi.waitFor(() => expect(removePlugin).toHaveBeenCalledWith('ifc-checker', { force: true }))
+    expect(save).toHaveBeenCalledOnce()
+    expect(toast.success).toHaveBeenCalledWith('toastSharedPluginRemoved')
+    save.mockRestore()
+  })
+
+  it('lets a platform admin install a registry plugin into their own organization in one step', async () => {
+    registryState.current = productionAdmin([registryPlugin()])
+    const installHere = vi.fn().mockResolvedValue(undefined)
+    render(<PluginsManager listings={[]} registryActions={actions({ installHere })} />)
+    openRegistry()
+
+    row('ifc-checker').getByRole('button', { name: 'installHere' }).click()
+
+    await vi.waitFor(() => expect(installHere).toHaveBeenCalledWith('ifc-checker'))
+    expect(toast.success).toHaveBeenCalledWith('toastInstalledHere')
+  })
+
+  it('offers installing into the organization to platform admins only', () => {
+    registryState.current = devTeam([registryPlugin()])
+    render(<PluginsManager listings={[]} registryActions={actions()} />)
+    openRegistry()
+
+    expect(row('ifc-checker').queryByRole('button', { name: 'installHere' })).not.toBeInTheDocument()
   })
 
   it('confirms before removing a version and reports a yank', async () => {

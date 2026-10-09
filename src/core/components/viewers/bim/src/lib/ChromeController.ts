@@ -10,17 +10,18 @@ import { BimSceneObjects } from '../SceneObjects'
 import { BimSplats } from '../Splats'
 import { ViewportGizmo } from '../ViewportGizmo'
 
+import { readBimLighting, refreshSunPlacement } from './bimLighting'
+import { modelBounds } from './modelBounds'
+import { applyRenderMode, readRenderMode } from './renderMode'
 import { hideSceneContent, restoreSceneContent } from './sceneContent'
 
+import type { RenderModeName } from './renderMode'
 import type { SceneContentVisibility } from './sceneContent'
 import type * as OBC from '@thatopen/components'
 
 /**
- * Manages the viewer chrome muted while a drawing-based view tool is
- * active: cursor, selection highlighter, viewport gizmo, and ambient
- * lighting. Each setter is idempotent and each restore is no-op when the
- * corresponding apply was never called — this keeps deactivate safe even
- * if activate failed midway.
+ * The viewer chrome a drawing tool mutes. Each apply is idempotent and each restore a no-op without its
+ * apply, so deactivating stays safe after an activation that failed midway.
  */
 export class ChromeController {
   private _savedCursor: string | null = null
@@ -31,6 +32,8 @@ export class ChromeController {
   private _savedGizmoEnabled: boolean | null = null
 
   private _ambientLight: THREE.AmbientLight | null = null
+
+  private _savedRenderMode: RenderModeName | null = null
 
   private _savedBackground: THREE.Color | THREE.Texture | null | undefined =
     undefined
@@ -83,11 +86,7 @@ export class ChromeController {
     if (!highlighter) return
     this._savedHighlighterEnabled = highlighter.enabled
     highlighter.enabled = false
-    // `clearSelection()` empties the internal DataSet but the
-    // `onBeforeDelete` listener that removes selection-overlay meshes from
-    // the scene isn't always invoked by `.clear()`. Force-remove the
-    // overlays directly so the cyan selection tint can't bleed onto the
-    // white slabs in floorplan mode.
+    // `.clear()` does not always fire the listener that removes selection overlays, so they are removed here.
     for (const mesh of highlighter.selectedMeshes as Iterable<THREE.Mesh>) {
       mesh.removeFromParent()
       mesh.geometry?.dispose()
@@ -142,9 +141,26 @@ export class ChromeController {
     this._ambientLight = null
   }
 
-  /** Swap the scene background to a warm off-white during floorplan mode —
-   *  pure white reads cold, most architectural prints use a softer cream.
-   *  Restored on `restoreBackground`. */
+  /** Shadows and ambient occlusion only muddy a flat drawing, so plans render in Basic mode. */
+  applyBasicRender() {
+    if (this._savedRenderMode !== null) return
+    const world = this.components.get(CurrentWorld).world
+    if (!world) return
+    this._savedRenderMode = readRenderMode(world)
+    applyRenderMode(world, 'Basic')
+  }
+
+  restoreRenderMode() {
+    if (this._savedRenderMode === null) return
+    const world = this.components.get(CurrentWorld).world
+    const mode = this._savedRenderMode
+    this._savedRenderMode = null
+    if (!world || mode === 'Basic') return
+    applyRenderMode(world, mode)
+    refreshSunPlacement(world, modelBounds(this.components), readBimLighting(world))
+  }
+
+  /** A warm off-white plan background, as on architectural prints; pure white reads cold. */
   applyDrawingBackground() {
     if (this._savedBackground !== undefined) return
     const sourceWorld = this.components.get(CurrentWorld).world
@@ -171,8 +187,7 @@ export class ChromeController {
     try {
       return this.components.get(ctor as any) as T
     } catch {
-      // Not registered in this viewer (e.g. SimpleBimViewer doesn't
-      // register Highlighter or ViewportGizmo).
+      // SimpleBimViewer registers neither Highlighter nor ViewportGizmo.
       return null
     }
   }

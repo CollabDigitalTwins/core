@@ -6,6 +6,7 @@ import * as THREE from 'three'
 import { DEFAULT_PLACEMENT } from '../pointcloud/pointCloudPlacement'
 
 import { YAW_ONLY_PLACEMENT } from './placementTarget'
+import { objectProjectNorth } from './projectNorth'
 
 import type { PlacementCapabilities, PlacementTarget } from './placementTarget'
 import type { DbFile } from '../../../../types/dbTypes'
@@ -17,6 +18,7 @@ export interface ObjectTargetSetup {
   updateFile: (patch: Partial<DbFile>) => Promise<unknown>
   /** Defaults to position and yaw only, which is all a fragment model can hold. */
   capabilities?: PlacementCapabilities
+  confirmCommit?: PlacementTarget['confirmCommit']
 }
 
 /**
@@ -29,12 +31,14 @@ export function objectTarget({
   object,
   updateFile,
   capabilities = YAW_ONLY_PLACEMENT,
+  confirmCommit,
 }: ObjectTargetSetup): PlacementTarget {
   return {
     id,
     name,
     capabilities,
     object,
+    confirmCommit,
     read: () => {
       const root = object()
       if (!root) return { ...DEFAULT_PLACEMENT }
@@ -42,7 +46,7 @@ export function objectTarget({
       return {
         ...DEFAULT_PLACEMENT,
         position: [x, y, z],
-        rotation: [0, root.rotation.y, 0],
+        rotation: [0, root.rotation.y - objectProjectNorth(root), 0],
         scale: capabilities.scale ? root.scale.x : DEFAULT_PLACEMENT.scale,
       }
     },
@@ -50,7 +54,7 @@ export function objectTarget({
       const root = object()
       if (!root) return
       root.position.set(...placement.position)
-      root.rotation.y = placement.rotation[1]
+      root.rotation.y = placement.rotation[1] + objectProjectNorth(root)
       if (capabilities.scale) root.scale.setScalar(placement.scale)
       root.updateMatrixWorld(true)
     },

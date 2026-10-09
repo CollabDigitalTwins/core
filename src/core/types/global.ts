@@ -63,5 +63,5 @@ export enum RoleNames {
   viewer = 'Viewer',
 }
 
-export type FileAction = 'download' | 'view' | 'ghost' | 'move' | 'edit' | 'info' | 'delete'
+export type FileAction = 'download' | 'view' | 'ghost' | 'move' | 'projectNorth' | 'edit' | 'info' | 'delete'
 

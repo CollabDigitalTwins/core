@@ -26,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/Tabs'
 import { VIEWER_CONFIG } from '../Data/utils/viewerConfig'
 
 
+import { InstallHereButton } from './src/InstallHereButton'
 import { visibleColumns } from './src/pluginColumns'
 import { PluginDetails } from './src/PluginDetails'
 import { InstallQuickControl, OrgQuickControl, UserQuickControl } from './src/PluginQuickControls'
@@ -484,10 +485,13 @@ function Row({
             }}
           />
         ) : (
-          <p className="text-sm text-muted-foreground">
-            {entry?.description && <span className="mb-1 block text-foreground">{entry.description}</span>}
-            {t('notInOrg')}
-          </p>
+          <div className="flex flex-col items-start gap-2">
+            <p className="text-sm text-muted-foreground">
+              {entry?.description && <span className="mb-1 block text-foreground">{entry.description}</span>}
+              {t('notInOrg')}
+            </p>
+            {canGrant && entry?.latestVersion && <InstallHereButton slug={slug} name={name} actions={registryActions} />}
+          </div>
         )}
 
         {showRegistry && (
@@ -502,7 +506,6 @@ function Row({
 
       <ConfirmDialog
         isOpen={confirmingUninstall}
-        isDeleting={false}
         onOpenChange={setConfirmingUninstall}
         handleConfirm={event => {
           event.preventDefault()

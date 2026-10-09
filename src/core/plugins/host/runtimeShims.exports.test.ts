@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'vitest'
 
 // Static, not `import()` in a test: transforming these graphs can outlast testTimeout.
+import * as sdkCharts from '../sdk/charts'
 import * as sdkComponents from '../sdk/components'
 import * as sdkConfig from '../sdk/config'
 import * as sdkData from '../sdk/data'
@@ -26,6 +27,7 @@ const SDK_MODULES: Record<string, Record<string, unknown>> = {
   '@collabdt/core/plugins-sdk/state': sdkState,
   '@collabdt/core/plugins-sdk/ui': sdkUi,
   '@collabdt/core/plugins-sdk/components': sdkComponents,
+  '@collabdt/core/plugins-sdk/charts': sdkCharts,
 }
 
 // Exports a module has on purpose without a shim of its own, and why.

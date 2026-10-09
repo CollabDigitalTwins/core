@@ -4,6 +4,8 @@
 import * as OBC from '@thatopen/components'
 import * as THREE from 'three'
 
+import { isEditableTarget } from '../../../../utils/utils'
+
 import { CurrentWorld } from './CurrentWorld'
 
 export type NavigationMode = 'Orbit' | 'FirstPerson'
@@ -48,13 +50,6 @@ const WALK_KEYS = new Set([
 
 /** Below this the change is not worth a re-render of the elevation field. */
 const ELEVATION_EPSILON = 0.01
-
-function isTyping(): boolean {
-  const active = document.activeElement as HTMLElement | null
-  if (!active) return false
-  if (active.isContentEditable) return true
-  return ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName)
-}
 
 export interface CameraNavigationState {
   mode: NavigationMode
@@ -185,7 +180,7 @@ export class CameraNavigation extends OBC.Component implements OBC.Disposable {
 
   private readonly onKeyDown = (event: KeyboardEvent) => {
     if (!this.enabled || this.currentMode !== 'FirstPerson') return
-    if (!WALK_KEYS.has(event.key) || isTyping()) return
+    if (!WALK_KEYS.has(event.key) || isEditableTarget(document.activeElement)) return
 
     event.preventDefault()
     this.pressed.add(event.key)

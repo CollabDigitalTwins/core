@@ -9,8 +9,27 @@ repository root.
 ## [Unreleased]
 
 ### Added
+- `BimToolProps.floorplan` (`PluginFloorplan`, `FloorplanStorey`, `PlanPoint`, `SketchKind`, `PlanOverlayShape`,
+  `PlanOverlayOptions`, `PlanFootprint`): storeys, opening plans, projecting their lines (`generateLines`,
+  `hasLines`), drawing (`drawShape`) and reshaping (`editShape`, `finishEditingShape`, `isEditingShape`) outlines,
+  fitting the view to one (`frame`), reading IFCSPACE floor outlines (`getSpaceFootprints`), and per-plugin
+  overlays (`setOverlay` with `onShapeClick` and `replacesSpaces`, `clearOverlay`). `cancelDrawing()` ends a
+  drawing or a shape edit.
+- `BimToolProps.modelPlacement` (`PluginModelPlacement`, `ModelPlacementWatcher`, `ModelPlacementChange`), to keep
+  world-coordinate data on a model the user moves or turns.
+- `BimToolProps.buildingId` and `BimToolProps.appearance` (`PluginBimAppearance`, `BimAppearanceGroup`,
+  `BimAppearance`).
+- `DataPageTable` and `DataPageCustom`: a `data.pages` registration may pass its own `component` instead of
+  `useRows` / `columns`.
+- `@collabdt/core/plugins-sdk/charts` in `PLUGIN_EXTERNALS` and its ambient declarations, with `ChartConfig` and
+  the chart prop types under `@collabdt/plugin-kit/types/charts`.
+- `ConfirmDialog` (`ConfirmDialogProps`) in the `@collabdt/core/plugins-sdk/components` declarations and `toast` in
+  the `@collabdt/core/plugins-sdk/ui` ones.
 - `apply()` and `remove()` on `PluginDatasetState` in the `@collabdt/core/plugins-sdk/data` declarations.
   They need a platform running `@collabdt/core` with the same addition.
+
+### Changed
+- `DataPageRegistration` is now `DataPageTable | DataPageCustom`.
 
 ## [0.9.0] - 2026-10-03
 

@@ -22,7 +22,6 @@ import { setCameraLookAt } from '../../utils/setCameraLookAt'
 import { partitionFileTab } from '../BimSidebar/src/FileTab/src/partitionFileTab'
 import { ElevationsTool } from '../ElevationsTool'
 import { FloorplanTool } from '../FloorplanTool'
-import { applyModelPlacement } from '../lib/applyModelPlacement'
 import { isBimFile, selectLoadableBimFiles } from '../lib/bimFilesToLoad'
 import { nextBimViewerState } from '../lib/bimViewerState'
 import { acceptAttribute, routePickedFile } from '../lib/pickAndRouteFile'
@@ -196,12 +195,8 @@ export function BimLoadingState() {
     const loaded: DbFile[] = []
     for (const bimFile of toLoad) {
       try {
-        await loadModels.load(bimFile.url, bimFile.name)
+        await loadModels.load(bimFile.url, bimFile.name, bimFile)
         loaded.push(bimFile)
-        if ((bimFile.fileTransformX != null || bimFile.fileTransformY != null || bimFile.fileTransformZ != null) && fragments) {
-          const fragModel = fragments.core.models.list.get(bimFile.name)
-          if (fragModel) applyModelPlacement(fragModel.object, bimFile)
-        }
       } catch (e) {
         console.error("Error loading BIM file", bimFile.name, e)
       }

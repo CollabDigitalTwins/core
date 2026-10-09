@@ -24,15 +24,16 @@ interface SavedControls {
   maxAzimuthAngle: number
   mouseButtons: any
   touches: any
+  draggingSmoothTime: number
+  dollyToCursor: boolean
 }
 
+// Pans and wheel zooms land on the frame they happen in, so the plan stays pinned under the cursor like CAD.
+const PLAN_DRAGGING_SMOOTH_TIME = 0
+
 /**
- * Camera lock used by drawing-based view tools (FloorplanTool,
- * ElevationsTool). `lock()` snapshots the current pose + projection +
- * control limits and disables rotation so only pan/zoom remain. `frame()`
- * positions the camera orthographically along an arbitrary view direction
- * (top-down for floorplans, side-on for elevations). `unlock()` restores
- * the snapshot.
+ * Camera lock for drawing tools: `lock()` snapshots pose, projection and limits and leaves only pan/zoom,
+ * `frame()` aims an orthographic view along a direction, `unlock()` restores the snapshot.
  */
 export class CameraController {
   private _saved: SavedControls | null = null
@@ -40,6 +41,7 @@ export class CameraController {
   private _savedTarget: THREE.Vector3 | null = null
   private _savedProjection: 'Orthographic' | 'Perspective' | null = null
   private _savedNavMode: string | null = null
+  private _leftButtonPans = true
 
   constructor(private components: OBC.Components) {}
 
@@ -60,6 +62,8 @@ export class CameraController {
       maxAzimuthAngle: controls.maxAzimuthAngle,
       mouseButtons: { ...controls.mouseButtons },
       touches: { ...controls.touches },
+      draggingSmoothTime: controls.draggingSmoothTime,
+      dollyToCursor: controls.dollyToCursor,
     }
     this._savedPosition = new THREE.Vector3()
     this._savedTarget = new THREE.Vector3()
@@ -77,8 +81,24 @@ export class CameraController {
       controls.minPolarAngle = lockPolar
       controls.maxPolarAngle = lockPolar
     }
-    controls.mouseButtons.left = ACTION_TRUCK
-    controls.mouseButtons.middle = ACTION_NONE
+    controls.draggingSmoothTime = PLAN_DRAGGING_SMOOTH_TIME
+    controls.dollyToCursor = true
+    this._leftButtonPans = true
+    this._applyDrawingButtons(controls)
+  }
+
+  /** While a drawing tool takes left clicks, only the middle button pans. No-op unless locked. */
+  setLeftButtonPans(pans: boolean) {
+    const controls = this.components.get(CurrentWorld).world?.camera?.controls as any
+    if (!this._saved || !controls) return
+    this._leftButtonPans = pans
+    this._applyDrawingButtons(controls)
+  }
+
+  // Middle-drag always pans, as in CAD; OBC's orthographic switch rebinds it to zoom, so this re-runs after it.
+  private _applyDrawingButtons(controls: any) {
+    controls.mouseButtons.left = this._leftButtonPans ? ACTION_TRUCK : ACTION_NONE
+    controls.mouseButtons.middle = ACTION_TRUCK
     controls.mouseButtons.right = ACTION_NONE
     controls.mouseButtons.wheel = ACTION_ZOOM
     controls.touches.one = ACTION_TOUCH_TRUCK
@@ -98,8 +118,7 @@ export class CameraController {
     const controls = sourceWorld.camera.controls as any
     const saved = this._saved
 
-    // Restore projection BEFORE pose so the orthographic frustum doesn't
-    // fight the new perspective look-at.
+    // Projection goes back before pose, or the orthographic frustum fights the perspective look-at.
     const camera = sourceWorld.camera as OBC.OrthoPerspectiveCamera
     // First Person refuses to run under an orthographic lens, so the mode can only go back after it.
     if (this._savedProjection) {
@@ -120,6 +139,8 @@ export class CameraController {
     controls.maxAzimuthAngle = saved.maxAzimuthAngle
     Object.assign(controls.mouseButtons, saved.mouseButtons)
     Object.assign(controls.touches, saved.touches)
+    controls.draggingSmoothTime = saved.draggingSmoothTime
+    controls.dollyToCursor = saved.dollyToCursor
 
     if (this._savedPosition && this._savedTarget) {
       const p = this._savedPosition
@@ -130,23 +151,14 @@ export class CameraController {
     this._reset()
   }
 
-  /**
-   * Frame an orthographic view of `target` looking along `viewDirection`.
-   * The camera is placed at `target − viewDirection × span`.
-   *
-   * `viewDirection` is the direction the camera looks:
-   *   (0, -1, 0) → top-down (floorplan)
-   *   (0, 0, -1) → looking south (north elevation)
-   *   (0, 0,  1) → looking north (south elevation)
-   *   (-1, 0, 0) → looking west (east elevation)
-   *   ( 1, 0, 0) → looking east (west elevation)
-   */
+  /** Orthographic view of `target` from `span` back along `viewDirection`, e.g. (0, -1, 0) for a plan. */
   frame(target: THREE.Vector3, viewDirection: THREE.Vector3, span: number) {
     const sourceWorld = this.components.get(CurrentWorld).world
     if (!sourceWorld?.camera?.controls) return
     const camera = sourceWorld.camera as OBC.OrthoPerspectiveCamera
 
     this._forceOrthographic(camera)
+    if (this._saved) this._applyDrawingButtons(sourceWorld.camera.controls)
 
     const dir = viewDirection.clone().normalize()
     const camPos = target.clone().sub(dir.multiplyScalar(span))

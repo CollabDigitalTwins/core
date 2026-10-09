@@ -7,6 +7,7 @@ import * as React from "react";
 import * as THREE from "three";
 
 import { BimContext } from "../../../../store";
+import { BimProvider } from "../../../../store/BIM/context";
 import { LoadingSpinner } from '../../../ui/LoadingSpinner';
 
 import { CameraProjection } from './CameraProjection';
@@ -29,7 +30,16 @@ interface Props {
     height?: string
 }
 
-export function SimpleBimViewer({file, width = "100%", height = "100%"}: Props) {
+// Its own store: the main BIM viewer stays mounted behind data pages and must not share one with a preview.
+export function SimpleBimViewer(props: Props) {
+    return (
+        <BimProvider>
+            <PreviewBimViewer {...props} />
+        </BimProvider>
+    );
+}
+
+function PreviewBimViewer({file, width = "100%", height = "100%"}: Props) {
 
     const { state: bimState, dispatch: bimDispatch } = React.useContext(BimContext);
     const { bimComponents } = bimState.bim;
@@ -89,10 +99,7 @@ export function SimpleBimViewer({file, width = "100%", height = "100%"}: Props) 
                 world.renderer?.resize(new THREE.Vector2(width, height));
             };
 
-            // Watch for container size changes using ResizeObserver. This
-            // already covers the window-resize case: when the window resizes,
-            // the flex layout reshapes this container, and ResizeObserver
-            // fires.
+            // Also covers window resizes, which reshape this container through the flex layout.
             const resizeObserver = new ResizeObserver(() => {
                 handleResize();
             });
@@ -163,7 +170,7 @@ export function SimpleBimViewer({file, width = "100%", height = "100%"}: Props) 
                         const camY = center.y;
                         const camZ = center.z + cameraZ;
 
-                        world.camera.controls.setLookAt(
+                        void world.camera.controls.setLookAt(
                             camX, camY, camZ,
                             center.x, center.y, center.z,
                             true
@@ -230,7 +237,6 @@ export function SimpleBimViewer({file, width = "100%", height = "100%"}: Props) 
             )}
             <div
                 className="bim-container"
-                id="bim-viewer-container"
                 ref={containerRef}
                 style={{
                     width: "100%",

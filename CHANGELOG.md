@@ -7,6 +7,127 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Added
+- **Plugin data follows a moved model.** `BimToolProps.modelPlacement.watch(watcher)` tells a plugin about every
+  confirmed move or turn of a model (`ModelPlacementChange`: `mapPoint`, `elevationChange`, `rotated`), so outlines it
+  keeps in world coordinates move with it. Before a turn, core asks each watcher's `turnWarning` and shows any it returns
+  in a confirmation dialog; declining keeps the model where it was. Covers the placement editor and project north.
+  Core's `ModelPlacementWatchers` component; `PlacementTarget.confirmCommit` lets a target veto a changed placement.
+- A registry plugin not yet shared with the current organization gets an **Install in this organization** button
+  (`RegistryActions.installHere(slug)`) that shares it and switches it on in one step.
+- `ConfirmDialog` in `@collabdt/core/plugins-sdk/components` and `toast` (`success` / `error` / `info`) in
+  `@collabdt/core/plugins-sdk/ui`, both in the runtime shims for mounted plugins.
+- Setting project north shows a toast when it is saved, or when saving fails.
+- **Floorplan surface for plugins.** `BimToolProps.floorplan` (`PluginFloorplan`) lists the storeys and the open one,
+  opens and closes plans, projects the open storey's vector lines (`generateLines`, `hasLines`), lets the user draw a
+  rectangle or polygon on the plan (`drawShape`, snapping to those lines' corners and edges), draws the plugin's own filled and
+  labelled shapes on it (`setOverlay` / `clearOverlay`, kept per plugin) and reads IFCSPACE floor outlines
+  (`getSpaceFootprints`). Types in `@collabdt/core/plugins-sdk/bimViewer`.
+- **Reshaping an outline on a floorplan.** `PluginFloorplan.editShape(points)` lets the user drag an outline's
+  corners and edges (snapping to plan lines unless Alt is held), Ctrl+click an edge, or the plan after the selected
+  corner, to add one, and press Delete to remove the selected one. It resolves on Enter or `finishEditingShape()`;
+  `cancelDrawing()` and Esc drop it. `isEditingShape` reports it. Core's `FloorplanTool.editor` (`PlanShapeEditor`).
+- `PluginFloorplan.frame(points)` fits the open plan's view to an outline with a margin, such as a space a list
+  links to. Core's `FloorplanTool.framePoints`.
+- **Clickable plan overlays.** `setOverlay(shapes, { onShapeClick })` brightens the shape under the pointer, shows a
+  pointer cursor and reports the clicked shape's id. A click that ends a pan does not count.
+- `PlanOverlayOptions.replacesSpaces` names the IFC spaces an overlay redraws; the plan hides their own room fill, X
+  and name tag while that overlay is set, even one with no shapes, so a plugin can switch its rooms off without the
+  IFC rooms showing through. `SpaceOverlayHandle.setHidden(localIds)` hides single rooms.
+- `BimToolProps.buildingId` and `BimToolProps.appearance`, so a runtime-loaded BIM tool knows its building and can
+  colour elements without the compiled-in `usePluginBimAppearance`.
+- **Custom `data.pages`.** A registration with `component` instead of `useRows` / `columns` keeps core's page frame
+  and title and renders the plugin's own content below them. Types: `DataPageTable`, `DataPageCustom`;
+  `DataPageRegistration` is their union.
+- **`@collabdt/core/plugins-sdk/charts`**: the host's Recharts and shadcn chart wrappers for plugins. Its runtime
+  shim is `lazy`, so the host loads Recharts only when a plugin imports it. `RuntimeShim.lazy` marks such shims.
+- `FloorplanTool.sketch` (`PlanSketch`) and `FloorplanTool.overlay` (`PluginPlanOverlay`).
+- `isEditableTarget(target)` in `utils/utils`: whether a keystroke is aimed at a text field rather than the page.
+- **Project north for BIM models.** A model's `fileRotationZ` is its project north, in radians about the vertical
+  axis, added on top of its placement turn (`fileRotationY`). The model is turned by it in the scene, so its grid
+  runs along world X and Z and a floorplan opens square to the screen. The floorplan compass sets it from a typed
+  angle or a two-click line, and the BIM file menu's new **Set project north** (`FileAction` `'projectNorth'`,
+  `useFileActions({ onProjectNorth })`) picks a model edge in the 3D view, snapping and highlighting it as the
+  dimension tool does. Both save it to the file. `FloorplanTool`
+  gains `pickNorthLine()` and `refreshModel(modelId)`.
+
+### Changed
+- `ConfirmDialog`'s `isDeleting` is optional and defaults to `false`.
+- **Removing a shared registry plugin.** The Plugins page no longer fails on a plugin still shared with organizations:
+  a platform admin confirms a dialog naming how many lose access, and the removal wipes the data those organizations
+  stored in it after downloading it as a CSV backup. `RegistryActions.removePlugin(slug, { force })` resolves with
+  `{ backup?: { fileName, contents } }`.
+- The floorplan **Spaces** layer (IFCSPACE fills, X and names) is on by default once a storey's plan lines are generated.
+- **Drawing on a floorplan** (plugin sketches and the true-north line now share one tool): the system crosshair
+  cursor tracks the mouse, and a marker shows where a point snaps to a plan-line corner (square) or edge (diamond);
+  holding Alt places points without snapping. A rectangle
+  rubber-bands from its first corner and a polygon draws live as corners are placed; click-click or click-and-drag
+  both work. Left-click only places points, and the sketch's clicks no longer select elements underneath.
+  Right-click, Enter or a double-click closes a polygon, Backspace undoes a corner, Esc cancels, and Enter, Space
+  and Esc no longer also press the focused button.
+- **Floorplan and elevation navigation works like CAD**: middle-drag always pans, left-drag pans when not drawing,
+  and wheel zoom anchors on the cursor with no easing lag, so the plan stays pinned under the pointer.
+  Opening a plan fits the storey on screen instead of keeping whatever scale the 3D view had; generating its lines
+  afterwards leaves the camera where the user put it.
+- **Floorplans render in Basic mode** (no shadows or ambient occlusion); closing the plan restores the previous mode.
+- **Floorplans show furniture.** Furniture, specialty equipment (building element proxies), sanitary fixtures, doors,
+  windows and railings under the cut are painted with the fill colour, outlined by their plan lines, instead of
+  being hidden.
+- **Cut walls read as solid on a floorplan.** Walls, columns and curtain-wall parts the section cuts are capped with
+  the cut colour (now `0x333333`), whichever storey they are filed under; the cut colour picker recolours the cap too.
+- Floor slabs hide the lines of whatever hangs below them on a plan, without drawing slab joints as lines of their
+  own, and a plan captures only 10 cm below its floor instead of 0.5 m, so the ceiling beneath no longer shows through.
+- **The BIM viewer stays mounted** after its first visit, hidden while another page shows, so switching to a data
+  page and back keeps the loaded models, camera and open floorplan, as the map viewer already did. Visited plugin
+  data pages are kept the same way. File previews (`SimpleBimViewer`) now use their own BIM store.
+- `useBimViewer()` now needs a plugin scope, since its result is bound to the calling plugin. The BIM toolbar uses
+  the new `useBimToolHostProps()`, whose `forPlugin(pluginId)` the toolbar host calls once per plugin tool.
+- The floorplan compass sets the open model's project north instead of turning only the camera; floorplans now
+  always open at azimuth 0. The `ViewSection.trueNorth*` strings read "Project north", and a DXF export is no
+  longer rotated to the screen.
+- Moving a BIM model reads and saves only its placement turn (`fileRotationY`), leaving project north alone.
+
+### Removed
+- `FloorplanTool.northAngle`, `setNorthAngle`, `onNorthAngleChanged` and `startPickNorth`: the view angle was
+  never saved. Project north lives on the file as `fileRotationZ`.
+- `addItemsProjectionByClass` from `lib/drawingProjection`; `addItemsProjectionByClassOccluded` takes its place and
+  gains an optional `occluderIds` argument for items that hide edges without drawing their own.
+
+### Fixed
+- The black cap where a clipping plane or the section box cuts a model stayed where the model was before it was
+  moved, turned or given a project north. Every section cut now follows the model's placement.
+- A room's X on the floorplan Spaces layer stays inside its fill for L-shaped and other non-rectangular rooms.
+- Floorplans cut at the wrong height on models whose storey `Elevation` attributes sit in a different frame from
+  the geometry. Storeys are now placed where their walls and columns actually stand, keeping the attribute spacing.
+- A storey's plan lists only the elements under it in the spatial structure, including furniture and equipment
+  placed in its rooms, read from `getSpatialStructure`
+  instead of the `ContainedInStructure` relation, which some models leave unindexed.
+- Moving or turning a BIM model with the placement editor re-projects its floorplans, so the plan lines and the
+  Spaces layer follow the model instead of staying where it was. A second move from the same properties panel
+  reports only its own change to `modelPlacement` watchers, not the total since the panel opened.
+- The floorplan sketch preview never drew past its first point (three.js no longer grows an existing
+  `BufferGeometry` in `setFromPoints`), so clicks looked ignored.
+- Snap targets refresh when plan lines finish projecting mid-sketch.
+- A BIM model's stored placement and project north are applied as it is added to the scene, not after the camera
+  fit. Plugins reading the model on load (such as IFC space footprints) saw it unturned at the origin.
+  `LoadModels.load` takes the placement as an optional third argument.
+- Labels on the BIM viewer (markers, room tags) no longer draw over dialogs and popovers opened on top of it.
+- Text a runtime-loaded plugin supplies in its manifest `messages` (a data page title and breadcrumb, dialog titles,
+  viewer tab labels) showed the raw key, since only compiled-in manifests reach the i18n catalog. Lookups now fall
+  back to the loaded manifest's messages in the active locale, then English.
+- Chart legends (`ChartLegendContent`) wrap and truncate long labels, with the full label as a tooltip, instead of
+  overflowing the chart container.
+
+### Migration
+- A `registryActions` override adds `installHere(slug)` and resolves `removePlugin` with `{}` (or `{ backup }`).
+- A host that renders plugin BIM tools itself switches from `useBimViewer()` to `useBimToolHostProps()`.
+- A host that serves the plugin runtime publishes `sdkCharts` as a loader (`() => import('@collabdt/core/plugins-sdk/charts')`)
+  and regenerates its shims so `lazy` ones `await` it.
+- Code that called `FloorplanTool.setNorthAngle` or `startPickNorth` saves `fileRotationZ` on the model's file
+  instead, or calls `pickNorthLine()` and turns the model itself; read the angle off the file, not the tool.
+- Calls to `addItemsProjectionByClass(drawing, modelId, ids)` become
+  `addItemsProjectionByClassOccluded(drawing, components, modelId, ids)`.
+
 ## [0.13.3] - 2026-10-05.
 
 ### Added

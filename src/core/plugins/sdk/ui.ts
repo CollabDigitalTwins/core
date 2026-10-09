@@ -4,6 +4,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as React from 'react'
+import { toast as sonner } from 'sonner'
 
 import { usePluginDialogControls } from '../host/dialogs'
 import { usePluginId } from '../host/scope'
@@ -27,4 +28,11 @@ export function usePluginDialogs(): PluginDialogs {
     open: (dialogId, props) => controls.open(pluginId, dialogId, props),
     close: dialogId => controls.close(pluginId, dialogId),
   }), [controls, pluginId])
+}
+
+/** The host's toasts, so a plugin's confirmations look like core's own. */
+export const toast = {
+  success: (message: string) => { sonner.success(message) },
+  error: (message: string) => { sonner.error(message) },
+  info: (message: string) => { sonner.info(message) },
 }

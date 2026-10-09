@@ -8,6 +8,7 @@ import { DEFAULT_PLACEMENT } from '../pointcloud/pointCloudPlacement'
 
 import { objectTarget } from './objectTarget'
 import { SCALABLE_OBJECT_PLACEMENT } from './placementTarget'
+import { setObjectProjectNorth } from './projectNorth'
 
 
 function stubModel() {
@@ -54,6 +55,18 @@ describe('objectTarget', () => {
 
     expect(object!.position.toArray()).toEqual([4, 5, 6])
     expect(object!.rotation.y).toBeCloseTo(1.2)
+  })
+
+  it('keeps project north out of the placement it reads and commits', () => {
+    const { target, object } = setUp()
+    object!.rotation.y = 0.75
+    setObjectProjectNorth(object!, 0.25)
+
+    expect(target.read().rotation[1]).toBeCloseTo(0.5)
+
+    target.apply({ ...DEFAULT_PLACEMENT, rotation: [0, 1, 0] })
+
+    expect(object!.rotation.y).toBeCloseTo(1.25)
   })
 
   it('has no object when the model is not loaded', () => {

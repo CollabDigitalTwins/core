@@ -37,6 +37,8 @@ export const initializeCSS2DRenderer = (world: any) => {
   css2dRenderer.domElement.classList.add('css2d-renderer')
 
   const container = world.renderer!.three.domElement!.parentElement!
+  // Keeps the labels' z-index inside the viewer, so dialogs and popovers portalled to the page cover them.
+  container.style.isolation = 'isolate'
   container.append(css2dRenderer.domElement)
   ;(world as any).css2dRenderer = css2dRenderer
 

@@ -19,18 +19,34 @@ import { ViewModeCoordinator } from '../lib/ViewModeCoordinator'
 import { stagePercent } from '../lib/viewSection'
 
 import { FloorplanRenderer } from './src/FloorplanRenderer'
+import { PlanCutFill } from './src/PlanCutFill'
+import { requestPlanRender } from './src/planScene'
+import { PlanShapeEditor } from './src/PlanShapeEditor'
+import { PlanSketch } from './src/PlanSketch'
+import { PluginPlanOverlay } from './src/PluginPlanOverlay'
 import { StoreyProjector } from './src/StoreyProjector'
 import { CUT_COLOR, FILL_COLOR, FLOORPLAN_TOOL_UUID } from './src/types'
-import { normalizeElevation, storeyCutPlaneY, storeyLowerClipY } from './src/utils'
+import { anchorStoreyElevations, normalizeElevation, storeyCutPlaneY, storeyFloorY, storeyLowerClipY } from './src/utils'
 
 import type { RenderStage } from './src/FloorplanRenderer';
+import type { PlanPoint } from './src/planPointer'
 import type { FloorplanEntry} from './src/types';
 import type { ViewLoadingState } from '../lib/viewSection';
+import type * as FRAGS from '@thatopen/fragments'
 
 const SLOT_SECTION = 'floorplan:section'
 const SLOT_LOWER = 'floorplan:lower'
 
+interface StoreyRecord { name: string; rawElevation: number; storeyLocalId: number }
+
 export type { FloorplanEntry } from './src/types'
+export type { PlanPoint } from './src/planPointer'
+export type { SketchKind } from './src/PlanSketch'
+export type { PlanOverlayOptions, PlanOverlayShape } from './src/PluginPlanOverlay'
+
+// Just under the cut plane, so plugin shapes sit above every surviving 3D surface.
+const PLAN_OVERLAY_OFFSET = 0.01
+const FIT_PADDING = 0.05
 
 export type FloorplanLoadingStage =
   | 'init'
@@ -67,48 +83,28 @@ export class FloorplanTool extends OBC.Component {
   readonly onDrawingsChanged = new OBC.Event<FloorplanEntry[]>()
   readonly onActiveDrawingChanged = new OBC.Event<FloorplanEntry | null>()
   readonly onGenerationStateChanged = new OBC.Event<FloorplanLoadingState>()
-  /** Fires whenever an entry's layer metadata changes (toggle / color). */
   readonly onLayersChanged = new OBC.Event<FloorplanEntry>()
-  /** Fires when the building's true-north angle (in degrees) is updated. */
-  readonly onNorthAngleChanged = new OBC.Event<number>()
-  /** Fires when line-pick mode toggles on/off. */
   readonly onPickingNorthChanged = new OBC.Event<boolean>()
 
   private _entries = new Map<string, FloorplanEntry>()
   private _activeId: string | null = null
-  /** Sequence guard: when activate() is called multiple times in quick
-   *  succession (e.g. user clicks two storeys), only the last call applies
-   *  its final state. Prior calls bail out at await boundaries. */
+  // Only the latest activate() applies its final state; earlier calls bail out at each await.
   private _activateSeq = 0
-  /** True-north rotation in degrees (clockwise from default screen-up).
-   *  Persists across storey switches; cleared by `resetAll` on a building change. */
-  private _northAngle = 0
-  /** True while the user is drawing the two-point north line. */
   private _pickingNorth = false
-  private _pickHandler: ((e: MouseEvent) => void) | null = null
-  private _moveHandler: ((e: MouseEvent) => void) | null = null
-  private _keyHandler: ((e: KeyboardEvent) => void) | null = null
-  /** First clicked point of the north line, in drawing-local space (Y=0).
-   *  Null until the user places the first point. */
-  private _drawStart: THREE.Vector3 | null = null
-  /** Cached snap targets — projected-geometry vertices flattened as
-   *  [x0,z0, x1,z1, …] in drawing-local space. Rebuilt each time draw mode
-   *  starts so it reflects the active storey's lines. */
-  private _snapVerts: Float32Array | null = null
-  /** Rubber-band preview line + cursor snap marker, parented to the active
-   *  drawing so they inherit its world transform. */
-  private _previewLine: THREE.Line | null = null
-  private _snapMarker: THREE.LineSegments | null = null
-  /** Canvas cursor before draw mode swapped in the crosshair — typically the
-   *  floorplan-mode "grab" hand. Restored (not cleared) on exit so panning
-   *  keeps the hand; only leaving floorplan mode reverts to the default. */
-  private _savedPickCursor: string | null = null
+
+  /** Interactive rectangle/polygon drawing on the open plan, for plugins. */
+  readonly sketch: PlanSketch
+  /** Interactive reshaping of an existing outline on the open plan, for plugins. */
+  readonly editor: PlanShapeEditor
+  /** Shapes plugins draw on the open plan, one layer per plugin. */
+  readonly overlay: PluginPlanOverlay
 
   private projector: StoreyProjector
   private renderer: FloorplanRenderer
   private camera: CameraController
   private chrome: ChromeController
   private clip: ClipController
+  private cutFill: PlanCutFill
   private grid: GridController
 
   constructor(components: OBC.Components) {
@@ -120,13 +116,43 @@ export class FloorplanTool extends OBC.Component {
     this.camera = new CameraController(components)
     this.chrome = new ChromeController(components)
     this.clip = new ClipController(components)
+    this.cutFill = new PlanCutFill(components)
     this.grid = new GridController(components)
+    const planY = () => this.activePlanY
+    const snapSegments = () => (this.activeDrawing ? this._collectSnapSegments(this.activeDrawing) : null)
+    this.sketch = new PlanSketch(components, {
+      planY,
+      snapSegments,
+      setLeftButtonPans: pans => this.camera.setLeftButtonPans(pans),
+    })
+    this.editor = new PlanShapeEditor(components, { planY, snapSegments })
+    this.overlay = new PluginPlanOverlay(components, () => this.isPointerBusy)
+    this.overlay.onReplacedSpacesChanged.add(() => this._hideReplacedSpaces())
+    this.sketch.onActiveChanged.add(active => this._onPointerToolChanged(active, this.editor))
+    this.editor.onActiveChanged.add(active => this._onPointerToolChanged(active, this.sketch))
 
     const fragments = components.get(OBC.FragmentsManager)
     fragments.core.onModelLoaded.add((model) => {
       void this.generate(model.modelId)
     })
     fragments.list.onItemDeleted.add(this.onModelRemoved)
+  }
+
+  /** True while a sketch or a shape edit owns the plan pointer. */
+  get isPointerBusy(): boolean {
+    return this.sketch.isActive || this.editor.isActive
+  }
+
+  // Sketching and reshaping both own the pointer, so starting one ends the other.
+  private _onPointerToolChanged(active: boolean, other: { cancel: () => void }) {
+    if (!active) return
+    other.cancel()
+    this.overlay.releasePointer()
+  }
+
+  private _hideReplacedSpaces() {
+    for (const entry of this._entries.values()) entry.spaces?.setHidden(this.overlay.replacedSpaces(entry.modelId))
+    requestPlanRender(this.components)
   }
 
   // Unloading a model has to take its drawings with it, or they outlive the building they describe.
@@ -148,13 +174,17 @@ export class FloorplanTool extends OBC.Component {
     return this._activeId ? this._entries.get(this._activeId) ?? null : null
   }
 
-  /** Inject the world grid (typically `bimState.bim.grid`). Without this
-   *  the tool falls back to looking it up via `OBC.Grids`. */
+  /** World height plugin sketches and overlays sit at, or null with no plan open. */
+  get activePlanY(): number | null {
+    const entry = this.activeDrawing
+    return entry ? storeyCutPlaneY(entry.elevation) - PLAN_OVERLAY_OFFSET : null
+  }
+
+  /** Without an injected grid the tool falls back to looking it up via `OBC.Grids`. */
   setGrid(grid: any | null) {
     this.grid.setGrid(grid)
   }
 
-  /** Toggle visibility of a single per-class layer on an entry's drawing. */
   setLayerVisible(entryId: string, className: string, visible: boolean) {
     const entry = this._entries.get(entryId)
     if (!entry?.drawing) return
@@ -165,7 +195,7 @@ export class FloorplanTool extends OBC.Component {
       entry.spaces.setVisible(visible)
       const spaceMeta = entry.layers.find((l) => l.className === SPACES_LAYER)
       if (spaceMeta) spaceMeta.visible = visible
-      this._requestUpdate()
+      requestPlanRender(this.components)
       this.onLayersChanged.trigger(entry)
       return
     }
@@ -174,27 +204,22 @@ export class FloorplanTool extends OBC.Component {
     entry.drawing.layers.setVisibility(className, visible)
     const meta = entry.layers.find((l) => l.className === className)
     if (meta) meta.visible = visible
-    this._requestUpdate()
+    requestPlanRender(this.components)
     this.onLayersChanged.trigger(entry)
   }
 
-  /** Update the color (hex int, e.g. 0xff0000) of a per-class layer. Updates
-   *  both the projected-line color in the drawing AND the 3D highlight
-   *  color for FILL (slabs / roofs) and CUT (walls / columns / curtain-
-   *  walls) classes — so changing the IFCSLAB color repaints both its
-   *  outline and its solid fill underneath. */
+  /** Recolours a class's projected lines and, for fill and cut classes, its 3D highlight too. */
   async setLayerColor(entryId: string, className: string, color: number) {
     const entry = this._entries.get(entryId)
     if (!entry?.drawing) return
 
-    // Picking a colour for the rooms also drops the default X, which only
-    // reads as a room marker while the fill is unstyled.
+    // Picking a colour for the rooms also drops the default X, which only reads as a marker on an unstyled fill.
     if (className === SPACES_LAYER) {
       if (!entry.spaces) return
       entry.spaces.setColor(color)
       const spaceMeta = entry.layers.find((l) => l.className === SPACES_LAYER)
       if (spaceMeta) spaceMeta.color = color
-      this._requestUpdate()
+      requestPlanRender(this.components)
       this.onLayersChanged.trigger(entry)
       return
     }
@@ -208,19 +233,23 @@ export class FloorplanTool extends OBC.Component {
       await this._updateClassHighlight(entry, className, color)
     }
 
-    this._requestUpdate()
+    requestPlanRender(this.components)
     this.onLayersChanged.trigger(entry)
   }
 
-  /** Prepend Fill / Cut group-color rows to entry.layers so the sidebar
-   *  shows group-level color pickers at the top of the layer list. Idempotent
-   *  — removes any existing group entries before re-inserting. */
-  private _injectGroupColorLayers(entry: FloorplanEntry) {
-    // Read current group colors from the renderer config so subsequent
-    // setFillGroupColor / setCutGroupColor calls are reflected immediately.
+  private _groupColor(index: number, fallback: number): number {
+    // The highlighter keeps its live group colours in a private config, with no getter.
     const groups = (this.renderer as any)._highlighter?.config?.groups ?? []
-    const cutColor: number = (groups[0]?.color as number | undefined) ?? CUT_COLOR
-    const fillColor: number = (groups[1]?.color as number | undefined) ?? FILL_COLOR
+    return (groups[index]?.color as number | undefined) ?? fallback
+  }
+
+  private _cutColor(): number {
+    return this._groupColor(0, CUT_COLOR)
+  }
+
+  private _injectGroupColorLayers(entry: FloorplanEntry) {
+    const cutColor = this._cutColor()
+    const fillColor = this._groupColor(1, FILL_COLOR)
     const filtered = entry.layers.filter(
       (l) => l.className !== 'DrawingLayers.fill' && l.className !== 'DrawingLayers.cut',
     )
@@ -245,10 +274,6 @@ export class FloorplanTool extends OBC.Component {
     ]
   }
 
-  /** Re-apply the 3D highlight (mesh fill color) for a single IFC class on
-   *  the active model, scoped to the active storey. Called after the user
-   *  edits a layer color in the sidebar so the 3D underlay stays in sync
-   *  with the line color. */
   private async _updateClassHighlight(
     entry: FloorplanEntry,
     className: string,
@@ -258,13 +283,11 @@ export class FloorplanTool extends OBC.Component {
     const model = fragments.list.get(entry.modelId) as any
     if (!model) return
 
-    // Match this specific class only (no partial-match regex).
     const map = await model.getItemsOfCategories([
       new RegExp(`^${className}$`),
     ])
     let ids = Object.values(map).flat() as number[]
 
-    // Restrict to the active storey so changes don't leak into other floors.
     try {
       const storeyIds = await this.projector.getCachedStoreyIds(
         entry.modelId,
@@ -297,9 +320,6 @@ export class FloorplanTool extends OBC.Component {
     }
   }
 
-  /** Change the 3D fill color for ALL fill-group items (slabs / roofs) on
-   *  the active entry. Updates the layer metadata so the sidebar swatch
-   *  reflects the change immediately. */
   async setFillGroupColor(entryId: string, color: number) {
     const entry = this._entries.get(entryId)
     if (!entry) return
@@ -309,373 +329,115 @@ export class FloorplanTool extends OBC.Component {
     this.onLayersChanged.trigger(entry)
   }
 
-  /** Change the 3D cut color for ALL cut-group items (walls / columns /
-   *  curtain walls) on the active entry. */
   async setCutGroupColor(entryId: string, color: number) {
     const entry = this._entries.get(entryId)
     if (!entry) return
     await this.renderer.setCutColor(entryId, color)
+    this.cutFill.setColor(color)
+    requestPlanRender(this.components)
     const meta = entry.layers.find((l) => l.className === 'DrawingLayers.cut')
     if (meta) meta.color = color
     this.onLayersChanged.trigger(entry)
   }
 
-  /** Current true-north rotation (degrees, clockwise from default up). */
-  get northAngle(): number {
-    return this._northAngle
-  }
-
-  /** True while the line-pick mode is awaiting a click on the drawing. */
   get isPickingNorth(): boolean {
     return this._pickingNorth
   }
 
-  /** Set the true-north rotation. Normalised to [0, 360). Applied to the
-   *  camera azimuth immediately if a floorplan is currently active so the
-   *  view re-orients. */
-  setNorthAngle(degrees: number) {
-    const normalized = ((degrees % 360) + 360) % 360
-    if (this._northAngle === normalized) return
-    this._northAngle = normalized
-    this.onNorthAngleChanged.trigger(normalized)
-    if (this._activeId) this._applyNorthToCamera()
-  }
-
-  /** Enter two-point draw mode. The user clicks two points on the active
-   *  floorplan (each snapped to the nearest projected-geometry vertex); the
-   *  bearing of the segment between them becomes the new true-north angle.
-   *  A rubber-band preview + snap marker track the cursor; Esc cancels.
-   *  No-op if no floorplan is active. */
-  startPickNorth() {
-    if (this._pickingNorth || !this._activeId) return
-    const entry = this.activeDrawing
-    const world = this.components.get(CurrentWorld).world
-    if (!entry?.drawing || !world?.renderer) return
-    const canvas = world.renderer.three.domElement
-
-    this._drawStart = null
-    this._snapVerts = this._collectSnapVertices(entry)
-
-    this._pickHandler = (e: MouseEvent) => this._onPickClick(e)
-    this._moveHandler = (e: MouseEvent) => this._onPickMove(e)
-    this._keyHandler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') this.cancelPickNorth()
-    }
-    canvas.addEventListener('click', this._pickHandler)
-    canvas.addEventListener('mousemove', this._moveHandler)
-    window.addEventListener('keydown', this._keyHandler)
-    this._savedPickCursor = canvas.style.cursor
-    canvas.style.cursor = 'crosshair'
+  /** Two clicks on the open plan, resolving the segment's ends, or null when cancelled or no plan is open. */
+  async pickNorthLine(): Promise<[PlanPoint, PlanPoint] | null> {
+    if (this._pickingNorth || !this.activeDrawing) return null
+    const picked = this.sketch.start('segment')
+    if (!this.sketch.isActive) return null
     this._pickingNorth = true
     this.onPickingNorthChanged.trigger(true)
+    try {
+      const points = await picked
+      return points?.length === 2 ? [points[0], points[1]] : null
+    } finally {
+      this._pickingNorth = false
+      this.onPickingNorthChanged.trigger(false)
+    }
   }
 
-  /** Exit draw mode without applying any rotation. Tears down the canvas
-   *  listeners and removes the rubber-band preview. */
   cancelPickNorth() {
-    if (!this._pickingNorth) return
-    const world = this.components.get(CurrentWorld).world
-    const canvas = world?.renderer?.three.domElement ?? null
-    if (canvas) {
-      if (this._pickHandler) canvas.removeEventListener('click', this._pickHandler)
-      if (this._moveHandler) canvas.removeEventListener('mousemove', this._moveHandler)
-      // Restore the floorplan-mode cursor (the grab hand), not the OS default
-      // — that only comes back when the tool deactivates.
-      canvas.style.cursor = this._savedPickCursor ?? 'grab'
-    }
-    this._savedPickCursor = null
-    if (this._keyHandler) window.removeEventListener('keydown', this._keyHandler)
-    this._pickHandler = null
-    this._moveHandler = null
-    this._keyHandler = null
-    this._drawStart = null
-    this._snapVerts = null
-    this._clearPreview()
-    this._pickingNorth = false
-    this.onPickingNorthChanged.trigger(false)
+    if (this._pickingNorth) this.sketch.cancel()
   }
 
-  /** Click handler for draw mode. First click places the start point; the
-   *  second rotates the view so the drawn segment becomes parallel to the
-   *  screen X-axis (horizontal). Both points lie on the drawing's horizontal
-   *  plane (Y=0), so only the in-plane direction matters. */
-  private _onPickClick(event: MouseEvent) {
-    const entry = this.activeDrawing
-    if (!entry?.drawing) return
-    const local = this._eventToLocalPoint(event, entry)
-    if (!local) return
-    const point = this._snap(local)
-
-    if (!this._drawStart) {
-      this._drawStart = point
-      this._updatePreview(entry, point)
-      this._requestUpdate()
-      return
-    }
-
-    // Ignore a degenerate (near-zero-length) segment so a stray double-click
-    // can't set a bogus angle.
-    const dx = point.x - this._drawStart.x
-    const dz = point.z - this._drawStart.z
-    if (dx * dx + dz * dz < 1e-6) return
-
-    // Resolve the segment in WORLD space (the drawing has its own orientTo
-    // rotation, so a drawing-local bearing wouldn't match the world-space
-    // camera azimuth), then rotate the view to lay it on the X-axis.
-    const drawing = entry.drawing
-    drawing.three.updateWorldMatrix(true, false)
-    const aWorld = drawing.three.localToWorld(this._drawStart.clone())
-    const bWorld = drawing.three.localToWorld(point.clone())
-    const azimuthDeg = this._azimuthToAlignLineToX(aWorld, bWorld)
-    if (azimuthDeg !== null) this.setNorthAngle(azimuthDeg)
-    this.cancelPickNorth()
+  /** Re-projects a model's plans after its transform changed, reopening its open storey. */
+  async refreshModel(modelId: string) {
+    const reopen = this.activeDrawing?.modelId === modelId ? this.activeDrawing : null
+    if (reopen) await this.deactivate()
+    this.disposeEntriesForModel(modelId)
+    await this.generate(modelId)
+    if (!reopen) return
+    await this.activate(reopen.id)
+    if (reopen.projected) await this.generateLines(reopen.id)
   }
 
-  /** Camera azimuth (degrees) that rotates the top-down view so the world
-   *  segment a→b lands parallel to the screen X-axis (horizontal).
-   *
-   *  Derivation: with the standard Y-up spherical convention camera-controls
-   *  uses, the camera's screen-right world direction has angle ρ = −θ + C
-   *  (θ = azimuth). We measure ρ₀ and θ₀ from the live camera so C cancels —
-   *  making the result independent of the drawing's orientation and the
-   *  controls' up-space. We then solve ρ(θ) = λ (the segment's world angle),
-   *  giving θ = ρ₀ + θ₀ − λ. Returns null if the controls are unavailable. */
-  private _azimuthToAlignLineToX(
-    aWorld: THREE.Vector3,
-    bWorld: THREE.Vector3,
-  ): number | null {
-    const world = this.components.get(CurrentWorld).world
-    const cam = world?.camera?.three as THREE.Camera | undefined
-    const controls = world?.camera?.controls as any
-    if (!cam || typeof controls?.azimuthAngle !== 'number') return null
-
-    const lx = bWorld.x - aWorld.x
-    const lz = bWorld.z - aWorld.z
-    if (lx * lx + lz * lz < 1e-12) return null
-    const lambda = Math.atan2(lz, lx)
-
-    // Screen-right = camera local +X axis = first column of matrixWorld.
-    cam.updateMatrixWorld()
-    const e = cam.matrixWorld.elements
-    const rho0 = Math.atan2(e[2], e[0])
-    const theta0 = controls.azimuthAngle as number
-
-    return ((rho0 + theta0 - lambda) * 180) / Math.PI
-  }
-
-  /** Mousemove handler for draw mode — keeps the snap marker (and, after the
-   *  first click, the rubber-band line) glued to the cursor's snapped point. */
-  private _onPickMove(event: MouseEvent) {
-    const entry = this.activeDrawing
-    if (!entry?.drawing) return
-    const local = this._eventToLocalPoint(event, entry)
-    if (!local) return
-    this._updatePreview(entry, this._snap(local))
-    this._requestUpdate()
-  }
-
-  /** Convert a canvas mouse event into a point on the drawing plane, in
-   *  drawing-local space (XZ plane, Y=0). Casts a ray from the active camera,
-   *  transforms it into the drawing's local frame, and intersects Y=0. */
-  private _eventToLocalPoint(
-    event: MouseEvent,
-    entry: FloorplanEntry,
-  ): THREE.Vector3 | null {
-    const world = this.components.get(CurrentWorld).world
-    if (!world?.renderer || !world.camera || !entry.drawing) return null
-    const canvas = world.renderer.three.domElement
-    const rect = canvas.getBoundingClientRect()
-    const x = ((event.clientX - rect.left) / rect.width) * 2 - 1
-    const y = -((event.clientY - rect.top) / rect.height) * 2 + 1
-    const raycaster = new THREE.Raycaster()
-    raycaster.setFromCamera(
-      new THREE.Vector2(x, y),
-      world.camera.three as THREE.Camera,
-    )
-    const drawing = entry.drawing
-    drawing.three.updateWorldMatrix(true, false)
-    const inv = new THREE.Matrix4().copy(drawing.three.matrixWorld).invert()
-    const origin = raycaster.ray.origin.clone().applyMatrix4(inv)
-    const dir = raycaster.ray.direction.clone().transformDirection(inv)
-    if (Math.abs(dir.y) < 1e-9) return null
-    const t = -origin.y / dir.y
-    if (!Number.isFinite(t)) return null
-    return new THREE.Vector3(
-      origin.x + dir.x * t,
-      0,
-      origin.z + dir.z * t,
-    )
-  }
-
-  /** Snap a drawing-local point to the nearest projected-geometry vertex
-   *  within the snap radius; returns the point unchanged if none is close. */
-  private _snap(local: THREE.Vector3): THREE.Vector3 {
-    const verts = this._snapVerts
-    if (!verts) return local
-    const radius = this._snapRadiusLocal()
-    let best = -1
-    let bestD2 = radius * radius
-    for (let i = 0; i < verts.length; i += 2) {
-      const dx = verts[i] - local.x
-      const dz = verts[i + 1] - local.z
-      const d2 = dx * dx + dz * dz
-      if (d2 < bestD2) {
-        bestD2 = d2
-        best = i
-      }
-    }
-    if (best < 0) return local
-    return new THREE.Vector3(verts[best], 0, verts[best + 1])
-  }
-
-  /** Snap radius in drawing-local units (= world units; the drawing is
-   *  unscaled), derived from a fixed ~12 px tolerance at the current ortho
-   *  zoom so it feels consistent as the user zooms. */
-  private _snapRadiusLocal(): number {
-    const SNAP_PX = 12
-    const FALLBACK = 0.5
-    const world = this.components.get(CurrentWorld).world
-    const cam = world?.camera?.three as any
-    const canvas = world?.renderer?.three.domElement
-    if (!cam?.isOrthographicCamera || !canvas) return FALLBACK
-    const worldWidth = (cam.right - cam.left) / (cam.zoom || 1)
-    const worldPerPixel = worldWidth / Math.max(1, canvas.clientWidth)
-    return worldPerPixel * SNAP_PX || FALLBACK
-  }
-
-  /** Flatten every visible projected line vertex into drawing-local [x,z]
-   *  pairs for endpoint snapping. Each vertex is transformed through its
-   *  owning object's world matrix into the drawing's local frame, so it
-   *  works regardless of how layers nest the `LineSegments`. */
-  private _collectSnapVertices(entry: FloorplanEntry): Float32Array | null {
+  // Every visible projected line as world `[x0, z0, x1, z1, …]`, for snapping sketch points to walls and corners.
+  private _collectSnapSegments(entry: FloorplanEntry): Float32Array | null {
     const drawing = entry.drawing
     if (!drawing) return null
     drawing.three.updateWorldMatrix(true, true)
-    const inv = new THREE.Matrix4().copy(drawing.three.matrixWorld).invert()
     const v = new THREE.Vector3()
     const out: number[] = []
     drawing.three.traverse((child: THREE.Object3D) => {
       if (!(child instanceof THREE.LineSegments) || !child.visible) return
       if (child.userData?.isDimension) return
-      const pos = child.geometry?.attributes?.position as
-        | THREE.BufferAttribute
-        | undefined
+      const geometry = child.geometry as THREE.BufferGeometry | undefined
+      const pos = geometry?.attributes?.position as THREE.BufferAttribute | undefined
       if (!pos) return
-      for (let i = 0; i < pos.count; i++) {
-        v.set(pos.getX(i), pos.getY(i), pos.getZ(i))
-          .applyMatrix4(child.matrixWorld)
-          .applyMatrix4(inv)
-        out.push(v.x, v.z)
+      const index = geometry?.index
+      const count = index ? index.count : pos.count
+      for (let i = 0; i + 1 < count; i += 2) {
+        for (const j of [i, i + 1]) {
+          const vertex = index ? index.getX(j) : j
+          v.set(pos.getX(vertex), pos.getY(vertex), pos.getZ(vertex)).applyMatrix4(child.matrixWorld)
+          out.push(v.x, v.z)
+        }
       }
     })
     return out.length ? new Float32Array(out) : null
   }
 
-  /** Update (creating on first use) the cursor snap marker and, once the
-   *  first point is placed, the rubber-band line from start → cursor. Both
-   *  live in drawing-local space, Y=0. */
-  private _updatePreview(entry: FloorplanEntry, current: THREE.Vector3) {
-    const drawing = entry.drawing
-    if (!drawing) return
-    const COLOR = 0x2563eb
-
-    if (!this._snapMarker) {
-      // Unit-armed cross scaled to the snap radius so it reads as the
-      // current snap tolerance.
-      const geom = new THREE.BufferGeometry()
-      geom.setAttribute(
-        'position',
-        new THREE.Float32BufferAttribute(
-          new Float32Array([-1, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 1]),
-          3,
-        ),
-      )
-      this._snapMarker = new THREE.LineSegments(
-        geom,
-        new THREE.LineBasicMaterial({ color: COLOR }),
-      )
-      this._snapMarker.renderOrder = 999
-      drawing.three.add(this._snapMarker)
-    }
-    const arm = this._snapRadiusLocal()
-    this._snapMarker.scale.setScalar(arm)
-    this._snapMarker.position.set(current.x, 0, current.z)
-    this._snapMarker.visible = true
-
-    if (!this._drawStart) {
-      if (this._previewLine) this._previewLine.visible = false
-      return
-    }
-    if (!this._previewLine) {
-      const geom = new THREE.BufferGeometry()
-      geom.setAttribute(
-        'position',
-        new THREE.Float32BufferAttribute(new Float32Array(6), 3),
-      )
-      this._previewLine = new THREE.Line(
-        geom,
-        new THREE.LineBasicMaterial({ color: COLOR }),
-      )
-      this._previewLine.renderOrder = 999
-      drawing.three.add(this._previewLine)
-    }
-    const pos = this._previewLine.geometry.attributes
-      .position as THREE.BufferAttribute
-    pos.setXYZ(0, this._drawStart.x, 0, this._drawStart.z)
-    pos.setXYZ(1, current.x, 0, current.z)
-    pos.needsUpdate = true
-    this._previewLine.visible = true
-  }
-
-  /** Remove + dispose the preview line and snap marker. Uses each object's
-   *  own parent so it stays correct even when called from deactivate(),
-   *  where `_activeId` is already null. */
-  private _clearPreview() {
-    if (this._previewLine) {
-      this._previewLine.parent?.remove(this._previewLine)
-      this._previewLine.geometry.dispose()
-      const m = this._previewLine.material
-      if (!Array.isArray(m)) m.dispose()
-      this._previewLine = null
-    }
-    if (this._snapMarker) {
-      this._snapMarker.parent?.remove(this._snapMarker)
-      this._snapMarker.geometry.dispose()
-      const m = this._snapMarker.material
-      if (!Array.isArray(m)) m.dispose()
-      this._snapMarker = null
-    }
-    this._requestUpdate()
-  }
-
-  /** Push `_northAngle` into the camera-controls azimuth so the view
-   *  rotates around the active floor's centre. Called on every activate
-   *  and whenever the angle changes while a floorplan is active. */
-  private _applyNorthToCamera() {
+  // Zero azimuth puts world X across the screen, so a model turned to project north reads square.
+  private _squareCameraToAxes() {
     const world = this.components.get(CurrentWorld).world
     if (!world?.camera?.controls) return
     const controls = world.camera.controls as any
-    const radians = (this._northAngle * Math.PI) / 180
     if (typeof controls.rotateAzimuthTo === 'function') {
-      void pumpCameraTransition(this.components, controls.rotateAzimuthTo(radians, true))
+      void pumpCameraTransition(this.components, controls.rotateAzimuthTo(0, true))
     } else {
-      controls.azimuthAngle = radians
+      controls.azimuthAngle = 0
     }
   }
 
-  /** Force a render update so layer visibility/color changes paint
-   *  immediately even when the camera is at rest. */
-  private _requestUpdate() {
-    try {
-      const fragments = this.components.get(OBC.FragmentsManager)
-      void fragments.core.update(true)
-    } catch {
-      // FragmentsManager not initialized yet — no-op.
-    }
+  // The Elevation attribute is in the IFC's own frame, so it is shifted onto where each storey's walls actually stand.
+  private async _storeyElevations(
+    modelId: string,
+    model: FRAGS.FragmentsModel,
+    storeys: StoreyRecord[],
+  ): Promise<number[]> {
+    const anchorIds = Object.values(await model.getItemsOfCategories([/^IFCWALL/, /^IFCCOLUMN/])).flat()
+    const boxes: (THREE.Box3 | undefined)[] = anchorIds.length > 0 ? await model.getBoxes(anchorIds) : []
+    const bottomById = new Map<number, number>()
+    anchorIds.forEach((id, i) => {
+      const box = boxes[i]
+      if (box && !box.isEmpty()) bottomById.set(id, box.min.y)
+    })
+    const withFloors = await Promise.all(storeys.map(async (storey) => {
+      const contained = await this.projector.getCachedStoreyIds(modelId, storey.storeyLocalId, model)
+      const bottoms = contained.flatMap(id => bottomById.get(id) ?? [])
+      return { rawElevation: storey.rawElevation, floorY: storeyFloorY(bottoms) }
+    }))
+    const anchored = anchorStoreyElevations(withFloors)
+    if (anchored) return anchored
+    const [, coordHeight] = await model.getCoordinates()
+    return storeys.map(s => normalizeElevation(s.rawElevation, coordHeight, model.box.min.y, model.box.max.y))
   }
 
-  /** Build one entry per IFC storey. Drawings are projected lazily on
-   *  first activation. */
+  /** One entry per IFC storey; drawings are projected lazily on first activation. */
   async generate(modelId: string): Promise<FloorplanEntry[]> {
     const fragments = this.components.get(OBC.FragmentsManager)
     const model = fragments.list.get(modelId)
@@ -696,37 +458,24 @@ export class FloorplanTool extends OBC.Component {
       if (storeyIds.length === 0) return []
 
       const storeysData = await model.getItemsData(storeyIds)
-      const [, coordHeight] = await model.getCoordinates()
-      const box = model.box
-      const minY = box.min.y
-      const maxY = box.max.y
+      const storeys: StoreyRecord[] = storeysData.flatMap((storey: any, i: number) =>
+        'value' in storey.Name && 'value' in storey.Elevation
+          ? [{ name: String(storey.Name.value), rawElevation: Number(storey.Elevation.value), storeyLocalId: storeyIds[i] }]
+          : [],
+      )
+      const elevations = await this._storeyElevations(modelId, model, storeys)
 
-      const created: FloorplanEntry[] = []
-
-      // storeysData is parallel to storeyIds — preserve the mapping so each
-      // entry remembers its storey's localId for later per-storey queries.
-      for (let i = 0; i < storeysData.length; i++) {
-        const storey = storeysData[i]
-        const storeyLocalId = storeyIds[i]
-        if (!('value' in storey.Name && 'value' in storey.Elevation)) continue
-
-        const name = String(storey.Name.value)
-        const rawElev = Number(storey.Elevation.value)
-        const elevation = normalizeElevation(rawElev, coordHeight, minY, maxY)
-
-        const entry: FloorplanEntry = {
-          id: `${modelId}::${name}`,
-          name,
-          elevation,
-          storeyLocalId,
-          modelId,
-          drawing: null,
-          projected: false,
-          layers: [],
-        }
-        this._entries.set(entry.id, entry)
-        created.push(entry)
-      }
+      const created: FloorplanEntry[] = storeys.map((storey, i) => ({
+        id: `${modelId}::${storey.name}`,
+        name: storey.name,
+        elevation: elevations[i],
+        storeyLocalId: storey.storeyLocalId,
+        modelId,
+        drawing: null,
+        projected: false,
+        layers: [],
+      }))
+      for (const entry of created) this._entries.set(entry.id, entry)
 
       this.onDrawingsChanged.trigger(this.drawings)
       return created
@@ -757,11 +506,10 @@ export class FloorplanTool extends OBC.Component {
     if (seq !== this._activateSeq) return
 
     try {
-      // ----- Phase 1: synchronous chrome + clip + camera (instant feedback)
       if (!wasActive) {
         this.chrome.applyLighting()
+        this.chrome.applyBasicRender()
         this.chrome.applyDrawingBackground()
-        // Lock to top-down (polar = 0).
         this.camera.lock(0)
         this.chrome.setCursor()
         this.chrome.disableHighlighter()
@@ -778,8 +526,6 @@ export class FloorplanTool extends OBC.Component {
       safeRun(() => this._applyLowerClip(entry), 'applyLower')
       safeRun(() => this.grid.hide(), 'hideGrid')
 
-      // Hide previously visible drawings synchronously so they don't bleed
-      // through while the new one is being projected.
       for (const other of this._entries.values()) {
         if (other.drawing && other.id !== entry.id) {
           other.drawing.three.visible = false
@@ -788,16 +534,20 @@ export class FloorplanTool extends OBC.Component {
 
       this._frameCamera(entry)
 
-      // Mark active immediately so the React UI shows Exit and the user can
-      // bail out at any point during loading.
+      // Active before loading finishes, so the user can exit at any point.
       this._activeId = id
+      this.sketch.cancel()
+      this.editor.cancel()
+      this.overlay.show(storeyCutPlaneY(entry.elevation) - PLAN_OVERLAY_OFFSET)
       this.onActiveDrawingChanged.trigger(entry)
 
-      // ----- Phase 2: recolour only. Lines are a separate, explicit step. -----
       await this.renderer.apply(entry, (stage) => {
         if (seq !== this._activateSeq) return
         this._emit({ isLoading: true, stage })
       })
+      if (seq !== this._activateSeq) return
+
+      await safeRunAsync(() => this.cutFill.show(sourceWorld, storeyCutPlaneY(entry.elevation), this._cutColor()), 'showCutFill')
       if (seq !== this._activateSeq) return
 
       await this._showDrawing(entry, seq)
@@ -824,11 +574,14 @@ export class FloorplanTool extends OBC.Component {
 
     try {
       await this.projector.project(entry)
+      entry.spaces?.setHidden(this.overlay.replacedSpaces(entry.modelId))
       if (seq !== this._activateSeq) return
 
-      await this._showDrawing(entry, seq)
+      await this._showDrawing(entry, seq, false)
       if (seq !== this._activateSeq) return
 
+      this.sketch.refreshSnapTargets()
+      this.editor.refreshSnapTargets()
       this.onLayersChanged.trigger(entry)
       this._emit({ isLoading: false, stage: 'done' })
     } catch (error) {
@@ -837,36 +590,28 @@ export class FloorplanTool extends OBC.Component {
     }
   }
 
-  private async _showDrawing(entry: FloorplanEntry, seq: number) {
+  // Lines generated on an open plan leave the camera alone: the user may already have panned or zoomed.
+  private async _showDrawing(entry: FloorplanEntry, seq: number, fit = true) {
     const editor = this.components.get(OBF.DrawingEditor)
     editor.activeDrawing = entry.drawing
     if (entry.drawing) entry.drawing.three.visible = true
 
-    // Phase 1's `_frameCamera` can only guess from the model bounds; once lines exist, fit to them.
-    await safeRunAsync(() => this._fitToDrawing(entry), 'fitToDrawing')
+    if (fit) await safeRunAsync(() => this._fitToDrawing(entry), 'fitToDrawing')
     if (seq !== this._activateSeq) return
 
     this._injectGroupColorLayers(entry)
   }
 
-  /**
-   * Exit floorplan mode. Each cleanup step is independently guarded so a
-   * failure in one (e.g. resetHighlight on a huge model) cannot strand
-   * camera, clip, or gizmo state.
-   */
+  /** Each cleanup step is guarded on its own, so one failure cannot strand camera, clip or gizmo state. */
   async deactivate() {
     if (!this._activeId) return
 
-    // Reset active state immediately so the React UI hides Exit and double
-    // calls become no-ops.
     this._activeId = null
+    safeRun(() => this.sketch.cancel(), 'cancelSketch')
+    safeRun(() => this.editor.cancel(), 'cancelShapeEdit')
+    safeRun(() => this.overlay.hide(), 'hideOverlay')
     this.onActiveDrawingChanged.trigger(null)
 
-    // Drop any in-flight north-pick listener so the canvas stops
-    // intercepting clicks once the floorplan is closed.
-    safeRun(() => this.cancelPickNorth(), 'cancelPickNorth')
-
-    // Clear editor + drawing visibility (synchronous, fast).
     safeRun(() => {
       const editor = this.components.get(OBF.DrawingEditor)
       editor.activeDrawing = null
@@ -879,8 +624,8 @@ export class FloorplanTool extends OBC.Component {
       }
     }
 
-    // Restore user-facing state FIRST so input feels responsive even if
-    // model-render restoration takes a beat.
+    // User-facing state first, so input responds while the slower model restore runs.
+    safeRun(() => this.cutFill.hide(), 'hideCutFill')
     safeRun(() => this.clip.removeAll(), 'removeClips')
     safeRun(() => this.grid.restore(), 'showGrid')
     safeRun(() => this.camera.unlock(), 'unlockCamera')
@@ -888,11 +633,10 @@ export class FloorplanTool extends OBC.Component {
     safeRun(() => this.chrome.restoreHighlighter(), 'restoreHighlighter')
     safeRun(() => this.chrome.showGizmo(), 'showGizmo')
     safeRun(() => this.chrome.removeLighting(), 'removeLighting')
+    safeRun(() => this.chrome.restoreRenderMode(), 'restoreRenderMode')
     safeRun(() => this.chrome.restoreBackground(), 'restoreBackground')
     safeRun(() => this.chrome.restoreSceneContent(), 'restoreSceneContent')
 
-    // Slow async step last. Awaited so callers can chain on it, but failures
-    // can't undo the synchronous restores above.
     await safeRunAsync(() => this.renderer.restore(), 'restoreModelRendering')
 
     safeRun(() => this._releaseCoordinator(), 'releaseCoordinator')
@@ -903,8 +647,7 @@ export class FloorplanTool extends OBC.Component {
     for (const [id, entry] of this._entries) {
       if (entry.modelId !== modelId) continue
       if (this._activeId === id) void this.deactivate()
-      // The room overlay owns DOM label nodes, so it needs an explicit dispose
-      // rather than being collected with the drawing's Three objects.
+      // The room overlay owns DOM label nodes, which disposing the drawing would leave behind.
       safeRun(() => entry.spaces?.dispose(), 'disposeSpaces')
       disposeDrawing(this.components, entry.drawing)
       this._entries.delete(id)
@@ -916,10 +659,7 @@ export class FloorplanTool extends OBC.Component {
     if (touched) this.onDrawingsChanged.trigger(this.drawings)
   }
 
-  /**
-   * Building-scoped teardown: frees every drawing and the north angle while
-   * keeping the model subscriptions, so the tool serves the next building.
-   */
+  /** Frees every drawing but keeps the model subscriptions, so the tool serves the next building. */
   resetAll() {
     this._activateSeq++
     void this.deactivate()
@@ -934,13 +674,14 @@ export class FloorplanTool extends OBC.Component {
       this.renderer.invalidateForModel(entry.modelId)
     }
     this._entries.clear()
-    this._northAngle = 0
-    this.onNorthAngleChanged.trigger(0)
+    safeRun(() => this.overlay.clearAll(), 'clearOverlay')
     this.onDrawingsChanged.trigger([])
   }
 
   dispose() {
     void this.deactivate()
+    safeRun(() => this.overlay.clearAll(), 'clearOverlay')
+    safeRun(() => this.cutFill.dispose(), 'disposeCutFill')
     safeRun(
       () => this.components.get(OBC.FragmentsManager).list.onItemDeleted.remove(this.onModelRemoved),
       'unsubscribeModelRemoved',
@@ -957,8 +698,6 @@ export class FloorplanTool extends OBC.Component {
     this.onGenerationStateChanged.trigger(state)
   }
 
-  /** Mutual-exclusion claim. If ElevationsTool (or any other view tool)
-   *  was active, the coordinator awaits its deactivate() first. */
   private async _tryClaimCoordinator() {
     try {
       const coordinator = this.components.get(ViewModeCoordinator)
@@ -976,9 +715,7 @@ export class FloorplanTool extends OBC.Component {
     }
   }
 
-  /** Lower clip plane sits just under the active floor's slab (normal +Y),
-   *  so ceiling fixtures / lights / equipment of the storey below never
-   *  bleed into the projection or the 3D underlay. */
+  // Just under the active floor's slab, so the storey below's ceiling fixtures never reach the plan.
   private _applyLowerClip(entry: FloorplanEntry) {
     const cutY = storeyLowerClipY(entry.elevation)
     this.clip.set(
@@ -988,23 +725,37 @@ export class FloorplanTool extends OBC.Component {
     )
   }
 
-  // North is applied first: the fit uses an axis-aligned box, so rotating after it could push content out of frame.
+  // The camera squares up first: the fit uses an axis-aligned box, so rotating after it could push content out of frame.
   private async _fitToDrawing(entry: FloorplanEntry) {
     if (!entry.drawing) return
 
     const box = new THREE.Box3().setFromObject(entry.drawing.three)
     if (box.isEmpty()) {
-      // Nothing projected (empty storey) — fall back to the model-bounds guess.
       this._frameCamera(entry)
       return
     }
 
-    this._applyNorthToCamera()
+    this._squareCameraToAxes()
+    await this._fitPlanBox(box)
+  }
 
-    const world = this.components.get(CurrentWorld).world
-    const controls = world?.camera?.controls
+  /** Fits the open plan's view to an outline in world plan coordinates; no-op with no plan open. */
+  async framePoints(points: readonly PlanPoint[], padding = 0.25) {
+    const planY = this.activePlanY
+    if (planY === null || points.length === 0) return
+    const box = new THREE.Box3().setFromPoints(points.map(point => new THREE.Vector3(point.x, planY, point.z)))
+    box.expandByScalar(Math.max(box.max.x - box.min.x, box.max.z - box.min.z, 1) * padding)
+    await safeRunAsync(() => this._fitPlanBox(box), 'framePoints')
+  }
+
+  // An orthographic plan's scale is its zoom, not its distance, so framing has to go through fitToBox.
+  private async _fitPlanBox(box: THREE.Box3) {
+    const controls = this.components.get(CurrentWorld).world?.camera?.controls
     if (!controls) return
-    await pumpCameraTransition(this.components, controls.fitToBox(box, true))
+    const pad = Math.max(box.max.x - box.min.x, box.max.z - box.min.z) * FIT_PADDING
+    await pumpCameraTransition(this.components, controls.fitToBox(box, true, {
+      paddingTop: pad, paddingBottom: pad, paddingLeft: pad, paddingRight: pad,
+    }))
   }
 
   private _frameCamera(entry: FloorplanEntry) {
@@ -1022,7 +773,12 @@ export class FloorplanTool extends OBC.Component {
       center.z,
     )
     this.camera.frame(target, new THREE.Vector3(0, -1, 0), span)
-    this._applyNorthToCamera()
+    this._squareCameraToAxes()
+    const storey = new THREE.Box3(
+      new THREE.Vector3(model.box.min.x, entry.elevation, model.box.min.z),
+      new THREE.Vector3(model.box.max.x, entry.elevation + 1.2, model.box.max.z),
+    )
+    void safeRunAsync(() => this._fitPlanBox(storey), 'fitToModel')
   }
 
 }

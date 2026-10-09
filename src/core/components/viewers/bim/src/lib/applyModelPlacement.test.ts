@@ -4,6 +4,8 @@
 import * as THREE from 'three'
 import { describe, expect, it, vi } from 'vitest'
 
+import { objectProjectNorth } from '../../../shared/placement/projectNorth'
+
 import { applyModelPlacement } from './applyModelPlacement'
 
 describe('applyModelPlacement', () => {
@@ -30,6 +32,23 @@ describe('applyModelPlacement', () => {
     applyModelPlacement(object, { fileTransformX: 0, fileTransformY: 0, fileTransformZ: 0, fileRotationY: Math.PI / 2 })
 
     expect(object.rotation.y).toBeCloseTo(Math.PI / 2)
+  })
+
+  it('adds project north to the placement yaw and remembers it on the object', () => {
+    const object = new THREE.Object3D()
+
+    applyModelPlacement(object, { fileTransformX: 0, fileTransformY: 0, fileTransformZ: 0, fileRotationY: 0.5, fileRotationZ: 0.25 })
+
+    expect(object.rotation.y).toBeCloseTo(0.75)
+    expect(objectProjectNorth(object)).toBe(0.25)
+  })
+
+  it('turns a model that has only a project north', () => {
+    const object = new THREE.Object3D()
+
+    applyModelPlacement(object, { fileTransformX: 0, fileTransformY: 0, fileTransformZ: 0, fileRotationY: null, fileRotationZ: -0.3 })
+
+    expect(object.rotation.y).toBeCloseTo(-0.3)
   })
 
   it('keeps the existing rotation when none was stored', () => {

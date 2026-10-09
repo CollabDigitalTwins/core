@@ -91,6 +91,7 @@ function RegistryEntry({ plugin, canGrant, actions }: { plugin: RegistryPlugin; 
   const [busy, setBusy] = React.useState(false)
 
   const canEdit = plugin.ownedByMe || canGrant
+  const sharedWith = plugin.grants?.length ?? 0
 
   const exportVersion = async (version: string) => {
     try {
@@ -112,8 +113,11 @@ function RegistryEntry({ plugin, canGrant, actions }: { plugin: RegistryPlugin; 
           ? t('toastVersionYanked', { version: pending.version })
           : t('toastVersionDeleted', { version: pending.version }))
       } else {
-        await actions.removePlugin(plugin.slug)
-        toast.success(t('toastPluginRemoved', { name: plugin.name }))
+        const { backup } = await actions.removePlugin(plugin.slug, { force: sharedWith > 0 })
+        if (backup) saveFile(backup.fileName, backup.contents)
+        toast.success(backup
+          ? t('toastSharedPluginRemoved', { name: plugin.name, count: sharedWith, file: backup.fileName })
+          : t('toastPluginRemoved', { name: plugin.name }))
       }
       setPending(null)
     } catch (error) {
@@ -169,8 +173,8 @@ function RegistryEntry({ plugin, canGrant, actions }: { plugin: RegistryPlugin; 
         title={pending?.kind === 'version'
           ? t('removeVersionTitle', { name: plugin.name, version: pending.version })
           : t('removePluginTitle', { name: plugin.name })}
-        description={removalDescription(pending, plugin.slug, t)}
-        confirmLabel={t('removeConfirm')}
+        description={removalDescription(pending, plugin.slug, sharedWith, t)}
+        confirmLabel={pending?.kind === 'plugin' && sharedWith > 0 ? t('removeSharedConfirm') : t('removeConfirm')}
         cancelLabel={t('cancel')}
       />
     </div>
@@ -180,9 +184,12 @@ function RegistryEntry({ plugin, canGrant, actions }: { plugin: RegistryPlugin; 
 function removalDescription(
   pending: Pending,
   slug: string,
+  sharedWith: number,
   t: ReturnType<typeof useTranslations<'PluginRegistry'>>,
 ): string {
-  if (pending?.kind !== 'version') return t('removePluginDescription', { slug })
+  if (pending?.kind !== 'version') {
+    return sharedWith > 0 ? t('removeSharedPluginDescription', { count: sharedWith, slug }) : t('removePluginDescription', { slug })
+  }
   return pending.retired ? t('removeRetiredVersionDescription') : t('removeVersionDescription')
 }
 

@@ -87,9 +87,11 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
         return canRun(other) ? other : null;
     }, [bimComponents]);
 
+    // The viewer stays mounted behind other pages, where Ctrl+Z must not rewind a scene nobody can see.
     useUndoRedoShortcuts({
         undo: () => { void undoRedoTarget('undo')?.undo(); },
         redo: () => { void undoRedoTarget('redo')?.redo(); },
+        enabled: currentViewer === ViewerNames.bim,
     });
 
 

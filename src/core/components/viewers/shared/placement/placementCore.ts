@@ -78,6 +78,7 @@ export class PlacementCore implements PlacementExclusiveTool {
   private proxy: THREE.Object3D | null = null
   private proxyBase: PointCloudPlacement | null = null
   private draggingProxy = false
+  private confirming = false
   /** A gizmo attach always starts in translate, so the live mode has to be re-applied. */
   private currentMode: PlacementMode = 'translate'
 
@@ -195,7 +196,15 @@ export class PlacementCore implements PlacementExclusiveTool {
     const stored = placement && narrowPlacement(placement, target.capabilities)
     const before = this.snapshot && narrowPlacement(this.snapshot, target.capabilities)
     // A Done that moved nothing must not write, or claim to have written.
-    const changed = !!stored && (!before || !samePlacement(stored, before))
+    let changed = !!stored && (!before || !samePlacement(stored, before))
+    if (changed && stored && before && target.confirmCommit) {
+      if (this.confirming) return
+      this.confirming = true
+      const proceed = await target.confirmCommit(stored, before).finally(() => { this.confirming = false })
+      if (this.target !== target) return
+      if (!proceed && this.snapshot) target.apply(this.snapshot)
+      changed = proceed
+    }
     const committed = stored && changed
       ? { id: target.id, name: target.name, capabilities: target.capabilities, mode: this.currentMode, placement, pivot: this.pivot }
       : null

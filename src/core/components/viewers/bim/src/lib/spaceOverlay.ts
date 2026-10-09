@@ -7,26 +7,6 @@ import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
 import type { DrawingLayerInfo } from './drawingLayers'
 import type * as OBC from '@thatopen/components'
 
-/**
- * Room (IFCSPACE) overlay for floorplans.
- *
- * Spaces cannot go through the normal per-class edge projection: they are
- * volumetric solids, so projecting them yields the outline of a box rather than
- * the room graphic drafters expect. Instead this builds, per space:
- *
- * - a translucent fill from the solid's **bottom face**, which is the true
- *   footprint (a bounding rectangle would be wrong for any L-shaped room),
- * - an X across the footprint's extent, the conventional "this is a room"
- *   marker, shown only while the layer is at its default colour,
- * - a name tag at the footprint centroid.
- *
- * Spaces are also missing from the projection for a second reason: they hang
- * off the storey through `IfcRelAggregates`, not the
- * `IfcRelContainedInSpatialStructure` relation the storey filter queries, so
- * they never reach `idFilter`. This module selects them by elevation instead,
- * the same way door swings are matched to a storey.
- */
-
 export const SPACES_LAYER = 'Spaces'
 
 /** Light blue, matching the convention in most authoring software. */
@@ -40,17 +20,16 @@ const BOTTOM_FACE_EPSILON = 0.02
 /** Keeps the fill and X behind the projected linework. */
 const FILL_RENDER_ORDER = -20
 const CROSS_RENDER_ORDER = -19
+const MIN_CROSS_PIECE = 1e-6
 
 export interface SpaceOverlayHandle {
   /** Number of spaces drawn. */
   count: number
   setVisible: (visible: boolean) => void
-  /**
-   * Recolour the fill. Any call counts as a user choice, which hides the X —
-   * the cross reads as "unstyled room", so it stops making sense once the room
-   * carries a deliberate colour.
-   */
+  /** Recolours the fill. Any call is a deliberate colour, which hides the X that marks an unstyled room. */
   setColor: (color: number) => void
+  /** Hides these rooms' fill, X and tag, and shows every other room. */
+  setHidden: (localIds: ReadonlySet<number>) => void
   dispose: () => void
 }
 
@@ -66,7 +45,7 @@ export interface SpaceFootprint {
 export type ToDrawingLocal = (point: THREE.Vector3) => THREE.Vector3
 
 /** World-space triangles of one item, with its transform and the model's applied. */
-function worldTriangles(
+export function worldTriangles(
   meshes: readonly any[] | undefined,
   modelMatrix: THREE.Matrix4 | undefined,
 ): number[] {
@@ -95,11 +74,7 @@ function worldTriangles(
   return out
 }
 
-/**
- * Keep the triangles lying on the solid's lowest horizontal plane and flatten
- * them into the drawing. Falls back to the world bounding box when the solid
- * has no flat base (a sloped or malformed space).
- */
+/** The solid's lowest flat face flattened into the drawing, or its world box when it has no flat base. */
 export function footprintFor(
   triangles: number[],
   toLocal: ToDrawingLocal,
@@ -182,6 +157,50 @@ export function footprintFor(
   }
 }
 
+/** The parts of the segment `from`–`to` inside the footprint's triangles, as line-segment vertices. */
+export function clipSegmentToFootprint(from: THREE.Vector2, to: THREE.Vector2, triangles: readonly number[]): number[] {
+  const out: number[] = []
+  const dx = to.x - from.x
+  const dz = to.y - from.y
+  for (let offset = 0; offset < triangles.length; offset += 9) {
+    const range = segmentRangeInTriangle(from, dx, dz, triangles, offset)
+    if (!range) continue
+    const [start, end] = range
+    out.push(from.x + dx * start, 0, from.y + dz * start, from.x + dx * end, 0, from.y + dz * end)
+  }
+  return out
+}
+
+function segmentRangeInTriangle(
+  from: THREE.Vector2,
+  dx: number,
+  dz: number,
+  triangles: readonly number[],
+  offset: number,
+): [number, number] | null {
+  const xs = [triangles[offset], triangles[offset + 3], triangles[offset + 6]]
+  const zs = [triangles[offset + 2], triangles[offset + 5], triangles[offset + 8]]
+  const winding = Math.sign((xs[1] - xs[0]) * (zs[2] - zs[0]) - (zs[1] - zs[0]) * (xs[2] - xs[0]))
+  if (winding === 0) return null
+
+  let start = 0
+  let end = 1
+  for (let k = 0; k < 3; k++) {
+    const edgeX = xs[(k + 1) % 3] - xs[k]
+    const edgeZ = zs[(k + 1) % 3] - zs[k]
+    const insideAtStart = winding * (edgeX * (from.y - zs[k]) - edgeZ * (from.x - xs[k]))
+    const insideRate = winding * (edgeX * dz - edgeZ * dx)
+    if (insideRate === 0) {
+      if (insideAtStart < 0) return null
+      continue
+    }
+    const crossing = -insideAtStart / insideRate
+    if (insideRate > 0) start = Math.max(start, crossing)
+    else end = Math.min(end, crossing)
+  }
+  return end - start > MIN_CROSS_PIECE ? [start, end] : null
+}
+
 function readSpaceName(data: any, fallback: number): string {
   const candidates = [data?.Name?.value, data?.LongName?.value]
   for (const candidate of candidates) {
@@ -206,19 +225,21 @@ function makeNameTag(text: string, position: THREE.Vector2): CSS2DObject {
     'pointer-events:none',
   ].join(';')
 
-  // CSS2DObject writes its own transform from `center` (0.5, 0.5 by default),
-  // which already centres the tag on the point — do not set one here.
+  // CSS2DObject already centres the tag on the point from its own `center`, so no transform is set here.
   const tag = new CSS2DObject(element)
   tag.position.set(position.x, 0, position.y)
   return tag
 }
 
+function positionGeometry(vertices: readonly number[]): THREE.BufferGeometry {
+  const geometry = new THREE.BufferGeometry()
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(vertices), 3))
+  return geometry
+}
+
 /**
- * Build the Spaces overlay for one storey and attach it to the drawing.
- *
- * Returns null when the storey has no spaces. The layer starts hidden: room
- * fills cover the linework underneath, so they are opt-in rather than something
- * the user has to turn off on every plan.
+ * Attaches one storey's room overlay, visible: a bottom-face fill, an X clipped to the footprint and a name tag,
+ * since a projected space is only a box outline. Null when the storey has no spaces.
  */
 export async function addSpacesToDrawing(
   drawing: OBC.TechnicalDrawing,
@@ -238,15 +259,14 @@ export async function addSpacesToDrawing(
   for (const [index, id] of allSpaceIds.entries()) {
     const box = boxes?.[index]
     if (!box || box.isEmpty()) continue
-    // Spaces reach the storey through IfcRelAggregates, which the storey filter
-    // does not query, so match them by elevation instead.
+    // Spaces reach the storey through IfcRelAggregates, which the storey filter does not query, so match by elevation.
     if (Math.abs(box.min.y - storeyY) > STOREY_Y_TOLERANCE) continue
     spaceIds.push(id)
     boxById.set(id, box)
   }
   if (spaceIds.length === 0) return null
 
-  const [geometries, itemsData] = await Promise.all([
+  const [spaceGeometries, itemsData] = await Promise.all([
     model.getItemsGeometry(spaceIds),
     model.getItemsData(spaceIds, {
       attributesDefault: false,
@@ -255,36 +275,8 @@ export async function addSpacesToDrawing(
   ])
 
   const modelMatrix = model.object?.matrixWorld as THREE.Matrix4 | undefined
-  const fillVerts: number[] = []
-  const crossVerts: number[] = []
-  const tags: CSS2DObject[] = []
-
-  drawing.three.updateWorldMatrix(true, false)
-  const toLocal: ToDrawingLocal = (point) => drawing.three.worldToLocal(point.clone())
-
-  for (const [index, id] of spaceIds.entries()) {
-    const triangles = worldTriangles(geometries?.[index], modelMatrix)
-    const footprint = footprintFor(triangles, toLocal, boxById.get(id) ?? null)
-    if (!footprint) continue
-
-    fillVerts.push(...footprint.triangles)
-
-    // X from corner to corner of the footprint's extent.
-    const { min, max } = footprint
-    crossVerts.push(
-      min.x, 0, min.y, max.x, 0, max.y,
-      min.x, 0, max.y, max.x, 0, min.y,
-    )
-
-    tags.push(makeNameTag(readSpaceName(itemsData?.[index], id), footprint.centroid))
-  }
-
-  if (fillVerts.length === 0) return null
-
   const group = new THREE.Group()
   group.name = SPACES_LAYER
-  group.visible = false
-
   const fillMaterial = new THREE.MeshBasicMaterial({
     color: DEFAULT_SPACE_COLOR,
     transparent: true,
@@ -292,48 +284,68 @@ export async function addSpacesToDrawing(
     side: THREE.DoubleSide,
     depthWrite: false,
   })
-  const fillGeometry = new THREE.BufferGeometry()
-  fillGeometry.setAttribute(
-    'position',
-    new THREE.Float32BufferAttribute(new Float32Array(fillVerts), 3),
-  )
-  const fill = new THREE.Mesh(fillGeometry, fillMaterial)
-  fill.renderOrder = FILL_RENDER_ORDER
-  group.add(fill)
-
   const crossMaterial = new THREE.LineBasicMaterial({
     color: DEFAULT_SPACE_COLOR,
     transparent: true,
     opacity: 0.9,
   })
-  const crossGeometry = new THREE.BufferGeometry()
-  crossGeometry.setAttribute(
-    'position',
-    new THREE.Float32BufferAttribute(new Float32Array(crossVerts), 3),
-  )
-  const cross = new THREE.LineSegments(crossGeometry, crossMaterial)
-  cross.renderOrder = CROSS_RENDER_ORDER
-  group.add(cross)
+  const rooms = new Map<number, THREE.Group>()
+  const geometries: THREE.BufferGeometry[] = []
+  const tags: CSS2DObject[] = []
 
-  for (const tag of tags) group.add(tag)
+  drawing.three.updateWorldMatrix(true, false)
+  const toLocal: ToDrawingLocal = (point) => drawing.three.worldToLocal(point.clone())
+
+  for (const [index, id] of spaceIds.entries()) {
+    const triangles = worldTriangles(spaceGeometries?.[index], modelMatrix)
+    const footprint = footprintFor(triangles, toLocal, boxById.get(id) ?? null)
+    if (!footprint) continue
+
+    const { min, max, triangles: base } = footprint
+    const fillGeometry = positionGeometry(base)
+    const crossGeometry = positionGeometry([
+      ...clipSegmentToFootprint(min, max, base),
+      ...clipSegmentToFootprint(new THREE.Vector2(min.x, max.y), new THREE.Vector2(max.x, min.y), base),
+    ])
+    geometries.push(fillGeometry, crossGeometry)
+
+    const fill = new THREE.Mesh(fillGeometry, fillMaterial)
+    fill.renderOrder = FILL_RENDER_ORDER
+    const cross = new THREE.LineSegments(crossGeometry, crossMaterial)
+    cross.renderOrder = CROSS_RENDER_ORDER
+    const tag = makeNameTag(readSpaceName(itemsData?.[index], id), footprint.centroid)
+    tags.push(tag)
+
+    const room = new THREE.Group()
+    room.add(fill, cross, tag)
+    rooms.set(id, room)
+    group.add(room)
+  }
+
+  if (rooms.size === 0) {
+    fillMaterial.dispose()
+    crossMaterial.dispose()
+    return null
+  }
 
   drawing.three.add(group)
 
   const handle: SpaceOverlayHandle = {
-    count: tags.length,
+    count: rooms.size,
     setVisible: (visible: boolean) => { group.visible = visible },
     setColor: (color: number) => {
       fillMaterial.color.setHex(color)
       fillMaterial.needsUpdate = true
-      // A deliberate colour replaces the default room graphic; the name tag
-      // stays, since that is information rather than styling.
-      cross.visible = false
+      // The name tag stays: it is information rather than styling.
+      crossMaterial.visible = false
+    },
+    setHidden: (localIds: ReadonlySet<number>) => {
+      for (const [id, room] of rooms) room.visible = !localIds.has(id)
     },
     dispose: () => {
       group.removeFromParent()
       for (const tag of tags) tag.removeFromParent()
-      fillGeometry.dispose()
-      crossGeometry.dispose()
+      for (const geometry of geometries) geometry.dispose()
       fillMaterial.dispose()
       crossMaterial.dispose()
     },
@@ -342,7 +354,7 @@ export async function addSpacesToDrawing(
   const layer: DrawingLayerInfo = {
     className: SPACES_LAYER,
     layerName: SPACES_LAYER,
-    visible: false,
+    visible: true,
     color: DEFAULT_SPACE_COLOR,
     itemCount: handle.count,
     displayKey: 'DrawingLayers.spaces',

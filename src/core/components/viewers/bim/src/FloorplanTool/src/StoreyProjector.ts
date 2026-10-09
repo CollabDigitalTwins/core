@@ -7,8 +7,7 @@ import * as THREE from 'three'
 
 import { CurrentWorld } from '../../CurrentWorld'
 import {
-  addDoorSwingsToDrawing,
-  addItemsProjectionByClass,
+  addItemsProjectionByClassOccluded,
   createDrawing,
   disableProjectorWebGPU,
   DrawingEditorReady,
@@ -19,14 +18,12 @@ import {
 import { addSpacesToDrawing } from '../../lib/spaceOverlay'
 import { initializeCSS2DRenderer } from '../../tools/AddToBim/src/FileMarkerUtils'
 
-import { getStoreyItemIds, STOREY_CUT_DEPTH, storeyCutPlaneY } from './utils'
+import { FLOORPLAN_FILL_CATEGORIES } from './types'
+import { getStoreyItemIds, planLineClasses, STOREY_CUT_DEPTH, storeyCutPlaneY } from './utils'
 
 import type { FloorplanEntry } from './types'
 
-/**
- * Floorplan-flavor wrapper around the generic drawing primitives.
- * Owns: storey-id cache, lazy projection per FloorplanEntry, editor warmup.
- */
+/** Projects storey plans lazily, caching each storey's item ids and the drawing on its entry. */
 export class StoreyProjector {
   private _editorReady: DrawingEditorReady
   private _storeyIdCache = new Map<string, number[]>()
@@ -39,8 +36,6 @@ export class StoreyProjector {
     return this._editorReady.ensure()
   }
 
-  /** Lazy projection. After the first call for a given entry, the drawing
-   *  is cached on the entry itself so subsequent activations are instant. */
   async project(entry: FloorplanEntry): Promise<void> {
     if (entry.drawing && entry.projected) return
 
@@ -69,9 +64,6 @@ export class StoreyProjector {
     // Reachable from the entry before the first await, so a teardown mid-projection can still dispose it.
     entry.drawing = drawing
 
-    // Make the drawing visible BEFORE projection starts so lines appear
-    // class-by-class as `addItemsProjectionByClass` walks the IFC classes —
-    // otherwise the render loop only sees the full result at the end.
     drawing.three.visible = true
 
     const editor = this.components.get(OBF.DrawingEditor)
@@ -88,8 +80,6 @@ export class StoreyProjector {
       model,
     )
     const storeyIdSet = new Set(storeyIds)
-    // Restrict the per-class projection to items that (a) have geometry and
-    // (b) belong to this storey (when storey ids resolved at all).
     const filterFn =
       storeyIds.length > 0
         ? (id: number) => geomSet.has(id) && storeyIdSet.has(id)
@@ -103,50 +93,30 @@ export class StoreyProjector {
       return
     }
 
-    const itemIdsByClass = await getItemIdsByClass(model, idFilter)
-    const layers = await addItemsProjectionByClass(
+    const itemIdsByClass = planLineClasses(await getItemIdsByClass(model, idFilter))
+    // Floors hide what hangs beneath them but draw no edges of their own, since joints between slab pieces read as walls.
+    const floorIds = Object.values(await model.getItemsOfCategories(FLOORPLAN_FILL_CATEGORIES)).flat() as number[]
+    const layers = await addItemsProjectionByClassOccluded(
       drawing,
+      this.components,
       entry.modelId,
       itemIdsByClass,
-      // The BIM viewer renders on camera events, not continuously — request
-      // an explicit render after each class so the user sees lines pop in
-      // as each IFC class finishes projecting.
-      () => { void fragments.core.update(true) },
+      floorIds.filter(id => geomSet.has(id)),
     )
-    // Room fills / X / name tags. Spaces are deliberately outside the per-class
-    // projection above: they are solids, so projecting them draws a box outline
-    // instead of a room, and they never reach `idFilter` because they hang off
-    // the storey by aggregation rather than containment.
+    // Spaces are solids that hang off the storey by aggregation, so the class projection would miss or box them.
     try {
       const spaces = await addSpacesToDrawing(drawing, model, entry.elevation)
       if (spaces) {
-        // Room names are CSS2D labels, which need the overlay renderer the
-        // comment/file markers also use. Idempotent per world.
         const world = this.components.get(CurrentWorld).world
         if (world) initializeCSS2DRenderer(world)
         entry.spaces = spaces.handle
         layers.push(spaces.layer)
-        void fragments.core.update(true)
       }
     } catch (error) {
       console.warn('[StoreyProjector] space overlay skipped:', error)
     }
 
-    // Iconic floor-plan swing arcs for doors. Best-effort: a model without
-    // IFCDOOR items, or whose worker can't supply bboxes, falls through
-    // silently. Runs after the main projection so the arcs sit on top.
-    try {
-      // const doorLayer = await addDoorSwingsToDrawing(
-      //   drawing,
-      //   model,
-      //   idFilter,
-      //   entry.elevation,
-      // )
-      // if (doorLayer) layers.push(doorLayer)
-      void fragments.core.update(true)
-    } catch (error) {
-      console.warn('[StoreyProjector] door swings skipped:', error)
-    }
+    void fragments.core.update(true)
     entry.projected = true
     entry.layers = layers
   }

@@ -6,7 +6,8 @@
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
-import { BimContext } from '../../../../../../../../store'
+import { useFilesByBuildingId } from '../../../../../../../../hooks/files/files'
+import { BimContext, BuildingsContext } from '../../../../../../../../store'
 
 import {
   FloorplanTool,
@@ -16,6 +17,7 @@ import { exportDrawingToDxf } from '../../../../lib/exportDrawingToDxf'
 import { TrueNorthPopover } from '../../../../lib/TrueNorthPopover'
 import { useBuildingName } from '../../../../lib/useBuildingName'
 import { useFriendlyIfcClassName } from '../../../../lib/useFriendlyIfcClassName'
+import { useProjectNorth } from '../../../../lib/useProjectNorth'
 import { ViewSectionList } from '../../../../lib/ViewSectionList'
 
 import { ALL_MODELS, DrawingModelFilter } from './DrawingModelFilter'
@@ -52,10 +54,9 @@ export function FloorplanSection({
   const [loading, setLoading] =
     React.useState<FloorplanLoadingState>(IDLE_LOADING)
   const [pendingId, setPendingId] = React.useState<string | null>(null)
-  const [northAngle, setNorthAngle] = React.useState(0)
+  const [, setNorthTick] = React.useState(0)
   const [pickingNorth, setPickingNorth] = React.useState(false)
-  /** Bump on every layers-changed event to re-read the active entry's
-   *  layer metadata (the entry mutates in place inside the tool). */
+  // The tool mutates the active entry's layers in place, so a change has to force a re-render.
   const [, setLayersTick] = React.useState(0)
 
   React.useEffect(() => {
@@ -64,7 +65,6 @@ export function FloorplanSection({
 
     setEntries(tool.drawings)
     setActiveId(tool.activeDrawingId)
-    setNorthAngle(tool.northAngle)
     setPickingNorth(tool.isPickingNorth)
 
     const onDrawings = (next: FloorplanEntry[]) => setEntries([...next])
@@ -75,14 +75,12 @@ export function FloorplanSection({
       if (!state.isLoading) setPendingId(null)
     }
     const onLayers = () => setLayersTick((v) => v + 1)
-    const onNorth = (angle: number) => setNorthAngle(angle)
     const onPicking = (picking: boolean) => setPickingNorth(picking)
 
     tool.onDrawingsChanged.add(onDrawings)
     tool.onActiveDrawingChanged.add(onActive)
     tool.onGenerationStateChanged.add(onLoading)
     tool.onLayersChanged.add(onLayers)
-    tool.onNorthAngleChanged.add(onNorth)
     tool.onPickingNorthChanged.add(onPicking)
 
     return () => {
@@ -90,7 +88,6 @@ export function FloorplanSection({
       tool.onActiveDrawingChanged.remove(onActive)
       tool.onGenerationStateChanged.remove(onLoading)
       tool.onLayersChanged.remove(onLayers)
-      tool.onNorthAngleChanged.remove(onNorth)
       tool.onPickingNorthChanged.remove(onPicking)
     }
   }, [bimComponents])
@@ -112,6 +109,15 @@ export function FloorplanSection({
     () => entries.find((entry) => entry.id === activeId) ?? null,
     [entries, activeId],
   )
+
+  const { state: buildingsState } = React.useContext(BuildingsContext)
+  const buildingFiles = useFilesByBuildingId(buildingsState.buildings.building?.id ?? 0).files
+  const activeFile = React.useMemo(
+    () => (activeEntry ? buildingFiles.find((file) => file.name === activeEntry.modelId) ?? null : null),
+    [buildingFiles, activeEntry],
+  )
+  const { projectNorthOf, setProjectNorth, pickProjectNorth } = useProjectNorth()
+  const northDegrees = activeFile ? (projectNorthOf(activeFile) * 180) / Math.PI : 0
 
   const handleSelect = (entry: ViewListEntry) => {
     if (!bimComponents) return
@@ -142,17 +148,12 @@ export function FloorplanSection({
     const fpEntry = entries.find((e) => e.id === entry.id)
     if (!fpEntry?.drawing) return
     const fileName = `${buildingName(fpEntry.modelId)}-${fpEntry.name}`
-    // Bake the on-screen orientation into the exported geometry. `northAngle`
-    // is the camera azimuth, which rotates the floorplan clockwise on screen;
-    // the DXF exporter rotates its image counter-clockwise, so we negate to
-    // make the DXF land in the same orientation the user sees.
-    exportDrawingToDxf(bimComponents, fpEntry.drawing, fileName, -northAngle)
+    exportDrawingToDxf(bimComponents, fpEntry.drawing, fileName)
   }
 
   const handleToggleLayer = (className: string, visible: boolean) => {
     if (!bimComponents || !activeId) return
-    // Group-level entries (Fill / Cut) are 3D model highlights, not drawing
-    // layers — their toggle has no per-layer effect so we skip it here.
+    // Fill and Cut group rows are 3D highlights, not drawing layers, so they have nothing to toggle.
     if (className.startsWith('DrawingLayers.')) return
     bimComponents.get(FloorplanTool).setLayerVisible(activeId, className, visible)
   }
@@ -170,13 +171,13 @@ export function FloorplanSection({
   }
 
   const handleChangeNorthAngle = (degrees: number) => {
-    if (!bimComponents) return
-    bimComponents.get(FloorplanTool).setNorthAngle(degrees)
+    if (!activeFile) return
+    void setProjectNorth(activeFile, (degrees * Math.PI) / 180).then(() => setNorthTick((v) => v + 1))
   }
 
   const handleStartPickNorth = () => {
-    if (!bimComponents) return
-    bimComponents.get(FloorplanTool).startPickNorth()
+    if (!activeFile) return
+    void pickProjectNorth(activeFile).then(() => setNorthTick((v) => v + 1))
   }
 
   const handleCancelPickNorth = () => {
@@ -200,9 +201,9 @@ export function FloorplanSection({
       }
       actions={
         <TrueNorthPopover
-          northAngle={northAngle}
+          northAngle={northDegrees}
           pickingNorth={pickingNorth}
-          disabled={!activeId}
+          disabled={!activeFile}
           onChangeAngle={handleChangeNorthAngle}
           onStartPick={handleStartPickNorth}
           onCancelPick={handleCancelPickNorth}

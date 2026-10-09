@@ -107,16 +107,30 @@ export interface DataPageRows<Row> {
   onRowClick?: (row: Row) => void
 }
 
-export interface DataPageRegistration<Row = Record<string, unknown>> {
+interface DataPageBase {
   id: string
   titleKey: string
   icon: string | React.ComponentType<LucideProps>
+}
+
+/** Core renders a searchable table from the plugin's rows and columns. */
+export interface DataPageTable<Row = Record<string, unknown>> extends DataPageBase {
   useRows: () => DataPageRows<Row>
   columns: DataPageColumn<Row>[]
   /** Column keys the search box filters on. Omit to search every column. */
   searchKeys?: string[]
   emptyKey?: string
+  component?: never
 }
+
+/** Core keeps the page frame and title; the plugin renders everything below them. */
+export interface DataPageCustom extends DataPageBase {
+  component: React.ComponentType
+  useRows?: never
+  columns?: never
+}
+
+export type DataPageRegistration<Row = Record<string, unknown>> = DataPageTable<Row> | DataPageCustom
 
 /** Every toolbar component receives the toolbar entry core built for it. */
 export interface ToolbarToolProps {

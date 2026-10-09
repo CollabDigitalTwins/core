@@ -3,10 +3,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { useMessages, useTranslations } from 'next-intl'
+import { useLocale, useMessages, useTranslations } from 'next-intl'
 import * as React from 'react'
 
+import { RuntimePluginMessagesContext } from '../host/runtimeMessages'
 import { usePluginId } from '../host/scope'
+
+import type { RuntimePluginMessages } from '../host/runtimeMessages'
 
 /**
  * Translations for plugin-supplied text.
@@ -26,17 +29,34 @@ function lookupPluginMessage(
   const plugins = messages?.plugins
   if (typeof plugins !== 'object' || plugins === null) return undefined
 
-  const own = (plugins as Record<string, unknown>)[pluginId]
-  if (typeof own !== 'object' || own === null) return undefined
+  return readKey((plugins as Record<string, unknown>)[pluginId], key)
+}
 
-  // Dotted keys address nested groups, e.g. 'spaces.title'.
-  let node: unknown = own
+// Dotted keys address nested groups, e.g. 'spaces.title'.
+function readKey(strings: unknown, key: string): string | undefined {
+  let node: unknown = strings
   for (const part of key.split('.')) {
     if (typeof node !== 'object' || node === null) return undefined
     node = (node as Record<string, unknown>)[part]
   }
-
   return typeof node === 'string' && node.length > 0 ? node : undefined
+}
+
+// The catalog first, then a runtime-loaded manifest in the active locale, then its English.
+function usePluginMessageReader() {
+  const messages = useMessages() as Record<string, unknown> | undefined
+  const runtime = React.useContext(RuntimePluginMessagesContext)
+  const locale = useLocale().toLowerCase()
+
+  return React.useCallback(
+    (pluginId: string, key: string) => lookupPluginMessage(messages, pluginId, key) ?? readRuntimeMessage(runtime, pluginId, locale, key),
+    [messages, runtime, locale],
+  )
+}
+
+function readRuntimeMessage(runtime: RuntimePluginMessages, pluginId: string, locale: string, key: string): string | undefined {
+  const own = runtime[pluginId]
+  return own ? readKey(own[locale], key) ?? readKey(own.en, key) : undefined
 }
 
 /**
@@ -45,12 +65,8 @@ function lookupPluginMessage(
  * contributed tool's label.
  */
 export function usePluginMessage(pluginId: string, key: string, fallback: string): string {
-  const messages = useMessages() as Record<string, unknown> | undefined
-
-  return React.useMemo(
-    () => lookupPluginMessage(messages, pluginId, key) ?? fallback,
-    [messages, pluginId, key, fallback],
-  )
+  const read = usePluginMessageReader()
+  return React.useMemo(() => read(pluginId, key) ?? fallback, [read, pluginId, key, fallback])
 }
 
 export type PluginTranslator = (key: string, fallback?: string) => string
@@ -62,14 +78,11 @@ export type PluginTranslator = (key: string, fallback?: string) => string
  */
 export function usePluginTranslations(): PluginTranslator {
   const pluginId = usePluginId()
-  const messages = useMessages() as Record<string, unknown> | undefined
+  const read = usePluginMessageReader()
 
   return React.useCallback(
-    (key: string, fallback?: string) =>
-      lookupPluginMessage(messages, pluginId, key)
-      ?? fallback
-      ?? `plugins.${pluginId}.${key}`,
-    [messages, pluginId],
+    (key: string, fallback?: string) => read(pluginId, key) ?? fallback ?? `plugins.${pluginId}.${key}`,
+    [read, pluginId],
   )
 }
 
@@ -80,12 +93,10 @@ export type PluginMessageLookup = (pluginId: string, key: string, fallback: stri
  * cannot be called per row. Host-side only; a plugin has `usePluginTranslations`.
  */
 export function usePluginMessageLookup(): PluginMessageLookup {
-  const messages = useMessages() as Record<string, unknown> | undefined
-
+  const read = usePluginMessageReader()
   return React.useCallback(
-    (pluginId: string, key: string, fallback: string) =>
-      lookupPluginMessage(messages, pluginId, key) ?? fallback,
-    [messages],
+    (pluginId: string, key: string, fallback: string) => read(pluginId, key) ?? fallback,
+    [read],
   )
 }
 

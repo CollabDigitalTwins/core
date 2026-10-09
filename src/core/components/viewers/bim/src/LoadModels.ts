@@ -6,8 +6,10 @@ import * as OBC from "@thatopen/components";
 import { CameraProjection } from "./CameraProjection";
 import { CurrentWorld } from "./CurrentWorld";
 import { FitCamera } from "./FitCamera";
+import { applyModelPlacement } from "./lib/applyModelPlacement";
 import { SpatialStructure } from "./SpatialStructure";
 
+import type { ModelPlacementColumns } from "./lib/applyModelPlacement";
 import type * as FRAGS from "@thatopen/fragments";
 import type * as THREE from "three";
 
@@ -17,7 +19,6 @@ export class LoadModels extends OBC.Component {
 
     enabled = false;
 
-    // Events for loading states
     onLoadingStateChanged = new OBC.Event<{
         "isLoading": boolean;
         "message": string;
@@ -25,7 +26,6 @@ export class LoadModels extends OBC.Component {
 
     private world: OBC.World | null = null;
 
-    // Use OBC.FragmentsManager (tutorial approach)
     private fragments: OBC.FragmentsManager | null = null;
 
     private _model: FRAGS.FragmentsModel | null = null;
@@ -51,7 +51,6 @@ export class LoadModels extends OBC.Component {
             this,
         );
         this.world = components.get(CurrentWorld).world;
-        // Initialize fragments manager from components (BimViewer already called init on it)
         this.fragments = components.get(OBC.FragmentsManager);
         this.fitCamera = components.get(FitCamera);
         this.cameraProjection = components.get(CameraProjection);
@@ -97,18 +96,17 @@ export class LoadModels extends OBC.Component {
         }
     }
 
-    // Load a single fragment file (kept for backwards compatibility)
-    async load(url: string, modelId: string): Promise<FRAGS.FragmentsModel | null> {
-        return this.enqueue(modelId, () => this.loadNow(url, modelId));
+    /** `placement` is applied as the model is added, before the camera fit, so no reader of the new model sees it at the origin. */
+    async load(url: string, modelId: string, placement?: ModelPlacementColumns): Promise<FRAGS.FragmentsModel | null> {
+        return this.enqueue(modelId, () => this.loadNow(url, modelId, placement));
     }
 
-    private async loadNow(url: string, modelId: string): Promise<FRAGS.FragmentsModel | null> {
+    private async loadNow(url: string, modelId: string, placement?: ModelPlacementColumns): Promise<FRAGS.FragmentsModel | null> {
 
         if (!(this.fragments && this.world)) {
             throw new Error("Missing required fragments or world.");
         }
 
-        // Skip if already loaded to avoid duplicate component registration
         if (this.isModelLoaded(modelId)) {
             console.warn(`Model ${modelId} already loaded. Skipping.`);
             return this.modelFromList(modelId);
@@ -145,6 +143,7 @@ export class LoadModels extends OBC.Component {
             await this.setupModel(
                 model,
                 modelId,
+                placement,
             );
 
             this.onLoadingStateChanged.trigger({
@@ -163,7 +162,6 @@ export class LoadModels extends OBC.Component {
         }
     }
 
-    // New helper following tutorial pattern: load many concurrently
     async loadMany(urls: string[]) {
         if (!(this.fragments && this.world)) {
             throw new Error("Missing required fragments or world.");
@@ -175,14 +173,12 @@ export class LoadModels extends OBC.Component {
                 urls.map(async (path) => {
                     const modelId = path.split("/").pop()?.split(".").shift();
                     if (!modelId) return null;
-                    // Skip duplicates
                     if (this.isModelLoaded(modelId)) {
                         console.warn(`Model ${modelId} already loaded. Skipping.`);
                         return this.fragments!.core.models.list.get(modelId) as FRAGS.FragmentsModel | null;
                     }
                     const res = await fetch(path);
                     const buffer = await res.arrayBuffer();
-                    // main fragments load
                     const model = await this.fragments!.core.load(buffer, { modelId });
                     await this.setupModel(model, modelId);
                     return model;
@@ -202,7 +198,6 @@ export class LoadModels extends OBC.Component {
             throw new Error("Missing required components.");
         }
 
-        // Skip if already loaded to avoid duplicate component registration
         if (this.isModelLoaded(modelId)) {
             console.warn(`Model ${modelId} already loaded. Skipping.`);
             return;
@@ -212,7 +207,6 @@ export class LoadModels extends OBC.Component {
             const fileBuffer = await file.arrayBuffer();
 
             if (file.name.toLowerCase().endsWith(".frag")) {
-                // Handle fragment files - load directly
                 this.onLoadingStateChanged.trigger({
                     isLoading: true,
                     message: "Loading BIM Model..."
@@ -228,7 +222,6 @@ export class LoadModels extends OBC.Component {
                     modelId,
                 );
 
-                // Loading complete
                 this.onLoadingStateChanged.trigger({
                     isLoading: false,
                     message: ""
@@ -239,7 +232,6 @@ export class LoadModels extends OBC.Component {
             }
 
         } catch (error) {
-            // Make sure to clear loading state on error
             this.onLoadingStateChanged.trigger({
                 isLoading: false,
                 message: ""
@@ -250,7 +242,6 @@ export class LoadModels extends OBC.Component {
 
     async loadModel(model: FRAGS.FragmentsModel, modelId: string) {
         try {
-            // Skip if already attached
             if (this.isModelLoaded(modelId)) {
                 console.warn(`Model ${modelId} already loaded. Skipping.`);
                 return;
@@ -264,7 +255,7 @@ export class LoadModels extends OBC.Component {
         }
     }
 
-    private async setupModel(model: FRAGS.FragmentsModel, modelId: string) {
+    private async setupModel(model: FRAGS.FragmentsModel, modelId: string, placement?: ModelPlacementColumns) {
 
         if (!this.world) {
             throw new Error("Missing required world.");
@@ -273,28 +264,20 @@ export class LoadModels extends OBC.Component {
         this._model = model;
         this.world.scene.three.add(model.object);
 
-        model.object.position.set(
-            0,
-            0,
-            0,
-        );
+        if (placement) applyModelPlacement(model.object, placement);
+        else model.object.position.set(0, 0, 0);
         model.useCamera(this.world.camera.three);
 
         if (this.cameraProjection && this.world && this._model) {
             this.cameraProjection.onProjectionChanged.add(() => {
-                // `world.renderer` is the safe probe for a disposed world: it goes null, whereas
-                // `world.camera` throws. This listener is never removed, so it can outlive the world.
+                // Never removed, so it can outlive the world; `renderer` goes null on dispose where `camera` throws.
                 if (this._model && this.world?.renderer) {
                     this._model.useCamera(this.world.camera.three);
                 }
             });
         }
 
-        // Apply clipping plane to the model. Without this, we would have issues.
-        // This callback lives on the fragments model, which outlives the world: the culler keeps
-        // refreshing views during teardown, so once the renderer is nulled the old non-null
-        // assertions threw "Cannot read properties of null (reading 'three')" here. No planes is
-        // the correct answer for a world that is going away.
+        // The fragments model outlives the world and the culler polls this during teardown, so no renderer means no planes.
         model.getClippingPlanesEvent = () => {
             const planes = this.world?.renderer?.three.clippingPlanes;
             return planes ? Array.from(planes) : [];

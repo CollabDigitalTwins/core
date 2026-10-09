@@ -203,6 +203,13 @@ declare module '@collabdt/core/plugins-sdk/ui' {
 
   /** Opens and closes this plugin's `ui.dialogs` contributions from any of its surfaces. */
   export function usePluginDialogs(): PluginDialogs
+
+  /** The host's toasts, so a plugin's confirmations look like core's own. */
+  export const toast: {
+    success: (message: string) => void
+    error: (message: string) => void
+    info: (message: string) => void
+  }
 }
 
 declare module '@collabdt/core/plugins-sdk/components' {
@@ -223,6 +230,9 @@ declare module '@collabdt/core/plugins-sdk/components' {
 
   export type SeparatorProps = import('./components').SeparatorProps
   export const Separator: import('./components').SeparatorComponent
+
+  export type ConfirmDialogProps = import('./components').ConfirmDialogProps
+  export const ConfirmDialog: import('./components').ConfirmDialogComponent
 
   export const Card: import('./components').CardComponent
   export const CardHeader: import('./components').CardComponent
@@ -249,4 +259,28 @@ declare module '@collabdt/core/plugins-sdk/components' {
 
   export type DialogDescriptionProps = import('./components').DialogDescriptionProps
   export const DialogDescription: import('./components').DialogDescriptionComponent
+}
+
+declare module '@collabdt/core/plugins-sdk/charts' {
+  // Loaded on first import, so the host's Recharts never reaches a page that draws no plugin chart.
+  export type ChartConfig = import('./charts').ChartConfig
+  export const ChartContainer: import('./charts').ChartContainerComponent
+  export const ChartTooltip: import('./charts').RechartsComponent
+  export const ChartTooltipContent: import('./charts').RechartsComponent
+  export const ChartLegend: import('./charts').RechartsComponent
+  export const ChartLegendContent: import('./charts').RechartsComponent
+
+  export const Area: import('./charts').RechartsComponent
+  export const AreaChart: import('./charts').RechartsComponent
+  export const Bar: import('./charts').RechartsComponent
+  export const BarChart: import('./charts').RechartsComponent
+  export const CartesianGrid: import('./charts').RechartsComponent
+  export const Cell: import('./charts').RechartsComponent
+  export const Line: import('./charts').RechartsComponent
+  export const LineChart: import('./charts').RechartsComponent
+  export const Pie: import('./charts').RechartsComponent
+  export const PieChart: import('./charts').RechartsComponent
+  export const ResponsiveContainer: import('./charts').RechartsComponent
+  export const XAxis: import('./charts').RechartsComponent
+  export const YAxis: import('./charts').RechartsComponent
 }

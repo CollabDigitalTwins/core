@@ -13,6 +13,7 @@ import { PluginDialogProvider } from './dialogs'
 import { PluginHost } from './host'
 import { PluginDatasetLookupContext, type PluginDatasetLookup } from './pluginDatasetLookup'
 import { PluginRegistry } from './registry'
+import { collectRuntimeMessages, RuntimePluginMessagesContext } from './runtimeMessages'
 import { toPluginDataset } from './toPluginDataset'
 
 
@@ -147,6 +148,10 @@ export function PluginHostProvider({
     () => ({ registry, host, ready, configs: resolvedConfigs }),
     [registry, host, ready, resolvedConfigs],
   )
+  const runtimeMessages = React.useMemo(
+    () => collectRuntimeMessages((sources ?? []).map(source => source.manifest)),
+    [sources],
+  )
 
   const findDataset = React.useCallback<PluginDatasetLookup>((pluginId, id) => {
     const registration = (registry.getAll('map.datasets') as unknown as PluginContribution<'map.datasets'>[])
@@ -156,11 +161,13 @@ export function PluginHostProvider({
 
   return (
     <PluginHostContext.Provider value={value}>
-      <PluginDatasetLookupContext.Provider value={findDataset}>
-        <PluginDialogProvider>
-          {children}
-        </PluginDialogProvider>
-      </PluginDatasetLookupContext.Provider>
+      <RuntimePluginMessagesContext.Provider value={runtimeMessages}>
+        <PluginDatasetLookupContext.Provider value={findDataset}>
+          <PluginDialogProvider>
+            {children}
+          </PluginDialogProvider>
+        </PluginDatasetLookupContext.Provider>
+      </RuntimePluginMessagesContext.Provider>
     </PluginHostContext.Provider>
   )
 }

@@ -27,3 +27,4 @@ export {
 } from '../../../core/components/ui/Card'
 export { Badge } from '../../../core/components/ui/Badge'
 export { Separator } from '../../../core/components/ui/Separator'
+export { default as ConfirmDialog } from '../../../core/components/ConfirmDialog'

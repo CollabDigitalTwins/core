@@ -23,8 +23,7 @@ import type { FileAction } from '../../../../types/global'
 
 export interface FileMenuContentProps {
   file: DbFile & { isVisible?: boolean }
-  // Async handlers are supported: the delete flow awaits the result to keep its
-  // spinner up (see handleDeleteConfirm), other actions are fire-and-forget.
+  // The delete flow awaits the result to keep its spinner up; other actions are fire-and-forget.
   onAction: (action: FileAction, file: DbFile) => void | Promise<void>
   options: FileAction[]
   confirmDelete?: boolean
@@ -127,6 +126,15 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
           {t('moveTitle')}
         </DropdownMenuItem>
       )}
+      {options.includes('projectNorth') && !isHidden && (
+        <DropdownMenuItem
+          onClick={() => { void onAction('projectNorth', file) }}
+          disabled={!canReadFile || !canUpdateFile}
+        >
+          <LR.Compass className="h-4 w-4" />
+          {t('projectNorthTitle')}
+        </DropdownMenuItem>
+      )}
       {options.includes('edit') && (
         <DropdownMenuItem
           onClick={() => { void onAction('edit', file) }}
@@ -150,10 +158,7 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
           {options.some(o => o !== 'delete') && <DropdownMenuSeparator />}
           <DropdownMenuItem
             onSelect={(e) => {
-              // Always keep the dropdown open past selection — a confirm dialog is about to
-              // open (local when confirmDelete, else the caller's own via onAction), and letting
-              // Radix auto-close the dropdown in the same tick races its body pointer-events
-              // lock against the dialog's, leaving clicks dead across the page afterward.
+              // Auto-closing as the confirm dialog opens races Radix's body pointer-events locks and kills clicks.
               e.preventDefault()
             }}
             onClick={handleDeleteClick}

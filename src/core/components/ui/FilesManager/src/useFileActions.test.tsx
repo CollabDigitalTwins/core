@@ -177,6 +177,14 @@ describe('useFileActions', () => {
     expect(setFiles).toHaveBeenCalled()
   })
 
+  it('projectNorth hands the file to onProjectNorth', async () => {
+    const onProjectNorth = vi.fn()
+    const { hook } = setup({ onProjectNorth })
+    const file = makeFile()
+    await act(async () => { await hook.result.current.handleAction('projectNorth', file as any) })
+    expect(onProjectNorth).toHaveBeenCalledWith(file)
+  })
+
   it('info dispatches the menu navigation when no onInfo handler is provided', async () => {
     const { hook } = setup({ onInfo: undefined })
     const file = makeFile()

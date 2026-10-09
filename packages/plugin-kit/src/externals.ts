@@ -18,6 +18,7 @@ export const PLUGIN_EXTERNALS: readonly string[] = [
   '@collabdt/core/plugins-sdk/state',
   '@collabdt/core/plugins-sdk/ui',
   '@collabdt/core/plugins-sdk/components',
+  '@collabdt/core/plugins-sdk/charts',
 ]
 
 // A second copy of any of these is a crash rather than a size regression. Used only to

@@ -50,6 +50,7 @@ vi.mock('../lib/ChromeController', () => ({
     disableHighlighter() {} hideGizmo() {} hideSceneContent() {}
     restoreCursor() {} restoreHighlighter() {} showGizmo() {}
     removeLighting() {} restoreBackground() {} restoreSceneContent() {}
+    applyBasicRender() {} restoreRenderMode() {}
   },
 }))
 vi.mock('../lib/ClipController', () => ({
@@ -92,7 +93,13 @@ function makeEntry(): FloorplanEntry {
 }
 
 function makeTool() {
-  const model = { box: new THREE.Box3(new THREE.Vector3(-5, 0, -5), new THREE.Vector3(5, 10, 5)) }
+  const model = {
+    box: new THREE.Box3(new THREE.Vector3(-5, 0, -5), new THREE.Vector3(5, 10, 5)),
+    getItemsOfCategories: async () => ({ IFCBUILDINGSTOREY: [1] }),
+    getItemsData: async () => [{ Name: { value: 'L1' }, Elevation: { value: 3 } }],
+    getCoordinates: async () => [0, 0, 0],
+    getBoxes: async (ids: number[]) => ids.map(() => new THREE.Box3()),
+  }
   const deleteHandlers: ((modelId: string) => void)[] = []
   const fragments = {
     list: Object.assign(new Map([['model-1', model]]), {
@@ -107,7 +114,7 @@ function makeTool() {
     core: { onModelLoaded: { add() {} }, update: vi.fn() },
   }
   const editor = { activeDrawing: null as unknown }
-  const world = { camera: { controls: { fitToBox: vi.fn(async () => {}) } } }
+  const world = { camera: { controls: { fitToBox: vi.fn(async (_box: THREE.Box3) => {}) } } }
   const components = {
     add() {},
     get(ctor: unknown) {
@@ -126,7 +133,7 @@ function makeTool() {
   const states: FloorplanLoadingState[] = []
   tool.onGenerationStateChanged.add((state) => states.push(state))
 
-  return { tool, entry, states, editor, deleteHandlers }
+  return { tool, entry, states, editor, deleteHandlers, fitToBox: world.camera.controls.fitToBox }
 }
 
 describe('FloorplanTool activation split', () => {
@@ -174,6 +181,31 @@ describe('FloorplanTool activation split', () => {
     expect((entry.drawing as unknown as { three: THREE.Object3D }).three.visible).toBe(true)
   })
 
+  it('leaves the camera alone when lines are generated on an open plan', async () => {
+    const { tool, entry, fitToBox } = makeTool()
+    await tool.activate(entry.id)
+    fitToBox.mockClear()
+
+    await tool.generateLines(entry.id)
+
+    expect(fitToBox).not.toHaveBeenCalled()
+  })
+
+  it('frames an outline on the open plan, with a margin, and does nothing without one', async () => {
+    const { tool, entry, fitToBox } = makeTool()
+    const square = [{ x: 0, z: 0 }, { x: 4, z: 0 }, { x: 4, z: 4 }, { x: 0, z: 4 }]
+    await tool.framePoints(square)
+    expect(fitToBox).not.toHaveBeenCalled()
+
+    await tool.activate(entry.id)
+    fitToBox.mockClear()
+    await tool.framePoints(square)
+
+    const box = fitToBox.mock.calls[0][0]
+    expect(box.min.x).toBeLessThan(0)
+    expect(box.max.z).toBeGreaterThan(4)
+  })
+
   it('ignores generateLines for an entry that is not active', async () => {
     const { tool, entry } = makeTool()
 
@@ -192,18 +224,16 @@ describe('FloorplanTool resetAll', () => {
     })
   })
 
-  it('drops every drawing and resets north without unsubscribing', async () => {
+  it('drops every drawing without unsubscribing', async () => {
     const { tool, entry, editor, deleteHandlers } = makeTool()
     await tool.activate(entry.id)
     await tool.generateLines(entry.id)
-    tool.setNorthAngle(45)
     const drawing = entry.drawing
 
     tool.resetAll()
 
     expect(tool.drawings).toEqual([])
     expect(tool.activeDrawingId).toBeNull()
-    expect(tool.northAngle).toBe(0)
     expect(editor.activeDrawing).toBeNull()
     expect(vi.mocked(disposeDrawing)).toHaveBeenCalledWith(expect.anything(), drawing)
     expect(deleteHandlers).toHaveLength(1)
@@ -222,5 +252,38 @@ describe('FloorplanTool resetAll', () => {
     await tool.generateLines(next.id)
 
     expect(next.projected).toBe(true)
+  })
+})
+
+describe('FloorplanTool refreshModel', () => {
+  beforeEach(() => {
+    spies.project.mockClear()
+    spies.project.mockImplementation(async (entry: FloorplanEntry) => {
+      entry.drawing = { three: new THREE.Object3D(), layers: new Map() } as never
+      entry.projected = true
+    })
+  })
+
+  it('reopens the open storey and re-projects the lines it had', async () => {
+    const { tool, entry } = makeTool()
+    await tool.activate(entry.id)
+    await tool.generateLines(entry.id)
+    spies.project.mockClear()
+
+    await tool.refreshModel('model-1')
+
+    expect(tool.activeDrawingId).toBe(entry.id)
+    expect(tool.activeDrawing).not.toBe(entry)
+    expect(spies.project).toHaveBeenCalledTimes(1)
+  })
+
+  it('regenerates the storeys but opens nothing when no plan was open', async () => {
+    const { tool } = makeTool()
+
+    await tool.refreshModel('model-1')
+
+    expect(tool.activeDrawingId).toBeNull()
+    expect(tool.drawings.map(drawing => drawing.id)).toEqual(['model-1::L1'])
+    expect(spies.project).not.toHaveBeenCalled()
   })
 })

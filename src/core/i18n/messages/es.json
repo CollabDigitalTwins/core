@@ -560,6 +560,7 @@
     "ghostTitle": "Fantasma",
     "unghostTitle": "Quitar fantasma",
     "moveTitle": "Editar posición",
+    "projectNorthTitle": "Definir norte del proyecto",
     "editTitle": "Editar",
     "infoTitle": "Más información",
     "deleteTitle": "Eliminar",
@@ -1423,8 +1424,8 @@
     "toggleVisibility": "Mostrar/ocultar",
     "generateLines": "Generar líneas",
     "chooseColor": "Elegir color",
-    "trueNorthTitle": "Norte geográfico",
-    "trueNorthAngleLabel": "Ángulo de rotación (0–360°)",
+    "trueNorthTitle": "Norte del proyecto",
+    "trueNorthAngleLabel": "Rotación (°)",
     "trueNorthPickLine": "Dibujar línea (dos puntos)",
     "trueNorthPicking": "Haz clic en dos puntos para trazar una línea…",
     "trueNorthCancelPick": "Cancelar selección",
@@ -2058,7 +2059,10 @@
     "uninstallTitle": "¿Desinstalar {name}?",
     "uninstallDescription": "Deja de ejecutarse para todas las personas de esta organización. Puedes volver a instalarlo más tarde.",
     "uninstallConfirm": "Desinstalar",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "installHere": "Instalar en esta organización",
+    "toastInstalledHere": "{name} se ha compartido con esta organización y está activado.",
+    "toastInstallHereFailed": "No se pudo instalar {name}: {message}"
   },
   "PluginRegistry": {
     "tabLabel": "Registro",
@@ -2142,7 +2146,10 @@
     "grantPinnedRetired": "Fijada en v{version} (retirada)",
     "toastSharedAdded": "{name} ya está compartido con tu organización. Instálalo desde la pestaña Sin instalar.",
     "toastSharedUpdated": "Tu organización recibe ahora {name} v{version}.",
-    "toastSharedRemoved": "{name} ya no está compartido con tu organización."
+    "toastSharedRemoved": "{name} ya no está compartido con tu organización.",
+    "removeSharedPluginDescription": "Compartido con {count, plural, one {# organización} other {# organizaciones}}. Eliminarlo les quita el acceso a todas y borra para siempre los datos que guardaron en él. Primero se descarga una copia de seguridad CSV de esos datos. El nombre «{slug}» sigue reservado para su propietario.",
+    "removeSharedConfirm": "Eliminar y descargar copia",
+    "toastSharedPluginRemoved": "{name} eliminado de {count, plural, one {# organización} other {# organizaciones}}; sus datos se guardaron en {file}."
   },
   "Placement": {
     "cancel": "Cancelar",
@@ -2174,6 +2181,11 @@
     "deleteFailed": "No se pudo eliminar \"{name}\"",
     "movedFile": "Se movió «{name}»",
     "rotatedFile": "Se rotó «{name}»",
+    "projectNorthSaved": "Norte del proyecto fijado para «{name}»",
+    "projectNorthFailed": "No se pudo guardar el norte del proyecto de «{name}»",
+    "turnModelTitle": "¿Rotar «{name}»?",
+    "turnModelBody": "Rotar este modelo también gira lo que los plugins han colocado en él:",
+    "turnModelConfirm": "Rotar",
     "scaledFile": "Se escaló «{name}»",
     "positionAcceptedToast": "La posición del archivo se ha guardado.",
     "linkBuildingTitle": "¿Vincular con este edificio?",

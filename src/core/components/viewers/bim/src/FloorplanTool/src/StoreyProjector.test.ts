@@ -20,7 +20,7 @@ vi.mock('../../tools/AddToBim/src/FileMarkerUtils', () => ({
 }))
 vi.mock('../../lib/drawingProjection', () => ({
   addDoorSwingsToDrawing: vi.fn(),
-  addItemsProjectionByClass: vi.fn(),
+  addItemsProjectionByClassOccluded: vi.fn(),
   createDrawing: (...args: unknown[]) => createDrawing(...(args as [])),
   disableProjectorWebGPU: vi.fn(),
   DrawingEditorReady: class DrawingEditorReady {

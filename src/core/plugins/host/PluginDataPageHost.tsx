@@ -21,10 +21,15 @@ import { usePluginConfigs, usePluginContributions } from './provider'
 import { PluginScopeProvider } from './scope'
 
 import type { ViewerKey } from '../../types/dbTypes'
-import type { DataPageRegistration } from '../sdk/types'
+import type { DataPageCustom, DataPageRegistration, DataPageTable } from '../sdk/types'
 
 type Row = Record<string, unknown>
 type Registration = DataPageRegistration & { pluginId: string }
+type TableRegistration = DataPageTable & { pluginId: string }
+
+function isCustomPage(registration: Registration): registration is DataPageCustom & { pluginId: string } {
+  return registration.component != null
+}
 
 /**
  * Renders the `data.pages` contribution the viewer key names. The frame mirrors
@@ -77,31 +82,40 @@ function PluginDataPage({ registration }: { registration: Registration }) {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:justify-end items-stretch sm:items-center px-3 sm:px-6 py-4 gap-3 sm:gap-4">
-            <div className="w-full sm:w-96">
-              <Input
-                placeholder={`${tData('searchPlaceholder')} ${title}...`}
-                value={searchTerm}
-                onChange={event => setSearchTerm(event.target.value)}
-                aria-label={`${tData('searchPlaceholder')} ${title}`}
-              />
+          {isCustomPage(registration) ? (
+            <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-6 pb-8">
+              <PluginScopeProvider pluginId={registration.pluginId} config={configs[registration.pluginId]}>
+                <registration.component />
+              </PluginScopeProvider>
             </div>
-          </div>
+          ) : (
+            <>
+              <div className="flex flex-col sm:flex-row sm:justify-end items-stretch sm:items-center px-3 sm:px-6 py-4 gap-3 sm:gap-4">
+                <div className="w-full sm:w-96">
+                  <Input
+                    placeholder={`${tData('searchPlaceholder')} ${title}...`}
+                    value={searchTerm}
+                    onChange={event => setSearchTerm(event.target.value)}
+                    aria-label={`${tData('searchPlaceholder')} ${title}`}
+                  />
+                </div>
+              </div>
 
-          <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-6 pb-8">
-            {/* The rows hook and the cell renderers are the plugin's, so they run inside its
-                scope and can reach usePluginStore, usePluginState and the rest. */}
-            <PluginScopeProvider
-              pluginId={registration.pluginId}
-              config={configs[registration.pluginId]}
-            >
-              <PluginDataTable
-                key={`${registration.pluginId}:${registration.id}`}
-                registration={registration}
-                searchTerm={searchTerm}
-              />
-            </PluginScopeProvider>
-          </div>
+              <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-6 pb-8">
+                {/* The rows hook and cell renderers are the plugin's, so they run in its scope. */}
+                <PluginScopeProvider
+                  pluginId={registration.pluginId}
+                  config={configs[registration.pluginId]}
+                >
+                  <PluginDataTable
+                    key={`${registration.pluginId}:${registration.id}`}
+                    registration={registration}
+                    searchTerm={searchTerm}
+                  />
+                </PluginScopeProvider>
+              </div>
+            </>
+          )}
 
         </div>
       </div>
@@ -110,7 +124,7 @@ function PluginDataPage({ registration }: { registration: Registration }) {
 }
 
 interface TableProps {
-  registration: Registration
+  registration: TableRegistration
   searchTerm: string
 }
 

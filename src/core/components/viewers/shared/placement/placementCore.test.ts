@@ -154,3 +154,48 @@ describe('PlacementCore without a coordinator', () => {
     expect(release).toHaveBeenCalledWith(core)
   })
 })
+
+describe('PlacementCore confirmCommit', () => {
+  it('commits when the target agrees', async () => {
+    const core = new PlacementCore()
+    core.setup({ createGizmo: stubGizmo })
+    const { target, commits } = stubTarget()
+    const confirmCommit = vi.fn(async () => true)
+
+    await core.begin({ ...target, confirmCommit })
+    core.setPlacement({ ...DEFAULT_PLACEMENT, rotation: [0, 1, 0] })
+    await core.accept()
+
+    expect(confirmCommit).toHaveBeenCalledOnce()
+    expect(commits).toHaveLength(1)
+  })
+
+  it('puts the target back and saves nothing when the target declines', async () => {
+    const core = new PlacementCore()
+    core.setup({ createGizmo: stubGizmo })
+    const { target, commits } = stubTarget()
+    const committed = vi.fn()
+    core.onCommitted.add(committed)
+
+    await core.begin({ ...target, confirmCommit: async () => false })
+    core.setPlacement({ ...DEFAULT_PLACEMENT, rotation: [0, 1, 0] })
+    await core.accept()
+
+    expect(commits).toHaveLength(0)
+    expect(committed).not.toHaveBeenCalled()
+    expect(target.read().rotation[1]).toBe(0)
+    expect(core.activeId).toBeNull()
+  })
+
+  it('is not asked when nothing changed', async () => {
+    const core = new PlacementCore()
+    core.setup({ createGizmo: stubGizmo })
+    const { target } = stubTarget()
+    const confirmCommit = vi.fn(async () => true)
+
+    await core.begin({ ...target, confirmCommit })
+    await core.accept()
+
+    expect(confirmCommit).not.toHaveBeenCalled()
+  })
+})

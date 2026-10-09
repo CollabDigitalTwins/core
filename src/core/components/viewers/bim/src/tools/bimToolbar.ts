@@ -7,15 +7,13 @@ import { useTranslations } from 'next-intl'
 
 
 import { usePluginToolbarTools } from '../../../../../plugins/host/usePluginToolbarTools'
-import { useBimViewer } from '../../../../../plugins/sdk/bimViewer'
+import { useBimToolHostProps } from '../../../../../plugins/sdk/bimViewer'
 
 import AddToBim from './AddToBim'
 import { ClippingTool } from './ClippingTool/ClippingTool';
-import { ExplodeByLevelTool } from './ExplodeByLevelTool'
 import { FitCameraTool } from './FitCameraTool'
 import { InspectBimTool } from './InspectBimTool'
 import { MeasureBimTool } from './measureBimTool'
-import { SelectionBimTool } from './selectionBimTool'
 import { ShareBimTool } from './shareBimTool'
 
 import type { Tool } from '../../../../../types/tools'
@@ -29,26 +27,13 @@ export type BimToolbarToolsType =
 /** BIM toolbar tool definitions. A hook because it calls useTranslations, so it has to
  *  run during a render. */
 export function useBimToolbarTools(): Tool[] {
-  // Translation
   const t = useTranslations('bimToolbarTools')
 
   // Read here, not in the shared toolbar host, to keep `@thatopen` out of the map route's bundle.
-  const viewer = useBimViewer()
+  const viewer = useBimToolHostProps()
   const pluginTools = usePluginToolbarTools('bim.tools', viewer as unknown as Record<string, unknown>)
 
   return [
-    // {
-    //   id: 'bim-selection',
-    //   title: t('selection'),
-    //   icon: LR.MousePointerClick,
-    //   component: SelectionBimTool,
-    // },
-    // {
-    //   id: 'bim-explode',
-    //   title: t('explode'),
-    //   icon: LR.Layers3,
-    //   component: ExplodeByLevelTool,
-    // },
     {
       id: 'bim-clipping',
       title: t('clipping'),

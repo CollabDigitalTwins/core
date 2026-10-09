@@ -28,7 +28,9 @@ import { PLUGIN_HOST_API } from '../sdk/version'
 import { runTsc, type TscRun } from './__tests__/tscProbe'
 
 import type * as Kit from '../../../../packages/plugin-kit/src/types/base'
+import type * as KitBim from '../../../../packages/plugin-kit/src/types/bim'
 import type * as KitLegend from '../../../../packages/plugin-kit/src/types/legend'
+import type * as CoreBim from '../sdk/bimViewer'
 import type * as Core from '../sdk/types'
 
 // --- Compile-time assertions ---
@@ -61,11 +63,15 @@ const _manifest: Accepts<Kit.PluginManifest, Core.PluginManifest> = true
 const _registration: Accepts<Kit.ToolbarRegistration, Core.ToolbarRegistration> = true
 const _dataset: Accepts<Kit.DatasetRegistration, Core.DatasetRegistration> = true
 const _legend: Accepts<KitLegend.LegendRegistration, Core.LegendRegistration> = true
+const _dataPage: Accepts<Kit.DataPageRegistration, Core.DataPageRegistration> = true
+// Reverse direction, minus the @thatopen handles: the kit's own install is a second copy of those types.
+type ViewerHandles = 'components' | 'world' | 'fragments'
+const _bimProps: Accepts<Omit<CoreBim.BimToolProps, ViewerHandles>, Omit<KitBim.BimToolProps, ViewerHandles>> = true
 
 void [
   _capabilities,
   _iconIsOnlyAString, _iconIsStillValid,
-  _manifest, _registration, _dataset, _legend,
+  _manifest, _registration, _dataset, _legend, _dataPage, _bimProps,
 ]
 
 // --- The kit's source, as TypeScript parses it ---
@@ -147,6 +153,7 @@ describe('@collabdt/plugin-kit types', () => {
     // because every surface file re-exports this one.
     expect(moduleReferences('base.ts')).toEqual(['react'])
     expect(moduleReferences('components.ts')).toEqual(['react'])
+    expect(moduleReferences('charts.ts')).toEqual(['react'])
   })
 
   it('confines each viewer library to its own surface file', () => {
@@ -160,6 +167,6 @@ describe('@collabdt/plugin-kit types', () => {
   it('keeps the ambient SDK declarations free of anything a plugin must install', () => {
     // The only modules it may name are the kit's own, which is where the shapes live
     // so that core can compare against them.
-    expect(moduleReferences('sdkModules.d.ts')).toEqual(['./components', './data'])
+    expect(moduleReferences('sdkModules.d.ts')).toEqual(['./charts', './components', './data'])
   })
 })

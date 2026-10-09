@@ -11,6 +11,8 @@ export interface RuntimeShim {
   specifier: string
   /** Re-exported by name, because an import map cannot rewrite a namespace. */
   exports: string[]
+  /** The bridge holds a loader instead of the module, so the app loads it only when a plugin imports it. */
+  lazy?: boolean
 }
 
 // Part of the host contract, so it lives beside `PLUGIN_HOST_API` rather than in the
@@ -107,18 +109,29 @@ export const PLUGIN_RUNTIME_SHIMS: readonly RuntimeShim[] = [
     file: 'sdk-ui.js',
     bridge: 'sdkUi',
     specifier: '@collabdt/core/plugins-sdk/ui',
-    exports: ['usePluginDialogs'],
+    exports: ['toast', 'usePluginDialogs'],
   },
   {
     file: 'sdk-components.js',
     bridge: 'sdkComponents',
     specifier: '@collabdt/core/plugins-sdk/components',
     exports: [
-      'Badge', 'Button', 'Input', 'Separator',
+      'Badge', 'Button', 'ConfirmDialog', 'Input', 'Separator',
       'Card', 'CardContent', 'CardDescription', 'CardFooter', 'CardHeader', 'CardTitle',
       'Dialog', 'DialogClose', 'DialogContent', 'DialogDescription',
       'DialogFooter', 'DialogHeader', 'DialogTitle', 'DialogTrigger',
     ],
+  },
+  {
+    file: 'sdk-charts.js',
+    bridge: 'sdkCharts',
+    specifier: '@collabdt/core/plugins-sdk/charts',
+    exports: [
+      'ChartContainer', 'ChartTooltip', 'ChartTooltipContent', 'ChartLegend', 'ChartLegendContent',
+      'Area', 'AreaChart', 'Bar', 'BarChart', 'CartesianGrid', 'Cell', 'Line', 'LineChart',
+      'Pie', 'PieChart', 'ResponsiveContainer', 'XAxis', 'YAxis',
+    ],
+    lazy: true,
   },
 ]
 

@@ -14,6 +14,7 @@ import { SunPath } from "../SunPath";
 import { applyBimLighting, DEFAULT_BIM_LIGHTING } from "./bimLighting";
 import { modelBounds } from "./modelBounds";
 import { PivotIndicator } from "./PivotIndicator";
+import { installPlacedClipEdges } from "./placedClipEdges";
 import { applyRenderMode, enablePostproduction, excludeFromPostproduction, syncPostproductionCamera } from "./renderMode";
 
 const FRAGMENTS_WORKER_URL =
@@ -44,6 +45,7 @@ async function createFragmentsWorkerUrl() {
 }
 
 export async function createBimWorld(container: HTMLElement): Promise<BimWorldBootstrap> {
+    installPlacedClipEdges();
     const components = new OBC.Components();
     const worlds = components.get(OBC.Worlds);
     const world = worlds.create<

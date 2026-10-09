@@ -25,6 +25,8 @@ export type ToolbarCapability = 'map.tools' | 'bim.tools'
 /** What `ToolbarButton` renders for a tool that supplies its own component. */
 type ToolComponent = NonNullable<Tool['component']>
 
+type ScopedPropsFactory = (pluginId: string) => Record<string, unknown>
+
 /**
  * Plugin contributions for one toolbar, as `Tool` objects the toolbars already
  * render: `[...coreTools, ...usePluginToolbarTools('bim.tools', viewerProps)]`.
@@ -157,10 +159,14 @@ function wrapPluginComponent(
   // the hosting toolbar passed, so the shape is erased here on purpose.
   const Component = contribution.component as unknown as React.ComponentType<Record<string, unknown>>
 
-  function PluginToolboxItem({ tool, ...rest }: React.ComponentProps<ToolComponent>) {
+  function PluginToolboxItem({ tool, forPlugin, ...rest }: React.ComponentProps<ToolComponent> & { forPlugin?: unknown }) {
+    const scoped = React.useMemo(
+      () => (typeof forPlugin === 'function' ? (forPlugin as ScopedPropsFactory)(contribution.pluginId) : undefined),
+      [forPlugin],
+    )
     const panel = (
       <PluginScopeProvider pluginId={contribution.pluginId} config={readConfig()}>
-        <Component tool={tool} {...rest} />
+        <Component tool={tool} {...rest} {...scoped} />
       </PluginScopeProvider>
     )
 

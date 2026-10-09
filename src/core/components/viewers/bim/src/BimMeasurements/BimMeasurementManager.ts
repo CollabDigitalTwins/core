@@ -6,6 +6,7 @@ import * as OBF from '@thatopen/components-front'
 import * as FRAGS from '@thatopen/fragments'
 import * as THREE from 'three'
 
+import { isEditableTarget } from '../../../../../utils/utils'
 import { CurrentWorld } from '../CurrentWorld'
 import { betterPick, interceptLastPick, ndcFromPointer, pickNearest, SCENE_PICK_WINDOW_PX } from '../lib/scenePicker'
 
@@ -34,14 +35,6 @@ const SNAP_CLASS_BY_NAME: Record<SnapClassName, FRAGS.SnappingClass> = {
 
 /** Kinds whose creation is finished by the user rather than by a point count. */
 const ENDS_ON_ENTER: ReadonlySet<BimMeasureKind> = new Set<BimMeasureKind>(['area', 'volume'])
-
-/** True when a keystroke is aimed at a text field rather than the viewport. */
-function isEditableTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false
-  if (target.isContentEditable) return true
-  const tag = target.tagName
-  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT'
-}
 
 /**
  * Owns all four BIM measurement tools and guarantees only one is live at a

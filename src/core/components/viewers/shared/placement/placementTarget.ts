@@ -32,6 +32,8 @@ export interface PlacementTarget {
   applyDrag?(object: THREE.Object3D): void
   bounds(): THREE.Vector3 | null
   commit(placement: PointCloudPlacement): Promise<void>
+  /** Asked before a changed placement is saved; false puts the target back where the session began. */
+  confirmCommit?(next: PointCloudPlacement, previous: PointCloudPlacement): Promise<boolean>
 }
 
 /** Strips whatever the target cannot store, so a dropped value never reaches the user as saved. */

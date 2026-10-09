@@ -16,6 +16,7 @@ import type { PluginManifest, PluginSource } from '../sdk/types'
 
 // The title falls back to its key, which is what these assertions read.
 vi.mock('next-intl', () => ({
+  useLocale: () => 'en',
   useMessages: () => ({}),
   useTranslations: () => (key: string) => key,
 }))

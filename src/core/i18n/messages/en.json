@@ -560,6 +560,7 @@
     "ghostTitle": "Ghost",
     "unghostTitle": "Unghost",
     "moveTitle": "Edit position",
+    "projectNorthTitle": "Set project north",
     "editTitle": "Edit",
     "infoTitle": "More information",
     "deleteTitle": "Delete",
@@ -1424,8 +1425,8 @@
     "toggleVisibility": "Toggle visibility",
     "generateLines": "Generate lines",
     "chooseColor": "Choose color",
-    "trueNorthTitle": "True north",
-    "trueNorthAngleLabel": "Rotation angle (0–360°)",
+    "trueNorthTitle": "Project north",
+    "trueNorthAngleLabel": "Rotation (°)",
     "trueNorthPickLine": "Draw line (two points)",
     "trueNorthPicking": "Click two points to draw a line…",
     "trueNorthCancelPick": "Cancel pick",
@@ -2061,7 +2062,10 @@
     "uninstallTitle": "Uninstall {name}?",
     "uninstallDescription": "It stops running for everyone in this organization. You can install it again later.",
     "uninstallConfirm": "Uninstall",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "installHere": "Install in this organization",
+    "toastInstalledHere": "{name} is shared with this organization and switched on.",
+    "toastInstallHereFailed": "Could not install {name}: {message}"
   },
   "PluginRegistry": {
     "tabLabel": "Registry",
@@ -2145,7 +2149,10 @@
     "grantPinnedRetired": "Pinned to v{version} (retired)",
     "toastSharedAdded": "{name} is now shared with your organization. Install it from the Not installed tab.",
     "toastSharedUpdated": "Your organization now gets {name} v{version}.",
-    "toastSharedRemoved": "{name} is no longer shared with your organization."
+    "toastSharedRemoved": "{name} is no longer shared with your organization.",
+    "removeSharedPluginDescription": "Shared with {count, plural, one {# organization} other {# organizations}}. Removing it cuts all of them off and permanently deletes the data they stored in it. A CSV backup of that data downloads first. The name “{slug}” stays reserved for its owner.",
+    "removeSharedConfirm": "Remove and download backup",
+    "toastSharedPluginRemoved": "{name} removed from {count, plural, one {# organization} other {# organizations}}; their data was saved to {file}."
   },
   "Placement": {
     "cancel": "Cancel",
@@ -2177,6 +2184,11 @@
     "deleteFailed": "Could not delete \"{name}\"",
     "movedFile": "Moved \"{name}\"",
     "rotatedFile": "Rotated \"{name}\"",
+    "projectNorthSaved": "Project north set for \"{name}\"",
+    "projectNorthFailed": "Could not save project north for \"{name}\"",
+    "turnModelTitle": "Rotate \"{name}\"?",
+    "turnModelBody": "Rotating this model also turns what plugins have placed on it:",
+    "turnModelConfirm": "Rotate",
     "scaledFile": "Scaled \"{name}\"",
     "positionAcceptedToast": "File position has been saved.",
     "linkBuildingTitle": "Link to this building?",

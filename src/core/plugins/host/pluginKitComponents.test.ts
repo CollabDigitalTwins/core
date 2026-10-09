@@ -59,6 +59,7 @@ const _cardDescription: Narrows<React.ComponentProps<Kit.CardComponent>, React.C
 const _cardContent: Narrows<React.ComponentProps<Kit.CardComponent>, React.ComponentProps<typeof Sdk.CardContent>> = true
 const _cardFooter: Narrows<React.ComponentProps<Kit.CardComponent>, React.ComponentProps<typeof Sdk.CardFooter>> = true
 
+const _confirmDialog: Narrows<React.ComponentProps<Kit.ConfirmDialogComponent>, React.ComponentProps<typeof Sdk.ConfirmDialog>> = true
 const _dialog: Narrows<React.ComponentProps<Kit.DialogComponent>, React.ComponentProps<typeof Sdk.Dialog>> = true
 const _dialogTrigger: Narrows<React.ComponentProps<Kit.DialogTriggerComponent>, React.ComponentProps<typeof Sdk.DialogTrigger>> = true
 const _dialogClose: Narrows<React.ComponentProps<Kit.DialogTriggerComponent>, React.ComponentProps<typeof Sdk.DialogClose>> = true
@@ -69,7 +70,7 @@ const _dialogTitle: Narrows<React.ComponentProps<Kit.DialogTitleComponent>, Reac
 const _dialogDescription: Narrows<React.ComponentProps<Kit.DialogDescriptionComponent>, React.ComponentProps<typeof Sdk.DialogDescription>> = true
 
 void [
-  _button, _input, _badge, _separator,
+  _button, _input, _badge, _separator, _confirmDialog,
   _card, _cardHeader, _cardTitle, _cardDescription, _cardContent, _cardFooter,
   _dialog, _dialogTrigger, _dialogClose, _dialogContent,
   _dialogHeader, _dialogFooter, _dialogTitle, _dialogDescription,

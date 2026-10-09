@@ -26,6 +26,7 @@ import { BimSplats } from '../Splats'
 import { AnimationPanel } from './AnimationPanel'
 import { AnimationSession } from './AnimationSession'
 import { markerActionsFor } from './markerActions'
+import { ModelTurnConfirm } from './ModelTurnConfirm'
 import { PlacementEditor } from './PlacementEditor'
 import { PlacementPanel } from './PlacementPanel'
 import { useModelTarget } from './targets/useModelTarget'
@@ -249,13 +250,16 @@ export function PlacementEditorHost() {
   }
 
   const deleteDialog = (
-    <ConfirmDialog
-      isOpen={pendingDelete !== null}
-      isDeleting={isDeleting}
-      onOpenChange={(open: boolean) => { if (!open) setPendingDelete(null) }}
-      handleConfirm={() => { void confirmDelete() }}
-      itemName={pendingDelete?.file.name ?? ''}
-    />
+    <>
+      <ConfirmDialog
+        isOpen={pendingDelete !== null}
+        isDeleting={isDeleting}
+        onOpenChange={(open: boolean) => { if (!open) setPendingDelete(null) }}
+        handleConfirm={() => { void confirmDelete() }}
+        itemName={pendingDelete?.file.name ?? ''}
+      />
+      <ModelTurnConfirm components={bimComponents ?? null} />
+    </>
   )
 
   if (!session) {

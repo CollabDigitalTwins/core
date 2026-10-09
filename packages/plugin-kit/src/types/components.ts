@@ -49,6 +49,24 @@ export type CardComponent = React.ForwardRefExoticComponent<
   CardProps & React.RefAttributes<HTMLDivElement>
 >
 
+export interface ConfirmDialogProps {
+  isOpen: boolean
+  /** Shows a spinner on the confirm button and disables it. */
+  isDeleting?: boolean
+  onOpenChange: (open: boolean) => void
+  handleConfirm: (e: React.MouseEvent) => void | Promise<void>
+  itemName?: string
+  dataType?: string
+  /** Copy for a question that is not a delete. Each falls back to the delete wording. */
+  title?: string
+  description?: React.ReactNode
+  confirmLabel?: string
+  cancelLabel?: string
+  /** 'destructive' paints the confirm red; a question that destroys nothing passes 'default'. */
+  tone?: 'destructive' | 'default'
+}
+export type ConfirmDialogComponent = (props: ConfirmDialogProps) => React.ReactElement
+
 export interface DialogProps {
   open?: boolean
   defaultOpen?: boolean

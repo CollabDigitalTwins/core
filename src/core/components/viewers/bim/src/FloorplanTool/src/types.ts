@@ -13,11 +13,9 @@ export interface FloorplanEntry {
   modelId: string
   drawing: OBC.TechnicalDrawing | null
   projected: boolean
-  /** Per-IFC-class layer metadata, populated after projection. The sidebar
-   *  uses this to render visibility toggles + color pickers. */
+  /** Per-IFC-class layer metadata, populated after projection. */
   layers: DrawingLayerInfo[]
-  /** Room overlay, when the storey has spaces. Not a `drawing.layers` entry —
-   *  those hold line materials only, and the fill is a mesh. */
+  /** Room overlay, kept outside `drawing.layers` because those hold line materials only. */
   spaces?: SpaceOverlayHandle | null
 }
 
@@ -40,5 +38,16 @@ export const FLOORPLAN_CUT_CATEGORIES = [
   /IFCSTAIRFLIGHT/,
   /IFCFOOTING/,
 ]
+/** Painted with the fill below the cut; unlike slabs, they keep their plan lines. */
+export const FLOORPLAN_FURNISHING_CATEGORIES = [
+  /IFCFURNISHINGELEMENT/,
+  /IFCFURNITURE/,
+  /IFCSYSTEMFURNITUREELEMENT/,
+  /IFCBUILDINGELEMENTPROXY/,
+  /IFCSANITARYTERMINAL/,
+  /IFCDOOR/,
+  /IFCWINDOW/,
+  /IFCRAILING/,
+]
 export const FILL_COLOR = 0xffffff
-export const CUT_COLOR = 0x444444
+export const CUT_COLOR = 0x333333

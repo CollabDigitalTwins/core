@@ -18,11 +18,18 @@ import {
   getItemProperties,
   getItemsOfCategory,
 } from '../../components/viewers/bim/src/lib/bimQueries'
+import { ModelPlacementWatchers } from '../../components/viewers/bim/src/lib/modelPlacementWatchers'
 import { BimContext } from '../../store/BIM/context'
+import { BuildingsContext } from '../../store/Buildings/context'
 import { usePluginId } from '../host/scope'
+
+import { bindPluginFloorplan, useFloorplanSource } from './floorplan'
+
+import type { FloorplanSource, PluginFloorplan } from './floorplan'
 
 import type { BimItemProperties } from '../../components/viewers/bim/src/lib/bimQueries'
 import type { ModelIdMap } from '../../components/viewers/bim/src/lib/bimTree'
+import type { ModelPlacementChange, ModelPlacementWatcher } from '../../components/viewers/bim/src/lib/modelPlacementWatchers'
 import type * as OBC from '@thatopen/components'
 
 export interface BimToolProps {
@@ -50,17 +57,38 @@ export interface BimToolProps {
   getItemsOfCategory: (category: string) => Promise<ModelIdMap>
   /** Attributes for the given elements. Omit `attributes` for the default set. */
   getProperties: (items: ModelIdMap, attributes?: string[]) => Promise<BimItemProperties[]>
+
+  /** The building whose models are open, or null before one is chosen. */
+  buildingId: number | null
+  /** Storeys, plan sketching and plan overlays, scoped to the calling plugin. */
+  floorplan: PluginFloorplan
+  /** Element colours, scoped to the calling plugin. */
+  appearance: PluginBimAppearance
+  /** Lets data kept in world coordinates follow a model the user moves or turns. */
+  modelPlacement: PluginModelPlacement
 }
 
-/**
- * Thin façade over the `lib/bim*` helpers core itself uses. Colour lives in
- * {@link usePluginBimAppearance}, which knows the calling plugin; this cannot.
- */
-export function useBimViewer(): BimToolProps {
-  const { state } = React.useContext(BimContext)
-  const { bimComponents, world, fragments, modelIds, selection } = state.bim
+export interface PluginModelPlacement {
+  /** Follows every confirmed move and turn until the returned function is called. */
+  watch: (watcher: ModelPlacementWatcher) => () => void
+}
 
-  return React.useMemo<BimToolProps>(() => ({
+type PluginScopedProps = Pick<BimToolProps, 'floorplan' | 'appearance'>
+type BimViewerBase = Omit<BimToolProps, keyof PluginScopedProps>
+
+/** What the BIM toolbar hands its plugin tools: `forPlugin` supplies the plugin-scoped half. */
+export interface BimToolHostProps extends BimViewerBase {
+  forPlugin: (pluginId: string) => PluginScopedProps
+}
+
+function useBimViewerBase(): BimViewerBase {
+  const { state } = React.useContext(BimContext)
+  const { state: buildingsState } = React.useContext(BuildingsContext)
+  const { bimComponents, world, fragments, modelIds, selection } = state.bim
+  const buildingId = buildingsState.buildings.building?.id ?? null
+
+  return React.useMemo<BimViewerBase>(() => ({
+    buildingId,
     components: bimComponents,
     world,
     fragments,
@@ -91,7 +119,46 @@ export function useBimViewer(): BimToolProps {
       bimComponents ? getItemsOfCategory(bimComponents, category) : {},
     getProperties: async (items: ModelIdMap, attributes?: string[]) =>
       bimComponents ? getItemProperties(bimComponents, items, attributes) : [],
-  }), [bimComponents, world, fragments, modelIds, selection])
+
+    modelPlacement: {
+      watch: (watcher: ModelPlacementWatcher) =>
+        bimComponents ? bimComponents.get(ModelPlacementWatchers).watch(watcher) : () => {},
+    },
+  }), [bimComponents, world, fragments, modelIds, selection, buildingId])
+}
+
+function pluginScopedProps(
+  components: OBC.Components | null,
+  floorplan: FloorplanSource,
+  pluginId: string,
+): PluginScopedProps {
+  return {
+    floorplan: bindPluginFloorplan(floorplan, pluginId),
+    appearance: createAppearance(components, pluginId),
+  }
+}
+
+/** For the BIM toolbar, which renders every plugin's tool and so cannot know one plugin's id. */
+export function useBimToolHostProps(): BimToolHostProps {
+  const base = useBimViewerBase()
+  const floorplan = useFloorplanSource(base.components)
+
+  return React.useMemo(() => ({
+    ...base,
+    forPlugin: (pluginId: string) => pluginScopedProps(base.components, floorplan, pluginId),
+  }), [base, floorplan])
+}
+
+/** The BIM viewer as the calling plugin sees it. Inside a plugin component only. */
+export function useBimViewer(): BimToolProps {
+  const pluginId = usePluginId()
+  const base = useBimViewerBase()
+  const floorplan = useFloorplanSource(base.components)
+
+  return React.useMemo(
+    () => ({ ...base, ...pluginScopedProps(base.components, floorplan, pluginId) }),
+    [base, floorplan, pluginId],
+  )
 }
 
 export interface BimAppearance {
@@ -110,19 +177,24 @@ export interface PluginBimAppearance {
   setAppearance: (groups: readonly BimAppearanceGroup[]) => void
   clearAppearance: () => void
 }
+function createAppearance(components: OBC.Components | null, pluginId: string): PluginBimAppearance {
+  return {
+    setAppearance: (groups: readonly BimAppearanceGroup[]) => {
+      components?.get(ElementAppearance).setElementAppearance(pluginId, groups)
+    },
+    clearAppearance: () => {
+      components?.get(ElementAppearance).clearElementAppearance(pluginId)
+    },
+  }
+}
+
 export function usePluginBimAppearance(): PluginBimAppearance {
   const pluginId = usePluginId()
   const { state } = React.useContext(BimContext)
   const { bimComponents } = state.bim
 
-  return React.useMemo<PluginBimAppearance>(() => ({
-    setAppearance: (groups: readonly BimAppearanceGroup[]) => {
-      bimComponents?.get(ElementAppearance).setElementAppearance(pluginId, groups)
-    },
-    clearAppearance: () => {
-      bimComponents?.get(ElementAppearance).clearElementAppearance(pluginId)
-    },
-  }), [bimComponents, pluginId])
+  return React.useMemo(() => createAppearance(bimComponents, pluginId), [bimComponents, pluginId])
 }
 
-export type { ModelIdMap, BimItemProperties }
+export type { ModelIdMap, BimItemProperties, ModelPlacementChange, ModelPlacementWatcher }
+export type { FloorplanStorey, PlanFootprint, PlanOverlayOptions, PlanOverlayShape, PlanPoint, PluginFloorplan, SketchKind } from './floorplan'

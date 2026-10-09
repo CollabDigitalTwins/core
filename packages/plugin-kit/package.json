@@ -19,6 +19,10 @@
       "types": "./dist/types/components.d.ts",
       "default": "./dist/types/components.js"
     },
+    "./types/charts": {
+      "types": "./dist/types/charts.d.ts",
+      "default": "./dist/types/charts.js"
+    },
     "./types/data": {
       "types": "./dist/types/data.d.ts",
       "default": "./dist/types/data.js"

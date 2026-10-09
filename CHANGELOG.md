@@ -7,6 +7,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-10-09.
+
 ### Added
 - **Plugin data follows a moved model.** `BimToolProps.modelPlacement.watch(watcher)` tells a plugin about every
   confirmed move or turn of a model (`ModelPlacementChange`: `mapPoint`, `elevationChange`, `rotated`), so outlines it

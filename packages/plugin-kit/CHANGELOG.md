@@ -8,6 +8,8 @@ repository root.
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-10-09
+
 ### Added
 - `BimToolProps.floorplan` (`PluginFloorplan`, `FloorplanStorey`, `PlanPoint`, `SketchKind`, `PlanOverlayShape`,
   `PlanOverlayOptions`, `PlanFootprint`): storeys, opening plans, projecting their lines (`generateLines`,

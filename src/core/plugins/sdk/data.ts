@@ -61,5 +61,8 @@ export { usePluginConfig } from './config'
 
 export { usePluginPermissions } from './permissions'
 
+export { usePluginUser } from './user'
+export type { PluginUser } from './user'
+
 export { usePluginDataset } from './datasets'
 export type { PluginDatasetState } from './datasets'

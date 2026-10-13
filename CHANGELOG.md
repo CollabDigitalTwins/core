@@ -7,6 +7,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-10-13
+
 ### Added
 - **Colour and opacity for a whole BIM file.** The file row menu has a **Colour and opacity** item (`FileAction`
   `'appearance'`) opening the class rows' picker for every element of that model, with undo. `AppearanceSource` gains

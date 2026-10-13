@@ -221,7 +221,7 @@ export function BuildingAdder({ isOpen, onClose, geocodeEarthApiKey, geocoderUrl
             <LR.MousePointerClick className="size-4" />
             {t('pickFootprint')}
           </Button>
-          <Button variant="outline" disabled={isSaving} onClick={startDrawing}>
+          <Button variant="outline" disabled={isSaving} onClick={() => startDrawing()}>
             <LR.PenTool className="size-4" />
             {t('drawFootprint')}
           </Button>

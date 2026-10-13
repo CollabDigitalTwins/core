@@ -17,6 +17,12 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - **Adding a building from the map toolbar** starts from a searched address, a picked OSM footprint (stored as
   `buildingOsmId`), or a footprint drawn on the map, stored in `Building.buildingGeometry` and extruded by the new
   drawn-buildings layer. Drawing needs the host to persist a `buildingGeometry` Json column on Building.
+- **Edit shape** in the database building popover reshapes a building's footprint on the map, starting from its
+  stored `buildingGeometry` or the clicked OSM footprint. A building with a `buildingGeometry` is drawn from it, and
+  its OSM footprint is filtered out of the 3D buildings layer. The map store gains `editingFootprint` and the
+  `SET_EDITING_FOOTPRINT` action.
+- Polygon drawing (sites, building footprints): drag a corner to move it, Ctrl+click an edge to insert one, and Delete
+  removes the hovered corner or else the last one.
 
 - Shared helpers: `hexFromInt` / `intFromHex` in `utils/colourUtils`, `withoutUndefined` in `utils/utils`,
   `isMapFile` in `ui/FilesManager/src/fileType`, `addressFieldsFromPlace` in `map/utils/geocoder`, `hasMapApi` in
@@ -26,8 +32,13 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - Site and building drawing share `usePolygonDraw` and `useMapToolSession`; the map's click popups are paused while
   either is drawing or picking.
 - Deleting a file revalidates every building's and site's file list, not only the one the caller named.
+- New buildings start with `buildingStoreyNum: 1`, and a drawn footprint without storeys extrudes one storey.
+- Drawn footprints are only drawn from zoom 14 and within the camera's padded view.
 
 ### Fixed
+- Drawn building footprints never appeared because their layer waited for `isStyleLoaded()`, which stays false while
+  tiles stream in.
+- Closing a footprint on its first corner no longer leaves the Finish/Cancel toast up while the building saves.
 - The map toolbar's building tool no longer leaves the page unresponsive after its dialog closes.
 - A model added on the map and linked to a building shows in that building's BIM viewer File tab.
 - Deleting a BIM model from its map context menu deletes it. Deleting one anywhere, the sidebar included, removes it

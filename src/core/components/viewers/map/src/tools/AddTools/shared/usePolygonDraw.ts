@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 
 import { hasMapApi } from '../../../../utils/hasMapApi'
 
+import { insertCorner, moveCorner, nearestCornerIndex, nearestEdgeIndex, removeCorner } from './ringEditing'
 import { useMapToolSession } from './useMapToolSession'
 
 import type { MapClickManager } from '../../../../utils/MapEventManager/MapClickManager'
@@ -13,7 +14,8 @@ import type { Ring } from '../../../MapLayers/src/SiteLayer/siteGeometry'
 import type * as maplibregl from 'maplibre-gl'
 
 const SOURCE_ID = 'add-geojson'
-const CLOSE_PIXEL_THRESHOLD = 14
+const CORNER_PIXEL_THRESHOLD = 14
+const EDGE_PIXEL_THRESHOLD = 8
 
 /** Toast and error strings, so each tool words its own shape. */
 export interface PolygonDrawLabels {
@@ -31,12 +33,12 @@ export interface PolygonDrawLabels {
 /** Rejecting keeps the drawing on the map so the user can retry finishing. */
 export type FinishPolygon = (ring: Ring) => Promise<void>
 
-function drawingFeatures(points: Ring): GeoJSON.FeatureCollection {
+function drawingFeatures(points: Ring, hoveredIndex: number): GeoJSON.FeatureCollection {
   const closable = points.length >= 3
   const features: GeoJSON.Feature[] = points.map((point, index) => ({
     type: 'Feature',
     geometry: { type: 'Point', coordinates: point },
-    properties: { isDrawPoint: true, closable: closable && index === 0 },
+    properties: { isDrawPoint: true, closable: closable && index === 0, hovered: index === hoveredIndex },
   }))
 
   if (points.length > 1) {
@@ -79,8 +81,8 @@ function addDrawingLayers(map: maplibregl.Map) {
       type: 'circle',
       source: SOURCE_ID,
       paint: {
-        'circle-radius': ['case', ['==', ['get', 'closable'], true], 8, 5],
-        'circle-color': ['case', ['==', ['get', 'closable'], true], '#22c55e', '#ffffff'],
+        'circle-radius': ['case', ['==', ['get', 'closable'], true], 8, ['==', ['get', 'hovered'], true], 7, 5],
+        'circle-color': ['case', ['==', ['get', 'closable'], true], '#22c55e', ['==', ['get', 'hovered'], true], '#3b82f6', '#ffffff'],
         'circle-stroke-width': 2,
         'circle-stroke-color': ['case', ['==', ['get', 'closable'], true], '#15803d', '#000000'],
       },
@@ -101,49 +103,75 @@ function addDrawingLayers(map: maplibregl.Map) {
 }
 
 /**
- * Click-to-place polygon drawing: Enter or the first corner finishes, Esc cancels, Backspace undoes.
- * A drawing in progress stops when `enabled` turns false.
+ * Click-to-place polygon drawing: Enter or the first corner finishes, Esc cancels. Corners drag,
+ * Ctrl+click on an edge inserts one, Delete removes the hovered corner or else the last one.
  */
-export function usePolygonDraw({ map, mapClickManager, enabled, toastId, labels, onFinish }: {
+export function usePolygonDraw({ map, mapClickManager, enabled, toastId, labels, onFinish, onCancel }: {
   map: maplibregl.Map | null | undefined
   mapClickManager?: MapClickManager | null
   enabled: boolean
   toastId: string
   labels: PolygonDrawLabels
   onFinish: FinishPolygon
+  onCancel?: () => void
 }) {
   const [isDrawing, setIsDrawing] = React.useState(false)
+  const [isFinishing, setIsFinishing] = React.useState(false)
   const [pointCount, setPointCount] = React.useState(0)
+  const [hoveredIndex, setHoveredIndex] = React.useState(-1)
+  const [draggingIndex, setDraggingIndex] = React.useState(-1)
   const pointsRef = React.useRef<Ring>([])
+  const hoveredRef = React.useRef(-1)
+  const draggedRef = React.useRef(false)
   const finishingRef = React.useRef(false)
-  const latest = React.useRef({ labels, onFinish })
-  latest.current = { labels, onFinish }
+  const latest = React.useRef({ labels, onFinish, onCancel })
+  latest.current = { labels, onFinish, onCancel }
+
+  const render = React.useCallback(() => {
+    const source = map?.getSource(SOURCE_ID) as maplibregl.GeoJSONSource | undefined
+    void source?.setData(drawingFeatures(pointsRef.current, hoveredRef.current))
+  }, [map])
+
+  const hover = React.useCallback((index: number) => {
+    if (hoveredRef.current === index) return
+    hoveredRef.current = index
+    setHoveredIndex(index)
+    render()
+  }, [render])
 
   const commit = React.useCallback((points: Ring) => {
     pointsRef.current = points
+    if (hoveredRef.current >= points.length) {
+      hoveredRef.current = -1
+      setHoveredIndex(-1)
+    }
     setPointCount(points.length)
-    void (map?.getSource(SOURCE_ID) as maplibregl.GeoJSONSource | undefined)?.setData(drawingFeatures(points))
-  }, [map])
+    render()
+  }, [render])
 
   const stop = React.useCallback(() => {
+    hover(-1)
+    setDraggingIndex(-1)
     commit([])
     setIsDrawing(false)
     toast.dismiss(toastId)
-  }, [commit, toastId])
+  }, [commit, hover, toastId])
 
-  const start = React.useCallback(() => {
+  const start = React.useCallback((initialRing: Ring = []): boolean => {
     if (!hasMapApi(map)) {
       toast.error(latest.current.labels.mapNotReady)
-      return
+      return false
     }
     addDrawingLayers(map)
-    commit([])
+    commit([...initialRing])
     setIsDrawing(true)
+    return true
   }, [map, commit])
 
   const cancel = React.useCallback(() => {
     stop()
     toast.info(latest.current.labels.cancelled)
+    latest.current.onCancel?.()
   }, [stop])
 
   const finish = React.useCallback(async () => {
@@ -154,6 +182,7 @@ export function usePolygonDraw({ map, mapClickManager, enabled, toastId, labels,
       return
     }
     finishingRef.current = true
+    setIsFinishing(true)
     try {
       await latest.current.onFinish(ring)
       stop()
@@ -163,31 +192,64 @@ export function usePolygonDraw({ map, mapClickManager, enabled, toastId, labels,
     }
     finally {
       finishingRef.current = false
+      setIsFinishing(false)
     }
   }, [stop])
 
-  const isNearFirstPoint = (point: [number, number]) => {
+  const screenCorners = () => (map ? pointsRef.current.map(point => map.project(point)) : [])
+  const cornerAt = (e: maplibregl.MapMouseEvent) => nearestCornerIndex(screenCorners(), e.point, CORNER_PIXEL_THRESHOLD)
+  const lngLatOf = (e: maplibregl.MapMouseEvent): [number, number] => [e.lngLat.lng, e.lngLat.lat]
+
+  const removeHoveredOrLast = () => {
     const points = pointsRef.current
-    if (!map || points.length < 3) return false
-    const first = map.project(points[0])
-    const click = map.project(point)
-    return Math.hypot(first.x - click.x, first.y - click.y) <= CLOSE_PIXEL_THRESHOLD
+    const index = hoveredRef.current >= 0 ? hoveredRef.current : points.length - 1
+    if (index >= 0) commit(removeCorner(points, index))
+  }
+
+  const placeCorner = (e: maplibregl.MapMouseEvent) => {
+    const points = pointsRef.current
+    const corner = cornerAt(e)
+    if (corner === 0 && points.length >= 3) {
+      void finish()
+      return
+    }
+    if (corner >= 0) return
+    const splitsEdge = e.originalEvent.ctrlKey || e.originalEvent.metaKey
+    const edge = splitsEdge ? nearestEdgeIndex(screenCorners(), e.point, EDGE_PIXEL_THRESHOLD) : -1
+    commit(edge >= 0 ? insertCorner(points, edge, lngLatOf(e)) : [...points, lngLatOf(e)])
   }
 
   useMapToolSession({
     map,
     mapClickManager,
-    active: isDrawing,
-    cursor: 'crosshair',
+    active: isDrawing && !isFinishing,
+    cursor: draggingIndex >= 0 ? 'grabbing' : hoveredIndex >= 0 ? 'grab' : 'crosshair',
+    onMouseDown: (e) => {
+      const index = cornerAt(e)
+      if (index < 0) return
+      e.preventDefault()
+      draggedRef.current = false
+      setDraggingIndex(index)
+    },
+    onMouseMove: (e) => {
+      const dragging = draggingIndex >= 0 && e.originalEvent.buttons !== 0
+      if (!dragging) {
+        if (draggingIndex >= 0) setDraggingIndex(-1)
+        hover(cornerAt(e))
+        return
+      }
+      draggedRef.current = true
+      commit(moveCorner(pointsRef.current, draggingIndex, lngLatOf(e)))
+    },
+    onMouseUp: () => setDraggingIndex(-1),
     onClick: (e) => {
-      const point: [number, number] = [e.lngLat.lng, e.lngLat.lat]
-      if (isNearFirstPoint(point)) void finish()
-      else commit([...pointsRef.current, point])
+      if (draggedRef.current) draggedRef.current = false
+      else placeCorner(e)
     },
     onKeyDown: (e) => {
       if (e.key === 'Enter') { e.preventDefault(); void finish() }
       else if (e.key === 'Escape') { e.preventDefault(); cancel() }
-      else if (e.key === 'Backspace') { e.preventDefault(); commit(pointsRef.current.slice(0, -1)) }
+      else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); removeHoveredOrLast() }
     },
   })
 
@@ -196,7 +258,7 @@ export function usePolygonDraw({ map, mapClickManager, enabled, toastId, labels,
   }, [enabled, isDrawing, stop])
 
   React.useEffect(() => {
-    if (!isDrawing) {
+    if (!isDrawing || isFinishing) {
       toast.dismiss(toastId)
       return
     }
@@ -209,7 +271,7 @@ export function usePolygonDraw({ map, mapClickManager, enabled, toastId, labels,
       action: canFinish ? { label: text.finish, onClick: () => { void finish() } } : undefined,
       cancel: { label: text.cancel, onClick: cancel },
     })
-  }, [isDrawing, pointCount, toastId, finish, cancel])
+  }, [isDrawing, isFinishing, pointCount, toastId, finish, cancel])
 
   React.useEffect(() => () => { toast.dismiss(toastId) }, [toastId])
 

@@ -188,7 +188,8 @@
     "editBimButton": "Editar posición BIM",
     "buildingIdRequired": "El ID del edificio es obligatorio para subir archivos.",
     "noBimFile": "Este edificio aún no tiene un modelo BIM",
-    "bimFilesUnavailable": "No se pudieron cargar los archivos de este edificio"
+    "bimFilesUnavailable": "No se pudieron cargar los archivos de este edificio",
+    "editShapeTitle": "Editar forma"
   },
   "CameraSettings": {
     "title": "Configuración de la cámara",
@@ -1199,7 +1200,7 @@
     "drawTitle": "Dibuje su sitio",
     "drawReadyTitle": "Listo para finalizar su sitio",
     "drawHint": "Haga clic en el mapa para añadir cada esquina ({count} hasta ahora). Añada al menos 3 para formar un sitio. Esc cancela.",
-    "drawReadyHint": "{count} puntos añadidos. Haga clic en el primer punto, presione Enter o toque Finalizar para cerrarlo. Retroceso elimina el último punto, Esc cancela.",
+    "drawReadyHint": "{count} puntos añadidos. Haga clic en el primer punto, presione Enter o toque Finalizar para cerrarlo. Arrastre un punto para moverlo, Ctrl+clic en una línea añade uno, Supr elimina el punto señalado o el último, Esc cancela.",
     "needThreePoints": "Añada al menos 3 puntos antes de cerrar el sitio.",
     "siteCreated": "Sitio \"{name}\" creado.",
     "drawCancelled": "Dibujo del sitio cancelado.",
@@ -2288,7 +2289,7 @@
     "drawTitle": "Dibuja la huella del edificio",
     "drawReadyTitle": "Listo para terminar la huella",
     "drawHint": "Haz clic en el mapa para añadir cada esquina ({count} hasta ahora). Añade al menos 3. Esc cancela.",
-    "drawReadyHint": "{count} esquinas colocadas. Haz clic en la primera esquina, pulsa Intro o toca Terminar. Retroceso elimina la última esquina, Esc cancela.",
+    "drawReadyHint": "{count} esquinas colocadas. Haz clic en la primera esquina, pulsa Intro o toca Terminar. Arrastra una esquina para moverla, Ctrl+clic en un lado añade una, Supr elimina la esquina señalada o la última, Esc cancela.",
     "drawCancelled": "Dibujo de la huella cancelado.",
     "needThreePoints": "Añade al menos 3 esquinas antes de terminar la huella.",
     "mapNotReady": "El mapa aún se está cargando. Inténtalo de nuevo en un momento.",
@@ -2299,5 +2300,17 @@
     "createFailed": "No se pudo crear el edificio. Inténtalo de nuevo.",
     "noOrganization": "Tu cuenta no tiene organización, así que no se puede crear el edificio.",
     "unnamed": "Edificio sin nombre"
+  },
+  "FootprintEditor": {
+    "title": "Editar la huella del edificio",
+    "hint": "{count} esquinas. Arrastra una esquina para moverla, Ctrl+clic en un lado añade una, Supr elimina la esquina señalada o la última. Intro o Guardar conserva la forma, Esc cancela.",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "cancelled": "Edición de la huella cancelada.",
+    "needThreePoints": "Una huella necesita al menos 3 esquinas.",
+    "mapNotReady": "El mapa todavía se está cargando. Inténtalo de nuevo en un momento.",
+    "saving": "Guardando la huella…",
+    "saved": "Huella guardada.",
+    "saveFailed": "No se pudo guardar la huella. Inténtalo de nuevo."
   }
 }

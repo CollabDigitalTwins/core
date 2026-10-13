@@ -12,6 +12,7 @@ describe('newBuildingData', () => {
     expect(data).toEqual({
       buildingName: 'Tory',
       buildingType: ['Other'],
+      buildingStoreyNum: 1,
       buildingLongitude: -75.7,
       buildingLatitude: 45.38,
       buildingAddress: '1 Main St',

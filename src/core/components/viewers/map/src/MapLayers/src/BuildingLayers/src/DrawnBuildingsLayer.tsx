@@ -7,14 +7,18 @@ import * as React from "react";
 
 import { MapContext } from "../../../../../../../../store/Map/context";
 import { MapLayerClickPriority } from "../../../../../utils/MapEventManager/MapClickManager";
+import { ASSIGNED_COLOUR } from "../buildingColourExpression";
 import { buildingPopupEntry } from "../buildingPopupEntry";
-import { drawnFootprints } from "../drawnFootprints";
+import { drawnFootprints, footprintsInBounds } from "../drawnFootprints";
+
+import { useViewBounds } from "./useViewBounds";
 
 import type { Building } from "../../../../../../../../types/dbTypes";
 import type { PopupEntry } from "../../../../../../../../types/map";
 import type { GeoJSONSource, MapGeoJSONFeature, MapMouseEvent } from "maplibre-gl";
 
 const DRAWN_BUILDINGS_ID = "cdt-drawn-buildings";
+const MIN_ZOOM = 14;
 
 interface DrawnBuildingsLayerProps {
   buildings: Building[];
@@ -24,37 +28,51 @@ interface DrawnBuildingsLayerProps {
 
 export function DrawnBuildingsLayer({ buildings, fallbackName, onClosePopup }: DrawnBuildingsLayerProps) {
   const { state: mapState } = React.useContext(MapContext);
-  const { map, mapClickManager, show3dBuildings } = mapState.map;
+  const { map, mapClickManager, show3dBuildings, editingFootprint } = mapState.map;
+  const editingId = editingFootprint?.buildingId;
+  const viewBounds = useViewBounds(map, MIN_ZOOM);
 
-  const footprints = React.useMemo(() => drawnFootprints(buildings), [buildings]);
+  const allFootprints = React.useMemo(
+    () => drawnFootprints(buildings.filter(building => building.id !== editingId)),
+    [buildings, editingId],
+  );
+  const footprints = React.useMemo(() => footprintsInBounds(allFootprints, viewBounds), [allFootprints, viewBounds]);
   const latest = React.useRef({ footprints, show3dBuildings });
   latest.current = { footprints, show3dBuildings };
 
   React.useEffect(() => {
     if (!map) return;
 
+    // isStyleLoaded() stays false while any tile source is loading, so it cannot gate this.
     const addLayer = () => {
-      if (!map.isStyleLoaded() || map.getLayer(DRAWN_BUILDINGS_ID)) return;
-      if (!map.getSource(DRAWN_BUILDINGS_ID)) {
-        map.addSource(DRAWN_BUILDINGS_ID, { type: "geojson", data: latest.current.footprints });
+      if (map.getLayer(DRAWN_BUILDINGS_ID)) return;
+      try {
+        if (!map.getSource(DRAWN_BUILDINGS_ID)) {
+          map.addSource(DRAWN_BUILDINGS_ID, { type: "geojson", data: latest.current.footprints });
+        }
+        map.addLayer({
+          id: DRAWN_BUILDINGS_ID,
+          type: "fill-extrusion",
+          source: DRAWN_BUILDINGS_ID,
+          minzoom: MIN_ZOOM,
+          layout: { visibility: latest.current.show3dBuildings ? "visible" : "none" },
+          paint: {
+            "fill-extrusion-color": ASSIGNED_COLOUR,
+            "fill-extrusion-height": ["get", "height"],
+            "fill-extrusion-opacity": 0.85,
+          },
+        });
+      } catch {
+        // The style is mid-swap; the next styledata or idle event retries.
       }
-      map.addLayer({
-        id: DRAWN_BUILDINGS_ID,
-        type: "fill-extrusion",
-        source: DRAWN_BUILDINGS_ID,
-        layout: { visibility: latest.current.show3dBuildings ? "visible" : "none" },
-        paint: {
-          "fill-extrusion-color": "#94a3b8",
-          "fill-extrusion-height": ["get", "height"],
-          "fill-extrusion-opacity": 0.85,
-        },
-      });
     };
 
     addLayer();
     map.on("styledata", addLayer);
+    map.on("idle", addLayer);
     return () => {
       map.off("styledata", addLayer);
+      map.off("idle", addLayer);
       try {
         if (map.getLayer(DRAWN_BUILDINGS_ID)) map.removeLayer(DRAWN_BUILDINGS_ID);
         if (map.getSource(DRAWN_BUILDINGS_ID)) map.removeSource(DRAWN_BUILDINGS_ID);

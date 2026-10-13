@@ -142,7 +142,7 @@ export const SiteAdder = ({ isOpen = false, onCancel }: SiteAdderProps) => {
         </ol>
 
         <div className="flex gap-2">
-          <Button onClick={startDrawing}>
+          <Button onClick={() => startDrawing()}>
             <BoxSelect className="size-4" />
             {t('startDrawing')}
           </Button>

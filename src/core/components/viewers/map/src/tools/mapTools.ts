@@ -39,7 +39,8 @@ export type MapToolbarToolType =
 'map-share' |
 'map-compare-buildings' |
 'open-building-page' |
-'open-bim-viewer'
+'open-bim-viewer' |
+'map-edit-footprint'
 
 type MapToolsConfig = {
   martinBaseUrl?: string

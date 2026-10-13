@@ -18,6 +18,9 @@ export const DEFAULT_COLOUR_EXPRESSION: PaintExpression = ["coalesce", ["get", "
 
 export const HOVER_COLOUR = "#e0e0e0";
 
+/** Lighter than the default grey so footprints tied to a database building stand out. */
+export const ASSIGNED_COLOUR = "#f0f0f0";
+
 /** How far a sensor-coloured footprint is lifted toward white on hover. */
 const HOVER_LIFT = 0.18;
 
@@ -30,6 +33,15 @@ const PROP_KEY: PaintExpression = ["to-string", ["coalesce", ["get", "osm_id"], 
 /** Matches a footprint by either key, mirroring `buildHeightExpression`. */
 function matchesKey(key: string): PaintExpression {
   return ["any", ["==", ID_KEY, key], ["==", PROP_KEY, key]];
+}
+
+function matchesAnyKey(keys: readonly string[]): PaintExpression {
+  return ["any", ["in", ID_KEY, ["literal", [...keys]]], ["in", PROP_KEY, ["literal", [...keys]]]];
+}
+
+function fallbackColour(assignedOsmIds: readonly string[]): PaintExpression {
+  if (assignedOsmIds.length === 0) return DEFAULT_COLOUR_EXPRESSION;
+  return ["case", matchesAnyKey(assignedOsmIds), ASSIGNED_COLOUR, DEFAULT_COLOUR_EXPRESSION];
 }
 
 /**
@@ -63,26 +75,29 @@ export function osmColourEntries(
 
 /**
  * The layer's `fill-extrusion-color`: hover and click highlights first, then the sensor colour,
- * then the tile default.
+ * then the assigned grey, then the tile default.
  *
  * With no colours to apply this returns the default expression unchanged, so the feature being
  * off reproduces the layer's original paint exactly.
  */
 export function buildingColourExpression({
   osmColours,
+  assignedOsmIds = [],
   clickedKey,
   hoveredKey,
 }: {
   osmColours: readonly (readonly [string, string])[];
+  assignedOsmIds?: readonly string[];
   clickedKey?: string | number | null;
   hoveredKey?: string | number | null;
 }): PaintExpression {
   // `match` needs at least one label/output pair, so an empty set short-circuits. The id lookup
   // falls back to the property lookup, which falls back to the tile default.
-  let lookup: PaintExpression = DEFAULT_COLOUR_EXPRESSION;
+  const fallback = fallbackColour(assignedOsmIds);
+  let lookup: PaintExpression = fallback;
   if (osmColours.length > 0) {
     const pairs = osmColours.flatMap(([osmId, colour]) => [osmId, colour]);
-    lookup = ["match", ID_KEY, ...pairs, ["match", PROP_KEY, ...pairs, DEFAULT_COLOUR_EXPRESSION]];
+    lookup = ["match", ID_KEY, ...pairs, ["match", PROP_KEY, ...pairs, fallback]];
   }
 
   const branches: PaintExpression = [];

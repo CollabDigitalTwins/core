@@ -24,6 +24,7 @@ export function newBuildingData({ name, placement, address }: {
   return withoutUndefined({
     buildingName: name.trim() || address.buildingAddress?.split(',')[0].trim(),
     buildingType: ['Other'],
+    buildingStoreyNum: 1,
     buildingLongitude: placement.lng,
     buildingLatitude: placement.lat,
     buildingOsmId: placement.osmId,

@@ -188,7 +188,8 @@
     "editBimButton": "Edit BIM Position",
     "buildingIdRequired": "Building ID is required for file upload.",
     "noBimFile": "This building has no BIM model yet",
-    "bimFilesUnavailable": "This building's files could not be loaded"
+    "bimFilesUnavailable": "This building's files could not be loaded",
+    "editShapeTitle": "Edit shape"
   },
   "CameraSettings": {
     "title": "Camera Settings",
@@ -1200,7 +1201,7 @@
     "drawTitle": "Draw your site",
     "drawReadyTitle": "Ready to finish your site",
     "drawHint": "Click on the map to add each corner ({count} so far). Add at least 3 to form a site. Esc cancels.",
-    "drawReadyHint": "{count} points placed. Click the first point, press Enter, or tap Finish to close it. Backspace removes the last point, Esc cancels.",
+    "drawReadyHint": "{count} points placed. Click the first point, press Enter, or tap Finish to close it. Drag a point to move it, Ctrl+click a line to add one, Delete removes the hovered or last point, Esc cancels.",
     "needThreePoints": "Add at least 3 points before closing the site.",
     "siteCreated": "Site \"{name}\" created.",
     "drawCancelled": "Site drawing cancelled.",
@@ -2291,7 +2292,7 @@
     "drawTitle": "Draw the building footprint",
     "drawReadyTitle": "Ready to finish the footprint",
     "drawHint": "Click on the map to add each corner ({count} so far). Add at least 3. Esc cancels.",
-    "drawReadyHint": "{count} corners placed. Click the first corner, press Enter, or tap Finish. Backspace removes the last corner, Esc cancels.",
+    "drawReadyHint": "{count} corners placed. Click the first corner, press Enter, or tap Finish. Drag a corner to move it, Ctrl+click an edge to add one, Delete removes the hovered or last corner, Esc cancels.",
     "drawCancelled": "Footprint drawing cancelled.",
     "needThreePoints": "Add at least 3 corners before finishing the footprint.",
     "mapNotReady": "The map is still loading. Please try again in a moment.",
@@ -2302,5 +2303,17 @@
     "createFailed": "Failed to create the building. Please try again.",
     "noOrganization": "Your account has no organization, so the building can't be created.",
     "unnamed": "Unnamed building"
+  },
+  "FootprintEditor": {
+    "title": "Edit the building footprint",
+    "hint": "{count} corners. Drag a corner to move it, Ctrl+click an edge to add one, Delete removes the hovered or last corner. Enter or Save keeps the shape, Esc cancels.",
+    "save": "Save",
+    "cancel": "Cancel",
+    "cancelled": "Footprint edit cancelled.",
+    "needThreePoints": "A footprint needs at least 3 corners.",
+    "mapNotReady": "The map is still loading. Please try again in a moment.",
+    "saving": "Saving footprint…",
+    "saved": "Footprint saved.",
+    "saveFailed": "Failed to save the footprint. Please try again."
   }
 }

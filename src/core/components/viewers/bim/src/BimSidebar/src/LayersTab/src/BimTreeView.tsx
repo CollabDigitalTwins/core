@@ -58,7 +58,7 @@ const BimTreeRow = React.memo(function BimTreeRow({ node, controls, source }: Ro
     expandedIds,
     toggleExpanded,
     visibilityOf,
-    onNodeClick,
+    onNodeSelect,
     onNodeHover,
     onNodeVisibilityChange,
     onNodeIsolate,
@@ -77,8 +77,11 @@ const BimTreeRow = React.memo(function BimTreeRow({ node, controls, source }: Ro
   return (
     <div>
       <div
-        className="group flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent/50 transition-colors cursor-pointer"
-        onClick={() => onNodeClick(node)}
+        className={cn(
+          'group flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent/50 transition-colors',
+          hasChildren && 'cursor-pointer',
+        )}
+        onClick={() => { if (hasChildren) toggleExpanded(node.id) }}
         onMouseEnter={() => onNodeHover(node, true)}
         onMouseLeave={() => onNodeHover(node, false)}
       >
@@ -130,6 +133,16 @@ const BimTreeRow = React.memo(function BimTreeRow({ node, controls, source }: Ro
         )}
 
         <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+            onClick={() => onNodeSelect(node)}
+            title={t('selectTitle')}
+            aria-label={t('selectLabel', { name: node.label })}
+          >
+            <LR.SquareMousePointer className="h-4 w-4" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"

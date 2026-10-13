@@ -749,6 +749,8 @@
     "noClasses": "Aucune classe IFC disponible",
     "isolateTitle": "Isoler",
     "isolateLabel": "Isoler {name}",
+    "selectTitle": "Sélectionner",
+    "selectLabel": "Sélectionner {name}",
     "showAllTitle": "Tout afficher",
     "toggleVisibilityLabel": "Basculer la visibilité de {name}",
     "expandNodeLabel": "Développer {name}",
@@ -1068,8 +1070,7 @@
   "RenderMode": {
     "renderModeTitle": "Mode de rendu",
     "shadowed": "Ombre",
-    "basic": "Basique",
-    "ghost": "Fantôme"
+    "basic": "Basique"
   },
   "SelectionBimTool": {
     "show": "Afficher tout",

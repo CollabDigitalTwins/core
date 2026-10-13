@@ -4,6 +4,7 @@
 import * as OBC from '@thatopen/components'
 
 import { Highlighter } from '../Highlighter'
+import { createClickGuard } from '../lib/clickGuard'
 import { pickAtPointer } from '../lib/pickAtPointer'
 import { BimSceneObjects } from '../SceneObjects'
 import { BimSplats } from '../Splats'
@@ -12,6 +13,7 @@ import { SceneObjectHighlight } from './sceneObjectHighlight'
 import { sameSelection, winningPick } from './selectionState'
 
 import type { SceneSelection, WinningPick } from './selectionState'
+import type { ClickGuard } from '../lib/clickGuard'
 import type { HighlightLevel } from '../lib/highlightMaterials'
 
 const HOVER_GUARD_MS = 50
@@ -30,6 +32,7 @@ export class Selection extends OBC.Component implements OBC.Disposable {
   private overlay: SceneObjectHighlight | null = null
   private selection: SceneSelection = null
   private hoverTimer: number | null = null
+  private clickGuard: ClickGuard | null = null
 
   constructor(components: OBC.Components) {
     super(components)
@@ -47,6 +50,7 @@ export class Selection extends OBC.Component implements OBC.Disposable {
     this.canvas?.addEventListener('click', this.onClick)
     this.canvas?.addEventListener('mousemove', this.onMove)
     this.canvas?.addEventListener('mouseleave', this.onLeave)
+    this.clickGuard = this.canvas ? createClickGuard(this.canvas) : null
   }
 
   get current(): SceneSelection {
@@ -68,6 +72,8 @@ export class Selection extends OBC.Component implements OBC.Disposable {
     this.canvas?.removeEventListener('click', this.onClick)
     this.canvas?.removeEventListener('mousemove', this.onMove)
     this.canvas?.removeEventListener('mouseleave', this.onLeave)
+    this.clickGuard?.dispose()
+    this.clickGuard = null
     this.canvas = null
     if (this.hoverTimer !== null) clearTimeout(this.hoverTimer)
     this.hoverTimer = null
@@ -76,6 +82,7 @@ export class Selection extends OBC.Component implements OBC.Disposable {
   }
 
   private onClick = (event: MouseEvent) => {
+    if (this.clickGuard && !this.clickGuard.isClick(event)) return
     void this.pick(event.clientX, event.clientY).then((pick) => {
       if (!pick) {
         if (!event.ctrlKey) this.select(null)

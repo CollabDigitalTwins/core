@@ -34,6 +34,16 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - Deleting a file revalidates every building's and site's file list, not only the one the caller named.
 - New buildings start with `buildingStoreyNum: 1`, and a drawn footprint without storeys extrudes one storey.
 - Drawn footprints are only drawn from zoom 14 and within the camera's padded view.
+- Footprints tied to a database building, drawn or OSM, are a lighter grey (`ASSIGNED_COLOUR`) than the rest of the 3D
+  buildings, and an OSM footprint whose building has `buildingStoreyNum` is extruded by its storeys, not the tile height.
+- BIM spatial-structure and IFC-class rows no longer select on click: clicking a row expands it, and a new select
+  button on the row's right does the selecting. `BimTreeControls.onNodeClick` is renamed `onNodeSelect`.
+- Picking an element in the 3D view needs a quick press that stays put, so orbiting or panning no longer opens the
+  properties menu.
+
+### Removed
+- Ghost mode from the BIM UI: the **Ghost** render mode in settings and the **Ghost** item in BIM file row menus. The
+  `GhostMode` component stays for programmatic use such as the IDS checker. The `RenderMode.ghost` message is gone.
 
 ### Fixed
 - Drawn building footprints never appeared because their layer waited for `isStyleLoaded()`, which stays false while

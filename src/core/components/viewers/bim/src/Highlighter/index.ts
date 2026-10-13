@@ -12,6 +12,7 @@ import {
   modelIdMapSize,
   type ModelIdMap,
 } from '../lib/bimTree'
+import { createClickGuard, type ClickGuard } from '../lib/clickGuard'
 import { hoverMaterial, selectedMaterial } from '../lib/highlightMaterials'
 
 import type * as FRAGS from '@thatopen/fragments'
@@ -35,6 +36,7 @@ export class Highlighter extends OBC.Component {
   private _disposed = false
   /** The element the pointer listeners are attached to, so they can be removed after teardown. */
   private _listenerTarget: HTMLElement | null = null
+  private _clickGuard: ClickGuard | null = null
 
   // Events
   onElementsSelected = new OBC.Event<number[]>()
@@ -145,6 +147,7 @@ export class Highlighter extends OBC.Component {
   }
 
   private onMouseClick = (event: MouseEvent) => {
+    if (this._clickGuard && !this._clickGuard.isClick(event)) return
     this._mouse.x = event.clientX
     this._mouse.y = event.clientY
     void this.click(event)
@@ -179,6 +182,8 @@ export class Highlighter extends OBC.Component {
       this._listenerTarget.removeEventListener('click', this.onMouseClick)
       this._listenerTarget.removeEventListener('mousemove', this.onMouseMove)
       this._listenerTarget.removeEventListener('mouseleave', this.onMouseLeave)
+      this._clickGuard?.dispose()
+      this._clickGuard = null
       this._listenerTarget = null
     }
     if (!active) return
@@ -187,6 +192,7 @@ export class Highlighter extends OBC.Component {
     container.addEventListener('click', this.onMouseClick)
     container.addEventListener('mousemove', this.onMouseMove)
     container.addEventListener('mouseleave', this.onMouseLeave)
+    this._clickGuard = createClickGuard(container)
     this._listenerTarget = container
   }
 

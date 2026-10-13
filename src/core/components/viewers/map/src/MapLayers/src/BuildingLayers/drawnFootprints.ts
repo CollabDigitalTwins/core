@@ -2,14 +2,13 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { isBuildingGeometry } from './buildingGeometry'
+import { byOsmLabel, osmLabel } from './osmIdExpression'
 
 import type { Building } from '../../../../../../../types/dbTypes'
+import type { FlatBounds } from '../../../../utils/validateBounds'
 
 const STOREY_HEIGHT_M = 3.5
 const DEFAULT_STOREYS = 1
-
-/** West, south, east, north in degrees. */
-export type LngLatBounds = [number, number, number, number]
 
 /** Height a building's storey count implies, or the one-storey default. */
 export const storeyHeight = (building: Building) => (building.buildingStoreyNum || DEFAULT_STOREYS) * STOREY_HEIGHT_M
@@ -18,10 +17,10 @@ export const storeyHeight = (building: Building) => (building.buildingStoreyNum 
 export function osmStoreyHeights(buildings: Building[]): [string, number][] {
   const heights = new Map<string, number>()
   for (const building of buildings) {
-    const osmId = String(building.buildingOsmId ?? '').trim()
+    const osmId = osmLabel(building)
     if (osmId && building.buildingStoreyNum && !heights.has(osmId)) heights.set(osmId, storeyHeight(building))
   }
-  return [...heights].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+  return [...heights].sort(byOsmLabel)
 }
 
 const hasDrawnFootprint = (building: Building) => isBuildingGeometry(building.buildingGeometry)
@@ -50,7 +49,7 @@ export function overriddenOsmIds(buildings: Building[]): string[] {
     .map(building => String(building.buildingOsmId))
 }
 
-function intersects(polygon: GeoJSON.Polygon, [west, south, east, north]: LngLatBounds): boolean {
+function intersects(polygon: GeoJSON.Polygon, [west, south, east, north]: FlatBounds): boolean {
   const outer = polygon.coordinates[0]
   const lngs = outer.map(([lng]) => lng)
   const lats = outer.map(([, lat]) => lat)
@@ -59,7 +58,7 @@ function intersects(polygon: GeoJSON.Polygon, [west, south, east, north]: LngLat
 
 export function footprintsInBounds(
   footprints: GeoJSON.FeatureCollection<GeoJSON.Polygon>,
-  bounds: LngLatBounds | null,
+  bounds: FlatBounds | null,
 ): GeoJSON.FeatureCollection<GeoJSON.Polygon> {
   if (!bounds) return { type: 'FeatureCollection', features: [] }
   return { type: 'FeatureCollection', features: footprints.features.filter(feature => intersects(feature.geometry, bounds)) }

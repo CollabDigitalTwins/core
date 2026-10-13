@@ -231,8 +231,7 @@ export default function BuildingTools({
         },
       ];
 
-      // Hidden, not disabled: a tool that navigates somewhere the sidebar does not offer is a
-      // dead end, so it should not be on screen at all. Same rule the sidebar applies.
+      // Hidden, not disabled, like the sidebar: a viewer the org lacks is a dead end.
       return tools.filter(
         tool => tool.opensViewer == null || hasAppContent(organization, tool.opensViewer),
       );
@@ -272,6 +271,8 @@ export default function BuildingTools({
     onCloseAction();
   }
 
+  const bimUnavailableReason = isError ? t('bimFilesUnavailable') : bimFiles.length === 0 ? t('noBimFile') : undefined;
+  const modelOnBuilding = bimModelsAddedToMap.find(model => model.building?.id === buildingId);
 
   return (
     <div className="space-y-4">
@@ -355,35 +356,30 @@ export default function BuildingTools({
                   <Label
                     className={`font-semibold ${isError || bimFiles.length === 0 ? 'text-muted-foreground' : ''}`}
                     htmlFor="show-bim"
-                    title={isError ? t('bimFilesUnavailable') : bimFiles.length === 0 ? t('noBimFile') : undefined}
+                    title={bimUnavailableReason}
                   >
                     {bimAdded ? t('hideBIM') : t('showBIM')}
                   </Label>
                   <Switch
                     id="show-bim"
-                    // A switch that cannot be flipped says why, rather than sitting there grey.
-                    title={isError ? t('bimFilesUnavailable') : bimFiles.length === 0 ? t('noBimFile') : undefined}
+                    title={bimUnavailableReason}
                     checked={bimFiles.length === 1 && bimModelsAddedToMap.some(model => model.bimFile.id === bimFiles[0]?.id)}
                     disabled={isError || bimFiles.length === 0 || !ability.can('read', 'File')}
                     onCheckedChange={() => onLoadBIM()}
                   />
                 </div>
               )}
-              {bimFiles.length === 1 && bimModelsAddedToMap.some(model => model.building?.id === buildingId) && (() => {
-                // A model placed on open ground carries no building, so neither lookup can assume one.
-                const selectedModel = bimModelsAddedToMap.find(model => model.building?.id === buildingId);
-                return selectedModel ? (
-                  <Button
-                    onClick={() => handleEditClick(selectedModel.bimFile.id)}
-                    variant="ghost"
-                    size="sm"
-                    title={t('editBimButton')}
-                    disabled={!ability.can('update', 'File')}
-                  >
-                    <LR.LocationEdit className="h-4 w-4" />
-                  </Button>
-                ) : null;
-              })()}
+              {bimFiles.length === 1 && modelOnBuilding && (
+                <Button
+                  onClick={() => handleEditClick(modelOnBuilding.bimFile.id)}
+                  variant="ghost"
+                  size="sm"
+                  title={t('editBimButton')}
+                  disabled={!ability.can('update', 'File')}
+                >
+                  <LR.LocationEdit className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           )
         }

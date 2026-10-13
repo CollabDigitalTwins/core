@@ -3,6 +3,8 @@
 
 import * as React from 'react'
 
+import { mapBbox, type FlatBounds } from '../../../../../utils/validateBounds'
+
 import type { Dataset } from '../../../../../../../../types/datasetTypes'
 import type { FeatureCollection } from 'geojson'
 import type { Map as MapLibreMap } from 'maplibre-gl'
@@ -22,9 +24,8 @@ function asFeatureCollection(fetched: unknown): FeatureCollection {
   return (fetched as { type?: unknown } | null)?.type === 'FeatureCollection' ? fetched as FeatureCollection : EMPTY
 }
 
-function currentView(map: MapLibreMap): { bbox: [number, number, number, number]; zoom: number } {
-  const bounds = map.getBounds()
-  return { bbox: [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()], zoom: map.getZoom() }
+function currentView(map: MapLibreMap): { bbox: FlatBounds; zoom: number } {
+  return { bbox: mapBbox(map), zoom: map.getZoom() }
 }
 
 /** Loads a dataset once, or — when it declares a `viewport` — for the visible bbox after every settled pan or zoom. */

@@ -36,6 +36,15 @@ import type { FileAction } from '../../../../../../../../types/global'
 const BIM_MODEL_OPTIONS: FileAction[] = ['view', 'appearance', 'move', 'projectNorth', 'info', 'delete']
 const BIM_ACCEPT = '.ifc,.frag'
 
+const withModelVisibility = (
+  files: DbFile[],
+  modelUIState: Record<number, { isVisible?: boolean } | undefined>,
+): (DbFile & { isVisible?: boolean })[] =>
+  files.map(file => ({
+    ...file,
+    isVisible: modelUIState[file.id]?.isVisible ?? (file as any).isVisible ?? false,
+  }))
+
 interface BimSectionProps extends FileTabSectionChrome {
   files: DbFile[]
   query?: string
@@ -58,18 +67,10 @@ export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
   const { handleDeleteFile } = useFileDeleteHandler({ deleteFile })
   const unloadFromScene = useSceneUnload()
 
-  const [loadedModels, setLoadedModels] = React.useState<(DbFile & { isVisible?: boolean })[]>(
-    files.map(file => ({
-      ...file,
-      isVisible: modelUIState[file.id]?.isVisible ?? (file as any).isVisible ?? false,
-    }))
-  )
+  const [loadedModels, setLoadedModels] = React.useState(() => withModelVisibility(files, modelUIState))
 
   React.useEffect(() => {
-    setLoadedModels(files.map(file => ({
-      ...file,
-      isVisible: modelUIState[file.id]?.isVisible ?? (file as any).isVisible ?? false,
-    })))
+    setLoadedModels(withModelVisibility(files, modelUIState))
   }, [files, modelUIState])
 
   const modelManager = React.useMemo(() => {

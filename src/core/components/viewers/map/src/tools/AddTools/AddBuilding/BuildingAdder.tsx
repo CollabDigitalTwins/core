@@ -19,13 +19,12 @@ import { addressFieldsFromPlace, getDetailedAddress } from '../../../../utils/ge
 import { polygonCentroid } from '../../../MapLayers/src/SiteLayer/siteGeometry'
 import { BUILDINGS_LAYER_ID, buildingWithOsmId, footprintAt } from '../../../Placement/resolveClickPlacement'
 import { useMapToolSession } from '../shared/useMapToolSession'
-import { usePolygonDraw } from '../shared/usePolygonDraw'
+import { toolDrawLabels, usePolygonDraw } from '../shared/usePolygonDraw'
 
 import { newBuildingData } from './newBuilding'
 
 import type { BuildingPlacement } from './newBuilding'
 import type { AddressFields } from '../../../../utils/geocoder'
-import type { Ring } from '../../../MapLayers/src/SiteLayer/siteGeometry'
 import type * as maplibregl from 'maplibre-gl'
 
 interface BuildingAdderProps {
@@ -101,21 +100,11 @@ export function BuildingAdder({ isOpen, onClose, geocodeEarthApiKey, geocoderUrl
     mapClickManager,
     enabled: isOpen,
     toastId: DRAW_TOAST_ID,
-    onFinish: (ring: Ring) => {
+    onFinish: (ring) => {
       const [lng, lat] = polygonCentroid(ring)
       return create({ lng, lat, ring })
     },
-    labels: {
-      mapNotReady: t('mapNotReady'),
-      cancelled: t('drawCancelled'),
-      needThreePoints: t('needThreePoints'),
-      title: t('drawTitle'),
-      readyTitle: t('drawReadyTitle'),
-      hint: count => t('drawHint', { count }),
-      readyHint: count => t('drawReadyHint', { count }),
-      finish: t('finish'),
-      cancel: t('cancel'),
-    },
+    labels: toolDrawLabels(t),
   })
 
   const startPicking = () => {

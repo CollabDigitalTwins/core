@@ -24,7 +24,6 @@ interface Props {
   nodeId: string
 }
 
-/** Colour picker, opacity slider and reset for one appearance node. */
 export function AppearanceControls({ source, nodeId }: Props) {
   const t = useTranslations('LayersTab')
   const { overrideFor, setAppearance, endCoalescing, clearNode } = useAppearance()

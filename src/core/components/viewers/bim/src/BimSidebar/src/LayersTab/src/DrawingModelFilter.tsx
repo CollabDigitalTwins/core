@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 
 export const ALL_MODELS = '__all__'
 
-/** One option per distinct model id, labelled for the picker. */
 export const modelOptions = (modelIds: Iterable<string>, labelOf: (modelId: string) => string) =>
   [...new Set(modelIds)].map(id => ({ id, label: labelOf(id) }))
 

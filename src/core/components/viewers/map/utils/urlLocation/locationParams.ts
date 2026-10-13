@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { mapBbox } from '../validateBounds'
+
 import { LOCATION_LEVELS } from './locationTarget'
 
 import type { Bbox, CameraTarget, LocationLevel } from './locationTarget'
@@ -80,14 +82,13 @@ export function withLocationParams(params: URLSearchParams, camera: CameraSnapsh
 
 export function cameraSnapshot(map: MapLibreMap): CameraSnapshot {
   const center = map.getCenter()
-  const bounds = map.getBounds()
   return {
     lat: center.lat,
     lng: center.lng,
     zoom: map.getZoom(),
     bearing: map.getBearing(),
     pitch: map.getPitch(),
-    bounds: [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()],
+    bounds: mapBbox(map),
   }
 }
 

@@ -18,7 +18,6 @@ interface Props {
   onClose: () => void
 }
 
-/** Colour and opacity for every element of one loaded model. */
 export function FileAppearanceDialog({ file, onClose }: Props) {
   return (
     <AddItemDialog

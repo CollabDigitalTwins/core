@@ -63,7 +63,6 @@ export function isModelIdMapEmpty(map: ModelIdMap): boolean {
   return true
 }
 
-/** Every model the flat `nodes` draw elements from, sorted. */
 export function modelIdsOf(nodes: BimTreeNode[]): string[] {
   return [...new Set(nodes.flatMap(node => Object.keys(node.items)))].sort()
 }
@@ -218,24 +217,18 @@ export const fileNodeId = (modelId: string): string => `file:${modelId}`
 
 const fileNodesCache = new WeakMap<BimTreeNode[], BimTreeNode[]>()
 
-/** One node per model the flat `classNodes` cover, holding every element they list. Cached per list. */
+/** One node per model, holding every element `classNodes` list. Cached per list. */
 export function fileNodes(classNodes: BimTreeNode[]): BimTreeNode[] {
   const cached = fileNodesCache.get(classNodes)
   if (cached) return cached
 
-  const elementsByModel = new Map<string, Set<number>>()
-  for (const node of classNodes) {
-    for (const [modelId, localIds] of Object.entries(node.items)) {
-      const elements = elementsByModel.get(modelId) ?? new Set<number>()
-      localIds.forEach(localId => elements.add(localId))
-      elementsByModel.set(modelId, elements)
-    }
-  }
+  const elementsByModel: ModelIdMap = {}
+  for (const node of classNodes) mergeModelIdMap(elementsByModel, node.items)
 
-  const nodes = [...elementsByModel.keys()].sort().map(modelId => ({
+  const nodes = Object.keys(elementsByModel).sort().map(modelId => ({
     id: fileNodeId(modelId),
     label: modelId,
-    items: { [modelId]: elementsByModel.get(modelId)! },
+    items: { [modelId]: elementsByModel[modelId] },
     children: [],
   }))
   fileNodesCache.set(classNodes, nodes)

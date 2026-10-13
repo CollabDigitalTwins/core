@@ -21,7 +21,6 @@ export interface SensorView {
   buildingId?: number
 }
 
-/** Sensors belonging to the open viewer and, when they name one, to its current building. */
 export function sensorsInView<T extends Pick<Sensor, 'viewer' | 'buildingId'>>(all: T[], view: SensorView): T[] {
   return all.filter(s => s.viewer === view.viewer && (!s.buildingId || s.buildingId === view.buildingId))
 }

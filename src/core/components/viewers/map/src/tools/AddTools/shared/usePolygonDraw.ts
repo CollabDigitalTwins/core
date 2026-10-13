@@ -23,12 +23,27 @@ export interface PolygonDrawLabels {
   cancelled: string
   needThreePoints: string
   title: string
-  readyTitle: string
+  readyTitle?: string
   hint: (count: number) => string
-  readyHint: (count: number) => string
+  readyHint?: (count: number) => string
   finish: string
   cancel: string
 }
+
+type Translate = (key: string, values?: { count: number }) => string
+
+/** Labels for a tool whose i18n namespace carries the shared `draw*` keys. */
+export const toolDrawLabels = (t: Translate): PolygonDrawLabels => ({
+  mapNotReady: t('mapNotReady'),
+  cancelled: t('drawCancelled'),
+  needThreePoints: t('needThreePoints'),
+  title: t('drawTitle'),
+  readyTitle: t('drawReadyTitle'),
+  hint: count => t('drawHint', { count }),
+  readyHint: count => t('drawReadyHint', { count }),
+  finish: t('finish'),
+  cancel: t('cancel'),
+})
 
 /** Rejecting keeps the drawing on the map so the user can retry finishing. */
 export type FinishPolygon = (ring: Ring) => Promise<void>
@@ -188,7 +203,7 @@ export function usePolygonDraw({ map, mapClickManager, enabled, toastId, labels,
       stop()
     }
     catch {
-      // The caller reports the failure; the corners stay so the user can finish again.
+      // onFinish reports its own failure.
     }
     finally {
       finishingRef.current = false
@@ -264,9 +279,11 @@ export function usePolygonDraw({ map, mapClickManager, enabled, toastId, labels,
     }
     const { labels: text } = latest.current
     const canFinish = pointCount >= 3
-    toast.info(canFinish ? text.readyTitle : text.title, {
+    const title = canFinish ? text.readyTitle ?? text.title : text.title
+    const hint = canFinish ? text.readyHint ?? text.hint : text.hint
+    toast.info(title, {
       id: toastId,
-      description: canFinish ? text.readyHint(pointCount) : text.hint(pointCount),
+      description: hint(pointCount),
       duration: Infinity,
       action: canFinish ? { label: text.finish, onClick: () => { void finish() } } : undefined,
       cancel: { label: text.cancel, onClick: cancel },

@@ -8,7 +8,7 @@ import useSWRMutation from "swr/mutation";
 import type { Building } from '../../types/dbTypes'
 import type { ApiAdapter } from "../ports/apiAdapter";
 
-// One shared fallback so an unloaded list keeps its identity across renders and memo deps hold.
+// Stable fallback so memo deps hold while the list loads.
 const NO_BUILDINGS: Building[] = [];
 
 export function createBuildingHooks(adapter: ApiAdapter) {

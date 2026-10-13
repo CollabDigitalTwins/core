@@ -15,7 +15,7 @@ import { Input, Label } from '../../../../../../ui/'
 import { AddItemDialog } from '../../../../../../ui/AddItemDialog'
 import { Button } from '../../../../../../ui/Button'
 import { polygonCentroid, filterPointsInRing } from '../../../MapLayers/src/SiteLayer/siteGeometry'
-import { usePolygonDraw } from '../shared/usePolygonDraw'
+import { toolDrawLabels, usePolygonDraw } from '../shared/usePolygonDraw'
 
 import { AssociateBuildingsDialog } from './AssociateBuildingsDialog'
 import { persistDrawnSite } from './persistSite'
@@ -74,20 +74,9 @@ export const SiteAdder = ({ isOpen = false, onCancel }: SiteAdderProps) => {
     enabled: isOpen,
     toastId: DRAW_TOAST_ID,
     onFinish: persistRing,
-    labels: {
-      mapNotReady: t('mapNotReady'),
-      cancelled: t('drawCancelled'),
-      needThreePoints: t('needThreePoints'),
-      title: t('drawTitle'),
-      readyTitle: t('drawReadyTitle'),
-      hint: count => t('drawHint', { count }),
-      readyHint: count => t('drawReadyHint', { count }),
-      finish: t('finish'),
-      cancel: t('cancel'),
-    },
+    labels: toolDrawLabels(t),
   })
 
-  // Waits for the buildings list so a draw on a cold cache still gets the prompt.
   React.useEffect(() => {
     if (!pendingDetection) return
     if (buildingsLoading && buildings.length === 0) return

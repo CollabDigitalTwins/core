@@ -78,3 +78,16 @@ export function withAlpha(colour: string, alpha: number): string {
   if (!rgb) return colour
   return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${clamp01(alpha)})`
 }
+
+/** `#rrggbb` for a three.js-style 0xRRGGBB number; an unset colour stays unset. */
+export function hexFromInt(colour: number): string
+export function hexFromInt(colour: number | undefined): string | undefined
+export function hexFromInt(colour: number | undefined): string | undefined {
+  return colour === undefined ? undefined : `#${colour.toString(16).padStart(6, '0')}`
+}
+
+/** The 0xRRGGBB number for a `#rrggbb` string, or null when it does not parse. */
+export function intFromHex(colour: string): number | null {
+  const value = Number.parseInt(colour.replace('#', ''), 16)
+  return Number.isNaN(value) ? null : value
+}

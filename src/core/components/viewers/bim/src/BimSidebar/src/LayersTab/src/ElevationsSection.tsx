@@ -17,7 +17,7 @@ import { useBuildingName } from '../../../../lib/useBuildingName'
 import { useFriendlyIfcClassName } from '../../../../lib/useFriendlyIfcClassName'
 import { ViewSectionList } from '../../../../lib/ViewSectionList'
 
-import { ALL_MODELS, DrawingModelFilter } from './DrawingModelFilter'
+import { ALL_MODELS, DrawingModelFilter, modelOptions } from './DrawingModelFilter'
 import { LayerViewPanel } from './LayerViewPanel'
 
 import type {
@@ -82,10 +82,10 @@ export function ElevationSection({
     }
   }, [bimComponents])
 
-  const models = React.useMemo(() => {
-    const ids = [...new Set(entries.map((entry) => entry.modelId))]
-    return ids.map((id) => ({ id, label: buildingName(id) }))
-  }, [entries, buildingName])
+  const models = React.useMemo(
+    () => modelOptions(entries.map((entry) => entry.modelId), buildingName),
+    [entries, buildingName],
+  )
 
   const filteredEntries: ViewListEntry[] = React.useMemo(() => {
     const q = query.trim().toLowerCase()

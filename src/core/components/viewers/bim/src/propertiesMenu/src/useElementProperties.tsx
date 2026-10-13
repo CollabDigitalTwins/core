@@ -13,19 +13,21 @@ import type { ElementProperty, PropertyGroup} from './utils';
 
 
 
+function candidateModels(bimComponents: OBC.Components, modelId?: string) {
+  const list = bimComponents.get(OBC.FragmentsManager)?.core?.models?.list
+  if (!list) return []
+  const owner = modelId ? list.get(modelId) : undefined
+  return owner ? [owner] : [...list.values()]
+}
+
 export function useElementProperties(bimComponents: any) {
   // Function to get element attributes using ThatOpen API
-  const getElementAttributes = React.useCallback(async (localId: number, attributes?: string[]) => {
+  const getElementAttributes = React.useCallback(async (localId: number, modelId?: string) => {
     if (!bimComponents) return null
 
-    const fragments = bimComponents.get(OBC.FragmentsManager)
-    if (!fragments?.core?.models?.list) return null
-    const models = [...fragments.core.models.list.values()]; for (const model of models) {
+    for (const model of candidateModels(bimComponents, modelId)) {
       try {
-        const [data] = await (model as any).getItemsData([localId], {
-          attributesDefault: !attributes,
-          attributes,
-        })
+        const [data] = await (model as any).getItemsData([localId], { attributesDefault: true })
 
         if (data) return data
       }
@@ -38,12 +40,10 @@ export function useElementProperties(bimComponents: any) {
   }, [bimComponents])
 
   // Function to get element property sets using ThatOpen API
-  const getElementPropertySets = React.useCallback(async (localId: number) => {
+  const getElementPropertySets = React.useCallback(async (localId: number, modelId?: string) => {
     if (!bimComponents) return null
 
-    const fragments = bimComponents.get(OBC.FragmentsManager)
-    if (!fragments?.core?.models?.list) return null
-    const models = [...fragments.core.models.list.values()]; for (const model of models) {
+    for (const model of candidateModels(bimComponents, modelId)) {
       try {
         const [data] = await (model as any).getItemsData([localId], {
           attributesDefault: false,
@@ -94,7 +94,7 @@ export function useElementProperties(bimComponents: any) {
 
   // Function to fetch element properties from ThatOpen model
   const t = useTranslations('analyzeProperty')
-  const fetchElementProperties = React.useCallback(async (localId: number): Promise<{ groups: PropertyGroup[], elementName: string | null }> => {
+  const fetchElementProperties = React.useCallback(async (localId: number, modelId?: string): Promise<{ groups: PropertyGroup[], elementName: string | null }> => {
     try {
       const allProperties: ElementProperty[] = []
 
@@ -106,7 +106,7 @@ export function useElementProperties(bimComponents: any) {
       })
 
       // Get basic attributes
-      const attributes = await getElementAttributes(localId)
+      const attributes = await getElementAttributes(localId, modelId)
       if (attributes) {
         for (const [key, attr] of Object.entries(attributes)) {
           if (attr && typeof attr === 'object' && 'value' in attr && (attr as any).value !== undefined && (attr as any).value !== null) {
@@ -120,7 +120,7 @@ export function useElementProperties(bimComponents: any) {
       }
 
       // Get property sets
-      const rawPsets = await getElementPropertySets(localId)
+      const rawPsets = await getElementPropertySets(localId, modelId)
       if (rawPsets && Array.isArray(rawPsets)) {
         const formattedPsets = formatPropertySets(rawPsets)
 

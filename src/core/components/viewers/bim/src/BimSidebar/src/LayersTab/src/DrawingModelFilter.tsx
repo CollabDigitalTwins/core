@@ -9,6 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 
 export const ALL_MODELS = '__all__'
 
+export const modelOptions = (modelIds: Iterable<string>, labelOf: (modelId: string) => string) =>
+  [...new Set(modelIds)].map(id => ({ id, label: labelOf(id) }))
+
 interface Props {
   models: { id: string; label: string }[]
   value: string

@@ -7,6 +7,60 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Added
+- **Colour and opacity for a whole BIM file.** The file row menu has a **Colour and opacity** item (`FileAction`
+  `'appearance'`) opening the class rows' picker for every element of that model, with undo. `AppearanceSource` gains
+  `'file'`, keyed by `fileNodeId(modelId)`.
+- The IFC classes view can be narrowed to one loaded file, reusing the drawings' model picker.
+- An element's properties lead their Identity Data with the **File** it came from.
+- A switch beside the sensors search box turns every listed sensor type, or tag, on or off at once.
+- **Adding a building from the map toolbar** starts from a searched address, a picked OSM footprint (stored as
+  `buildingOsmId`), or a footprint drawn on the map, stored in `Building.buildingGeometry` and extruded by the new
+  drawn-buildings layer. Drawing needs the host to persist a `buildingGeometry` Json column on Building.
+- **Edit shape** in the database building popover reshapes a building's footprint on the map, starting from its
+  stored `buildingGeometry` or the clicked OSM footprint. A building with a `buildingGeometry` is drawn from it, and
+  its OSM footprint is filtered out of the 3D buildings layer. The map store gains `editingFootprint` and the
+  `SET_EDITING_FOOTPRINT` action.
+- Polygon drawing (sites, building footprints): drag a corner to move it, Ctrl+click an edge to insert one, and Delete
+  removes the hovered corner or else the last one.
+- `usePluginUser()` in `@collabdt/core/plugins-sdk/data` (type `PluginUser`): the signed-in user's `id` and `name`,
+  or `null` while the session loads or when signed out. Also shimmed for runtime-loaded plugins.
+
+- Shared helpers: `hexFromInt` / `intFromHex` in `utils/colourUtils`, `withoutUndefined` in `utils/utils`,
+  `isMapFile` in `ui/FilesManager/src/fileType`, `addressFieldsFromPlace` in `map/utils/geocoder`, `hasMapApi` in
+  `map/utils/hasMapApi`, and `useSensorsInView` for the sensor panels' viewer and building scope.
+
+### Changed
+- Site and building drawing share `usePolygonDraw` and `useMapToolSession`; the map's click popups are paused while
+  either is drawing or picking.
+- Deleting a file revalidates every building's and site's file list, not only the one the caller named.
+- New buildings start with `buildingStoreyNum: 1`, and a drawn footprint without storeys extrudes one storey.
+- Drawn footprints are only drawn from zoom 14 and within the camera's padded view.
+- Footprints tied to a database building, drawn or OSM, are a lighter grey (`ASSIGNED_COLOUR`) than the rest of the 3D
+  buildings, and an OSM footprint whose building has `buildingStoreyNum` is extruded by its storeys, not the tile height.
+- BIM spatial-structure and IFC-class rows no longer select on click: clicking a row expands it, and a new select
+  button on the row's right does the selecting. `BimTreeControls.onNodeClick` is renamed `onNodeSelect`.
+- Picking an element in the 3D view needs a quick press that stays put, so orbiting or panning no longer opens the
+  properties menu.
+
+### Removed
+- Ghost mode from the BIM UI: the **Ghost** render mode in settings and the **Ghost** item in BIM file row menus. The
+  `GhostMode` component stays for programmatic use such as the IDS checker. The `RenderMode.ghost` message is gone.
+
+### Fixed
+- Drawn building footprints never appeared because their layer waited for `isStyleLoaded()`, which stays false while
+  tiles stream in.
+- Closing a footprint on its first corner no longer leaves the Finish/Cancel toast up while the building saves.
+- The map toolbar's building tool no longer leaves the page unresponsive after its dialog closes.
+- A model added on the map and linked to a building shows in that building's BIM viewer File tab.
+- Deleting a BIM model from its map context menu deletes it. Deleting one anywhere, the sidebar included, removes it
+  from the map.
+- Comparing sensors only reaches what the sidebar lists: map sensors on the map, the open building's in the BIM viewer.
+  `sensorsInView` in `components/ui/Sensors/sensorScope` holds the shared filter.
+- The sensor comparison bar chart scrolls inside the dialog instead of growing past it with many sensors.
+- Element properties are read from the model the selection came from, so two loaded files sharing a local id no longer
+  show each other's attributes.
+
 ## [0.14.0] - 2026-10-09.
 
 ### Added

@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 
 import { ViewerNames } from '../../../types/dbTypes'
 
-import { sensorsInScope, tagsForScope, tagsOf } from './sensorScope'
+import { sensorsInScope, sensorsInView, tagsForScope, tagsOf } from './sensorScope'
 import { UNTAGGED_TAG } from './sensorVisibility'
 
 
@@ -86,5 +86,24 @@ describe('tagsForScope', () => {
 
   it('returns nothing usable when the focused sensor has no type', () => {
     expect(tagsForScope(s(9, null, ['x']), all)).toEqual([])
+  })
+})
+
+describe('sensorsInView', () => {
+  const placed = (id: number, viewer: ViewerNames, buildingId: number | null) => ({ id, viewer, buildingId })
+  const sensors = [
+    placed(1, ViewerNames.bim, 7),
+    placed(2, ViewerNames.bim, 8),
+    placed(3, ViewerNames.bim, null),
+    placed(4, ViewerNames.map, null),
+    placed(5, ViewerNames.map, 7),
+  ]
+
+  it('keeps only the current building in the BIM viewer', () => {
+    expect(sensorsInView(sensors, { viewer: ViewerNames.bim, buildingId: 7 }).map(x => x.id)).toEqual([1, 3])
+  })
+
+  it('keeps only map sensors in the map viewer', () => {
+    expect(sensorsInView(sensors, { viewer: ViewerNames.map, buildingId: 7 }).map(x => x.id)).toEqual([4, 5])
   })
 })

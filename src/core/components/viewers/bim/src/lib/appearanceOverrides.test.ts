@@ -50,7 +50,7 @@ function ifcClasses(): BimTreeNode[] {
 }
 
 function trees(): Record<AppearanceSource, BimTreeNode[]> {
-  return { 'spatial': spatial(), 'ifc-class': ifcClasses() }
+  return { 'spatial': spatial(), 'ifc-class': ifcClasses(), 'file': [node('file:m', 'm', createModelIdMap('m', [10, 11, 12]))] }
 }
 
 function override(
@@ -63,6 +63,12 @@ function override(
 }
 
 describe('resolveAppearance', () => {
+  it('paints every element of a file from its file override', () => {
+    const resolved = resolveAppearance([override('file', 'file:m', 0, { opacity: 0.5 })], trees())
+
+    expect([...(resolved.get('m')?.values() ?? [])]).toEqual([{ opacity: 0.5 }, { opacity: 0.5 }, { opacity: 0.5 }])
+  })
+
   it('cascades a node override to its whole subtree', () => {
     const resolved = resolveAppearance(
       [override('spatial', 'm:2', 0, { color: RED })],
@@ -207,6 +213,7 @@ describe('bucketByAppearance', () => {
           }),
         ],
         'ifc-class': [],
+        'file': [],
       },
     )
 

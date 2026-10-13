@@ -8,6 +8,10 @@ import useSWRMutation from "swr/mutation";
 import type { DbFile } from "../../types/dbTypes";
 import type { ApiAdapter } from "../ports/apiAdapter";
 
+// Every building's and site's file list, so a delete clears the row wherever it was listed.
+const isAttachedFileList = (key: unknown): boolean =>
+  Array.isArray(key) && (key[0] === "filesByBuilding" || key[0] === "filesBySite");
+
 export function createFileHooks(adapter: ApiAdapter) {
   // Call adapter methods inside hooks
   const useFiles = () => {
@@ -127,17 +131,11 @@ export function createFileHooks(adapter: ApiAdapter) {
     );
     const deleteFile = async (fileId: number) => {
         await trigger({ fileId });
-        // revalidate after the mutation using the fileId we have in scope
         void mutate(["files"]);
         void mutate(["file", fileId]);
-        if (buildingId) {
-          void mutate(["filesByBuilding", buildingId, ""]);
-          void mutate(["building", buildingId]);
-        }
-        if (siteId) {
-          void mutate(["filesBySite", siteId, ""]);
-          void mutate(["site", siteId]);
-        }
+        void mutate(isAttachedFileList);
+        if (buildingId) void mutate(["building", buildingId]);
+        if (siteId) void mutate(["site", siteId]);
     };
     return { deleteFile, isMutating, deleteError: error, deletedData };
   };

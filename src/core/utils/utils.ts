@@ -6,6 +6,11 @@ import { twMerge } from 'tailwind-merge'
 
 import type { Language } from '../types/dbTypes'
 
+/** A copy without the keys whose value is undefined, so a partial write leaves those columns alone. */
+export function withoutUndefined<T extends object>(fields: T): Partial<T> {
+  return Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined)) as Partial<T>
+}
+
 /** True when a keystroke is aimed at a text field rather than the page. */
 export function isEditableTarget(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))

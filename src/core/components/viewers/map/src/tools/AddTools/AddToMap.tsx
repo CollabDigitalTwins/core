@@ -22,14 +22,15 @@ import { useSidebar, ItemsBadgeButton } from '../../../../../ui/'
 import { AddItemDialog } from '../../../../../ui/AddItemDialog'
 import { CommentInput } from '../../../../../ui/Comments/CommentInput'
 import { DropdownMenuItem } from '../../../../../ui/DropdownMenu'
+import { isMapFile } from '../../../../../ui/FilesManager/src/fileType'
 
 // Icons
 
 // Adder Components
 import { SensorInput } from '../../../../../ui/Sensors/SensorInput'
-import AddBuilding from '../../../../Data/buildingDetails/AddBuilding'
 import Datasets from '../../../datasets'
 
+import { BuildingAdder } from './AddBuilding/BuildingAdder'
 import { DatasetAdder } from './AddDataset/DatasetAdder'
 import { FileAdder } from './AddFile/FileAdder'
 import { SiteAdder } from './AddSite/SiteAdder'
@@ -61,13 +62,10 @@ export default function AddToMap({ tool, organization, martinBaseUrl, geocodeEar
   const [addingMode, setAddingMode] = React.useState<ToolbarToolType | null>(null)
   const { state: fileState } = React.useContext(FilesContext)
   const { files } = fileState.files
-  const mapFiles: DbFile[] = files.filter(file => file.type === 'map-file')
+  const mapFiles: DbFile[] = files.filter(isMapFile)
 
   const {comments} = useComments()
   const {sensors} = useSensors()
-
-  const [newBuildingFields, setNewBuildingFields] = React.useState({})
-  const [buildingDialogOpen, setBuildingDialogOpen] = React.useState(false)
 
   const { currentToolId } = toolsState?.tools || {}
 
@@ -204,7 +202,7 @@ export default function AddToMap({ tool, organization, martinBaseUrl, geocodeEar
         </div>
 
         <DropdownMenuItem
-          onClick={() => setBuildingDialogOpen(true)}
+          onClick={() => handleToolClick('map-add-building')}
           disabled={!ability.can('create', 'Building')}
         >
           <LR.Building2 />
@@ -252,11 +250,9 @@ export default function AddToMap({ tool, organization, martinBaseUrl, geocodeEar
       </AddItemDialog>
 
       {/* Building */}
-      <AddBuilding
-        newBuildingFields={newBuildingFields}
-        setNewBuildingFields={setNewBuildingFields}
-        open={buildingDialogOpen}
-        onOpenChange={setBuildingDialogOpen}
+      <BuildingAdder
+        isOpen={addingMode === 'map-add-building'}
+        onClose={clearTool}
         geocodeEarthApiKey={geocodeEarthApiKey}
         geocoderUrl={geocoderUrl}
       />

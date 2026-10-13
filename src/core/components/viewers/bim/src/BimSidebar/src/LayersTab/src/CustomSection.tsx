@@ -17,7 +17,7 @@ import { useBuildingName } from '../../../../lib/useBuildingName'
 import { useFriendlyIfcClassName } from '../../../../lib/useFriendlyIfcClassName'
 import { ViewSectionList } from '../../../../lib/ViewSectionList'
 
-import { ALL_MODELS, DrawingModelFilter } from './DrawingModelFilter'
+import { ALL_MODELS, DrawingModelFilter, modelOptions } from './DrawingModelFilter'
 import { LayerViewPanel } from './LayerViewPanel'
 
 import type {
@@ -88,10 +88,10 @@ export function CustomSection({
     [entries],
   )
 
-  const models = React.useMemo(() => {
-    const ids = [...new Set(customEntries.map((entry) => entry.modelId))]
-    return ids.map((id) => ({ id, label: buildingName(id) }))
-  }, [customEntries, buildingName])
+  const models = React.useMemo(
+    () => modelOptions(customEntries.map((entry) => entry.modelId), buildingName),
+    [customEntries, buildingName],
+  )
 
   const filteredEntries: ViewListEntry[] = React.useMemo(() => {
     const q = query.trim().toLowerCase()

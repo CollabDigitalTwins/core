@@ -188,7 +188,8 @@
     "editBimButton": "Modifier la position BIM",
     "buildingIdRequired": "L'identifiant du bâtiment est requis pour le téléchargement de fichier.",
     "noBimFile": "Ce bâtiment n'a pas encore de modèle BIM",
-    "bimFilesUnavailable": "Les fichiers de ce bâtiment n’ont pas pu être chargés"
+    "bimFilesUnavailable": "Les fichiers de ce bâtiment n’ont pas pu être chargés",
+    "editShapeTitle": "Modifier la forme"
   },
   "CameraSettings": {
     "title": "Paramètres de caméra",
@@ -559,6 +560,7 @@
     "placeTitle": "Placer",
     "ghostTitle": "Fantôme",
     "unghostTitle": "Normal",
+    "appearanceTitle": "Couleur et opacité",
     "moveTitle": "Modifier la position",
     "projectNorthTitle": "Définir le nord du projet",
     "editTitle": "Modifier",
@@ -747,6 +749,8 @@
     "noClasses": "Aucune classe IFC disponible",
     "isolateTitle": "Isoler",
     "isolateLabel": "Isoler {name}",
+    "selectTitle": "Sélectionner",
+    "selectLabel": "Sélectionner {name}",
     "showAllTitle": "Tout afficher",
     "toggleVisibilityLabel": "Basculer la visibilité de {name}",
     "expandNodeLabel": "Développer {name}",
@@ -1048,6 +1052,7 @@
     "size": "Taille",
     "uploaded": "Téléchargé",
     "description": "Description",
+    "file": "Fichier",
     "position": "Position",
     "rotation": "Rotation (°)",
     "scale": "Échelle",
@@ -1065,8 +1070,7 @@
   "RenderMode": {
     "renderModeTitle": "Mode de rendu",
     "shadowed": "Ombre",
-    "basic": "Basique",
-    "ghost": "Fantôme"
+    "basic": "Basique"
   },
   "SelectionBimTool": {
     "show": "Afficher tout",
@@ -1119,6 +1123,7 @@
     "cancel": "Annuler",
     "filters": "Filtres",
     "toggleLegend": "Afficher ou masquer la légende des couleurs",
+    "toggleAllSensors": "Afficher ou masquer tous les capteurs",
     "groupBy": "Grouper par",
     "groupByType": "Type",
     "groupByTag": "Étiquette",
@@ -1196,7 +1201,7 @@
     "drawTitle": "Dessinez votre site",
     "drawReadyTitle": "Prêt à terminer votre site",
     "drawHint": "Cliquez sur la carte pour ajouter chaque coin ({count} jusqu'à présent). Ajoutez-en au moins 3 pour former un site. Échap annule.",
-    "drawReadyHint": "{count} points placés. Cliquez sur le premier point, appuyez sur Entrée ou cliquez sur Terminer pour le fermer. Retour arrière supprime le dernier point, Échap annule.",
+    "drawReadyHint": "{count} points placés. Cliquez sur le premier point, appuyez sur Entrée ou cliquez sur Terminer pour le fermer. Glissez un point pour le déplacer, Ctrl+clic sur une ligne en ajoute un, Suppr retire le point survolé ou le dernier, Échap annule.",
     "needThreePoints": "Ajoutez au moins 3 points avant de fermer le site.",
     "siteCreated": "Site « {name} » créé.",
     "drawCancelled": "Dessin du site annulé.",
@@ -2265,5 +2270,48 @@
   "BimAttribution": {
     "poweredBy": "Propulsé par :",
     "toggle": "Afficher les attributions"
+  },
+  "BuildingAdder": {
+    "title": "Ajouter un bâtiment",
+    "description": "Recherchez une adresse, choisissez une empreinte sur la carte ou dessinez-la.",
+    "nameLabel": "Nom du bâtiment",
+    "namePlaceholder": "Facultatif — l’adresse par défaut",
+    "addressLabel": "Adresse",
+    "selected": "Sélectionnée : {address}",
+    "createAtAddress": "Créer à cette adresse",
+    "or": "ou",
+    "pickFootprint": "Choisir une empreinte",
+    "drawFootprint": "Dessiner l’empreinte",
+    "pickTitle": "Choisissez l’empreinte d’un bâtiment",
+    "pickHint": "Cliquez sur un bâtiment de la carte pour le créer à cet endroit. Échap annule.",
+    "pickMissed": "Aucune empreinte à cet endroit. Zoomez et cliquez sur un bâtiment.",
+    "pickTaken": "Cette empreinte appartient déjà à un bâtiment.",
+    "footprintsUnavailable": "Cette carte n’affiche pas les empreintes des bâtiments. Zoomez ou dessinez l’empreinte.",
+    "drawTitle": "Dessinez l’empreinte du bâtiment",
+    "drawReadyTitle": "Prêt à terminer l’empreinte",
+    "drawHint": "Cliquez sur la carte pour ajouter chaque coin ({count} jusqu’ici). Ajoutez-en au moins 3. Échap annule.",
+    "drawReadyHint": "{count} coins placés. Cliquez sur le premier coin, appuyez sur Entrée ou touchez Terminer. Glissez un coin pour le déplacer, Ctrl+clic sur un côté en ajoute un, Suppr retire le coin survolé ou le dernier, Échap annule.",
+    "drawCancelled": "Dessin de l’empreinte annulé.",
+    "needThreePoints": "Ajoutez au moins 3 coins avant de terminer l’empreinte.",
+    "mapNotReady": "La carte est encore en cours de chargement. Réessayez dans un instant.",
+    "finish": "Terminer",
+    "cancel": "Annuler",
+    "saving": "Création du bâtiment…",
+    "created": "Bâtiment « {name} » créé.",
+    "createFailed": "Impossible de créer le bâtiment. Veuillez réessayer.",
+    "noOrganization": "Votre compte n’a pas d’organisation : impossible de créer le bâtiment.",
+    "unnamed": "Bâtiment sans nom"
+  },
+  "FootprintEditor": {
+    "title": "Modifier l’empreinte du bâtiment",
+    "hint": "{count} coins. Glissez un coin pour le déplacer, Ctrl+clic sur un côté en ajoute un, Suppr retire le coin survolé ou le dernier. Entrée ou Enregistrer conserve la forme, Échap annule.",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "cancelled": "Modification de l’empreinte annulée.",
+    "needThreePoints": "Une empreinte nécessite au moins 3 coins.",
+    "mapNotReady": "La carte est encore en cours de chargement. Réessayez dans un instant.",
+    "saving": "Enregistrement de l’empreinte…",
+    "saved": "Empreinte enregistrée.",
+    "saveFailed": "Impossible d’enregistrer l’empreinte. Veuillez réessayer."
   }
 }

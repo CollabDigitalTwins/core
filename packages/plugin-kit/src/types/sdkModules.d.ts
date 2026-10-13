@@ -117,6 +117,7 @@ declare module '@collabdt/core/plugins-sdk/data' {
   export type PluginComment = import('./data').PluginComment
   export type PluginAbility = import('./data').PluginAbility
   export type PluginPermissions = import('./data').PluginPermissions
+  export type PluginUser = import('./data').PluginUser
 
   export function useBuildings(): import('./data').PluginBuildingsQuery
   export function useBuilding(id: number | null): import('./data').PluginBuildingQuery
@@ -166,6 +167,7 @@ declare module '@collabdt/core/plugins-sdk/data' {
     T extends Record<string, unknown> = Record<string, unknown>,
   >(): T
   export function usePluginPermissions(): import('./data').PluginPermissions
+  export function usePluginUser(): import('./data').PluginUser | null
 
   export interface PluginDatasetState {
     /** The user added it from the Datasets menu. */

@@ -188,7 +188,8 @@
     "editBimButton": "Editar posición BIM",
     "buildingIdRequired": "El ID del edificio es obligatorio para subir archivos.",
     "noBimFile": "Este edificio aún no tiene un modelo BIM",
-    "bimFilesUnavailable": "No se pudieron cargar los archivos de este edificio"
+    "bimFilesUnavailable": "No se pudieron cargar los archivos de este edificio",
+    "editShapeTitle": "Editar forma"
   },
   "CameraSettings": {
     "title": "Configuración de la cámara",
@@ -559,6 +560,7 @@
     "placeTitle": "Colocar",
     "ghostTitle": "Fantasma",
     "unghostTitle": "Quitar fantasma",
+    "appearanceTitle": "Color y opacidad",
     "moveTitle": "Editar posición",
     "projectNorthTitle": "Definir norte del proyecto",
     "editTitle": "Editar",
@@ -747,6 +749,8 @@
     "noClasses": "No hay clases IFC disponibles",
     "isolateTitle": "Aislar",
     "isolateLabel": "Aislar {name}",
+    "selectTitle": "Seleccionar",
+    "selectLabel": "Seleccionar {name}",
     "showAllTitle": "Mostrar todo",
     "toggleVisibilityLabel": "Alternar visibilidad de {name}",
     "expandNodeLabel": "Expandir {name}",
@@ -1048,6 +1052,7 @@
     "size": "Tamaño",
     "uploaded": "Subido",
     "description": "Descripción",
+    "file": "Archivo",
     "position": "Posición",
     "rotation": "Rotación (°)",
     "scale": "Escala",
@@ -1065,8 +1070,7 @@
   "RenderMode": {
     "renderModeTitle": "Modo de renderizado",
     "shadowed": "Sombreado",
-    "basic": "Básico",
-    "ghost": "Fantasma"
+    "basic": "Básico"
   },
   "SelectionBimTool": {
     "show": "Mostrar todo",
@@ -1119,6 +1123,7 @@
     "cancel": "Cancelar",
     "filters": "Filtros",
     "toggleLegend": "Mostrar u ocultar la leyenda de colores",
+    "toggleAllSensors": "Mostrar u ocultar todos los sensores",
     "groupBy": "Agrupar por",
     "groupByType": "Tipo",
     "groupByTag": "Etiqueta",
@@ -1196,7 +1201,7 @@
     "drawTitle": "Dibuje su sitio",
     "drawReadyTitle": "Listo para finalizar su sitio",
     "drawHint": "Haga clic en el mapa para añadir cada esquina ({count} hasta ahora). Añada al menos 3 para formar un sitio. Esc cancela.",
-    "drawReadyHint": "{count} puntos añadidos. Haga clic en el primer punto, presione Enter o toque Finalizar para cerrarlo. Retroceso elimina el último punto, Esc cancela.",
+    "drawReadyHint": "{count} puntos añadidos. Haga clic en el primer punto, presione Enter o toque Finalizar para cerrarlo. Arrastre un punto para moverlo, Ctrl+clic en una línea añade uno, Supr elimina el punto señalado o el último, Esc cancela.",
     "needThreePoints": "Añada al menos 3 puntos antes de cerrar el sitio.",
     "siteCreated": "Sitio \"{name}\" creado.",
     "drawCancelled": "Dibujo del sitio cancelado.",
@@ -2265,5 +2270,48 @@
   "BimAttribution": {
     "poweredBy": "Con tecnología de:",
     "toggle": "Mostrar atribuciones"
+  },
+  "BuildingAdder": {
+    "title": "Añadir edificio",
+    "description": "Busca una dirección, elige una huella en el mapa o dibújala.",
+    "nameLabel": "Nombre del edificio",
+    "namePlaceholder": "Opcional: por defecto, la dirección",
+    "addressLabel": "Dirección",
+    "selected": "Seleccionada: {address}",
+    "createAtAddress": "Crear en esta dirección",
+    "or": "o",
+    "pickFootprint": "Elegir huella",
+    "drawFootprint": "Dibujar huella",
+    "pickTitle": "Elige la huella de un edificio",
+    "pickHint": "Haz clic en un edificio del mapa para crearlo allí. Esc cancela.",
+    "pickMissed": "No hay ninguna huella ahí. Acerca el mapa y haz clic en un edificio.",
+    "pickTaken": "Esa huella ya pertenece a un edificio.",
+    "footprintsUnavailable": "Este mapa no muestra huellas de edificios. Acerca el mapa o dibuja la huella.",
+    "drawTitle": "Dibuja la huella del edificio",
+    "drawReadyTitle": "Listo para terminar la huella",
+    "drawHint": "Haz clic en el mapa para añadir cada esquina ({count} hasta ahora). Añade al menos 3. Esc cancela.",
+    "drawReadyHint": "{count} esquinas colocadas. Haz clic en la primera esquina, pulsa Intro o toca Terminar. Arrastra una esquina para moverla, Ctrl+clic en un lado añade una, Supr elimina la esquina señalada o la última, Esc cancela.",
+    "drawCancelled": "Dibujo de la huella cancelado.",
+    "needThreePoints": "Añade al menos 3 esquinas antes de terminar la huella.",
+    "mapNotReady": "El mapa aún se está cargando. Inténtalo de nuevo en un momento.",
+    "finish": "Terminar",
+    "cancel": "Cancelar",
+    "saving": "Creando edificio…",
+    "created": "Edificio \"{name}\" creado.",
+    "createFailed": "No se pudo crear el edificio. Inténtalo de nuevo.",
+    "noOrganization": "Tu cuenta no tiene organización, así que no se puede crear el edificio.",
+    "unnamed": "Edificio sin nombre"
+  },
+  "FootprintEditor": {
+    "title": "Editar la huella del edificio",
+    "hint": "{count} esquinas. Arrastra una esquina para moverla, Ctrl+clic en un lado añade una, Supr elimina la esquina señalada o la última. Intro o Guardar conserva la forma, Esc cancela.",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "cancelled": "Edición de la huella cancelada.",
+    "needThreePoints": "Una huella necesita al menos 3 esquinas.",
+    "mapNotReady": "El mapa todavía se está cargando. Inténtalo de nuevo en un momento.",
+    "saving": "Guardando la huella…",
+    "saved": "Huella guardada.",
+    "saveFailed": "No se pudo guardar la huella. Inténtalo de nuevo."
   }
 }

@@ -88,6 +88,7 @@ const _useComment: Provides<typeof SdkData.useComment, DeclaredData['useComment'
 const _useCommentsByBuilding: Provides<typeof SdkData.useCommentsByBuilding, DeclaredData['useCommentsByBuilding']> = true
 const _useCommentsByAuthor: Provides<typeof SdkData.useCommentsByAuthor, DeclaredData['useCommentsByAuthor']> = true
 const _usePluginPermissions: Provides<typeof SdkData.usePluginPermissions, DeclaredData['usePluginPermissions']> = true
+const _usePluginUser: Provides<typeof SdkData.usePluginUser, DeclaredData['usePluginUser']> = true
 const _useCreateSensor: Provides<typeof SdkData.useCreateSensor, DeclaredData['useCreateSensor']> = true
 const _useCreateComment: Provides<typeof SdkData.useCreateComment, DeclaredData['useCreateComment']> = true
 const _useDeleteComments: Provides<typeof SdkData.useDeleteComments, DeclaredData['useDeleteComments']> = true
@@ -135,6 +136,7 @@ void [
   _useSensorTypes, _useSensorType,
   _useComments, _useComment, _useCommentsByBuilding, _useCommentsByAuthor,
   _usePluginPermissions,
+  _usePluginUser,
   _useCreateSensor, _useCreateComment, _useDeleteComments, _useDownloadFile, _usePluginDataset,
   _usePluginConfig, _usePluginId,
   _usePluginMessage, _usePluginTranslations, _pluginTranslator,

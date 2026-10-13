@@ -14,7 +14,6 @@ import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { FileItemComponent, useFileActions, useFileDeleteHandler, useFileVisibility, UploadProgressBar, useUploadTasks } from '../../../../../../../ui/FilesManager'
 import { SECTION_ICONS } from '../../../../../../../ui/FilesManager/src/fileType'
 import { BIMManager } from '../../../../BIMManager'
-import { GhostMode } from '../../../../GhostMode'
 import { Highlighter } from '../../../../Highlighter'
 import { applyModelPlacement } from '../../../../lib/applyModelPlacement'
 import { useBimFileIntake } from '../../../../lib/useBimFileIntake'
@@ -28,11 +27,23 @@ import { useSceneUnload } from '../../../../Placement/useSceneUnload'
 import { BimPointClouds } from '../../../../PointClouds'
 import { SpatialStructure } from '../../../../SpatialStructure'
 
+import { FileAppearanceDialog } from './FileAppearanceDialog'
+
 import type { FileTabSectionChrome } from './sectionChrome'
 import type { DbFile as DbFile } from '../../../../../../../../types/dbTypes'
+import type { FileAction } from '../../../../../../../../types/global'
 
-const BIM_MODEL_OPTIONS: import('../../../../../../../../types/global').FileAction[] = ['view', 'ghost', 'move', 'projectNorth', 'info', 'delete']
+const BIM_MODEL_OPTIONS: FileAction[] = ['view', 'appearance', 'move', 'projectNorth', 'info', 'delete']
 const BIM_ACCEPT = '.ifc,.frag'
+
+const withModelVisibility = (
+  files: DbFile[],
+  modelUIState: Record<number, { isVisible?: boolean } | undefined>,
+): (DbFile & { isVisible?: boolean })[] =>
+  files.map(file => ({
+    ...file,
+    isVisible: modelUIState[file.id]?.isVisible ?? (file as any).isVisible ?? false,
+  }))
 
 interface BimSectionProps extends FileTabSectionChrome {
   files: DbFile[]
@@ -56,23 +67,10 @@ export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
   const { handleDeleteFile } = useFileDeleteHandler({ deleteFile })
   const unloadFromScene = useSceneUnload()
 
-  const [loadedModels, setLoadedModels] = React.useState<(DbFile & { isVisible?: boolean })[]>(
-    files.map(file => ({
-      ...file,
-      isVisible: modelUIState[file.id]?.isVisible ?? (file as any).isVisible ?? false,
-      isGhost: modelUIState[file.id]?.isGhost ?? false,
-    }))
-  )
+  const [loadedModels, setLoadedModels] = React.useState(() => withModelVisibility(files, modelUIState))
 
   React.useEffect(() => {
-    setLoadedModels(prev => {
-      const prevMap = new Map(prev.map(f => [f.id, f as any]))
-      return files.map(file => ({
-        ...file,
-        isVisible: modelUIState[file.id]?.isVisible ?? (file as any).isVisible ?? false,
-        isGhost: modelUIState[file.id]?.isGhost ?? prevMap.get(file.id)?.isGhost ?? false,
-      }))
-    })
+    setLoadedModels(withModelVisibility(files, modelUIState))
   }, [files, modelUIState])
 
   const modelManager = React.useMemo(() => {
@@ -89,16 +87,6 @@ export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
     if (!bimComponents) return null
     try {
       return bimComponents.get(BIMManager)
-    }
-    catch {
-      return null
-    }
-  }, [bimComponents])
-
-  const ghostMode = React.useMemo(() => {
-    if (!bimComponents) return null
-    try {
-      return bimComponents.get(GhostMode)
     }
     catch {
       return null
@@ -122,10 +110,8 @@ export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
   }, [bimComponents])
 
   const handleBimView = React.useCallback(async (file: DbFile, newVisibility: boolean) => {
-    const isGhosted = modelUIState[file.id]?.isGhost ?? false
-
     if (highlighter) {
-      if (!newVisibility || isGhosted) highlighter.disableModel(file.name)
+      if (!newVisibility) highlighter.disableModel(file.name)
       else highlighter.enableModel(file.name)
     }
 
@@ -143,9 +129,7 @@ export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
     const loadModels = bimComponents.get(LoadModels)
 
     if (!newVisibility) {
-      bimDispatch({ type: 'SET_MODEL_UI_STATE', payload: { fileId: file.id, isVisible: false, isGhost: false } })
-      const ghosted = isGhosted ? fragments.core.models.list.get(file.name) : undefined
-      if (ghosted) ghostMode?.setModelGhost(ghosted, false)
+      bimDispatch({ type: 'SET_MODEL_UI_STATE', payload: { fileId: file.id, isVisible: false } })
       bimManager?.remove(file.name)
       try {
         bimComponents.get(SpatialStructure).forgetModel(file.name)
@@ -167,12 +151,12 @@ export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
       model.object.visible = true
       void fragments.core.update(true)
       bimDispatch({ type: 'SET_MODEL_UI_STATE', payload: { fileId: file.id, isVisible: true } })
-      if (!isGhosted) highlighter?.enableModel(file.name)
+      highlighter?.enableModel(file.name)
     } catch (error) {
       console.error(`Could not show model "${file.name}":`, error)
       bimDispatch({ type: 'SET_MODEL_UI_STATE', payload: { fileId: file.id, isVisible: false } })
     }
-  }, [bimComponents, modelManager, fragments, highlighter, ghostMode, bimManager, bimDispatch, modelUIState])
+  }, [bimComponents, modelManager, fragments, highlighter, bimManager, bimDispatch])
 
   const handleBimMove = React.useCallback((file: DbFile) => {
     if (!bimComponents || !fragments) return
@@ -191,28 +175,6 @@ export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
     void editor.begin(targetFor(file, () => fragments.core.models.list.get(file.name)?.object ?? null))
   }, [bimComponents, fragments, targetFor])
 
-  const handleBimGhost = React.useCallback((file: DbFile, ghostState: boolean) => {
-    if (!fragments || !ghostMode) return
-
-    const fragModel = fragments.core.models.list.get(file.name)
-    if (!fragModel) {
-      console.warn(`[BimGhost] Model not found: "${file.name}"`)
-      return
-    }
-
-    ghostMode.setModelGhost(fragModel, ghostState)
-    bimDispatch({ type: 'SET_MODEL_UI_STATE', payload: { fileId: file.id, isGhost: ghostState } })
-
-    if (highlighter) {
-      const isVisible = modelUIState[file.id]?.isVisible ?? true
-      if (ghostState || !isVisible) {
-        highlighter.disableModel(file.name)
-      } else {
-        highlighter.enableModel(file.name)
-      }
-    }
-  }, [fragments, ghostMode, bimDispatch, highlighter, modelUIState])
-
   const { handleAction, deleteDialog } = useFileActions({
     files: loadedModels,
     setFiles: setLoadedModels,
@@ -223,8 +185,16 @@ export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
     onDelete: file => unloadFromScene(file, 'model'),
     onMove: handleBimMove,
     onProjectNorth: file => void pickProjectNorth(file),
-    onGhost: handleBimGhost
   })
+
+  const [appearanceFile, setAppearanceFile] = React.useState<DbFile | null>(null)
+  const handleRowAction = React.useCallback((action: FileAction, file: DbFile) => {
+    if (action === 'appearance') {
+      setAppearanceFile(file)
+      return
+    }
+    return handleAction(action, file)
+  }, [handleAction])
 
   const intake = useBimFileIntake({
     buildingId,
@@ -294,7 +264,7 @@ export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
             <FileItemComponent
               key={file.id}
               file={file}
-              onAction={handleAction}
+              onAction={handleRowAction}
               options={BIM_MODEL_OPTIONS}
               confirmDelete={false}
             />
@@ -309,6 +279,8 @@ export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
         handleConfirm={deleteDialog.onConfirm}
         itemName={deleteDialog.itemName}
       />
+
+      <FileAppearanceDialog file={appearanceFile} onClose={() => setAppearanceFile(null)} />
     </>
   )
 }

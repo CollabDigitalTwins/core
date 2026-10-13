@@ -15,15 +15,18 @@ import { ViewerNames } from "../../../../../../../types/dbTypes";
 import { useBuildingSensorColours } from "../../../../../../ui/Sensors/useBuildingSensorColours";
 import { MapLayerClickPriority } from "../../../../utils/MapEventManager/MapClickManager";
 import { maptilerKeyForRequest } from "../../../../utils/mapStyleSpec";
-import MapFeaturePopoverMenu from "../../../MapFeaturePopoverMenu";
 
 import {
   buildingColourExpression,
-  DEFAULT_COLOUR_EXPRESSION,
   osmColourEntries,
   type PaintExpression,
 } from "./buildingColourExpression";
+import { buildingPopupEntry } from "./buildingPopupEntry";
+import { osmStoreyHeights, overriddenOsmIds } from "./drawnFootprints";
+import { matchByOsmId, matchesAnyOsmId } from "./osmIdExpression";
 import { BuildingSensorMarkers } from "./src/BuildingSensorMarkers";
+import { DrawnBuildingsLayer } from "./src/DrawnBuildingsLayer";
+import { FootprintEditor } from "./src/FootprintEditor";
 
 import type { PopupEntry } from "../../../../../../../types/map";
 import type { DataDrivenPropertyValueSpecification, MapGeoJSONFeature, MapMouseEvent } from "maplibre-gl";
@@ -32,25 +35,24 @@ const LAYER_ID = "maptiler-3d-buildings";
 const OWN_SOURCE_ID = "cdt-buildings";
 const REUSABLE_SOURCE_IDS = ["openmaptiles", "maptiler_planet", "carto"] as const;
 
-function buildLayerFilter() {
+interface LayerInputs {
+  replacedOsmIds: string[];
+  storeyHeights: [string, number][];
+  colourExpr: PaintExpression;
+}
+
+function buildLayerFilter(replacedOsmIds: string[]) {
   return [
     "all",
     ["!=", ["get", "hide_3d"], true],
     ["!=", ["get", "hide_3d"], "true"],
+    ["!", matchesAnyOsmId(replacedOsmIds)],
   ];
 }
 
-function buildHeightExpression(hiddenBimOsmIds: string[]) {
-  return [
-    "case",
-    [
-      "any",
-      ["in", ["to-string", ["id"]], ["literal", hiddenBimOsmIds]],
-      ["in", ["to-string", ["coalesce", ["get", "osm_id"], ""]], ["literal", hiddenBimOsmIds]],
-    ],
-    0.1,
-    ["coalesce", ["get", "height"], 5],
-  ];
+function buildHeightExpression(hiddenBimOsmIds: string[], storeyHeights: [string, number][]) {
+  const tileHeight: PaintExpression = ["coalesce", ["get", "height"], 5];
+  return ["case", matchesAnyOsmId(hiddenBimOsmIds), 0.1, matchByOsmId(storeyHeights.flat(), tileHeight)];
 }
 
 // Null when there is nothing to draw buildings from so the layer is skipped rather than 403ing.
@@ -89,7 +91,7 @@ function removeBasemapBuildingLayers(map: any, sourceId: string) {
   }
 }
 
-function addBuildingLayer(map: any, hiddenBimOsmIds: string[], colourExpr: PaintExpression, maptilerKey?: string) {
+function addBuildingLayer(map: any, hiddenBimOsmIds: string[], { replacedOsmIds, storeyHeights, colourExpr }: LayerInputs, maptilerKey?: string) {
   try {
     if (map.getLayer(LAYER_ID)) return;
 
@@ -107,12 +109,11 @@ function addBuildingLayer(map: any, hiddenBimOsmIds: string[], colourExpr: Paint
       source: sourceId,
       "source-layer": "building",
       minzoom: 14,
-      filter: buildLayerFilter(),
+      filter: buildLayerFilter(replacedOsmIds),
       paint: {
-        // Seeded rather than hardcoded: `styledata` re-adds this layer after any setStyle, and
-        // the paint effect below will not re-run for it, so the colours would be lost.
+        // Seeded: `styledata` re-adds this layer after setStyle and the paint effect will not re-run.
         "fill-extrusion-color": colourExpr,
-        "fill-extrusion-height": buildHeightExpression(hiddenBimOsmIds),
+        "fill-extrusion-height": buildHeightExpression(hiddenBimOsmIds, storeyHeights),
         "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
         "fill-extrusion-opacity": [
           "interpolate", ["linear"], ["zoom"],
@@ -128,7 +129,7 @@ function addBuildingLayer(map: any, hiddenBimOsmIds: string[], colourExpr: Paint
 
 export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
   const { state: mapState, dispatch: mapDispatch } = React.useContext(MapContext);
-  const { map, mapClickManager, show3dBuildings, popupStack } = mapState.map;
+  const { map, mapClickManager, show3dBuildings, popupStack, editingFootprint } = mapState.map;
   const t = useTranslations("DatabaseBuildingPopover");
   const { setCompareItems } = useBuildingsContext();
   const { buildings } = useBuildings();
@@ -144,8 +145,7 @@ export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
   );
   const [buildingByOsmId, setBuildingByOsmId] = React.useState<Record<string, { id: number }>>({});
 
-  // Footprints are tinted by the average reading of the legend's sensor type. Nothing is polled
-  // and nothing changes colour until a type is pinned in the legend and switched on.
+  // Nothing is polled until a sensor type is pinned in the legend and switched on.
   const sensorColours = useBuildingSensorColours(ViewerNames.map);
   const { averages, colourKey } = sensorColours;
 
@@ -159,18 +159,17 @@ export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
     ? entryFeaturesRef.current[activeEntry.id]?.id ?? null
     : null;
 
+  const assignedOsmIds = React.useMemo(() => Object.keys(buildingByOsmId).sort(), [buildingByOsmId]);
+
   const colourExpr = React.useMemo(
     () => buildingColourExpression({
       osmColours,
+      assignedOsmIds,
       clickedKey,
       hoveredKey: hoveredFeature,
     }),
-    [osmColours, clickedKey, hoveredFeature],
+    [osmColours, assignedOsmIds, clickedKey, hoveredFeature],
   );
-
-  // Read by the add-layer effect, which must not re-run when only the colours change.
-  const colourExprRef = React.useRef<PaintExpression>(DEFAULT_COLOUR_EXPRESSION);
-  colourExprRef.current = colourExpr;
 
   const hiddenBimOsmIds = React.useMemo(
     () => Array.from(new Set(
@@ -208,15 +207,24 @@ export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
     });
   }, [buildings]);
 
+  const replacedOsmIds = React.useMemo(() => {
+    const editedOsmId = buildings.find(building => building.id === editingFootprint?.buildingId)?.buildingOsmId;
+    const ids = overriddenOsmIds(buildings);
+    return editedOsmId == null ? ids : [...ids, String(editedOsmId)];
+  }, [buildings, editingFootprint?.buildingId]);
+
+  const storeyHeights = React.useMemo(() => osmStoreyHeights(buildings), [buildings]);
+
+  // Read by the add-layer effect, which must not re-run when only these change.
+  const layerInputsRef = React.useRef<LayerInputs>({ replacedOsmIds, storeyHeights, colourExpr });
+  layerInputsRef.current = { replacedOsmIds, storeyHeights, colourExpr };
+
   // Add the layer imperatively
   React.useEffect(() => {
     if (!map) return;
 
-    if (map.isStyleLoaded()) {
-      addBuildingLayer(map, hiddenBimOsmIds, colourExprRef.current, maptilerKey);
-    }
-
-    const onStyleLoad = () => addBuildingLayer(map, hiddenBimOsmIds, colourExprRef.current, maptilerKey);
+    const onStyleLoad = () => addBuildingLayer(map, hiddenBimOsmIds, layerInputsRef.current, maptilerKey);
+    if (map.isStyleLoaded()) onStyleLoad();
     map.on("styledata", onStyleLoad);
 
     return () => {
@@ -237,9 +245,9 @@ export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
   React.useEffect(() => {
     if (!map || !map.getLayer(LAYER_ID)) return;
 
-    map.setFilter(LAYER_ID, buildLayerFilter() as any);
-    map.setPaintProperty(LAYER_ID, "fill-extrusion-height", buildHeightExpression(hiddenBimOsmIds) as any);
-  }, [map, hiddenBimOsmIds]);
+    map.setFilter(LAYER_ID, buildLayerFilter(replacedOsmIds) as any);
+    map.setPaintProperty(LAYER_ID, "fill-extrusion-height", buildHeightExpression(hiddenBimOsmIds, storeyHeights) as any);
+  }, [map, hiddenBimOsmIds, replacedOsmIds, storeyHeights]);
 
   React.useEffect(() => {
     if (!map) return;
@@ -293,23 +301,17 @@ export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
         const id = `${LAYER_ID}:${normalizedOsmId}`;
         entryFeaturesRef.current[id] = featureClone;
 
-        return {
-          id,
+        return buildingPopupEntry({
           layerId: LAYER_ID,
-          priority: MapLayerClickPriority.BuildingLayersClickPriority,
+          key: normalizedOsmId,
           title: (_name as string) || t("fallbackName"),
           coordinates,
-          render: (header) => (
-            <MapFeaturePopoverMenu
-              header={header}
-              feature={featureClone}
-              onCloseAction={() => {
-                closePopups();
-                setCompareItems([]);
-              }}
-            />
-          ),
-        };
+          feature: featureClone,
+          onClose: () => {
+            closePopups();
+            setCompareItems([]);
+          },
+        });
       });
     };
 
@@ -347,9 +349,7 @@ export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
     };
   }, [map, mapClickManager, buildingByOsmId, hiddenBimOsmIds, t, closePopups, setCompareItems]);
 
-  // Single writer for fill-extrusion-color: hover, click and sensor colours are merged into one
-  // expression upstream, so there is no second effect to race with. `colourExpr` only changes
-  // when a highlight moves or a sensor colour actually differs, not on every 15s poll.
+  // Sole writer of fill-extrusion-color; every highlight is merged into `colourExpr` upstream.
   React.useEffect(() => {
     if (!map || !map.getLayer(LAYER_ID)) return;
     // The spec union cannot describe an expression assembled at runtime, so the structural type is asserted here.
@@ -363,6 +363,8 @@ export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
   return (
     <>
       <BuildingSensorMarkers buildings={buildings ?? []} sensorColours={sensorColours} />
+      <DrawnBuildingsLayer buildings={buildings} fallbackName={t("fallbackName")} onClosePopup={closePopups} />
+      <FootprintEditor />
     </>
   );
 }

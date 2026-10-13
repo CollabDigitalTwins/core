@@ -23,6 +23,7 @@ import { hasAppContent } from "../../../../../../../../utils/appContent";
 import { useFileVisibility } from '../../../../../../../ui/FilesManager';
 import { toggleBimToMap as dispatchToggleBimToMap } from '../../../../../utils/toggleBimToMap';
 import Compare from '../../../../compare';
+import { ringFromGeoJson } from '../../../../MapLayers/src/SiteLayer/siteGeometry';
 
 import type { Building, DbFile } from "../../../../../../../../types/dbTypes";
 import type { Tool } from "../../../../../../../../types/tools";
@@ -51,7 +52,7 @@ export default function BuildingTools({
   const { dispatch: menusDispatch } = React.useContext(MenusContext);
   const { state: appConfigState } = React.useContext(AppConfigContext);
   const { organization } = appConfigState.appConfig;
-  const { state: mapState, } = React.useContext(MapContext);
+  const { state: mapState, dispatch: mapDispatch } = React.useContext(MapContext);
   const { dispatch: bimDispatch, state: bimState } = React.useContext(BimContext);
   const { bimModelsAddedToMap } = bimState.bim;
   const { dispatch: buildingsDispatch } = React.useContext(BuildingsContext);
@@ -208,6 +209,18 @@ export default function BuildingTools({
           opensViewer: ViewerNames.bim
         },
         {
+          id: "map-edit-footprint",
+          icon: LR.VectorPolygon,
+          title: t('editShapeTitle'),
+          onClick: () => {
+            if (!building) return;
+            const editingFootprint = { buildingId: building.id, seedRing: ringFromGeoJson(feature?.geometry) };
+            mapDispatch({ type: "SET_EDITING_FOOTPRINT", payload: { editingFootprint } });
+            onCloseAction();
+          },
+          disabled: !ability.can('update', 'Building'),
+        },
+        {
           id: "map-add-file",
           icon: isUploading
             ? LR.Loader
@@ -218,8 +231,7 @@ export default function BuildingTools({
         },
       ];
 
-      // Hidden, not disabled: a tool that navigates somewhere the sidebar does not offer is a
-      // dead end, so it should not be on screen at all. Same rule the sidebar applies.
+      // Hidden, not disabled, like the sidebar: a viewer the org lacks is a dead end.
       return tools.filter(
         tool => tool.opensViewer == null || hasAppContent(organization, tool.opensViewer),
       );
@@ -232,7 +244,10 @@ export default function BuildingTools({
       setView,
       isUploading,
       triggerFileInput,
-      organization
+      organization,
+      mapDispatch,
+      onCloseAction,
+      feature
     ]
   );
 
@@ -256,6 +271,8 @@ export default function BuildingTools({
     onCloseAction();
   }
 
+  const bimUnavailableReason = isError ? t('bimFilesUnavailable') : bimFiles.length === 0 ? t('noBimFile') : undefined;
+  const modelOnBuilding = bimModelsAddedToMap.find(model => model.building?.id === buildingId);
 
   return (
     <div className="space-y-4">
@@ -269,109 +286,104 @@ export default function BuildingTools({
 
       {/* BIM Controls */}
       <div className="flex items-center space-x-2">
-          {isLoading
-            ? <>
-              <Skeleton className="h-4 w-20" />
+        {isLoading
+          ? <>
+            <Skeleton className="h-4 w-20" />
 
-              <Skeleton className="h-6 w-10" />
-            </>
-            : (
-              <div className="flex items-center justify-between w-full">
-                {bimFiles.length > 1 ? (
-                  <div className="flex items-center space-x-2">
-                    <Label className="font-semibold" htmlFor="bim-file-dropdown">
-                      {t('selectBimLabel')}
-                    </Label>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" id="bim-file-dropdown">
-                          {bimModelsAddedToMap.length > 0
-                            ? `${bimModelsAddedToMap.filter(model => model.bimFile.attachedFilesBuildingId === buildingId).length} ${t('filesSelected')}`
-                            : t('selectFiles')
-                          }
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        {bimFiles.map((file: DbFile) => {
-                          const isSelected = bimModelsAddedToMap.some(model => model.bimFile.id === file.id);
-                          return (
-                            <DropdownMenuItem
-                              key={file.id}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                toggleBimToMap(file);
-                              }}
-                              className="flex items-center justify-between cursor-pointer"
-                            >
-                              <div className="flex items-center space-x-2">
-                                <Checkbox
-                                  checked={isSelected}
-                                  onClick={(e) => e.stopPropagation()}
-                                  onCheckedChange={() => {
-                                    toggleBimToMap(file);
-                                  }}
-                                />
-                                <span>{file.name}</span>
-                              </div>
-                              {isSelected && (
-                                <Button
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    handleEditClick(file.id);
-                                  }}
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-6 w-6 p-0"
-                                  title={t('editBimButton')}
-                                >
-                                  <LR.LocationEdit className="h-3 w-3" />
-                                </Button>
-                              )}
-                            </DropdownMenuItem>
-                          );
-                        })}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                ) : (
-                  <div className="flex items-center space-x-2">
-                    <Label
-                      className={`font-semibold ${isError || bimFiles.length === 0 ? 'text-muted-foreground' : ''}`}
-                      htmlFor="show-bim"
-                      title={isError ? t('bimFilesUnavailable') : bimFiles.length === 0 ? t('noBimFile') : undefined}
-                    >
-                      {bimAdded ? t('hideBIM') : t('showBIM')}
-                    </Label>
-                    <Switch
-                      id="show-bim"
-                      // A switch that cannot be flipped says why, rather than sitting there grey.
-                      title={isError ? t('bimFilesUnavailable') : bimFiles.length === 0 ? t('noBimFile') : undefined}
-                      checked={bimFiles.length === 1 && bimModelsAddedToMap.some(model => model.bimFile.id === bimFiles[0]?.id)}
-                      disabled={isError || bimFiles.length === 0 || !ability.can('read', 'File')}
-                      onCheckedChange={() => onLoadBIM()}
-                    />
-                  </div>
-                )}
-                {bimFiles.length === 1 && bimModelsAddedToMap.some(model => model.building?.id === buildingId) && (() => {
-                  // A model placed on open ground carries no building, so neither lookup can assume one.
-                  const selectedModel = bimModelsAddedToMap.find(model => model.building?.id === buildingId);
-                  return selectedModel ? (
-                    <Button
-                      onClick={() => handleEditClick(selectedModel.bimFile.id)}
-                      variant="ghost"
-                      size="sm"
-                      title={t('editBimButton')}
-                      disabled={!ability.can('update', 'File')}
-                    >
-                      <LR.LocationEdit className="h-4 w-4" />
-                    </Button>
-                  ) : null;
-                })()}
-              </div>
-            )
-          }
-        </div>
+            <Skeleton className="h-6 w-10" />
+          </>
+          : (
+            <div className="flex items-center justify-between w-full">
+              {bimFiles.length > 1 ? (
+                <div className="flex items-center space-x-2">
+                  <Label className="font-semibold" htmlFor="bim-file-dropdown">
+                    {t('selectBimLabel')}
+                  </Label>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" id="bim-file-dropdown">
+                        {bimModelsAddedToMap.length > 0
+                          ? `${bimModelsAddedToMap.filter(model => model.bimFile.attachedFilesBuildingId === buildingId).length} ${t('filesSelected')}`
+                          : t('selectFiles')
+                        }
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      {bimFiles.map((file: DbFile) => {
+                        const isSelected = bimModelsAddedToMap.some(model => model.bimFile.id === file.id);
+                        return (
+                          <DropdownMenuItem
+                            key={file.id}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              toggleBimToMap(file);
+                            }}
+                            className="flex items-center justify-between cursor-pointer"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                checked={isSelected}
+                                onClick={(e) => e.stopPropagation()}
+                                onCheckedChange={() => {
+                                  toggleBimToMap(file);
+                                }}
+                              />
+                              <span>{file.name}</span>
+                            </div>
+                            {isSelected && (
+                              <Button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleEditClick(file.id);
+                                }}
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                title={t('editBimButton')}
+                              >
+                                <LR.LocationEdit className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Label
+                    className={`font-semibold ${isError || bimFiles.length === 0 ? 'text-muted-foreground' : ''}`}
+                    htmlFor="show-bim"
+                    title={bimUnavailableReason}
+                  >
+                    {bimAdded ? t('hideBIM') : t('showBIM')}
+                  </Label>
+                  <Switch
+                    id="show-bim"
+                    title={bimUnavailableReason}
+                    checked={bimFiles.length === 1 && bimModelsAddedToMap.some(model => model.bimFile.id === bimFiles[0]?.id)}
+                    disabled={isError || bimFiles.length === 0 || !ability.can('read', 'File')}
+                    onCheckedChange={() => onLoadBIM()}
+                  />
+                </div>
+              )}
+              {bimFiles.length === 1 && modelOnBuilding && (
+                <Button
+                  onClick={() => handleEditClick(modelOnBuilding.bimFile.id)}
+                  variant="ghost"
+                  size="sm"
+                  title={t('editBimButton')}
+                  disabled={!ability.can('update', 'File')}
+                >
+                  <LR.LocationEdit className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          )
+        }
+      </div>
 
       {/* Tool Buttons */}
       <div className="flex items-center gap-3">

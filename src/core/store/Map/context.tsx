@@ -38,6 +38,7 @@ const initialState: InitialStateType = {
     dimensionsColour: '#ffffff',
     terrainLevel: 'medium',
     show3dBuildings: true,
+    editingFootprint: null,
     popupStack: null,
   },
 }

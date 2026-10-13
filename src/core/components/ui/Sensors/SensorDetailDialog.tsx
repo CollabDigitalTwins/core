@@ -7,7 +7,6 @@ import { Radio } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
-import { useSensors } from '../../../hooks/sensors/sensors'
 import { AppConfigContext, MenusContext } from '../../../store'
 import { formatInZone } from '../../../utils/timeUtils'
 import { AddItemDialog } from '../AddItemDialog'
@@ -23,6 +22,7 @@ import { UNTAGGED_TAG } from './sensorVisibility'
 // TimeZoneSelect is intentionally not rendered for now (kept as a standalone component).
 import { useSensorSeries } from './useSensorSeries'
 import { latestValues, useSensorSeriesMulti } from './useSensorSeriesMulti'
+import { useSensorsInView } from './useSensorsInView'
 
 import type { SensorSeriesMeta } from './sensorData'
 import type { Sensor, SensorType } from '../../../types/dbTypes'
@@ -108,7 +108,7 @@ export function SensorDetailDialog({
   const [scopeMode, setScopeMode] = React.useState<ScopeMode>('sensor')
   const [scopeTag, setScopeTag] = React.useState<string | null>(null)
 
-  const { sensors } = useSensors()
+  const { sensors } = useSensorsInView()
   // Memoised on the resolved tag list, not the sensors array: SWR hands back a new array on every
   // revalidation, which would make the effect below fire on every render. Serialised as JSON
   // rather than joined, because tags are free text and could contain any separator.
@@ -197,7 +197,7 @@ export function SensorDetailDialog({
       icon={Radio}
       contentClassName="max-w-3xl max-h-[90vh] overflow-y-auto"
     >
-      <div className="space-y-4">
+      <div className="min-w-0 space-y-4">
         {/* One filter row scoping everything below it, so the charts always agree. */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex flex-wrap items-center gap-1">

@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import { highlightColor } from "../../../../../../../types/martinTypes";
 
 import {
+  ASSIGNED_COLOUR,
   buildingColourExpression,
   DEFAULT_COLOUR_EXPRESSION,
   HOVER_COLOUR,
@@ -109,6 +110,25 @@ describe("buildingColourExpression", () => {
   it("keeps the plain grey hover for a footprint with no sensor colour", () => {
     const expr = buildingColourExpression({ osmColours: [["123", "#000000"]], hoveredKey: "999" });
     expect(expr[2]).toBe(HOVER_COLOUR);
+  });
+
+  it("gives assigned footprints the lighter grey, below their sensor colour", () => {
+    expect(buildingColourExpression({ osmColours: [["123", "#ff0000"]], assignedOsmIds: ["123", "456"] })).toEqual([
+      "match", ["to-string", ["id"]], "123", "#ff0000",
+      [
+        "match", ["to-string", ["coalesce", ["get", "osm_id"], ""]], "123", "#ff0000",
+        [
+          "case",
+          [
+            "any",
+            ["in", ["to-string", ["id"]], ["literal", ["123", "456"]]],
+            ["in", ["to-string", ["coalesce", ["get", "osm_id"], ""]], ["literal", ["123", "456"]]],
+          ],
+          ASSIGNED_COLOUR,
+          DEFAULT_COLOUR_EXPRESSION,
+        ],
+      ],
+    ]);
   });
 
   it("emits no branch for an absent or empty highlight key", () => {

@@ -43,7 +43,7 @@ export interface BimTreeControls {
   toggleExpanded: (id: string) => void
   toggleExpandAll: () => void
   visibilityOf: (node: BimTreeNode) => NodeVisibility
-  onNodeClick: (node: BimTreeNode) => void
+  onNodeSelect: (node: BimTreeNode) => void
   onNodeHover: (node: BimTreeNode, isHovering: boolean) => void
   onNodeVisibilityChange: (node: BimTreeNode, visible: boolean) => void
   onNodeIsolate: (node: BimTreeNode) => void
@@ -127,7 +127,7 @@ export function useBimTreeControls({
     [hidden],
   )
 
-  const onNodeClick = React.useCallback((node: BimTreeNode) => {
+  const onNodeSelect = React.useCallback((node: BimTreeNode) => {
     if (!components) return
     void selectItems(components, subtreeItems(node))
   }, [components])
@@ -170,7 +170,7 @@ export function useBimTreeControls({
     toggleExpanded,
     toggleExpandAll,
     visibilityOf,
-    onNodeClick,
+    onNodeSelect,
     onNodeHover,
     onNodeVisibilityChange,
     onNodeIsolate,
@@ -182,7 +182,7 @@ export function useBimTreeControls({
     toggleExpanded,
     toggleExpandAll,
     visibilityOf,
-    onNodeClick,
+    onNodeSelect,
     onNodeHover,
     onNodeVisibilityChange,
     onNodeIsolate,

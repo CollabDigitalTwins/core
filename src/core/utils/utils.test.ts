@@ -3,7 +3,7 @@
 
 import { describe, it, expect } from 'vitest'
 
-import { cn, getFileExtension, toDisplayString } from './utils'
+import { cn, getFileExtension, toDisplayString, withoutUndefined } from './utils'
 
 describe('cn', () => {
   it('joins class names', () => {
@@ -53,5 +53,11 @@ describe('toDisplayString', () => {
     const circular: Record<string, unknown> = {}
     circular.self = circular
     expect(toDisplayString(circular)).toBe('')
+  })
+})
+
+describe('withoutUndefined', () => {
+  it('drops undefined values and keeps every other falsy one', () => {
+    expect(withoutUndefined({ a: undefined, b: null, c: 0, d: '' })).toEqual({ b: null, c: 0, d: '' })
   })
 })

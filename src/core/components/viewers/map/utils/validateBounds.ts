@@ -1,10 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import type { Map as MapLibreMap } from 'maplibre-gl'
+
 /** Flat bounds `[minLng, minLat, maxLng, maxLat]` — the only shape `<Map maxBounds>` accepts. */
 export type FlatBounds = [number, number, number, number]
 
 type NestedBounds = [[number, number], [number, number]]
+
+export function mapBbox(map: Pick<MapLibreMap, 'getBounds'>): FlatBounds {
+  const bounds = map.getBounds()
+  return [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()]
+}
 
 const isValidFlatBounds = (value: unknown): value is FlatBounds => (
   Array.isArray(value)

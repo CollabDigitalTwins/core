@@ -16,6 +16,15 @@ export interface SensorScope {
 
 type ScopeSensor = Pick<Sensor, 'id' | 'typeId' | 'tags' | 'viewer'>
 
+export interface SensorView {
+  viewer: Sensor['viewer']
+  buildingId?: number
+}
+
+export function sensorsInView<T extends Pick<Sensor, 'viewer' | 'buildingId'>>(all: T[], view: SensorView): T[] {
+  return all.filter(s => s.viewer === view.viewer && (!s.buildingId || s.buildingId === view.buildingId))
+}
+
 /** The tags a sensor counts under, treating "no tags" as the untagged sentinel. */
 export function tagsOf(sensor: Pick<Sensor, 'tags'>): string[] {
   return sensor.tags && sensor.tags.length > 0 ? sensor.tags : [UNTAGGED_TAG]

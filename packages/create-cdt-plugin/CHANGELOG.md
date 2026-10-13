@@ -8,11 +8,21 @@ repository root.
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-13
+
+Using plugin-kid v0.12.0
+
 ## [0.11.0] - 2026-10-09
+
+Using plugin-kid v0.11.0
 
 ## [0.10.0] - 2026-10-05
 
+Using plugin-kid v0.10.0
+
 ## [0.9.0] - 2026-10-03
+
+Using plugin-kid v0.9.0
 
 ### Added
 - **A Dataset surface (`--surface map.datasets`)**, whose example lists two GeoJSON points under Organizational

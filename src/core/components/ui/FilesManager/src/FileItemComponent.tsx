@@ -117,6 +117,15 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
           {isGhost ? t('unghostTitle') : t('ghostTitle')}
         </DropdownMenuItem>
       )}
+      {options.includes('appearance') && !isHidden && (
+        <DropdownMenuItem
+          onClick={() => { void onAction('appearance', file) }}
+          disabled={!canReadFile}
+        >
+          <LR.Palette className="h-4 w-4" />
+          {t('appearanceTitle')}
+        </DropdownMenuItem>
+      )}
       {options.includes('move') && isPlaced && !isHidden && (
         <DropdownMenuItem
           onClick={() => { void onAction('move', file) }}

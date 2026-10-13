@@ -4,7 +4,7 @@
 import * as LR from 'lucide-react'
 import { describe, expect, it } from 'vitest'
 
-import { iconForFile, SECTION_FOR_TYPE, SECTION_ICONS, typeOfFile, typeOfRecord } from './fileType'
+import { SECTION_FOR_TYPE, SECTION_ICONS, iconForFile, isMapFile, typeOfFile, typeOfRecord } from './fileType'
 
 import type { FileType } from './fileType'
 import type { DbFile } from '../../../../types/dbTypes'
@@ -111,5 +111,12 @@ describe('section icons', () => {
     expect(iconForFile({ extension: 'glb' } as DbFile)).toBe(SECTION_ICONS.models)
     expect(iconForFile({ extension: 'las' } as DbFile)).toBe(SECTION_ICONS.pointClouds)
     expect(iconForFile({ extension: 'pdf' } as DbFile)).toBe(SECTION_ICONS.files)
+  })
+})
+
+describe('isMapFile', () => {
+  it('matches the map type in any case', () => {
+    expect(isMapFile({ type: 'Map-File' })).toBe(true)
+    expect(isMapFile({ type: 'system' })).toBe(false)
   })
 })

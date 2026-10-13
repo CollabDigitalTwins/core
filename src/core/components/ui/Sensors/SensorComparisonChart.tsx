@@ -80,61 +80,63 @@ export function SensorComparisonChart({
   const height = Math.max(120, sorted.length * 34 + 28)
 
   return (
-    <ChartContainer config={chartConfig} className="w-full" style={{ height }}>
-      <BarChart
-        data={sorted}
-        layout="vertical"
-        margin={{ left: 0, right: 44, top: 4, bottom: 4 }}
-        barCategoryGap={2}
-      >
-        <XAxis
-          type="number"
-          tickLine={false}
-          axisLine={false}
-          tick={{ fontSize: 11 }}
-          tickFormatter={(value: number) => valueNumber.format(value)}
-        />
-        <YAxis
-          type="category"
-          dataKey="name"
-          tickLine={false}
-          axisLine={false}
-          width={110}
-          tick={{ fontSize: 11 }}
-        />
-        <Tooltip
-          cursor={{ fillOpacity: 0.08 }}
-          content={<BarTooltip formatValue={formatValue} />}
-        />
-        <Bar
-          dataKey="value"
-          radius={[0, 4, 4, 0]}
-          maxBarSize={24}
-          isAnimationActive={false}
-          onClick={(data: unknown) => {
-            const entry = (data as { payload?: ComparisonEntry })?.payload
-            if (entry) onFocus(entry.id)
-          }}
-          style={{ cursor: 'pointer' }}
+    <div className="max-h-[360px] min-w-0 overflow-y-auto overflow-x-hidden">
+      <ChartContainer config={chartConfig} className="aspect-auto w-full" style={{ height }}>
+        <BarChart
+          data={sorted}
+          layout="vertical"
+          margin={{ left: 0, right: 44, top: 4, bottom: 4 }}
+          barCategoryGap={2}
         >
-          {sorted.map(entry => (
-            <Cell
-              key={entry.id}
-              fill={entry.colour}
-              // Focus reads as a ring on the bar, since fill already carries the value.
-              stroke={entry.id === focusedId ? 'hsl(var(--foreground))' : undefined}
-              strokeWidth={entry.id === focusedId ? 1.5 : 0}
-            />
-          ))}
-          <LabelList
-            dataKey="value"
-            position="right"
-            className="fill-foreground"
-            style={{ fontSize: 11 }}
-            formatter={(value: number) => formatValue(value)}
+          <XAxis
+            type="number"
+            tickLine={false}
+            axisLine={false}
+            tick={{ fontSize: 11 }}
+            tickFormatter={(value: number) => valueNumber.format(value)}
           />
-        </Bar>
-      </BarChart>
-    </ChartContainer>
+          <YAxis
+            type="category"
+            dataKey="name"
+            tickLine={false}
+            axisLine={false}
+            width={110}
+            tick={{ fontSize: 11 }}
+          />
+          <Tooltip
+            cursor={{ fillOpacity: 0.08 }}
+            content={<BarTooltip formatValue={formatValue} />}
+          />
+          <Bar
+            dataKey="value"
+            radius={[0, 4, 4, 0]}
+            maxBarSize={24}
+            isAnimationActive={false}
+            onClick={(data: unknown) => {
+              const entry = (data as { payload?: ComparisonEntry })?.payload
+              if (entry) onFocus(entry.id)
+            }}
+            style={{ cursor: 'pointer' }}
+          >
+            {sorted.map(entry => (
+              <Cell
+                key={entry.id}
+                fill={entry.colour}
+                // Focus reads as a ring on the bar, since fill already carries the value.
+                stroke={entry.id === focusedId ? 'hsl(var(--foreground))' : undefined}
+                strokeWidth={entry.id === focusedId ? 1.5 : 0}
+              />
+            ))}
+            <LabelList
+              dataKey="value"
+              position="right"
+              className="fill-foreground"
+              style={{ fontSize: 11 }}
+              formatter={(value: number) => formatValue(value)}
+            />
+          </Bar>
+        </BarChart>
+      </ChartContainer>
+    </div>
   )
 }

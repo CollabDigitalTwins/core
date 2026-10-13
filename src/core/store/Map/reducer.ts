@@ -44,6 +44,8 @@ export interface MapTypes {
   dimensionsColour: string;
   terrainLevel: TerrainLevel
   show3dBuildings: boolean
+  /** The building whose footprint is open for reshaping; `seedRing` starts it when none is stored yet. */
+  editingFootprint?: { buildingId: number, seedRing: [number, number][] | null } | null
   popupStack: PopupStack | null
 }
 
@@ -73,6 +75,7 @@ export type MapPayload = {
   ['UPDATE_DIMENSIONS_COLOUR']: Pick<MapTypes, 'dimensionsColour'>
   ['UPDATE_TERRAIN_LEVEL']: Pick<MapTypes, 'terrainLevel'>
   ['UPDATE_SHOW_3D_BUILDINGS']: Pick<MapTypes, 'show3dBuildings'>
+  ['SET_EDITING_FOOTPRINT']: Pick<MapTypes, 'editingFootprint'>
   ['SET_POPUP_STACK']: { entries: PopupEntry[] } | null
   ['SET_POPUP_INDEX']: { activeIndex: number }
 }
@@ -227,6 +230,11 @@ export const MapReducer = (state: MapState, action: MapActions) => {
       return {
         ...state,
         show3dBuildings: action.payload.show3dBuildings,
+      }
+    case 'SET_EDITING_FOOTPRINT':
+      return {
+        ...state,
+        editingFootprint: action.payload.editingFootprint,
       }
     default:
       return state

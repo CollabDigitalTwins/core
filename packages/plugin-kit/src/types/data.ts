@@ -236,3 +236,8 @@ export interface PluginPermissions {
   ability: PluginAbility
   isLoading: boolean
 }
+
+export interface PluginUser {
+  id: string
+  name: string
+}

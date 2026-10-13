@@ -26,6 +26,16 @@ const osmIdOf = (feature: { id?: unknown, properties?: Record<string, unknown> |
   return typeof raw === 'number' ? String(raw) : null
 }
 
+/** The OSM id of the footprint drawn at a screen point, or null for open ground or a map without footprints. */
+export function footprintAt(map: maplibregl.Map, point: ClickAt['point']): string | null {
+  if (!map.getLayer(BUILDINGS_LAYER_ID)) return null
+  const [feature] = map.queryRenderedFeatures(point as maplibregl.PointLike, { layers: [BUILDINGS_LAYER_ID] })
+  return feature ? osmIdOf(feature) : null
+}
+
+export const buildingWithOsmId = (buildings: readonly Building[], osmId: string): Building | undefined =>
+  buildings.find(candidate => candidate.buildingOsmId != null && String(candidate.buildingOsmId) === osmId)
+
 /** Where a click lands: its ground position, and the building it fell on if it fell on one. */
 export function resolveClickPlacement(
   map: maplibregl.Map,
@@ -35,13 +45,8 @@ export function resolveClickPlacement(
   const { lng, lat } = at.lngLat
   const elevation = map.queryTerrainElevation([lng, lat]) ?? 0
 
-  if (!map.getLayer(BUILDINGS_LAYER_ID)) return { lng, lat, elevation, buildingId: null }
-
-  const [feature] = map.queryRenderedFeatures(at.point as maplibregl.PointLike, { layers: [BUILDINGS_LAYER_ID] })
-  const osmId = feature ? osmIdOf(feature) : null
-  const building = osmId == null
-    ? undefined
-    : buildings.find(candidate => candidate.buildingOsmId != null && String(candidate.buildingOsmId) === osmId)
+  const osmId = footprintAt(map, at.point)
+  const building = osmId == null ? undefined : buildingWithOsmId(buildings, osmId)
 
   return { lng, lat, elevation, buildingId: building?.id ?? null }
 }

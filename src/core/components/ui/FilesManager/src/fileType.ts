@@ -90,6 +90,9 @@ export function typeOfFile(file: File): FileType {
   return byExtension(extensionOfName(file.name)) ?? byMimeType(file.type) ?? 'file'
 }
 
+/** A row the map viewer placed, whatever case the writer used for its type. */
+export const isMapFile = (file: Pick<DbFile, 'type'>): boolean => file.type?.toLowerCase() === 'map-file'
+
 export function typeOfRecord(file: DbFile): FileType {
   const stored = file.type?.toLowerCase() ?? ''
   return byExtension(file.extension ?? '')

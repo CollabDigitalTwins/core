@@ -6,6 +6,7 @@
 import * as LR from 'lucide-react'
 import * as React from 'react'
 
+import { hexFromInt, intFromHex } from '../../../../../utils/colourUtils'
 import { Button } from '../../../../ui/Button'
 import { Switch } from '../../../../ui/Switch'
 
@@ -299,7 +300,7 @@ function LayerRow({
   onToggle,
   onColor,
 }: LayerRowProps) {
-  const hex = `#${layer.color.toString(16).padStart(6, '0')}`
+  const hex = hexFromInt(layer.color)
   return (
     <div className="flex items-center gap-2 px-1 py-1 hover:bg-accent/30 rounded-sm">
       <Switch
@@ -317,8 +318,8 @@ function LayerRow({
           type="color"
           value={hex}
           onChange={(event) => {
-            const next = parseInt(event.target.value.replace('#', ''), 16)
-            if (!Number.isNaN(next)) onColor(next)
+            const next = intFromHex(event.target.value)
+            if (next !== null) onColor(next)
           }}
           className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
         />

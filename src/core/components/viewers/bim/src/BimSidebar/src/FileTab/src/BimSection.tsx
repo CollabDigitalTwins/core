@@ -28,10 +28,13 @@ import { useSceneUnload } from '../../../../Placement/useSceneUnload'
 import { BimPointClouds } from '../../../../PointClouds'
 import { SpatialStructure } from '../../../../SpatialStructure'
 
+import { FileAppearanceDialog } from './FileAppearanceDialog'
+
 import type { FileTabSectionChrome } from './sectionChrome'
 import type { DbFile as DbFile } from '../../../../../../../../types/dbTypes'
+import type { FileAction } from '../../../../../../../../types/global'
 
-const BIM_MODEL_OPTIONS: import('../../../../../../../../types/global').FileAction[] = ['view', 'ghost', 'move', 'projectNorth', 'info', 'delete']
+const BIM_MODEL_OPTIONS: FileAction[] = ['view', 'ghost', 'appearance', 'move', 'projectNorth', 'info', 'delete']
 const BIM_ACCEPT = '.ifc,.frag'
 
 interface BimSectionProps extends FileTabSectionChrome {
@@ -226,6 +229,15 @@ export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
     onGhost: handleBimGhost
   })
 
+  const [appearanceFile, setAppearanceFile] = React.useState<DbFile | null>(null)
+  const handleRowAction = React.useCallback((action: FileAction, file: DbFile) => {
+    if (action === 'appearance') {
+      setAppearanceFile(file)
+      return
+    }
+    return handleAction(action, file)
+  }, [handleAction])
+
   const intake = useBimFileIntake({
     buildingId,
     apiBase: bimComponents?.get(BimPointClouds).apiBase ?? '',
@@ -294,7 +306,7 @@ export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
             <FileItemComponent
               key={file.id}
               file={file}
-              onAction={handleAction}
+              onAction={handleRowAction}
               options={BIM_MODEL_OPTIONS}
               confirmDelete={false}
             />
@@ -309,6 +321,8 @@ export function BimSection({ files, query = '', ...chrome }: BimSectionProps) {
         handleConfirm={deleteDialog.onConfirm}
         itemName={deleteDialog.itemName}
       />
+
+      <FileAppearanceDialog file={appearanceFile} onClose={() => setAppearanceFile(null)} />
     </>
   )
 }

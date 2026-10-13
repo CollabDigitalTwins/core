@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { readableTextColour, relativeLuminance } from './colourUtils'
+import { hexFromInt, intFromHex, readableTextColour, relativeLuminance } from './colourUtils'
 
 describe('relativeLuminance', () => {
   it('spans 0 to 1 between black and white', () => {
@@ -40,5 +40,16 @@ describe('readableTextColour', () => {
 
   it('falls back to black for an unparseable colour', () => {
     expect(readableTextColour('hsl(var(--muted))')).toBe('#000000')
+  })
+})
+
+describe('hexFromInt / intFromHex', () => {
+  it('round-trips a colour, padding short values', () => {
+    expect(hexFromInt(0x00ff00)).toBe('#00ff00')
+    expect(intFromHex('#00ff00')).toBe(0x00ff00)
+  })
+
+  it('rejects a string that is not hex', () => {
+    expect(intFromHex('#zzzzzz')).toBeNull()
   })
 })

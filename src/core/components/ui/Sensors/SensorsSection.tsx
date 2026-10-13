@@ -8,7 +8,7 @@ import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { toast } from 'sonner'
 
-import { useSensor, useSensors } from '../../../hooks/sensors/sensors'
+import { useSensor } from '../../../hooks/sensors/sensors'
 import { useSensorTypes } from '../../../hooks/sensorTypes/sensorTypes'
 import { AppConfigContext, BuildingsContext, MenusContext, ToolsContext } from '../../../store'
 import { resolveDefaultTimeZone } from '../../../utils/timeUtils'
@@ -25,6 +25,7 @@ import {
   DropdownMenuRadioItem,
 } from '../DropdownMenu'
 import { SearchInput } from '../SearchInput'
+import { Switch } from '../Switch'
 
 import { CollapsibleSensorItem } from './CollapsibleSensorItem'
 import { SensorInput } from './SensorInput'
@@ -33,6 +34,7 @@ import { resolveLucideIcon } from './sensorUtils'
 import { valueColoursBySensor } from './sensorValueColours'
 import { activeSensorTypeId, legendScopeSensors, UNTAGGED_TAG } from './sensorVisibility'
 import { useSensorSeriesMulti } from './useSensorSeriesMulti'
+import { useSensorsInView } from './useSensorsInView'
 
 import type { Sensor, ViewerNames } from '../../../types/dbTypes';
 
@@ -56,12 +58,10 @@ export function SensorsSection() {
   // Only mounted from a built-in viewer's sidebar, so the key is never a plugin page's.
   const viewer = currentViewer as ViewerNames
 
-  const { sensors: allSensors }: { sensors: Sensor[] } = useSensors()
+  const { allSensors, sensors: currentSensors } = useSensorsInView()
   const { sensorTypes, isLoading } = useSensorTypes()
 
-  const {state: buildingsState} = React.useContext(BuildingsContext)
-  const buildingId = buildingsState?.buildings?.building?.id || -1
-
+  const { state: buildingsState } = React.useContext(BuildingsContext)
   const { state: appConfigState, dispatch: appConfigDispatch } = React.useContext(AppConfigContext)
 
   const [sensorToDelete, setSensorToDelete] = React.useState<number | null>(null)
@@ -115,8 +115,6 @@ export function SensorsSection() {
       setSensorToDelete(null)
     }
   }, [sensorToDelete, deleteSensor])
-
-  const currentSensors: Sensor[] = allSensors.filter((sensor) => viewer === sensor.viewer && (!sensor.buildingId || sensor.buildingId === buildingId))
 
   // Readings for every listed sensor, so each row can be ringed by its current value. This is the
   // only place that polls across types; the viewers poll the focused type alone. Bounded by
@@ -252,6 +250,28 @@ export function SensorsSection() {
     return grouped
   }, [filteredSensors])
 
+  const groupTypeIds = Object.keys(sensorsByType)
+    .map(name => sensorTypes.find(type => type.name === name)?.id)
+    .filter((id): id is number => id != null)
+  const groupTags = Object.keys(sensorsByTag)
+  const isTypeMode = groupBy === 'type'
+  const groupCount = isTypeMode ? groupTypeIds.length : groupTags.length
+  const allGroupsVisible = groupCount > 0 && (isTypeMode
+    ? groupTypeIds.every(id => visibleSensorTypes?.[viewer]?.includes(id))
+    : groupTags.every(tag => visibleSensorTags?.[viewer]?.includes(tag)))
+
+  const setAllGroupsVisible = (visible: boolean) => {
+    if (!visible) {
+      menusDispatch({ type: isTypeMode ? 'HIDE_ALL_SENSORS_IN_VIEWER' : 'HIDE_ALL_SENSOR_TAGS_IN_VIEWER', payload: { viewer } })
+      return
+    }
+    if (isTypeMode) {
+      groupTypeIds.forEach(sensorTypeId => menusDispatch({ type: 'TOGGLE_SENSOR_TYPE_VISIBILITY', payload: { viewer, sensorTypeId, force: true } }))
+    } else {
+      groupTags.forEach(sensorTag => menusDispatch({ type: 'TOGGLE_SENSOR_TAG_VISIBILITY', payload: { viewer, sensorTag, force: true } }))
+    }
+  }
+
   return (
     <div className="flex-1 flex flex-col space-y-4 overflow-hidden">
       <div className="px-4 flex items-center gap-2">
@@ -259,6 +279,14 @@ export function SensorsSection() {
           placeholder={t('searchSensors')}
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
+        />
+        <Switch
+          checked={allGroupsVisible}
+          disabled={groupCount === 0}
+          onCheckedChange={setAllGroupsVisible}
+          aria-label={t('toggleAllSensors')}
+          title={t('toggleAllSensors')}
+          className="flex-shrink-0"
         />
         <Button
           variant={legendVisible ? 'default' : 'outline'}

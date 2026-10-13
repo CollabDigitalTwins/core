@@ -3,8 +3,8 @@
 
 import { subtreeItems, type BimTreeNode } from './bimTree'
 
-/** Which sidebar tree an override was made from. */
-export type AppearanceSource = 'spatial' | 'ifc-class'
+/** Where an override was made from: the spatial tree, the class list, or a whole file. */
+export type AppearanceSource = 'spatial' | 'ifc-class' | 'file'
 
 /** A colour and/or opacity override. Either half may be absent. */
 export interface NodeAppearance {
@@ -92,6 +92,7 @@ export function resolveAppearance(
   const indexes: Record<AppearanceSource, Map<string, IndexedNode>> = {
     'spatial': indexNodes(nodesBySource.spatial),
     'ifc-class': indexNodes(nodesBySource['ifc-class']),
+    'file': indexNodes(nodesBySource.file),
   }
 
   const live = overrides.filter(o => indexes[o.source].has(o.nodeId))

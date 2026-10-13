@@ -6,29 +6,14 @@
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
+import { hexFromInt } from '../../../../../../../../utils/colourUtils'
 import { cn } from '../../../../../../../../utils/utils'
-import { Button } from '../../../../../../../ui/Button'
 import { Popover, PopoverContent, PopoverTrigger } from '../../../../../../../ui/Popover'
-import { Slider } from '../../../../../../../ui/Slider'
 
+import { AppearanceControls } from './AppearanceControls'
 import { useAppearance } from './AppearanceProvider'
 
 import type { AppearanceSource } from '../../../../lib/appearanceOverrides'
-
-/** What the picker opens on for a node that has no colour yet: the app accent. */
-const DEFAULT_PICKER_COLOR = '#73cee2'
-
-/**
- * Floor for the opacity slider. Zero would make the element invisible, which the
- * row's visibility switch already does — and an invisible element cannot be
- * clicked to get back, so it reads as a bug rather than a setting.
- */
-const MIN_OPACITY_PERCENT = 10
-
-function toHex(color: number | undefined): string | undefined {
-  if (color === undefined) return undefined
-  return `#${color.toString(16).padStart(6, '0')}`
-}
 
 interface Props {
   source: AppearanceSource
@@ -47,21 +32,11 @@ interface Props {
  */
 export function AppearanceSwatch({ source, nodeId, label }: Props) {
   const t = useTranslations('LayersTab')
-  const { overrideFor, setAppearance, endCoalescing, clearNode } = useAppearance()
+  const { overrideFor } = useAppearance()
 
   const override = overrideFor(source, nodeId)
-  const hex = toHex(override?.color)
-  const opacityPercent = Math.round((override?.opacity ?? 1) * 100)
+  const hex = hexFromInt(override?.color)
   const isSet = override !== undefined
-
-  // The native picker streams changes while the user moves around in it, and the
-  // slider fires on every tick, so both fold into one undo step per interaction.
-  const onColorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const next = Number.parseInt(event.target.value.replace('#', ''), 16)
-    if (!Number.isNaN(next)) {
-      setAppearance(source, nodeId, { color: next }, `color:${source}:${nodeId}`)
-    }
-  }
 
   return (
     <Popover>
@@ -96,64 +71,10 @@ export function AppearanceSwatch({ source, nodeId, label }: Props) {
 
       <PopoverContent
         align="start"
-        className="w-48 space-y-3 p-3"
+        className="w-48 p-3"
         onClick={event => event.stopPropagation()}
       >
-        <div className="flex items-center gap-2">
-          <label
-            title={t('colorTitle')}
-            className="relative inline-block h-5 w-5 flex-shrink-0 cursor-pointer overflow-hidden rounded-full border border-foreground/20"
-            style={{ backgroundColor: hex ?? DEFAULT_PICKER_COLOR }}
-          >
-            <input
-              type="color"
-              value={hex ?? DEFAULT_PICKER_COLOR}
-              onChange={onColorChange}
-              onBlur={endCoalescing}
-              aria-label={t('colorTitle')}
-              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-            />
-          </label>
-          <span className="font-mono text-xs uppercase text-muted-foreground">
-            {hex ?? '—'}
-          </span>
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">{t('opacityLabel')}</span>
-            <span className="tabular-nums text-muted-foreground">{opacityPercent}%</span>
-          </div>
-          <Slider
-            className="mt-2"
-            value={[opacityPercent]}
-            min={MIN_OPACITY_PERCENT}
-            max={100}
-            step={5}
-            onValueChange={([next]) =>
-              setAppearance(
-                source,
-                nodeId,
-                { opacity: next / 100 },
-                `opacity:${source}:${nodeId}`,
-              )
-            }
-            onValueCommit={endCoalescing}
-            aria-label={t('opacityLabel')}
-          />
-        </div>
-
-        <div className="flex justify-end">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 px-2 text-xs"
-            disabled={!isSet}
-            onClick={() => clearNode(source, nodeId)}
-          >
-            {t('resetNodeLabel')}
-          </Button>
-        </div>
+        <AppearanceControls source={source} nodeId={nodeId} />
       </PopoverContent>
     </Popover>
   )

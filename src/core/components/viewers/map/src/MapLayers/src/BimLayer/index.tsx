@@ -10,8 +10,10 @@ import * as React from "react";
 import { Marker } from "react-map-gl/maplibre";
 import * as THREE from "three";
 
+import { useDeleteFile, useFiles } from "../../../../../../../hooks/files/files";
 import { BimContext, BuildingsContext, MapContext } from "../../../../../../../store";
 import { markerOcclusionProps } from "../../../../../../../utils/markerUtils";
+import ConfirmDialog from "../../../../../../ConfirmDialog";
 import { writeModelMatrix } from "../../../../utils/modelMatrix";
 import { toggleBimToMap } from "../../../../utils/toggleBimToMap";
 import { syncGizmoCamera } from "../../../Placement/mapGizmoCamera";
@@ -21,6 +23,8 @@ import { MapPlacementMenu } from "../../../Placement/MapPlacementMenu";
 import { useMapContextMenu } from "../../../Placement/useMapContextMenu";
 import { disposeThreeScene } from "../disposeThreeScene";
 import { PlaceOnMap } from "../PlaceOnMap";
+
+import { deletedModelIds } from "./deletedModelIds";
 
 import type { Building, DbFile } from "../../../../../../../types/dbTypes";
 import type { FileAction } from "../../../../../../../types/global";
@@ -63,13 +67,42 @@ export const BimLayer = () => {
     const { menu: contextMenu, open: openContextMenu, close: closeContextMenu } =
         useMapContextMenu<{ bimFile: DbFile }>(map);
 
+    const { deleteFile, isMutating: isDeleting } = useDeleteFile();
+    const [pendingDelete, setPendingDelete] = React.useState<DbFile | null>(null);
+
+    const removeFromMap = React.useCallback((fileId: number | string) => {
+        bimDispatch({ type: 'REMOVE_BIM_FROM_MAP', payload: { bimModelId: String(fileId) } });
+    }, [bimDispatch]);
+
+    const confirmDelete = async () => {
+        if (!pendingDelete) return;
+        try {
+            await deleteFile(pendingDelete.id);
+        } catch (error) {
+            console.error('Failed to delete BIM model:', error);
+        } finally {
+            setPendingDelete(null);
+        }
+    };
+
     const handleContextMenuAction = React.useCallback((action: FileAction, file: DbFile) => {
         if (action === 'view') {
-            bimDispatch({ type: 'REMOVE_BIM_FROM_MAP', payload: { bimModelId: String(file.id) } });
+            removeFromMap(file.id);
         } else if (action === 'move') {
             bimDispatch({ type: 'EDIT_BIM_MODEL_BY_ID', payload: { editingBimModelId: String(file.id) } });
+        } else if (action === 'delete') {
+            setPendingDelete(file);
         }
-    }, [bimDispatch]);
+    }, [bimDispatch, removeFromMap]);
+
+    const { files, isLoading: filesLoading, isError: filesError } = useFiles();
+    const knownFileIdsRef = React.useRef<Set<number> | null>(null);
+    React.useEffect(() => {
+        if (filesLoading || filesError) return;
+        const currentFileIds = new Set(files.map(file => file.id));
+        deletedModelIds(bimModelsAddedToMap, knownFileIdsRef.current, currentFileIds).forEach(removeFromMap);
+        knownFileIdsRef.current = currentFileIds;
+    }, [files, filesLoading, filesError, bimModelsAddedToMap, removeFromMap]);
 
     const [editMode, setEditMode] = React.useState<PlacementMode>('translate');
 
@@ -585,6 +618,14 @@ export const BimLayer = () => {
                     onClose={closeContextMenu}
                 />
             )}
+
+            <ConfirmDialog
+                isOpen={pendingDelete !== null}
+                isDeleting={isDeleting}
+                onOpenChange={(open: boolean) => { if (!open) setPendingDelete(null); }}
+                handleConfirm={() => { void confirmDelete(); }}
+                itemName={pendingDelete?.name ?? ''}
+            />
         </>
     );
 

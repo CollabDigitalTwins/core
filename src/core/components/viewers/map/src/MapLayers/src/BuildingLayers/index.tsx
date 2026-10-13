@@ -15,7 +15,6 @@ import { ViewerNames } from "../../../../../../../types/dbTypes";
 import { useBuildingSensorColours } from "../../../../../../ui/Sensors/useBuildingSensorColours";
 import { MapLayerClickPriority } from "../../../../utils/MapEventManager/MapClickManager";
 import { maptilerKeyForRequest } from "../../../../utils/mapStyleSpec";
-import MapFeaturePopoverMenu from "../../../MapFeaturePopoverMenu";
 
 import {
   buildingColourExpression,
@@ -23,7 +22,9 @@ import {
   osmColourEntries,
   type PaintExpression,
 } from "./buildingColourExpression";
+import { buildingPopupEntry } from "./buildingPopupEntry";
 import { BuildingSensorMarkers } from "./src/BuildingSensorMarkers";
+import { DrawnBuildingsLayer } from "./src/DrawnBuildingsLayer";
 
 import type { PopupEntry } from "../../../../../../../types/map";
 import type { DataDrivenPropertyValueSpecification, MapGeoJSONFeature, MapMouseEvent } from "maplibre-gl";
@@ -293,23 +294,17 @@ export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
         const id = `${LAYER_ID}:${normalizedOsmId}`;
         entryFeaturesRef.current[id] = featureClone;
 
-        return {
-          id,
+        return buildingPopupEntry({
           layerId: LAYER_ID,
-          priority: MapLayerClickPriority.BuildingLayersClickPriority,
+          key: normalizedOsmId,
           title: (_name as string) || t("fallbackName"),
           coordinates,
-          render: (header) => (
-            <MapFeaturePopoverMenu
-              header={header}
-              feature={featureClone}
-              onCloseAction={() => {
-                closePopups();
-                setCompareItems([]);
-              }}
-            />
-          ),
-        };
+          feature: featureClone,
+          onClose: () => {
+            closePopups();
+            setCompareItems([]);
+          },
+        });
       });
     };
 
@@ -363,6 +358,7 @@ export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
   return (
     <>
       <BuildingSensorMarkers buildings={buildings ?? []} sensorColours={sensorColours} />
+      <DrawnBuildingsLayer buildings={buildings} fallbackName={t("fallbackName")} onClosePopup={closePopups} />
     </>
   );
 }

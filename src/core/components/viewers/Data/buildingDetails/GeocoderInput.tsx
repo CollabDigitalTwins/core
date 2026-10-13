@@ -4,6 +4,7 @@
 import React from 'react'
 
 import Geocoder from '../../map/src/Geocoder'
+import { addressFieldsFromPlace } from '../../map/utils/geocoder'
 
 interface GeocoderInputProps {
   onSelect: (fields: {
@@ -30,13 +31,10 @@ export default function GeocoderInput({ onSelect, geocodeEarthApiKey, geocoderUr
         if (!addressData) return
         const { formatted_address, coordinates, properties } = addressData
         onSelect({
+          ...addressFieldsFromPlace(properties, formatted_address),
           buildingAddress: formatted_address,
           buildingLongitude: coordinates[0],
           buildingLatitude: coordinates[1],
-          buildingStreetName: properties?.street,
-          buildingCountrySubdivision: properties?.region_a || properties?.region,
-          buildingMunicipality: properties?.locality || properties?.county,
-          buildingPostalCode: properties?.postalcode,
         })
       }}
     />

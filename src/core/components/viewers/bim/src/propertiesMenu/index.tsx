@@ -21,7 +21,7 @@ import { BimSceneObjects } from '../SceneObjects'
 import { BimSplats } from '../Splats'
 
 import { ElementList } from './src/ElementList'
-import { fileIdentityGroup } from './src/fileIdentityGroup'
+import { fileIdentityGroup, withElementFile } from './src/fileIdentityGroup'
 import { PositionSection } from './src/PositionSection'
 import { PropertiesMenuHeader } from './src/PropertiesMenuHeader'
 import { PropertyGroup } from './src/PropertyGroup'
@@ -38,7 +38,12 @@ interface PropertiesSideBarProps {
 
 const identityPropertyValue = (value: string | number) => String(value)
 
-// Hook to get element names for multiple elements
+function selectedModelIdOf(bimComponents: OBC.Components | null | undefined, localId: number): string | undefined {
+  if (!bimComponents) return undefined
+  const selectedItems = bimComponents.get(Highlighter).selectedItems
+  return Object.keys(selectedItems).find(id => selectedItems[id].has(localId))
+}
+
 function useElementNames(bimComponents: any) {
   const { fetchElementProperties } = useElementProperties(bimComponents)
 
@@ -147,7 +152,7 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
   const loadElementProperties = React.useCallback(async (localId: number) => {
     setLoading(true)
     try {
-      const { groups, elementName } = await fetchElementProperties(localId)
+      const { groups, elementName } = await fetchElementProperties(localId, selectedModelIdOf(bimComponents, localId))
       setPropertyGroups(groups)
       setCurrentElementName(elementName)
       // Reset expanded groups to defaults when element changes
@@ -161,7 +166,7 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
     finally {
       setLoading(false)
     }
-  }, [fetchElementProperties])
+  }, [fetchElementProperties, bimComponents])
 
   // Handle closing the properties panel
   const handleClose = React.useCallback(() => {
@@ -252,12 +257,14 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
     handleOpenChange(true)
   }, [selectedFile, currentToolId, handleOpenChange, cancelPendingClose])
 
-  const modelFileForElement = React.useMemo(() => {
-    if (!bimComponents || currentElementId === null) return null
-    const selectedItems = bimComponents.get(Highlighter).selectedItems
-    const modelId = Object.keys(selectedItems).find(id => selectedItems[id].has(currentElementId))
-    return files?.find(file => file.name === modelId) ?? null
-  }, [bimComponents, currentElementId, files])
+  const modelIdForElement = React.useMemo(
+    () => (currentElementId === null ? null : selectedModelIdOf(bimComponents, currentElementId) ?? null),
+    [bimComponents, currentElementId],
+  )
+  const modelFileForElement = React.useMemo(
+    () => files?.find(file => file.name === modelIdForElement) ?? null,
+    [files, modelIdForElement],
+  )
 
   const latestPositionInputsRef = React.useRef({ bimComponents, selectedFile, modelFileForElement, splatTargets, modelTargets })
   React.useEffect(() => {
@@ -307,13 +314,16 @@ export function PropertiesMenu({ open = false, onOpenChangeAction }: PropertiesS
       size: t('size'),
       uploaded: t('uploaded'),
       description: t('description'),
+      file: t('file'),
     }
     if (!selectedFile) return base
     const typeKey = `type_${typeOfRecord(selectedFile)}`
     return { ...base, [typeKey]: t(typeKey) }
   }, [t, selectedFile])
 
-  const groups = selectedFile ? [fileIdentityGroup(selectedFile, identityLabels)] : propertyGroups
+  const groups = selectedFile
+    ? [fileIdentityGroup(selectedFile, identityLabels)]
+    : withElementFile(propertyGroups, modelIdForElement, identityLabels)
 
   // Handler to close IDS verification
   const handleIDSClose = React.useCallback(async () => {

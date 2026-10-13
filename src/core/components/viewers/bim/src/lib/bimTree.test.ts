@@ -9,6 +9,10 @@ import {
   isModelIdMapEmpty,
   mergeModelIdMap,
   modelIdMapSize,
+  modelIdsOf,
+  fileNodeId,
+  fileNodes,
+  narrowToModel,
   nodeVisibility,
   subtreeItems,
   type BimTreeNode,
@@ -180,5 +184,36 @@ describe('filterTree', () => {
     const result = filterTree(roots, 'building a')
 
     expect(result.nodes[0]).toBe(roots[0])
+  })
+})
+
+describe('narrowToModel', () => {
+  const walls = { ...node('ifc-class:IFCWALL', 'IFCWALL', { a: new Set([1, 2]), b: new Set([3]) }), count: 3 }
+  const doors = { ...node('ifc-class:IFCDOOR', 'IFCDOOR', { a: new Set([4]) }), count: 1 }
+
+  it('keeps only the chosen model, recounting each class', () => {
+    const [narrowed] = narrowToModel([walls, doors], 'b')
+    expect(narrowed.items).toEqual({ b: new Set([3]) })
+    expect(narrowed.count).toBe(1)
+  })
+
+  it('drops classes the model has no elements in', () => {
+    expect(narrowToModel([walls, doors], 'b').map(n => n.label)).toEqual(['IFCWALL'])
+  })
+
+  it('lists every model the classes draw from', () => {
+    expect(modelIdsOf([walls, doors])).toEqual(['a', 'b'])
+  })
+})
+
+describe('fileNodes', () => {
+  const walls = node('ifc-class:IFCWALL', 'IFCWALL', { a: new Set([1, 2]), b: new Set([3]) })
+  const doors = node('ifc-class:IFCDOOR', 'IFCDOOR', { a: new Set([4]) })
+
+  it('makes one node per model holding every element the classes list', () => {
+    expect(fileNodes([walls, doors])).toEqual([
+      node(fileNodeId('a'), 'a', { a: new Set([1, 2, 4]) }),
+      node(fileNodeId('b'), 'b', { b: new Set([3]) }),
+    ])
   })
 })

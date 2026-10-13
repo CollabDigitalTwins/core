@@ -8,6 +8,9 @@ import useSWRMutation from "swr/mutation";
 import type { Building } from '../../types/dbTypes'
 import type { ApiAdapter } from "../ports/apiAdapter";
 
+// One shared fallback so an unloaded list keeps its identity across renders and memo deps hold.
+const NO_BUILDINGS: Building[] = [];
+
 export function createBuildingHooks(adapter: ApiAdapter) {
     //Call adapter methods inside hooks
 
@@ -18,7 +21,7 @@ export function createBuildingHooks(adapter: ApiAdapter) {
             () => adapter.getBuildings(),
         );
         return {
-            buildings: data ?? [],
+            buildings: data ?? NO_BUILDINGS,
             isLoading,
             isError: error,
         };
@@ -87,7 +90,7 @@ export function createBuildingHooks(adapter: ApiAdapter) {
             () => adapter.getBuildingsByOsm(buildingOsmId as number),
         );
         return {
-            buildings: data ?? [],
+            buildings: data ?? NO_BUILDINGS,
             isLoading,
             isError: error,
         };

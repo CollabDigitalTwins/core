@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { fileIdentityGroup } from './fileIdentityGroup'
+import { fileIdentityGroup, withElementFile } from './fileIdentityGroup'
 
 import type { DbFile } from '../../../../../../types/dbTypes'
 
@@ -75,5 +75,25 @@ describe('fileIdentityGroup', () => {
   it('omits the uploaded row when uploadedAt does not parse', () => {
     const names = fileIdentityGroup(file({ uploadedAt: 'not-a-date' }), labels).properties.map(property => property.name)
     expect(names).not.toContain('Uploaded')
+  })
+})
+
+describe('withElementFile', () => {
+  const identity = { id: 'identity-data', name: 'Identity Data', icon: null, properties: [{ name: 'Name', value: 'Wall-01' }] }
+  const dimensions = { id: 'dimensions', name: 'Dimensions', icon: null, properties: [] }
+
+  it('puts the file name first in Identity Data', () => {
+    const [group] = withElementFile([identity, dimensions], 'tower.frag', { ...labels, file: 'File' })
+    expect(group.properties.map(property => [property.name, property.value])).toEqual([['File', 'tower.frag'], ['Name', 'Wall-01']])
+  })
+
+  it('adds an Identity Data group when the element has none', () => {
+    const groups = withElementFile([dimensions], 'tower.frag', { ...labels, file: 'File' })
+    expect(groups.map(group => group.id)).toEqual(['identity-data', 'dimensions'])
+  })
+
+  it('leaves the groups alone without a file name', () => {
+    const groups = [identity, dimensions]
+    expect(withElementFile(groups, null, { ...labels, file: 'File' })).toBe(groups)
   })
 })

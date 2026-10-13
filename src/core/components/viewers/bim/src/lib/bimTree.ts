@@ -63,6 +63,18 @@ export function isModelIdMapEmpty(map: ModelIdMap): boolean {
   return true
 }
 
+/** Every model the flat `nodes` draw elements from, sorted. */
+export function modelIdsOf(nodes: BimTreeNode[]): string[] {
+  return [...new Set(nodes.flatMap(node => Object.keys(node.items)))].sort()
+}
+
+/** Flat `nodes` cut down to one model's elements, recounted, dropping those left empty. */
+export function narrowToModel(nodes: BimTreeNode[], modelId: string): BimTreeNode[] {
+  return nodes
+    .filter(node => (node.items[modelId]?.size ?? 0) > 0)
+    .map(node => ({ ...node, items: { [modelId]: node.items[modelId] }, count: node.items[modelId].size }))
+}
+
 /**
  * Cache keyed by node identity. Trees are rebuilt as fresh objects whenever
  * their data changes, so entries can never go stale — the old nodes are simply
@@ -200,4 +212,32 @@ export function filterTree(nodes: BimTreeNode[], query: string): FilteredTree {
   }
 
   return { nodes: result, expandIds }
+}
+
+export const fileNodeId = (modelId: string): string => `file:${modelId}`
+
+const fileNodesCache = new WeakMap<BimTreeNode[], BimTreeNode[]>()
+
+/** One node per model the flat `classNodes` cover, holding every element they list. Cached per list. */
+export function fileNodes(classNodes: BimTreeNode[]): BimTreeNode[] {
+  const cached = fileNodesCache.get(classNodes)
+  if (cached) return cached
+
+  const elementsByModel = new Map<string, Set<number>>()
+  for (const node of classNodes) {
+    for (const [modelId, localIds] of Object.entries(node.items)) {
+      const elements = elementsByModel.get(modelId) ?? new Set<number>()
+      localIds.forEach(localId => elements.add(localId))
+      elementsByModel.set(modelId, elements)
+    }
+  }
+
+  const nodes = [...elementsByModel.keys()].sort().map(modelId => ({
+    id: fileNodeId(modelId),
+    label: modelId,
+    items: { [modelId]: elementsByModel.get(modelId)! },
+    children: [],
+  }))
+  fileNodesCache.set(classNodes, nodes)
+  return nodes
 }

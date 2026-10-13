@@ -1,10 +1,31 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { withoutUndefined } from '../../../../utils/utils'
+
 import { autocompleteGeocode, reverseGeocode } from './geocoding'
 import { MarkerManager } from './MarkerManager'
 
+import type { Building } from '../../../../types/dbTypes'
 import type { Feature, Point } from 'geojson'
+
+export type AddressFields = Partial<Pick<Building,
+  'buildingAddress' | 'buildingStreetName' | 'buildingCountrySubdivision' | 'buildingMunicipality' | 'buildingPostalCode'>>
+
+const text = (value: unknown): string | undefined =>
+  typeof value === 'string' && value.trim() ? value : undefined
+
+/** Maps a geocoder place (forward or reverse) onto a building's address columns. */
+export function addressFieldsFromPlace(properties: Record<string, unknown> | null | undefined, label: string): AddressFields {
+  const place = properties ?? {}
+  return withoutUndefined({
+    buildingAddress: text(label),
+    buildingStreetName: text(place.street),
+    buildingCountrySubdivision: text(place.region_a) ?? text(place.region),
+    buildingMunicipality: text(place.locality) ?? text(place.county),
+    buildingPostalCode: text(place.postalcode),
+  })
+}
 
 // Global marker manager instance for geocoder
 let geocoderMarkerManager: MarkerManager | null = null

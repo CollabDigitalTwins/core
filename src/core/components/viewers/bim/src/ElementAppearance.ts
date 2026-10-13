@@ -22,11 +22,11 @@ import {
   type NodeAppearance,
   type ResolvedAppearance,
 } from './lib/appearanceOverrides'
+import { fileNodes, type BimTreeNode } from './lib/bimTree'
 import { safeRunAsync } from './lib/safeRun'
 import { ViewModeCoordinator } from './lib/ViewModeCoordinator'
 import { SpatialStructure } from './SpatialStructure'
 
-import type { BimTreeNode } from './lib/bimTree'
 import type { UndoHistory } from '../../../../utils/undoHistory'
 import type * as FRAGS from '@thatopen/fragments'
 
@@ -370,9 +370,11 @@ export class ElementAppearance extends OBC.Component implements OBC.Disposable {
   }
 
   private nodesBySource(): Record<AppearanceSource, BimTreeNode[]> {
+    const classes = this.components.get(IfcClasses).classes
     return {
       'spatial': this.components.get(SpatialStructure).trees,
-      'ifc-class': this.components.get(IfcClasses).classes,
+      'ifc-class': classes,
+      'file': this.hasOverrides('file') ? fileNodes(classes) : [],
     }
   }
 

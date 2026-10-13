@@ -135,11 +135,9 @@ export class ViewportGizmo extends OBC.Component implements OBC.Disposable {
 
         this.world.camera.controls.addEventListener('update', updateHandler);
 
-        if (this.world.camera.controls) {
-          const targetArray = this.gizmo.target.set(0, 0, 0).toArray() as [number, number, number]
-          this.world.camera.controls.setTarget(...targetArray)
-          this.camera.three.lookAt(this.gizmo.target)
-        }
+        // Runs on every return to the viewer, so it follows the camera target.
+        this.world.camera.controls.getTarget(this.gizmo.target)
+        this.gizmo.update()
 
         // Set initial pointer events based on enabled state
         const gizmoDom = (this.gizmo as any).domElement;

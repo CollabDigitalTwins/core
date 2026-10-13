@@ -10,10 +10,13 @@ import * as React from 'react'
 import { BimContext } from '../../../../../../../../store'
 import { Button } from '../../../../../../../ui/Button'
 import { IfcClasses } from '../../../../IfcClasses'
+import { modelIdsOf, narrowToModel } from '../../../../lib/bimTree'
 import { useBimTreeControls } from '../../../../lib/useBimTreeControls'
+import { useBuildingName } from '../../../../lib/useBuildingName'
 
 import { useAppearance } from './AppearanceProvider'
 import { BimTreeView } from './BimTreeView'
+import { ALL_MODELS, DrawingModelFilter, modelOptions } from './DrawingModelFilter'
 import { LayerViewPanel } from './LayerViewPanel'
 
 import type { BimTreeNode } from '../../../../lib/bimTree'
@@ -33,12 +36,15 @@ interface Props {
  */
 export function IfcClassesSection({ searchQuery }: Props) {
   const t = useTranslations('LayersTab')
+  const tView = useTranslations('ViewSection')
+  const buildingName = useBuildingName()
   const { state: bimState } = React.useContext(BimContext)
   const { bimComponents } = bimState.bim
   const { clearSource, hasOverrides } = useAppearance()
 
   const [classes, setClasses] = React.useState<BimTreeNode[]>([])
   const [isLoading, setIsLoading] = React.useState(false)
+  const [modelFilter, setModelFilter] = React.useState(ALL_MODELS)
 
   React.useEffect(() => {
     if (!bimComponents) return
@@ -64,9 +70,17 @@ export function IfcClassesSection({ searchQuery }: Props) {
     }
   }, [bimComponents])
 
+  const modelIds = modelIdsOf(classes)
+  const models = modelOptions(modelIds, buildingName)
+  const activeModel = modelIds.includes(modelFilter) ? modelFilter : ALL_MODELS
+  const shownClasses = React.useMemo(
+    () => (activeModel === ALL_MODELS ? classes : narrowToModel(classes, activeModel)),
+    [classes, activeModel],
+  )
+
   const controls = useBimTreeControls({
     components: bimComponents,
-    nodes: classes,
+    nodes: shownClasses,
     searchQuery,
   })
 
@@ -78,7 +92,7 @@ export function IfcClassesSection({ searchQuery }: Props) {
         <span className="text-sm text-muted-foreground">{t('loadingClasses')}</span>
       </div>
     )
-  } else if (classes.length === 0) {
+  } else if (shownClasses.length === 0) {
     body = (
       <div className="flex items-center justify-center py-8">
         <span className="text-sm text-muted-foreground">{t('noClasses')}</span>
@@ -98,7 +112,15 @@ export function IfcClassesSection({ searchQuery }: Props) {
 
   return (
     <LayerViewPanel
-      count={classes.length}
+      count={shownClasses.length}
+      filter={
+        <DrawingModelFilter
+          models={models}
+          value={activeModel}
+          onChange={setModelFilter}
+          allLabel={tView('allIfcFiles')}
+        />
+      }
       actions={
         <>
           <Button

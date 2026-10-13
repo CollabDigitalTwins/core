@@ -19,6 +19,8 @@ export interface PluginDatasetState {
   apply: () => void
   /** What unticking it in the Datasets menu does: takes it off the map. */
   remove: () => void
+  /** What its eye toggle in the applied list does: keeps it applied but stops drawing it. */
+  hide: () => void
 }
 
 /**
@@ -47,5 +49,9 @@ export function usePluginDataset(id: string): PluginDatasetState {
     if (applied) dispatch({ type: 'REMOVE_DATASET_FROM_MAP', payload: { datasetId } })
   }, [applied, datasetId, dispatch])
 
-  return React.useMemo(() => ({ applied, visible, apply, remove }), [applied, visible, apply, remove])
+  const hide = React.useCallback(() => {
+    if (visible) dispatch({ type: 'TOGGLE_DATASET_VISIBILITY', payload: { datasetId } })
+  }, [visible, datasetId, dispatch])
+
+  return React.useMemo(() => ({ applied, visible, apply, remove, hide }), [applied, visible, apply, remove, hide])
 }

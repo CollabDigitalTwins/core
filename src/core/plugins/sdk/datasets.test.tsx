@@ -117,6 +117,32 @@ describe('usePluginDataset', () => {
     expect(dispatch).toHaveBeenCalledExactlyOnceWith({ type: 'REMOVE_DATASET_FROM_MAP', payload: { datasetId: 'plugin:wildfire:fires' } })
   })
 
+  it('hides a shown dataset as its eye toggle would', () => {
+    const dispatch = vi.fn()
+    const { result } = renderHook(() => usePluginDataset('fires'), {
+      wrapper: wrapperWith([{ id: 'plugin:wildfire:fires' }], dispatch),
+    })
+
+    act(() => { result.current.hide() })
+
+    expect(dispatch).toHaveBeenCalledExactlyOnceWith({ type: 'TOGGLE_DATASET_VISIBILITY', payload: { datasetId: 'plugin:wildfire:fires' } })
+  })
+
+  it('does nothing when hiding one already hidden or not applied', () => {
+    const dispatch = vi.fn()
+    const hidden = renderHook(() => usePluginDataset('fires'), {
+      wrapper: wrapperWith([{ id: 'plugin:wildfire:fires', visible: false }], dispatch),
+    })
+    const absent = renderHook(() => usePluginDataset('fires'), { wrapper: wrapperWith([], dispatch) })
+
+    act(() => {
+      hidden.result.current.hide()
+      absent.result.current.hide()
+    })
+
+    expect(dispatch).not.toHaveBeenCalled()
+  })
+
   it('cannot apply a dataset it never registered', () => {
     const dispatch = vi.fn()
     const { result } = renderHook(() => usePluginDataset('unregistered'), { wrapper: wrapperWith([], dispatch) })

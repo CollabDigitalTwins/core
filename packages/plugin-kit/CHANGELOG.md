@@ -8,6 +8,10 @@ repository root.
 
 ## [Unreleased]
 
+### Added
+- `PluginUser` and `usePluginUser()` in the `@collabdt/core/plugins-sdk/data` declarations: the signed-in user's
+  `id` and `name`, or `null` while the session loads or when signed out.
+
 ## [0.11.0] - 2026-10-09
 
 ### Added

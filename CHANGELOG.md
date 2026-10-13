@@ -23,6 +23,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   `SET_EDITING_FOOTPRINT` action.
 - Polygon drawing (sites, building footprints): drag a corner to move it, Ctrl+click an edge to insert one, and Delete
   removes the hovered corner or else the last one.
+- `usePluginUser()` in `@collabdt/core/plugins-sdk/data` (type `PluginUser`): the signed-in user's `id` and `name`,
+  or `null` while the session loads or when signed out. Also shimmed for runtime-loaded plugins.
 
 - Shared helpers: `hexFromInt` / `intFromHex` in `utils/colourUtils`, `withoutUndefined` in `utils/utils`,
   `isMapFile` in `ui/FilesManager/src/fileType`, `addressFieldsFromPlace` in `map/utils/geocoder`, `hasMapApi` in

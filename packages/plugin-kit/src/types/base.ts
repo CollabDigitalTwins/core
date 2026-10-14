@@ -89,7 +89,7 @@ export type PluginDatasetSource =
 
 /**
  * A dataset listed in the Datasets menu: under Live Data when `live`, otherwise under
- * Organizational. `usePluginDataset(id)` reports whether it is applied and can apply or remove it.
+ * Organizational. `usePluginDataset(id)` reports whether it is applied and can apply, remove or hide it.
  */
 export interface DatasetRegistration {
   id: string

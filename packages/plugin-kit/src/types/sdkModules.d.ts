@@ -178,6 +178,8 @@ declare module '@collabdt/core/plugins-sdk/data' {
     apply: () => void
     /** What unticking it in the Datasets menu does: takes it off the map. */
     remove: () => void
+    /** What its eye toggle in the applied list does: keeps it applied but stops drawing it. */
+    hide: () => void
   }
 
   /** Whether one of this plugin's `map.datasets`, by its registration id, is on the map, and the menu's actions for it. */

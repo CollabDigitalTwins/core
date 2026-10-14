@@ -11,6 +11,8 @@ repository root.
 ### Added
 - `PluginUser` and `usePluginUser()` in the `@collabdt/core/plugins-sdk/data` declarations: the signed-in user's
   `id` and `name`, or `null` while the session loads or when signed out.
+- `hide()` on `PluginDatasetState` in the `@collabdt/core/plugins-sdk/data` declarations. It needs a platform
+  running `@collabdt/core` with the same addition.
 
 ## [0.11.0] - 2026-10-09
 

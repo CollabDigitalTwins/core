@@ -443,7 +443,10 @@
     "noDescription": "Sin descripción disponible."
   },
   "DatasetManagerMenu": {
-    "appliedLayer": "Capa aplicada"
+    "appliedLayers": "{count, plural, one {Capa} other {Capas}}",
+    "style": "Estilo",
+    "reorder": "Arrastrar para reordenar",
+    "closeStyle": "Cerrar estilo"
   },
   "MapLegend": {
     "title": "Leyenda",
@@ -452,7 +455,6 @@
     "feedUnavailableToast": "{title}: la fuente en vivo no está disponible en este momento; la capa puede faltar o estar desactualizada."
   },
   "Datasets": {
-    "failedFetchError": "Error al obtener conjuntos de datos.",
     "dialogTitle": "Conjuntos de datos",
     "dialogDescription": "Gestione las capas visibles en su mapa",
     "appliedTab": "Aplicados",
@@ -465,7 +467,6 @@
     "liveDataTab": "Datos en vivo",
     "loading": "Cargando conjuntos de datos...",
     "fetchingDatasets": "Obteniendo conjuntos de datos...",
-    "refreshButton": "Reintentar",
     "breadcrumbTitle": "Conjuntos de datos",
     "backToDataButton": "Volver a Conjuntos de datos",
     "removeButton": "Eliminar conjunto de datos",
@@ -490,7 +491,25 @@
     "toastDeleted": "Se eliminó «{name}»",
     "toastDeleteFailed": "Error al eliminar: {error}",
     "toastDatasetAdded": "Se añadió «{name}»",
-    "toastDatasetNotSaved": "No se pudo guardar «{name}» y se perderá al recargar: {error}"
+    "toastDatasetNotSaved": "No se pudo guardar «{name}» y se perderá al recargar: {error}",
+    "urlLoadFailed": "No se pudo cargar esta URL",
+    "noServiceLayers": "Este servicio no ofrece capas que se puedan mostrar en el mapa.",
+    "urlPlaceholder": "https://… GeoJSON, capa de ArcGIS, WMS, WMTS o URL de teselas",
+    "urlType": "Tipo de fuente",
+    "urlTypes": {
+      "geojson": "GeoJSON",
+      "arcgis": "Capa de entidades de ArcGIS",
+      "wms": "WMS",
+      "wmts": "WMTS",
+      "arcgisMapServer": "Servicio de mapas de ArcGIS",
+      "arcgisImageServer": "Servicio de imágenes de ArcGIS",
+      "xyz": "Teselas XYZ"
+    },
+    "load": "Cargar",
+    "addToMap": "Añadir al mapa",
+    "serviceLayer": "Capa del servicio",
+    "favouriteSaveFailed": "No se pudo guardar este favorito. Inténtalo de nuevo.",
+    "checkingDataset": "Comprobando que este conjunto de datos se puede cargar…"
   },
   "DrawingLayers": {
     "doorSwings": "Hojas de puertas",
@@ -512,18 +531,6 @@
     "exportButton": "Exportar datos",
     "csv": "Exportar CSV",
     "xml": "Exportar XML"
-  },
-  "FieldsTable": {
-    "loadingText": "Cargando campos...",
-    "fieldName": "Nombre del campo",
-    "color": "Color",
-    "fieldColor": "Color del campo",
-    "minVal": "Color del valor mínimo",
-    "maxVal": "Color del valor máximo",
-    "false": "Falso/No",
-    "falseColor": "Color para Falso/No",
-    "true": "Verdadero/Sí",
-    "trueColor": "Color para Verdadero/Sí"
   },
   "FileAdder": {
     "title": "Agregar archivo",
@@ -651,10 +658,6 @@
     "municipality": "Municipalidad",
     "type": "Tipo",
     "source": "Fuente",
-    "countrySubdivisionLower": "subdivisión del país",
-    "municipalityLower": "municipalidad",
-    "typeLower": "tipo",
-    "sourceLower": "fuente",
     "selectField": "Seleccionar campo",
     "searchFields": "Buscar campos...",
     "selectOperator": "Seleccionar operador",
@@ -673,7 +676,10 @@
     "isOn": "es el",
     "isBefore": "es antes de",
     "isAfter": "es después de",
-    "isBetween": "está entre"
+    "isBetween": "está entre",
+    "active": "Filtros activos",
+    "clearAll": "Quitar todos los filtros",
+    "removeFilter": "Quitar el filtro {value}"
   },
   "FiltersDialog": {
     "advanced": "Avanzado",
@@ -916,9 +922,23 @@
     "showing": "Mostrando",
     "properties": "propiedades"
   },
-  "ViewportDatasetNotice": {
+  "DatasetLoadStatus": {
     "zoomIn": "Acerque el mapa para ver este conjunto de datos.",
-    "loadFailed": "No se pudo cargar este conjunto de datos: {reason}"
+    "truncated": "Se muestran las primeras {count} entidades; el resto no se cargó.",
+    "loading": "Cargando…",
+    "bytesOf": "{loaded} de {total}",
+    "featuresSoFar": "{count, plural, one {# elemento} other {# elementos}}",
+    "featuresOf": "{count, number} de {total, number} elementos",
+    "reason": {
+      "forbidden": "El editor no permite el acceso a este conjunto de datos.",
+      "notFound": "El editor ya no ofrece este conjunto de datos.",
+      "unreachable": "No se pudo contactar con el editor. Inténtelo de nuevo más tarde.",
+      "notAMap": "Este servicio no ofrece un mapa que esta plataforma pueda dibujar.",
+      "tooLarge": "Este archivo es demasiado grande para dibujarlo directamente.",
+      "noData": "Este conjunto de datos no tiene elementos para dibujar.",
+      "unknown": "No se pudo cargar este conjunto de datos."
+    },
+    "removed": "Se quitó del mapa: {reason}"
   },
   "OrganizationConfig": {
     "title": "Configuración de la organización",
@@ -2313,5 +2333,55 @@
     "saving": "Guardando la huella…",
     "saved": "Huella guardada.",
     "saveFailed": "No se pudo guardar la huella. Inténtalo de nuevo."
+  },
+  "DatasetStyle": {
+    "loading": "Leyendo campos…",
+    "colourBy": "Colorear por",
+    "allFeatures": "Todas las entidades",
+    "display": "Visualización",
+    "renderer": {
+      "single": "Color único",
+      "featureColour": "Colores de los datos",
+      "categorical": "Categorías",
+      "boolean": "Sí / no",
+      "ramp": "Rampa de color",
+      "graduated": "Clases",
+      "heatmap": "Mapa de calor"
+    },
+    "colour": "Color",
+    "other": "Otro",
+    "yes": "Sí",
+    "no": "No",
+    "noData": "Sin datos",
+    "min": "Mínimo",
+    "max": "Máximo",
+    "classification": "Clasificación",
+    "method": {
+      "quantile": "Cuantiles",
+      "equalInterval": "Intervalos iguales",
+      "jenks": "Cortes naturales (Jenks)"
+    },
+    "classes": "Clases",
+    "colourRamp": "Rampa de color",
+    "ramp": {
+      "viridis": "Viridis",
+      "magma": "Magma",
+      "blues": "Azules",
+      "greens": "Verdes",
+      "reds": "Rojos",
+      "oranges": "Naranjas",
+      "redYellowBlue": "Rojo – amarillo – azul"
+    },
+    "opacity": "Opacidad",
+    "borderColour": "Color del borde",
+    "borderWidth": "Grosor del borde",
+    "pointSize": "Tamaño de los puntos",
+    "lineWidth": "Grosor de las líneas",
+    "labels": "Etiquetas",
+    "noLabels": "Sin etiquetas",
+    "legend": "Leyenda",
+    "moreStyle": "Más estilo",
+    "moreEntries": "+{count, number} más",
+    "lessStyle": "Menos estilo"
   }
 }

@@ -443,7 +443,10 @@
     "noDescription": "Aucune description disponible."
   },
   "DatasetManagerMenu": {
-    "appliedLayer": "Couche appliquée"
+    "appliedLayers": "{count, plural, one {Couche} other {Couches}}",
+    "style": "Style",
+    "reorder": "Glisser pour réordonner",
+    "closeStyle": "Fermer le style"
   },
   "MapLegend": {
     "title": "Légende",
@@ -452,7 +455,6 @@
     "feedUnavailableToast": "{title} : le flux en direct est inaccessible pour le moment; la couche peut être absente ou périmée."
   },
   "Datasets": {
-    "failedFetchError": "Échec de la récupération des ensembles de données.",
     "dialogTitle": "Ensembles de données",
     "dialogDescription": "Gérez les couches visibles sur votre carte",
     "appliedTab": "Appliqué",
@@ -465,7 +467,6 @@
     "liveDataTab": "Données en direct",
     "loading": "Chargement des ensembles de données...",
     "fetchingDatasets": "Récupération des ensembles de données...",
-    "refreshButton": "Réessayer",
     "breadcrumbTitle": "Ensembles de données",
     "backToDataButton": "Retour aux ensembles de données",
     "removeButton": "Retirer l'ensemble de données",
@@ -490,7 +491,25 @@
     "toastDeleted": "« {name} » supprimé",
     "toastDeleteFailed": "Échec de la suppression : {error}",
     "toastDatasetAdded": "« {name} » ajouté",
-    "toastDatasetNotSaved": "« {name} » n'a pas pu être enregistré et sera perdu au rechargement : {error}"
+    "toastDatasetNotSaved": "« {name} » n'a pas pu être enregistré et sera perdu au rechargement : {error}",
+    "urlLoadFailed": "Impossible de charger cette URL",
+    "noServiceLayers": "Ce service ne propose aucune couche affichable sur la carte.",
+    "urlPlaceholder": "https://… GeoJSON, couche ArcGIS, WMS, WMTS ou URL de tuiles",
+    "urlType": "Type de source",
+    "urlTypes": {
+      "geojson": "GeoJSON",
+      "arcgis": "Couche d’entités ArcGIS",
+      "wms": "WMS",
+      "wmts": "WMTS",
+      "arcgisMapServer": "Service de carte ArcGIS",
+      "arcgisImageServer": "Service d’images ArcGIS",
+      "xyz": "Tuiles XYZ"
+    },
+    "load": "Charger",
+    "addToMap": "Ajouter à la carte",
+    "serviceLayer": "Couche du service",
+    "favouriteSaveFailed": "Impossible d’enregistrer ce favori. Réessayez.",
+    "checkingDataset": "Vérification que ce jeu de données peut être chargé…"
   },
   "DrawingLayers": {
     "doorSwings": "Ouvrants de portes",
@@ -512,18 +531,6 @@
     "exportButton": "Exporter les données",
     "csv": "Exporter CSV",
     "xml": "Exporter XML"
-  },
-  "FieldsTable": {
-    "loadingText": "Chargement des champs...",
-    "fieldName": "Nom du champ",
-    "color": "Couleur",
-    "fieldColor": "Couleur du champ",
-    "minVal": "Couleur valeur min.",
-    "maxVal": "Couleur valeur max.",
-    "false": "Faux/Non",
-    "falseColor": "Couleur Faux/Non",
-    "true": "Vrai/Oui",
-    "trueColor": "Couleur Vrai/Oui"
   },
   "FileAdder": {
     "title": "Ajouter un fichier",
@@ -651,10 +658,6 @@
     "municipality": "Municipalité",
     "type": "Type",
     "source": "Source",
-    "countrySubdivisionLower": "subdivision",
-    "municipalityLower": "municipalité",
-    "typeLower": "type",
-    "sourceLower": "source",
     "selectField": "Sélectionner un champ",
     "searchFields": "Rechercher des champs...",
     "selectOperator": "Sélectionner un opérateur",
@@ -673,7 +676,10 @@
     "isOn": "est le",
     "isBefore": "est avant",
     "isAfter": "est après",
-    "isBetween": "est entre"
+    "isBetween": "est entre",
+    "active": "Filtres actifs",
+    "clearAll": "Effacer tous les filtres",
+    "removeFilter": "Retirer le filtre {value}"
   },
   "FiltersDialog": {
     "advanced": "Avancé",
@@ -916,9 +922,23 @@
     "showing": "Affichage de",
     "properties": "propriétés"
   },
-  "ViewportDatasetNotice": {
+  "DatasetLoadStatus": {
     "zoomIn": "Zoomez pour voir ce jeu de données.",
-    "loadFailed": "Impossible de charger ce jeu de données : {reason}"
+    "truncated": "Affichage des {count} premières entités ; les autres n’ont pas été chargées.",
+    "loading": "Chargement…",
+    "bytesOf": "{loaded} sur {total}",
+    "featuresSoFar": "{count, plural, one {# entité} other {# entités}}",
+    "featuresOf": "{count, number} entités sur {total, number}",
+    "reason": {
+      "forbidden": "L’éditeur n’autorise pas l’accès à ce jeu de données.",
+      "notFound": "L’éditeur ne diffuse plus ce jeu de données.",
+      "unreachable": "Impossible de joindre l’éditeur. Réessayez plus tard.",
+      "notAMap": "Ce service ne fournit pas de carte que cette plateforme peut afficher.",
+      "tooLarge": "Ce fichier est trop volumineux pour être affiché directement.",
+      "noData": "Ce jeu de données ne contient aucune entité à afficher.",
+      "unknown": "Impossible de charger ce jeu de données."
+    },
+    "removed": "Retiré de la carte : {reason}"
   },
   "OrganizationConfig": {
     "title": "Configuration de l’organisation",
@@ -2313,5 +2333,55 @@
     "saving": "Enregistrement de l’empreinte…",
     "saved": "Empreinte enregistrée.",
     "saveFailed": "Impossible d’enregistrer l’empreinte. Veuillez réessayer."
+  },
+  "DatasetStyle": {
+    "loading": "Lecture des champs…",
+    "colourBy": "Colorer selon",
+    "allFeatures": "Toutes les entités",
+    "display": "Affichage",
+    "renderer": {
+      "single": "Couleur unique",
+      "featureColour": "Couleurs des données",
+      "categorical": "Catégories",
+      "boolean": "Oui / non",
+      "ramp": "Dégradé",
+      "graduated": "Classes",
+      "heatmap": "Carte de chaleur"
+    },
+    "colour": "Couleur",
+    "other": "Autre",
+    "yes": "Oui",
+    "no": "Non",
+    "noData": "Aucune donnée",
+    "min": "Minimum",
+    "max": "Maximum",
+    "classification": "Classification",
+    "method": {
+      "quantile": "Quantiles",
+      "equalInterval": "Intervalles égaux",
+      "jenks": "Seuils naturels (Jenks)"
+    },
+    "classes": "Classes",
+    "colourRamp": "Dégradé de couleurs",
+    "ramp": {
+      "viridis": "Viridis",
+      "magma": "Magma",
+      "blues": "Bleus",
+      "greens": "Verts",
+      "reds": "Rouges",
+      "oranges": "Oranges",
+      "redYellowBlue": "Rouge – jaune – bleu"
+    },
+    "opacity": "Opacité",
+    "borderColour": "Couleur de bordure",
+    "borderWidth": "Épaisseur de bordure",
+    "pointSize": "Taille des points",
+    "lineWidth": "Épaisseur des lignes",
+    "labels": "Étiquettes",
+    "noLabels": "Aucune étiquette",
+    "legend": "Légende",
+    "moreStyle": "Plus de style",
+    "moreEntries": "+{count, number} de plus",
+    "lessStyle": "Moins de style"
   }
 }

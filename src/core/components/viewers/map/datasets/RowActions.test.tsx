@@ -21,8 +21,8 @@ vi.mock('../../../../store', async (importOriginal) => ({
 }))
 vi.mock('../../../ui/', () => ({
   Button: ({ children, ...rest }: any) => <button {...rest}>{children}</button>,
-  Checkbox: ({ checked, onCheckedChange }: any) => (
-    <input type="checkbox" checked={!!checked} onChange={() => onCheckedChange?.()} />
+  Checkbox: ({ checked, disabled, onCheckedChange }: any) => (
+    <input type="checkbox" checked={!!checked} disabled={disabled} onChange={() => onCheckedChange?.()} />
   ),
 }))
 vi.mock('../../../ui/AlertDialog', () => ({
@@ -57,7 +57,7 @@ function renderRow(dataset: Dataset) {
   }
   render(
     <DatasetsContext.Provider value={{ state, dispatch } as never}>
-      <RowActions dataset={dataset} favouriteDatasets={[]} setFavouriteDatasets={vi.fn()} />
+      <RowActions dataset={dataset} isFavourite={false} onFavourite={vi.fn()} />
     </DatasetsContext.Provider>,
   )
   return { dispatch }
@@ -101,9 +101,7 @@ describe('RowActions — delete', () => {
     expect(deleteButton()).toBeInTheDocument()
   })
 
-  it('does not offer delete on an open-data row that was published', () => {
-    // The File row behind it is the org's, but the dataset is the portal's —
-    // un-publish is the action here, not delete.
+  it('does not offer delete on a published open-data row, because the portal owns the dataset and only un-publish applies', () => {
     renderRow(catalogRow)
     expect(deleteButton()).not.toBeInTheDocument()
   })
@@ -159,5 +157,34 @@ describe('RowActions — map toasts', () => {
     renderRow(orgUpload)
     await act(async () => { fireEvent.click(screen.getByRole('checkbox')) })
     expect(toastSuccess).toHaveBeenCalled()
+  })
+})
+
+describe('RowActions — checking a dataset before adding it', () => {
+  it('shows the dataset as being checked, then adds it', async () => {
+    let pass!: () => void
+    const checked = { ...catalogRow, probe: () => new Promise<void>((resolve) => { pass = resolve }) } as Dataset
+    const { dispatch } = renderRow(checked)
+
+    await act(async () => { fireEvent.click(screen.getByRole('checkbox')) })
+    expect((screen.getByRole('checkbox') as HTMLInputElement).disabled).toBe(true)
+    expect(screen.getByRole('progressbar')).toBeTruthy()
+    expect(dispatchedTypes(dispatch)).not.toContain('ADD_DATASET_TO_MAP')
+
+    await act(async () => { pass() })
+    expect(dispatchedTypes(dispatch)).toContain('ADD_DATASET_TO_MAP')
+    expect(screen.queryByRole('progressbar')).toBeNull()
+    expect(toastSuccess).toHaveBeenCalled()
+  })
+
+  it('does not add a dataset that fails its check', async () => {
+    const refused = { ...catalogRow, probe: () => Promise.reject(new Error('HTTP 403')) } as Dataset
+    const { dispatch } = renderRow(refused)
+
+    await act(async () => { fireEvent.click(screen.getByRole('checkbox')) })
+
+    expect(dispatchedTypes(dispatch)).not.toContain('ADD_DATASET_TO_MAP')
+    expect(toastError).toHaveBeenCalledWith('wards', expect.objectContaining({ description: 'reason.forbidden' }))
+    expect(toastSuccess).not.toHaveBeenCalled()
   })
 })

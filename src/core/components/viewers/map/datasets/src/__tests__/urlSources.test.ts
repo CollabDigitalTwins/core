@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { detectSourceType, extractWmsLayers, nameFromUrl, buildWmsTileUrl } from '../urlSources'
+import { detectSourceType, extractWmsLayers, nameFromUrl } from '../urlSources'
 
 describe('detectSourceType', () => {
   it('detects WMS URLs', () => {
@@ -9,9 +9,17 @@ describe('detectSourceType', () => {
     expect(detectSourceType('https://example.com/ows?SERVICE=WMS&REQUEST=GetMap')).toBe('wms')
   })
 
-  it('detects ArcGIS Feature Service URLs', () => {
+  it('detects ArcGIS feature layers, including a MapServer layer', () => {
     expect(detectSourceType('https://services.arcgis.com/abc/arcgis/rest/services/Roads/FeatureServer/0')).toBe('arcgis')
-    expect(detectSourceType('https://example.com/arcgis/rest/services/X/MapServer')).toBe('arcgis')
+    expect(detectSourceType('https://services.arcgis.com/abc/arcgis/rest/services/Roads/FeatureServer')).toBe('arcgis')
+    expect(detectSourceType('https://example.com/arcgis/rest/services/X/MapServer/3')).toBe('arcgis')
+  })
+
+  it('treats a whole MapServer, ImageServer, WMTS or XYZ template as a raster service', () => {
+    expect(detectSourceType('https://example.com/arcgis/rest/services/X/MapServer')).toBe('arcgisMapServer')
+    expect(detectSourceType('https://example.com/arcgis/rest/services/Elev/ImageServer')).toBe('arcgisImageServer')
+    expect(detectSourceType('https://example.com/wmts/1.0.0/WMTSCapabilities.xml')).toBe('wmts')
+    expect(detectSourceType('https://tile.example.com/{z}/{x}/{y}.png')).toBe('xyz')
   })
 
   it('falls back to geojson', () => {
@@ -38,18 +46,5 @@ describe('nameFromUrl', () => {
 
   it('uses the last path segment for a file URL', () => {
     expect(nameFromUrl('https://example.com/data/roads.geojson')).toBe('roads.geojson')
-  })
-})
-
-describe('buildWmsTileUrl', () => {
-  it('builds a GetMap template with a literal bbox token', () => {
-    const tpl = buildWmsTileUrl('https://x.com/geoserver/wms?foo=bar', 'topo:roads')
-    expect(tpl).toContain('https://x.com/geoserver/wms?')
-    expect(tpl).toContain('REQUEST=GetMap')
-    expect(tpl).toContain('LAYERS=topo%3Aroads')
-    expect(tpl).toContain('SRS=EPSG%3A3857')
-    expect(tpl.endsWith('&BBOX={bbox-epsg-3857}')).toBe(true)
-    // the pre-existing query string is dropped, not duplicated
-    expect(tpl).not.toContain('foo=bar')
   })
 })

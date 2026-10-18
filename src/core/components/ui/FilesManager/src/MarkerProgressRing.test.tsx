@@ -6,33 +6,7 @@
 import { render } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import { arcOffset, CIRCUMFERENCE, MarkerProgressRing, OVERHANG, RING_STROKE, VIEWBOX } from './MarkerProgressRing'
-
-describe('arcOffset', () => {
-  it('leaves the whole ring empty at nothing done', () => {
-    expect(arcOffset(0)).toBeCloseTo(CIRCUMFERENCE)
-  })
-
-  it('closes the ring completely at 100', () => {
-    expect(arcOffset(100)).toBeCloseTo(0)
-  })
-
-  it('fills the fraction the percentage asks for', () => {
-    expect(arcOffset(25)).toBeCloseTo(CIRCUMFERENCE * 0.75)
-    expect(arcOffset(60)).toBeCloseTo(CIRCUMFERENCE * 0.4)
-  })
-
-  it('draws a short spinning arc when the phase reports no percentage', () => {
-    const offset = arcOffset(null)
-    expect(offset).toBeGreaterThan(0)
-    expect(offset).toBeLessThan(CIRCUMFERENCE)
-  })
-
-  it('clamps a percentage outside 0-100 rather than overdrawing the arc', () => {
-    expect(arcOffset(-20)).toBeCloseTo(CIRCUMFERENCE)
-    expect(arcOffset(140)).toBeCloseTo(0)
-  })
-})
+import { MarkerProgressRing, OVERHANG } from './MarkerProgressRing'
 
 describe('MarkerProgressRing', () => {
   const ring = (container: HTMLElement) => container.querySelector('svg')!
@@ -60,20 +34,6 @@ describe('MarkerProgressRing geometry', () => {
     expect(style.height).toBe(`calc(100% + ${OVERHANG * 2}px)`)
     expect(style.top).toBe(`${-OVERHANG}px`)
     expect(style.left).toBe(`${-OVERHANG}px`)
-  })
-
-  it('traces the marker own circle, stroke edge flush with the viewBox edge', () => {
-    const { container } = render(<MarkerProgressRing progress={40} />)
-    const circle = ring(container).querySelector('circle')!
-
-    const radius = Number(circle.getAttribute('r'))
-    expect(radius + RING_STROKE / 2).toBeCloseTo(VIEWBOX / 2, 9)
-  })
-
-  it('turns the arc to start at the top without a utility class', () => {
-    const { container } = render(<MarkerProgressRing progress={40} />)
-
-    expect(ring(container).style.transform).toContain('rotate(-90deg)')
   })
 })
 

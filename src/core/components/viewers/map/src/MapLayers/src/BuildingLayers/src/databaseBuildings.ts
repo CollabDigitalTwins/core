@@ -4,12 +4,12 @@
 import { DatasetGroup, type Building } from '../../../../../../../../types/dbTypes'
 import { layerColorByName } from '../../../../../utils/stringToColour'
 
-import type { Dataset } from '../../../../../../../../types/datasetTypes'
+import type { Dataset, DatasetField } from '../../../../../../../../types/datasetTypes'
 
 export function createBuildingsDataset(buildings: Building[], name: string): Dataset {
   const layerColor = layerColorByName(name)
 
-  const getFields = async () => [
+  const getFields = async (): Promise<DatasetField[]> => [
     { name: 'buildingType', type: 'string' },
     { name: 'buildingUnitsTotal', type: 'number' },
     { name: 'buildingTotalSqft', type: 'number' },

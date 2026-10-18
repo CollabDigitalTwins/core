@@ -12,11 +12,12 @@ import {
   useOpenDataPortalsByMunicipality,
 } from '../../../../../../../hooks/openDataPortals/openDataPortals'
 import { usePluginDatasets } from '../../../../../../../plugins/host/pluginDatasets'
-import { DatasetsContext, MenusContext, useMapContext } from '../../../../../../../store'
+import { DatasetsContext, useMapContext } from '../../../../../../../store'
 import { DatasetGroup } from '../../../../../../../types/dbTypes'
 import { ViewerSidebarPanel } from '../../../../../../ui/ViewerSidebar/Panel'
 import { fetchLocalDatasets } from '../../../../datasets/src/localDatasets'
 import { datasetVisibleForOrg, getOrgVisibility } from '../../../../datasets/src/orgVisibility'
+import { useDatasetFavourites } from '../../../../datasets/src/useDatasetFavourites'
 import { useDatasetsForPortals } from '../../../../datasets/src/useDatasetsForPortals'
 
 import { AppliedDatasetsSection } from './src/AppliedDatasetsSection'
@@ -56,7 +57,6 @@ function sanitizeDatasets(list: Dataset[]) {
 
 export function LayersTab({ martinBaseUrl, organization }: { martinBaseUrl?: string; organization?: Organization }) {
   const [searchQuery, setSearchQuery] = React.useState('')
-  const [favourites, setFavourites] = React.useState<Dataset[]>([])
 
   const { state: mapState } = useMapContext()
   const { currentLocation } = mapState.map
@@ -67,8 +67,6 @@ export function LayersTab({ martinBaseUrl, organization }: { martinBaseUrl?: str
   const countrySubdivision = currentLocation?.countrySubdivision ?? org?.countrySubdivision ?? null
 
   const { state: datasetState, dispatch: datasetDispatch } = React.useContext(DatasetsContext)
-  const { state: menusState } = React.useContext(MenusContext)
-  const { rowsPerPage } = menusState.menus
 
   const orgVisibility = React.useMemo(() => getOrgVisibility(org?.id), [org?.id])
 
@@ -100,9 +98,9 @@ export function LayersTab({ martinBaseUrl, organization }: { martinBaseUrl?: str
     [nationalPortals, matchesOrgCountry],
   )
 
-  const municipal = useDatasetsForPortals(filteredMunicipalPortals, { rowsPerPage })
-  const subdivision = useDatasetsForPortals(filteredSubdivisionPortals, { rowsPerPage })
-  const national = useDatasetsForPortals(filteredNationalPortals, { rowsPerPage })
+  const municipal = useDatasetsForPortals(filteredMunicipalPortals)
+  const subdivision = useDatasetsForPortals(filteredSubdivisionPortals)
+  const national = useDatasetsForPortals(filteredNationalPortals)
 
   React.useEffect(() => {
     const loadOrganizationalDatasets = async () => {
@@ -166,13 +164,7 @@ export function LayersTab({ martinBaseUrl, organization }: { martinBaseUrl?: str
     [allDatasets],
   )
 
-  const toggleFavourite = React.useCallback((dataset: Dataset) => {
-    setFavourites(prev => (
-      prev.some(f => f.name === dataset.name)
-        ? prev.filter(f => f.name !== dataset.name)
-        : [...prev, dataset]
-    ))
-  }, [])
+  const { favourites, toggleFavourite } = useDatasetFavourites(allDatasets)
 
   const showMunicipal = Boolean(municipality)
 

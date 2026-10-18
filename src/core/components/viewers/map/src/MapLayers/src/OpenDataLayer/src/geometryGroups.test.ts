@@ -48,18 +48,18 @@ const multiPolygon: Feature = {
 describe('groupFeaturesByGeometry', () => {
   it('keeps every geometry family present in a mixed collection', () => {
     const groups = groupFeaturesByGeometry(fc(polygon, line, point))
-    expect(groups.map(g => g.kind).sort()).toEqual(['lines', 'points', 'polygons'])
+    expect(groups.map(g => g.family).sort()).toEqual(['lines', 'points', 'polygons'])
   })
 
   it('does not let the first feature decide the whole collection', () => {
     const polygonFirst = groupFeaturesByGeometry(fc(polygon, point))
     const pointFirst = groupFeaturesByGeometry(fc(point, polygon))
-    expect(polygonFirst.map(g => g.kind).sort()).toEqual(pointFirst.map(g => g.kind).sort())
+    expect(polygonFirst.map(g => g.family).sort()).toEqual(pointFirst.map(g => g.family).sort())
   })
 
   it('puts each feature in its own group', () => {
     const groups = groupFeaturesByGeometry(fc(polygon, line, point))
-    const points = groups.find(g => g.kind === 'points')
+    const points = groups.find(g => g.family === 'points')
     expect(points?.featureCollection.features).toEqual([point])
   })
 
@@ -74,7 +74,7 @@ describe('groupFeaturesByGeometry', () => {
   it('returns a single group for a collection of one family', () => {
     const groups = groupFeaturesByGeometry(fc(polygon, polygon))
     expect(groups).toHaveLength(1)
-    expect(groups[0].kind).toBe('polygons')
+    expect(groups[0].family).toBe('polygons')
     expect(groups[0].featureCollection.features).toHaveLength(2)
   })
 
@@ -86,7 +86,7 @@ describe('groupFeaturesByGeometry', () => {
     const noGeometry = { type: 'Feature', properties: {}, geometry: null } as unknown as Feature
     const groups = groupFeaturesByGeometry(fc(noGeometry, point))
     expect(groups).toHaveLength(1)
-    expect(groups[0].kind).toBe('points')
+    expect(groups[0].family).toBe('points')
   })
 
   it('ignores geometry types it cannot draw, such as GeometryCollection', () => {
@@ -96,12 +96,12 @@ describe('groupFeaturesByGeometry', () => {
       geometry: { type: 'GeometryCollection', geometries: [] },
     } as unknown as Feature
     const groups = groupFeaturesByGeometry(fc(collection, point))
-    expect(groups.map(g => g.kind)).toEqual(['points'])
+    expect(groups.map(g => g.family)).toEqual(['points'])
   })
 
   it('orders groups so polygons draw beneath lines and points', () => {
     const groups = groupFeaturesByGeometry(fc(point, line, polygon))
-    expect(groups.map(g => g.kind)).toEqual(['polygons', 'lines', 'points'])
+    expect(groups.map(g => g.family)).toEqual(['polygons', 'lines', 'points'])
   })
 
   it('carries the collection-level properties onto each group', () => {

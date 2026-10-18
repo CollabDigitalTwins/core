@@ -3,29 +3,42 @@
 
 import * as React from 'react'
 
+import { VIEWPORT_MIN_ZOOM } from '../../../../../datasets/src/viewportLoader'
 import { mapBbox, type FlatBounds } from '../../../../../utils/validateBounds'
 
-import type { Dataset } from '../../../../../../../../types/datasetTypes'
+import type { Dataset, FeatureRequest, LoadedFeatures, LoadProgress } from '../../../../../../../../types/datasetTypes'
 import type { FeatureCollection } from 'geojson'
 import type { Map as MapLibreMap } from 'maplibre-gl'
 
 export type DatasetFeaturesStatus =
-  | { kind: 'loading' }
-  | { kind: 'ready' }
+  | { kind: 'loading'; progress?: LoadProgress }
+  | { kind: 'ready'; truncatedAt?: number; featureCount?: number; bytes?: number }
   | { kind: 'belowMinZoom'; minZoom: number }
+  | { kind: 'empty' }
   | { kind: 'error'; message: string }
-
-type FeatureRequest = Parameters<Dataset['getFeatures']>[0]
 
 const EMPTY: FeatureCollection = { type: 'FeatureCollection', features: [] }
 export const VIEWPORT_DEBOUNCE_MS = 300
 
-function asFeatureCollection(fetched: unknown): FeatureCollection {
-  return (fetched as { type?: unknown } | null)?.type === 'FeatureCollection' ? fetched as FeatureCollection : EMPTY
+function asLoadedFeatures(fetched: unknown): LoadedFeatures {
+  return (fetched as { type?: unknown } | null)?.type === 'FeatureCollection' ? fetched as LoadedFeatures : EMPTY
 }
 
 function currentView(map: MapLibreMap): { bbox: FlatBounds; zoom: number } {
   return { bbox: mapBbox(map), zoom: map.getZoom() }
+}
+
+function progressKey({ fraction, featureCount }: LoadProgress): string {
+  return `${fraction === undefined ? '' : Math.round(fraction * 100)}|${featureCount ?? ''}`
+}
+
+function readyStatus(loaded: LoadedFeatures, bytes: number | undefined): DatasetFeaturesStatus {
+  return {
+    kind: 'ready',
+    ...(loaded.truncatedAt !== undefined && { truncatedAt: loaded.truncatedAt }),
+    featureCount: loaded.features.length,
+    ...(bytes !== undefined && { bytes }),
+  }
 }
 
 /** Loads a dataset once, or — when it declares a `viewport` — for the visible bbox after every settled pan or zoom. */
@@ -41,22 +54,45 @@ export function useDatasetFeatures(map: MapLibreMap | null, dataset: Pick<Datase
     if (!map) return
     let cancelled = false
     let latestRequest = 0
+    let inFlight: AbortController | undefined
     let debounce: ReturnType<typeof setTimeout> | undefined
+
+    const showBelowMinZoom = (zoom: number) => {
+      setFeatureCollection(EMPTY)
+      setStatus(previous => (previous.kind === 'belowMinZoom' && previous.minZoom === zoom ? previous : { kind: 'belowMinZoom', minZoom: zoom }))
+    }
 
     const load = async () => {
       const request = ++latestRequest
+      inFlight?.abort()
+      const controller = new AbortController()
+      inFlight = controller
       const isCurrent = () => !cancelled && request === latestRequest
-      const view: FeatureRequest = minZoom === undefined ? undefined : currentView(map)
-      if (minZoom !== undefined && view?.zoom !== undefined && view.zoom < minZoom) {
-        setFeatureCollection(EMPTY)
-        setStatus({ kind: 'belowMinZoom', minZoom })
-        return
+      let view: ReturnType<typeof currentView> | undefined
+      if (minZoom !== undefined) {
+        view = currentView(map)
+        if (view.zoom < minZoom) {
+          showBelowMinZoom(minZoom)
+          return
+        }
       }
-      try {
-        const fetched = await getFeaturesRef.current(view)
+      let bytes: number | undefined
+      let reportedProgress: string | undefined
+      const onProgress = (progress: LoadProgress) => {
         if (!isCurrent()) return
-        setFeatureCollection(asFeatureCollection(fetched))
-        setStatus({ kind: 'ready' })
+        bytes = progress.bytes ?? bytes
+        const key = progressKey(progress)
+        if (key === reportedProgress) return
+        reportedProgress = key
+        setStatus({ kind: 'loading', progress })
+      }
+      const featureRequest: FeatureRequest = { ...view, onProgress, signal: controller.signal }
+      try {
+        const loaded = asLoadedFeatures(await getFeaturesRef.current(featureRequest))
+        if (!isCurrent()) return
+        setFeatureCollection(loaded)
+        const wholeLoad = view === undefined || view.zoom < VIEWPORT_MIN_ZOOM
+        setStatus(wholeLoad && loaded.features.length === 0 ? { kind: 'empty' } : readyStatus(loaded, bytes))
       }
       catch (error) {
         if (!isCurrent()) return
@@ -65,8 +101,13 @@ export function useDatasetFeatures(map: MapLibreMap | null, dataset: Pick<Datase
       }
     }
 
+    const cancel = () => {
+      cancelled = true
+      inFlight?.abort()
+    }
+
     void load()
-    if (minZoom === undefined) return () => { cancelled = true }
+    if (minZoom === undefined) return cancel
 
     const onMoveEnd = () => {
       clearTimeout(debounce)
@@ -74,7 +115,7 @@ export function useDatasetFeatures(map: MapLibreMap | null, dataset: Pick<Datase
     }
     map.on('moveend', onMoveEnd)
     return () => {
-      cancelled = true
+      cancel()
       clearTimeout(debounce)
       map.off('moveend', onMoveEnd)
     }

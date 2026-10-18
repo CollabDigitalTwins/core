@@ -3,14 +3,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-// Icons
 import * as LR from 'lucide-react'
-// Dependencies
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
 import { Badge, Button } from '../../../../components/ui/'
-// Shadcn Components
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,160 +18,115 @@ import {
 } from '../../../../components/ui/DropdownMenu'
 import { usePermissions } from '../../../../store'
 
-// Custom Components
 import NestedFilter from './NestedFilter'
+import {
+  activeFilterCount,
+  DATASET_FILTER_KEYS,
+  EMPTY_FILTERS,
+  filterOptions,
+  withoutFilterValue,
+  type DatasetFilterKey,
+  type DatasetFilters,
+} from './src/datasetFilters'
+
+import type { Dataset } from '../../../../types/datasetTypes'
 
 type FiltersProps = {
-  datasets: any[]
-  appliedFilters: {
-    countrySubdivisions: string[]
-    municipalities: string[]
-    types: string[]
-    sources: string[]
-  }
-  onFiltersChange: (filters: { countrySubdivisions: string[], municipalities: string[], types: string[], sources: string[] }) => void
+  datasets: Dataset[]
+  appliedFilters: DatasetFilters
+  onFiltersChange: (filters: DatasetFilters) => void
+}
+
+const TITLE_KEY: Record<DatasetFilterKey, 'countrySubdivision' | 'municipality' | 'type' | 'source'> = {
+  countrySubdivisions: 'countrySubdivision',
+  municipalities: 'municipality',
+  types: 'type',
+  sources: 'source',
 }
 
 export default function Filters({ datasets, appliedFilters, onFiltersChange }: FiltersProps) {
-  // Translation
   const t = useTranslations('Filters')
-
-  // Permissions
   const { ability } = usePermissions()
+  const [openKey, setOpenKey] = React.useState<DatasetFilterKey | null>(null)
+  const totalApplied = activeFilterCount(appliedFilters)
+  const canRead = ability.can('read', 'File')
 
-  // State to control which view is displayed
-  const [content, setContent] = React.useState(true)
-  const [label, setLabel] = React.useState('')
-
-  const totalAppliedFilters = Object.values(appliedFilters).reduce((total, filterArray) => {
-    return total + filterArray.length
-  }, 0)
-
-  const handleContent = (e: React.MouseEvent, label?: string) => {
-    // Prevent default behavior and stop propagation
-    e.stopPropagation()
-    e.preventDefault()
-    // Update content state
-    setContent(!content)
-
-    // Update label
-    if (label) {
-      setLabel(label)
-    }
-
-    // TODO: Update data source to propagate nested menu items
+  const openNested = (event: React.MouseEvent, key: DatasetFilterKey) => {
+    event.stopPropagation()
+    event.preventDefault()
+    setOpenKey(key)
   }
 
-  // Get unique values for each filter type from datasets
-  const getUniqueValues = (field: string) => {
-    const values = new Set<string>()
-    const isSource = field === t('sourceLower')
-    for (const dataset of datasets) {
-      const value = isSource ? (dataset.portal?.name ?? dataset.publisher) : dataset[field]
-      if (value && value !== '') {
-        values.add(value)
-      }
-    }
-    return [...values].sort()
+  const backToCategories = (event: React.MouseEvent) => {
+    event.stopPropagation()
+    event.preventDefault()
+    setOpenKey(null)
   }
 
-  const handleFilterChange = (filterType: string, selectedValues: string[]) => {
-    const newFilters = { ...appliedFilters }
-
-    switch (filterType) {
-      case 'subdivision': {
-        newFilters.countrySubdivisions = selectedValues
-
-        break
-      }
-      case 'municipality': {
-        newFilters.municipalities = selectedValues
-
-        break
-      }
-      case 'type': {
-        newFilters.types = selectedValues
-
-        break
-      }
-      case 'source': {
-        newFilters.sources = selectedValues
-
-        break
-      }
-    // No default
-    }
-
-    onFiltersChange(newFilters)
-  }
+  const activeValues = DATASET_FILTER_KEYS.flatMap(key => appliedFilters[key].map(value => ({ key, value })))
 
   return (
-    <>
+    <div className="flex items-center gap-1">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            className="dropdown-menu-trigger"
-            onClick={e => e.stopPropagation()}
-            disabled={!ability.can('read', 'File')}
-          >
-            {totalAppliedFilters > 0
-              ? <Badge variant="default" className="">{totalAppliedFilters}</Badge>
-              : <LR.ListFilter />}
-
+          <Button variant="outline" className="dropdown-menu-trigger" onClick={event => event.stopPropagation()} disabled={!canRead}>
+            {totalApplied > 0 ? <Badge variant="default">{totalApplied}</Badge> : <LR.ListFilter />}
             <span>{t('filters')}</span>
           </Button>
         </DropdownMenuTrigger>
 
-        {content
-
+        {openKey === null
           ? (
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="min-w-56">
                 <DropdownMenuLabel>{t('filters')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={(e) => { handleContent(e, t('countrySubdivisionLower')) }}
-                >
-                  {t('countrySubdivision')}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={(e) => { handleContent(e, t('municipalityLower')) }}
-                >
-                  {t('municipality')}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={(e) => { handleContent(e, t('typeLower')) }}
-                >
-                  {t('type')}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={(e) => { handleContent(e, t('sourceLower')) }}
-                >
-                  {t('source')}
-                </DropdownMenuItem>
-
+                {DATASET_FILTER_KEYS.map(key => (
+                  <DropdownMenuItem key={key} onClick={event => openNested(event, key)} className="justify-between gap-4">
+                    {t(TITLE_KEY[key])}
+                    {appliedFilters[key].length > 0 && <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1.5 text-xs">{appliedFilters[key].length}</Badge>}
+                  </DropdownMenuItem>
+                ))}
+                {activeValues.length > 0 && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">{t('active')}</DropdownMenuLabel>
+                    {activeValues.map(({ key, value }) => (
+                      <DropdownMenuItem
+                        key={`${key}:${value}`}
+                        aria-label={t('removeFilter', { value })}
+                        onSelect={event => event.preventDefault()}
+                        onClick={() => onFiltersChange(withoutFilterValue(appliedFilters, key, value))}
+                        className="justify-between gap-4"
+                      >
+                        <span className="truncate">{value}</span>
+                        <LR.X className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => onFiltersChange(EMPTY_FILTERS)} className="gap-2 text-destructive">
+                      <LR.X className="h-4 w-4" aria-hidden />
+                      {t('clearAll')}
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             )
-
           : (
               <NestedFilter
-                label={label}
-                handleContent={handleContent}
-                setContent={setContent}
-                availableValues={getUniqueValues(label)}
-                selectedValues={
-                  label === t('countrySubdivisionLower')
-                    ? appliedFilters.countrySubdivisions
-                    : label === t('municipalityLower')
-                      ? appliedFilters.municipalities
-                      : label === t('typeLower')
-                          ? appliedFilters.types
-                          : label === t('sourceLower') ? appliedFilters.sources : []
-                }
-                onSelectionChange={selectedValues => handleFilterChange(label, selectedValues)}
+                label={t(TITLE_KEY[openKey])}
+                handleContent={backToCategories}
+                setContent={() => setOpenKey(null)}
+                availableValues={filterOptions(datasets, openKey, appliedFilters[openKey])}
+                selectedValues={appliedFilters[openKey]}
+                onSelectionChange={selected => onFiltersChange({ ...appliedFilters, [openKey]: selected })}
               />
             )}
       </DropdownMenu>
-    </>
+      {totalApplied > 0 && (
+        <Button variant="ghost" size="icon" aria-label={t('clearAll')} title={t('clearAll')} onClick={() => onFiltersChange(EMPTY_FILTERS)} className="h-9 w-9">
+          <LR.X className="h-4 w-4" aria-hidden />
+        </Button>
+      )}
+    </div>
   )
 }

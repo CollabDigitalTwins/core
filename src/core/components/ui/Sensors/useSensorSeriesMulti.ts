@@ -5,6 +5,8 @@
 
 import * as React from 'react'
 
+import { withConcurrencyLimit } from '../../../utils/concurrency'
+
 import { parseSensorSeries, type SensorSeries } from './sensorData'
 
 import type { SensorDataFormat } from '../../../types/dbTypes'
@@ -26,18 +28,6 @@ export interface UseSensorSeriesMultiResult {
   /** Parsed series keyed by sensor id. Sensors that have never loaded are simply absent. */
   seriesById: Map<number, SensorSeries>
   isLoading: boolean
-}
-
-/** Runs `worker` over `items` with at most `limit` in flight at a time. */
-async function runPool<T>(items: T[], limit: number, worker: (item: T) => Promise<void>): Promise<void> {
-  let cursor = 0
-  const lanes = Array.from({ length: Math.min(limit, items.length) }, async () => {
-    while (cursor < items.length) {
-      const item = items[cursor++]
-      await worker(item)
-    }
-  })
-  await Promise.all(lanes)
 }
 
 /**
@@ -84,7 +74,7 @@ export function useSensorSeriesMulti(
       if (showLoading) setIsLoading(true)
       const fetched = new Map<number, SensorSeries>()
 
-      await runPool(batch, MAX_CONCURRENT, async (sensor) => {
+      await withConcurrencyLimit(batch, MAX_CONCURRENT, async (sensor) => {
         try {
           const res = await fetch(sensor.url, { signal: controller.signal })
           const text = await res.text()

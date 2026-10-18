@@ -37,11 +37,6 @@ test('renders nothing when there are no frames', () => {
   expect(container).toBeEmptyDOMElement()
 })
 
-test('shows the legend image when legendUrl is provided', () => {
-  render(<WmsTimeControl frames={frames} onTimeChange={vi.fn()} legendUrl="http://x/legend.png" />)
-  expect(screen.getByAltText('Legend')).toBeInTheDocument()
-})
-
 test('play advances frames on the interval and wraps at the end', () => {
   vi.useFakeTimers()
   try {

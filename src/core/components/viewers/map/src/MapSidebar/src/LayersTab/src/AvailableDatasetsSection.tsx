@@ -10,6 +10,7 @@ import * as React from 'react'
 import { DatasetsContext } from '../../../../../../../../store'
 import { Button } from '../../../../../../../ui/Button'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
+import { useAddDatasetToMap } from '../../../../../datasets/src/useAddDatasetToMap'
 
 import type { Dataset } from '../../../../../../../../types/datasetTypes'
 
@@ -113,7 +114,7 @@ export function AvailableDatasetsSection({
   onFavouriteToggle,
 }: AvailableDatasetsSectionProps) {
   const t = useTranslations('LayersTab')
-  const { state: datasetState, dispatch: datasetDispatch } = React.useContext(DatasetsContext)
+  const { state: datasetState } = React.useContext(DatasetsContext)
   const { addedDatasets } = datasetState.datasets
 
   const isApplied = React.useCallback(
@@ -121,9 +122,10 @@ export function AvailableDatasetsSection({
     [addedDatasets],
   )
 
+  const { addDataset } = useAddDatasetToMap()
   const onApply = React.useCallback((dataset: Dataset) => {
-    datasetDispatch({ type: 'ADD_DATASET_TO_MAP', payload: { dataset } })
-  }, [datasetDispatch])
+    void addDataset(dataset)
+  }, [addDataset])
 
   const notApplied = React.useCallback(
     (list: Dataset[]) => list.filter(d => !isApplied(d)),

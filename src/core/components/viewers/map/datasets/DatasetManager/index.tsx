@@ -13,7 +13,6 @@ import {
   useSensors
 } from '@dnd-kit/core'
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
@@ -26,22 +25,21 @@ import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
-import { Command, Menubar, Badge, Button, Switch } from '../../../../../components/ui/'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from '../../../../../components/ui/Table'
+import { Button, Switch } from '../../../../../components/ui/'
 import { pluginDatasetId } from '../../../../../plugins/host/pluginDatasetId'
 import { MapContext, DatasetsContext } from '../../../../../store'
 import { ViewerNames } from '../../../../../types/dbTypes'
+import { LegendCard } from '../../../../ui/LegendCard'
 import { useSidebar } from '../../../../ui/Sidebar'
 import { legendKey, PluginLegendSection } from '../../../shared/legends/PluginLegendSection'
 import { usePluginLegends } from '../../../shared/legends/usePluginLegends'
 import { ClusterManager } from '../../utils/ClusterManager'
 
-import { FieldsTable } from './src/FieldsTable'
+import { isRasterDataset } from '../src/mapServices'
+import { reorderedDatasets, sortByOrder } from '../utils'
+
+import { DatasetStylePanel } from './src/DatasetStylePanel'
+import { useDatasetLoadDisplay } from './src/useDatasetLoadDisplay'
 import { hasWmsTimeControl, WmsDatasetControls } from './src/WmsDatasetControls'
 
 import type { Dataset, BuildingDataset as RawBuildingDataset } from '../../../../../types/datasetTypes'
@@ -56,101 +54,81 @@ type BuildingDataset = RawBuildingDataset & Dataset
 const isBuildingDataset = (dataset: Dataset): dataset is BuildingDataset =>
   dataset.type === 'buildings' && 'data' in dataset
 
-interface SortableTableRowProps {
+interface SortableDatasetRowProps {
   dataset: Dataset
   onToggleDataset: (dataset: Dataset) => void
-  openDatasetDetails: (datasetName: string) => void
-  expandedDatasets: Set<string>
+  onToggleStyle: (datasetName: string) => void
+  styleOpen: boolean
   legend?: React.ReactNode
 }
 
-const SortableTableRow: React.FC<SortableTableRowProps> = ({
+
+const SortableDatasetRow: React.FC<SortableDatasetRowProps> = ({
   dataset,
   onToggleDataset,
-  openDatasetDetails,
-  expandedDatasets,
+  onToggleStyle,
+  styleOpen,
   legend,
 }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: dataset.name })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  }
-
-  // Raster (WMS) layers are server-rendered images with no fields and a server-fixed
-  // colour ramp, so the field-styling table + colour swatch are meaningless — hide them.
-  const isRaster = dataset.datasetType === 'WMS' || dataset.type === 'WMS'
-  const hasFields = !isRaster && !dataset.drawnByPlugin
+  const t = useTranslations('DatasetManagerMenu')
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: dataset.name })
+  const isRaster = isRasterDataset(dataset)
+  const isStylable = !dataset.drawnByPlugin
+  const name = dataset.name.replaceAll('_', ' ')
+  const { indicator, summary } = useDatasetLoadDisplay(dataset.name)
+  const source = dataset.portal?.name ?? dataset.publisher
+  const subtitle = summary ?? source
+  const subtitleTooltip = [source, summary].filter(Boolean).join(' · ')
 
   return (
-    <>
-      <TableRow ref={setNodeRef} style={style} className="hover:bg-muted/50">
-        <TableCell>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="cursor-grab active:cursor-grabbing"
-              {...attributes}
-              {...listeners}
-            >
-              <LR.GripVertical className="h-4 w-4" />
-            </Button>
-            <Switch
-              checked={dataset.visible !== false}
-              onCheckedChange={() => onToggleDataset(dataset)}
-              className="shrink-0"
-              style={dataset.visible === false || isRaster ? {} : { backgroundColor: dataset.layerColor.color }}
-            />
-          </div>
-        </TableCell>
-        <TableCell className="font-medium">
-          {dataset.name.replaceAll('_', ' ')}
-          {dataset.total && (
-            <Badge variant="outline" className="ml-2 text-xs">
-              {dataset.total}
-            </Badge>
-          )}
-        </TableCell>
-        <TableCell>
-          {hasFields && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => openDatasetDetails(dataset.name)}
-              className="shrink-0"
-            >
-              <LR.ChevronDown
-                className={`h-4 w-4 transition-transform duration-200 ${expandedDatasets.has(dataset.name) ? 'rotate-180' : ''}`}
-              />
-            </Button>
-          )}
-        </TableCell>
-      </TableRow>
-      {legend && (
-        <TableRow className="hover:bg-transparent">
-          <TableCell colSpan={4} className="p-0">{legend}</TableCell>
-        </TableRow>
+    <li
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
+      className="group rounded-md"
+    >
+      <div className="flex items-center gap-2 rounded-md px-1.5 py-1.5 hover:bg-muted/50">
+        <button
+          type="button"
+          aria-label={t('reorder')}
+          className="cursor-grab text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+        >
+          <LR.GripVertical className="h-3.5 w-3.5" aria-hidden />
+        </button>
+        <Switch
+          checked={dataset.visible !== false}
+          onCheckedChange={() => onToggleDataset(dataset)}
+          aria-label={name}
+          className="shrink-0"
+          style={dataset.visible === false || isRaster ? {} : { backgroundColor: dataset.layerColor.color }}
+        />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium leading-5" title={name}>{name}</p>
+          {subtitle && <p className="truncate text-xs text-muted-foreground" title={subtitleTooltip}>{subtitle}</p>}
+        </div>
+        {indicator}
+        {isStylable && (
+          <Button
+            variant={styleOpen ? 'secondary' : 'ghost'}
+            size="icon"
+            aria-expanded={styleOpen}
+            aria-label={t(styleOpen ? 'closeStyle' : 'style')}
+            title={t(styleOpen ? 'closeStyle' : 'style')}
+            onClick={() => onToggleStyle(dataset.name)}
+            className="h-7 w-7 shrink-0"
+          >
+            {styleOpen ? <LR.X className="h-4 w-4" aria-hidden /> : <LR.Settings2 className="h-4 w-4" aria-hidden />}
+          </Button>
+        )}
+      </div>
+      {legend && <div className="pb-1.5 pl-9 pr-2">{legend}</div>}
+      {isStylable && styleOpen && (
+        <div className="mb-1.5 ml-9 mr-1.5 rounded-md border bg-muted/30">
+          <DatasetStylePanel dataset={dataset} />
+        </div>
       )}
-      {hasFields && expandedDatasets.has(dataset.name) && (
-        <TableRow>
-          <TableCell colSpan={4} className="p-0 pb-1">
-            <FieldsTable
-              dataset={dataset}
-            />
-          </TableCell>
-        </TableRow>
-      )}
-    </>
+    </li>
   )
 }
 
@@ -196,14 +174,7 @@ export default function DatasetManagerMenu() {
     })
   )
 
-  const sortedDatasets = React.useMemo(() => {
-    const datasetsWithOrder = addedDatasets.map((dataset, index) => ({
-      ...dataset,
-      order: dataset.order !== undefined ? dataset.order : addedDatasets.length - 1 - index,
-    }))
-
-    return datasetsWithOrder.sort((a, b) => (b.order ?? 0) - (a.order ?? 0))
-  }, [addedDatasets])
+  const sortedDatasets = React.useMemo(() => sortByOrder(addedDatasets), [addedDatasets])
 
   React.useEffect(() => {
     if (!map || !addedDatasets) return
@@ -243,8 +214,6 @@ export default function DatasetManagerMenu() {
     previousNamesRef.current = currentNames
   }, [map, addedDatasets])
 
-  const onToggle = () => setOpen(!open)
-
   const onToggleDataset = (dataset: Dataset) => {
     const datasetId = dataset.id;
     datasetDispatch({ type: 'TOGGLE_DATASET_VISIBILITY', payload: { datasetId } })
@@ -258,27 +227,9 @@ export default function DatasetManagerMenu() {
     })
   }
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
-
-    if (over && active.id !== over.id) {
-      const displayOrder = [...sortedDatasets]
-
-      const oldIndex = displayOrder.findIndex(dataset => dataset.name === active.id)
-      const newIndex = displayOrder.findIndex(dataset => dataset.name === over.id)
-
-      const reorderedDisplay = arrayMove(displayOrder, oldIndex, newIndex)
-      const maxOrder = reorderedDisplay.length - 1
-      const reorderedDatasets = reorderedDisplay.map((dataset, index) => ({
-        ...dataset,
-        order: maxOrder - index,
-      }))
-
-      datasetDispatch({
-        type: 'REORDER_DATASETS',
-        payload: { reorderedDatasets }
-      })
-    }
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    const reordered = over ? reorderedDatasets(sortedDatasets, String(active.id), String(over.id)) : undefined
+    if (reordered) datasetDispatch({ type: 'REORDER_DATASETS', payload: { reorderedDatasets: reordered } })
   }
 
   const openAnimation = `
@@ -305,10 +256,6 @@ export default function DatasetManagerMenu() {
     if (showsLegend) setOpen(true)
   }, [showsLegend])
 
-  const openDatasetDetails = (datasetName: string) => {
-    toggleDatasetExpansion(datasetName)
-  }
-
   const {openInfo} = useSidebar()
 
   return (
@@ -316,68 +263,46 @@ export default function DatasetManagerMenu() {
       {legends.probes}
       {!openInfo && cardCount > 0 && (
         <div data-state={menuOpen ? 'open' : 'closed'} className={openAnimation}>
-          <Menubar className="pointer-events-auto w-96 h-auto">
-            <Command>
-              <div>
-                <div className={`flex items-center justify-between gap-3 ${open ? 'p-3' : 'pl-1 py-0'}`}>
-                  <div className="flex items-center gap-2">
-                    <Badge>{cardCount}</Badge>
-                    <div className="text-sm font-medium">
-                      {t('appliedLayer')}
-                      {cardCount === 1 ? '' : 's'}
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={onToggle}
-                    className="opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent"
-                  >
-                    <LR.ChevronUp
-                      size={14}
-                      className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-                    />
-                  </Button>
-                </div>
-                {open && (
-                  <div className="max-h-[40vh] overflow-y-auto">
-                    <DndContext
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragEnd={handleDragEnd}
-                    >
-                      <SortableContext
-                        items={sortedDatasets.map(dataset => dataset.name)}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        <Table>
-                          <TableBody>
-                            {sortedDatasets.map((dataset) => (
-                              <SortableTableRow
-                                key={dataset.name}
-                                dataset={dataset}
-                                onToggleDataset={onToggleDataset}
-                                openDatasetDetails={openDatasetDetails}
-                                expandedDatasets={expandedDatasets}
-                                legend={legendFor(dataset)}
-                              />
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </SortableContext>
-                    </DndContext>
-                    {standaloneLegends.map(registration => (
-                      <PluginLegendSection
-                        key={legendKey(registration)}
-                        registration={registration}
-                        config={legends.configs[registration.pluginId]}
+          <LegendCard
+            title={t('appliedLayers', { count: cardCount })}
+            count={cardCount}
+            open={open}
+            onOpenChange={setOpen}
+            className="w-96"
+          >
+            <div className="px-1.5 py-1.5">
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={sortedDatasets.map(dataset => dataset.name)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <ul className="flex flex-col gap-0.5">
+                    {sortedDatasets.map(dataset => (
+                      <SortableDatasetRow
+                        key={dataset.name}
+                        dataset={dataset}
+                        onToggleDataset={onToggleDataset}
+                        onToggleStyle={toggleDatasetExpansion}
+                        styleOpen={expandedDatasets.has(dataset.name)}
+                        legend={legendFor(dataset)}
                       />
                     ))}
-                  </div>
-                )}
-              </div>
-            </Command>
-          </Menubar>
+                  </ul>
+                </SortableContext>
+              </DndContext>
+              {standaloneLegends.map(registration => (
+                <PluginLegendSection
+                  key={legendKey(registration)}
+                  registration={registration}
+                  config={legends.configs[registration.pluginId]}
+                />
+              ))}
+            </div>
+          </LegendCard>
         </div>
       )}
     </>

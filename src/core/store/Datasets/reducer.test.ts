@@ -71,3 +71,13 @@ describe('DatasetReducer — REFRESH_ORG_DATASETS', () => {
     expect(next.orgRefreshNonce).toBe(3)
   })
 })
+
+describe('DatasetReducer: UPDATE_ADDED_DATASET', () => {
+  it('merges changes into the added dataset with that name only', () => {
+    const style = { renderer: { kind: 'single' }, opacity: 0.5, strokeColour: '#fff', strokeWidth: 1, strokeOpacity: 1, pointRadius: 4, lineWidth: 2 }
+    const s0 = { ...base, addedDatasets: [ds('a', { order: 3 }), ds('b')] }
+    const s1 = DatasetReducer(s0, { type: 'UPDATE_ADDED_DATASET', payload: { datasetName: 'a', changes: { style } } } as never)
+    expect(s1.addedDatasets[0]).toMatchObject({ style, order: 3 })
+    expect(s1.addedDatasets[1].style).toBeUndefined()
+  })
+})

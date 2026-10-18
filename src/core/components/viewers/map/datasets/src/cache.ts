@@ -6,6 +6,9 @@ type CacheValue<T> = {
   e: number
 }
 
+export const HOUR_MS = 60 * 60 * 1000
+export const DAY_MS = 24 * HOUR_MS
+
 const NS = 'datasetCache:'
 const mem = new Map<string, CacheValue<any>>()
 
@@ -59,48 +62,20 @@ export function withCache<T>(key: string, ttlMs: number, fn: () => Promise<T>): 
   })
 }
 
-export async function withServerCache<T>(key: string, ttlMs: number, fn: () => Promise<T>): Promise<T> {
-  if (typeof window === 'undefined') {
-    const ttlSeconds = Math.floor(ttlMs / 1000)
-    try {
-      const { getMemcache, setMemcache } = await import('../../../../../utils/memcache')
-
-      const cached = await getMemcache<T>(key)
-      if (cached !== null) {
-        setCache(key, cached, ttlMs)
-        return cached
+/** The unexpired keys starting with `prefix`, from memory and localStorage in one pass. */
+export function liveKeysWithPrefix(prefix: string): Set<string> {
+  const keys = new Set<string>()
+  for (const [key, rec] of mem) if (key.startsWith(prefix) && rec.e > now()) keys.add(key)
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const storage = window.localStorage
+      for (let i = 0; i < storage.length; i++) {
+        const key = storage.key(i)
+        if (key?.startsWith(prefix) && !keys.has(key) && getCache(key) !== undefined) keys.add(key)
       }
-
-      const localCached = getCache<T>(key)
-      if (localCached !== undefined) {
-        return localCached
-      }
-
-      const result = await fn()
-
-      try {
-        await setMemcache(key, result, ttlSeconds)
-      } catch (error) {
-        console.warn('Memcache write failed:', error)
-      }
-      setCache(key, result, ttlMs)
-
-      return result
-    } catch (error) {
-      console.warn('Memcache operations failed, falling back to local cache:', error)
-
-      const localCached = getCache<T>(key)
-      if (localCached !== undefined) {
-        return localCached
-      }
-
-      const result = await fn()
-      setCache(key, result, ttlMs)
-      return result
     }
-  }
-
-  return withCache(key, ttlMs, fn)
+  } catch {}
+  return keys
 }
 
 export function buildValidationKey(source: string, id: string | number | undefined, version?: string | number | null) {

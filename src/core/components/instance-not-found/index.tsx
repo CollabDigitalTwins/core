@@ -103,7 +103,7 @@ export function InstanceNotFound({ organizationName }: InstanceNotFoundProps) {
   return (
     <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
       <AnimatedBackground />
-      <Toaster richColors />
+      <Toaster richColors closeButton />
       <Navbar
         activeSection=""
         theme={theme}

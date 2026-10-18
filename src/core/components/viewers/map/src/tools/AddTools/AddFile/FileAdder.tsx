@@ -11,10 +11,12 @@ import ReactDOM from 'react-dom/client'
 import { toast } from 'sonner'
 import { mutate } from 'swr'
 
+
 import { useBuildings } from '../../../../../../../hooks/buildings/buildings'
 import { useFiles, useUpdateFile } from '../../../../../../../hooks/files/files'
 import { BimContext, MapContext, FilesContext } from '../../../../../../../store'
 import { acceptedFiles, isAcceptedFileType } from '../../../../../../../utils/acceptedFiles'
+import { dismissHint, onHintClosed } from '../../../../../../../utils/toastHints'
 import { cn } from '../../../../../../../utils/utils'
 import { AddItemDialog } from '../../../../../../ui/AddItemDialog'
 import { extensionOfName } from '../../../../../../ui/FilesManager/src/fileType'
@@ -183,15 +185,16 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
   // Show instruction toast when file is selected and dismiss when deselected
   React.useEffect(() => {
     if (!selectedFile) {
-      toast.dismiss('place-file-toast')
+      dismissHint('place-file-toast')
       return
     }
     toast.info(`${t('placeOnMapToast')}: "${selectedFile.name}"`, {
       id: 'place-file-toast',
       duration: Infinity,
+      onDismiss: onHintClosed('place-file-toast', () => setSelectedFile(null)),
     })
     return () => {
-      toast.dismiss('place-file-toast')
+      dismissHint('place-file-toast')
     }
   }, [selectedFile])
 
@@ -217,7 +220,7 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
 
       placingRef.current = true
       setCursor(null)
-      toast.dismiss('place-file-toast')
+      dismissHint('place-file-toast')
 
       const { lng, lat, elevation, buildingId } = resolveClickPlacement(map, e, buildings ?? [])
       const building = buildingId === null

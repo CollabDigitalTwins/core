@@ -8,10 +8,12 @@ import * as React from 'react'
 import { toast } from 'sonner'
 
 import { PluginScopeProvider } from '../../../../plugins/host/scope'
+import { LegendRows } from '../../../ui/LegendRows'
 import { Switch } from '../../../ui/Switch'
 
 import type { PluginContribution } from '../../../../plugins/host/provider'
 import type { LegendRegistration, LegendRow } from '../../../../plugins/sdk/types'
+import type { LegendRowEntry } from '../../../ui/LegendRows'
 
 export type LegendContribution = PluginContribution<'viewer.legends'>
 
@@ -61,30 +63,25 @@ function LegendBody({ registration, onActiveChange, renderBody = true, showTitle
           {t('feedUnavailable')}
         </div>
       )}
-      <ul className="space-y-1">
-        {rows.map(row => <LegendRowItem key={row.label} row={row} />)}
-      </ul>
+      <LegendRows rows={rows.map(legendRowEntry)} className="space-y-1 text-xs" labelClassName="flex-1" />
       {controls && <div className="mt-2">{controls}</div>}
     </div>
   )
 }
 
-function LegendRowItem({ row }: { row: LegendRow }) {
-  const switchable = row.onVisibleChange !== undefined
+function legendRowEntry(row: LegendRow): LegendRowEntry {
   const visible = row.visible !== false
-
-  return (
-    <li className={`flex items-center gap-2 text-xs ${visible ? '' : 'opacity-50'}`}>
-      <span aria-hidden="true" className="inline-block h-3 w-3 rounded-sm shrink-0" style={{ backgroundColor: row.color }} />
-      <span className="flex-1">{row.label}</span>
+  const trailing = (
+    <>
       {row.count !== undefined && <span className="tabular-nums opacity-70">{row.count}</span>}
-      {switchable && (
+      {row.onVisibleChange !== undefined && (
         <Switch
           checked={visible}
           onCheckedChange={checked => row.onVisibleChange?.(checked)}
           aria-label={row.label}
         />
       )}
-    </li>
+    </>
   )
+  return { label: row.label, swatch: row.color, trailing, dimmed: !visible }
 }

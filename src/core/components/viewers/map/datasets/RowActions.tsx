@@ -24,9 +24,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../../../ui/AlertDialog'
+import { ProgressRing } from '../../../ui/ProgressRing'
 
 import { buildPublishedTileDatasets } from './src/publishedTiles'
-import { handleFavouriteDataset } from './utils'
+import { useAddDatasetToMap } from './src/useAddDatasetToMap'
 
 // Shadcn Components
 
@@ -37,15 +38,15 @@ import type { Dataset } from '../../../../types/datasetTypes'
 
 interface RowActionsProps {
   dataset: Dataset
-  favouriteDatasets: Dataset[]
-  setFavouriteDatasets: React.Dispatch<React.SetStateAction<Dataset[]>>
+  isFavourite: boolean
+  onFavourite: (dataset: Dataset) => void
   martinBaseUrl?: string
 }
 
 export default function RowActions({
   dataset,
-  favouriteDatasets,
-  setFavouriteDatasets,
+  isFavourite,
+  onFavourite,
   martinBaseUrl,
 }: RowActionsProps) {
   const t = useTranslations('Datasets')
@@ -55,22 +56,15 @@ export default function RowActions({
 
 
   const { state: datasetsState, dispatch: datasetsDispatch } = React.useContext(DatasetsContext)
+  const { addDataset, checking } = useAddDatasetToMap()
+  const isChecking = checking.has(dataset.name)
   const { addedDatasets } = datasetsState.datasets
   const orgDatasets = datasetsState.datasets.datasets
 
-  // const [checked, setChecked] = useState(false);
-
-  // Check if this specific dataset is in favourites
-  const isFavourite = favouriteDatasets.some(item => item.name === dataset.name)
-
-  // "Checked" means the dataset is applied to the map. All dataset types —
-  // including Organizational (MinIO/Martin-hydrated uploads) — toggle their
-  // membership in addedDatasets, which is the only list OpenDataLayers renders.
-  // (Previously Organizational datasets toggled a `visible` flag on the
-  // available list, which nothing renders from, so they never appeared.)
+  // addedDatasets is the only list OpenDataLayers renders, for every dataset type.
   const checked = addedDatasets.some(d => d.name === dataset.name)
 
-  const handleApplyDataset = () => {
+  const handleApplyDataset = async () => {
     if (!dataset) {
       console.error('No dataset provided in RowActions')
       return
@@ -85,16 +79,15 @@ export default function RowActions({
       })
       toast.success(t('toastRemoved', { name: dataset.name }))
     }
-    else {
-      datasetsDispatch({
-        type: 'ADD_DATASET_TO_MAP',
-        payload: { dataset: dataset },
-      })
+    else if (await addDataset(dataset)) {
       toast.success(t('toastApplied', { name: dataset.name }))
     }
   }
 
-  const handleFavourite = handleFavouriteDataset(dataset, favouriteDatasets, setFavouriteDatasets)
+  const handleFavourite = (event: React.MouseEvent) => {
+    event.preventDefault()
+    onFavourite(dataset)
+  }
 
   const [publishing, setPublishing] = React.useState(false)
   const [published, setPublished] = React.useState(false)
@@ -107,10 +100,7 @@ export default function RowActions({
   const tiledMatch = typeof dataset.id === 'string'
     ? /^org_(\d+)_file_(\d+)$/.exec(dataset.id)
     : null
-  // A row is "converted" either because it IS the org_<orgId>_file_<fileId> tile
-  // entry (organizational tab), or because it's the original open-data dataset
-  // stamped with the published File it resolves to (every other tab). Either way
-  // we show the un-publish action and drive it with this fileId.
+  // Converted means the row is the published tile table, or the portal dataset stamped with it.
   const tiledFileId = tiledMatch
     ? Number(tiledMatch[2])
     : (typeof dataset.publishedFileId === 'number' ? dataset.publishedFileId : null)
@@ -198,11 +188,7 @@ export default function RowActions({
       const result = await res.json()
       setPublished(true)
 
-      // Optimistically swap the MinIO upload row for its published-tile form so the
-      // un-publish (CloudOff) icon shows immediately. The full org refetch below
-      // (REFRESH_ORG_DATASETS) re-samples a vector tile per dataset to detect geometry,
-      // which can take several seconds; without this the row only flips after that lands
-      // (or after the dialog is reopened). The refetch reconciles this swap when it finishes.
+      // Swapped optimistically: the org refetch below re-samples a tile per dataset and takes seconds.
       const tileBaseUrl = (martinBaseUrl ?? '').replace(/\/+$/, '')
       const minioId = `org-minio-${fileId}`
       const [optimistic] = buildPublishedTileDatasets(
@@ -238,8 +224,7 @@ export default function RowActions({
     }
   }
 
-  // Catalog (open-data-portal) GeoJSON datasets: not a MinIO upload, not an already-tiled
-  // table, carry a portal + are typed GeoJSON. MVT catalog datasets are already tiles.
+  // Only portal GeoJSON publishes here; uploads publish from their own row and MVT is already tiled.
   const isCatalogGeoJson =
     !isOrgMinio
     && tiledFileId == null
@@ -281,21 +266,21 @@ export default function RowActions({
 
   return (
     <div className="flex items-center flex-nowrap gap-0.5 sm:gap-1">
-      <Button
-        size="icon"
-        variant="ghost"
-        // onClick={handleApplyDataset}
-        className="h-8 w-8 sm:h-9 sm:w-9 hover:bg-transparent"
-        disabled={!ability.can('read', 'File')}
-      >
+      <span className="relative inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center">
         <Checkbox
           checked={checked}
+          disabled={isChecking || !ability.can('read', 'File')}
           onCheckedChange={() => {
-            handleApplyDataset()
+            void handleApplyDataset()
           }}
           className="opacity-70 hover:opacity-100 data-[state=checked]:opacity-100 transition-opacity duration-200"
         />
-      </Button>
+        {isChecking && (
+          <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <ProgressRing progress={null} size={16} label={t('checkingDataset')} />
+          </span>
+        )}
+      </span>
 
       <Button
         variant="ghost"

@@ -7,6 +7,7 @@
 import * as React from "react";
 
 import { useFilesByBuildingId } from '../../../../hooks/files/files'
+import { formatBytes } from '../../../../utils/utils'
 
 // Shadcn Components
 import { Button } from '../../../ui/Button'
@@ -43,14 +44,6 @@ export default function AttachedFiles({ buildingId, files: propFiles, isLoading:
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false)
   const [selectedFileTypes, setSelectedFileTypes] = React.useState<string[]>([])
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes'
-    const k = 1024
-    const sizes = ['Bytes', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-  }
-
   const transformedFiles = React.useMemo(() => {
     if (!files || !Array.isArray(files)) return []
 
@@ -61,7 +54,7 @@ export default function AttachedFiles({ buildingId, files: propFiles, isLoading:
       mimeType: file.mimeType || 'Unknown',
       extension: file.extension || 'Unknown',
       dateUploaded: file.uploadedAt ? new Date(file.uploadedAt).toLocaleDateString() : 'Unknown date',
-      size: file.sizeBytes ? formatFileSize(file.sizeBytes) : 'Unknown size',
+      size: file.sizeBytes ? formatBytes(file.sizeBytes) : 'Unknown size',
       tag: file.tag || 'General',
       url: file.assetId ? `/api/files/download/${file.assetId}` : file.url || '',
       // Keep original file object

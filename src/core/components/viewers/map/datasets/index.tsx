@@ -35,7 +35,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../components/ui/Tabs'
 import { useOpenDataPortalsByCountrySubdivision, useOpenDataPortalsByGroup, useOpenDataPortalsByMunicipality } from '../../../../hooks/openDataPortals/openDataPortals'
 import { usePluginDatasets } from '../../../../plugins/host/pluginDatasets'
-import { DatasetsContext, MenusContext, useMapContext } from '../../../../store'
+import { DatasetsContext, useMapContext } from '../../../../store'
 import { usePermissions } from '../../../../store'
 
 // Data
@@ -48,12 +48,13 @@ import DatasetDetails from './DatasetDetails'
 import DatasetSkeleton from './DatasetSkeleton'
 import Filters from './Filters'
 import RowActions from './RowActions'
+import { EMPTY_FILTERS, matchesFilters, type DatasetFilters } from './src/datasetFilters'
 import { datasetVisibleForOrg } from './src/orgVisibility'
 import { stampPublished } from './src/publishedTiles'
+import { useAddDatasetToMap } from './src/useAddDatasetToMap'
+import { useDatasetFavourites } from './src/useDatasetFavourites'
 import { useDatasetsForPortals } from './src/useDatasetsForPortals'
-import { useFastDatasetCache } from './src/useFastDatasetCache'
 import { useOrganizationalDatasets } from './src/useOrganizationalDatasets'
-import { handleFavouriteDataset } from './utils'
 
 import type { Dataset } from '../../../../types/datasetTypes'
 import type { Organization } from '../../../../types/dbTypes';
@@ -84,8 +85,6 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
   const countrySubdivision = currentLocation?.countrySubdivision ?? org?.countrySubdivision ?? null
   const { state: datasetState, dispatch: datasetDispatch } = React.useContext(DatasetsContext)
   const { addedDatasets } = datasetState.datasets
-  const { state: menusState } = React.useContext(MenusContext)
-  const { rowsPerPage } = menusState.menus
 
   const { datasets: orgDatasets, publishedCatalog, orgVisibility } = useOrganizationalDatasets({
     organization: org,
@@ -102,9 +101,8 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
   // UI State
   const [view, setView] = React.useState<'table' | 'detail'>('table')
   const [selectedDataset, setSelectedDataset] = React.useState<Dataset | null>(null)
-  const [favouriteDatasets, setFavouriteDatasets] = React.useState<Dataset[]>([])
   const [searchTerm, setSearchTerm] = React.useState('')
-  const [appliedFilters, setAppliedFilters] = React.useState<{ countrySubdivisions: string[], municipalities: string[], types: string[], sources: string[] }>({ countrySubdivisions: [], municipalities: [], types: [], sources: [] })
+  const [appliedFilters, setAppliedFilters] = React.useState<DatasetFilters>(EMPTY_FILTERS)
   const [currentTab, setCurrentTab] = React.useState('all')
   const [isAddPortalOpen, setIsAddPortalOpen] = React.useState(false)
   const showMunicipalTab = React.useMemo(() => Boolean(municipality), [municipality])
@@ -141,13 +139,11 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
   }, [nationalPortals, orgCountry, matchesOrgCountry])
 
   const pluginDatasets = usePluginDatasets(orgVisibility.currentOrgId)
-  const municipal = useDatasetsForPortals(filteredMunicipalPortals, { rowsPerPage })
-  const subdivision = useDatasetsForPortals(filteredSubdivisionPortals, { rowsPerPage })
-  const national = useDatasetsForPortals(filteredNationalPortals, { rowsPerPage })
+  const municipal = useDatasetsForPortals(filteredMunicipalPortals)
+  const subdivision = useDatasetsForPortals(filteredSubdivisionPortals)
+  const national = useDatasetsForPortals(filteredNationalPortals)
 
-  // Stamp each portal list with published-tile identity so a converted open-data
-  // dataset shows as converted on its own tab (National/Subdivision/Municipal),
-  // not only on the organizational tab. No-op for unpublished datasets.
+  // Stamped so a published dataset shows as converted on its own tab, not only the organizational one.
   const nationalDatasets = React.useMemo(() => stampPublished(national.datasets, publishedCatalog), [national.datasets, publishedCatalog])
   const subdivisionDatasets = React.useMemo(() => stampPublished(subdivision.datasets, publishedCatalog), [subdivision.datasets, publishedCatalog])
   const municipalDatasets = React.useMemo(() => stampPublished(municipal.datasets, publishedCatalog), [municipal.datasets, publishedCatalog])
@@ -155,13 +151,6 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
   const isLoadingNational = national.isLoading && nationalDatasets.length === 0
   const isLoadingSubdivision = subdivision.isLoading && subdivisionDatasets.length === 0
   const isLoadingMunicipal = municipal.isLoading && municipalDatasets.length === 0
-
-  const datasetsError = React.useMemo(() => {
-    if (currentTab === 'municipal' && municipal.isError && municipalDatasets.length === 0) return t('failedFetchError')
-    if (currentTab === 'countrySubdivision' && subdivision.isError && subdivisionDatasets.length === 0) return t('failedFetchError')
-    if (currentTab === 'national' && national.isError && nationalDatasets.length === 0) return t('failedFetchError')
-    return null
-  }, [currentTab, municipal.isError, municipalDatasets.length, subdivision.isError, subdivisionDatasets.length, national.isError, nationalDatasets.length, t])
 
   const allDatasets = React.useMemo(() => {
     const unfiltered = [
@@ -175,9 +164,7 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
 
     const filtered = unfiltered.filter(ds => datasetVisibleForOrg(ds, orgVisibility))
 
-    // Also stamp here so the addedDatasets snapshot (applied at add-time, before
-    // conversion) and any org-list entries pick up published identity on the
-    // Applied/All tabs. Already-stamped portal entries are unchanged.
+    // Applied entries were snapshotted before publishing, so they need stamping too.
     return stampPublished(filtered, publishedCatalog)
   }, [pluginDatasets, nationalDatasets, subdivisionDatasets, municipalDatasets, datasetState.datasets.datasets, addedDatasets, orgVisibility, publishedCatalog])
 
@@ -208,13 +195,16 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
     }
   }, [showMunicipalTab, currentTab])
 
+  const { favourites, isFavourite, toggleFavourite } = useDatasetFavourites(allDatasets)
+  const selectedIsFavourite = selectedDataset !== null && isFavourite(selectedDataset)
+
   // Memoized datasets for current tab
   const currentTabDatasets = React.useMemo(() => {
     switch (currentTab) {
       case 'applied':
         return allDatasets.filter(ds => addedDatasets.some(d => d.name === ds.name))
       case 'favourites':
-        return allDatasets.filter(ds => favouriteDatasets.some(fav => fav.name === ds.name))
+        return favourites
       case 'organizational':
         return allDatasets.filter(ds => ds.group === 'Organizational')
       case 'liveData':
@@ -229,7 +219,7 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
       default:
         return allDatasets
     }
-  }, [currentTab, allDatasets, addedDatasets, favouriteDatasets, nationalDatasets, subdivisionDatasets, municipalDatasets])
+  }, [currentTab, allDatasets, addedDatasets, favourites, nationalDatasets, subdivisionDatasets, municipalDatasets])
 
   // Memoized filtered data
   const filteredData = React.useMemo(() => {
@@ -241,30 +231,7 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
       if (!matchesSearch)
         return false
 
-      // Country subdivision filter
-      const matchesSubdivision
-        = appliedFilters.countrySubdivisions.length === 0
-          || !dataset.countrySubdivision
-          || appliedFilters.countrySubdivisions.includes(dataset.countrySubdivision)
-
-      // Municipality filter
-      const matchesMunicipality
-        = appliedFilters.municipalities.length === 0
-          || !dataset.municipality
-          || appliedFilters.municipalities.includes(dataset.municipality)
-
-      // Type filter
-      const matchesType
-        = appliedFilters.types.length === 0
-          || appliedFilters.types.includes(dataset.type)
-
-      // Source filter (dataset.portal?.name, falling back to publisher)
-      const datasetSource = dataset.portal?.name ?? dataset.publisher
-      const matchesSource
-        = appliedFilters.sources.length === 0
-          || (datasetSource ? appliedFilters.sources.includes(datasetSource) : false)
-
-      return matchesSubdivision && matchesMunicipality && matchesType && matchesSource
+      return matchesFilters(dataset, appliedFilters)
     })
   }, [currentTabDatasets, searchTerm, appliedFilters])
 
@@ -305,52 +272,28 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
     )
   }, [filteredData])
 
-  const { prefetch } = useFastDatasetCache()
-
-  React.useEffect(() => {
-    if (isOpen && sortedFilteredData.length > 0) {
-      const datasetsToPreload = sortedFilteredData.slice(0, 10)
-      datasetsToPreload.forEach((dataset, index) => {
-        setTimeout(() => {
-          prefetch(dataset)
-        }, index * 200)
-      })
-    }
-  }, [isOpen, sortedFilteredData, prefetch])
-
   // Handlers
   const handleTabChange = React.useCallback((value: string) => setCurrentTab(value), [])
   const handleRowClick = React.useCallback((dataset: Dataset) => {
     setSelectedDataset(dataset)
     setView('detail')
   }, [])
-  const handleRowHover = React.useCallback((dataset: Dataset) => {
-    prefetch(dataset)
-
-    const currentIndex = sortedFilteredData.indexOf(dataset)
-    if (currentIndex >= 0 && currentIndex < sortedFilteredData.length - 2) {
-      setTimeout(() => {
-        if (sortedFilteredData[currentIndex + 1]) {
-          prefetch(sortedFilteredData[currentIndex + 1])
-        }
-      }, 100)
-    }
-  }, [prefetch, sortedFilteredData])
   const handleBackToTable = React.useCallback(() => {
     setView('table')
     setSelectedDataset(null)
   }, [])
+  const { addDataset, checking } = useAddDatasetToMap()
   const handleAddDatasetToMap = React.useCallback(() => {
-    if (selectedDataset) {
-      datasetDispatch({ type: 'ADD_DATASET_TO_MAP', payload: { dataset: selectedDataset } })
-    }
-  }, [selectedDataset, datasetDispatch])
+    if (selectedDataset) void addDataset(selectedDataset)
+  }, [selectedDataset, addDataset])
   const handleRemoveDatasetFromMap = React.useCallback(() => {
     if (selectedDataset) {
       datasetDispatch({ type: 'REMOVE_DATASET_FROM_MAP', payload: { datasetId: selectedDataset.id } })
     }
   }, [selectedDataset, datasetDispatch])
-  const handleFavourite = handleFavouriteDataset(selectedDataset, favouriteDatasets, setFavouriteDatasets)
+  const handleFavourite = () => {
+    if (selectedDataset) toggleFavourite(selectedDataset)
+  }
 
   const handleAddDataset = () => {
     // Logic to add a new dataset
@@ -453,15 +396,6 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
                 >
                   {currentTabLoading ? (
                     <DatasetSkeleton />
-                  ) : (datasetsError ? (
-                    <div className="flex flex-col justify-center items-center h-32 text-muted-foreground">
-                      <LR.AlertCircle className="h-6 w-6 mb-2" />
-                      <span>{datasetsError}</span>
-                      <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="mt-2">
-                        <LR.RefreshCw className="h-4 w-4 mr-2" />
-                        {t('refreshButton')}
-                      </Button>
-                    </div>
                   ) : (
                     <DataTable
                       showPagination={true}
@@ -469,15 +403,14 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
                       data={sortedFilteredData}
                       tab={currentTab}
                       onRowClick={handleRowClick}
-                      onRowHover={handleRowHover}
                       className="rounded-none w-auto h-full"
                       paginationClasses="bg-background z-20 w-full border-t"
                       isLoading={currentTabLoading}
                       leadingCell={props => (
                         <RowActions
                           {...props}
-                          favouriteDatasets={favouriteDatasets}
-                          setFavouriteDatasets={setFavouriteDatasets}
+                          isFavourite={isFavourite(props.dataset)}
+                          onFavourite={toggleFavourite}
                           martinBaseUrl={martinBaseUrl}
                         />
                       )}
@@ -493,7 +426,7 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
                         </div>
                       )}
                     />
-                  ))}
+                  )}
                 </TabsContent>
               </Tabs>
             </div>
@@ -540,14 +473,14 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`shrink-0 opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent ${selectedDataset && favouriteDatasets.includes(selectedDataset) ? 'opacity-100' : ''}`}
+                    className={`shrink-0 opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent ${selectedIsFavourite ? 'opacity-100' : ''}`}
                     onClick={handleFavourite}
                   >
                     <LR.Star
                       className="!h-5 !w-5"
                       size={24}
-                      color={`${selectedDataset && favouriteDatasets.includes(selectedDataset) ? 'hsl(var(--chart-5))' : 'black'} `}
-                      fill={`${selectedDataset && favouriteDatasets.includes(selectedDataset) ? 'hsl(var(--chart-5))' : 'none'} `}
+                      color={selectedIsFavourite ? 'hsl(var(--chart-5))' : 'black'}
+                      fill={selectedIsFavourite ? 'hsl(var(--chart-5))' : 'none'}
                     />
                   </Button>
                   <DialogTitle className="truncate">{selectedDataset?.name}</DialogTitle>
@@ -568,7 +501,7 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
                         </Button>
                       )
                     : (
-                        <Button onClick={handleAddDatasetToMap} disabled={!ability.can('read', 'File')}>
+                        <Button onClick={handleAddDatasetToMap} disabled={checking.has(selectedDataset?.name ?? '') || !ability.can('read', 'File')}>
                           <LR.Plus />
                           {t('applyButton')}
                         </Button>

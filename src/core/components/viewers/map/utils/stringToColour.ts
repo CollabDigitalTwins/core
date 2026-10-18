@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { parseHex, toHex } from '../../../../utils/colourUtils'
+
 import type { LayerColors } from '../../../../types/datasetTypes'
 
 /** Map-friendly, colourblind-accessible colours. Re-exported through `plugins-sdk`. */
@@ -41,17 +43,17 @@ export const MAP_COLOUR_PALETTE = [
     '#ccebc5', // mint
   ] as const
 
-/** A stable colour from `MAP_COLOUR_PALETTE`, chosen by hashing the string. */
-export const stringToColour = (str: string, variant?: 'min' | 'max') => {
-  const palette = MAP_COLOUR_PALETTE
-
-  // Simple hash to index
+function paletteIndex(str: string): number {
   let hash = 0
   for (let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 5) - hash)
   }
-  const index = Math.abs(hash) % palette.length
-  const baseColour = palette[index]
+  return Math.abs(hash) % MAP_COLOUR_PALETTE.length
+}
+
+/** A stable colour from `MAP_COLOUR_PALETTE`, chosen by hashing the string. */
+export const stringToColour = (str: string, variant?: 'min' | 'max') => {
+  const baseColour = MAP_COLOUR_PALETTE[paletteIndex(str)]
 
   // No default lightening, just use as-is for good contrast
   let colour: string = baseColour
@@ -81,16 +83,10 @@ function darken(hex: string, amount: number) {
 
 // Adjust color brightness
 function adjustColor(hex: string, amount: number) {
-  let usePound = false
-  if (hex[0] === '#') {
-    hex = hex.slice(1)
-    usePound = true
-  }
-  const num = Number.parseInt(hex, 16)
-  const r = Math.min(255, Math.max(0, ((num >> 16) & 0xFF) + Math.round(255 * amount)))
-  const g = Math.min(255, Math.max(0, ((num >> 8) & 0xFF) + Math.round(255 * amount)))
-  const b = Math.min(255, Math.max(0, (num & 0xFF) + Math.round(255 * amount)))
-  return (usePound ? '#' : '') + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)
+  const rgb = parseHex(hex)
+  if (!rgb) return hex
+  const shift = (channel: number) => Math.min(255, Math.max(0, channel + Math.round(255 * amount)))
+  return toHex({ r: shift(rgb.r), g: shift(rgb.g), b: shift(rgb.b) })
 }
 
 export const layerColorByName = (name: string): LayerColors => {
@@ -101,4 +97,15 @@ export const layerColorByName = (name: string): LayerColors => {
     minColor: stringToColour(name, 'min'),
     maxColor: stringToColour(name, 'max'),
   }
+}
+
+/** One palette colour per value, stable like `stringToColour` but stepping past colours already taken. */
+export function distinctColours(values: string[]): string[] {
+  const taken = new Set<number>()
+  return values.map((value) => {
+    let index = paletteIndex(value)
+    while (taken.has(index) && taken.size < MAP_COLOUR_PALETTE.length) index = (index + 1) % MAP_COLOUR_PALETTE.length
+    taken.add(index)
+    return MAP_COLOUR_PALETTE[index]
+  })
 }

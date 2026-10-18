@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { buildWmsTileUrl } from '../../components/viewers/map/datasets/src/urlSources'
+import { buildWmsTileUrl } from '../../components/viewers/map/datasets/src/wmsTime'
 import { layerColorByName } from '../../components/viewers/map/utils/stringToColour'
 import { DatasetGroup } from '../../types/dbTypes'
 

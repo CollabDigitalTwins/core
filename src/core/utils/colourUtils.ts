@@ -29,13 +29,7 @@ export function toHex({ r, g, b }: Rgb): string {
   return `#${channel(r)}${channel(g)}${channel(b)}`
 }
 
-/**
- * Straight sRGB interpolation between two hex colours, `t` clamped to 0..1.
- *
- * sRGB rather than a perceptual space is deliberate: both endpoints are colours an operator
- * picked in a colour input, so the midpoint should be the one they would predict from mixing
- * them. Falls back to whichever endpoint parses when the other is malformed.
- */
+/** sRGB interpolation, `t` clamped to 0..1: endpoints are user-picked, so the midpoint should match mixing them by eye. */
 export function lerpHex(from: string, to: string, t: number): string {
   const a = parseHex(from)
   const b = parseHex(to)
@@ -59,12 +53,7 @@ export function relativeLuminance(colour: string): number | null {
   return 0.2126 * linear(rgb.r) + 0.7152 * linear(rgb.g) + 0.0722 * linear(rgb.b)
 }
 
-/**
- * Black or white, whichever reads better on the given background.
- *
- * Needed wherever a value ramp is used as a fill behind text: a ramp runs from dark to light by
- * design, so no single fixed text colour stays legible across it.
- */
+/** Black or white, whichever reads better on `background`; a dark-to-light ramp behind text needs both. */
 export function readableTextColour(background: string): string {
   const luminance = relativeLuminance(background)
   if (luminance == null) return '#000000'
@@ -90,4 +79,33 @@ export function hexFromInt(colour: number | undefined): string | undefined {
 export function intFromHex(colour: string): number | null {
   const value = Number.parseInt(colour.replace('#', ''), 16)
   return Number.isNaN(value) ? null : value
+}
+
+const CSS_COLOUR_FUNCTION = /^(rgb|rgba|hsl|hsla)\(\s*[\d.]+%?\s*,?\s*[\d.]+%?\s*,?\s*[\d.]+%?\s*([,/]\s*[\d.]+%?\s*)?\)$/i
+const RGB_TRIPLET = /^\s*(\d{1,3})\s*[,; ]\s*(\d{1,3})\s*[,; ]\s*(\d{1,3})\s*$/
+
+function isNamedCssColour(value: string): boolean {
+  return /^[a-z]{3,20}$/i.test(value) && typeof CSS !== 'undefined' && CSS.supports?.('color', value) === true
+}
+
+/** A CSS colour MapLibre can draw, from hex, `rgb()`/`hsl()`, a CSS name or a bare `r,g,b` triplet; null otherwise. */
+export function normaliseColour(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  if (trimmed.startsWith('#')) return parseHex(trimmed) ? trimmed : null
+  if (CSS_COLOUR_FUNCTION.test(trimmed)) return trimmed
+  const triplet = RGB_TRIPLET.exec(trimmed)
+  if (triplet) {
+    const channels = triplet.slice(1, 4).map(Number)
+    return channels.every(c => c <= 255) ? `rgb(${channels.join(', ')})` : null
+  }
+  return isNamedCssColour(trimmed) ? trimmed.toLowerCase() : null
+}
+
+/** An Esri `[r, g, b, a]` symbol colour as `{ colour, opacity }`. */
+export function fromEsriColour(colour: unknown): { colour: string; opacity: number } | null {
+  if (!Array.isArray(colour) || colour.length < 3) return null
+  const [r, g, b, a = 255] = colour.map(Number)
+  if ([r, g, b, a].some(n => !Number.isFinite(n))) return null
+  return { colour: toHex({ r, g, b }), opacity: clamp01(a / 255) }
 }

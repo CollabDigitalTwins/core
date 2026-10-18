@@ -10,6 +10,152 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ### Added
 - `hide()` on `usePluginDataset(id)`: what the dataset's eye toggle does, so a plugin's own switch can hide its
   dataset without taking it off the map.
+- **Dataset styling.** A dataset's `style` (`DatasetStyle`) holds a `DatasetRenderer`: single colour, the features' own
+  colours, categories (palette colours per distinct value, each with an optional `CategoryColour.opacity`), yes/no, a
+  colour ramp, graduated classes (quantile, equal interval or Jenks, with a preset ramp the renderer remembers) or a
+  heatmap. It also sets opacity, border colour and width, point size, line width and labels. `datasetStyleOf` and
+  `baseColourOf` in `map/utils/datasetStyle` give an unstyled dataset the default for what it draws.
+- Field types come from the values (`FieldProfile`, `profileFields` in `datasets/src/fieldProfile`), and id and
+  coordinate fields are left out of styling. A new dataset starts from `getSourceStyle()` (ArcGIS `drawingInfo`), then
+  a colour-valued property, then a single colour.
+- **Complete, viewport-aware loading.** Every portal adapter pages to the end. `viewportLoader` loads a dataset whole
+  when it has up to 50,000 features or the map is zoomed out past zoom 11, and otherwise per zoom-11 tile, cached in
+  IndexedDB (`featureStore`); once loaded whole it serves every view. `fileIndexLoader` does the same over a GeoJSON
+  file indexed in a web worker. Points cluster at every style except heatmap. `getFeatures` may return
+  `LoadedFeatures` with `truncatedAt`, and the map shows a notice.
+- ArcGIS line and polygon layers are fetched simplified to about one screen pixel (`maxAllowableOffset`): a whole
+  overview per detail level when zoomed out, detailed tiles when zoomed in, in 100-feature pages, through
+  `fetchLayerFeatures(layerUrl, info, { bbox, total, tolerance })`.
+- **Load progress.** `getFeatures` takes a `FeatureRequest` with an optional `onProgress` (`LoadProgress`), and every
+  adapter reports features against the expected total and bytes against the file size. Each row of the layer list
+  shows a progress ring with its percentage while its dataset loads, then the feature count and size, or a warning
+  with the reason it will not show. Helpers: `readJsonWithProgress`, `trackPages` and `fetchJsonOrThrow` in
+  `datasets/src/http`; `formatBytes` in `utils/utils`.
+- `FeatureRequest.signal`: an `AbortSignal` the map aborts when it no longer wants a load. Every adapter passes it to
+  its requests, and `fetchAllPages` takes a `signal` and hands each `fetchPage` one.
+- **Map services** as datasets: WMS, WMTS, ArcGIS map and image services, and XYZ tiles (`mapService` on `Dataset`,
+  `mapServices.ts`, `RasterDatasetLayer`). Add them from a pasted URL, with a layer picker for WMS and WMTS. Their
+  legends (`Dataset.legend`, `ServiceLegend`) come from a WMS layer's `LegendURL`, a WMTS style or an ArcGIS
+  `/legend`, and WMS time steps arrive with the layer (`Dataset.wmsFrames`). Raster rows show tiles drawn out of
+  tiles requested.
+- Legends for every visible layer show under its row in the layer list.
+- A dataset that fails to load is left out of the catalogue for an hour, one that loads with no features for a day,
+  and one the publisher refuses or no longer serves (the `denied` reason) for a day (`markDatasetUnavailable`,
+  `unavailableDatasetFilter`). `useUnavailableDatasetFilter()` returns a predicate that updates as datasets are marked,
+  so an open catalogue drops one at once.
+- `Dataset.probe?: () => Promise<void>` rejects when a dataset will predictably fail to load. Map services, ArcGIS
+  layers and CKAN GeoJSON files set it; `resolveMapServiceOnce` shares one resolution between the check and the layer.
+- `useAddDatasetToMap()` returns `{ addDataset, checking }`: `addDataset(dataset)` runs the probe and adds the dataset
+  only when it passes, resolving to whether it was added.
+- `describeLoadError(error)` in `datasets/src/loadErrors` turns a load error into a plain-language `reason`
+  (`forbidden`, `notFound`, `unreachable`, `notAMap`, `tooLarge`, `noData`, `unknown`) and whether it is `permanent`.
+- Friendly load messages: `DatasetLoadStatus.reason.*` and `DatasetLoadStatus.removed`, and `Datasets.checkingDataset`.
+- **Incremental catalogues.** The portal fetchers take an optional `DatasetListener` (`onDatasets`) and report datasets
+  as each service, page or view resolves, so the catalogue fills in while a large portal is still loading.
+- CKAN packages use their best resource: ArcGIS service, WFS, DataStore, GeoJSON file, then WMS/WMTS. ArcGIS Hub
+  downloads are read from their FeatureServer.
+- **Saved favourites** through `useDatasetFavourites`, shared by the catalogue and the map sidebar. Needs the host to
+  serve `GET`/`POST /api/datasets/favourites` and `DELETE /api/datasets/favourites/[datasetKey]`.
+- Shared UI: `ProgressRing` (`showPercent`, `tone`, `size`), `LegendRows`, `ColourSwatch` and `LabelledSelect` in
+  `ui/`. `LegendCard` takes `open`/`onOpenChange` to control its collapse state, and `className`.
+- Shared helpers: `parseNumericValue`, `parseBooleanValue`, `isBlank` in `utils/valueParsing`; `normaliseColour` and
+  `fromEsriColour` in `utils/colourUtils`; `createKeyedStore` in `utils/keyedStore`; `distinctColours` in
+  `map/utils/stringToColour`; `classBreaks`, `colourRamps` and `styleExpressions` in `map/utils/`; `fetchAllPages`
+  (with `onPage`); `withConcurrencyLimit` (with `onFulfilled`), `fulfilledValues` and `allFulfilledOrThrow` in
+  `utils/concurrency`; `DAY_MS`, `HOUR_MS` and
+  `liveKeysWithPrefix` in `datasets/src/cache`; `sortByOrder` and `reorderedDatasets` in `datasets/utils`.
+- WMS legends come as data where the server offers it (GeoServer's JSON `GetLegendGraphic`, or the REST `/legend` of an
+  ArcGIS-hosted WMS), drawn as labelled swatches (`ServiceLegend` items take an optional `colour`); other servers keep
+  their legend image. `wmsTileTemplate` and `proxiedTileTemplate` in `datasets/src/mapServices` build WMS tile URLs.
+- `sliceLegendImage` in `datasets/src/legendImage` splits a server-drawn legend of stacked swatches into entries, so an
+  image-only WMS legend shows as normal-size swatches beside its labels. `LegendRowEntry.labelContent` shows such a
+  label in place of text. `dismissHint` and `onHintClosed` in `utils/toastHints` tell a person closing a hint toast
+  from code dismissing it.
+- The catalogue filter menu lists the active filters, each with a remove button, and a **Clear all filters** item; a
+  clear button also sits beside **Filters** while any is active. `datasets/src/datasetFilters` holds the filter keys,
+  options and matching shared by the menu and the catalogue.
+
+### Changed
+- `Dataset.datasetType` widens to `DatasetType` (`'WMTS' | 'ArcGISRaster' | 'XYZ'` added). `getFields()` resolves to
+  `DatasetField[]`, and `fields` holds `FieldProfile[]`.
+- `fetchArcGISDatasets(portal, onDatasets?)`: the second argument is a `DatasetListener`, no longer `rowsPerPage`.
+- `buildWmsTileUrl` lives in `datasets/src/wmsTime` and takes an optional `time`, replacing `buildWmsTimeUrl`.
+- `parseTimeExtent(extent)` takes the time dimension's text and returns the frames as `string[]`.
+  `fetchWmsFrames({ baseUrl, layers })` moves to `datasets/src/mapServices`.
+- The URL importer adds an ArcGIS layer as a live dataset instead of downloading it, recognises a whole MapServer as a
+  map service, and fetches GeoJSON URLs through the proxy when CORS blocks them.
+- The applied-layers card is a compact list: one line per layer with its load status, a settings button for its
+  style, and the opacity, border, size and label settings behind **More style**. Points start fully opaque.
+- Cluster counts and map labels pick black or white text from their background colour for contrast.
+- `defaultStyle(renderer, layerType?)` takes the layer type.
+- `useDatasetsForPortals` returns `{ datasets, isLoading }`, and `useFastDatasetCache` returns `{ getFromCache }`.
+- Attached file sizes use decimal units (`1.5 MB`), like the rest of the platform.
+- A catalogue dataset is checked when it is added; one that would predictably fail is not added, and a short toast says
+  why in plain words. A dataset that fails permanently after it was added, or loads with nothing to draw, is removed
+  from the map with the same toast; a passing failure keeps its row with a plain-language warning.
+- A dataset load is cancelled when a newer view supersedes it or its layer leaves the map, so pans and removed layers
+  stop downloading. A cancelled load is neither an error nor cached; a failed page stops the pages still to come.
+- Open-data requests go through one `/api/openDataProxy` route, and `proxiedUrl(url)` drops its provider argument.
+  Hosts must serve that route; cdt-na keeps `/api/ckanProxy`, `/api/opendatasoftProxy` and `/api/socrataProxy` as
+  aliases.
+- The `LegendCard` header puts the count badge after the title, and the open body is bordered.
+- Every toast can be dismissed with a close button.
+- A layer's legend shows inside its style settings, so a collapsed row is one line; service legend images keep their
+  natural size so their labels stay readable.
+
+### Removed
+- `ColorType`, `DatasetField.colorType`/`layerColor`/`datasetName`, `Dataset.selectedFieldName`, and the
+  `DATASET_COLOR`, `SET_DATASET_FIELDS`, `SET_SELECTED_FIELD` and `SET_FIELD_COLOR` actions.
+- `addWmsToMap`, `loadVectorUrl`, `arcgisFetch.ts` (`fetchWithTimeout` moves to `datasets/src/http`), `FieldsTable`,
+  `handleFavouriteDataset`, and the `rowsPerPage` option of `useDatasetsForPortals`.
+- `WmsTimeExtent`, and the `legendUrl` prop of `WmsTimeControl` (the layer row shows the legend).
+- `useViewportDatasetToast`; map layers report status and notices through `useReportedLoadStatus`.
+- `isError`, `isValidating` and `mutate` from `useDatasetsForPortals`; `prefetch` and `clearCache` from
+  `useFastDatasetCache`; `withServerCache` from `datasets/src/cache`.
+- The `Datasets.failedFetchError` and `Datasets.refreshButton` messages, which nothing showed.
+- The `DatasetLoadStatus.loadFailed` and `DatasetLoadStatus.empty` messages, replaced by `DatasetLoadStatus.reason.*`.
+- The `Filters.countrySubdivisionLower`, `municipalityLower`, `typeLower` and `sourceLower` messages.
+
+### Fixed
+- CKAN fields were never typed as numbers, and Opendatasoft fields never mapped at all, so neither could be coloured
+  by value.
+- CKAN loaded at most 5,000 rows, Opendatasoft and Socrata 5,000 features, and ArcGIS about 20,000. Each now loads
+  everything, up to a 500,000-feature cap that is reported.
+- CKAN GeoJSON file resources were dropped from the catalogue.
+- Whole feature collections were cached in localStorage, silently failing past its quota.
+- Fields ending in "id", such as `paid` or `humid`, were hidden as identifiers.
+- Hovering or opening the catalogue no longer downloads dataset details ahead of time.
+- The catalogue's apply checkbox was nested inside another button.
+- A WMS whose catalogue link is a static capabilities file drew nothing and showed a broken legend: tiles now come from
+  the `GetMap` endpoint its capabilities name.
+- Time-enabled WMS layers showed their legend twice, and their time steps failed where CORS blocked the capabilities.
+- Quickly toggled favourites lost one of the toggles.
+- `ColourSwatch` turned short hex colours such as `#abc` black.
+- WMS layers from servers that send no `Access-Control-Allow-Origin` never drew: their tiles now go through the proxy
+  when one sample tile shows the server blocks cross-origin reads.
+- Raster progress froze below 100% when tiles failed with a 404 or were dropped by a pan; it now settles when the map
+  goes idle, and fails only when no tile drew.
+- Closing a drawing, placing or picking hint toast did nothing: the tool was still active and showed it again. Closing
+  it now ends that tool, like its Cancel button.
+- An active catalogue filter could not be turned off once no listed dataset had its value (for example a **WMS** type
+  filter on a portal with no WMS), so the catalogue looked empty.
+- The **Subdivision** filter never listed any values, and outside English the filters read the wrong fields.
+
+### Migration
+- Code dispatching `DATASET_COLOR`, `SET_SELECTED_FIELD`, `SET_FIELD_COLOR` or `SET_DATASET_FIELDS` dispatches
+  `UPDATE_ADDED_DATASET` with `{ datasetName, changes: { style, layerColor, fields } }`.
+- Code reading `selectedFieldName` or a field's `colorType` reads `dataset.style.renderer` instead.
+- Imports of `buildWmsTimeUrl` become `buildWmsTileUrl(base, layers, time)`; imports from `urlSources` of
+  `buildWmsTileUrl` move to `wmsTime`.
+- Calls of `fetchArcGISDatasets(portal, rowsPerPage)` drop the second argument.
+- `parseTimeExtent(xml).frames` becomes `parseTimeExtent(dimensionText)`; import `fetchWmsFrames` from
+  `datasets/src/mapServices` and pass `{ baseUrl, layers }`.
+- Callers of `useViewportDatasetToast(name, status)` call `useReportedLoadStatus(dataset, status)`.
+- Renames: `GeometryKind` becomes `GeometryFamily` (and `GeometryGroup.kind` becomes `GeometryGroup.family`);
+  `LoadProgress.features`/`totalFeatures` become `featureCount`/`totalFeatureCount`, and the ready load status reports
+  `featureCount`; `SourceStyle.colour` becomes `SourceStyle.layerColour`; the `ViewportDatasetNotice` i18n namespace
+  becomes `DatasetLoadStatus`, so hosts overriding its messages rename the key; imports from
+  `datasets/src/arcGISDatasets` move to `datasets/src/arcgisDatasets`.
 
 ## [0.15.0] - 2026-10-13
 

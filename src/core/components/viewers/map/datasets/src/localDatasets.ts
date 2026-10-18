@@ -9,11 +9,14 @@ import { toDisplayString } from '../../../../../utils/utils'
 import { layerColorByName } from '../../utils/stringToColour'
 import { formatName } from '../utils'
 
-import { getCache, setCache } from './cache'
+import { HOUR_MS } from './cache'
+import { cachedFeatures } from './featureStore'
+import { fetchJsonOrThrow } from './http'
 import { isPublishedOrgTable, buildPublishedTileDatasets, type PublishedFileRow } from './publishedTiles'
 
 import type { Dataset, FieldType, LayerGeometryType } from '../../../../../types/datasetTypes'
 import type { AllGeoJSON } from '@turf/turf'
+import type { FeatureCollection } from 'geojson'
 
 
 // Define the structure of local dataset items
@@ -321,8 +324,7 @@ async function fetchMartinServerDatasets(
 
     const catalog: MartinIndexResponse = await response.json()
     const tiles = normalizeMartinCatalog(catalog, tileBaseUrl)
-      // Drop our published org tables (served via the cdt_tiles function + discovered
-      // from File metadata) and the cdt_tiles function source itself (no ?source= → empty).
+      // Published org tables are discovered from File rows, and cdt_tiles itself is empty without ?source=.
       .filter(t => !isPublishedOrgTable(t.tileName) && t.tileName !== 'cdt_tiles')
 
     const datasets: Dataset[] = await Promise.all(tiles.map(async (tileInfo) => {
@@ -468,59 +470,16 @@ export async function fetchLocalDatasets(
       // Simple getFields function that returns fields from layer properties
       const getFields = async () => {
         if (datasetItem.layer?.properties) {
-          return Object.entries(datasetItem.layer.properties).map(([name, type]) => ({
-            name,
-            label: formatName(name),
-            type: type as string,
-            description: `${formatName(name)} field`,
-          }))
+          return Object.keys(datasetItem.layer.properties).map(name => ({ name, type: undefined }))
         }
         return []
       }
 
-      // Fetch GeoJSON data from the featuresUrl
-      const getFeatures = async (): Promise<AllGeoJSON> => {
-        // Create a cache key based on the dataset name and features URL
-        const featuresKey = `features:local:${datasetItem.name}:${datasetItem.featuresUrl}`
-
-        // Check cache first
-        const cachedFeatures = getCache<AllGeoJSON>(featuresKey)
-        if (cachedFeatures) {
-          return cachedFeatures
-        }
-
-        try {
-          // Use the featuresUrl from the dataset item
-          let geojsonUrl: string
-          if (datasetItem.featuresUrl.startsWith('http://') || datasetItem.featuresUrl.startsWith('https://')) {
-            geojsonUrl = datasetItem.featuresUrl
-          } else {
-            const baseUrl = apiUrl.endsWith('.json')
-              ? apiUrl.substring(0, apiUrl.lastIndexOf('/'))
-              : apiUrl
-            geojsonUrl = `${baseUrl}/${datasetItem.featuresUrl}`
-          }
-
-          const response = await fetch(geojsonUrl)
-
-          if (!response.ok) {
-            throw new Error(`Failed to fetch GeoJSON: ${response.status}`)
-          }
-
-          const geojsonData = await response.json() as AllGeoJSON
-
-          // Cache for 1 hour
-          setCache(featuresKey, geojsonData, 60 * 60 * 1000)
-
-          return geojsonData
-        } catch (error) {
-          console.error(`Error loading GeoJSON for ${datasetItem.name}:`, error)
-          return {
-            type: 'FeatureCollection',
-            features: [],
-          } as AllGeoJSON
-        }
-      }
+      const featuresUrl = /^https?:\/\//.test(datasetItem.featuresUrl)
+        ? datasetItem.featuresUrl
+        : `${apiUrl.endsWith('.json') ? apiUrl.substring(0, apiUrl.lastIndexOf('/')) : apiUrl}/${datasetItem.featuresUrl}`
+      const getFeatures: Dataset['getFeatures'] = options => cachedFeatures(`local:${datasetItem.name}:${featuresUrl}`, HOUR_MS, () =>
+        fetchJsonOrThrow<FeatureCollection>(featuresUrl, 120_000, 'GeoJSON fetch', options?.onProgress, options?.signal), options?.signal)
 
       const name = formatName(datasetItem.name)
 

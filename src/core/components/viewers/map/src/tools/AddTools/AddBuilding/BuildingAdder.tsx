@@ -9,8 +9,10 @@ import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { toast } from 'sonner'
 
+
 import { useBuildings, useCreateBuilding } from '../../../../../../../hooks/buildings/buildings'
 import { MapContext } from '../../../../../../../store'
+import { dismissHint, onHintClosed } from '../../../../../../../utils/toastHints'
 import { Input, Label } from '../../../../../../ui/'
 import { AddItemDialog } from '../../../../../../ui/AddItemDialog'
 import { Button } from '../../../../../../ui/Button'
@@ -145,8 +147,9 @@ export function BuildingAdder({ isOpen, onClose, geocodeEarthApiKey, geocoderUrl
       description: t('pickHint'),
       duration: Infinity,
       cancel: { label: t('cancel'), onClick: () => setIsPicking(false) },
+      onDismiss: onHintClosed(PICK_TOAST_ID, () => setIsPicking(false)),
     })
-    return () => { toast.dismiss(PICK_TOAST_ID) }
+    return () => { dismissHint(PICK_TOAST_ID) }
   }, [isPicking, t])
 
   React.useEffect(() => {

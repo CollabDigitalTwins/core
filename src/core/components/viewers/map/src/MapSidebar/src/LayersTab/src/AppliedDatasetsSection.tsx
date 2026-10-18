@@ -13,7 +13,6 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core'
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
@@ -29,7 +28,8 @@ import { Badge } from '../../../../../../../ui/Badge'
 import { Button } from '../../../../../../../ui/Button'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { Switch } from '../../../../../../../ui/Switch'
-import { FieldsTable } from '../../../../../datasets/DatasetManager/src/FieldsTable'
+import { DatasetStylePanel } from '../../../../../datasets/DatasetManager/src/DatasetStylePanel'
+import { reorderedDatasets, sortByOrder } from '../../../../../datasets/utils'
 
 import type { Dataset } from '../../../../../../../../types/datasetTypes'
 
@@ -102,7 +102,7 @@ function SortableRow({ dataset, expanded, onToggle, onExpand, onRemove }: Sortab
       </div>
       {expanded && (
         <div className="pl-2 pb-2">
-          <FieldsTable dataset={dataset} />
+          <DatasetStylePanel dataset={dataset} />
         </div>
       )}
     </div>
@@ -122,13 +122,7 @@ export function AppliedDatasetsSection() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
-  const sortedDatasets = React.useMemo(() => {
-    const withOrder = addedDatasets.map((dataset, index) => ({
-      ...dataset,
-      order: dataset.order !== undefined ? dataset.order : addedDatasets.length - 1 - index,
-    }))
-    return withOrder.sort((a, b) => (b.order ?? 0) - (a.order ?? 0))
-  }, [addedDatasets])
+  const sortedDatasets = React.useMemo(() => sortByOrder(addedDatasets), [addedDatasets])
 
   const toggleExpansion = (name: string) => {
     setExpanded((prev) => {
@@ -148,22 +142,9 @@ export function AppliedDatasetsSection() {
     datasetDispatch({ type: 'REMOVE_DATASET_FROM_MAP', payload: { datasetId: dataset.id } })
   }
 
-  const onDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
-    if (!over || active.id === over.id) return
-
-    const display = [...sortedDatasets]
-    const oldIndex = display.findIndex(d => d.name === active.id)
-    const newIndex = display.findIndex(d => d.name === over.id)
-    if (oldIndex < 0 || newIndex < 0) return
-
-    const reordered = arrayMove(display, oldIndex, newIndex)
-    const maxOrder = reordered.length - 1
-    const reorderedDatasets = reordered.map((dataset, index) => ({
-      ...dataset,
-      order: maxOrder - index,
-    }))
-    datasetDispatch({ type: 'REORDER_DATASETS', payload: { reorderedDatasets } })
+  const onDragEnd = ({ active, over }: DragEndEvent) => {
+    const reordered = over ? reorderedDatasets(sortedDatasets, String(active.id), String(over.id)) : undefined
+    if (reordered) datasetDispatch({ type: 'REORDER_DATASETS', payload: { reorderedDatasets: reordered } })
   }
 
   const allVisible = addedDatasets.length > 0 && addedDatasets.every(d => d.visible !== false)

@@ -443,7 +443,10 @@
     "noDescription": "No description available."
   },
   "DatasetManagerMenu": {
-    "appliedLayer": "Applied Layer"
+    "appliedLayers": "{count, plural, one {Layer} other {Layers}}",
+    "style": "Style",
+    "reorder": "Drag to reorder",
+    "closeStyle": "Close style"
   },
   "MapLegend": {
     "title": "Legend",
@@ -452,7 +455,6 @@
     "feedUnavailableToast": "{title}: the live feed is unreachable right now, so the layer may be missing or out of date."
   },
   "Datasets": {
-    "failedFetchError": "Failed to fetch datasets.",
     "dialogTitle": "Datasets",
     "dialogDescription": "Manage the layers visible on your map",
     "appliedTab": "Applied",
@@ -465,7 +467,6 @@
     "liveDataTab": "Live Data",
     "loading": "Loading datasets...",
     "fetchingDatasets": "Fetching datasets...",
-    "refreshButton": "Retry",
     "breadcrumbTitle": "Datasets",
     "backToDataButton": "Back to Datasets",
     "removeButton": "Remove Dataset",
@@ -490,7 +491,25 @@
     "toastDeleted": "Deleted \"{name}\"",
     "toastDeleteFailed": "Delete failed: {error}",
     "toastDatasetAdded": "Added \"{name}\"",
-    "toastDatasetNotSaved": "\"{name}\" could not be saved and will be lost on reload: {error}"
+    "toastDatasetNotSaved": "\"{name}\" could not be saved and will be lost on reload: {error}",
+    "urlLoadFailed": "Could not load this URL",
+    "noServiceLayers": "This service lists no layers that can be drawn on the map.",
+    "urlPlaceholder": "https://… GeoJSON, ArcGIS layer, WMS, WMTS or tile URL",
+    "urlType": "Source type",
+    "urlTypes": {
+      "geojson": "GeoJSON",
+      "arcgis": "ArcGIS feature layer",
+      "wms": "WMS",
+      "wmts": "WMTS",
+      "arcgisMapServer": "ArcGIS map service",
+      "arcgisImageServer": "ArcGIS image service",
+      "xyz": "XYZ tiles"
+    },
+    "load": "Load",
+    "addToMap": "Add to map",
+    "serviceLayer": "Service layer",
+    "favouriteSaveFailed": "Could not save this favourite. Try again.",
+    "checkingDataset": "Checking that this dataset can be loaded…"
   },
   "DrawingLayers": {
     "doorSwings": "Door Swings",
@@ -512,18 +531,6 @@
     "exportButton": "Export data",
     "csv": "Export CSV",
     "xml": "Export XML"
-  },
-  "FieldsTable": {
-    "loadingText": "Loading Fields...",
-    "fieldName": "Field Name",
-    "color": "Colour",
-    "fieldColor": "Field colour",
-    "minVal": "Min value colour",
-    "maxVal": "Max value colour",
-    "false": "False/No",
-    "falseColor": "False/No colour",
-    "true": "True/Yes",
-    "trueColor": "True/Yes colour"
   },
   "FileAdder": {
     "title": "Add File",
@@ -651,10 +658,6 @@
     "municipality": "Municipality",
     "type": "Type",
     "source": "Source",
-    "countrySubdivisionLower": "subdivision",
-    "municipalityLower": "municipality",
-    "typeLower": "type",
-    "sourceLower": "source",
     "selectField": "Select field",
     "searchFields": "Search fields...",
     "selectOperator": "Select operator",
@@ -673,7 +676,10 @@
     "isOn": "is on",
     "isBefore": "is before",
     "isAfter": "is after",
-    "isBetween": "is between"
+    "isBetween": "is between",
+    "active": "Active filters",
+    "clearAll": "Clear all filters",
+    "removeFilter": "Remove filter {value}"
   },
   "FiltersDialog": {
     "advanced": "Advanced",
@@ -916,9 +922,23 @@
     "showing": "Showing",
     "properties": "properties"
   },
-  "ViewportDatasetNotice": {
+  "DatasetLoadStatus": {
     "zoomIn": "Zoom in to see this dataset.",
-    "loadFailed": "Could not load this dataset: {reason}"
+    "truncated": "Showing the first {count} features; the rest were not loaded.",
+    "loading": "Loading…",
+    "bytesOf": "{loaded} of {total}",
+    "featuresSoFar": "{count, plural, one {# feature} other {# features}}",
+    "featuresOf": "{count, number} of {total, number} features",
+    "reason": {
+      "forbidden": "The publisher does not allow access to this dataset.",
+      "notFound": "The publisher no longer serves this dataset.",
+      "unreachable": "The publisher could not be reached. Try again later.",
+      "notAMap": "This service does not provide a map this platform can draw.",
+      "tooLarge": "This file is too large to draw directly.",
+      "noData": "This dataset has no features to draw.",
+      "unknown": "This dataset could not be loaded."
+    },
+    "removed": "Removed from the map: {reason}"
   },
   "OrganizationConfig": {
     "title": "Organization Setup",
@@ -2316,5 +2336,55 @@
     "saving": "Saving footprint…",
     "saved": "Footprint saved.",
     "saveFailed": "Failed to save the footprint. Please try again."
+  },
+  "DatasetStyle": {
+    "loading": "Reading fields…",
+    "colourBy": "Colour by",
+    "allFeatures": "All features",
+    "display": "Display",
+    "renderer": {
+      "single": "Single colour",
+      "featureColour": "Colours in the data",
+      "categorical": "Categories",
+      "boolean": "Yes / no",
+      "ramp": "Colour ramp",
+      "graduated": "Classes",
+      "heatmap": "Heatmap"
+    },
+    "colour": "Colour",
+    "other": "Other",
+    "yes": "Yes",
+    "no": "No",
+    "noData": "No data",
+    "min": "Lowest",
+    "max": "Highest",
+    "classification": "Classification",
+    "method": {
+      "quantile": "Quantile",
+      "equalInterval": "Equal interval",
+      "jenks": "Natural breaks (Jenks)"
+    },
+    "classes": "Classes",
+    "colourRamp": "Colour ramp",
+    "ramp": {
+      "viridis": "Viridis",
+      "magma": "Magma",
+      "blues": "Blues",
+      "greens": "Greens",
+      "reds": "Reds",
+      "oranges": "Oranges",
+      "redYellowBlue": "Red – yellow – blue"
+    },
+    "opacity": "Opacity",
+    "borderColour": "Border colour",
+    "borderWidth": "Border width",
+    "pointSize": "Point size",
+    "lineWidth": "Line width",
+    "labels": "Labels",
+    "noLabels": "No labels",
+    "legend": "Legend",
+    "moreStyle": "More style",
+    "moreEntries": "+{count, number} more",
+    "lessStyle": "Less style"
   }
 }

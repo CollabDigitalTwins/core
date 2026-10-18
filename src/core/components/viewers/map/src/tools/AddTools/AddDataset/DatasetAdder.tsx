@@ -12,16 +12,19 @@ import { toast } from 'sonner'
 import { DatasetsContext, MapContext } from '../../../../../../../store'
 import { DatasetGroup } from '../../../../../../../types/dbTypes'
 import { Button, Input } from '../../../../../../ui/'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../../ui/Select'
 import { parseGeoJSON, type GeoJSONSummary } from '../../../../datasets/src/geojsonFile'
+import { listWmsLayers, listWmtsLayers, mapServiceDataset, type MapServiceLayer } from '../../../../datasets/src/mapServices'
 import { normalizeOrgId } from '../../../../datasets/src/orgVisibility'
 import {
-  addWmsToMap,
+  arcgisUrlDataset,
   detectSourceType,
   extractWmsLayers,
-  loadVectorUrl,
+  loadGeojsonUrl,
   nameFromUrl,
   type UrlSourceType,
 } from '../../../../datasets/src/urlSources'
+import { useAddDatasetToMap } from '../../../../datasets/src/useAddDatasetToMap'
 import { layerColorByName } from '../../../../utils/stringToColour'
 import { uploadToPresignedUrl } from '../AddFile/utils/uploadToPresignedURLS'
 
@@ -30,12 +33,8 @@ import type { Dataset } from '../../../../../../../types/datasetTypes'
 /** The orgId prefix is added server-side. */
 const DATASETS_BUCKET = 'pointclouds-demo'
 
-/** Default per-geometry paint, persisted so reload hydration can restyle. */
-const DEFAULT_LAYER_STYLES = {
-  lineLayerStyle: { 'line-color': '#0d9488', 'line-width': 4 },
-  pointLayerStyle: { 'circle-color': '#0d9488', 'circle-radius': 8 },
-  polygonLayerStyle: { 'fill-color': '#0d9488', 'fill-opacity': 0.8 },
-}
+const URL_TYPES: UrlSourceType[] = ['geojson', 'arcgis', 'wms', 'wmts', 'arcgisMapServer', 'arcgisImageServer', 'xyz']
+const LAYER_PICKER_TYPES = new Set<UrlSourceType>(['wms', 'wmts'])
 
 type PersistGeometry = 'points' | 'lines' | 'polygons'
 
@@ -66,9 +65,8 @@ interface DatasetAdderProps {
 }
 
 /**
- * Add a dataset from a GeoJSON file or a pasted URL (GeoJSON, ArcGIS, WMS).
- * Vector sources render through OpenDataLayers; WMS goes straight on the map as a
- * raster overlay. File uploads also persist to MinIO and re-hydrate on reload.
+ * Add a dataset from a GeoJSON file or a pasted URL: GeoJSON, an ArcGIS feature layer, or a map service.
+ * File uploads also persist to MinIO and re-hydrate on reload.
  */
 export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
   const t = useTranslations('Datasets')
@@ -86,7 +84,8 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
 
   const [url, setUrl] = React.useState('')
   const [urlType, setUrlType] = React.useState<UrlSourceType>('geojson')
-  const [wmsLayers, setWmsLayers] = React.useState('')
+  const [serviceLayers, setServiceLayers] = React.useState<MapServiceLayer[]>([])
+  const [serviceLayer, setServiceLayer] = React.useState('')
   const [busy, setBusy] = React.useState(false)
   const [saving, setSaving] = React.useState(false)
 
@@ -111,48 +110,58 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
 
   const handleUrlChange = (value: string) => {
     setUrl(value)
+    setServiceLayers([])
     if (!value.trim()) return
     const detected = detectSourceType(value)
     setUrlType(detected)
-    if (detected === 'wms') {
-      const layers = extractWmsLayers(value)
-      if (layers) setWmsLayers(layers)
-    }
+    if (detected === 'wms') setServiceLayer(extractWmsLayers(value))
   }
 
-  const loadFromUrl = React.useCallback(async () => {
-    const trimmed = url.trim()
-    if (!trimmed) return
+  const { addDataset: addCheckedDataset } = useAddDatasetToMap()
+  const addDataset = React.useCallback(async (dataset: Dataset) => {
+    if (!await addCheckedDataset(dataset)) return
+    datasetDispatch({ type: 'ADD_DATASET', payload: { dataset } })
+    onClose?.()
+  }, [addCheckedDataset, datasetDispatch, onClose])
+
+  const withBusy = React.useCallback(async (task: () => Promise<void>) => {
     setError(null)
     setBusy(true)
     try {
-      const { featureCollection, summary } = await loadVectorUrl(
-        trimmed,
-        urlType === 'arcgis' ? 'arcgis' : 'geojson',
-      )
-      setLoaded({ sourceName: nameFromUrl(trimmed), featureCollection, summary })
+      await task()
     }
     catch (e) {
-      setLoaded(null)
-      setError(e instanceof Error ? e.message : 'Failed to load URL')
+      setError(e instanceof Error ? e.message : t('urlLoadFailed'))
     }
     finally {
       setBusy(false)
     }
-  }, [url, urlType])
+  }, [t])
 
-  const addWms = React.useCallback(() => {
+  const loadFromUrl = React.useCallback(() => withBusy(async () => {
     const trimmed = url.trim()
-    if (!map) { setError('Open the Map viewer first.'); return }
-    if (!trimmed || !wmsLayers.trim()) { setError('A WMS URL and layer name are required.'); return }
-    try {
-      addWmsToMap(map, trimmed, wmsLayers.trim())
-      onClose?.()
+    if (urlType === 'geojson') {
+      const { featureCollection, summary } = await loadGeojsonUrl(trimmed)
+      setLoaded({ sourceName: nameFromUrl(trimmed), featureCollection, summary })
+      return
     }
-    catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to add WMS layer')
+    if (urlType === 'arcgis') {
+      await addDataset(await arcgisUrlDataset(trimmed, owningOrgId))
+      return
     }
-  }, [map, url, wmsLayers, onClose])
+    if (LAYER_PICKER_TYPES.has(urlType) && !serviceLayer) {
+      const layers = urlType === 'wms' ? await listWmsLayers(trimmed) : await listWmtsLayers(trimmed)
+      if (layers.length === 0) throw new Error(t('noServiceLayers'))
+      setServiceLayers(layers)
+      setServiceLayer(layers[0].name)
+      return
+    }
+    const layerTitle = serviceLayers.find(layer => layer.name === serviceLayer)?.title
+    await addDataset(mapServiceDataset(
+      { kind: urlType, url: trimmed, layer: serviceLayer || undefined },
+      { name: layerTitle || serviceLayer || nameFromUrl(trimmed), group: DatasetGroup.Organizational, organization: owningOrgId, publisher: 'Local / URL' },
+    ))
+  }), [withBusy, url, urlType, serviceLayer, serviceLayers, addDataset, owningOrgId, t])
 
   /** Throws rather than blocking the add; the caller degrades to a session-only dataset. */
   const persistFile = React.useCallback(async (file: File, geometry: PersistGeometry): Promise<number> => {
@@ -176,7 +185,6 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
       description: JSON.stringify({
         bucket: DATASETS_BUCKET,
         geometryType: geometry,
-        layerStyles: DEFAULT_LAYER_STYLES,
       }),
     }
     const fileRes = await fetch('/api/files/create', {
@@ -256,6 +264,8 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
     onClose?.()
   }, [loaded, map, datasetDispatch, persistFile, onClose, owningOrgId, t])
 
+  const needsLoad = urlType === 'geojson' || (LAYER_PICKER_TYPES.has(urlType) && !serviceLayer)
+
   return (
     <div className="flex flex-col gap-3 mt-2">
       {!loaded && (
@@ -292,44 +302,34 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
 
           <div className="flex flex-col gap-2">
             <Input
-              placeholder="https://… (GeoJSON, ArcGIS FeatureServer, or WMS)"
+              placeholder={t('urlPlaceholder')}
               value={url}
               onChange={(e) => handleUrlChange(e.target.value)}
             />
             <div className="flex items-center gap-2">
-              <select
-                className="border border-input rounded p-1 text-sm bg-background"
+              <Select
                 value={urlType}
-                onChange={(e) => setUrlType(e.target.value as UrlSourceType)}
+                onValueChange={(value) => {
+                  setUrlType(value as UrlSourceType)
+                  setServiceLayers([])
+                }}
               >
-                <option value="geojson">GeoJSON</option>
-                <option value="arcgis">ArcGIS Feature Service</option>
-                <option value="wms">WMS</option>
-              </select>
-
-              {urlType === 'wms'
-                ? (
-                    <>
-                      <Input
-                        placeholder="WMS layer name(s)"
-                        value={wmsLayers}
-                        onChange={(e) => setWmsLayers(e.target.value)}
-                      />
-                      <Button onClick={addWms} disabled={!url.trim() || !wmsLayers.trim()}>
-                        Add WMS
-                      </Button>
-                    </>
-                  )
-                : (
-                    <Button onClick={() => void loadFromUrl()} disabled={!url.trim() || busy}>
-                      {busy ? 'Loading…' : 'Load'}
-                    </Button>
-                  )}
+                <SelectTrigger aria-label={t('urlType')}><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {URL_TYPES.map(type => <SelectItem key={type} value={type}>{t(`urlTypes.${type}`)}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Button onClick={() => void loadFromUrl()} disabled={!url.trim() || busy}>
+                {busy ? t('loading') : needsLoad ? t('load') : t('addToMap')}
+              </Button>
             </div>
-            {urlType === 'wms' && (
-              <p className="text-xs text-muted-foreground">
-                WMS is added as a raster overlay (not a dataset) — it won’t appear in “view datasets”.
-              </p>
+            {serviceLayers.length > 0 && (
+              <Select value={serviceLayer} onValueChange={setServiceLayer}>
+                <SelectTrigger aria-label={t('serviceLayer')}><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {serviceLayers.map(layer => <SelectItem key={layer.name} value={layer.name}>{layer.title}</SelectItem>)}
+                </SelectContent>
+              </Select>
             )}
           </div>
 

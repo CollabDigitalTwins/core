@@ -4,6 +4,8 @@
 import * as React from 'react'
 import { toast } from 'sonner'
 
+import { dismissHint, onHintClosed } from '../../../../../../../utils/toastHints'
+
 import { hasMapApi } from '../../../../utils/hasMapApi'
 
 import { insertCorner, moveCorner, nearestCornerIndex, nearestEdgeIndex, removeCorner } from './ringEditing'
@@ -169,7 +171,7 @@ export function usePolygonDraw({ map, mapClickManager, enabled, toastId, labels,
     setDraggingIndex(-1)
     commit([])
     setIsDrawing(false)
-    toast.dismiss(toastId)
+    dismissHint(toastId)
   }, [commit, hover, toastId])
 
   const start = React.useCallback((initialRing: Ring = []): boolean => {
@@ -274,7 +276,7 @@ export function usePolygonDraw({ map, mapClickManager, enabled, toastId, labels,
 
   React.useEffect(() => {
     if (!isDrawing || isFinishing) {
-      toast.dismiss(toastId)
+      dismissHint(toastId)
       return
     }
     const { labels: text } = latest.current
@@ -287,10 +289,11 @@ export function usePolygonDraw({ map, mapClickManager, enabled, toastId, labels,
       duration: Infinity,
       action: canFinish ? { label: text.finish, onClick: () => { void finish() } } : undefined,
       cancel: { label: text.cancel, onClick: cancel },
+      onDismiss: onHintClosed(toastId, cancel),
     })
   }, [isDrawing, isFinishing, pointCount, toastId, finish, cancel])
 
-  React.useEffect(() => () => { toast.dismiss(toastId) }, [toastId])
+  React.useEffect(() => () => { dismissHint(toastId) }, [toastId])
 
   return { isDrawing, start }
 }

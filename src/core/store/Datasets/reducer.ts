@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { Dataset, DatasetField, LayerColors } from '../../types/datasetTypes'
+import type { Dataset } from '../../types/datasetTypes'
 import type { ActionMap } from '../ActionMap'
 
 interface DatasetsType {
@@ -28,11 +28,7 @@ export type DatasetPayload = {
   ['REFRESH_ORG_DATASETS']: void
   ['TOGGLE_DATASET_VISIBILITY']: Pick<DatasetState, 'datasetId'>
 
-  ['DATASET_COLOR']: { datasetId: string, layerColor: LayerColors  }
-
-  ['SET_DATASET_FIELDS']: { datasetName: string, datasetFields: DatasetField[]}
-  ['SET_SELECTED_FIELD']: { datasetName: string, fieldName: string }
-  ['SET_FIELD_COLOR']: { datasetName: string, fieldName: string, layerColor: LayerColors }
+  ['UPDATE_ADDED_DATASET']: { datasetName: string, changes: Partial<Dataset> }
 
   ['REORDER_DATASETS']: { reorderedDatasets: Dataset[] }
 }
@@ -142,71 +138,13 @@ export const DatasetReducer = (state: DatasetState, action: DatasetActions) => {
       }
     }
 
-      case 'DATASET_COLOR':
-        const { datasetId, layerColor } = action.payload
-        return {
-          ...state,
-          addedDatasets: state.addedDatasets.map((dataset) => {
-            if (dataset.id === datasetId) {
-              return {
-                ...dataset,
-                layerColor,
-              }
-            }
-            return dataset
-          }),
-        }
-
-    case 'SET_DATASET_FIELDS':
-      const { datasetName, datasetFields } = action.payload
+    case 'UPDATE_ADDED_DATASET': {
+      const { datasetName, changes } = action.payload
       return {
         ...state,
-        addedDatasets: state.addedDatasets.map(dataset => {
-          if (dataset.name === datasetName) {
-            return {
-              ...dataset,
-              fields: datasetFields,
-            }
-          }
-          return dataset
-        }),
+        addedDatasets: state.addedDatasets.map(dataset => (dataset.name === datasetName ? { ...dataset, ...changes } : dataset)),
       }
-    case 'SET_SELECTED_FIELD':
-      const { datasetName: dsName, fieldName } = action.payload
-      return {
-        ...state,
-        addedDatasets: state.addedDatasets.map(dataset => {
-          if (dataset.name === dsName) {
-            return {
-              ...dataset,
-              selectedFieldName: fieldName,
-            }
-          }
-          return dataset
-        }),
-      }
-    case 'SET_FIELD_COLOR':
-      const { datasetName: dName, fieldName: fName, layerColor: lColor } = action.payload
-      return {
-        ...state,
-        addedDatasets: state.addedDatasets.map(dataset => {
-          if (dataset.name === dName) {
-            return {
-              ...dataset,
-              fields: dataset.fields.map(field => {
-                if (field.name === fName) {
-                  return {
-                    ...field,
-                    layerColor: lColor,
-                  }
-                }
-                return field
-              }),
-            }
-          }
-          return dataset
-        }),
-      }
+    }
 
     case 'REORDER_DATASETS':
       const { reorderedDatasets } = action.payload

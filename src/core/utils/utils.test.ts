@@ -3,7 +3,7 @@
 
 import { describe, it, expect } from 'vitest'
 
-import { cn, getFileExtension, toDisplayString, withoutUndefined } from './utils'
+import { cn, formatBytes, getFileExtension, toDisplayString, withoutUndefined } from './utils'
 
 describe('cn', () => {
   it('joins class names', () => {
@@ -59,5 +59,12 @@ describe('toDisplayString', () => {
 describe('withoutUndefined', () => {
   it('drops undefined values and keeps every other falsy one', () => {
     expect(withoutUndefined({ a: undefined, b: null, c: 0, d: '' })).toEqual({ b: null, c: 0, d: '' })
+  })
+})
+
+describe('formatBytes', () => {
+  it('keeps bytes whole and gives larger units one decimal', () => {
+    expect(formatBytes(512)).toBe('512 B')
+    expect(formatBytes(12_400_000)).toBe('12.4 MB')
   })
 })

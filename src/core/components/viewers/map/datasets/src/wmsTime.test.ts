@@ -2,7 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import {
-  buildWmsTimeUrl,
+  buildWmsTileUrl,
   expandTimeRange,
   formatFrameTime,
   parseIso8601DurationMs,
@@ -61,35 +61,25 @@ describe('expandTimeRange', () => {
 })
 
 describe('parseTimeExtent', () => {
-  const caps = (dimBody: string) =>
-    `<Layer><Name>RADAR_1KM_RRAI</Name>` +
-    `<Dimension name="time" units="ISO8601" default="2026-06-03T23:00:00Z" nearestValue="0">${dimBody}</Dimension>` +
-    `</Layer>`
-
   it('parses the real GeoMet start/end/PT6M extent shape', () => {
-    const { frames } = parseTimeExtent(caps('2026-06-03T22:48:00Z/2026-06-03T23:00:00Z/PT6M'))
-    expect(frames).toEqual([
+    expect(parseTimeExtent('2026-06-03T22:48:00Z/2026-06-03T23:00:00Z/PT6M')).toEqual([
       '2026-06-03T22:48:00Z',
       '2026-06-03T22:54:00Z',
       '2026-06-03T23:00:00Z',
     ])
   })
   it('handles a comma-separated timestamp list', () => {
-    const { frames } = parseTimeExtent(caps('2026-06-03T22:54:00Z,2026-06-03T23:00:00Z'))
-    expect(frames).toEqual(['2026-06-03T22:54:00Z', '2026-06-03T23:00:00Z'])
+    expect(parseTimeExtent(' 2026-06-03T22:54:00Z, 2026-06-03T23:00:00Z\n')).toEqual(['2026-06-03T22:54:00Z', '2026-06-03T23:00:00Z'])
   })
-  it('returns no frames when there is no time dimension', () => {
-    expect(parseTimeExtent('<Layer><Name>RADAR_1KM_RRAI</Name></Layer>').frames).toEqual([])
-  })
-  it('returns no frames for an empty dimension body', () => {
-    expect(parseTimeExtent(caps('')).frames).toEqual([])
+  it('returns no frames for an empty dimension', () => {
+    expect(parseTimeExtent('  ')).toEqual([])
   })
 })
 
-describe('buildWmsTimeUrl / wmsCapabilitiesUrl', () => {
+describe('buildWmsTileUrl / wmsCapabilitiesUrl', () => {
   const BASE = 'https://geo.weather.gc.ca/geomet'
   it('embeds the TIME + LAYERS params and keeps the bbox token literal', () => {
-    const url = buildWmsTimeUrl(BASE, 'RADAR_1KM_RRAI', '2026-06-03T23:00:00Z')
+    const url = buildWmsTileUrl(BASE, 'RADAR_1KM_RRAI', '2026-06-03T23:00:00Z')
     expect(url).toContain('REQUEST=GetMap')
     expect(url).toContain('LAYERS=RADAR_1KM_RRAI')
     expect(url).toContain('SRS=EPSG%3A3857')
@@ -97,8 +87,11 @@ describe('buildWmsTimeUrl / wmsCapabilitiesUrl', () => {
     expect(url).toContain('TRANSPARENT=true')
     expect(url.endsWith('&BBOX={bbox-epsg-3857}')).toBe(true)
   })
+  it('omits TIME for a static layer', () => {
+    expect(buildWmsTileUrl(BASE, 'topo:roads')).not.toContain('TIME=')
+  })
   it('strips an existing query string off the base before building', () => {
-    const url = buildWmsTimeUrl(`${BASE}?foo=bar`, 'RADAR_1KM_RRAI', '2026-06-03T23:00:00Z')
+    const url = buildWmsTileUrl(`${BASE}?foo=bar`, 'RADAR_1KM_RRAI', '2026-06-03T23:00:00Z')
     expect(url).not.toContain('foo=bar')
   })
   it('builds a layer-scoped GetCapabilities URL', () => {

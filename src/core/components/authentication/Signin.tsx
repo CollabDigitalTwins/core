@@ -380,7 +380,7 @@ const handleResetPassword = async () => {
 }
   return (
     <>
-      <Toaster richColors position="top-right" />
+      <Toaster richColors closeButton position="top-right" />
 
       {/* LOGIN FORM */}
       {step === 'login' && (

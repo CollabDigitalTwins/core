@@ -4,12 +4,12 @@
 import { DatasetGroup, type Site } from '../../../../../../../types/dbTypes'
 import { layerColorByName } from '../../../../utils/stringToColour'
 
-import type { Dataset } from '../../../../../../../types/datasetTypes'
+import type { Dataset, DatasetField } from '../../../../../../../types/datasetTypes'
 
 export function createSitesDataset(sites: Site[], name: string): Dataset {
   const layerColor = layerColorByName(name)
 
-  const getFields = async () => [
+  const getFields = async (): Promise<DatasetField[]> => [
     { name: 'siteType', type: 'string' },
     { name: 'siteUnitsTotal', type: 'number' },
     { name: 'siteTotalSqft', type: 'number' },
@@ -33,10 +33,6 @@ export function createSitesDataset(sites: Site[], name: string): Dataset {
           isBuilding: true,
           isDbBuilding: true,
           name: site.siteName,
-        //   type: site.siteType,
-        //   unitsTotal: site.siteUnitsTotal,
-        //   totalSqft: site.siteTotalSqft,
-        //   storeyNum: site.siteStoreyNum,
         },
       })),
   } as import('geojson').FeatureCollection)

@@ -5,21 +5,18 @@
 
 import { useTranslations } from "next-intl";
 import * as React from "react";
-import { Source, Layer } from "react-map-gl/maplibre";
-
 
 import { DatasetsContext } from '../../../../../../../../store';
 import { MapContext } from "../../../../../../../../store/Map/context";
-import { useWmsActiveTime } from "../../../../../datasets/src/wmsActiveTime";
-import { buildWmsTimeUrl } from "../../../../../datasets/src/wmsTime";
-import { fitGeoJsonBounds } from "../../../../../utils/fitGeojsonBounds";
+import { isRasterDataset } from "../../../../../datasets/src/mapServices";
 import { MapLayerClickPriority } from "../../../../../utils/MapEventManager/MapClickManager";
 import MapFeaturePopoverMenu from "../../../../MapFeaturePopoverMenu";
 
-import { groupFeaturesByGeometry } from "./geometryGroups";
-import { useDatasetFeatures } from "./useDatasetFeatures";
-import { useViewportDatasetToast } from "./useViewportDatasetToast";
+import { GeoJsonDatasetLayer } from "./GeoJsonDatasetLayer";
+import { MVTDatasetLayer } from "./MVTDatasetLayer";
+import { RasterDatasetLayer } from "./RasterDatasetLayer";
 
+import type { Dataset } from '../../../../../../../../types/datasetTypes';
 import type { Building } from '../../../../../../../../types/dbTypes';
 import type { PopupEntry } from "../../../../../../../../types/map";
 import type { MapGeoJSONFeature, MapMouseEvent } from "maplibre-gl";
@@ -31,392 +28,15 @@ interface BuildingDataset {
     "visible"?: boolean;
 }
 
-const isBuildingDataset = (dataset: any): dataset is BuildingDataset => {
-    return dataset.type === "buildings" && "data" in dataset;
+const isBuildingDataset = (dataset: unknown): dataset is BuildingDataset => {
+    return (dataset as { type?: unknown }).type === "buildings" && "data" in (dataset as object);
 };
 
-const parseNumericValue = (value: unknown): number | null => {
-    if (typeof value === 'number' && Number.isFinite(value)) return value;
-    if (typeof value !== 'string') return null;
-    const cleaned = value.replace(/[$%\s]/g, '').replace(/,/g, '');
-    const parsed = Number.parseFloat(cleaned);
-    return Number.isFinite(parsed) ? parsed : null;
-};
-
-const computeMinMax = (
-    features: import('geojson').Feature[],
-    fieldName: string,
-): { min: number; max: number } | null => {
-    let min = Number.POSITIVE_INFINITY;
-    let max = Number.NEGATIVE_INFINITY;
-    let found = false;
-    for (const feature of features) {
-        const properties = (feature.properties || {}) as Record<string, unknown>;
-        const value = parseNumericValue(properties[fieldName]);
-        if (value === null) continue;
-        found = true;
-        if (value < min) min = value;
-        if (value > max) max = value;
-    }
-    if (!found) return null;
-    return { min, max: max === min ? min + 1 : max };
-};
-
-// ─── Per-dataset GeoJSON layer ────────────────────────────────────────
-// Each dataset manages its own fetch lifecycle.  This means:
-//   • datasets render PROGRESSIVELY as each one loads (no blocking)
-//   • unmounting a dataset cancels only ITS fetch
-//   • re-renders of one dataset never cancel fetches for another
-
-interface GeoJsonDatasetLayerProps {
-    dataset: any;
-    index: number;
-    onLayerReady: (datasetName: string, layerIds: string[]) => void;
-    onLayerRemoved: (datasetName: string) => void;
+function layerComponent(dataset: Dataset) {
+    if (isRasterDataset(dataset)) return RasterDatasetLayer;
+    if (dataset.datasetType === 'MVT' || dataset.type === 'MVT') return MVTDatasetLayer;
+    return GeoJsonDatasetLayer;
 }
-
-const GeoJsonDatasetLayer = React.memo(({ dataset, index, onLayerReady, onLayerRemoved }: GeoJsonDatasetLayerProps) => {
-    const { state: mapState } = React.useContext(MapContext);
-    const { map } = mapState.map;
-
-    const fitBoundsAppliedRef = React.useRef(false);
-    const { featureCollection, status } = useDatasetFeatures(map, dataset);
-    useViewportDatasetToast(dataset.name, status);
-
-    // Build the layer JSX from the loaded feature collection
-    const layerContent = React.useMemo(() => {
-        if (!featureCollection || featureCollection.features.length === 0) return null;
-
-        // ── colour resolution ──
-        let layerColor: any = dataset.layerColor?.color || '#0d9488';
-        let numericFieldName: string | undefined;
-
-        if (dataset.selectedFieldName) {
-            const selectedField = dataset.fields?.find((field: any) => field.name === dataset.selectedFieldName);
-            if (selectedField?.layerColor) {
-                if (selectedField.colorType === 'single') {
-                    layerColor = selectedField.layerColor.color;
-                }
-                if (selectedField.colorType === 'minMax') {
-                    try {
-                        const fieldName = dataset.selectedFieldName;
-                        numericFieldName = `__numeric_${fieldName}`;
-                        const range = computeMinMax(featureCollection.features, fieldName);
-                        if (range) {
-                            const minColor = selectedField.layerColor.minColor || dataset.layerColor?.minColor || dataset.layerColor?.color || '#0d9488';
-                            const maxColor = selectedField.layerColor.maxColor || dataset.layerColor?.maxColor || dataset.layerColor?.color || '#0d9488';
-                            layerColor = [
-                                'interpolate', ['linear'],
-                                ['to-number', ['get', numericFieldName], range.min],
-                                range.min, minColor,
-                                range.max, maxColor,
-                            ];
-                        }
-                    } catch (error) {
-                        console.warn('Failed to build interpolate for field', dataset.selectedFieldName, error);
-                    }
-                }
-                if (selectedField.colorType === 'boolean') {
-                    const minColor = selectedField.layerColor.minColor || dataset.layerColor?.minColor || dataset.layerColor?.color || '#0d9488';
-                    const maxColor = selectedField.layerColor.maxColor || dataset.layerColor?.maxColor || dataset.layerColor?.color || '#0d9488';
-                    const fieldName = dataset.selectedFieldName;
-                    layerColor = [
-                        'case',
-                        ['any',
-                            ['==', ['get', fieldName], true],
-                            ['==', ['get', fieldName], 1],
-                            ['==', ['downcase', ['to-string', ['get', fieldName]]], 'true'],
-                            ['==', ['downcase', ['to-string', ['get', fieldName]]], 'yes'],
-                        ],
-                        maxColor,
-                        minColor,
-                    ];
-                }
-            }
-        }
-
-        // ── inject datasetName + numeric shadow field into each feature ──
-        const enrichedFC: import('geojson').FeatureCollection = {
-            ...featureCollection,
-            features: featureCollection.features.map((feature) => {
-                let numericVal: number | undefined;
-                if (numericFieldName && dataset.selectedFieldName) {
-                    const v = parseNumericValue((feature.properties || {})[dataset.selectedFieldName]);
-                    if (v !== null) numericVal = v;
-                }
-                return {
-                    ...feature,
-                    properties: {
-                        ...feature.properties,
-                        datasetName: dataset.name,
-                        layer_color: layerColor,
-                        ...(numericFieldName && numericVal !== undefined ? { [numericFieldName]: numericVal } : {}),
-                    },
-                };
-            }),
-        };
-
-        // ── build one layer set per geometry family present ──
-        // MapLibre needs a different layer type for points, lines and polygons,
-        // and clustering only works on a points-only source — so each family
-        // gets its own source. Reading features[0] and picking a single branch
-        // silently dropped every other geometry in a mixed collection.
-        const registeredIds: string[] = [];
-        const sources: React.ReactNode[] = [];
-
-        for (const group of groupFeaturesByGeometry(enrichedFC)) {
-            const sourceId = `${dataset.name}-source-${group.kind}`;
-            const sourceKey = `${index}-${sourceId}`;
-
-            if (group.kind === 'points') {
-                const paint = {
-                    'circle-radius': 6,
-                    'circle-color': layerColor,
-                    'circle-opacity': 0.8,
-                    'circle-stroke-width': 2,
-                    'circle-stroke-color': '#ffffff',
-                };
-                registeredIds.push(`${dataset.name}-unclustered-point`);
-
-                sources.push(
-                    <Source
-                        id={sourceId}
-                        key={sourceKey}
-                        type="geojson"
-                        data={group.featureCollection}
-                        cluster={true}
-                        clusterMaxZoom={11}
-                        clusterRadius={50}
-                    >
-                        <Layer
-                            id={`${dataset.name}-clusters`}
-                            filter={['has', 'point_count']}
-                            type="circle"
-                            paint={{
-                                'circle-color': dataset.layerColor?.color || '#0d9488',
-                                'circle-radius': ['step', ['get', 'point_count'], 20, 100, 30, 750, 40],
-                                'circle-opacity': 0.9,
-                            }}
-                        />
-                        <Layer
-                            id={`${dataset.name}-cluster-count`}
-                            filter={['has', 'point_count']}
-                            type="symbol"
-                            layout={{
-                                'text-field': '{point_count_abbreviated}',
-                                'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-                                'text-size': 12,
-                            }}
-                            paint={{ 'text-color': '#fff' }}
-                        />
-                        <Layer
-                            id={`${dataset.name}-unclustered-point`}
-                            filter={['!', ['has', 'point_count']]}
-                            type="circle"
-                            paint={paint}
-                        />
-                    </Source>,
-                );
-                continue;
-            }
-
-            if (group.kind === 'lines') {
-                const mainId = `${dataset.name}-line`;
-                registeredIds.push(mainId);
-                sources.push(
-                    <Source
-                        id={sourceId}
-                        key={sourceKey}
-                        type="geojson"
-                        data={group.featureCollection}
-                    >
-                        <Layer
-                            id={mainId}
-                            type="line"
-                            paint={{ 'line-color': layerColor, 'line-width': 3, 'line-opacity': 1 }}
-                        />
-                    </Source>,
-                );
-                continue;
-            }
-
-            const fillId = `${dataset.name}-fill`;
-            const outlineId = `${dataset.name}-outline`;
-            registeredIds.push(fillId, outlineId);
-            sources.push(
-                <Source
-                    id={sourceId}
-                    key={sourceKey}
-                    type="geojson"
-                    data={group.featureCollection}
-                >
-                    <Layer
-                        id={fillId}
-                        type="fill"
-                        paint={{ 'fill-color': layerColor, 'fill-opacity': 0.5 }}
-                    />
-                    <Layer
-                        id={outlineId}
-                        type="line"
-                        paint={{ 'line-color': '#ffffff', 'line-width': 2 }}
-                    />
-                </Source>,
-            );
-        }
-
-        if (sources.length === 0) return null;
-
-        return { registeredIds, jsx: <>{sources}</> };
-    }, [featureCollection, dataset.name, dataset.layerColor, dataset.selectedFieldName, dataset.fields, index]);
-
-    // Register / unregister interactive layer IDs with the parent
-    React.useEffect(() => {
-        if (layerContent?.registeredIds) {
-            onLayerReady(dataset.name, layerContent.registeredIds);
-        }
-        return () => { onLayerRemoved(dataset.name); };
-    }, [layerContent?.registeredIds, dataset.name, onLayerReady, onLayerRemoved]);
-
-    return layerContent?.jsx ?? null;
-});
-GeoJsonDatasetLayer.displayName = 'GeoJsonDatasetLayer';
-
-
-// ─── Per-dataset MVT layer ────────────────────────────────────────────
-
-interface MVTDatasetLayerProps {
-    dataset: any;
-    index: number;
-    onLayerReady: (datasetName: string, layerIds: string[]) => void;
-    onLayerRemoved: (datasetName: string) => void;
-}
-
-const MVTDatasetLayer = React.memo(({ dataset, index, onLayerReady, onLayerRemoved }: MVTDatasetLayerProps) => {
-    const tileUrl = dataset.url || dataset.information;
-    const sourceLayer = (dataset as any)?.serviceInfo?.sourceLayer || dataset.id || dataset.name.toLowerCase().replace(/\s+/g, '_');
-    const layerColor = dataset.layerColor?.color || '#0d9488';
-    const isPointLayer = dataset.layerType === 'circle' || /point/i.test(sourceLayer);
-    const isMartinBuilding = /buildings?/i.test((dataset as any)?.serviceInfo?.sourceLayer || dataset.id || dataset.name);
-    // Only extrude actual building layers. A polygon dataset resolves to layerType
-    // 'fill', so keying extrusion off 'fill' alone routed every polygon (e.g. published
-    // open-data boundaries) into the zero-height, minzoom-15.5 extrusion branch — leaving
-    // only the outline visible. Non-building polygons fall through to the flat-fill branch.
-    const extraIsBuilding = isMartinBuilding && !isPointLayer;
-
-    const mainLayerId = isPointLayer
-        ? `${dataset.name}-points`
-        : extraIsBuilding
-            ? `${dataset.name}-extrusion`
-            : `${dataset.name}-fill`;
-    const outlineLayerId = `${dataset.name}-outline`;
-
-    // Register interactive layer IDs
-    React.useEffect(() => {
-        const ids = isPointLayer ? [mainLayerId] : [mainLayerId, outlineLayerId];
-        onLayerReady(dataset.name, ids);
-        return () => { onLayerRemoved(dataset.name); };
-    }, [dataset.name, mainLayerId, outlineLayerId, isPointLayer, onLayerReady, onLayerRemoved]);
-
-    if (!tileUrl) {
-        console.error(`❌ OpenDataLayers: No tile URL found for MVT dataset "${dataset.name}"`);
-        return null;
-    }
-
-    if (extraIsBuilding) {
-        return (
-            <Source id={`${dataset.name}-source`} key={`${index}-${dataset.name}-source`} type="vector" tiles={[tileUrl]}>
-                <Layer
-                    id={mainLayerId} type="fill-extrusion" source-layer={sourceLayer}
-                    paint={{
-                        'fill-extrusion-color': layerColor,
-                        'fill-extrusion-height': ['coalesce', ['to-number', ['get', 'heightmax']], 0],
-                        'fill-extrusion-opacity': 0.8,
-                    }}
-                    minzoom={15.5}
-                />
-                <Layer id={outlineLayerId} type="line" source-layer={sourceLayer} paint={{ 'line-color': layerColor, 'line-width': 1, 'line-opacity': 0.8 }} />
-            </Source>
-        );
-    }
-
-    if (isPointLayer) {
-        return (
-            <Source id={`${dataset.name}-source`} key={`${index}-${dataset.name}-source`} type="vector" tiles={[tileUrl]}>
-                <Layer
-                    id={mainLayerId} type="circle" source-layer={sourceLayer}
-                    paint={{ 'circle-radius': 6, 'circle-color': layerColor, 'circle-opacity': 0.8, 'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff' }}
-                />
-            </Source>
-        );
-    }
-
-    return (
-        <Source id={`${dataset.name}-source`} key={`${index}-${dataset.name}-source`} type="vector" tiles={[tileUrl]}>
-            <Layer id={mainLayerId} type="fill" source-layer={sourceLayer} paint={{ 'fill-color': layerColor, 'fill-opacity': 0.6 }} />
-            {/* White outline (matches the original GeoJSON polygon style) so subdivision
-                boundaries stay legible — a same-colour outline read as one solid blob. */}
-            <Layer id={outlineLayerId} type="line" source-layer={sourceLayer} paint={{ 'line-color': '#ffffff', 'line-width': 2 }} />
-        </Source>
-    );
-});
-MVTDatasetLayer.displayName = 'MVTDatasetLayer';
-
-
-// ─── Per-dataset WMS raster layer ─────────────────────────────────────
-// Live/federated WMS overlays. The dataset's
-// `url` is a MapLibre raster tile template (GetMap with a literal
-// {bbox-epsg-3857}); MapLibre fetches tiles directly, so there's nothing to
-// parse and no features to query (raster → not interactive).
-
-interface WMSDatasetLayerProps {
-    dataset: any;
-    index: number;
-    onLayerReady: (datasetName: string, layerIds: string[]) => void;
-    onLayerRemoved: (datasetName: string) => void;
-}
-
-const WMSDatasetLayer = React.memo(({ dataset, index, onLayerReady, onLayerRemoved }: WMSDatasetLayerProps) => {
-    const { state: mapState } = React.useContext(MapContext);
-    const { map } = mapState.map;
-
-    const tileUrl = dataset.url || dataset.information;
-    const layerId = `${dataset.name}-wms`;
-    const sourceId = `${dataset.name}-source`;
-
-    const activeTime = useWmsActiveTime(dataset.name);
-
-    // Register with no interactive layer ids — a raster has no queryable features.
-    React.useEffect(() => {
-        onLayerReady(dataset.name, []);
-        return () => { onLayerRemoved(dataset.name); };
-    }, [dataset.name, onLayerReady, onLayerRemoved]);
-
-    // Imperatively swap the raster source's tiles per frame. The <Source tiles>
-    // prop below never changes after mount, so there's no react-map-gl tug-of-war
-    // and no flicker — this setTiles call is the single source of truth for TIME.
-    React.useEffect(() => {
-        if (!map || !activeTime || !dataset.wms) return;
-        const src = map.getSource(sourceId) as { setTiles?: (t: string[]) => void } | undefined;
-        if (src?.setTiles) {
-            src.setTiles([buildWmsTimeUrl(dataset.wms.baseUrl, dataset.wms.layers, activeTime)]);
-        }
-    }, [map, activeTime, sourceId, dataset.wms?.baseUrl, dataset.wms?.layers]);
-
-    if (!tileUrl) {
-        console.error(`❌ OpenDataLayers: No tile URL found for WMS dataset "${dataset.name}"`);
-        return null;
-    }
-
-    return (
-        <Source id={sourceId} key={`${index}-${dataset.name}-source`} type="raster" tiles={[tileUrl]} tileSize={256}>
-            <Layer id={layerId} type="raster" paint={{ 'raster-opacity': 0.85 }} />
-        </Source>
-    );
-});
-WMSDatasetLayer.displayName = 'WMSDatasetLayer';
-
-
-// ─── Main orchestrator ────────────────────────────────────────────────
 
 export const OpenDataLayers = () => {
     const { "state": mapState, "dispatch": mapDispatch } = React.useContext(MapContext);
@@ -427,7 +47,6 @@ export const OpenDataLayers = () => {
     const { addedDatasets } = datasetState.datasets;
 
 
-    // Track interactive layer IDs per dataset for click handling
     const layerIdsMapRef = React.useRef<Record<string, string[]>>({});
     const [allLayerNames, setAllLayerNames] = React.useState<string[]>([]);
 
@@ -441,7 +60,6 @@ export const OpenDataLayers = () => {
         setAllLayerNames(Object.values(layerIdsMapRef.current).flat());
     }, []);
 
-    // ── Click handling ──
     React.useEffect(() => {
         if (!map || !mapClickManager || allLayerNames.length === 0) return;
 
@@ -455,7 +73,7 @@ export const OpenDataLayers = () => {
                 let datasetNameFromFeature = properties.datasetName;
                 if (!datasetNameFromFeature && feature.layer) {
                     const layerId = feature.layer.id;
-                    const suffixes = ['-unclustered-point', '-clusters', '-cluster-count', '-outline', '-fill', '-line', '-circle', '-extrusion', '-points'];
+                    const suffixes = ['-unclustered-point', '-outline', '-fill', '-line', '-extrusion', '-points'];
                     let extractedName = layerId;
                     for (const suffix of suffixes) {
                         if (layerId.endsWith(suffix)) {
@@ -505,7 +123,6 @@ export const OpenDataLayers = () => {
         };
     }, [map, mapClickManager, allLayerNames, t]);
 
-    // ── Hover cursor handling ──
     React.useEffect(() => {
         if (!map) return;
 
@@ -544,7 +161,6 @@ export const OpenDataLayers = () => {
         mapDispatch({ type: "SET_POPUP_STACK", payload: null });
     }
 
-    // ── Sort datasets by display order ──
     const sortedDatasets = React.useMemo(() => {
         if (!addedDatasets?.length) return [];
         return [...addedDatasets].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
@@ -557,32 +173,9 @@ export const OpenDataLayers = () => {
                 if (isBuildingDataset(dataset)) return null;
                 if (dataset.drawnByPlugin) return null;
 
-                if (dataset.type === 'WMS' || dataset.datasetType === 'WMS') {
-                    return (
-                        <WMSDatasetLayer
-                            key={dataset.name}
-                            dataset={dataset}
-                            index={index}
-                            onLayerReady={handleLayerReady}
-                            onLayerRemoved={handleLayerRemoved}
-                        />
-                    );
-                }
-
-                if (dataset.type === 'MVT' || dataset.datasetType === 'MVT') {
-                    return (
-                        <MVTDatasetLayer
-                            key={dataset.name}
-                            dataset={dataset}
-                            index={index}
-                            onLayerReady={handleLayerReady}
-                            onLayerRemoved={handleLayerRemoved}
-                        />
-                    );
-                }
-
+                const DatasetLayer = layerComponent(dataset);
                 return (
-                    <GeoJsonDatasetLayer
+                    <DatasetLayer
                         key={dataset.name}
                         dataset={dataset}
                         index={index}

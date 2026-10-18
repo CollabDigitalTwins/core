@@ -2,26 +2,6 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import type { Dataset } from '../../../../types/datasetTypes'
-import type * as React from "react";
-
-export const handleFavouriteDataset = (
-  dataset: Dataset,
-  state: Dataset[],
-  setter: React.Dispatch<React.SetStateAction<Dataset[]>>,
-): React.MouseEventHandler<HTMLButtonElement> => {
-  return (event) => {
-    event.preventDefault()
-
-    // If already in favourites, remove it
-    if (state.some(item => item.name === dataset.name)) {
-      setter(prev => prev.filter(item => item.name !== dataset.name))
-    }
-    else {
-      // If not in favourites, add it
-      setter(prev => [...prev, dataset])
-    }
-  }
-}
 
 // Simple name formatting function
 export function formatName(name: string): string {
@@ -52,4 +32,22 @@ export function formatDate(dateString: string): string {
 
 export function stripHtml(html: string): string {
   return html?.replace(/<[^>]*>/g, '').trim() || ''
+}
+type Ordered = Pick<Dataset, 'name' | 'order'>
+
+/** Applied datasets top layer first; one without an `order` is numbered from its list position, first on top. */
+export function sortByOrder<T extends Ordered>(datasets: T[]): Array<T & { order: number }> {
+  return datasets
+    .map((dataset, index) => ({ ...dataset, order: dataset.order ?? datasets.length - 1 - index }))
+    .sort((a, b) => b.order - a.order)
+}
+
+/** The display list after dragging `activeId` onto `overId`, renumbered top-down; undefined when nothing moved. */
+export function reorderedDatasets<T extends Ordered>(datasets: T[], activeId: string, overId: string): T[] | undefined {
+  const from = datasets.findIndex(dataset => dataset.name === activeId)
+  const to = datasets.findIndex(dataset => dataset.name === overId)
+  if (from < 0 || to < 0 || from === to) return undefined
+  const moved = [...datasets]
+  moved.splice(to, 0, ...moved.splice(from, 1))
+  return moved.map((dataset, index) => ({ ...dataset, order: moved.length - 1 - index }))
 }

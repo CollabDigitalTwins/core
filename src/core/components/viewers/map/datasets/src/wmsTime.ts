@@ -1,15 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-/**
- * Generic WMS-T (time dimension) helpers for animating WMS raster overlays.
- *
- * Generalized from the radar-specific helpers (RadarLayer/geomet.ts): any WMS
- * layer with an ISO8601 TIME dimension can be expanded into frames and animated
- * by swapping the GetMap TIME param. Data stays federated — the browser fetches
- * raster tiles directly; nothing is ingested or stored here.
- */
-
 /** Cap on expanded frames — guards against a pathological extent string. */
 const MAX_FRAMES = 60
 
@@ -28,11 +19,7 @@ export function parseIso8601DurationMs(iso: string): number {
   return seconds * 1000
 }
 
-/**
- * Expand a WMS-T `start/end/interval` extent into ascending frame timestamps
- * (oldest → newest). Falls back to `[start]` if the interval can't be parsed,
- * `[]` if start itself is invalid. Capped at `maxFrames` (keeps the newest).
- */
+/** Ascending frame timestamps for a `start/end/interval` extent, keeping the newest `maxFrames`; `[start]` when the interval does not parse. */
 export function expandTimeRange(
   startIso: string,
   endIso: string,
@@ -56,35 +43,31 @@ export function expandTimeRange(
   return out.length > maxFrames ? out.slice(out.length - maxFrames) : out
 }
 
-export interface WmsTimeExtent {
-  /** Ascending frame timestamps (oldest → newest). Empty when no time dimension found. */
-  frames: string[]
-}
-
-/**
- * Pull the `<Dimension name="time">` out of a (layer-scoped) WMS GetCapabilities
- * document and expand it to frame timestamps. Handles the `start/end/interval`
- * form and a bare comma-separated list as a fallback.
- */
-export function parseTimeExtent(xml: string, maxFrames: number = MAX_FRAMES): WmsTimeExtent {
-  const dim = xml.match(/<Dimension\b[^>]*\bname="time"[^>]*>([\s\S]*?)<\/Dimension>/i)
-  if (!dim) return { frames: [] }
-
-  const body = dim[1].trim()
-  if (!body) return { frames: [] }
-
-  let frames: string[]
+/** Frame timestamps from a `<Dimension name="time">`'s text, written as a `start/end/interval` range or a comma list. */
+export function parseTimeExtent(extent: string, maxFrames: number = MAX_FRAMES): string[] {
+  const body = extent.trim()
+  if (!body) return []
   if (body.includes('/')) {
     const [start, end, interval] = body.split('/')
-    frames = expandTimeRange(start, end, interval, maxFrames)
-  } else if (body.includes(',')) {
-    frames = body.split(',').map(s => s.trim()).filter(Boolean)
-    if (frames.length > maxFrames) frames = frames.slice(frames.length - maxFrames)
-  } else {
-    frames = [body]
+    return expandTimeRange(start, end, interval, maxFrames)
   }
+  if (body.includes(',')) {
+    const frames = body.split(',').map(s => s.trim()).filter(Boolean)
+    return frames.length > maxFrames ? frames.slice(frames.length - maxFrames) : frames
+  }
+  return [body]
+}
 
-  return { frames }
+/** Pull a `LAYERS`/`layers` value out of a WMS URL, if present. */
+export function extractWmsLayers(url: string): string {
+  try {
+    const params = new URL(url).searchParams
+    for (const [key, value] of params) {
+      if (key.toLowerCase() === 'layers' && value) return value
+    }
+  }
+  catch { /* not a parseable URL yet */ }
+  return ''
 }
 
 /** Short local-time label for a frame timestamp (e.g. "3:42 PM"). */
@@ -100,11 +83,7 @@ export function wmsCapabilitiesUrl(baseUrl: string, layers: string): string {
   return `${base}?service=WMS&version=1.3.0&request=GetCapabilities&layer=${encodeURIComponent(layers)}`
 }
 
-/**
- * Build a WMS GetLegendGraphic URL — the server-rendered legend image (colour
- * ramp + labels) for the layer's default style. No STYLE param, so it matches
- * the default-style tiles `buildWmsTimeUrl` requests (STYLES='').
- */
+/** The server-rendered legend image for the layer's default style, matching the `STYLES=''` tiles. */
 export function wmsLegendUrl(baseUrl: string, layers: string): string {
   const base = baseUrl.split('?')[0]
   const params = new URLSearchParams({
@@ -118,12 +97,8 @@ export function wmsLegendUrl(baseUrl: string, layers: string): string {
   return `${base}?${params.toString()}`
 }
 
-/**
- * Build a MapLibre raster tile-URL template for a WMS GetMap request at a given
- * TIME. `{bbox-epsg-3857}` must stay literal — MapLibre substitutes it per tile.
- * Mirrors `buildWmsTileUrl` (WMS 1.1.1 + SRS=EPSG:3857) with TIME added.
- */
-export function buildWmsTimeUrl(baseUrl: string, layers: string, time: string): string {
+/** A MapLibre raster tile template for WMS GetMap, optionally at one `time`; `{bbox-epsg-3857}` stays literal for MapLibre. */
+export function buildWmsTileUrl(baseUrl: string, layers: string, time?: string): string {
   const base = baseUrl.split('?')[0]
   const params = new URLSearchParams({
     SERVICE: 'WMS',
@@ -136,22 +111,7 @@ export function buildWmsTimeUrl(baseUrl: string, layers: string, time: string): 
     SRS: 'EPSG:3857',
     WIDTH: '256',
     HEIGHT: '256',
-    TIME: time,
   })
+  if (time) params.set('TIME', time)
   return `${base}?${params.toString()}&BBOX={bbox-epsg-3857}`
-}
-
-/**
- * Fetch a layer-scoped GetCapabilities document and return its time frames.
- * Thin network wrapper — returns `[]` on any failure so callers can simply
- * render no control (the static latest-frame raster keeps working).
- */
-export async function fetchWmsFrames(baseUrl: string, layers: string): Promise<string[]> {
-  try {
-    const res = await fetch(wmsCapabilitiesUrl(baseUrl, layers))
-    if (!res.ok) return []
-    return parseTimeExtent(await res.text()).frames
-  } catch {
-    return []
-  }
 }

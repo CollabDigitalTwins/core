@@ -18,8 +18,6 @@ interface WmsTimeControlProps {
   label?: string;
   /** Frame advance interval while playing, ms. */
   stepMs?: number;
-  /** WMS GetLegendGraphic image URL; shown under the slider when it loads. */
-  legendUrl?: string;
   /** Frame to resume on when the first frames arrive, if it is among them. Defaults to the latest. */
   initialTime?: string;
 }
@@ -38,15 +36,11 @@ export const WmsTimeControl: React.FC<WmsTimeControlProps> = ({
   onTimeChange,
   label,
   stepMs = 500,
-  legendUrl,
   initialTime,
 }) => {
   const resumeTime = React.useRef(initialTime);
   const [index, setIndex] = React.useState(() => seatIndex(frames, initialTime));
   const [playing, setPlaying] = React.useState(false);
-  const [legendOk, setLegendOk] = React.useState(true);
-
-  React.useEffect(() => { setLegendOk(true); }, [legendUrl]);
 
   React.useEffect(() => {
     setIndex(seatIndex(frames, resumeTime.current));
@@ -98,14 +92,6 @@ export const WmsTimeControl: React.FC<WmsTimeControlProps> = ({
         aria-label={label}
         className="block w-full accent-current"
       />
-      {legendUrl && legendOk && (
-        <img
-          src={legendUrl}
-          alt="Legend"
-          onError={() => setLegendOk(false)}
-          className="mt-2 block max-h-56 max-w-full object-contain"
-        />
-      )}
     </div>
   );
 };

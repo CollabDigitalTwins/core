@@ -2,22 +2,25 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { DataManagementSystem } from '../../../../../types/dbTypes'
+import { fulfilledValues, withConcurrencyLimit } from '../../../../../utils/concurrency'
 import { toDisplayString } from '../../../../../utils/utils'
 import { layerColorByName } from '../../utils/stringToColour'
 import { formatDate, formatName, stripHtml } from '../utils'
 
-import { buildValidationKey, getCache, setCache, withCache } from './cache'
+import { buildValidationKey, DAY_MS, getCache, setCache, withCache } from './cache'
+import { proxiedUrl, readJsonWithProgress, throwIfAborted, trackPages } from './http'
+import { fetchAllPages } from './paginate'
+import { pagedCollection, viewportLoader } from './viewportLoader'
 
-import type { Dataset, FieldType } from '../../../../../types/datasetTypes'
+import type { DatasetField, Dataset, DatasetListener, LoadedFeatures, ProgressListener } from '../../../../../types/datasetTypes'
 import type { OpenDataPortal } from '../../../../../types/dbTypes'
-import type { AllGeoJSON } from '@turf/turf'
-
-
+import type { FlatBounds } from '../../utils/validateBounds'
+import type { Feature } from 'geojson'
 
 const DISCOVERY_PAGE_SIZE = 100
 const MAX_DISCOVERED_DATASETS = 400
-const FEATURE_PAGE_SIZE = 500
-const MAX_FEATURES = 5_000
+const FEATURE_PAGE_SIZE = 50_000
+const DATE_TYPES = new Set(['calendar date', 'date', 'fixed_timestamp', 'floating_timestamp', 'timestamp'])
 const RETRY_BASE_MS = 500
 const MAX_RETRIES = 2
 
@@ -120,14 +123,12 @@ function buildServerHeaders() {
   return headers
 }
 
-async function fetchWithRetry(target: string, isServer: boolean): Promise<Response> {
-  const requestTarget = isServer
-    ? target
-    : `/api/socrataProxy?url=${encodeURIComponent(target)}`
+async function fetchWithRetry(target: string, isServer: boolean, signal?: AbortSignal): Promise<Response> {
+  const requestTarget = isServer ? target : proxiedUrl(target)
 
   const requestInit: RequestInit = isServer
-    ? { headers: buildServerHeaders() }
-    : {}
+    ? { headers: buildServerHeaders(), signal }
+    : { signal }
 
   let attempt = 0
   let lastError: unknown = null
@@ -148,6 +149,7 @@ async function fetchWithRetry(target: string, isServer: boolean): Promise<Respon
       return response
     }
     catch (error) {
+      throwIfAborted(signal)
       lastError = error
       if (attempt >= MAX_RETRIES) break
 
@@ -161,62 +163,13 @@ async function fetchWithRetry(target: string, isServer: boolean): Promise<Respon
     : new Error('Socrata request failed')
 }
 
-function mapSocrataFieldType(rawType: unknown): FieldType {
-  const type = toDisplayString(rawType).toLowerCase()
+function geoColumnName(columns: any[]): string | undefined {
+  const column = columns.find((candidate: any) => socrataGeoTypes.has(String(candidate?.dataTypeName || candidate?.datatype || candidate?.type || '').toLowerCase()))
+  return column?.fieldName || undefined
+}
 
-  if (
-    [
-      'number',
-      'money',
-      'double',
-      'float',
-      'percent',
-      'smallint',
-      'bigint',
-      'meta_data',
-    ].includes(type)
-  ) {
-    return 'number'
-  }
-
-  if (['checkbox', 'boolean'].includes(type)) {
-    return 'boolean'
-  }
-
-  if (
-    [
-      'calendar date',
-      'date',
-      'fixed_timestamp',
-      'floating_timestamp',
-      'timestamp',
-    ].includes(type)
-  ) {
-    return 'datetime'
-  }
-
-  if (
-    [
-      'point',
-      'multipoint',
-      'line',
-      'multiline',
-      'polygon',
-      'multipolygon',
-      'location',
-      'geometry',
-      'json',
-      'object',
-    ].includes(type)
-  ) {
-    return 'object'
-  }
-
-  if (type.includes('id')) {
-    return 'id'
-  }
-
-  return 'string'
+function withinBox(column: string, [west, south, east, north]: FlatBounds): string {
+  return `within_box(${column}, ${north}, ${west}, ${south}, ${east})`
 }
 
 function hasGeoColumns(view: any): boolean {
@@ -371,38 +324,9 @@ async function discoverSocrataViews(origin: string, isServer: boolean): Promise<
   return collected
 }
 
-async function withConcurrencyLimit<T, R>(
-  items: T[],
-  limit: number,
-  fn: (item: T) => Promise<R>,
-): Promise<PromiseSettledResult<R>[]> {
-  const results: PromiseSettledResult<R>[] = new Array(items.length)
-  let next = 0
-
-  async function worker() {
-    while (next < items.length) {
-      const index = next++
-      try {
-        results[index] = {
-          status: 'fulfilled',
-          value: await fn(items[index]),
-        }
-      }
-      catch (reason) {
-        results[index] = {
-          status: 'rejected',
-          reason,
-        }
-      }
-    }
-  }
-
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker))
-  return results
-}
-
 export async function fetchSocrataDatasets(
   portal: OpenDataPortal,
+  onDatasets?: DatasetListener,
 ): Promise<Dataset[]> {
   const { apiUrl, countrySubdivision, municipality, group } = portal
   const isServer = typeof window === 'undefined'
@@ -453,7 +377,7 @@ export async function fetchSocrataDatasets(
       const legacyQueryBase = `${origin}/resource/${viewId}.geojson`
 
       const validKey = buildValidationKey('socrata-v2', viewId, modifiedVersion)
-      const isValid = await withCache<boolean>(validKey, 24 * 60 * 60 * 1000, async () => {
+      const isValid = await withCache<boolean>(validKey, DAY_MS, async () => {
         try {
           const sampleUrl = `${v3QueryBase}?pageNumber=1&pageSize=1`
           const sampleRes = await fetchWithRetry(sampleUrl, isServer)
@@ -518,7 +442,7 @@ export async function fetchSocrataDatasets(
 
       const getFields = async () => {
         const fieldsKey = `fields:socrata:${viewId}:${modifiedVersion}`
-        const cached = getCache<any[]>(fieldsKey)
+        const cached = getCache<DatasetField[]>(fieldsKey)
         if (cached) return cached
 
         try {
@@ -534,18 +458,14 @@ export async function fetchSocrataDatasets(
             }
           }
 
-          const fields = columns.map((column: any) => {
-            const rawType = column?.dataTypeName || column?.datatype || column?.type
-            return {
-              name: column?.fieldName || column?.name || '',
-              label: column?.name || column?.fieldName || '',
-              type: mapSocrataFieldType(rawType),
-              socrataType: rawType,
-              description: column?.description || '',
-            }
-          })
+          const fields: DatasetField[] = columns.map((column: any) => ({
+            name: column?.fieldName || column?.name || '',
+            alias: column?.name && column.name !== column.fieldName ? column.name : undefined,
+            description: column?.description || undefined,
+            type: DATE_TYPES.has(String(column?.dataTypeName || '').toLowerCase()) ? 'datetime' : undefined,
+          }))
 
-          setCache(fieldsKey, fields, 24 * 60 * 60 * 1000)
+          setCache(fieldsKey, fields, DAY_MS)
           return fields
         }
         catch {
@@ -553,71 +473,42 @@ export async function fetchSocrataDatasets(
         }
       }
 
-      const getFeatures = async (): Promise<AllGeoJSON> => {
-        const featuresKey = `features:socrata:${viewId}:${modifiedVersion}`
-        const cached = getCache<AllGeoJSON>(featuresKey)
-        if (cached) return cached
-
-        try {
-          const features: any[] = []
-          let pageNumber = 1
-          let offset = 0
-          let mode: 'v3' | 'legacy' = 'v3'
-
-          while (features.length < MAX_FEATURES) {
-            const pageUrl = mode === 'v3'
-              ? `${v3QueryBase}?pageNumber=${pageNumber}&pageSize=${FEATURE_PAGE_SIZE}`
-              : `${legacyQueryBase}?$limit=${FEATURE_PAGE_SIZE}&$offset=${offset}`
-
-            const pageRes = await fetchWithRetry(pageUrl, isServer)
-
-            if (!pageRes.ok) {
-              if (mode === 'v3' && pageNumber === 1 && [400, 401, 403, 404, 405].includes(pageRes.status)) {
-                mode = 'legacy'
-                continue
-              }
-              break
-            }
-
-            const pageJson = await pageRes.json()
-            if (pageJson?.type !== 'FeatureCollection' || !Array.isArray(pageJson?.features)) {
-              break
-            }
-
-            const validFeatures = pageJson.features.filter((feature: any) => !!feature?.geometry)
-            if (validFeatures.length > 0) {
-              features.push(...validFeatures.slice(0, MAX_FEATURES - features.length))
-            }
-
-            const fetchedCount = pageJson.features.length
-            if (fetchedCount < FEATURE_PAGE_SIZE || fetchedCount === 0) {
-              break
-            }
-
-            if (mode === 'v3') {
-              pageNumber += 1
-            }
-            else {
-              offset += FEATURE_PAGE_SIZE
-            }
-          }
-
-          const result = {
-            type: 'FeatureCollection',
-            features,
-          } as AllGeoJSON
-
-          setCache(featuresKey, result, 60 * 60 * 1000)
-          return result
-        }
-        catch (error) {
-          console.error(`Socrata: Error fetching features for dataset ${viewId}:`, error)
-          return {
-            type: 'FeatureCollection',
-            features: [],
-          } as AllGeoJSON
-        }
+      const geoColumn = geoColumnName(Array.isArray(view?.columns) ? view.columns : [])
+      const resourceJson = async <T>(path: string, onProgress?: ProgressListener, signal?: AbortSignal): Promise<T> => {
+        const response = await fetchWithRetry(`${origin}/resource/${viewId}${path}`, isServer, signal)
+        if (!response.ok) throw new Error(`Socrata request failed: HTTP ${response.status}`)
+        return readJsonWithProgress<T>(response, onProgress)
       }
+      const fetchGeojson = async (where?: string, knownTotal?: number | null, onProgress?: ProgressListener, signal?: AbortSignal): Promise<LoadedFeatures> => {
+        const filter = where ? `&$where=${encodeURIComponent(where)}` : ''
+        const total = where ? null : knownTotal ?? await countRows()
+        const tracker = trackPages(onProgress, total)
+        const paged = await fetchAllPages<Feature>({
+          pageSize: FEATURE_PAGE_SIZE,
+          total,
+          signal,
+          onPage: tracker.onPage,
+          fetchPage: async (offset, limit, pageSignal) => {
+            const page = await resourceJson<{ features?: Feature[] }>(`.geojson?$order=:id&$limit=${limit}&$offset=${offset}${filter}`, tracker.bytes(), pageSignal)
+            const features = page.features ?? []
+            return { items: features, hasMore: features.length === limit }
+          },
+        })
+        return pagedCollection(paged.items.filter(feature => feature.geometry), paged)
+      }
+      const countRows = async () => {
+        const [row] = await resourceJson<Array<{ count?: string }>>('.json?$select=count(*) as count')
+        const count = Number(row?.count)
+        return Number.isFinite(count) ? count : null
+      }
+      const fetchBbox = (bbox: FlatBounds, _tolerance?: number, signal?: AbortSignal) =>
+        fetchGeojson(geoColumn ? withinBox(geoColumn, bbox) : undefined, undefined, undefined, signal)
+      const getFeatures = viewportLoader({
+        cacheKey: `socrata:${viewId}:${modifiedVersion}`,
+        countFeatures: countRows,
+        fetchAll: (total, _tolerance, onProgress, signal) => fetchGeojson(undefined, total, onProgress, signal),
+        fetchBbox,
+      })
 
       const rawName = String(view?.name || viewId)
       const name = formatName(rawName)
@@ -675,19 +566,15 @@ export async function fetchSocrataDatasets(
         getFields,
         getFeatures,
         getFeaturesData,
+        viewport: geoColumn ? { minZoom: 0 } : undefined,
         group,
         layerColor: layerColorByName(name),
       }
+    }, (dataset) => {
+      if (dataset) onDatasets?.([dataset])
     })
 
-    const datasets: Dataset[] = []
-    for (const result of settled) {
-      if (result.status === 'fulfilled' && result.value) {
-        datasets.push(result.value)
-      }
-    }
-
-    return datasets
+    return fulfilledValues(settled).filter((dataset): dataset is Dataset => dataset !== null)
   }
   catch (error) {
     console.error(`Error fetching Socrata datasets for ${portal.name}:`, error)

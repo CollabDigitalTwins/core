@@ -1,24 +1,19 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import type { LayerGeometryType } from '../../../../../../../../types/datasetTypes'
+import type { GeometryFamily } from '../../../../../utils/styleExpressions'
 import type { Feature, FeatureCollection } from 'geojson'
 
-/**
- * The three geometry families the map can draw. MapLibre needs a different
- * layer type for each, so a collection holding more than one family needs more
- * than one layer — see {@link groupFeaturesByGeometry}.
- */
-export type GeometryKind = 'polygons' | 'lines' | 'points'
-
 export interface GeometryGroup {
-  kind: GeometryKind
+  family: GeometryFamily
   featureCollection: FeatureCollection
 }
 
 /** Draw order: polygons sit beneath lines, and lines beneath points. */
-const DRAW_ORDER: GeometryKind[] = ['polygons', 'lines', 'points']
+const DRAW_ORDER: GeometryFamily[] = ['polygons', 'lines', 'points']
 
-const KIND_BY_GEOMETRY_TYPE: Record<string, GeometryKind> = {
+const FAMILY_BY_GEOMETRY_TYPE: Partial<Record<string, GeometryFamily>> = {
   Point: 'points',
   MultiPoint: 'points',
   LineString: 'lines',
@@ -27,40 +22,35 @@ const KIND_BY_GEOMETRY_TYPE: Record<string, GeometryKind> = {
   MultiPolygon: 'polygons',
 }
 
-/**
- * Split a collection into one group per geometry family present.
- *
- * The renderer used to read `features[0].geometry.type` and draw the whole
- * collection that way, so a file mixing polygons with points or lines lost
- * everything that did not match its first feature — silently, with no error.
- * Grouping first means each family gets its own layer.
- *
- * Features with no geometry, and geometry types the map cannot draw (such as
- * GeometryCollection), are left out rather than throwing.
- *
- * Groups come back in draw order, and each keeps any collection-level fields
- * (`bbox` and friends) from the source.
- */
+export const LAYER_TYPE_BY_FAMILY: Record<GeometryFamily, LayerGeometryType> = {
+  points: 'circle',
+  lines: 'line',
+  polygons: 'fill',
+}
+
+/** The family a GeoJSON geometry type draws as, or undefined for one that cannot be drawn. */
+export function geometryFamilyOf(geometryType: string | undefined): GeometryFamily | undefined {
+  return geometryType ? FAMILY_BY_GEOMETRY_TYPE[geometryType] : undefined
+}
+
+/** One group per geometry family present, in draw order; undrawable geometries such as GeometryCollection are skipped. */
 export function groupFeaturesByGeometry(featureCollection: FeatureCollection): GeometryGroup[] {
-  const byKind = new Map<GeometryKind, Feature[]>()
+  const byFamily = new Map<GeometryFamily, Feature[]>()
 
   for (const feature of featureCollection.features) {
-    const geometryType = feature?.geometry?.type
-    if (!geometryType) continue
+    const family = geometryFamilyOf(feature?.geometry?.type)
+    if (!family) continue
 
-    const kind = KIND_BY_GEOMETRY_TYPE[geometryType]
-    if (!kind) continue
-
-    const existing = byKind.get(kind)
+    const existing = byFamily.get(family)
     if (existing) existing.push(feature)
-    else byKind.set(kind, [feature])
+    else byFamily.set(family, [feature])
   }
 
-  return DRAW_ORDER.flatMap((kind) => {
-    const features = byKind.get(kind)
+  return DRAW_ORDER.flatMap((family) => {
+    const features = byFamily.get(family)
     if (!features) return []
     return [{
-      kind,
+      family,
       featureCollection: { ...featureCollection, type: 'FeatureCollection' as const, features },
     }]
   })

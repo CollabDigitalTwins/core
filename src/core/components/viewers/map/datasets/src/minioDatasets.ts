@@ -4,19 +4,14 @@
 import { DatasetGroup } from '../../../../../types/dbTypes'
 import { layerColorByName } from '../../utils/stringToColour'
 
-import type { Dataset } from '../../../../../types/datasetTypes'
-import type { AllGeoJSON } from '@turf/turf'
+import { fetchJsonOrThrow } from './http'
 
-/**
- * Hydrates uploaded GeoJSON datasets persisted via "Add Dataset". Looks up File
- * rows tagged `organizational-dataset` and builds Dataset entries whose
- * `getFeatures` lazy-loads the GeoJSON on first render.
- */
+import type { Dataset, FeatureRequest } from '../../../../../types/datasetTypes'
+import type { AllGeoJSON } from '@turf/turf'
 
 interface OrgDatasetDescription {
   bucket?: string
   geometryType?: 'points' | 'lines' | 'polygons'
-  layerStyles?: Record<string, Record<string, string | number>>
   tiledTable?: string
   tiledAt?: string
   featuresIngested?: number
@@ -54,6 +49,7 @@ function withBbox(url: string, bbox: [number, number, number, number]): string {
   return `${url}${url.includes('?') ? '&' : '?'}bbox=${bbox.map(value => value.toFixed(6)).join(',')}`
 }
 
+/** Rebuilds "Add Dataset" uploads from File rows tagged `organizational-dataset`, loading GeoJSON on first render. */
 export async function fetchOrganizationalMinioDatasets(
   organizationId: number,
   publishedTilesInCatalog: ReadonlySet<string> = new Set(),
@@ -79,14 +75,10 @@ export async function fetchOrganizationalMinioDatasets(
     if (row.tag !== TAG) continue
 
     const meta = parseDescription(row.description)
-    // Suppress the MinIO entry only once Martin actually serves the published
-    // table — otherwise the file appears to vanish during the publish→restart
-    // gap. Un-publish drops the table immediately, so the MinIO row reappears
-    // on next reload with no extra plumbing.
+    // Hidden only once Martin serves the table, or the file vanishes during the publish restart.
     if (meta?.tiledTable && publishedTilesInCatalog.has(meta.tiledTable)) continue
 
-    // Only ever the presigned URL the server minted for this session. Rebuilding
-    // the object path here would require the bucket to allow anonymous reads.
+    // A rebuilt object path would need anonymous bucket reads; only the presigned URL works.
     const sourceUrl = row.url
     if (!sourceUrl) continue
 
@@ -95,17 +87,12 @@ export async function fetchOrganizationalMinioDatasets(
     const viewport = typeof meta?.minZoom === 'number' ? { minZoom: meta.minZoom } : undefined
     let cached: AllGeoJSON | null = null
 
-    const fetchGeoJson = async (url: string): Promise<AllGeoJSON> => {
-      const response = await fetch(url)
-      if (!response.ok) {
-        throw new Error(`Failed to fetch GeoJSON from ${url}: ${response.status}`)
-      }
-      return await response.json() as AllGeoJSON
-    }
+    const fetchGeoJson = (url: string, options?: FeatureRequest) =>
+      fetchJsonOrThrow<AllGeoJSON>(url, 120_000, `GeoJSON fetch from ${url}`, options?.onProgress, options?.signal)
 
     const getFeatures: Dataset['getFeatures'] = async (options) => {
-      if (viewport && options?.bbox) return fetchGeoJson(withBbox(sourceUrl, options.bbox))
-      cached ??= await fetchGeoJson(sourceUrl)
+      if (viewport && options?.bbox) return fetchGeoJson(withBbox(sourceUrl, options.bbox), options)
+      cached ??= await fetchGeoJson(sourceUrl, options)
       return cached
     }
 
@@ -113,8 +100,7 @@ export async function fetchOrganizationalMinioDatasets(
 
     datasets.push({
       id,
-      // Stamped so the map's org-visibility filter can tell whose dataset this
-      // is. Without it every rebuilt dataset is dropped for non-admin viewers.
+      // Without it the org-visibility filter drops every rebuilt dataset for non-admins.
       organization: organizationId,
       name,
       type: 'Organizational',

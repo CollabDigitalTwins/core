@@ -4,7 +4,9 @@
 
 import type { Building, DataManagementSystem, DatasetGroup, OpenDataPortal,  } from './dbTypes'
 import type { BoundingBox, GeoJsonLayerProperty } from './map'
+import type { ColourRampName } from '../components/viewers/map/utils/colourRamps'
 import type { AllGeoJSON } from '@turf/turf'
+import type { FeatureCollection } from 'geojson'
 import type { Layer } from 'react-map-gl/maplibre'
 export interface OpenData {
   datasets: OpenDataPortal[]
@@ -45,14 +47,73 @@ export interface LayerColors {
   maxColor?: string
 }
 
-export type ColorType = 'single' | 'minMax' | 'boolean'
-
 export interface DatasetField {
   name: string
-  datasetName: string;
   type: FieldType
-  colorType?: ColorType
-  layerColor?: LayerColors
+  alias?: string
+  description?: string
+}
+
+/** A field's type and value summary, inferred from loaded features rather than provider metadata. */
+export interface FieldProfile extends DatasetField {
+  isId: boolean
+  nullCount: number
+  distinctValues: string[]
+  numericSample?: number[]
+  min?: number
+  max?: number
+}
+
+export type ClassificationMethod = 'equalInterval' | 'quantile' | 'jenks'
+
+export interface CategoryColour {
+  value: string
+  colour: string
+  /** 0–1, multiplied into the layer opacity; omitted means opaque. */
+  opacity?: number
+}
+
+export type DatasetRenderer =
+  | { kind: 'single' }
+  | { kind: 'featureColour'; property: string }
+  | { kind: 'categorical'; field: string; categories: CategoryColour[]; otherColour: string }
+  | { kind: 'boolean'; field: string; trueColour: string; falseColour: string; nullColour: string }
+  | { kind: 'ramp'; field: string; min: number; max: number; minColour: string; maxColour: string }
+  | { kind: 'graduated'; field: string; method: ClassificationMethod; breaks: number[]; colours: string[]; ramp?: ColourRampName }
+  | { kind: 'heatmap'; weightField?: string; maxWeight?: number }
+
+export interface DatasetLabel {
+  field: string
+  size: number
+  colour: string
+}
+
+export interface DatasetStyle {
+  renderer: DatasetRenderer
+  opacity: number
+  strokeColour: string
+  strokeWidth: number
+  strokeOpacity: number
+  pointRadius: number
+  lineWidth: number
+  label?: DatasetLabel
+}
+
+/** The publisher's own styling, applied when a dataset is first added. */
+export interface SourceStyle {
+  style: DatasetStyle
+  layerColour?: string
+}
+
+export type DatasetType = 'GeoJSON' | 'MVT' | 'WMS' | 'WMTS' | 'ArcGISRaster' | 'XYZ'
+
+export type MapServiceKind = 'wms' | 'wmts' | 'arcgisMapServer' | 'arcgisImageServer' | 'xyz'
+
+/** Enough to rebuild a raster map service: its endpoint, kind and, for WMS/WMTS, the chosen layer. */
+export interface MapServiceDescriptor {
+  kind: MapServiceKind
+  url: string
+  layer?: string
 }
 
 export interface Dataset {
@@ -71,7 +132,7 @@ export interface Dataset {
   dateUpdated?: string
   lastEditDate?: string
   dataLastEditDate?: string
-  datasetType: 'GeoJSON' | 'MVT' | 'WMS'
+  datasetType: DatasetType
   countrySubdivision: string
   municipality: string
   type: string
@@ -85,32 +146,64 @@ export interface Dataset {
   layerColor: LayerColors
   properties?: any // properties based on the dataset.
   total?: number // total number of records in the dataset
-  fields?: DatasetField[]
-  selectedFieldName?: string // the name of the selected field to visualize on the map
+  fields?: FieldProfile[]
+  style?: DatasetStyle
   order?: number
   getFeaturesData?: () => Promise<Object>
-  getFields: () => Promise<any[]>
-  getFeatures: (options?: { bbox?: [number, number, number, number]; zoom?: number }) => Promise<AllGeoJSON>
+  getFields: () => Promise<DatasetField[]>
+  getFeatures: (options?: FeatureRequest) => Promise<AllGeoJSON>
+  getSourceStyle?: () => Promise<SourceStyle | undefined>
+  /** Frees what loading kept in memory; called when the layer leaves the map. */
+  release?: () => void
+  /** Rejects when loading would predictably fail, so the dataset is never added. */
+  probe?: () => Promise<void>
   portal?: OpenDataPortal // The portal that this dataset belongs to.
+  legend?: ServiceLegend
   files?: []
-  // Set when this logical dataset has already been published to Martin vector
-  // tiles (via the open-data "Publish as vector tiles" path). The original
-  // portal entry keeps its own id across the national/applied/all tabs, so these
-  // flags carry the published identity so RowActions can show it as converted
-  // (and drive un-publish) on every tab — not just the organizational one.
+  // Carries the published identity across tabs, since the portal entry keeps its own id.
   publishedTable?: string // the org_<orgId>_file_<fileId> Martin table name
   publishedFileId?: number // the (synthetic) File row id backing that table
-  // ── WMS time animation ──
-  // Set on time-enabled WMS live datasets. When true,
-  // WMSDatasetLayer fetches the layer's GetCapabilities time extent and shows a
-  // scrub/play control that animates the WMS TIME dimension.
-  timeEnabled?: boolean
-  // The raw WMS coordinates the time control needs to rebuild GetMap/GetCapabilities
-  // URLs (the composed `url` already baked LAYERS into a tile template).
-  wms?: { baseUrl: string; layers: string }
+  timeEnabled?: boolean // WMS-T: animate the layer's TIME dimension
+  wms?: { baseUrl: string; layers: string; proxied?: boolean } // `url` already bakes LAYERS into a tile template, so time frames rebuild from this
+  wmsFrames?: string[]
   viewport?: DatasetViewport
+  mapService?: MapServiceDescriptor
   // The slug of the plugin whose own `map.layers` draws this dataset, so core draws nothing.
   drawnByPlugin?: string
+}
+
+/** A map service's key: one image, or a labelled image per entry. */
+export interface ServiceLegend {
+  imageUrl?: string
+  items?: Array<{ label: string; imageUrl?: string; colour?: string }>
+}
+
+/** How far a feature load has got; `fraction` (0–1) is set only when the end is known. */
+export interface LoadProgress {
+  fraction?: number
+  featureCount?: number
+  totalFeatureCount?: number
+  bytes?: number
+  totalBytes?: number
+}
+
+export type ProgressListener = (progress: LoadProgress) => void
+
+/** What the map asks `getFeatures` for: the visible area, and a listener for progress on slow loads. */
+export interface FeatureRequest {
+  bbox?: [number, number, number, number]
+  zoom?: number
+  onProgress?: ProgressListener
+  /** Aborted when the layer no longer wants this load: a newer view superseded it, or the layer left the map. */
+  signal?: AbortSignal
+}
+
+/** Receives datasets as a portal fetch discovers them, before the whole catalogue has loaded. */
+export type DatasetListener = (datasets: Dataset[]) => void
+
+/** Features plus, when the load was cut short, how many were kept. */
+export interface LoadedFeatures extends FeatureCollection {
+  truncatedAt?: number
 }
 
 /** Marks a dataset too large to load whole: features are fetched per map view, and only at or above `minZoom`. */

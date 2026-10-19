@@ -3,7 +3,7 @@
 
 import * as React from 'react'
 
-import { fetchArcGISDatasets } from './arcgisDatasets'
+import { fetchArcGISDatasets } from './arcGISDatasets'
 import { fetchCkanDatasets } from './ckanDatasets'
 import { fetchLocalDatasets } from './localDatasets'
 import { fetchOpenDataSoftDatasets } from './opendatasoftDatasets'

@@ -5,14 +5,14 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
-import { fetchArcGISDatasets } from './arcgisDatasets'
+import { fetchArcGISDatasets } from './arcGISDatasets'
 import { markDatasetUnavailable } from './unavailableDatasets'
 import { useDatasetsForPortals } from './useDatasetsForPortals'
 
 import type { Dataset, DatasetListener } from '../../../../../types/datasetTypes'
 import type { OpenDataPortal } from '../../../../../types/dbTypes'
 
-vi.mock('./arcgisDatasets', () => ({ fetchArcGISDatasets: vi.fn() }))
+vi.mock('./arcGISDatasets', () => ({ fetchArcGISDatasets: vi.fn() }))
 vi.mock('./ckanDatasets', () => ({ fetchCkanDatasets: vi.fn() }))
 vi.mock('./localDatasets', () => ({ fetchLocalDatasets: vi.fn() }))
 vi.mock('./opendatasoftDatasets', () => ({ fetchOpenDataSoftDatasets: vi.fn() }))

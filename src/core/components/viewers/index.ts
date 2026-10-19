@@ -3,7 +3,7 @@
 
 export * from './Viewer'
 export * from './map/MapViewer'
-export { fetchArcGISDatasets } from './map/datasets/src/arcgisDatasets'
+export { fetchArcGISDatasets } from './map/datasets/src/arcGISDatasets'
 export { fetchCkanDatasets } from './map/datasets/src/ckanDatasets'
 export { fetchOpenDataSoftDatasets } from './map/datasets/src/opendatasoftDatasets'
 export { fetchSocrataDatasets } from './map/datasets/src/socrataDatasets'

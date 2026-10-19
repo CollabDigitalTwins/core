@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+// @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { keepOpenOnToast } from './keepOpenOnToast'

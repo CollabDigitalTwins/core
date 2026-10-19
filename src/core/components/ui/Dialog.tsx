@@ -7,6 +7,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 import * as React from 'react'
 
+import { keepOpenOnToast } from '../../utils/keepOpenOnToast'
 import { cn } from '../../utils/utils'
 
 const Dialog = DialogPrimitive.Root
@@ -39,7 +40,7 @@ interface DialogContentProps extends DialogPrimitive.DialogContentProps {
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & DialogContentProps
->(({ className, children, closeClass, ...props }, ref) => (
+>(({ className, children, closeClass, onInteractOutside, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
@@ -49,6 +50,7 @@ const DialogContent = React.forwardRef<
         className,
       )}
       {...props}
+      onInteractOutside={keepOpenOnToast(onInteractOutside)}
     >
       {children}
       <DialogPrimitive.Close className={`absolute right-2.5 top-2.5 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground ${closeClass}`}>

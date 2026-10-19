@@ -7,6 +7,7 @@ import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
 import { Check, ChevronRight, Circle } from 'lucide-react'
 import * as React from 'react'
 
+import { keepOpenOnToast } from '../../utils/keepOpenOnToast'
 import { cn } from '../../utils/utils'
 
 const DropdownMenu = DropdownMenuPrimitive.Root
@@ -62,7 +63,7 @@ DropdownMenuSubContent.displayName
 const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
+>(({ className, sideOffset = 4, onInteractOutside, ...props }, ref) => (
   <DropdownMenuPrimitive.Portal>
     <DropdownMenuPrimitive.Content
       ref={ref}
@@ -73,6 +74,7 @@ const DropdownMenuContent = React.forwardRef<
         className,
       )}
       {...props}
+      onInteractOutside={keepOpenOnToast(onInteractOutside)}
     />
   </DropdownMenuPrimitive.Portal>
 ))

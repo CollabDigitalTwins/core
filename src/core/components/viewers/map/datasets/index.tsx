@@ -330,15 +330,17 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
                       appliedFilters={appliedFilters}
                       onFiltersChange={setAppliedFilters}
                     />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsAddPortalOpen(true)}
-                      title="Register a new open data portal"
-                    >
-                      <LR.Plus className="h-4 w-4 mr-1" />
-                      Add Portal
-                    </Button>
+                    {ability.can('create', 'OpenDataPortal') && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsAddPortalOpen(true)}
+                        title="Register a new open data portal for your organization"
+                      >
+                        <LR.Plus className="h-4 w-4 mr-1" />
+                        Add Portal
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>

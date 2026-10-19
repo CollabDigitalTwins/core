@@ -23,14 +23,10 @@ function fakeMap(over: { terrain?: number | null, features?: unknown[], hasLayer
 }
 
 describe('resolveClickPlacement', () => {
-  it('reads the terrain under the click as the elevation', () => {
+  it('lands on the terrain, since the layers add the terrain under a model to its elevation', () => {
     const placement = resolveClickPlacement(fakeMap({ terrain: 74.5 }), AT, BUILDINGS)
 
-    expect(placement).toMatchObject({ lng: -75.7, lat: 45.4, elevation: 74.5 })
-  })
-
-  it('places at sea level where the map has no terrain to ask', () => {
-    expect(resolveClickPlacement(fakeMap({ terrain: null }), AT, BUILDINGS).elevation).toBe(0)
+    expect(placement).toMatchObject({ lng: -75.7, lat: 45.4, elevation: 0 })
   })
 
   it('links the building whose footprint was clicked', () => {

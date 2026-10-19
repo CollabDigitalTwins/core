@@ -10,6 +10,7 @@ export const BUILDINGS_LAYER_ID = 'maptiler-3d-buildings'
 export interface ClickPlacement {
   lng: number
   lat: number
+  /** Height above the terrain, which the model layers add themselves; a click lands on the ground. */
   elevation: number
   /** The building whose footprint was clicked, or null for open ground. */
   buildingId: number | null
@@ -43,10 +44,8 @@ export function resolveClickPlacement(
   buildings: readonly Building[],
 ): ClickPlacement {
   const { lng, lat } = at.lngLat
-  const elevation = map.queryTerrainElevation([lng, lat]) ?? 0
-
   const osmId = footprintAt(map, at.point)
   const building = osmId == null ? undefined : buildingWithOsmId(buildings, osmId)
 
-  return { lng, lat, elevation, buildingId: building?.id ?? null }
+  return { lng, lat, elevation: 0, buildingId: building?.id ?? null }
 }

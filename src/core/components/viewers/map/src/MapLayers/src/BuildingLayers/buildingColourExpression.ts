@@ -16,12 +16,12 @@ import type { BuildingSensorAverage } from "../../../../../../ui/Sensors/buildin
 export type PaintExpression = (string | number | boolean | null | PaintExpression)[];
 
 /** Colour a footprint gets with nothing else to say about it: the tile's own, else grey. */
-export const DEFAULT_COLOUR_EXPRESSION: PaintExpression = ["coalesce", ["get", "colour"], "#cccccc"];
+export const DEFAULT_COLOUR_EXPRESSION: PaintExpression = ["coalesce", ["get", "colour"], "#b3b3b3"];
 
 export const HOVER_COLOUR = "#e0e0e0";
 
 /** Lighter than the default grey so footprints tied to a database building stand out. */
-export const ASSIGNED_COLOUR = "#f0f0f0";
+export const ASSIGNED_COLOUR = "#cccccc";
 
 /** How far a sensor-coloured footprint is lifted toward white on hover. */
 const HOVER_LIFT = 0.18;

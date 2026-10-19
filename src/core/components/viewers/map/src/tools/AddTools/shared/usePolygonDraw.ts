@@ -4,7 +4,7 @@
 import * as React from 'react'
 import { toast } from 'sonner'
 
-import { dismissHint, onHintClosed } from '../../../../../../../utils/toastHints'
+import { dismissHint, newHintId, onHintClosed } from '../../../../../../../utils/toastHints'
 
 import { hasMapApi } from '../../../../utils/hasMapApi'
 
@@ -166,13 +166,15 @@ export function usePolygonDraw({ map, mapClickManager, enabled, toastId, labels,
     render()
   }, [render])
 
+  const [hintId, setHintId] = React.useState(() => newHintId(toastId))
+
   const stop = React.useCallback(() => {
     hover(-1)
     setDraggingIndex(-1)
     commit([])
     setIsDrawing(false)
-    dismissHint(toastId)
-  }, [commit, hover, toastId])
+    dismissHint(hintId)
+  }, [commit, hover, hintId])
 
   const start = React.useCallback((initialRing: Ring = []): boolean => {
     if (!hasMapApi(map)) {
@@ -181,9 +183,10 @@ export function usePolygonDraw({ map, mapClickManager, enabled, toastId, labels,
     }
     addDrawingLayers(map)
     commit([...initialRing])
+    setHintId(newHintId(toastId))
     setIsDrawing(true)
     return true
-  }, [map, commit])
+  }, [map, commit, toastId])
 
   const cancel = React.useCallback(() => {
     stop()
@@ -276,7 +279,7 @@ export function usePolygonDraw({ map, mapClickManager, enabled, toastId, labels,
 
   React.useEffect(() => {
     if (!isDrawing || isFinishing) {
-      dismissHint(toastId)
+      dismissHint(hintId)
       return
     }
     const { labels: text } = latest.current
@@ -284,16 +287,16 @@ export function usePolygonDraw({ map, mapClickManager, enabled, toastId, labels,
     const title = canFinish ? text.readyTitle ?? text.title : text.title
     const hint = canFinish ? text.readyHint ?? text.hint : text.hint
     toast.info(title, {
-      id: toastId,
+      id: hintId,
       description: hint(pointCount),
       duration: Infinity,
       action: canFinish ? { label: text.finish, onClick: () => { void finish() } } : undefined,
       cancel: { label: text.cancel, onClick: cancel },
-      onDismiss: onHintClosed(toastId, cancel),
+      onDismiss: onHintClosed(hintId, cancel),
     })
-  }, [isDrawing, isFinishing, pointCount, toastId, finish, cancel])
+  }, [isDrawing, isFinishing, pointCount, hintId, finish, cancel])
 
-  React.useEffect(() => () => { dismissHint(toastId) }, [toastId])
+  React.useEffect(() => () => { dismissHint(hintId) }, [hintId])
 
   return { isDrawing, start }
 }

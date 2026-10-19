@@ -6,6 +6,7 @@
 import * as PopoverPrimitive from '@radix-ui/react-popover'
 import * as React from 'react'
 
+import { keepOpenOnToast } from '../../utils/keepOpenOnToast'
 import { cn } from '../../utils/utils'
 
 const Popover = PopoverPrimitive.Root
@@ -17,7 +18,7 @@ const PopoverAnchor = PopoverPrimitive.Anchor
 const PopoverContent = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
->(({ className, align = 'center', sideOffset = 4, ...props }, ref) => (
+>(({ className, align = 'center', sideOffset = 4, onInteractOutside, ...props }, ref) => (
   <PopoverPrimitive.Portal>
     <PopoverPrimitive.Content
       ref={ref}
@@ -28,6 +29,7 @@ const PopoverContent = React.forwardRef<
         className,
       )}
       {...props}
+      onInteractOutside={keepOpenOnToast(onInteractOutside)}
     />
   </PopoverPrimitive.Portal>
 ))

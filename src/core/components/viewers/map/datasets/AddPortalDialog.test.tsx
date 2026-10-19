@@ -5,7 +5,13 @@
 import { act, render, screen, fireEvent } from '@testing-library/react'
 import * as React from 'react'
 
-const { createMock } = vi.hoisted(() => ({ createMock: vi.fn() }))
+const { createMock, toastErrorMock, toastSuccessMock } = vi.hoisted(() => ({
+  createMock: vi.fn(),
+  toastErrorMock: vi.fn(),
+  toastSuccessMock: vi.fn(),
+}))
+
+vi.mock('sonner', () => ({ toast: { error: toastErrorMock, success: toastSuccessMock } }))
 
 vi.mock('../../../ui/Dialog', () => ({
   Dialog: ({ open, children }: any) => (open ? <div data-testid="dialog">{children}</div> : null),
@@ -34,7 +40,18 @@ import { AddPortalDialog } from './AddPortalDialog'
 
 beforeEach(() => {
   createMock.mockReset().mockResolvedValue(undefined)
+  toastErrorMock.mockReset()
+  toastSuccessMock.mockReset()
 })
+
+async function submitCkanPortal(apiUrl: string) {
+  fireEvent.change(screen.getByLabelText(/^Name/i), { target: { value: 'Données Québec' } })
+  fireEvent.change(screen.getByLabelText('Data Management System'), { target: { value: 'Ckan' } })
+  fireEvent.change(screen.getByLabelText('API URL'), { target: { value: apiUrl } })
+  await act(async () => {
+    fireEvent.submit(screen.getByText('Add Portal').closest('form')!)
+  })
+}
 
 describe('AddPortalDialog', () => {
   it('does not render when open is false', () => {
@@ -99,5 +116,56 @@ describe('AddPortalDialog', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  it('requires an API URL for a system core lists datasets from', async () => {
+    render(<AddPortalDialog open={true} onOpenChange={vi.fn()} />)
+
+    await submitCkanPortal('')
+
+    expect(screen.getByText('An API URL is required for Ckan portals')).toBeInTheDocument()
+    expect(createMock).not.toHaveBeenCalled()
+  })
+
+  it('refuses a malformed URL before calling the server', async () => {
+    render(<AddPortalDialog open={true} onOpenChange={vi.fn()} />)
+
+    await submitCkanPortal('https://exa mple.org')
+
+    expect(screen.getByText('API URL is not a valid URL')).toBeInTheDocument()
+    expect(createMock).not.toHaveBeenCalled()
+  })
+
+  it('toasts a duplicate and keeps the dialog open', async () => {
+    createMock.mockRejectedValue(new Error(
+      'API error 409: {"error":"\\"Données Québec\\" is already registered","code":"DUPLICATE_PORTAL","existingName":"Données Québec"}',
+    ))
+    const onOpenChange = vi.fn()
+    render(<AddPortalDialog open={true} onOpenChange={onOpenChange} />)
+
+    await submitCkanPortal('https://www.donneesquebec.ca/recherche')
+
+    expect(toastErrorMock).toHaveBeenCalledWith('Données Québec is already registered', expect.anything())
+    expect(onOpenChange).not.toHaveBeenCalled()
+  })
+
+  it('explains why an API that failed the server check cannot be used', async () => {
+    createMock.mockRejectedValue(new Error(
+      'API error 422: {"error":"The API answered with HTTP 404","code":"PORTAL_UNREACHABLE"}',
+    ))
+    render(<AddPortalDialog open={true} onOpenChange={vi.fn()} />)
+
+    await submitCkanPortal('https://www.donneesquebec.ca/recherche')
+
+    expect(screen.getByText("This API can't be used: The API answered with HTTP 404")).toBeInTheDocument()
+    expect(toastErrorMock).not.toHaveBeenCalled()
+  })
+
+  it('confirms a saved portal with a toast', async () => {
+    render(<AddPortalDialog open={true} onOpenChange={vi.fn()} />)
+
+    await submitCkanPortal('https://www.donneesquebec.ca/recherche')
+
+    expect(toastSuccessMock).toHaveBeenCalledWith('Données Québec is now available to your organization')
   })
 })

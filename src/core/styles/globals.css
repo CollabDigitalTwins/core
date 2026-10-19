@@ -946,6 +946,17 @@ ul {
   color: gray;
 }
 
+/* An open Radix modal sets pointer-events: none on body, which the toaster would inherit. */
+[data-sonner-toaster] {
+  pointer-events: auto;
+}
+
+@media (max-width: 767px) {
+  [data-sonner-toaster] [data-sonner-toast][data-styled] [data-close-button] {
+    display: none;
+  }
+}
+
 .maplibregl-popup-content {
   padding: 0;
   border-radius: 15px;

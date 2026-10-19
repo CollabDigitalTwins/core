@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 
 import { useBuildings, useCreateBuilding } from '../../../../../../../hooks/buildings/buildings'
 import { MapContext } from '../../../../../../../store'
-import { dismissHint, onHintClosed } from '../../../../../../../utils/toastHints'
+import { dismissHint, newHintId, onHintClosed } from '../../../../../../../utils/toastHints'
 import { Input, Label } from '../../../../../../ui/'
 import { AddItemDialog } from '../../../../../../ui/AddItemDialog'
 import { Button } from '../../../../../../ui/Button'
@@ -109,11 +109,14 @@ export function BuildingAdder({ isOpen, onClose, geocodeEarthApiKey, geocoderUrl
     labels: toolDrawLabels(t),
   })
 
+  const [pickHintId, setPickHintId] = React.useState(() => newHintId(PICK_TOAST_ID))
+
   const startPicking = () => {
     if (!map?.getLayer(BUILDINGS_LAYER_ID)) {
       toast.error(t('footprintsUnavailable'))
       return
     }
+    setPickHintId(newHintId(PICK_TOAST_ID))
     setIsPicking(true)
   }
 
@@ -143,14 +146,14 @@ export function BuildingAdder({ isOpen, onClose, geocodeEarthApiKey, geocoderUrl
   React.useEffect(() => {
     if (!isPicking) return
     toast.info(t('pickTitle'), {
-      id: PICK_TOAST_ID,
+      id: pickHintId,
       description: t('pickHint'),
       duration: Infinity,
       cancel: { label: t('cancel'), onClick: () => setIsPicking(false) },
-      onDismiss: onHintClosed(PICK_TOAST_ID, () => setIsPicking(false)),
+      onDismiss: onHintClosed(pickHintId, () => setIsPicking(false)),
     })
-    return () => { dismissHint(PICK_TOAST_ID) }
-  }, [isPicking, t])
+    return () => { dismissHint(pickHintId) }
+  }, [isPicking, t, pickHintId])
 
   React.useEffect(() => {
     if (!isOpen) setIsPicking(false)

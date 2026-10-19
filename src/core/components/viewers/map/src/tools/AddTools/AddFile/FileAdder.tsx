@@ -16,7 +16,7 @@ import { useBuildings } from '../../../../../../../hooks/buildings/buildings'
 import { useFiles, useUpdateFile } from '../../../../../../../hooks/files/files'
 import { BimContext, MapContext, FilesContext } from '../../../../../../../store'
 import { acceptedFiles, isAcceptedFileType } from '../../../../../../../utils/acceptedFiles'
-import { dismissHint, onHintClosed } from '../../../../../../../utils/toastHints'
+import { dismissHint, newHintId, onHintClosed } from '../../../../../../../utils/toastHints'
 import { cn } from '../../../../../../../utils/utils'
 import { AddItemDialog } from '../../../../../../ui/AddItemDialog'
 import { extensionOfName } from '../../../../../../ui/FilesManager/src/fileType'
@@ -30,6 +30,8 @@ import { useBuildingLinkConfirm } from '../../../Placement/useBuildingLinkConfir
 import type { DbFile } from '../../../../../../../types/dbTypes'
 import type { CursorType } from '../../../../../../../types/global'
 import type { LucideIcon } from 'lucide-react'
+
+const PLACE_HINT = 'place-file-toast'
 
 type FileAdderProps = {
   isOpen: boolean
@@ -128,6 +130,7 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
   const tPlacement = useTranslations('Placement')
 
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
+  const [placeHintId, setPlaceHintId] = React.useState(() => newHintId(PLACE_HINT))
   const [isUploading, setIsUploading] = React.useState(false)
   // One placement at a time: the question about a building is answered before the upload starts.
   const placingRef = React.useRef(false)
@@ -185,18 +188,18 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
   // Show instruction toast when file is selected and dismiss when deselected
   React.useEffect(() => {
     if (!selectedFile) {
-      dismissHint('place-file-toast')
+      dismissHint(placeHintId)
       return
     }
     toast.info(`${t('placeOnMapToast')}: "${selectedFile.name}"`, {
-      id: 'place-file-toast',
+      id: placeHintId,
       duration: Infinity,
-      onDismiss: onHintClosed('place-file-toast', () => setSelectedFile(null)),
+      onDismiss: onHintClosed(placeHintId, () => setSelectedFile(null)),
     })
     return () => {
-      dismissHint('place-file-toast')
+      dismissHint(placeHintId)
     }
-  }, [selectedFile])
+  }, [selectedFile, placeHintId])
 
   // Escape cancels placement
   React.useEffect(() => {
@@ -220,7 +223,7 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
 
       placingRef.current = true
       setCursor(null)
-      dismissHint('place-file-toast')
+      dismissHint(placeHintId)
 
       const { lng, lat, elevation, buildingId } = resolveClickPlacement(map, e, buildings ?? [])
       const building = buildingId === null
@@ -306,7 +309,7 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
         map.off('dblclick', onDblClick)
       }
     }
-  }, [selectedFile, isUploading, map, buildings, confirmLink, updateFileById, tPlacement, fileDispatch, bimDispatch])
+  }, [selectedFile, isUploading, map, buildings, confirmLink, updateFileById, tPlacement, fileDispatch, bimDispatch, placeHintId])
 
   // A popover opened by the first click would cover the point the second one needs.
   React.useEffect(() => {
@@ -329,6 +332,7 @@ export const FileAdder = ({ isOpen, onClose }: FileAdderProps) => {
       toast.error('Unsupported file type. Please select a safe BIM/GIS format.')
       return
     }
+    setPlaceHintId(newHintId(PLACE_HINT))
     setSelectedFile(file)
   }
 

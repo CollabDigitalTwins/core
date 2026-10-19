@@ -99,7 +99,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   Hosts must serve that route; cdt-na keeps `/api/ckanProxy`, `/api/opendatasoftProxy` and `/api/socrataProxy` as
   aliases.
 - The `LegendCard` header puts the count badge after the title, and the open body is bordered.
-- Every toast can be dismissed with a close button.
+- Every toast can be dismissed with a close button on larger screens; on mobile, toasts are swiped away.
+- Map building extrusions are darker: footprints with no colour of their own are a darker grey, and footprints tied to
+  a database building take the previous default grey instead of near-white.
 - A layer's legend shows inside its style settings, so a collapsed row is one line; service legend images keep their
   natural size so their labels stay readable.
 
@@ -117,6 +119,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - The `Filters.countrySubdivisionLower`, `municipalityLower`, `typeLower` and `sourceLower` messages.
 
 ### Fixed
+- A 3D model or BIM file placed on the map floated above the click by the terrain height: `resolveClickPlacement`
+  stored the terrain elevation, which the model layers add again. A click now places it on the ground.
 - CKAN fields were never typed as numbers, and Opendatasoft fields never mapped at all, so neither could be coloured
   by value.
 - CKAN loaded at most 5,000 rows, Opendatasoft and Socrata 5,000 features, and ArcGIS about 20,000. Each now loads
@@ -137,9 +141,18 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   goes idle, and fails only when no tile drew.
 - Closing a drawing, placing or picking hint toast did nothing: the tool was still active and showed it again. Closing
   it now ends that tool, like its Cancel button.
+- A hint toast re-shown soon after being dismissed (cancelling and restarting a tool) came back half off-screen with a
+  close button that did nothing, because sonner revives a toast still being removed under the same id. Each run of a
+  tool now uses its own hint id (`newHintId` in `utils/toastHints`).
+- Toasts shown over an open dialog, sheet, popover or menu could not be clicked or closed. Clicking one now leaves
+  the dialog or menu open (`keepOpenOnToast` in `utils/keepOpenOnToast`).
 - An active catalogue filter could not be turned off once no listed dataset had its value (for example a **WMS** type
   filter on a portal with no WMS), so the catalogue looked empty.
 - The **Subdivision** filter never listed any values, and outside English the filters read the wrong fields.
+- **Add Open Data Portal** showed raw database errors. A portal that is already registered now gets a toast naming it
+  and is not added. Malformed URLs, and a CKAN, ArcGIS, Opendatasoft or Socrata portal without an API URL, are refused
+  before submitting. If the host refuses the portal's API, the dialog says why. The **Add Portal** button now shows
+  only to users who can `create` `OpenDataPortal`, and the portal is available to their organization only. Adding a portal another organization already registered gives your organization access to that one instead of a second copy.
 
 ### Migration
 - Code dispatching `DATASET_COLOR`, `SET_SELECTED_FIELD`, `SET_FIELD_COLOR` or `SET_DATASET_FIELDS` dispatches

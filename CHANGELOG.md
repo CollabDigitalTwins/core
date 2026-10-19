@@ -7,6 +7,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-10-19
+
 ### Added
 - `hide()` on `usePluginDataset(id)`: what the dataset's eye toggle does, so a plugin's own switch can hide its
   dataset without taking it off the map.

@@ -46,6 +46,8 @@ export interface PluginManifest {
   author?: string
   /** A lucide icon name shown beside the plugin's name. Unset or unknown shows a puzzle piece. */
   icon?: string
+  /** Free-form grouping such as `live-data`. Informational only; the platform never checks it. */
+  category?: string
   capabilities: PluginCapability[]
   requiredPermissions?: string[]
   configSchema?: Record<string, unknown>

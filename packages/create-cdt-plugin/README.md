@@ -38,12 +38,11 @@
 
 A plugin adds something to the platform: a tool on the map, a panel in the BIM viewer, a legend. Think of a browser extension. The platform works without it, and installing one adds a feature.
 
-Two failure modes make writing one by hand harder than ordinary boilerplate, and neither points you at the mistake:
+One failure mode makes writing one by hand harder than ordinary boilerplate, and it does not point you at the mistake:
 
 - **Getting the externals list wrong does not fail loudly.** Bundle too little and your plugin ships a second copy of React or three.js, which is a documented crash. Bundle too much and you get a bare specifier the browser cannot resolve, dying at import with a message that blames your plugin rather than the missing shim.
-- **A slug that disagrees with its folder name is skipped silently.** The plugin never appears, and nothing explains why.
 
-This tool and [`@collabdt/plugin-kit`](https://www.npmjs.com/package/@collabdt/plugin-kit) exist to turn both into something that fails at build time instead.
+This tool and [`@collabdt/plugin-kit`](https://www.npmjs.com/package/@collabdt/plugin-kit) exist to turn it into something that fails at build time instead.
 
 ---
 
@@ -128,7 +127,7 @@ omitting the field means; the CLI says so when that happens.
 
 Worth knowing before you rename anything.
 
-- **`manifest.slug` must equal the folder name.** The scanner requires it and skips the folder with a single log line otherwise. The scaffolder gets this right; keep it right.
+- **`manifest.slug` is the plugin's identity, not its folder name.** The folder can sit up to five levels below `PLUGINS_DIR` and be called anything. Two folders that declare the same slug are both skipped, with a log line naming each, so a copied plugin needs a new slug, not just a new folder name.
 - **Every capability you register must be listed in `manifest.capabilities`.** Registering an undeclared one throws, and the platform then rolls back every contribution your plugin made and marks it errored. That is deliberately all-or-nothing rather than leaving a half-registered plugin.
 
 A plugin may register more than once, under one capability or several. Each entry needs its own `id`: contributions are de-duplicated by plugin and id, so reusing one silently drops the second.

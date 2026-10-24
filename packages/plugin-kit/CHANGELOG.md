@@ -8,12 +8,18 @@ repository root.
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-10-23
+
 ### Added
 - `category` on `PluginManifest`: an optional free-form grouping such as `live-data`, informational only.
-- `PluginUser` and `usePluginUser()` in the `@collabdt/core/plugins-sdk/data` declarations: the signed-in user's
-  `id` and `name`, or `null` while the session loads or when signed out.
 - `hide()` on `PluginDatasetState` in the `@collabdt/core/plugins-sdk/data` declarations. It needs a platform
   running `@collabdt/core` with the same addition.
+
+## [0.12.0] - 2026-10-13
+
+### Added
+- `PluginUser` and `usePluginUser()` in the `@collabdt/core/plugins-sdk/data` declarations: the signed-in user's
+  `id` and `name`, or `null` while the session loads or when signed out.
 
 ## [0.11.0] - 2026-10-09
 

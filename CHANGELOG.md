@@ -7,6 +7,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-10-23
+
 ### Added
 - `category` on `PluginManifest` (`@collabdt/core/plugins-sdk`): an optional free-form grouping such as `live-data`.
   Informational only; `validateManifest` does not check it.

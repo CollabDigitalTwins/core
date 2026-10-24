@@ -8,21 +8,29 @@ repository root.
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-10-23
+
+Using plugin-kit v0.13.0
+
+### Changed
+- Scaffolded plugins depend on `@collabdt/plugin-kit` `^0.13.0`.
+- README: `manifest.slug` is the plugin's identity, not its folder name.
+
 ## [0.12.0] - 2026-10-13
 
-Using plugin-kid v0.12.0
+Using plugin-kit v0.12.0
 
 ## [0.11.0] - 2026-10-09
 
-Using plugin-kid v0.11.0
+Using plugin-kit v0.11.0
 
 ## [0.10.0] - 2026-10-05
 
-Using plugin-kid v0.10.0
+Using plugin-kit v0.10.0
 
 ## [0.9.0] - 2026-10-03
 
-Using plugin-kid v0.9.0
+Using plugin-kit v0.9.0
 
 ### Added
 - **A Dataset surface (`--surface map.datasets`)**, whose example lists two GeoJSON points under Organizational

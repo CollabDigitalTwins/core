@@ -50,9 +50,11 @@ export const handleChangeViewer = (
 interface AppSidebarProps {
   children?: React.ReactNode
   signOut: (options?: { redirectTo?: string; redirect?: boolean }) => Promise<void>
+  /** Extra `DropdownMenuItem`s for the avatar menu, rendered between Settings and Logout. */
+  userMenuItems?: React.ReactNode
 }
 
-export function AppSidebar({ children, signOut }: AppSidebarProps) {
+export function AppSidebar({ children, signOut, userMenuItems }: AppSidebarProps) {
   // Translations
   const t = useTranslations('AppSidebar')
 
@@ -123,7 +125,7 @@ export function AppSidebar({ children, signOut }: AppSidebarProps) {
           }`}
         >
             {/* Nav User */}
-            <NavUser signOut={signOut} />
+            <NavUser signOut={signOut} userMenuItems={userMenuItems} />
 
             {!isCollapsed ? (
               <Link

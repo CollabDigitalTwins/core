@@ -15,6 +15,7 @@ import { createPluginHooks } from "./plugins/createPluginHooks";
 import { createSensorHooks } from "./sensors/createSensorHooks";
 import { createSensorTypeHooks } from "./sensorTypes/createSensorTypeHooks";
 import { createSiteHooks } from "./sites/createSiteHooks";
+import { createUsageHooks } from "./usage/createUsageHooks";
 import { createUserHooks } from "./users/createUserHooks";
 
 import type { ApiAdapter } from "./ports/apiAdapter";
@@ -36,6 +37,7 @@ export type HooksBag = {
   sensor: ReturnType<typeof createSensorHooks>;
   sensorType: ReturnType<typeof createSensorTypeHooks>;
   plugin: ReturnType<typeof createPluginHooks>;
+  usage: ReturnType<typeof createUsageHooks>;
 };
 export const HooksCtx = createContext<HooksBag | null>(null);
 
@@ -53,6 +55,7 @@ export function CoreHooksProvider({ adapter, children }:{ adapter: ApiAdapter; c
     sensor: createSensorHooks(adapter),
     sensorType: createSensorTypeHooks(adapter),
     plugin: createPluginHooks(adapter),
+    usage: createUsageHooks(adapter),
   }), [adapter]);
   return <HooksCtx.Provider value={hooks}>{children}</HooksCtx.Provider>;
 }

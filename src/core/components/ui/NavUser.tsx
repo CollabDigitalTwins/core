@@ -34,10 +34,14 @@ import {
 import { SidebarMenuItem, SidebarMenuButton, useSidebar } from './Sidebar'
 import { UserAvatar } from './UserAvatar'
 
+import type { ReactNode } from 'react'
+
 export function NavUser({
-  signOut
+  signOut,
+  userMenuItems,
 }: {
   signOut: (options?: { redirectTo?: string; redirect?: boolean }) => Promise<void>
+  userMenuItems?: ReactNode
 }) {
   // Translation
   const t = useTranslations('NavUser')
@@ -99,6 +103,7 @@ export function NavUser({
                 <LR.Settings className="size-4" />
                 {t('settings')}
               </DropdownMenuItem>
+              {userMenuItems}
             </DropdownMenuGroup>
             {/* <DropdownMenuSeparator />  Hide for now. This menu might eventually expand and separator would be necessary */}
             <DropdownMenuItem onClick={() => { void signOut({ redirectTo: `/${instance}/auth/signin`, redirect: true }) }}>

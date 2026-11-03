@@ -11,6 +11,15 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - `useFirstLoadableImage` (`hooks/useFirstLoadableImage`): returns the first image URL in a list that loads.
 - `orgLogoUrl`, `orgLogoCandidates` and `CDT_LOGO` (`utils/orgLogo`) for the public `org-logos` bucket.
 - `fallbacks` prop on `Logo`: URLs tried in order when `image` is missing or fails.
+- `userMenuItems` prop on `AppSidebar` and `NavUser`: extra avatar-menu items, rendered between Settings and Logout.
+- Upload usage (`components/usage/*`):
+  - `MyUsage` and `OrganizationUsage` panels.
+  - The building blocks behind them: `VolumeOverview`, `UserUsageTable`, `StatCard`, `SortHeader`, `ReportState`
+    and `ExportCsvButton`.
+  - Data comes from `useMyUsage` and `useOrganizationUsage` (`hooks/usage/usage`). The types are in `types/usage`.
+  - Strings are in a new `UsageReport` i18n namespace (en, fr, es).
+- `utils/usageFormat` (`gbFormatter`, `numberFormatter`, `relativeTime`, `monthLabel`).
+- `utils/csv` (`csvCell`, `toCsv`, `downloadText`) and `utils/usageCsv` (`userUsageToCsv`).
 
 ### Fixed
 - The sidebar logo tooltip shows the organization title instead of "Canada's Digital Twin"; `Logo` has no default `title`.
@@ -24,12 +33,15 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   `storageUrl`. Any S3-compatible object storage works.
 - `map/datasets/src/minioDatasets` is now `map/datasets/src/orgFileDatasets`, and `fetchOrganizationalMinioDatasets`
   is `fetchOrganizationalFileDatasets`.
+- `ApiAdapter` requires `getMyUsage()` and `getOrganizationUsage()`, which the usage hooks call.
 
 ### Migration
 - Pass `storageBaseUrl` where you passed `minioBaseUrl`; there is no alias.
 - Set `runtimeConfig.storageUrl` instead of `runtimeConfig.minioUrl`.
 - Imports of `fetchOrganizationalMinioDatasets` from `.../datasets/src/minioDatasets` become
   `fetchOrganizationalFileDatasets` from `.../datasets/src/orgFileDatasets`.
+- Implement `getMyUsage(): Promise<VolumeReport>` and `getOrganizationUsage(): Promise<UserUsageReport>` on your
+  `ApiAdapter`. The organization report must be scoped and authorized on the server, from the session.
 
 ## [0.17.0] - 2026-10-23
 

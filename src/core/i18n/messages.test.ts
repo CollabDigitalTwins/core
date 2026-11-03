@@ -33,4 +33,14 @@ describe('message catalogues', () => {
       expect(keysOf((locale as never)['BimAttribution']), name).toEqual(keysOf((en as never)['BimAttribution']))
     }
   })
+
+  it('gives every locale the same UsageReport keys, nested ones included', () => {
+    const report = (locale: unknown) => (locale as { UsageReport: Record<string, unknown> }).UsageReport
+    for (const [name, locale] of [['es', es], ['fr', fr]] as const) {
+      expect(keysOf(report(locale)), name).toEqual(keysOf(report(en)))
+      for (const group of ['stats', 'chart', 'byType', 'table']) {
+        expect(keysOf(report(locale)[group] as Record<string, unknown>), `${name}.${group}`).toEqual(keysOf(report(en)[group] as Record<string, unknown>))
+      }
+    }
+  })
 })

@@ -30,14 +30,13 @@ import OrganizationSkeleton from './OrganizationSkeleton'
 
 import type { Organization } from '../../../types/dbTypes'
 
-//import { useAppConfigContext } from '../../../store/AppConfig/context'
 
 interface OrganizationSettingsPanelProps {
-  minioBaseUrl?: string
+  storageBaseUrl?: string
 }
 
 export default function OrganizationSettingsPanel({
-  minioBaseUrl,
+  storageBaseUrl,
 }: OrganizationSettingsPanelProps) {
   const t = useTranslations('OrganizationSettings')
 
@@ -135,25 +134,17 @@ export default function OrganizationSettingsPanel({
     setSelectedFaviconFile(null)
   }
 
-  //const { state: { runtimeConfig: { minioUrl } } } = useAppConfigContext()
-
   const logoUrl = selectedLogoFile
     ? URL.createObjectURL(selectedLogoFile)
-    : (getFieldValue('logoKey') as string | null | undefined) && minioBaseUrl
-      ? `${minioBaseUrl}/org-logos/${toDisplayString(getFieldValue('logoKey'))}`
+    : (getFieldValue('logoKey') as string | null | undefined) && storageBaseUrl
+      ? `${storageBaseUrl}/org-logos/${toDisplayString(getFieldValue('logoKey'))}`
       : null
 
   const faviconUrl = selectedFaviconFile
     ? URL.createObjectURL(selectedFaviconFile)
-    : (getFieldValue('faviconKey') as string | null | undefined) && minioBaseUrl
-      ? `${minioBaseUrl}/org-logos/${toDisplayString(getFieldValue('faviconKey'))}`
+    : (getFieldValue('faviconKey') as string | null | undefined) && storageBaseUrl
+      ? `${storageBaseUrl}/org-logos/${toDisplayString(getFieldValue('faviconKey'))}`
       : null
-
-// const faviconUrl = selectedFaviconFile
-//   ? URL.createObjectURL(selectedFaviconFile)
-//   : organization?.faviconKey && minioUrl
-//     ? `${minioUrl}/org-logos/${organization.faviconKey}`
-//     : null
 
   if (isOrganizationLoading) {
     return (

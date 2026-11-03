@@ -89,7 +89,7 @@ const SidebarProvider = React.forwardRef<
     defaultOpen?: boolean
     open?: boolean
     onOpenChange?: (open: boolean) => void
-    minioBaseUrl?: string
+    storageBaseUrl?: string
     martinBaseUrl?: string
     organization?: import('../../types/dbTypes').Organization
     geocodeEarthApiKey?: string
@@ -104,7 +104,7 @@ const SidebarProvider = React.forwardRef<
       className,
       style,
       children,
-      minioBaseUrl,
+      storageBaseUrl,
       martinBaseUrl,
       organization,
       geocodeEarthApiKey,
@@ -275,7 +275,7 @@ const SidebarProvider = React.forwardRef<
                 width: isMobile ? SIDEBAR_WIDTH_MOBILE : infoWidth,
               }}
             >
-              <ViewerSidebar minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} />
+              <ViewerSidebar storageBaseUrl={storageBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} />
 
               {/* Right-edge drag handle (desktop only). Drag to resize the sidebar width. */}
               {canResizeInfo && (

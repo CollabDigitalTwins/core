@@ -23,7 +23,7 @@ const uploadedRow = {
   type: 'map-file',
   tag: 'organizational-dataset',
   name: 'roads.geojson',
-  url: 'https://minio.example.com/datasets/3/asset-123?X-Amz-Signature=abc',
+  url: 'https://storage.example.com/datasets/3/asset-123?X-Amz-Signature=abc',
   description: JSON.stringify({ geometryType: 'lines' }),
   uploadedAt: '2025-01-01',
 }

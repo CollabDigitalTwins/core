@@ -14,7 +14,7 @@ import SettingsSidebar from './src/SettingsSidebar'
 
 import type { SettingsTabKey } from './src/types'
 
-export function UserSettings({ minioBaseUrl }: { minioBaseUrl?: string }) {
+export function UserSettings({ storageBaseUrl }: { storageBaseUrl?: string }) {
   const t = useTranslations('UserSettings')
   const [activeTab, setActiveTab] = React.useState<SettingsTabKey>('account')
 
@@ -43,7 +43,7 @@ export function UserSettings({ minioBaseUrl }: { minioBaseUrl?: string }) {
 
             <Separator orientation="vertical" className="hidden md:!flex" />
 
-            <SettingsContent activeTab={activeTab} minioBaseUrl={minioBaseUrl} />
+            <SettingsContent activeTab={activeTab} storageBaseUrl={storageBaseUrl} />
           </div>
         </div>
       </div>

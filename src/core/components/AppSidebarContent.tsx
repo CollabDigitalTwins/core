@@ -27,6 +27,7 @@ import { usePluginDataPages } from '../plugins/host/usePluginDataPages'
 import { AppConfigContext, MapContext, useMenusContext } from '../store'
 import { ViewerNames } from '../types/'
 import { resolveAppContent } from '../utils/appContent'
+import { orgLogoCandidates, orgLogoUrl } from '../utils/orgLogo'
 
 
 // Shadcn Components
@@ -73,10 +74,10 @@ export const handleChangeViewer = (
 interface AppSidebarProps {
   organization: Organization
   countrySubdivisionsData?: Record<string, string>;
-  minioBaseUrl?: string
+  storageBaseUrl?: string
 }
 
-export function AppSidebarContent({ organization, countrySubdivisionsData, minioBaseUrl, }: AppSidebarProps) {
+export function AppSidebarContent({ organization, countrySubdivisionsData, storageBaseUrl, }: AppSidebarProps) {
   // Translations
   const t = useTranslations('AppSidebar')
 
@@ -106,10 +107,8 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
   // Shared with the map popover's tool row, so a viewer hidden here is not reachable from there.
   const appContent = resolveAppContent(organization)
 
-  const logoKey = organization?.logoKey
-  const logoUrl = minioBaseUrl && logoKey
-    ? `${minioBaseUrl}/org-logos/${logoKey}`
-    : '/images/cdt-logo-stroke.svg'
+  const logoUrl = orgLogoUrl(storageBaseUrl, organization?.logoKey)
+  const logoFallbacks = orgLogoCandidates(storageBaseUrl, organization?.name)
 
 
   const { dispatch: menusDispatch, state: menusState } = useMenusContext()
@@ -283,7 +282,7 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, minio
       <SidebarContent className='overflow-hidden'>
         <SidebarHeader className={`w-full pt-7  flex items-center justify-center ${isCollapsed ? 'items-center' : 'px-2 items-start'}`}>
           <div className='flex flex-row items-center gap-3'>
-            <Logo image={logoUrl} />
+            <Logo image={logoUrl} fallbacks={logoFallbacks} title={sidebarTitle} />
             {sidebarState === 'expanded'
               && <h1 className="text-sm font-bold max-w-36">{sidebarTitle}</h1>}
           </div>

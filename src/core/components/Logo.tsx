@@ -2,13 +2,17 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import { useTranslations } from 'next-intl'
-import { useEffect, useState } from 'react'
+
+import { useFirstLoadableImage } from '../hooks/useFirstLoadableImage'
+import { CDT_LOGO } from '../utils/orgLogo'
 
 interface LogoProps {
   width?: number
   height?: number
   className?: string
   image?: string
+  /** Tried in order when `image` is missing or fails; the CDT logo is always the last resort. */
+  fallbacks?: readonly string[]
   title?: string
 }
 
@@ -17,29 +21,22 @@ export const Logo: React.FC<LogoProps> = ({
   height = 24,
   className = '',
   image,
-  title = 'Canada\'s Digital Twin',
+  fallbacks = [],
+  title,
 }) => {
   const t = useTranslations('Logo')
-  const fallbackLogoImage = '/images/cdt-logo-stroke.svg'
-  const [currentImage, setCurrentImage] = useState(image ?? fallbackLogoImage)
+  const loaded = useFirstLoadableImage([image, ...fallbacks, CDT_LOGO])
 
-  useEffect(() => {
-    setCurrentImage(image ?? fallbackLogoImage)
-  }, [image])
+  if (!loaded) return <span aria-hidden className={`inline-block h-6 ${className}`} style={{ width }} />
 
   return (
     <img
-      src={currentImage}
+      src={loaded}
       width={width}
       height={height}
       alt={t('altText')}
       className={`w-auto h-6 ${className}`}
       title={title}
-      onError={() => {
-        if (currentImage !== fallbackLogoImage) {
-          setCurrentImage(fallbackLogoImage)
-        }
-      }}
     />
   )
 }

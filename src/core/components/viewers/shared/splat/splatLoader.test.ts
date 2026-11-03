@@ -126,7 +126,7 @@ describe('load', () => {
     const engine = createSparkEngine()
     await engine.attach(attachment(fakeScene()))
 
-    await engine.load('https://minio.test/bucket/9f2a-uuid?X-Amz-Signature=abc', { fileType: 'pcsogszip' })
+    await engine.load('https://storage.test/bucket/9f2a-uuid?X-Amz-Signature=abc', { fileType: 'pcsogszip' })
 
     expect(meshInstances[0].options.fileType).toBe('pcsogszip')
   })
@@ -135,7 +135,7 @@ describe('load', () => {
     const engine = createSparkEngine()
     await engine.attach(attachment(fakeScene()))
 
-    await engine.load('https://minio.test/bucket/9f2a-uuid')
+    await engine.load('https://storage.test/bucket/9f2a-uuid')
 
     expect(meshInstances[0].options).not.toHaveProperty('fileType')
   })

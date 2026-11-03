@@ -25,7 +25,7 @@ const BimToolbar = dynamic(
 
 interface Props {
   viewer: ViewerKey
-  minioBaseUrl?: string
+  storageBaseUrl?: string
   martinBaseUrl?: string
   organization?: Organization
   geocodeEarthApiKey?: string
@@ -35,17 +35,17 @@ interface Props {
 // Own component so the tools hook is called unconditionally on the map branch,
 // instead of inside Toolbar's viewer check (which would break hook ordering when
 // the user switches viewers).
-function MapToolbar({ minioBaseUrl, martinBaseUrl, organization, geocodeEarthApiKey, geocoderUrl }: Omit<Props, 'viewer'>) {
-  const tools = useMapToolbarTools({ minioBaseUrl, martinBaseUrl, organization, geocodeEarthApiKey, geocoderUrl })
+function MapToolbar({ storageBaseUrl, martinBaseUrl, organization, geocodeEarthApiKey, geocoderUrl }: Omit<Props, 'viewer'>) {
+  const tools = useMapToolbarTools({ storageBaseUrl, martinBaseUrl, organization, geocodeEarthApiKey, geocoderUrl })
 
   return <ToolbarBody viewer="map" tools={tools} />
 }
 
-export function Toolbar({ viewer, minioBaseUrl, martinBaseUrl, organization, geocodeEarthApiKey, geocoderUrl }: Props) {
+export function Toolbar({ viewer, storageBaseUrl, martinBaseUrl, organization, geocodeEarthApiKey, geocoderUrl }: Props) {
   if (viewer === ViewerNames.map) {
     return (
       <MapToolbar
-        minioBaseUrl={minioBaseUrl}
+        storageBaseUrl={storageBaseUrl}
         martinBaseUrl={martinBaseUrl}
         organization={organization}
         geocodeEarthApiKey={geocodeEarthApiKey}

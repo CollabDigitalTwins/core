@@ -7,6 +7,30 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Added
+- `useFirstLoadableImage` (`hooks/useFirstLoadableImage`): returns the first image URL in a list that loads.
+- `orgLogoUrl`, `orgLogoCandidates` and `CDT_LOGO` (`utils/orgLogo`) for the public `org-logos` bucket.
+- `fallbacks` prop on `Logo`: URLs tried in order when `image` is missing or fails.
+
+### Fixed
+- The sidebar logo tooltip shows the organization title instead of "Canada's Digital Twin"; `Logo` has no default `title`.
+- `Logo` never renders a broken image: it falls back to `<org name>-logo.png|svg` in `org-logos`, then the CDT logo.
+  `AuthPage` probes `<instance>-logo.png|svg` only; `.jpg`/`.jpeg` logos are no longer picked up by name.
+
+### Changed
+- Storage naming is vendor-neutral: the `minioBaseUrl` prop is now `storageBaseUrl` on `Viewer`, `Toolbar`, `SignIn`,
+  `AuthPage`, `AppSidebarContent`, `Sidebar`/`SidebarProvider`, `ViewerSidebar`, `MapSidebar`, `UserSettings`,
+  `SettingsContent`, `OrganizationSettingsPanel` and the map tools, and `AppConfig`'s `runtimeConfig.minioUrl` is
+  `storageUrl`. Any S3-compatible object storage works.
+- `map/datasets/src/minioDatasets` is now `map/datasets/src/orgFileDatasets`, and `fetchOrganizationalMinioDatasets`
+  is `fetchOrganizationalFileDatasets`.
+
+### Migration
+- Pass `storageBaseUrl` where you passed `minioBaseUrl`; there is no alias.
+- Set `runtimeConfig.storageUrl` instead of `runtimeConfig.minioUrl`.
+- Imports of `fetchOrganizationalMinioDatasets` from `.../datasets/src/minioDatasets` become
+  `fetchOrganizationalFileDatasets` from `.../datasets/src/orgFileDatasets`.
+
 ## [0.17.0] - 2026-10-23
 
 ### Added

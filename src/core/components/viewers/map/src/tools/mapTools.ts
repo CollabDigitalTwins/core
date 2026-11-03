@@ -44,7 +44,7 @@ export type MapToolbarToolType =
 
 type MapToolsConfig = {
   martinBaseUrl?: string
-  minioBaseUrl?: string
+  storageBaseUrl?: string
   organization?: Organization
   geocodeEarthApiKey?: string
   geocoderUrl?: string

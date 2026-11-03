@@ -96,7 +96,7 @@ const AssociatedBuildingsTable: React.FC<AssociatedBuildingsTableProps> = ({
   // Fetch all available buildings
   const { buildings: allBuildings, isLoading } = useBuildings()
 
-  // The site's saved boundary polygon (loaded from minio) used to suggest the
+  // The site's saved boundary polygon (loaded from object storage) used to suggest the
   // buildings that fall inside it when attaching.
   const [boundaryRing, setBoundaryRing] = React.useState<Ring | null>(null)
   const [showSuggestDialog, setShowSuggestDialog] = React.useState(false)

@@ -58,7 +58,7 @@ export const uploadFileWithProgress = async (
     })
 
     xhr.open('PUT', presignedUrl)
-    // A blank type would send an empty Content-Type, which MinIO rejects on a presigned PUT.
+    // A blank type would send an empty Content-Type, which S3 rejects on a presigned PUT.
     if (file.type) xhr.setRequestHeader('Content-Type', file.type)
     xhr.send(file)
   })

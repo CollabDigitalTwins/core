@@ -20,7 +20,7 @@ describe('uploadFile', () => {
     vi.mocked(uploadFileWithProgress).mockClear()
     global.fetch = vi.fn(async (input: RequestInfo | URL) => {
       if (String(input).includes('presigned-url-upload')) {
-        return { ok: true, json: async () => ({ presignedUrl: 'https://minio/put' }) } as Response
+        return { ok: true, json: async () => ({ presignedUrl: 'https://storage/put' }) } as Response
       }
       return { ok: true } as Response
     }) as typeof fetch

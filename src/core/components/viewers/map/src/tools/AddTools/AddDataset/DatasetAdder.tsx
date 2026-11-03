@@ -56,7 +56,7 @@ interface Loaded {
   sourceName: string
   featureCollection: GeoJSON.FeatureCollection
   summary: GeoJSONSummary
-  /** Present only for file sources — enables MinIO persistence on add. */
+  /** Present only for file sources — enables object-storage persistence on add. */
   file?: File
 }
 
@@ -66,7 +66,7 @@ interface DatasetAdderProps {
 
 /**
  * Add a dataset from a GeoJSON file or a pasted URL: GeoJSON, an ArcGIS feature layer, or a map service.
- * File uploads also persist to MinIO and re-hydrate on reload.
+ * File uploads also persist to object storage and re-hydrate on reload.
  */
 export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
   const t = useTranslations('Datasets')
@@ -211,7 +211,7 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
         persistedFileId = await persistFile(loaded.file, dominantGeometry(loaded.summary))
       }
       catch (e) {
-        console.warn('DatasetAdder: MinIO persistence failed; dataset will be session-only', e)
+        console.warn('DatasetAdder: object-storage persistence failed; dataset will be session-only', e)
         toast.error(t('toastDatasetNotSaved', {
           name: loaded.sourceName,
           error: e instanceof Error ? e.message : 'unknown error',
@@ -222,7 +222,7 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
       }
     }
 
-    // Must match the id minioDatasets.ts rebuilds: the panel dedups by name and keeps this row.
+    // Must match the id orgFileDatasets.ts rebuilds: the panel dedups by name and keeps this row.
     const dataset: Dataset = {
       id: persistedFileId != null ? `org-minio-${persistedFileId}` : `local-${Date.now()}`,
       organization: owningOrgId,
@@ -248,7 +248,7 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
     datasetDispatch({ type: 'ADD_DATASET', payload: { dataset } })
     datasetDispatch({ type: 'ADD_DATASET_TO_MAP', payload: { dataset } })
 
-    // Swap the optimistic row for the hydrated one, which carries the MinIO source URL.
+    // Swap the optimistic row for the hydrated one, which carries the object-storage source URL.
     if (persistedFileId != null) {
       datasetDispatch({ type: 'REFRESH_ORG_DATASETS' })
       toast.success(t('toastDatasetAdded', { name }))

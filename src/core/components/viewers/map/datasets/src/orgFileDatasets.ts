@@ -50,7 +50,7 @@ function withBbox(url: string, bbox: [number, number, number, number]): string {
 }
 
 /** Rebuilds "Add Dataset" uploads from File rows tagged `organizational-dataset`, loading GeoJSON on first render. */
-export async function fetchOrganizationalMinioDatasets(
+export async function fetchOrganizationalFileDatasets(
   organizationId: number,
   publishedTilesInCatalog: ReadonlySet<string> = new Set(),
 ): Promise<Dataset[]> {
@@ -58,14 +58,14 @@ export async function fetchOrganizationalMinioDatasets(
   try {
     const res = await fetch('/api/files')
     if (!res.ok) {
-      console.warn(`fetchOrganizationalMinioDatasets: /api/files returned ${res.status}`)
+      console.warn(`fetchOrganizationalFileDatasets: /api/files returned ${res.status}`)
       return []
     }
     const body = await res.json()
     rows = Array.isArray(body?.files) ? body.files : []
   }
   catch (err) {
-    console.warn('fetchOrganizationalMinioDatasets: /api/files request failed', err)
+    console.warn('fetchOrganizationalFileDatasets: /api/files request failed', err)
     return []
   }
 

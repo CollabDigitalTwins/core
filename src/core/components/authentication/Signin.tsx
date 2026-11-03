@@ -727,12 +727,12 @@ const handleResetPassword = async () => {
 
 interface SignInProps {
   recaptchaSiteKey?: string
-  minioBaseUrl?: string
+  storageBaseUrl?: string
 }
 
-export function SignIn({ recaptchaSiteKey,minioBaseUrl, }: SignInProps) {
+export function SignIn({ recaptchaSiteKey,storageBaseUrl, }: SignInProps) {
   return (
-    <AuthPage minioBaseUrl={minioBaseUrl}>
+    <AuthPage storageBaseUrl={storageBaseUrl}>
       <SignInContent recaptchaSiteKey={recaptchaSiteKey} />
     </AuthPage>
   )

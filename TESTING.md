@@ -72,7 +72,7 @@ Expect roughly **30–60% of component test files to need touch-ups annually** f
 - `src/core/components/viewers/map/datasets/src/geojsonFile.test.ts` — `parseGeoJSON` input variants (FeatureCollection / Feature / Geometry / invalid), `summarizeFeatures` bbox / property-key / geometry-type computation, Infinity edge case for empty bbox, 3D-coordinate z-stripping.
 - `src/core/components/viewers/map/datasets/src/arcgisFetch.test.ts` — `fetchWithTimeout` abort signal chaining, `fetchArcGISLayerFeatures` pagination (transfer-limit + short-page + maxPages stop conditions).
 - `src/core/components/viewers/map/datasets/src/__tests__/urlSources.test.ts` *(pre-existing)* — `detectSourceType`, `extractWmsLayers`, `nameFromUrl`, `buildWmsTileUrl`.
-- `src/core/components/viewers/map/datasets/src/minioDatasets.test.ts` — `/api/files` filtering by type+tag, MinIO URL construction, name fallback, `geometryType` → layerType mapping, `getFeatures` caching.
+- `src/core/components/viewers/map/datasets/src/orgFileDatasets.test.ts` — `/api/files` filtering by type+tag, object-storage URL construction, name fallback, `geometryType` → layerType mapping, `getFeatures` caching.
 - `src/core/components/viewers/map/datasets/utils.test.ts` — `formatName` slug→title, `formatDate` ISO formatting + invalid fallback, `stripHtml`.
 - `src/core/components/ui/Comments/commentUtils.test.ts` — `buildComment` shape with injected `now`.
 - `src/core/components/ui/downloadUtils.test.ts` — anchor creation + click + cleanup, timestamp prefix, custom extension swap.

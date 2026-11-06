@@ -5,7 +5,7 @@ import type { ActionMap } from '../ActionMap'
 
 /**
  * A site polygon currently shown on the map. The polygon geometry itself is
- * persisted as a GeoJSON file in minio (referenced by `assetId`/`fileId`); this
+ * persisted as a GeoJSON file in object storage (referenced by `assetId`/`fileId`); this
  * is the in-memory representation that drives the SiteLayer rendering.
  */
 export interface ShownSite {
@@ -14,7 +14,7 @@ export interface ShownSite {
   name: string
   /** Outer ring vertices [lng, lat], open (no repeated closing point) */
   ring: [number, number][]
-  /** minio object key of the geometry geojson, for re-upload when edited */
+  /** Object-storage key of the geometry geojson, for re-upload when edited */
   assetId?: string
   /** DB file id of the geometry geojson, for deletion */
   fileId?: number

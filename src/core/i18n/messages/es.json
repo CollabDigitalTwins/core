@@ -2383,5 +2383,36 @@
     "moreStyle": "Más estilo",
     "moreEntries": "+{count, number} más",
     "lessStyle": "Menos estilo"
+  },
+  "UsageReport": {
+    "loading": "Cargando el uso…",
+    "loadFailed": "No se pudo cargar el informe de uso.",
+    "exportCsv": "Exportar CSV",
+    "stats": {
+      "stored": "Almacenado",
+      "files": "Archivos",
+      "latestMonth": "Subido este mes",
+      "unsized": "{count, plural, one {# archivo no tiene} other {# archivos no tienen}} tamaño registrado"
+    },
+    "chart": {
+      "title": "Subidas por mes",
+      "description": "Tamaño de los archivos subidos cada mes que siguen almacenados.",
+      "uploaded": "Subido"
+    },
+    "byType": {
+      "title": "Por tipo de archivo",
+      "files": "{count, plural, one {# archivo} other {# archivos}}"
+    },
+    "table": {
+      "title": "Por usuario",
+      "user": "Usuario",
+      "organization": "Organización",
+      "stored": "Almacenado",
+      "files": "Archivos",
+      "lastUpload": "Última subida",
+      "unattributed": "Sin atribuir (subido antes del seguimiento)",
+      "deletedUser": "Usuario desconocido",
+      "empty": "Ninguna subida coincide."
+    }
   }
 }

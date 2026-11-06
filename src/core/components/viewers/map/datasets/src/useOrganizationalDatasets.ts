@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react'
 import * as React from 'react'
 
 import { fetchLocalDatasets } from './localDatasets'
-import { fetchOrganizationalMinioDatasets } from './minioDatasets'
+import { fetchOrganizationalFileDatasets } from './orgFileDatasets'
 import { datasetVisibleForOrg, getOrgVisibility, normalizeOrgId, type OrgVisibility } from './orgVisibility'
 import { buildPublishedCatalogMap, type PublishedCatalogEntry } from './publishedTiles'
 
@@ -13,7 +13,7 @@ import type { Dataset } from '../../../../../types/datasetTypes'
 import type { Organization } from '../../../../../types/dbTypes'
 
 /**
- * Loads the Organizational dataset list: Martin vector tiles plus the MinIO-
+ * Loads the Organizational dataset list: Martin vector tiles plus the object-storage-
  * backed GeoJSON uploads from "Add Dataset", for the signed-in organization.
  */
 export type UseOrganizationalDatasetsArgs = {
@@ -111,20 +111,20 @@ export function useOrganizationalDatasets({
         console.warn('No Martin server URL supplied (set MARTIN_SERVER_URL) — skipping Martin pre-load')
       }
 
-      // Martin must resolve first so MinIO suppression can check live catalog
+      // Martin must resolve first so object-storage suppression can check live catalog
       // membership — prevents "file disappeared" during the publish→restart gap.
       const martinDatasets = await martinPromise
       const publishedTilesInCatalog = new Set<string>(
         martinDatasets.map(d => typeof d.id === 'string' ? d.id : '').filter(Boolean),
       )
 
-      const minioDatasets = await fetchOrganizationalMinioDatasets(owningOrgId, publishedTilesInCatalog)
+      const fileDatasets = await fetchOrganizationalFileDatasets(owningOrgId, publishedTilesInCatalog)
         .catch((err) => {
-          console.error('Failed to load MinIO organizational datasets:', err)
+          console.error('Failed to load object-storage organizational datasets:', err)
           return [] as Dataset[]
         })
 
-      const combined = [...martinDatasets, ...minioDatasets]
+      const combined = [...martinDatasets, ...fileDatasets]
       const visibleOrgDatasets = combined.filter(ds => datasetVisibleForOrg(ds, orgVisibility))
 
       if (visibleOrgDatasets.length === 0) {

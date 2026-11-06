@@ -50,7 +50,7 @@ export const pointToSegmentDistance = (
   return Math.hypot(px - (ax + t * dx), py - (ay + t * dy))
 }
 
-/** Build the GeoJSON FeatureCollection stored in minio for a site polygon. */
+/** Build the GeoJSON FeatureCollection stored in object storage for a site polygon. */
 export const ringToFeatureCollection = (ring: Ring, name: string): GeoJSON.FeatureCollection => ({
   type: 'FeatureCollection',
   features: [
@@ -117,7 +117,7 @@ export const ringFromGeoJson = (geo: any): Ring | null => {
 }
 
 /**
- * Load a site's saved boundary ring from minio (via its attached geometry
+ * Load a site's saved boundary ring from object storage (via its attached geometry
  * file). Returns null if the site has no saved boundary or it can't be read.
  */
 export const fetchSiteBoundaryRing = async (siteId: number): Promise<Ring | null> => {
@@ -138,7 +138,7 @@ export const fetchSiteBoundaryRing = async (siteId: number): Promise<Ring | null
 }
 
 /**
- * (Over)write a site's GeoJSON object in minio under the given asset key.
+ * (Over)write a site's GeoJSON object in object storage under the given asset key.
  * Mirrors the presigned-upload flow used by FileAdder/DatasetAdder.
  */
 export const uploadGeoJsonToAsset = async (

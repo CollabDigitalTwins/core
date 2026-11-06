@@ -22,7 +22,7 @@ const { updateFileByIdMock } = vi.hoisted(() => ({ updateFileByIdMock: vi.fn(asy
 vi.mock('../../../../../hooks/files/files', () => ({ useUpdateFile: () => updateFileByIdMock }))
 
 vi.mock('../../../shared/pointcloud/pointCloudConversion', () => ({
-  createPointCloud: vi.fn(async () => ({ pointCloud: { id: 5 }, upload: { uploadUrl: 'https://minio/put' } })),
+  createPointCloud: vi.fn(async () => ({ pointCloud: { id: 5 }, upload: { uploadUrl: 'https://storage/put' } })),
   startConversion: vi.fn(async () => ({ jobId: 'job-1' })),
   watchConversion: vi.fn(() => () => undefined),
 }))

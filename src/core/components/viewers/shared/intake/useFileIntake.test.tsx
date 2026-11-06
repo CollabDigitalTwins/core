@@ -30,7 +30,7 @@ afterEach(() => {
 
 const okUpload = () => {
   global.fetch = vi.fn()
-    .mockResolvedValueOnce({ ok: true, json: async () => ({ presignedUrl: 'http://minio/abc' }) }) as any
+    .mockResolvedValueOnce({ ok: true, json: async () => ({ presignedUrl: 'http://storage/abc' }) }) as any
 }
 
 const bodyOf = (uploadFile: ReturnType<typeof vi.fn>) =>

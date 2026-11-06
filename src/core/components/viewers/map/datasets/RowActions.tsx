@@ -92,8 +92,8 @@ export default function RowActions({
   const [publishing, setPublishing] = React.useState(false)
   const [published, setPublished] = React.useState(false)
 
-  const isOrgMinio = typeof dataset.id === 'string' && dataset.id.startsWith('org-minio-')
-  const fileId = isOrgMinio
+  const isOrgFile = typeof dataset.id === 'string' && dataset.id.startsWith('org-minio-')
+  const fileId = isOrgFile
     ? Number(String(dataset.id).slice('org-minio-'.length))
     : null
 
@@ -134,7 +134,7 @@ export default function RowActions({
   }
 
   // Never a catalog row that merely has a published copy: that is tiledFileId.
-  const orgFileId = isOrgMinio
+  const orgFileId = isOrgFile
     ? fileId
     : (tiledMatch ? Number(tiledMatch[2]) : null)
   const canDelete = orgFileId != null && !Number.isNaN(orgFileId) && ability.can('delete', 'File')
@@ -190,7 +190,7 @@ export default function RowActions({
 
       // Swapped optimistically: the org refetch below re-samples a tile per dataset and takes seconds.
       const tileBaseUrl = (martinBaseUrl ?? '').replace(/\/+$/, '')
-      const minioId = `org-minio-${fileId}`
+      const orgFileDatasetId = `org-minio-${fileId}`
       const [optimistic] = buildPublishedTileDatasets(
         [{
           name: dataset.name,
@@ -201,13 +201,13 @@ export default function RowActions({
       )
       if (optimistic) {
         const current = orgDatasets ?? []
-        const swapped = current.some(d => d.id === minioId)
-          ? current.map(d => (d.id === minioId ? optimistic : d))
+        const swapped = current.some(d => d.id === orgFileDatasetId)
+          ? current.map(d => (d.id === orgFileDatasetId ? optimistic : d))
           : [...current, optimistic]
         datasetsDispatch({ type: 'SET_DATASETS', payload: { datasets: swapped } })
         // Keep the map layer in sync if this dataset was already applied.
-        if (addedDatasets.some(d => d.id === minioId)) {
-          datasetsDispatch({ type: 'REMOVE_DATASET_FROM_MAP', payload: { datasetId: minioId } })
+        if (addedDatasets.some(d => d.id === orgFileDatasetId)) {
+          datasetsDispatch({ type: 'REMOVE_DATASET_FROM_MAP', payload: { datasetId: orgFileDatasetId } })
           datasetsDispatch({ type: 'ADD_DATASET_TO_MAP', payload: { dataset: optimistic } })
         }
       }
@@ -226,7 +226,7 @@ export default function RowActions({
 
   // Only portal GeoJSON publishes here; uploads publish from their own row and MVT is already tiled.
   const isCatalogGeoJson =
-    !isOrgMinio
+    !isOrgFile
     && tiledFileId == null
     && dataset.datasetType === 'GeoJSON'
     && !!dataset.portal
@@ -295,7 +295,7 @@ export default function RowActions({
         />
       </Button>
 
-      {isOrgMinio && (
+      {isOrgFile && (
         <Button
           variant="ghost"
           size="icon"

@@ -16,10 +16,10 @@ export interface PersistedSite {
 /**
  * Persist a freshly drawn site:
  *   1. create the DB Site (via the injected `createSite` hook trigger),
- *   2. upload the polygon GeoJSON to minio (presigned PUT),
- *   3. create a File row attached to the site that references the minio object.
+ *   2. upload the polygon GeoJSON to object storage (presigned PUT),
+ *   3. create a File row attached to the site that references the stored object.
  *
- * The polygon geometry lives in minio (there is no geometry column on Site);
+ * The polygon geometry lives in object storage (there is no geometry column on Site);
  * the File row links it to the site via `attachedFilesSiteId` + the geometry tag.
  */
 export const persistDrawnSite = async (params: {
@@ -63,7 +63,7 @@ export const persistDrawnSite = async (params: {
       isVisible: false,
     }),
   })
-  // The DB link is required: without it the boundary is orphaned in minio and
+  // The DB link is required: without it the boundary is orphaned in object storage and
   // can never be re-shown. Treat failure as fatal so the caller can retry.
   if (!fileRes.ok) throw new Error('Failed to attach the geometry file to the site')
   const data = await fileRes.json().catch(() => null)

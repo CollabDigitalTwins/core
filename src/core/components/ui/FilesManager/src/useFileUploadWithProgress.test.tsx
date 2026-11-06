@@ -51,7 +51,7 @@ function makeFile(name = 'a.csv') {
 describe('useFileUploadWithProgress', () => {
   it('happy path: presigned URL → upload → metadata POST → onUploadSuccess', async () => {
     global.fetch = vi.fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ presignedUrl: 'http://minio/abc' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ presignedUrl: 'http://storage/abc' }) })
       .mockResolvedValueOnce({ ok: true, statusText: 'OK', json: async () => ({ newFile: { id: 7 } }) }) as any
 
     const onUploadSuccess = vi.fn()
@@ -62,7 +62,7 @@ describe('useFileUploadWithProgress', () => {
     })
 
     expect(global.fetch).toHaveBeenNthCalledWith(1, '/api/presigned-url-upload?asset=uuid-stub')
-    expect(uploadFileWithProgressMock).toHaveBeenCalledWith('http://minio/abc', expect.any(File), expect.any(Function))
+    expect(uploadFileWithProgressMock).toHaveBeenCalledWith('http://storage/abc', expect.any(File), expect.any(Function))
 
     const metadataCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[1]
     expect(metadataCall[0]).toBe('/api/files/create')
@@ -99,7 +99,7 @@ describe('useFileUploadWithProgress', () => {
 
   it('calls onUploadError when the metadata POST fails', async () => {
     global.fetch = vi.fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ presignedUrl: 'http://minio' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ presignedUrl: 'http://storage' }) })
       .mockResolvedValueOnce({ ok: false, statusText: 'Internal Error', json: async () => ({}) }) as any
 
     const onUploadError = vi.fn()
@@ -115,7 +115,7 @@ describe('useFileUploadWithProgress', () => {
 
   it('suffixes a name that is already taken in the organization', async () => {
     global.fetch = vi.fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ presignedUrl: 'http://minio/abc' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ presignedUrl: 'http://storage/abc' }) })
       .mockResolvedValueOnce({ ok: true, statusText: 'OK', json: async () => ({ newFile: { id: 8 } }) }) as any
 
     const { result } = renderHook(() => useFileUploadWithProgress({ existingNames: ['a.csv'] }))

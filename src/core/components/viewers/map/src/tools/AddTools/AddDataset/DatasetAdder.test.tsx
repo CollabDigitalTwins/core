@@ -102,7 +102,7 @@ beforeEach(() => {
 
   global.fetch = vi.fn().mockImplementation((url: string) => {
     if (String(url).startsWith('/api/presigned-url-upload')) {
-      return Promise.resolve({ ok: true, json: async () => ({ presignedUrl: 'https://minio.example.com/put' }) })
+      return Promise.resolve({ ok: true, json: async () => ({ presignedUrl: 'https://storage.example.com/put' }) })
     }
     if (url === '/api/files/create') {
       return Promise.resolve({ ok: true, json: async () => ({ newFile: { id: 42 } }) })
@@ -137,7 +137,7 @@ describe('DatasetAdder — persisted uploads', () => {
   })
 
   it('falls back to a session id when the upload was not persisted', async () => {
-    uploadMock.mockRejectedValue(new Error('minio down'))
+    uploadMock.mockRejectedValue(new Error('storage down'))
     const { dispatch } = renderAdder()
 
     await addGeoJsonFile()
@@ -164,7 +164,7 @@ describe('DatasetAdder — persisted uploads', () => {
   })
 
   it('leaves the dataset session-only when persistence fails', async () => {
-    uploadMock.mockRejectedValue(new Error('minio down'))
+    uploadMock.mockRejectedValue(new Error('storage down'))
     const { dispatch } = renderAdder()
 
     await addGeoJsonFile()
@@ -175,10 +175,10 @@ describe('DatasetAdder — persisted uploads', () => {
   })
 
   it('reports a failed File row create rather than silently losing the dataset', async () => {
-    // The bytes reach MinIO but nothing records them, so there is nothing to refetch.
+    // The bytes reach object storage but nothing records them, so there is nothing to refetch.
     global.fetch = vi.fn().mockImplementation((url: string) => {
       if (String(url).startsWith('/api/presigned-url-upload')) {
-        return Promise.resolve({ ok: true, json: async () => ({ presignedUrl: 'https://minio.example.com/put' }) })
+        return Promise.resolve({ ok: true, json: async () => ({ presignedUrl: 'https://storage.example.com/put' }) })
       }
       if (url === '/api/files/create') return Promise.resolve({ ok: false, status: 500 })
       return Promise.reject(new Error(`unexpected url ${url}`))

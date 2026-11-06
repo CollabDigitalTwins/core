@@ -17,13 +17,13 @@ const BimSidebar = dynamic(
   { ssr: false },
 )
 
-export function ViewerSidebar({ minioBaseUrl, martinBaseUrl, organization }: { minioBaseUrl?: string; martinBaseUrl?: string; organization?: Organization }) {
+export function ViewerSidebar({ storageBaseUrl, martinBaseUrl, organization }: { storageBaseUrl?: string; martinBaseUrl?: string; organization?: Organization }) {
   const { state: menusState } = React.useContext(MenusContext)
   const { currentViewer } = menusState.menus
 
   return (
     <>
-      {currentViewer === 'map' && <MapSidebar minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} />}
+      {currentViewer === 'map' && <MapSidebar storageBaseUrl={storageBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} />}
       {currentViewer === 'bim' && <BimSidebar organization={organization} />}
     </>
   )

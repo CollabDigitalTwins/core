@@ -59,7 +59,7 @@ The project is stewarded by [Collab Digital Twins](https://collabdt.org), a Cana
 
 CDT can be run in two ways, depending on how much infrastructure you want to manage. See the [Deployment overview](https://docs.collabdt.org/docs/deployment/overview) for full details.
 
-- **[Self-Hosting](https://docs.collabdt.org/docs/deployment/self-hosting)** — run the full stack on your own infrastructure with Docker or Podman. You retain full control over data and configuration. Best for organizations with existing IT capacity that require data sovereignty or custom configuration. The [Services](https://docs.collabdt.org/docs/deployment/services) reference covers the components involved: PostgreSQL, MinIO, Martin/PostGIS, Node/Next.js, and the Open Data Service.
+- **[Self-Hosting](https://docs.collabdt.org/docs/deployment/self-hosting)** — run the full stack on your own infrastructure with Docker or Podman. You retain full control over data and configuration. Best for organizations with existing IT capacity that require data sovereignty or custom configuration. The [Services](https://docs.collabdt.org/docs/deployment/services) reference covers the components involved: PostgreSQL, S3-compatible object storage, Martin/PostGIS, Node/Next.js, and the Open Data Service.
 - **[CDT Hosted](https://docs.collabdt.org/docs/deployment/cdt-hosted)** — a fully managed SaaS deployment hosted in Canada, or an assisted deployment where the CDT team installs CDT on your infrastructure. Best for organizations with limited IT resources.
 
 If you self-host CDT for others over a network, note the AGPL §13 source-availability obligation described under [Licensing](#licensing).

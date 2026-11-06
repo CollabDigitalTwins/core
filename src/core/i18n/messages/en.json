@@ -2386,5 +2386,36 @@
     "moreStyle": "More style",
     "moreEntries": "+{count, number} more",
     "lessStyle": "Less style"
+  },
+  "UsageReport": {
+    "loading": "Loading usage…",
+    "loadFailed": "Could not load the usage report.",
+    "exportCsv": "Export CSV",
+    "stats": {
+      "stored": "Stored",
+      "files": "Files",
+      "latestMonth": "Uploaded this month",
+      "unsized": "{count, plural, one {# file has} other {# files have}} no recorded size"
+    },
+    "chart": {
+      "title": "Uploads per month",
+      "description": "Size of the files uploaded each month that are still stored.",
+      "uploaded": "Uploaded"
+    },
+    "byType": {
+      "title": "By file type",
+      "files": "{count, plural, one {# file} other {# files}}"
+    },
+    "table": {
+      "title": "Per user",
+      "user": "User",
+      "organization": "Organization",
+      "stored": "Stored",
+      "files": "Files",
+      "lastUpload": "Last upload",
+      "unattributed": "Unattributed (uploaded before tracking)",
+      "deletedUser": "Unknown user",
+      "empty": "No uploads match."
+    }
   }
 }

@@ -3,6 +3,7 @@
 
 import type { Building, DbFile, Site, OpenDataPortal, DatasetGroup, User, Role, Organization, Comment, Sensor, Infrastructure, SensorType } from '../../../core/types/dbTypes'
 import type { PluginInstallation, PluginRecord, PluginUserSetting } from '../../../core/types/plugins'
+import type { UserUsageReport, VolumeReport } from '../../../core/types/usage'
 
 /*
  * ApiAdapter is the seam between the core package and whatever backend the app uses.
@@ -87,6 +88,10 @@ export interface ApiAdapter {
     updateOrganization(id: string, patch: Partial<Organization>): Promise<Organization>;
     getOrganizationByName(name: string): Promise<Organization | null>;
     getOrganizationRoles(orgId: string): Promise<Role[]>;
+
+    //Usage
+    getMyUsage(): Promise<VolumeReport>;
+    getOrganizationUsage(): Promise<UserUsageReport>;
 
     //Comments
     getComments(): Promise<Comment[]>

@@ -14,7 +14,7 @@ import { ringFromGeoJson, ringBounds, type Ring } from './siteGeometry'
  * Shared "show site(s) on the map" action used by the sites table row menu and
  * the "View All on Map" header button. It switches to the map viewer FIRST (so
  * the action always navigates, even if a boundary fails to load), then loads
- * each site's polygon GeoJSON from minio, hands it to the SiteLayer via the
+ * each site's polygon GeoJSON from object storage, hands it to the SiteLayer via the
  * MapSites store, and fits the camera to the loaded boundaries. Sites without a
  * saved boundary fall back to flying to their point.
  */

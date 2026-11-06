@@ -65,7 +65,7 @@ describe('buildPublishedCatalogMap', () => {
   it('skips rows that are not published, not open-data, or malformed', () => {
     const rows = [
       { id: 1, assetId: 'odp:3:x', description: JSON.stringify({ source: 'open-data-portal', portalId: 3, datasetId: 'x' }) }, // no tiledTable
-      { id: 2, assetId: '2/minio-key', description: JSON.stringify({ bucket: 'b', tiledTable: 'org_2_file_2' }) }, // not open-data
+      { id: 2, assetId: '2/storage-key', description: JSON.stringify({ bucket: 'b', tiledTable: 'org_2_file_2' }) }, // not open-data
       { id: 3, assetId: 'odp:3:y', description: '{not json' }, // malformed
       { assetId: 'odp:3:z', description: JSON.stringify({ source: 'open-data-portal', portalId: 3, datasetId: 'z', tiledTable: 'org_2_file_3' }) }, // no id
     ]

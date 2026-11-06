@@ -11,10 +11,10 @@ import type { SettingsTabKey } from './types'
 
 type SettingsContentProps = {
   activeTab: SettingsTabKey
-  minioBaseUrl?: string
+  storageBaseUrl?: string
 }
 
-export default function SettingsContent({ activeTab, minioBaseUrl }: SettingsContentProps) {
+export default function SettingsContent({ activeTab, storageBaseUrl }: SettingsContentProps) {
   return (
     <div className="flex-1 min-h-0 flex flex-col gap-6">
       {activeTab === 'account' ? (
@@ -22,7 +22,7 @@ export default function SettingsContent({ activeTab, minioBaseUrl }: SettingsCon
       ) : activeTab === 'users' ? (
         <UsersSettingsPanel />
       ) : activeTab === 'organization' ? (
-        <OrganizationSettingsPanel minioBaseUrl={minioBaseUrl} />
+        <OrganizationSettingsPanel storageBaseUrl={storageBaseUrl} />
       ) : null}
     </div>
   )

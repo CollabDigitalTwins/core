@@ -12,7 +12,7 @@ import { AppConfigReducer } from './reducer'
 import type { AppConfigActions, AppConfigState } from './reducer';
 
 export type RuntimeConfig = {
-  minioUrl?: string
+  storageUrl?: string
   martinUrl?: string
   recaptchaSiteKey?: string
   pointcloudApiUrl?: string

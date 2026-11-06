@@ -80,7 +80,7 @@ const shownWhen = (visible: boolean): React.CSSProperties => ({ display: visible
 
 interface ViewerProps {
   organization: Organization
-  minioBaseUrl?: string
+  storageBaseUrl?: string
   martinBaseUrl?: string
   pointcloudApiUrl?: string
   maptilerKey?: string
@@ -88,7 +88,7 @@ interface ViewerProps {
   geocoderUrl?: string
 }
 
-export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudApiUrl, maptilerKey, geocodeEarthApiKey, geocoderUrl }: ViewerProps) {
+export function Viewer({ organization, storageBaseUrl, martinBaseUrl, pointcloudApiUrl, maptilerKey, geocodeEarthApiKey, geocoderUrl }: ViewerProps) {
 
   const searchParams = useSearchParams()
   const viewer = (searchParams.get('viewer') as ViewerKey) || ViewerNames.map
@@ -211,7 +211,7 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
           </div>
         )}
         {builtInViewer === ViewerNames.settings && (
-          <UserSettings minioBaseUrl={minioBaseUrl} />
+          <UserSettings storageBaseUrl={storageBaseUrl} />
         )}
         {keptPluginPages.map(page => (
           <div key={page} className="h-full w-full overflow-y-auto" style={{ display: page === validViewer ? 'block' : 'none' }}>
@@ -225,7 +225,7 @@ export function Viewer({ organization, minioBaseUrl, martinBaseUrl, pointcloudAp
   return (
     <>
       {selectedViewer}
-      <Toolbar viewer={validViewer} minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} geocodeEarthApiKey={geocodeEarthApiKey} geocoderUrl={geocoderUrl} />
+      <Toolbar viewer={validViewer} storageBaseUrl={storageBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} geocodeEarthApiKey={geocodeEarthApiKey} geocoderUrl={geocoderUrl} />
       <UploadProgressToasts />
     </>
   )

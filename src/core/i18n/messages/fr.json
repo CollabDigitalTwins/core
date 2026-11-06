@@ -2383,5 +2383,36 @@
     "moreStyle": "Plus de style",
     "moreEntries": "+{count, number} de plus",
     "lessStyle": "Moins de style"
+  },
+  "UsageReport": {
+    "loading": "Chargement de l’utilisation…",
+    "loadFailed": "Impossible de charger le rapport d’utilisation.",
+    "exportCsv": "Exporter en CSV",
+    "stats": {
+      "stored": "Stocké",
+      "files": "Fichiers",
+      "latestMonth": "Téléversé ce mois-ci",
+      "unsized": "{count, plural, one {# fichier n’a} other {# fichiers n’ont}} pas de taille enregistrée"
+    },
+    "chart": {
+      "title": "Téléversements par mois",
+      "description": "Taille des fichiers téléversés chaque mois et toujours stockés.",
+      "uploaded": "Téléversé"
+    },
+    "byType": {
+      "title": "Par type de fichier",
+      "files": "{count, plural, one {# fichier} other {# fichiers}}"
+    },
+    "table": {
+      "title": "Par utilisateur",
+      "user": "Utilisateur",
+      "organization": "Organisation",
+      "stored": "Stocké",
+      "files": "Fichiers",
+      "lastUpload": "Dernier téléversement",
+      "unattributed": "Non attribué (téléversé avant le suivi)",
+      "deletedUser": "Utilisateur inconnu",
+      "empty": "Aucun téléversement ne correspond."
+    }
   }
 }

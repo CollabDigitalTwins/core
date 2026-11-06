@@ -19,7 +19,7 @@ import { SettingsTab } from './src/SettingsTab'
 import type { ViewerSidebarTab } from '../../../../../components/ui/ViewerSidebar/sidebarTabs'
 import type { Organization } from '../../../../../types/dbTypes'
 
-export function MapSidebar({ minioBaseUrl, martinBaseUrl, organization }: { minioBaseUrl?: string; martinBaseUrl?: string; organization?: Organization }) {
+export function MapSidebar({ storageBaseUrl, martinBaseUrl, organization }: { storageBaseUrl?: string; martinBaseUrl?: string; organization?: Organization }) {
   // Permissions
   const { ability } = usePermissions()
 

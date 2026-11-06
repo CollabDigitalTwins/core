@@ -7,6 +7,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-11-06
+
 ### Added
 - `useFirstLoadableImage` (`hooks/useFirstLoadableImage`): returns the first image URL in a list that loads.
 - `orgLogoUrl`, `orgLogoCandidates` and `CDT_LOGO` (`utils/orgLogo`) for the public `org-logos` bucket.

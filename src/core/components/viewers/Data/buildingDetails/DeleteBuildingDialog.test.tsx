@@ -68,7 +68,7 @@ describe('DeleteBuildingDialog', () => {
     associationsState.value = { files: 0, sensors: 0, comments: 0, isDefaultLocation: true }
     renderDialog()
     expect(screen.getByRole('switch')).toBeTruthy()
-    expect(screen.getByText(/defaultOutcome.*"isDefaultLocation":true/)).toBeTruthy()
+    expect(screen.getByText(/defaultOutcome.*"isDefaultLocation":"true"/)).toBeTruthy()
   })
 
   it('disables confirm and shows a message when the counts failed to load', () => {

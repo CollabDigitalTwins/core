@@ -36,7 +36,7 @@ export default function DeleteBuildingDialog({ building, open, onOpenChange, onR
 
   const hasAssociations = !!associations
     && (associations.files + associations.sensors + associations.comments > 0 || associations.isDefaultLocation)
-  const isDefaultLocation = !!associations?.isDefaultLocation
+  const isDefaultLocation = String(!!associations?.isDefaultLocation)
   const targets = React.useMemo(
     () => (buildings ?? [])
       .filter(candidate => candidate.id !== building.id)
@@ -77,7 +77,7 @@ export default function DeleteBuildingDialog({ building, open, onOpenChange, onR
         {error && <p className="text-sm text-destructive">{t('loadFailed')}</p>}
         {hasAssociations && (
           <div className="flex flex-col gap-3 text-sm">
-            <p>{t('associated', { ...associations })}</p>
+            <p>{t('associated', { files: associations.files, sensors: associations.sensors, comments: associations.comments })}</p>
             <label className="flex items-center gap-2">
               <Switch checked={transfer} onCheckedChange={setTransfer} />
               {t('transferToggle')}

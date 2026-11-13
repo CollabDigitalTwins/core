@@ -7,7 +7,7 @@ import * as React from "react";
 
 import { MapContext } from "../../../../../../../../store/Map/context";
 import { MapLayerClickPriority } from "../../../../../utils/MapEventManager/MapClickManager";
-import { ASSIGNED_COLOUR } from "../buildingColourExpression";
+import { drawnFootprintColour } from "../buildingColourExpression";
 import { buildingPopupEntry } from "../buildingPopupEntry";
 import { drawnFootprints, footprintsInBounds } from "../drawnFootprints";
 
@@ -15,7 +15,7 @@ import { useViewBounds } from "./useViewBounds";
 
 import type { Building } from "../../../../../../../../types/dbTypes";
 import type { PopupEntry } from "../../../../../../../../types/map";
-import type { GeoJSONSource, MapGeoJSONFeature, MapMouseEvent } from "maplibre-gl";
+import type { DataDrivenPropertyValueSpecification, GeoJSONSource, MapGeoJSONFeature, MapMouseEvent } from "maplibre-gl";
 
 const DRAWN_BUILDINGS_ID = "cdt-drawn-buildings";
 const MIN_ZOOM = 14;
@@ -28,17 +28,21 @@ interface DrawnBuildingsLayerProps {
 
 export function DrawnBuildingsLayer({ buildings, fallbackName, onClosePopup }: DrawnBuildingsLayerProps) {
   const { state: mapState } = React.useContext(MapContext);
-  const { map, mapClickManager, show3dBuildings, editingFootprint } = mapState.map;
+  const { map, mapClickManager, show3dBuildings, editingFootprint, focusedBuildings } = mapState.map;
   const editingId = editingFootprint?.buildingId;
   const viewBounds = useViewBounds(map, MIN_ZOOM);
+  const footprintColour = React.useMemo(
+    () => drawnFootprintColour(focusedBuildings.map(building => building.id)) as DataDrivenPropertyValueSpecification<string>,
+    [focusedBuildings],
+  );
 
   const allFootprints = React.useMemo(
     () => drawnFootprints(buildings.filter(building => building.id !== editingId)),
     [buildings, editingId],
   );
   const footprints = React.useMemo(() => footprintsInBounds(allFootprints, viewBounds), [allFootprints, viewBounds]);
-  const latest = React.useRef({ footprints, show3dBuildings });
-  latest.current = { footprints, show3dBuildings };
+  const latest = React.useRef({ footprints, show3dBuildings, footprintColour });
+  latest.current = { footprints, show3dBuildings, footprintColour };
 
   React.useEffect(() => {
     if (!map) return;
@@ -57,7 +61,7 @@ export function DrawnBuildingsLayer({ buildings, fallbackName, onClosePopup }: D
           minzoom: MIN_ZOOM,
           layout: { visibility: latest.current.show3dBuildings ? "visible" : "none" },
           paint: {
-            "fill-extrusion-color": ASSIGNED_COLOUR,
+            "fill-extrusion-color": latest.current.footprintColour,
             "fill-extrusion-height": ["get", "height"],
             "fill-extrusion-opacity": 0.85,
           },
@@ -85,6 +89,11 @@ export function DrawnBuildingsLayer({ buildings, fallbackName, onClosePopup }: D
   React.useEffect(() => {
     void (map?.getSource(DRAWN_BUILDINGS_ID) as GeoJSONSource | undefined)?.setData(footprints);
   }, [map, footprints]);
+
+  React.useEffect(() => {
+    if (!map?.getLayer(DRAWN_BUILDINGS_ID)) return;
+    map.setPaintProperty(DRAWN_BUILDINGS_ID, "fill-extrusion-color", footprintColour);
+  }, [map, footprintColour]);
 
   React.useEffect(() => {
     if (!map?.getLayer(DRAWN_BUILDINGS_ID)) return;

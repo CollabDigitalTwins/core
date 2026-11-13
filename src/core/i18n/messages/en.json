@@ -446,7 +446,11 @@
     "appliedLayers": "{count, plural, one {Layer} other {Layers}}",
     "style": "Style",
     "reorder": "Drag to reorder",
-    "closeStyle": "Close style"
+    "closeStyle": "Close style",
+    "hide": "Hide layer",
+    "show": "Show layer",
+    "zoomToExtent": "Zoom to extent",
+    "deactivate": "Remove from map"
   },
   "MapLegend": {
     "title": "Legend",
@@ -580,7 +584,8 @@
     "pointCloudsTitle": "Point Clouds",
     "addPointCloudTitle": "Add Point Cloud",
     "uploadingFile": "Uploading...",
-    "bimTitle": "BIM"
+    "bimTitle": "BIM",
+    "geolocateTitle": "Geolocate"
   },
   "FileMoreOptions": {
     "open": "Open menu",
@@ -643,7 +648,6 @@
   "FilterButtons": {
     "addBuilding": "Building",
     "fileType": "File Type",
-    "srFilters": "Open Filters",
     "no": "No",
     "noMatch": "s match your search",
     "noAvail": "s available.",
@@ -717,7 +721,15 @@
     "viewButton": "View All on Map",
     "compare": "Compare",
     "addBuilding": "Add Building",
-    "addUser": "Add User"
+    "addUser": "Add User",
+    "resultCount": "{count, plural, one {# result} other {# results}}",
+    "clearAll": "Clear all",
+    "filters": "Filters",
+    "removeFilter": "Remove filter {label}",
+    "site": "Site",
+    "building": "Building",
+    "infrastructure": "Infrastructure",
+    "fileType": "File type"
   },
   "InfrastructureDetails": {
     "toastSuccessCreate": "Infrastructure created successfully",
@@ -779,7 +791,9 @@
     "subdivisionTitle": "Subdivision",
     "municipalTitle": "Municipal",
     "liveDataTitle": "Live Data",
-    "noDatasets": "No datasets available."
+    "noDatasets": "No datasets available.",
+    "addToMap": "Add to map",
+    "removeFromMap": "On the map — click to remove"
   },
   "LightingManagement": {
     "lightingTitle": "Lighting",
@@ -860,7 +874,8 @@
     "deleteSite": "Delete Site",
     "deleteUser": "Delete User",
     "userDeleted": "User Deleted Successfully",
-    "userDeleteFailed": "Failed to delete user"
+    "userDeleteFailed": "Failed to delete user",
+    "deleteBuilding": "Delete Building"
   },
   "NavUser": {
     "dropdownLabel": "My Account",
@@ -2216,10 +2231,6 @@
     "turnModelConfirm": "Rotate",
     "scaledFile": "Scaled \"{name}\"",
     "positionAcceptedToast": "File position has been saved.",
-    "linkBuildingTitle": "Link to this building?",
-    "linkBuildingBody": "\"{file}\" was placed on \"{building}\". Linking it files the model under that building. You can place it without linking if it belongs somewhere else.",
-    "linkBuildingConfirm": "Link",
-    "linkBuildingCancel": "Don't link",
     "linkedToBuilding": "Linked \"{file}\" to \"{building}\"",
     "linkFailed": "Placed \"{file}\", but it could not be linked to \"{building}\""
   },
@@ -2417,5 +2428,42 @@
       "deletedUser": "Unknown user",
       "empty": "No uploads match."
     }
+  },
+  "Geolocation": {
+    "title": "Geolocate \"{name}\"",
+    "description": "Enter where the file stands in its source coordinate system. The source is kept, so you can return to it after moving the file on the map.",
+    "crs": "Coordinate system",
+    "customCrs": "Other (proj4 definition)",
+    "proj4Def": "proj4 definition",
+    "easting": "Easting (m)",
+    "northing": "Northing (m)",
+    "longitude": "Longitude",
+    "latitude": "Latitude",
+    "sourceHeight": "Source height (m)",
+    "sourceHeightHint": "The source height is kept for reference only. On the map, elevation is measured from the terrain; adjust it with Move.",
+    "rotation": "Rotation from north (°)",
+    "preview": "Latitude {lat}, longitude {lng}",
+    "invalid": "Enter coordinates in a coordinate system that can be converted",
+    "resetAll": "Reset all",
+    "resetField": "Reset to the stored value",
+    "save": "Save location",
+    "revert": "Revert to source position",
+    "saved": "Geolocated \"{name}\"",
+    "reverted": "\"{name}\" is back at its source position",
+    "saveFailed": "Could not save the location of \"{name}\""
+  },
+  "DeleteBuildingDialog": {
+    "title": "Remove {name} from this organization?",
+    "body": "Other organizations that share this building keep it. If none do, it is deleted.",
+    "associated": "Linked to this building: {files, plural, one {# file} other {# files}}, {sensors, plural, one {# sensor} other {# sensors}}, {comments, plural, one {# comment} other {# comments}}.",
+    "defaultOutcome": "Files are detached and stay in Files. Sensors and comments are deleted.{isDefaultLocation, select, true { The default map location is cleared.} other {}}",
+    "transferToggle": "Move them to another building instead",
+    "transferPlaceholder": "Choose a building",
+    "transferOutcome": "Files, sensors and comments{isDefaultLocation, select, true {, and the default map location,} other {}} move to {target}.",
+    "confirm": "Remove building",
+    "cancel": "Cancel",
+    "removed": "Building removed",
+    "failed": "Could not remove the building",
+    "loadFailed": "Couldn't load what is linked to this building. Try again."
   }
 }

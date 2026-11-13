@@ -19,9 +19,12 @@ interface DatasetRowProps {
   isFavourite: boolean
   onFavourite: (dataset: Dataset) => void
   onApply: (dataset: Dataset) => void
+  appliedAs?: Dataset
+  onRemove?: (applied: Dataset) => void
 }
 
-function DatasetRow({ dataset, isFavourite, onFavourite, onApply }: DatasetRowProps) {
+function DatasetRow({ dataset, isFavourite, onFavourite, onApply, appliedAs, onRemove }: DatasetRowProps) {
+  const t = useTranslations('LayersTab')
   return (
     <div className="flex items-center gap-1 py-1 hover:bg-accent/30 rounded-md px-1">
       <Button
@@ -40,15 +43,29 @@ function DatasetRow({ dataset, isFavourite, onFavourite, onApply }: DatasetRowPr
       <span className="flex-1 min-w-0 text-sm truncate" title={dataset.name}>
         {dataset.name.replaceAll('_', ' ')}
       </span>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-6 w-6 shrink-0"
-        onClick={() => onApply(dataset)}
-        title="Add to map"
-      >
-        <LR.Plus className="h-3.5 w-3.5" />
-      </Button>
+      {appliedAs && onRemove ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 shrink-0"
+          onClick={() => onRemove(appliedAs)}
+          aria-label={t('removeFromMap')}
+          title={t('removeFromMap')}
+        >
+          <LR.Check className="h-3.5 w-3.5 text-primary" />
+        </Button>
+      ) : (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 shrink-0"
+          onClick={() => onApply(dataset)}
+          aria-label={t('addToMap')}
+          title={t('addToMap')}
+        >
+          <LR.Plus className="h-3.5 w-3.5" />
+        </Button>
+      )}
     </div>
   )
 }
@@ -60,9 +77,11 @@ interface DatasetListProps {
   onFavourite: (dataset: Dataset) => void
   onApply: (dataset: Dataset) => void
   emptyLabel: string
+  appliedFor?: (dataset: Dataset) => Dataset | undefined
+  onRemove?: (applied: Dataset) => void
 }
 
-function DatasetList({ datasets, query, favourites, onFavourite, onApply, emptyLabel }: DatasetListProps) {
+function DatasetList({ datasets, query, favourites, onFavourite, onApply, emptyLabel, appliedFor, onRemove }: DatasetListProps) {
   const filtered = React.useMemo(() => {
     if (!query.trim()) return datasets
     const q = query.toLowerCase()
@@ -82,6 +101,8 @@ function DatasetList({ datasets, query, favourites, onFavourite, onApply, emptyL
           isFavourite={favourites.some(f => f.name === dataset.name)}
           onFavourite={onFavourite}
           onApply={onApply}
+          appliedAs={appliedFor?.(dataset)}
+          onRemove={onRemove}
         />
       ))}
     </div>
@@ -114,13 +135,17 @@ export function AvailableDatasetsSection({
   onFavouriteToggle,
 }: AvailableDatasetsSectionProps) {
   const t = useTranslations('LayersTab')
-  const { state: datasetState } = React.useContext(DatasetsContext)
+  const { state: datasetState, dispatch: datasetDispatch } = React.useContext(DatasetsContext)
   const { addedDatasets } = datasetState.datasets
 
-  const isApplied = React.useCallback(
-    (dataset: Dataset) => addedDatasets.some(d => d.name === dataset.name),
+  const appliedFor = React.useCallback(
+    (dataset: Dataset) => addedDatasets.find(d => d.name === dataset.name),
     [addedDatasets],
   )
+  const isApplied = React.useCallback((dataset: Dataset) => appliedFor(dataset) !== undefined, [appliedFor])
+  const onRemove = React.useCallback((applied: Dataset) => {
+    datasetDispatch({ type: 'REMOVE_DATASET_FROM_MAP', payload: { datasetId: applied.id } })
+  }, [datasetDispatch])
 
   const { addDataset } = useAddDatasetToMap()
   const onApply = React.useCallback((dataset: Dataset) => {
@@ -133,7 +158,6 @@ export function AvailableDatasetsSection({
   )
 
   const favouriteList = React.useMemo(() => notApplied(favourites), [favourites, notApplied])
-  const organizationalList = React.useMemo(() => notApplied(organizationalDatasets), [organizationalDatasets, notApplied])
   const allList = React.useMemo(() => notApplied(allDatasets), [allDatasets, notApplied])
   const nationalList = React.useMemo(() => notApplied(nationalDatasets), [nationalDatasets, notApplied])
   const subdivisionList = React.useMemo(() => notApplied(subdivisionDatasets), [subdivisionDatasets, notApplied])
@@ -167,16 +191,18 @@ export function AvailableDatasetsSection({
       <CollapsibleSection
         title={t('organizationalTitle')}
         icon={LR.Building}
-        itemCount={organizationalList.length}
+        itemCount={organizationalDatasets.length}
         defaultOpen={false}
       >
         <DatasetList
-          datasets={organizationalList}
+          datasets={organizationalDatasets}
           query={query}
           favourites={favourites}
           onFavourite={onFavouriteToggle}
           onApply={onApply}
           emptyLabel={emptyLabel}
+          appliedFor={appliedFor}
+          onRemove={onRemove}
         />
       </CollapsibleSection>
 

@@ -5,11 +5,16 @@
 import useSWR, { mutate } from "swr";
 import useSWRMutation from "swr/mutation";
 
-import type { Building } from '../../types/dbTypes'
+import type { Building, BuildingAssociations, BuildingRemoval } from '../../types/dbTypes'
 import type { ApiAdapter } from "../ports/apiAdapter";
 
 // Stable fallback so memo deps hold while the list loads.
 const NO_BUILDINGS: Building[] = [];
+
+const BUILDING_SCOPED_LISTS = ["filesByBuilding", "sensors", "comments"];
+
+const isBuildingScopedList = (key: unknown): boolean =>
+    Array.isArray(key) && BUILDING_SCOPED_LISTS.includes(key[0] as string);
 
 export function createBuildingHooks(adapter: ApiAdapter) {
     //Call adapter methods inside hooks
@@ -82,6 +87,32 @@ export function createBuildingHooks(adapter: ApiAdapter) {
         };
     };
 
+    const useBuildingAssociations = (id: number | null) => {
+        const { data, error, isLoading } = useSWR<BuildingAssociations>(
+            id ? ["buildingAssociations", id] as const : null,
+            () => adapter.getBuildingAssociations(id as number),
+        );
+        return { associations: data ?? null, isLoading, error };
+    };
+
+    const useRemoveBuilding = () => {
+        const { trigger, isMutating } = useSWRMutation(
+            ["removeBuilding"],
+            async (_key, { arg }: { arg: { id: number; opts?: { transferToBuildingId?: number } } }) =>
+                adapter.removeBuilding(arg.id, arg.opts),
+            {
+                onSuccess: (removal: BuildingRemoval) => {
+                    void mutate(["buildings"]);
+                    void mutate(["building", removal.buildingId]);
+                    if (removal.transferredTo) void mutate(["building", removal.transferredTo]);
+                    void mutate(isBuildingScopedList);
+                },
+            }
+        );
+        const removeBuilding = (id: number, opts?: { transferToBuildingId?: number }) => trigger({ id, opts });
+        return { removeBuilding, isMutating };
+    };
+
     // OSM id hooks
     const useBuildingsByOsm = (buildingOsmId: number | null) => {
         const key = buildingOsmId ? ["buildingsByOsm", buildingOsmId] as const : null;
@@ -116,5 +147,7 @@ export function createBuildingHooks(adapter: ApiAdapter) {
         useBuildingsByOsm,
         useBuildingOsmIds,
         useCreateBuilding,
+        useBuildingAssociations,
+        useRemoveBuilding,
     };
 }

@@ -3,8 +3,7 @@
 
 import { describe, it, expect, vi } from 'vitest'
 
-// maplibre-gl is imported in the reducer only as a TYPE (`map: Map | null`); mock it
-// so importing the reducer doesn't pull the browser library into the node test env.
+// Keeps the browser-only maplibre-gl out of the node test environment.
 vi.mock('maplibre-gl', () => ({ Map: class {} }))
 import { MapReducer, type MapState } from './reducer'
 
@@ -45,7 +44,7 @@ describe('MapReducer', () => {
   it('SET_BOUNDARY_GEOJSON sets the real `geojson` field (regression for the boundaryGeojson bug)', () => {
     const next = MapReducer(base, { type: 'SET_BOUNDARY_GEOJSON', payload: { geojson: 'GEO' } } as never)
     expect(next.geojson).toBe('GEO')
-    expect((next as Record<string, unknown>).boundaryGeojson).toBeUndefined()
+    expect('boundaryGeojson' in next).toBe(false)
   })
 
   it('unknown action returns the same state', () => {
@@ -83,5 +82,15 @@ describe('popupStack', () => {
 
   it('SET_POPUP_INDEX on a closed stack is a no-op', () => {
     expect(MapReducer(base, { type: 'SET_POPUP_INDEX', payload: { activeIndex: 1 } } as never)).toBe(base)
+  })
+})
+
+describe('focusedBuildings', () => {
+  it('SET_FOCUSED_BUILDINGS replaces the list', () => {
+    const a = { id: 1 }
+    const b = { id: 2 }
+    const first = MapReducer({ ...base, focusedBuildings: [] }, { type: 'SET_FOCUSED_BUILDINGS', payload: { focusedBuildings: [a] } } as never)
+    const second = MapReducer(first, { type: 'SET_FOCUSED_BUILDINGS', payload: { focusedBuildings: [b] } } as never)
+    expect(second.focusedBuildings).toEqual([b])
   })
 })

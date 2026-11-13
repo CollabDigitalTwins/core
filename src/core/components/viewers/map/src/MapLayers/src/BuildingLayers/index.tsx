@@ -23,7 +23,7 @@ import {
 } from "./buildingColourExpression";
 import { buildingPopupEntry } from "./buildingPopupEntry";
 import { osmStoreyHeights, overriddenOsmIds } from "./drawnFootprints";
-import { matchByOsmId, matchesAnyOsmId } from "./osmIdExpression";
+import { matchByOsmId, matchesAnyOsmId, osmLabel } from "./osmIdExpression";
 import { BuildingSensorMarkers } from "./src/BuildingSensorMarkers";
 import { DrawnBuildingsLayer } from "./src/DrawnBuildingsLayer";
 import { FootprintEditor } from "./src/FootprintEditor";
@@ -129,7 +129,7 @@ function addBuildingLayer(map: any, hiddenBimOsmIds: string[], { replacedOsmIds,
 
 export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
   const { state: mapState, dispatch: mapDispatch } = React.useContext(MapContext);
-  const { map, mapClickManager, show3dBuildings, popupStack, editingFootprint } = mapState.map;
+  const { map, mapClickManager, show3dBuildings, popupStack, editingFootprint, focusedBuildings } = mapState.map;
   const t = useTranslations("DatabaseBuildingPopover");
   const { setCompareItems } = useBuildingsContext();
   const { buildings } = useBuildings();
@@ -161,14 +161,20 @@ export function BuildingLayer({ maptilerKey }: { maptilerKey?: string }) {
 
   const assignedOsmIds = React.useMemo(() => Object.keys(buildingByOsmId).sort(), [buildingByOsmId]);
 
+  const focusedOsmIds = React.useMemo(
+    () => Array.from(new Set(focusedBuildings.map(osmLabel).filter(Boolean))).sort(),
+    [focusedBuildings],
+  );
+
   const colourExpr = React.useMemo(
     () => buildingColourExpression({
       osmColours,
       assignedOsmIds,
+      focusedOsmIds,
       clickedKey,
       hoveredKey: hoveredFeature,
     }),
-    [osmColours, assignedOsmIds, clickedKey, hoveredFeature],
+    [osmColours, assignedOsmIds, focusedOsmIds, clickedKey, hoveredFeature],
   );
 
   const hiddenBimOsmIds = React.useMemo(

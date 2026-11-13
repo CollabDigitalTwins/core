@@ -10,8 +10,7 @@ import type * as maplibregl from 'maplibre-gl'
  * layer. `ActiveTool` is the exception and stays exclusive.
  */
 export enum MapLayerClickPriority {
-  // Lowest priority: a site polygon only handles a click when no other
-  // interactive layer (buildings, comments, sensors, files, ...) was hit.
+  // A site polygon handles a click only when no other interactive layer was hit.
   SiteLayerClickPriority = 50,
   BuildingLayersClickPriority = 100,
   CommentLayersClickPriority = 200,
@@ -51,6 +50,7 @@ export class MapClickManager {
   private boundedDismissHandler: () => void
   private publish: (entries: PopupEntry[]) => void = () => {}
   private suspended = false
+  private emptyClickListeners = new Set<(e: maplibregl.MapMouseEvent) => void>()
 
   constructor(map: maplibregl.Map) {
     this.map = map
@@ -69,6 +69,14 @@ export class MapClickManager {
 
   public onPopupStack(publish: (entries: PopupEntry[]) => void) {
     this.publish = publish
+  }
+
+  /** Fires when a click hits no registered layer; basemap features under the pointer do not count. */
+  public onEmptyClick(listener: (e: maplibregl.MapMouseEvent) => void) {
+    this.emptyClickListeners.add(listener)
+    return () => {
+      this.emptyClickListeners.delete(listener)
+    }
   }
 
   public register(
@@ -134,12 +142,14 @@ export class MapClickManager {
     }
 
     this.publish(dedupeEntries(entries).slice(0, MAX_POPUP_ENTRIES))
+    if (!resolvedAnything) this.emptyClickListeners.forEach(listener => listener(e))
   }
 
   destroy() {
     this.map.off('click', this.boundedClickHandler)
     for (const event of DISMISSING_EVENTS) this.map.off(event, this.boundedDismissHandler)
     this.clickHandlers = []
+    this.emptyClickListeners.clear()
     this.publish = () => {}
   }
 }

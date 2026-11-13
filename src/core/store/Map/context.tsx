@@ -40,6 +40,7 @@ const initialState: InitialStateType = {
     show3dBuildings: true,
     editingFootprint: null,
     popupStack: null,
+    focusedBuildings: [],
   },
 }
 

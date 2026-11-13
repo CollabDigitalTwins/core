@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-// Dependencies
 import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
@@ -12,21 +11,17 @@ import { Button, Input, Checkbox, Badge } from '../../../components/ui/'
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../../../components/ui/DropdownMenu'
 import { useBuildings } from '../../../hooks/buildings/buildings'
 import { useInfrastructures } from '../../../hooks/infrastructures/infrastructures'
 import { useSites } from '../../../hooks/sites/sites'
 import { usePermissions } from '../../../store'
+import { buildingDisplayName } from '../../../utils/buildingDisplayName'
 
-// Shadcn Components
-
-// Icons
-
-// Custom Components
 import FiltersDialog from './advancedFilter/FiltersDialog'
 import FilterFiles from './details/FilterFiles'
+import { getFilterFieldNames } from './utils/filterFieldNames'
 import { getUniqueColumnValues } from './utils/filterHelper'
 
 import type { filterFieldOptions } from './utils/Columns'
@@ -39,6 +34,7 @@ interface FilterButtonsProps {
   data: any[]
   setFilters: React.Dispatch<React.SetStateAction<any[]>>
   setActiveFilters: React.Dispatch<React.SetStateAction<any[]>>
+  collapsed?: boolean
 }
 
 interface FilterOption {
@@ -49,99 +45,52 @@ interface FilterOption {
 
 type SortState = false | 'asc' | 'desc'
 
-const FilterButtons = ({ currentViewer, filters, activeFilters, filterFields, data, setFilters, setActiveFilters }: FilterButtonsProps) => {
-  // Translations
+const FilterButtons = ({ currentViewer, filters, activeFilters, filterFields, data, setFilters, setActiveFilters, collapsed }: FilterButtonsProps) => {
   const t = useTranslations('FilterButtons')
 
-  // Permissions
   const { ability } = usePermissions()
 
   const { sites } = useSites()
   const { buildings } = useBuildings()
   const { infrastructures } = useInfrastructures()
 
-  // Filter options state
   const [municipalityOptions, setMunicipalityOptions] = React.useState<FilterOption[]>([])
   const [countrySubdivisionOptions, setCountrySubdivisionOptions] = React.useState<FilterOption[]>([])
   const [buildingOptions, setBuildingOptions] = React.useState<FilterOption[]>([])
   const [siteOptions, setSiteOptions] = React.useState<FilterOption[]>([])
   const [infrastructureOptions, setInfrastructureOptions] = React.useState<FilterOption[]>([])
 
-  // Search terms for each filter
   const [municipalitySearch, setMunicipalitySearch] = React.useState('')
   const [countrySubdivisionSearch, setCountrySubdivisionSearch] = React.useState('')
   const [buildingSearch, setBuildingSearch] = React.useState('')
   const [siteSearch, setSiteSearch] = React.useState('')
   const [infrastructureSearch, setInfrastructureSearch] = React.useState('')
 
-  // Sort state for each filter: false (unsorted), 'asc', 'desc'
   const [municipalitySort, setMunicipalitySort] = React.useState<SortState>(false)
   const [countrySubdivisionSort, setCountrySubdivisionSort] = React.useState<SortState>(false)
   const [buildingSort, setBuildingSort] = React.useState<SortState>(false)
   const [siteSort, setSiteSort] = React.useState<SortState>(false)
   const [infrastructureSort, setInfrastructureSort] = React.useState<SortState>(false)
 
-  // Dialog open state
   const [filterDialogOpen, setFilterDialogOpen] = React.useState(false)
 
-  // Dropdown open states
   const [municipalityDropdownOpen, setMunicipalityDropdownOpen] = React.useState(false)
   const [countrySubdivisionDropdownOpen, setCountrySubdivisionDropdownOpen] = React.useState(false)
   const [buildingDropdownOpen, setBuildingDropdownOpen] = React.useState(false)
   const [siteDropdownOpen, setSiteDropdownOpen] = React.useState(false)
   const [infrastructureDropdownOpen, setInfrastructureDropdownOpen] = React.useState(false)
 
-  // File type filter state
-  const [selectedFileTypes, setSelectedFileTypes] = React.useState<string[]>([])
+  const fieldNames = getFilterFieldNames(currentViewer)
 
-  // Get the correct field names based on current viewer
-  const getFieldNames = () => {
-    switch (currentViewer) {
-      case 'buildings': {
-        return {
-          municipality: 'buildingMunicipality',
-          countrySubdivision: 'buildingCountrySubdivision',
-          site: 'buildingParentSiteId',
-        }
-      }
-      case 'sites': {
-        return {
-          municipality: 'siteMunicipality',
-          countrySubdivision: 'siteCountrySubdivision',
-          site: null, // Sites don't filter by site
-        }
-      }
-      case 'infrastructure': {
-        return {
-          municipality: 'infrastructureMunicipality',
-          countrySubdivision: 'infrastructureCountrySubdivision',
-          site: 'infrastructureParentSiteId',
-        }
-      }
-      case 'files': {
-        return {
-          municipality: null,
-          countrySubdivision: null,
-          building: 'building',
-          site: 'site',
-          infrastructure: 'infrastructure',
-        }
-      }
-    // No default
-    }
-    return {
-      municipality: null,
-      countrySubdivision: null,
-      building: null,
-      site: null,
-      infrastructure: null,
-    }
+  const selectedValuesOf = (field: string | undefined): string[] => {
+    const filter = activeFilters.find(f => f.field === field)
+    return Array.isArray(filter?.value) ? filter.value : []
   }
 
-  const getBuildingName = (buildingId: number) => {
-    const building = buildings?.find(b => b.id === buildingId)
-    return building?.buildingName || building?.buildingAddress || String(buildingId)
-  }
+  const selectedFileTypes = selectedValuesOf('fileType')
+
+  const getBuildingName = (buildingId: number) =>
+    buildingDisplayName(buildings?.find(b => b.id === buildingId)) ?? String(buildingId)
 
   const getSiteName = (siteId: number) => {
     const site = sites?.find(s => s.id === siteId)
@@ -153,15 +102,12 @@ const FilterButtons = ({ currentViewer, filters, activeFilters, filterFields, da
     return infrastructure?.infrastructureName || String(infrastructureId)
   }
 
-  // Generate filter options with unique values from data
   const generateFilterOptions = () => {
-    const fieldNames = getFieldNames()
 
     if (!data || data.length === 0) {
       return
     }
 
-    // Municipality options
     if (fieldNames.municipality) {
       const uniqueValues = getUniqueColumnValues(data, fieldNames.municipality)
       const validValues = uniqueValues.filter(value => value !== null && value !== undefined && value !== '')
@@ -181,7 +127,6 @@ const FilterButtons = ({ currentViewer, filters, activeFilters, filterFields, da
       })
     }
 
-    // Province options
     if (fieldNames.countrySubdivision) {
       const uniqueValues = getUniqueColumnValues(data, fieldNames.countrySubdivision)
       const validValues = uniqueValues.filter(value => value !== null && value !== undefined && value !== '')
@@ -201,7 +146,6 @@ const FilterButtons = ({ currentViewer, filters, activeFilters, filterFields, da
       })
     }
 
-    // Building options
     if (fieldNames.building) {
       const uniqueValues = getUniqueColumnValues(data, fieldNames.building)
       const validValues = uniqueValues.filter(value => value !== null && value !== undefined && value !== '')
@@ -221,7 +165,6 @@ const FilterButtons = ({ currentViewer, filters, activeFilters, filterFields, da
       })
     }
 
-    // Site options
     if (fieldNames.site) {
       const uniqueValues = getUniqueColumnValues(data, fieldNames.site)
       const validValues = uniqueValues.filter(value => value !== null && value !== undefined && value !== '')
@@ -241,7 +184,6 @@ const FilterButtons = ({ currentViewer, filters, activeFilters, filterFields, da
       })
     }
 
-    // Infrastructure options
     if (fieldNames.infrastructure) {
       const uniqueValues = getUniqueColumnValues(data, fieldNames.infrastructure)
       const validValues = uniqueValues.filter(value => value !== null && value !== undefined && value !== '')
@@ -263,9 +205,12 @@ const FilterButtons = ({ currentViewer, filters, activeFilters, filterFields, da
 
   }
 
-  // Reset filters when viewer changes
+  const previousViewer = React.useRef(currentViewer)
+
   React.useEffect(() => {
-    // Clear all filter states when switching viewers
+    if (previousViewer.current === currentViewer) return
+    previousViewer.current = currentViewer
+
     setMunicipalityOptions([])
     setCountrySubdivisionOptions([])
     setBuildingOptions([])
@@ -273,162 +218,55 @@ const FilterButtons = ({ currentViewer, filters, activeFilters, filterFields, da
     setInfrastructureOptions([])
     setActiveFilters([])
 
-    // Clear search terms
     setMunicipalitySearch('')
     setCountrySubdivisionSearch('')
     setBuildingSearch('')
     setSiteSearch('')
     setInfrastructureSearch('')
 
-    // Close any open dropdowns
     setMunicipalityDropdownOpen(false)
     setCountrySubdivisionDropdownOpen(false)
     setBuildingDropdownOpen(false)
     setSiteDropdownOpen(false)
     setInfrastructureDropdownOpen(false)
 
-    // Reset sort state
     setMunicipalitySort(false)
     setCountrySubdivisionSort(false)
     setBuildingSort(false)
     setSiteSort(false)
     setInfrastructureSort(false)
-
-    // Reset file type filter
-    setSelectedFileTypes([])
   }, [currentViewer])
 
-  // Generate filter options when data changes
   React.useEffect(() => {
     generateFilterOptions()
   }, [data])
 
-  // Update checked state based on active filters
   React.useEffect(() => {
-    if (activeFilters && activeFilters.length > 0) {
-      const fieldNames = getFieldNames()
-
-      // Find municipality filter
-      if (fieldNames.municipality) {
-        const municipalityFilter = activeFilters.find(filter => filter.field === fieldNames.municipality)
-        if (municipalityFilter && municipalityFilter.value && Array.isArray(municipalityFilter.value)) {
-          setMunicipalityOptions(prev =>
-            prev.map(opt => ({
-              ...opt,
-              checked: municipalityFilter.value.includes(opt.value),
-            })),
-          )
-        }
-      }
-
-      // Find countrySubdivision filter
-      if (fieldNames.countrySubdivision) {
-        const provinceFilter = activeFilters.find(filter => filter.field === fieldNames.countrySubdivision)
-        if (provinceFilter && provinceFilter.value && Array.isArray(provinceFilter.value)) {
-          setCountrySubdivisionOptions(prev =>
-            prev.map(opt => ({
-              ...opt,
-              checked: provinceFilter.value.includes(opt.value),
-            })),
-          )
-        }
-      }
-
-      // Find building filter
-      if (fieldNames.building) {
-        const buildingFilter = activeFilters.find(filter => filter.field === fieldNames.building)
-        if (buildingFilter && buildingFilter.value && Array.isArray(buildingFilter.value)) {
-          setBuildingOptions(prev =>
-            prev.map(opt => ({
-              ...opt,
-              checked: buildingFilter.value.includes(opt.value),
-            })),
-          )
-        }
-      }
-
-      // Find site filter
-      if (fieldNames.site) {
-        const siteFilter = activeFilters.find(filter => filter.field === fieldNames.site)
-        if (siteFilter && siteFilter.value && Array.isArray(siteFilter.value)) {
-          setSiteOptions(prev =>
-            prev.map(opt => ({
-              ...opt,
-              checked: siteFilter.value.includes(opt.value),
-            })),
-          )
-        }
-      }
-
-        // Find infrastructure filter
-        if (fieldNames.infrastructure) {
-          const infrastructureFilter = activeFilters.find(filter => filter.field === fieldNames.infrastructure)
-          if (infrastructureFilter && infrastructureFilter.value && Array.isArray(infrastructureFilter.value)) {
-            setInfrastructureOptions(prev =>
-              prev.map(opt => ({
-                ...opt,
-                checked: infrastructureFilter.value.includes(opt.value),
-              })),
-            )
-          }
+    const checkSelected = (field: string | undefined) => (prev: FilterOption[]) => {
+      const selected = selectedValuesOf(field)
+      return prev.map(opt => ({ ...opt, checked: selected.includes(opt.value) }))
     }
-  }
+
+    setMunicipalityOptions(checkSelected(fieldNames.municipality))
+    setCountrySubdivisionOptions(checkSelected(fieldNames.countrySubdivision))
+    setBuildingOptions(checkSelected(fieldNames.building))
+    setSiteOptions(checkSelected(fieldNames.site))
+    setInfrastructureOptions(checkSelected(fieldNames.infrastructure))
   }, [activeFilters, currentViewer])
 
-  // Update activeFilters when selectedFileTypes changes
-  React.useEffect(() => {
-    if (currentViewer !== 'files') return
-
-    if (selectedFileTypes.length === 0) {
-      // Remove file type filter if no types are selected
-      setActiveFilters(prev => prev.filter(filter => filter.field !== 'fileType'))
-    } else {
-      // Check if filter already exists
-      const existingFilterIndex = activeFilters.findIndex(filter => filter.field === 'fileType')
-
-      if (existingFilterIndex === -1) {
-        // Add new filter
-        setActiveFilters(prev => [
-          ...prev,
-          {
-            id: Date.now(),
-            field: 'fileType',
-            fieldType: 'string',
-            operator: 'inList',
-            value: selectedFileTypes,
-            secondValue: null,
-          },
-        ])
-      } else {
-        // Update existing filter
-        setActiveFilters(prev => {
-          const updatedFilters = [...prev]
-          updatedFilters[existingFilterIndex] = {
-            ...updatedFilters[existingFilterIndex],
-            value: selectedFileTypes,
-            operator: 'inList',
-          }
-          return updatedFilters
-        })
-      }
-    }
-  }, [selectedFileTypes, currentViewer])
-
-  // Update active filters when options are selected
   const updateFilters = (filterType: string, options: FilterOption[]) => {
-    const selectedValues = options.filter(opt => opt.checked).map(opt => opt.value)
+    applySelection(filterType, options.filter(opt => opt.checked).map(opt => opt.value))
+  }
 
+  const applySelection = (filterType: string, selectedValues: string[]) => {
     if (selectedValues.length === 0) {
-      // Remove this filter if no values are selected
       setActiveFilters(activeFilters.filter(filter => filter.field !== filterType))
       return
     }
 
-    // Check if filter already exists
     const existingFilterIndex = activeFilters.findIndex(filter => filter.field === filterType)
 
     if (existingFilterIndex === -1) {
-      // Add new filter
       setActiveFilters([
         ...activeFilters,
         {
@@ -442,7 +280,6 @@ const FilterButtons = ({ currentViewer, filters, activeFilters, filterFields, da
       ])
     }
     else {
-      // Update existing filter
       const updatedFilters = [...activeFilters]
       updatedFilters[existingFilterIndex] = {
         ...updatedFilters[existingFilterIndex],
@@ -453,7 +290,6 @@ const FilterButtons = ({ currentViewer, filters, activeFilters, filterFields, da
     }
   }
 
-  // Handle checkbox toggle
   const handleCheckboxChange = (
     option: FilterOption,
     options: FilterOption[],
@@ -468,13 +304,11 @@ const FilterButtons = ({ currentViewer, filters, activeFilters, filterFields, da
     updateFilters(filterType, updatedOptions)
   }
 
-  // Handle apply filters
   const handleApplyFilters = () => {
     setActiveFilters(filters)
     setFilterDialogOpen(false)
   }
 
-  // Filter dropdown creation function
   const createFilterDropdown = (
     title: string,
     options: FilterOption[],
@@ -486,12 +320,10 @@ const FilterButtons = ({ currentViewer, filters, activeFilters, filterFields, da
     sortState: SortState,
     setSortState: React.Dispatch<React.SetStateAction<SortState>>,
   ) => {
-    // Filter options based on search term
     let filteredOptions = options.filter(opt =>
       opt.label.toLowerCase().includes(searchTerm.toLowerCase()),
     )
 
-    // Sort options based on sortState
     if (sortState === 'asc') {
       filteredOptions = [...filteredOptions].sort((a, b) => a.label.localeCompare(b.label))
     } else if (sortState === 'desc') {
@@ -502,7 +334,6 @@ const FilterButtons = ({ currentViewer, filters, activeFilters, filterFields, da
     const buttonText = title
     const hasOptions = options.length > 0
 
-    // Cycle sort state: false -> 'asc' -> 'desc' -> false
     const handleSortClick = (e: React.MouseEvent) => {
       e.stopPropagation()
       setSortState(prev =>
@@ -519,7 +350,7 @@ const FilterButtons = ({ currentViewer, filters, activeFilters, filterFields, da
             setIsOpen(!isOpen)
           }}
         >
-          <Button variant="outline" className="border-dashed max-sm:hidden">
+          <Button variant="outline" className="border-dashed">
             {selectedCount > 0
               ? <Badge>{selectedCount}</Badge>
               : <LR.Filter className="" />}
@@ -537,7 +368,6 @@ const FilterButtons = ({ currentViewer, filters, activeFilters, filterFields, da
                 onClick={e => e.stopPropagation()}
                 className="rounded-bl-none pl-9 focus-visible:ring-offset-0 focus-visible:ring-0"
               />
-              {/* Sort button */}
               <Button
               variant='ghost'
                 className="hover:bg-transparent p-0 mr-2"
@@ -603,10 +433,6 @@ const FilterButtons = ({ currentViewer, filters, activeFilters, filterFields, da
     )
   }
 
-  // Get current field names for this viewer
-  const fieldNames = getFieldNames()
-
-  // Create filter buttons conditionally based on available fields
   const municipalityButton = fieldNames.municipality
     ? createFilterDropdown(
         `${t('municipality')}`,
@@ -677,277 +503,71 @@ const FilterButtons = ({ currentViewer, filters, activeFilters, filterFields, da
       )
     : null
 
-  // Get unique file types for the filter dropdown
   const fileTypes = React.useMemo(() => {
     if (!data || data.length === 0) return []
     const types = data.map(file => file.fileType).filter(Boolean).filter(type => type !== 'Unknown' && type !== '')
     return [...new Set(types)]
   }, [data])
 
-    if (currentViewer === 'buildings') {
-    return (
-      <>
-        {/* Mobile View */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              className="border-dashed sm:hidden"
-              onClick={e => e.stopPropagation()}
-            >
-              <LR.ListFilter />
-              <span className="sr-only">{t('srFilters')}</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {municipalityButton && (
-              <DropdownMenuItem
-                onSelect={e => e.preventDefault()}
-              >
-                {municipalityButton}
-              </DropdownMenuItem>
-            )}
-            {countrySubdivisionButton && (
-              <DropdownMenuItem
-                onSelect={e => e.preventDefault()}
-              >
-                {countrySubdivisionButton}
-              </DropdownMenuItem>
-            )}
-            {siteButton && (
-              <DropdownMenuItem
-                onSelect={e => e.preventDefault()}
-              >
-                {siteButton}
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem
-              onSelect={e => e.preventDefault()} // Prevent conflict with row click, which closes both menus
-            >
-              <FiltersDialog
-                filters={filters}
-                filterFields={filterFields}
-                activeFilters={activeFilters}
-                setFilters={setFilters}
-                onApplyFilters={handleApplyFilters}
-                setActiveFilters={setActiveFilters}
-              />
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+  const filtersDialog = (
+    <FiltersDialog
+      filters={filters}
+      isBuilding={currentViewer !== 'sites'}
+      filterFields={filterFields}
+      activeFilters={activeFilters}
+      setFilters={setFilters}
+      onApplyFilters={handleApplyFilters}
+      setActiveFilters={setActiveFilters}
+    />
+  )
 
-        {municipalityButton}
-        {countrySubdivisionButton}
-        {siteButton}
-        {/* Advanced Filters Dialog */}
-        <div className="max-sm:hidden">
-          <FiltersDialog
-            filters={filters}
-            filterFields={filterFields}
-            activeFilters={activeFilters}
-            setFilters={setFilters}
-            onApplyFilters={handleApplyFilters}
-            setActiveFilters={setActiveFilters}
+  switch (currentViewer) {
+    case 'buildings': {
+      return (
+        <>
+          {municipalityButton}
+          {countrySubdivisionButton}
+          {siteButton}
+          {filtersDialog}
+        </>
+      )
+    }
+    case 'sites': {
+      return (
+        <>
+          {municipalityButton}
+          {countrySubdivisionButton}
+          {filtersDialog}
+        </>
+      )
+    }
+    case 'infrastructure': {
+      return (
+        <>
+          {infrastructureButton}
+          {municipalityButton}
+          {countrySubdivisionButton}
+          {siteButton}
+          {collapsed && filtersDialog}
+        </>
+      )
+    }
+    case 'files': {
+      return (
+        <>
+          {siteButton}
+          {buildingButton}
+          <FilterFiles
+            availableTypes={fileTypes}
+            selectedTypes={selectedFileTypes}
+            onTypesChange={types => applySelection('fileType', types)}
           />
-        </div>
-      </>
-    )
+          {collapsed && filtersDialog}
+        </>
+      )
+    }
   }
-
-  if (currentViewer === 'sites') {
-    return (
-      <>
-        {/* Mobile View */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              className="border-dashed sm:hidden"
-              onClick={e => e.stopPropagation()}
-            >
-              <LR.ListFilter />
-              <span className="sr-only">{t('srFilters')}</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {municipalityButton && (
-              <DropdownMenuItem
-                onSelect={e => e.preventDefault()}
-              >
-                {municipalityButton}
-              </DropdownMenuItem>
-            )}
-            {countrySubdivisionButton && (
-              <DropdownMenuItem
-                onSelect={e => e.preventDefault()}
-              >
-                {countrySubdivisionButton}
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem
-              onSelect={e => e.preventDefault()} // Prevent conflict with row click, which closes both menus
-            >
-              <FiltersDialog
-                filters={filters}
-                filterFields={filterFields}
-                activeFilters={activeFilters}
-                setFilters={setFilters}
-                onApplyFilters={handleApplyFilters}
-                setActiveFilters={setActiveFilters}
-              />
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* desktop view */}
-        {municipalityButton}
-        {countrySubdivisionButton}
-        {/* Advanced Filters Dialog */}
-        <div className="max-sm:hidden">
-          <FiltersDialog
-            filters={filters}
-            isBuilding={false}
-            filterFields={filterFields}
-            activeFilters={activeFilters}
-            setFilters={setFilters}
-            onApplyFilters={handleApplyFilters}
-            setActiveFilters={setActiveFilters}
-          />
-        </div>
-      </>
-    )
-  }
-
-  if (currentViewer === 'infrastructure') {
-    return (
-      <>
-        {/* Mobile View */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              className="border-dashed sm:hidden"
-              onClick={e => e.stopPropagation()}
-            >
-              <LR.ListFilter />
-              <span className="sr-only">{t('srFilters')}</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {infrastructureButton && (
-              <DropdownMenuItem
-                onSelect={e => e.preventDefault()}
-              >
-                {infrastructureButton}
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem
-              onSelect={e => e.preventDefault()} // Prevent conflict with row click, which closes both menus
-            >
-              <FiltersDialog
-                filters={filters}
-                filterFields={filterFields}
-                activeFilters={activeFilters}
-                setFilters={setFilters}
-                onApplyFilters={handleApplyFilters}
-                setActiveFilters={setActiveFilters}
-              />
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {infrastructureButton}
-        {municipalityButton}
-        {countrySubdivisionButton}
-        {siteButton}
-        {/* Advanced Filters Dialog */}
-        {/* <div className="max-sm:hidden">
-          <FiltersDialog
-            filters={filters}
-            filterFields={filterFields}
-            activeFilters={activeFilters}
-            setFilters={setFilters}
-            onApplyFilters={handleApplyFilters}
-            setActiveFilters={setActiveFilters}
-          />
-        </div> */}
-      </>
-    )
-  }
-
-  if (currentViewer === 'files') {
-    return (
-      <>
-        {/* Mobile View */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              className="border-dashed sm:hidden"
-              onClick={e => e.stopPropagation()}
-            >
-              <LR.ListFilter />
-              <span className="sr-only">{t('srFilters')}</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {siteButton && (
-              <DropdownMenuItem
-                onSelect={e => e.preventDefault()}
-              >
-                {siteButton}
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem
-              onSelect={e => e.preventDefault()}
-            >
-              {buildingButton}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={e => e.preventDefault()}
-            >
-              <FilterFiles
-                availableTypes={fileTypes}
-                selectedTypes={selectedFileTypes}
-                onTypesChange={setSelectedFileTypes}
-              />
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={e => e.preventDefault()} // Prevent conflict with row click, which closes both menus
-            >
-              <FiltersDialog
-                filters={filters}
-                filterFields={filterFields}
-                activeFilters={activeFilters}
-                setFilters={setFilters}
-                onApplyFilters={handleApplyFilters}
-                setActiveFilters={setActiveFilters}
-              />
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {siteButton}
-        {buildingButton}
-        <FilterFiles
-          availableTypes={fileTypes}
-          selectedTypes={selectedFileTypes}
-          onTypesChange={setSelectedFileTypes}
-        />
-        {/* Advanced Filters Dialog */}
-        {/* <div className="max-sm:hidden">
-          <FiltersDialog
-            filters={filters}
-            filterFields={filterFields}
-            activeFilters={activeFilters}
-            setFilters={setFilters}
-            onApplyFilters={handleApplyFilters}
-            setActiveFilters={setActiveFilters}
-          />
-        </div> */}
-      </>
-    )
-  }
+  return null
 }
 
 export default FilterButtons

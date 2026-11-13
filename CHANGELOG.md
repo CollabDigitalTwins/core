@@ -7,6 +7,78 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Added
+- File geolocation (`viewers/shared/placement/GeolocationDialog`): a "Geolocate" item on file menus for BIM models,
+  point clouds, 3D models and splats. It takes coordinates in WGS 84, NAD83 / NAD83(CSRS) UTM, NAD83(CSRS) MTM,
+  WGS 84 UTM or any proj4 definition, converts them with proj4, and keeps the source so "Revert to source position"
+  can undo later moves. Each field has a reset button and "Reset all" restores the values the dialog opened with.
+  Strings are in a new `Geolocation` i18n namespace. `FileMenuContent` shows the item only when given `onGeolocate`,
+  and the caller mounts `GeolocationDialog` outside the menu.
+- IFC uploads read `IfcMapConversion` and `IfcProjectedCRS` (`ui/FilesManager/src/ifcGeoreference`) and place the
+  model at its georeferenced location, anchored at the IFC origin. It can still be moved, and reverted, afterwards.
+- `utils/geo/georeference` (`georeferenceToPlacement`, `manualGeoreference`, `isOverridden`, `sourcePlacementPatch`,
+  `hasGeoreference`) and `utils/geo/crsDefinitions` (`CRS_OPTIONS`, `registerBundledCrs`, `WGS84`).
+- `georeference` option on `uploadFile`, and `buildingId` on `useFileUploadWithProgress`.
+- Legend rows have show/hide, zoom to extent and remove-from-map buttons (`DatasetLayerActions`), shared with the
+  Layers tab's applied list. Zooming uses `zoomToDataset` and `fitDatasetBbox` (`map/datasets/src/datasetExtent`).
+- Datasets added from a URL (GeoJSON, ArcGIS, WMS, WMTS, XYZ, ArcGIS map/image services) are saved for the organization
+  and reload with the page (`map/datasets/src/orgDatasetFiles`).
+- Removing a building from the current organization: a "Delete Building" item in the row menu (`MoreOptions`) opens
+  `Data/buildingDetails/DeleteBuildingDialog`, which shows the organization's files, sensors and comments on the
+  building and can move them, and the default location, to another of its buildings first. The building record is
+  deleted once no organization uses it. Strings are in a new `DeleteBuildingDialog` namespace and
+  `MoreOptions.deleteBuilding`.
+- `ApiAdapter.getBuildingAssociations(id)` and `ApiAdapter.removeBuilding(id, { transferToBuildingId })`, the hooks
+  `useBuildingAssociations` and `useRemoveBuilding` (`hooks/buildings/buildings`), and the `BuildingAssociations` and
+  `BuildingRemoval` types. `BuildingAssociations.isDefaultLocation` says whether the building is the organization's
+  default map location.
+- Map building focus (`map/src/BuildingFocus`): "View on Map" and "View All on Map" paint the chosen footprints amber
+  (`FOCUS_COLOUR`), and Escape or a click on empty map clears them. `useBuildingFocus` focuses and clears,
+  `useClearBuildingFocus` wires the clearing, and the map store has `focusedBuildings` / `SET_FOCUSED_BUILDINGS`.
+- `FOCUS_DATASET_ID` (`map/src/BuildingFocus/useBuildingFocus`) names the legend dataset that holds the focused
+  footprints, and `drawnFootprintColour` (`BuildingLayers/buildingColourExpression`) colours drawn footprints.
+- `MapClickManager.onEmptyClick(listener)`: called when a click hits no registered layer; returns an unsubscribe.
+- `utils/escapeGuard` (`shouldIgnoreEscape`): whether a page-level Escape belongs to a text field or an open
+  dialog, menu or popover. `utils/buildingDisplayName`: a building's name, else its address.
+- Data list header pieces: `Data/PageActions` (Add and the ⋯ menu), `Data/ResultActions` (result count, View All on
+  Map, Compare), `Data/ActiveFilterChips` (removable chips per filter value), `Data/utils/filterFieldNames`
+  (`getFilterFieldNames`, `hasFilterButtons`), `removeFilterValue` in `Data/utils/filterHelper`, and a `collapsed`
+  prop on `FilterButtons`.
+
+### Changed
+- Placing a file on a building's footprint links it to that building without asking; the confirmation dialog is gone.
+- In the BIM viewer, a 3D model, CAD drawing or splat with no scene position offers "Place" and waits to be placed
+  instead of loading at the origin.
+- The legend's style toggle is a caret; its X now removes the layer from the map.
+- The Buildings, Sites, Infrastructure, Files and Users list header: page actions sit beside the title; below it come
+  search, filters, the result count and the result actions, then a row of removable filter chips. On a phone the
+  filters collapse into one "Filters" popover. Add and ⋯ stay visible while comparing.
+- `MapTypes.focusedBuildings` is a new required field of the map state.
+- "View on Map" and "View All on Map" replace the previous focus instead of adding another dataset each time.
+
+### Removed
+- `map/src/Placement/useBuildingLinkConfirm`, and the `Placement.linkBuilding*` strings.
+- `Data/HeaderButtons`, split into `PageActions` and `ResultActions`; the `FilterButtons.srFilters` string.
+
+### Fixed
+- Moving a model or file on the map again starts from its stored position, not from where the previous Move left it.
+- Datasets added through "Add dataset" now appear under Organizational and can be removed from the map; opening the
+  Layers tab no longer replaces the organizational list with Martin tiles only.
+- Files linked to a building from the map, through the sidebar or by placing them on its footprint, show in that
+  building's BIM viewer.
+- Below zoom 5 the map no longer picks a subdivision from the screen centre, so reloading a continental view stays put.
+- Clearing filters unchecks the quick-filter checkboxes too.
+
+### Migration
+- Custom `ApiAdapter` implementations must add `getBuildingAssociations(id): Promise<BuildingAssociations>` and
+  `removeBuilding(id, opts?): Promise<BuildingRemoval>`. Both must be scoped to the session's organization on the
+  server.
+- Hand-built `MapState` values must add `focusedBuildings: []`.
+- `getBuildingAssociations` must also return `isDefaultLocation: boolean` (the session organization's
+  `locationBuildingId` equals the building).
+- Imports of `.../viewers/Data/HeaderButtons` become `PageActions` (Add, ⋯) and `ResultActions` (count, View All on
+  Map, Compare) from the same folder.
+
 ## [0.18.0] - 2026-11-06
 
 ### Added

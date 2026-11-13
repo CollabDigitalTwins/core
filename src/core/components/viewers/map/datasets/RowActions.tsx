@@ -26,6 +26,8 @@ import {
 } from '../../../ui/AlertDialog'
 import { ProgressRing } from '../../../ui/ProgressRing'
 
+import { isRasterDataset } from './src/mapServices'
+import { fileIdFromOrgDatasetId, orgFileDatasetId, URL_DATASET_PUBLISHER } from './src/orgDatasetFiles'
 import { buildPublishedTileDatasets } from './src/publishedTiles'
 import { useAddDatasetToMap } from './src/useAddDatasetToMap'
 
@@ -92,10 +94,9 @@ export default function RowActions({
   const [publishing, setPublishing] = React.useState(false)
   const [published, setPublished] = React.useState(false)
 
-  const isOrgFile = typeof dataset.id === 'string' && dataset.id.startsWith('org-minio-')
-  const fileId = isOrgFile
-    ? Number(String(dataset.id).slice('org-minio-'.length))
-    : null
+  const fileId = fileIdFromOrgDatasetId(dataset.id)
+  const isOrgFile = fileId != null
+  const isStoredUpload = isOrgFile && dataset.publisher !== URL_DATASET_PUBLISHER && !isRasterDataset(dataset)
 
   const tiledMatch = typeof dataset.id === 'string'
     ? /^org_(\d+)_file_(\d+)$/.exec(dataset.id)
@@ -171,7 +172,7 @@ export default function RowActions({
   }
 
   const onPublish = async () => {
-    if (fileId == null || Number.isNaN(fileId)) return
+    if (fileId == null) return
     setPublishing(true)
     try {
       const res = await fetch('/api/datasets/publish-tiles', {
@@ -190,7 +191,7 @@ export default function RowActions({
 
       // Swapped optimistically: the org refetch below re-samples a tile per dataset and takes seconds.
       const tileBaseUrl = (martinBaseUrl ?? '').replace(/\/+$/, '')
-      const orgFileDatasetId = `org-minio-${fileId}`
+      const optimisticId = orgFileDatasetId(fileId)
       const [optimistic] = buildPublishedTileDatasets(
         [{
           name: dataset.name,
@@ -201,13 +202,13 @@ export default function RowActions({
       )
       if (optimistic) {
         const current = orgDatasets ?? []
-        const swapped = current.some(d => d.id === orgFileDatasetId)
-          ? current.map(d => (d.id === orgFileDatasetId ? optimistic : d))
+        const swapped = current.some(d => d.id === optimisticId)
+          ? current.map(d => (d.id === optimisticId ? optimistic : d))
           : [...current, optimistic]
         datasetsDispatch({ type: 'SET_DATASETS', payload: { datasets: swapped } })
         // Keep the map layer in sync if this dataset was already applied.
-        if (addedDatasets.some(d => d.id === orgFileDatasetId)) {
-          datasetsDispatch({ type: 'REMOVE_DATASET_FROM_MAP', payload: { datasetId: orgFileDatasetId } })
+        if (addedDatasets.some(d => d.id === optimisticId)) {
+          datasetsDispatch({ type: 'REMOVE_DATASET_FROM_MAP', payload: { datasetId: optimisticId } })
           datasetsDispatch({ type: 'ADD_DATASET_TO_MAP', payload: { dataset: optimistic } })
         }
       }
@@ -295,7 +296,7 @@ export default function RowActions({
         />
       </Button>
 
-      {isOrgFile && (
+      {isStoredUpload && (
         <Button
           variant="ghost"
           size="icon"

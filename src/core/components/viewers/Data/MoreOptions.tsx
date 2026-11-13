@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-// Dependencies
 import {
   MoreHorizontal,
   Map,
@@ -25,29 +24,19 @@ import {
 import ExportData from '../../../components/ui/ExportData'
 import { useDeleteSite } from '../../../hooks/sites/sites'
 import { useUser } from '../../../hooks/users/users'
-import { BuildingsContext, DatasetsContext, MapContext, MenusContext, useMapSitesContext } from '../../../store'
+import { BuildingsContext, MenusContext, useMapSitesContext } from '../../../store'
 import { usePermissions } from '../../../store'
 import { ViewerNames } from '../../../types/'
-import { createBuildingsDataset } from '../map/src/MapLayers/src/BuildingLayers/src/databaseBuildings'
+import { buildingDisplayName } from '../../../utils/buildingDisplayName'
+import { useBuildingFocus } from '../map/src/BuildingFocus/useBuildingFocus'
 import { useShowSitesOnMap } from '../map/src/MapLayers/src/SiteLayer/useShowSitesOnMap'
 
+import DeleteBuildingDialog from './buildingDetails/DeleteBuildingDialog'
 import FileMoreOptions from './files/FileMoreOptions'
 
 import type { DataTypes} from '../../../types/';
-import type { Dataset } from '../../../types/datasetTypes'
-import type { Building, Site, User } from '../../../types/dbTypes'
-
-// Shadcn Components
-
-
-// Icons
-
-// Custom Components
-
-
+import type { Building, BuildingRemoval, Site, User } from '../../../types/dbTypes'
 import type { FileRow } from '../../../types/files'
-
-
 
 interface MoreOptionsProps {
   row: Building | Site | FileRow | Partial<User>
@@ -59,22 +48,17 @@ interface MoreOptionsProps {
 }
 
 export default function MoreOptions({ row, dataType, variant, setView, hideViewOnMap = false, onDeleteUser }: MoreOptionsProps) {
-  // Translations
   const t = useTranslations('MoreOptions')
-  // Permissions
   const { ability } = usePermissions()
 
-  const { state: mapState } = React.useContext(MapContext)
   const { dispatch: menusDispatch } = React.useContext(MenusContext)
-  const { dispatch: datasetDispatch } = React.useContext(DatasetsContext)
   const { dispatch: buildingsDispatch } = React.useContext(BuildingsContext)
   const { dispatch: mapSitesDispatch } = useMapSitesContext()
   const showSitesOnMap = useShowSitesOnMap()
+  const { focus: focusBuildings, clear: clearBuildingFocus } = useBuildingFocus()
 
-  // States
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = React.useState(false)
-
-  const { map } = mapState.map
+  const [isBuildingDialogOpen, setIsBuildingDialogOpen] = React.useState(false)
 
   const siteId = dataType === 'site' && row && 'id' in row ? row.id : undefined
   const { deleteSite, isMutating: isDeleting } = useDeleteSite(siteId)
@@ -87,8 +71,7 @@ export default function MoreOptions({ row, dataType, variant, setView, hideViewO
     if (!siteId) return
     try {
       await deleteSite(siteId)
-      // Remove the polygon from the map if it is currently shown, so it doesn't
-      // linger as an un-backed "ghost" that still opens the context menu.
+      // Otherwise the deleted polygon lingers on the map and still opens the context menu.
       mapSitesDispatch({ type: 'HIDE_SITE', payload: { id: Number(siteId) } })
       toast.success("Site deleted successfully")
       setIsConfirmDialogOpen(false)
@@ -114,15 +97,18 @@ export default function MoreOptions({ row, dataType, variant, setView, hideViewO
     }
   }
 
+  const handleBuildingRemoved = (result: BuildingRemoval) => {
+    clearBuildingFocus()
+    buildingsDispatch({ type: 'REMOVE-BUILDING', payload: { buildingId: result.buildingId } })
+    setView?.('table')
+  }
+
   const handleViewOnMap = async (row: Building | Site | FileRow | Partial<User>) => {
-    // Sites: switch to the map and render the saved polygon boundary (falls
-    // back to the site's point if it has no drawn boundary yet).
     if (dataType === 'site' && 'id' in row && row.id) {
       await showSitesOnMap([row as Site])
       return
     }
 
-    // Buildings: add as a dataset and fly to it.
     if (
       dataType === 'building'
       && 'buildingLatitude' in row
@@ -131,27 +117,13 @@ export default function MoreOptions({ row, dataType, variant, setView, hideViewO
       && typeof row.buildingLongitude === 'number'
     ) {
       const building = row as Building
-      const coordinates: [number, number] = [building.buildingLongitude, building.buildingLatitude]
-      const name = building.buildingName || building.buildingAddress || 'Unnamed Building'
-      const dataset: Dataset = createBuildingsDataset([building], name)
-      datasetDispatch({ type: 'ADD_DATASET_TO_MAP', payload: { dataset } })
-      menusDispatch({ type: 'SET_VIEWER', payload: { currentViewer: ViewerNames.map } })
-      if (map) map.flyTo({ center: coordinates, zoom: 18, duration: 1000 })
+      focusBuildings([building], { name: buildingDisplayName(building) ?? 'Unnamed Building', fly: 'single' })
     }
   }
 
   const handleViewBIM = (row: Building | Site | FileRow | Partial<User>) => {
-    const building = row as Building
-           buildingsDispatch({
-        "type": "SET-CURRENT-BUILDING",
-        "payload": { building },
-      });
-    // set the current viewer to map
-    menusDispatch({
-      type: 'SET_VIEWER',
-      payload: { currentViewer: ViewerNames.bim },
-    })
-
+    buildingsDispatch({ type: 'SET-CURRENT-BUILDING', payload: { building: row as Building } })
+    menusDispatch({ type: 'SET_VIEWER', payload: { currentViewer: ViewerNames.bim } })
   }
 
   if (dataType === 'file') {
@@ -214,6 +186,12 @@ export default function MoreOptions({ row, dataType, variant, setView, hideViewO
               {isDeleting && <LoadingSpinner />}
             </DropdownMenuItem>
           )}
+          {dataType === 'building' && ability.can('delete', 'Building') && (
+            <DropdownMenuItem onClick={() => setIsBuildingDialogOpen(true)}>
+              <Trash2 />
+              {t('deleteBuilding')}
+            </DropdownMenuItem>
+          )}
           {dataType === 'user' && ability.can('delete', 'User') &&(
             <DropdownMenuItem
               onClick={() => setIsConfirmDialogOpen(true)}
@@ -225,7 +203,14 @@ export default function MoreOptions({ row, dataType, variant, setView, hideViewO
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-      {/* Confirm Dialog */}
+      {dataType === 'building' && (
+        <DeleteBuildingDialog
+          building={row as Building}
+          open={isBuildingDialogOpen}
+          onOpenChange={setIsBuildingDialogOpen}
+          onRemoved={handleBuildingRemoved}
+        />
+      )}
       <ConfirmDialog
         isOpen={isConfirmDialogOpen}
         isDeleting={dataType === 'site' ? isDeleting : isDeletingUser}

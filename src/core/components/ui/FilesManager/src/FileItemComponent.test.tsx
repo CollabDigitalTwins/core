@@ -14,6 +14,7 @@ vi.mock('../../../../store', () => ({
 }))
 
 vi.mock('../../../ConfirmDialog', () => ({ default: () => null }))
+vi.mock('../../../viewers/shared/placement/GeolocationDialog', () => ({ GeolocationDialog: () => null }))
 
 vi.mock('../../DropdownMenu', () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -73,5 +74,45 @@ describe('FileMenuContent scene tools', () => {
     renderMenu(false, ['download', 'view', 'delete'])
 
     expect(items()).toEqual(expect.arrayContaining(['downloadTitle']))
+  })
+})
+
+describe('FileMenuContent placement', () => {
+  const renderFile = (file: Partial<DbFile>, { hostsGeolocation = true } = {}) => render(
+    <FileMenuContent file={{ id: 2, name: 'chair.glb', isVisible: true, ...file } as DbFile} onAction={vi.fn()} options={SCENE_OPTIONS} onGeolocate={hostsGeolocation ? vi.fn() : undefined} />,
+  )
+
+  it('offers Place for a model that has no position in the scene yet', () => {
+    renderFile({ extension: 'glb' })
+
+    expect(items()).toEqual(expect.arrayContaining(['placeTitle']))
+    expect(items()).not.toEqual(expect.arrayContaining(['moveTitle']))
+  })
+
+  it('offers Move once the model has a scene position', () => {
+    renderFile({ extension: 'glb', fileTransformX: 0, fileTransformY: 0, fileTransformZ: 0 })
+
+    expect(items()).toEqual(expect.arrayContaining(['moveTitle']))
+  })
+
+  it('treats a BIM model as placed, since it loads at the origin', () => {
+    renderFile({ name: 'tower.frag', extension: 'frag' })
+
+    expect(items()).not.toEqual(expect.arrayContaining(['placeTitle']))
+  })
+
+  it('offers Geolocate for a model', () => {
+    renderFile({ extension: 'frag' })
+    expect(items()).toEqual(expect.arrayContaining(['geolocateTitle']))
+  })
+
+  it('does not offer Geolocate for a document', () => {
+    renderFile({ name: 'spec.pdf', extension: 'pdf' })
+    expect(items()).not.toEqual(expect.arrayContaining(['geolocateTitle']))
+  })
+
+  it('does not offer Geolocate when no caller hosts the dialog', () => {
+    renderFile({ extension: 'frag' }, { hostsGeolocation: false })
+    expect(items()).not.toEqual(expect.arrayContaining(['geolocateTitle']))
   })
 })

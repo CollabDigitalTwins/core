@@ -16,6 +16,8 @@ export interface UseFileUploadWithProgressProps {
   onUploadError?: (error: Error) => void
   /** Names already taken, so a clash is stored with a numeric suffix rather than shadowing. */
   existingNames?: string[]
+  /** Attaches every upload to this building, so the BIM viewer lists it. */
+  buildingId?: number
 }
 
 export interface UploadState {
@@ -34,6 +36,7 @@ export function useFileUploadWithProgress({
   onUploadSuccess,
   onUploadError,
   existingNames = [],
+  buildingId,
 }: UseFileUploadWithProgressProps = {}) {
   const [pendingName, setPendingName] = React.useState<string | null>(null)
   const inputRef = React.useRef<HTMLInputElement | null>(null)
@@ -49,7 +52,7 @@ export function useFileUploadWithProgress({
     return response.json()
   }, [])
 
-  const intake = useFileIntake({ existingNames, uploadFile: createFile })
+  const intake = useFileIntake({ buildingId, existingNames, uploadFile: createFile })
 
   const uploadState: UploadState = React.useMemo(() => {
     if (!pendingName) return IDLE

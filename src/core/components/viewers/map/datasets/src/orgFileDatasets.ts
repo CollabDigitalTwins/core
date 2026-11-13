@@ -5,11 +5,14 @@ import { DatasetGroup } from '../../../../../types/dbTypes'
 import { layerColorByName } from '../../utils/stringToColour'
 
 import { fetchJsonOrThrow } from './http'
+import { mapServiceDataset } from './mapServices'
+import { ORG_DATASET_TAG, orgFileDatasetId, URL_DATASET_PUBLISHER, type UrlDatasetSource } from './orgDatasetFiles'
+import { arcgisUrlDataset } from './urlSources'
 
-import type { Dataset, FeatureRequest } from '../../../../../types/datasetTypes'
+import type { Dataset, FeatureRequest, MapServiceKind } from '../../../../../types/datasetTypes'
 import type { AllGeoJSON } from '@turf/turf'
 
-interface OrgDatasetDescription {
+interface OrgDatasetDescription extends Partial<UrlDatasetSource> {
   bucket?: string
   geometryType?: 'points' | 'lines' | 'polygons'
   tiledTable?: string
@@ -32,8 +35,6 @@ interface RawFileRow {
   municipality?: string | null
 }
 
-const TAG = 'organizational-dataset'
-
 function parseDescription(value: string | null | undefined): OrgDatasetDescription | null {
   if (!value) return null
   try {
@@ -47,6 +48,19 @@ function parseDescription(value: string | null | undefined): OrgDatasetDescripti
 
 function withBbox(url: string, bbox: [number, number, number, number]): string {
   return `${url}${url.includes('?') ? '&' : '?'}bbox=${bbox.map(value => value.toFixed(6)).join(',')}`
+}
+
+// Live services are rebuilt from their saved URL; their features never pass through object storage.
+async function serviceDataset(row: RawFileRow, source: UrlDatasetSource, organization: number): Promise<Dataset> {
+  const id = orgFileDatasetId(row.id)
+  const name = row.name || `Dataset ${row.id}`
+  if (source.serviceType === 'arcgis') {
+    return { ...await arcgisUrlDataset(source.sourceUrl, organization), id, name }
+  }
+  return mapServiceDataset(
+    { kind: source.serviceType as MapServiceKind, url: source.sourceUrl, layer: source.layer },
+    { id, name, group: DatasetGroup.Organizational, organization, publisher: URL_DATASET_PUBLISHER },
+  )
 }
 
 /** Rebuilds "Add Dataset" uploads from File rows tagged `organizational-dataset`, loading GeoJSON on first render. */
@@ -72,18 +86,29 @@ export async function fetchOrganizationalFileDatasets(
   const datasets: Dataset[] = []
   for (const row of rows) {
     if (row.type !== 'map-file') continue
-    if (row.tag !== TAG) continue
+    if (row.tag !== ORG_DATASET_TAG) continue
 
     const meta = parseDescription(row.description)
     // Hidden only once Martin serves the table, or the file vanishes during the publish restart.
     if (meta?.tiledTable && publishedTilesInCatalog.has(meta.tiledTable)) continue
 
+    if (meta?.sourceUrl && meta.serviceType && meta.serviceType !== 'geojson') {
+      const source = { sourceUrl: meta.sourceUrl, serviceType: meta.serviceType, layer: meta.layer }
+      try {
+        datasets.push(await serviceDataset(row, source, organizationId))
+      }
+      catch (err) {
+        console.warn(`fetchOrganizationalFileDatasets: could not rebuild ${source.sourceUrl}`, err)
+      }
+      continue
+    }
+
     // A rebuilt object path would need anonymous bucket reads; only the presigned URL works.
-    const sourceUrl = row.url
+    const sourceUrl = meta?.sourceUrl ?? row.url
     if (!sourceUrl) continue
 
     const name = row.name?.replace(/\.geojson$/i, '') || `Dataset ${row.id}`
-    const id = `org-minio-${row.id}`
+    const id = orgFileDatasetId(row.id)
     const viewport = typeof meta?.minZoom === 'number' ? { minZoom: meta.minZoom } : undefined
     let cached: AllGeoJSON | null = null
 
@@ -104,7 +129,7 @@ export async function fetchOrganizationalFileDatasets(
       organization: organizationId,
       name,
       type: 'Organizational',
-      publisher: 'Organizational',
+      publisher: meta?.sourceUrl ? URL_DATASET_PUBLISHER : 'Organizational',
       license: 'Unknown',
       contact: 'Unknown',
       description: `Uploaded ${row.uploadedAt ?? ''}`.trim(),

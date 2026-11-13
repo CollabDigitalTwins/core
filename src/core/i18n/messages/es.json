@@ -446,7 +446,11 @@
     "appliedLayers": "{count, plural, one {Capa} other {Capas}}",
     "style": "Estilo",
     "reorder": "Arrastrar para reordenar",
-    "closeStyle": "Cerrar estilo"
+    "closeStyle": "Cerrar estilo",
+    "hide": "Ocultar capa",
+    "show": "Mostrar capa",
+    "zoomToExtent": "Acercar a la extensión",
+    "deactivate": "Quitar del mapa"
   },
   "MapLegend": {
     "title": "Leyenda",
@@ -580,7 +584,8 @@
     "pointCloudsTitle": "Nubes de puntos",
     "addPointCloudTitle": "Añadir nube de puntos",
     "uploadingFile": "Subiendo...",
-    "bimTitle": "BIM"
+    "bimTitle": "BIM",
+    "geolocateTitle": "Geolocalizar"
   },
   "FileMoreOptions": {
     "open": "Abrir menú",
@@ -643,7 +648,6 @@
   "FilterButtons": {
     "addBuilding": "Edificio",
     "fileType": "Tipo de archivo",
-    "srFilters": "Abrir filtros",
     "no": "No hay",
     "noMatch": " coinciden con su búsqueda",
     "noAvail": " disponibles.",
@@ -717,7 +721,15 @@
     "viewButton": "Ver todo en el mapa",
     "compare": "Comparar",
     "addBuilding": "Añadir edificio",
-    "addUser": "Añadir usuario"
+    "addUser": "Añadir usuario",
+    "resultCount": "{count, plural, one {# resultado} other {# resultados}}",
+    "clearAll": "Borrar todo",
+    "filters": "Filtros",
+    "removeFilter": "Quitar filtro {label}",
+    "site": "Sitio",
+    "building": "Edificio",
+    "infrastructure": "Infraestructura",
+    "fileType": "Tipo de archivo"
   },
   "InfrastructureDetails": {
     "toastSuccessCreate": "Infraestructura creada con éxito",
@@ -779,7 +791,9 @@
     "subdivisionTitle": "División administrativa",
     "municipalTitle": "Municipal",
     "liveDataTitle": "Datos en vivo",
-    "noDatasets": "No hay conjuntos de datos disponibles."
+    "noDatasets": "No hay conjuntos de datos disponibles.",
+    "addToMap": "Añadir al mapa",
+    "removeFromMap": "En el mapa: haz clic para quitar"
   },
   "LightingManagement": {
     "lightingTitle": "Iluminación",
@@ -860,7 +874,8 @@
     "deleteSite": "Eliminar sitio",
     "deleteUser": "Eliminar usuario",
     "userDeleted": "Usuario eliminado con éxito",
-    "userDeleteFailed": "Error al eliminar usuario"
+    "userDeleteFailed": "Error al eliminar usuario",
+    "deleteBuilding": "Eliminar edificio"
   },
   "NavUser": {
     "dropdownLabel": "Mi cuenta",
@@ -2213,10 +2228,6 @@
     "turnModelConfirm": "Rotar",
     "scaledFile": "Se escaló «{name}»",
     "positionAcceptedToast": "La posición del archivo se ha guardado.",
-    "linkBuildingTitle": "¿Vincular con este edificio?",
-    "linkBuildingBody": "\"{file}\" se colocó sobre \"{building}\". Al vincularlo, el modelo queda archivado en ese edificio. Puede colocarlo sin vincular si pertenece a otro sitio.",
-    "linkBuildingConfirm": "Vincular",
-    "linkBuildingCancel": "No vincular",
     "linkedToBuilding": "\"{file}\" se vinculó con \"{building}\"",
     "linkFailed": "\"{file}\" se colocó, pero no se pudo vincular con \"{building}\""
   },
@@ -2414,5 +2425,42 @@
       "deletedUser": "Usuario desconocido",
       "empty": "Ninguna subida coincide."
     }
+  },
+  "Geolocation": {
+    "title": "Geolocalizar \"{name}\"",
+    "description": "Indica dónde se ubica el archivo en su sistema de coordenadas de origen. El origen se conserva para que puedas volver a él después de mover el archivo en el mapa.",
+    "crs": "Sistema de coordenadas",
+    "customCrs": "Otro (definición proj4)",
+    "proj4Def": "Definición proj4",
+    "easting": "Coordenada este (m)",
+    "northing": "Coordenada norte (m)",
+    "longitude": "Longitud",
+    "latitude": "Latitud",
+    "sourceHeight": "Altura de origen (m)",
+    "sourceHeightHint": "La altura de origen se guarda solo como referencia. En el mapa la elevación se mide desde el terreno; ajústala con Mover.",
+    "rotation": "Rotación desde el norte (°)",
+    "preview": "Latitud {lat}, longitud {lng}",
+    "invalid": "Introduce coordenadas en un sistema de coordenadas convertible",
+    "resetAll": "Restablecer todo",
+    "resetField": "Restablecer al valor guardado",
+    "save": "Guardar ubicación",
+    "revert": "Volver a la posición de origen",
+    "saved": "\"{name}\" geolocalizado",
+    "reverted": "\"{name}\" volvió a su posición de origen",
+    "saveFailed": "No se pudo guardar la ubicación de \"{name}\""
+  },
+  "DeleteBuildingDialog": {
+    "title": "¿Quitar {name} de esta organización?",
+    "body": "Las demás organizaciones que comparten este edificio lo conservan. Si ninguna lo comparte, se elimina.",
+    "associated": "Vinculado a este edificio: {files, plural, one {# archivo} other {# archivos}}, {sensors, plural, one {# sensor} other {# sensores}}, {comments, plural, one {# comentario} other {# comentarios}}.",
+    "defaultOutcome": "Los archivos se desvinculan y permanecen en Archivos. Los sensores y comentarios se eliminan.{isDefaultLocation, select, true { Se borra la ubicación predeterminada en el mapa.} other {}}",
+    "transferToggle": "Moverlos a otro edificio",
+    "transferPlaceholder": "Elige un edificio",
+    "transferOutcome": "Los archivos, sensores y comentarios{isDefaultLocation, select, true {, así como la ubicación predeterminada en el mapa,} other {}} pasan a {target}.",
+    "confirm": "Quitar edificio",
+    "cancel": "Cancelar",
+    "removed": "Edificio eliminado",
+    "failed": "No se pudo quitar el edificio",
+    "loadFailed": "No se pudo cargar lo que está vinculado a este edificio. Inténtalo de nuevo."
   }
 }

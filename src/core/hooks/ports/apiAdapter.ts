@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import type { Building, DbFile, Site, OpenDataPortal, DatasetGroup, User, Role, Organization, Comment, Sensor, Infrastructure, SensorType } from '../../../core/types/dbTypes'
+import type { Building, BuildingAssociations, BuildingRemoval, DbFile, Site, OpenDataPortal, DatasetGroup, User, Role, Organization, Comment, Sensor, Infrastructure, SensorType } from '../../../core/types/dbTypes'
 import type { PluginInstallation, PluginRecord, PluginUserSetting } from '../../../core/types/plugins'
 import type { UserUsageReport, VolumeReport } from '../../../core/types/usage'
 
@@ -38,6 +38,8 @@ export interface ApiAdapter {
     getBuildingOsmIds(): Promise<number[]>
     updateBuilding(id: number, patch: Partial<Building>): Promise<Building>
     createBuilding(input: { buildingData: Partial<Building>; organizationId: string }): Promise<Building>
+    getBuildingAssociations(id: number): Promise<BuildingAssociations>
+    removeBuilding(id: number, opts?: { transferToBuildingId?: number }): Promise<BuildingRemoval>
 
     //Files
     listFiles(): Promise<DbFile[]>;
@@ -118,17 +120,14 @@ export interface ApiAdapter {
     deleteSensorType(id: number): Promise<SensorType>
     createSensorType(input: { sensorTypeData: Partial<SensorType>; }): Promise<SensorType>
 
-    //Plugins
-    // Which plugins this organization has admitted, and how they default.
+    // Plugins this organization has admitted, and how they default.
     listPluginInstallations(): Promise<PluginInstallation[]>;
     upsertPluginInstallation(pluginId: string, patch: Partial<PluginInstallation>): Promise<PluginInstallation>;
     deletePluginInstallation(pluginId: string): Promise<void>;
-    // The signed-in user's own choices. The server takes the user from the
-    // session, never from the request, so there is no userId parameter here.
+    // No userId: the server takes the user from the session.
     listPluginUserSettings(): Promise<PluginUserSetting[]>;
     upsertPluginUserSetting(pluginId: string, patch: Partial<PluginUserSetting>): Promise<PluginUserSetting>;
-    // A plugin's own documents, namespaced by (pluginId, collection, key) within
-    // the caller's organization. `data` is opaque to core.
+    // Namespaced by (pluginId, collection, key) within the caller's organization; `data` is opaque to core.
     listPluginRecords(pluginId: string, collection: string): Promise<PluginRecord[]>;
     putPluginRecord(pluginId: string, collection: string, key: string, data: unknown): Promise<PluginRecord>;
     deletePluginRecord(pluginId: string, collection: string, key: string): Promise<void>;

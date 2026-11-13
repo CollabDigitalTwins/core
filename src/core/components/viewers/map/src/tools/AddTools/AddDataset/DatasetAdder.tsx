@@ -13,8 +13,17 @@ import { DatasetsContext, MapContext } from '../../../../../../../store'
 import { DatasetGroup } from '../../../../../../../types/dbTypes'
 import { Button, Input } from '../../../../../../ui/'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../../ui/Select'
+import { fitDatasetBbox } from '../../../../datasets/src/datasetExtent'
 import { parseGeoJSON, type GeoJSONSummary } from '../../../../datasets/src/geojsonFile'
 import { listWmsLayers, listWmtsLayers, mapServiceDataset, type MapServiceLayer } from '../../../../datasets/src/mapServices'
+import {
+  createOrgDatasetFile,
+  createUrlDatasetFile,
+  orgFileDatasetId,
+  URL_DATASET_PUBLISHER,
+  type DatasetGeometry,
+  type UrlDatasetSource,
+} from '../../../../datasets/src/orgDatasetFiles'
 import { normalizeOrgId } from '../../../../datasets/src/orgVisibility'
 import {
   arcgisUrlDataset,
@@ -36,9 +45,7 @@ const DATASETS_BUCKET = 'pointclouds-demo'
 const URL_TYPES: UrlSourceType[] = ['geojson', 'arcgis', 'wms', 'wmts', 'arcgisMapServer', 'arcgisImageServer', 'xyz']
 const LAYER_PICKER_TYPES = new Set<UrlSourceType>(['wms', 'wmts'])
 
-type PersistGeometry = 'points' | 'lines' | 'polygons'
-
-function dominantGeometry(summary: GeoJSONSummary): PersistGeometry {
+function dominantGeometry(summary: GeoJSONSummary): DatasetGeometry {
   let points = 0
   let lines = 0
   let polygons = 0
@@ -58,6 +65,7 @@ interface Loaded {
   summary: GeoJSONSummary
   /** Present only for file sources — enables object-storage persistence on add. */
   file?: File
+  sourceUrl?: string
 }
 
 interface DatasetAdderProps {
@@ -66,7 +74,7 @@ interface DatasetAdderProps {
 
 /**
  * Add a dataset from a GeoJSON file or a pasted URL: GeoJSON, an ArcGIS feature layer, or a map service.
- * File uploads also persist to object storage and re-hydrate on reload.
+ * Every source is saved as an organization File row and re-hydrates on reload.
  */
 export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
   const t = useTranslations('Datasets')
@@ -117,12 +125,32 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
     if (detected === 'wms') setServiceLayer(extractWmsLayers(value))
   }
 
+  // Never throws: an unsaved dataset still goes on the map, session-only.
+  const saveRow = React.useCallback(async (name: string, save: () => Promise<number>): Promise<number | null> => {
+    setSaving(true)
+    try {
+      const fileId = await save()
+      toast.success(t('toastDatasetAdded', { name }))
+      return fileId
+    }
+    catch (e) {
+      console.warn('DatasetAdder: saving the dataset failed; it will be session-only', e)
+      toast.error(t('toastDatasetNotSaved', { name, error: e instanceof Error ? e.message : 'unknown error' }))
+      return null
+    }
+    finally {
+      setSaving(false)
+    }
+  }, [t])
+
   const { addDataset: addCheckedDataset } = useAddDatasetToMap()
-  const addDataset = React.useCallback(async (dataset: Dataset) => {
+  const addUrlDataset = React.useCallback(async (dataset: Dataset, source: UrlDatasetSource) => {
     if (!await addCheckedDataset(dataset)) return
+    const fileId = await saveRow(dataset.name, () => createUrlDatasetFile(dataset.name, source))
     datasetDispatch({ type: 'ADD_DATASET', payload: { dataset } })
+    if (fileId != null) datasetDispatch({ type: 'REFRESH_ORG_DATASETS' })
     onClose?.()
-  }, [addCheckedDataset, datasetDispatch, onClose])
+  }, [addCheckedDataset, saveRow, datasetDispatch, onClose])
 
   const withBusy = React.useCallback(async (task: () => Promise<void>) => {
     setError(null)
@@ -142,11 +170,11 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
     const trimmed = url.trim()
     if (urlType === 'geojson') {
       const { featureCollection, summary } = await loadGeojsonUrl(trimmed)
-      setLoaded({ sourceName: nameFromUrl(trimmed), featureCollection, summary })
+      setLoaded({ sourceName: nameFromUrl(trimmed), featureCollection, summary, sourceUrl: trimmed })
       return
     }
     if (urlType === 'arcgis') {
-      await addDataset(await arcgisUrlDataset(trimmed, owningOrgId))
+      await addUrlDataset(await arcgisUrlDataset(trimmed, owningOrgId), { sourceUrl: trimmed, serviceType: 'arcgis' })
       return
     }
     if (LAYER_PICKER_TYPES.has(urlType) && !serviceLayer) {
@@ -157,14 +185,17 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
       return
     }
     const layerTitle = serviceLayers.find(layer => layer.name === serviceLayer)?.title
-    await addDataset(mapServiceDataset(
-      { kind: urlType, url: trimmed, layer: serviceLayer || undefined },
-      { name: layerTitle || serviceLayer || nameFromUrl(trimmed), group: DatasetGroup.Organizational, organization: owningOrgId, publisher: 'Local / URL' },
-    ))
-  }), [withBusy, url, urlType, serviceLayer, serviceLayers, addDataset, owningOrgId, t])
+    const layer = serviceLayer || undefined
+    await addUrlDataset(
+      mapServiceDataset(
+        { kind: urlType, url: trimmed, layer },
+        { name: layerTitle || serviceLayer || nameFromUrl(trimmed), group: DatasetGroup.Organizational, organization: owningOrgId, publisher: URL_DATASET_PUBLISHER },
+      ),
+      { sourceUrl: trimmed, serviceType: urlType, layer },
+    )
+  }), [withBusy, url, urlType, serviceLayer, serviceLayers, addUrlDataset, owningOrgId, t])
 
-  /** Throws rather than blocking the add; the caller degrades to a session-only dataset. */
-  const persistFile = React.useCallback(async (file: File, geometry: PersistGeometry): Promise<number> => {
+  const uploadGeojson = React.useCallback(async (file: File, geometryType: DatasetGeometry): Promise<number> => {
     const assetId = `${crypto.randomUUID()}.geojson`
     const presignedRes = await fetch(
       `/api/presigned-url-upload?asset=${encodeURIComponent(assetId)}&bucket=${DATASETS_BUCKET}`,
@@ -173,30 +204,14 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
     const { presignedUrl } = await presignedRes.json()
     await uploadToPresignedUrl(presignedUrl, file)
 
-    const fileRow = {
-      type: 'map-file',
+    return createOrgDatasetFile({
       name: file.name,
       assetId,
       mimeType: 'application/geo+json',
       extension: 'geojson',
       sizeBytes: file.size,
-      tag: 'organizational-dataset',
-      isVisible: true,
-      description: JSON.stringify({
-        bucket: DATASETS_BUCKET,
-        geometryType: geometry,
-      }),
-    }
-    const fileRes = await fetch('/api/files/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(fileRow),
+      description: { bucket: DATASETS_BUCKET, geometryType },
     })
-    if (!fileRes.ok) throw new Error(`File row create returned ${fileRes.status}`)
-
-    const { newFile } = await fileRes.json()
-    if (typeof newFile?.id !== 'number') throw new Error('File row create returned no id')
-    return newFile.id
   }, [])
 
   const addToMap = React.useCallback(async () => {
@@ -204,31 +219,21 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
     const name = loaded.sourceName.replace(/\.(geo)?json$/i, '') || loaded.sourceName
     const featureCollection = loaded.featureCollection
 
-    let persistedFileId: number | null = null
-    if (loaded.file) {
-      setSaving(true)
-      try {
-        persistedFileId = await persistFile(loaded.file, dominantGeometry(loaded.summary))
-      }
-      catch (e) {
-        console.warn('DatasetAdder: object-storage persistence failed; dataset will be session-only', e)
-        toast.error(t('toastDatasetNotSaved', {
-          name: loaded.sourceName,
-          error: e instanceof Error ? e.message : 'unknown error',
-        }))
-      }
-      finally {
-        setSaving(false)
-      }
-    }
+    const geometryType = dominantGeometry(loaded.summary)
+    const { file, sourceUrl } = loaded
+    const persistedFileId = file
+      ? await saveRow(name, () => uploadGeojson(file, geometryType))
+      : sourceUrl
+        ? await saveRow(name, () => createUrlDatasetFile(name, { sourceUrl, serviceType: 'geojson' }, geometryType))
+        : null
 
     // Must match the id orgFileDatasets.ts rebuilds: the panel dedups by name and keeps this row.
     const dataset: Dataset = {
-      id: persistedFileId != null ? `org-minio-${persistedFileId}` : `local-${Date.now()}`,
+      id: persistedFileId != null ? orgFileDatasetId(persistedFileId) : `local-${Date.now()}`,
       organization: owningOrgId,
       name,
       type: 'Organizational',
-      publisher: loaded.file ? 'Organizational' : 'Local / URL',
+      publisher: loaded.file ? 'Organizational' : URL_DATASET_PUBLISHER,
       license: 'Unknown',
       contact: '',
       description: `Imported: ${loaded.sourceName}`,
@@ -248,21 +253,15 @@ export const DatasetAdder = ({ onClose }: DatasetAdderProps) => {
     datasetDispatch({ type: 'ADD_DATASET', payload: { dataset } })
     datasetDispatch({ type: 'ADD_DATASET_TO_MAP', payload: { dataset } })
 
-    // Swap the optimistic row for the hydrated one, which carries the object-storage source URL.
-    if (persistedFileId != null) {
-      datasetDispatch({ type: 'REFRESH_ORG_DATASETS' })
-      toast.success(t('toastDatasetAdded', { name }))
-    }
+    // Swap the optimistic row for the hydrated one, which carries the stored source URL.
+    if (persistedFileId != null) datasetDispatch({ type: 'REFRESH_ORG_DATASETS' })
 
-    const bbox = loaded.summary.bbox
-    if (map && bbox) {
-      map.fitBounds([[bbox[0], bbox[1]], [bbox[2], bbox[3]]], { padding: 48, duration: 800 })
-    }
+    if (map && loaded.summary.bbox) fitDatasetBbox(map, loaded.summary.bbox)
 
     setLoaded(null)
     setError(null)
     onClose?.()
-  }, [loaded, map, datasetDispatch, persistFile, onClose, owningOrgId, t])
+  }, [loaded, map, datasetDispatch, saveRow, uploadGeojson, onClose, owningOrgId])
 
   const needsLoad = urlType === 'geojson' || (LAYER_PICKER_TYPES.has(urlType) && !serviceLayer)
 

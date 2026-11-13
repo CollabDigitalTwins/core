@@ -3,6 +3,8 @@
 
 import proj4 from 'proj4'
 
+import { WGS84 as LON_LAT } from './crsDefinitions'
+
 import type { SimpleGeometry } from './wktToGeometry'
 import type { Position } from 'geojson'
 import type { Converter } from 'proj4'
@@ -15,8 +17,6 @@ export interface SourceCrs {
 export type Projector = (position: Position) => Position
 
 export class UnknownCrsError extends Error {}
-
-const LON_LAT = 'EPSG:4326'
 
 function roundTo6(value: number): number {
   return Math.round(value * 1e6) / 1e6

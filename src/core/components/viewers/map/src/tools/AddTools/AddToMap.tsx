@@ -246,7 +246,7 @@ export default function AddToMap({ tool, organization, martinBaseUrl, geocodeEar
         icon={LR.Database}
         contentClassName="max-w-xl"
       >
-        <DatasetAdder />
+        <DatasetAdder onClose={clearTool} />
       </AddItemDialog>
 
       {/* Building */}

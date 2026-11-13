@@ -12,8 +12,7 @@ import { uploadFile as performUploadFile } from '../../uploadFile'
 
 import { uploadFiling } from './uploadFiling'
 
-// @thatopen/IfcToFragments are imported dynamically in the IFC branch below
-// (not statically) to keep ~456 KB out of the eager bundle.
+// The IFC branch imports its converters dynamically to keep ~456 KB out of the eager bundle.
 
 interface UseFileUploadHandlerProps {
   buildingId: number
@@ -78,9 +77,11 @@ export function useFileUploadHandler({
 
       if (ext === 'ifc') {
         const { convertIfcToFragmentsFile } = await import('./convertIfcToFragmentsFile')
+        const { readIfcGeoreference } = await import('./ifcGeoreference')
         const convertToastId = `ifc-convert-${file.name}`
         try {
           toast.loading(t('convertingIfc', { name: file.name, percent: 0 }), { id: convertToastId })
+          const georeference = await readIfcGeoreference(file)
           const fragFile = await convertIfcToFragmentsFile(file, (progress) => {
             toast.loading(t('convertingIfc', { name: file.name, percent: Math.round(progress * 100) }), { id: convertToastId })
           })
@@ -95,6 +96,7 @@ export function useFileUploadHandler({
             uploadFile,
             position: { ...position },
             existingNames,
+            georeference,
           })
         } finally {
           toast.dismiss(convertToastId)

@@ -210,6 +210,10 @@ export interface BuildingGeometry {
     coordinates: [number, number][][]
 }
 
+export type BuildingAssociations = { files: number; sensors: number; comments: number; isDefaultLocation: boolean }
+
+export type BuildingRemoval = { buildingId: number; buildingDeleted: boolean; transferredTo: number | null } & BuildingAssociations
+
 export interface Building {
     id: number
     buildingEmail?: string

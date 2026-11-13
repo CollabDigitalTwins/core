@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-// Dependencies
+import * as LR from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
@@ -13,23 +13,14 @@ import { useBuildings, useCreateBuilding } from '../../../hooks/buildings/buildi
 import { useFiles } from '../../../hooks/files/files'
 import { useCreateInfrastructure, useInfrastructures } from '../../../hooks/infrastructures/infrastructures'
 import { useCreateSite, useSites } from '../../../hooks/sites/sites'
+import { useIsMobile } from '../../../hooks/ui/use-mobile'
 import { useUsers } from '../../../hooks/users/users'
 import { useMenusContext } from '../../../store'
 import { useBuildingsContext } from '../../../store'
 import { useFilesContext } from '../../../store'
 import { DataTypesNames, ViewerNames } from '../../../types'
 import { handleApiError } from '../../../utils/errorHandler'
-
-// Utils
-
-
-// Custom hooks
-
-// Context
-
-// Types
-
-import { Button, Checkbox, DataTable, Input, Separator } from '../../ui/'
+import { Badge, Button, Checkbox, DataTable, Input, Separator } from '../../ui/'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -38,28 +29,25 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '../../ui/Breadcrumb'
+import { Popover, PopoverContent, PopoverTrigger } from '../../ui/Popover'
 
-
+import ActiveFilterChips from './ActiveFilterChips'
 import BuildingDetails from './buildingDetails/BuildingDetails'
-
-// Custom Components
 import DetailActions from './details/DetailActions'
 import DetailHeader from './details/DetailHeader'
 import { FileDetails } from './files/FileDetails'
 import FilterButtons from './FilterButtons'
-import HeaderButtons from './HeaderButtons'
-
-// Data
-
-
-
-
 import InfrastructureDetails from './infrastructureDetails/InfrastructureDetails'
 import MoreOptions from './MoreOptions'
+import PageActions from './PageActions'
+import ResultActions from './ResultActions'
 import SiteDetails from './siteDetails/SiteDetails'
 import UserDetails from './userDetails/UserDetails'
 import { useColumns, useUserColumns } from './utils/Columns'
+import { hasFilterButtons } from './utils/filterFieldNames'
+import { removeFilterValue } from './utils/filterHelper'
 import { useBuildingHeaders, useInfrastructureHeaders, useSiteHeaders } from './utils/Headers'
+import { useFilterChipLabels } from './utils/useFilterChipLabels'
 import { useViewerData } from './utils/useViewerData'
 import { VIEWER_CONFIG } from './utils/viewerConfig'
 
@@ -71,6 +59,7 @@ import type { Building, Site, User, Infrastructure, Organization } from '../../.
 import type { FileRow } from '../../../types/files'
 import type { FilterState } from '../../../types/global'
 
+const EMPTY_FILTER_ROW: FilterState = { id: 1, field: '', fieldType: null, operator: null, value: null, secondValue: null }
 
 type DataMenuProps = {
   currentViewer: ViewerNames
@@ -86,6 +75,8 @@ type DataMenuProps = {
 export function DataMenu({ currentViewer, height, hideTitle, hideActions, hideFrame, organization, geocodeEarthApiKey, geocoderUrl }: DataMenuProps) {
   // Translations
   const t = useTranslations('DataMenu')
+  const tHeader = useTranslations('HeaderButtons')
+  const isMobile = useIsMobile()
 
   // View state
   const { view, setView } = useMenusContext()
@@ -100,9 +91,20 @@ export function DataMenu({ currentViewer, height, hideTitle, hideActions, hideFr
   // Search / filter state
   const [searchTerm, setSearchTerm] = React.useState('')
   const [activeFilters, setActiveFilters] = React.useState<FilterState[]>([])
-  const [filters, setFilters] = React.useState([
-    { id: 1, field: '', fieldType: null, operator: null, value: null, secondValue: null },
-  ])
+  const [filters, setFilters] = React.useState<FilterState[]>([EMPTY_FILTER_ROW])
+
+  const removeFilter = (id: number, value?: string) => {
+    setActiveFilters(prev => removeFilterValue(prev, id, value))
+    setFilters((prev) => {
+      const remaining = removeFilterValue(prev, id, value)
+      return remaining.length > 0 ? remaining : [EMPTY_FILTER_ROW]
+    })
+  }
+
+  const clearAllFilters = () => {
+    setActiveFilters([])
+    setFilters([EMPTY_FILTER_ROW])
+  }
 
   const [dataType, setDataType] = React.useState<DataTypes>(DataTypesNames.building)
   const [editing, setEditing] = React.useState(false)
@@ -145,8 +147,6 @@ export function DataMenu({ currentViewer, height, hideTitle, hideActions, hideFr
     }
   }, [selectedItem?.id, selectedInfrastructure?.id, currentViewer])
 
-  const [newItemName, setNewItemName] = React.useState('')
-
   // Compare state
   const {
     compareItems,
@@ -157,9 +157,7 @@ export function DataMenu({ currentViewer, height, hideTitle, hideActions, hideFr
     removeItemFromCompare,
   } = useBuildingsContext()
 
-  // Sync dataType with current viewer. ViewerNames are plural ('sites',
-  // 'buildings', …) while DataTypes are singular ('site', 'building', …), so a
-  // direct index returns undefined for most viewers — map explicitly.
+  // ViewerNames are plural and DataTypes singular, so a direct index misses most viewers.
   React.useEffect(() => {
     const viewerToDataType: Partial<Record<string, DataTypes>> = {
       [ViewerNames.buildings]: DataTypesNames.building,
@@ -171,10 +169,10 @@ export function DataMenu({ currentViewer, height, hideTitle, hideActions, hideFr
     setDataType(viewerToDataType[currentViewer] ?? DataTypesNames.building)
   }, [currentViewer])
 
-  // Reset compare state when viewer changes
   React.useEffect(() => {
     setComparing(false)
     setCompareItems([])
+    clearAllFilters()
   }, [currentViewer, setComparing, setCompareItems])
 
   // Data fetching
@@ -198,6 +196,8 @@ export function DataMenu({ currentViewer, height, hideTitle, hideActions, hideFr
     handleApiError(createBuildingError)
     handleApiError(createInfrastructureError)
   }, [buildingsError, sitesError, infrastructuresError, filesError, usersError, createSiteError, createBuildingError, createInfrastructureError])
+
+  const filterChipLabels = useFilterChipLabels({ buildings, sites, infrastructures })
 
   const tableColumns = useColumns(buildings || [])
   const userColumns = useUserColumns()
@@ -229,6 +229,12 @@ export function DataMenu({ currentViewer, height, hideTitle, hideActions, hideFr
     filters,
     userEmail: user?.email || '',
   })
+
+  const collectionData = currentViewer === ViewerNames.buildings
+    || currentViewer === ViewerNames.sites
+    || currentViewer === ViewerNames.infrastructure
+    ? filteredData as Array<Building | Site>
+    : undefined
 
   const openedCurrentFileIdRef = React.useRef<number | null>(null)
 
@@ -332,11 +338,7 @@ const handleBackToTable = () => {
     }
   }
 
-  /**
-   * Handles creation of a new entity (id < 0).
-   * Calls saveChanges on the appropriate ref, then shows a toast.
-   * Pass successKey as undefined for viewers that show their own success toast (e.g. buildings).
-   */
+  // Omit successKey for viewers that toast their own success (buildings).
   const handleCreate = async (
     ref: React.RefObject<{ saveChanges: () => Promise<void> }>,
     toastKeys: { successKey?: string; errorKey: string },
@@ -381,6 +383,29 @@ const handleBackToTable = () => {
     || (selectedInfrastructure && selectedInfrastructure.id < 0)
   )
 
+  const pageActions = (
+    <PageActions
+      currentViewer={currentViewer}
+      users={currentViewer === ViewerNames.users ? users : undefined}
+      geocodeEarthApiKey={geocodeEarthApiKey}
+      geocoderUrl={geocoderUrl}
+      filteredData={collectionData}
+    />
+  )
+
+  const filterButtons = (
+    <FilterButtons
+      currentViewer={currentViewer}
+      filters={filters}
+      activeFilters={activeFilters}
+      filterFields={filtersOptions}
+      data={data}
+      setFilters={setFilters}
+      setActiveFilters={setActiveFilters}
+      collapsed={isMobile}
+    />
+  )
+
   // Render
 
   return (
@@ -420,10 +445,10 @@ const handleBackToTable = () => {
               <>
                 {/* Title Row */}
                 {!hideTitle && (
-                  <div className="flex flex-row justify-between items-center px-6 py-6">
-                    <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-row justify-between items-start gap-3 px-3 sm:px-6 py-6">
+                    <div className="flex flex-col gap-1.5 min-w-0">
                       <div className="flex items-center gap-2">
-                        <MenuIcon className="h-8 w-8" />
+                        <MenuIcon className="h-8 w-8 shrink-0" />
                         <h1 className="text-2xl text-foreground">{headerTitle}</h1>
                       </div>
                       {comparing && (
@@ -432,12 +457,13 @@ const handleBackToTable = () => {
                         </h2>
                       )}
                     </div>
+                    <div className="flex flex-wrap justify-end gap-2">{pageActions}</div>
                   </div>
                 )}
 
                 {/* Search & Filter & Actions Row */}
-                <div className={`flex flex-col sm:flex-row ${hideTitle ? 'sm:justify-between' : 'sm:justify-end'} items-stretch sm:items-center px-3 sm:px-6 py-4 gap-3 sm:gap-4`}>
-                  <div className={`w-full ${hideTitle ? 'sm:w-64' : 'sm:w-96'}`}>
+                <div className="flex flex-wrap items-center gap-2 px-3 sm:px-6 py-4">
+                  <div className="w-full sm:w-80">
                     <Input
                       placeholder={`${t('searchPlaceholder')} ${headerTitle}...`}
                       value={searchTerm}
@@ -445,38 +471,48 @@ const handleBackToTable = () => {
                     />
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    <FilterButtons
-                      currentViewer={currentViewer}
-                      filters={filters}
+                  {isMobile && hasFilterButtons(currentViewer)
+                    ? (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" className="border-dashed">
+                              <LR.ListFilter />
+                              {tHeader('filters')}
+                              {activeFilters.length > 0 && <Badge>{activeFilters.length}</Badge>}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent align="start" className="flex w-auto flex-col items-stretch gap-2 p-2">
+                            {filterButtons}
+                          </PopoverContent>
+                        </Popover>
+                      )
+                    : filterButtons}
+
+                  <div className="flex-1" />
+
+                  <ResultActions
+                    headerTitle={headerTitle}
+                    currentViewer={currentViewer}
+                    filteredData={collectionData}
+                    compareItems={compareItems}
+                    setCompareItems={setCompareItems}
+                    comparing={comparing}
+                    setComparing={setComparing}
+                  />
+                  {hideTitle && pageActions}
+                </div>
+
+                {activeFilters.length > 0 && (
+                  <div className="px-3 sm:px-6 pb-3">
+                    <ActiveFilterChips
                       activeFilters={activeFilters}
-                      filterFields={filtersOptions}
-                      data={data}
-                      setFilters={setFilters}
-                      setActiveFilters={setActiveFilters}
-                    />
-                    <HeaderButtons
-                      headerTitle={headerTitle}
-                      currentViewer={currentViewer}
-                      compareItems={compareItems}
-                      setCompareItems={setCompareItems}
-                      comparing={comparing}
-                      setComparing={setComparing}
-                      newItemName={newItemName}
-                      setNewItemName={setNewItemName}
-                      filteredData={
-                        currentViewer === ViewerNames.buildings
-                        || currentViewer === ViewerNames.sites
-                        || currentViewer === ViewerNames.infrastructure
-                          ? filteredData
-                          : undefined
-                      }
-                      users={currentViewer === ViewerNames.users ? users : undefined}
-                      geocodeEarthApiKey={geocodeEarthApiKey}
-                      geocoderUrl={geocoderUrl}
+                      onRemove={removeFilter}
+                      onClearAll={clearAllFilters}
+                      fieldLabel={filterChipLabels.fieldLabel}
+                      valueLabel={filterChipLabels.valueLabel}
                     />
                   </div>
-                </div>
+                )}
 
                 <Separator />
               </>

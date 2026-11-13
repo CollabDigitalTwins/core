@@ -8,7 +8,6 @@ import { useSearchParams } from 'next/navigation'
 import React from 'react'
 import Map, { NavigationControl } from 'react-map-gl/maplibre'
 
-
 import { PluginMapLayerHost } from '../../../plugins/host/PluginMapLayerHost'
 import { MapContext } from '../../../store'
 import { SensorLegend } from '../../ui/Sensors/SensorLegend'
@@ -16,7 +15,7 @@ import SettingsButton from '../../ui/SettingsButton'
 import { StatsOverlay } from '../../ui/stats'
 
 import DatasetManagerMenu from './datasets/DatasetManager'
-
+import { useClearBuildingFocus } from './src/BuildingFocus/useClearBuildingFocus'
 import { MapLayers } from './src/MapLayers'
 import { MapTilerKeyNotice } from './src/MapTilerKeyNotice'
 import { MapClickManager } from './utils/MapEventManager/MapClickManager'
@@ -26,9 +25,6 @@ import { resolveStyleSpec, TERRAIN_SPEC } from './utils/mapStyleSpec'
 import { presentLevels } from './utils/urlLocation/locationTarget'
 import { useUrlFlyTo } from './utils/urlLocation/useUrlFlyTo'
 import { resolveBounds } from './utils/validateBounds'
-
-
-
 
 import type { Organization } from '../../../types/dbTypes'
 import type { CurrentLocation } from '../../../types/map'
@@ -82,8 +78,7 @@ export function MapViewer({ width = '100%', height = '100%', organization, mapti
     [width, height],
   )
 
-  // Adaptive pixel ratio. A hardcoded 2 doubled fragment-shader cost on 1× DPR
-  // desktops for zero visual gain; capping at 2 keeps phones (DPR 3-4) effective.
+  // Capped at 2: phones report DPR 3-4 and the extra fragment cost buys nothing visible.
   const pixelRatio = React.useMemo(
     () => Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 2),
     [],
@@ -92,12 +87,11 @@ export function MapViewer({ width = '100%', height = '100%', organization, mapti
   const mapRef = React.useRef<MapRef>(null)
   const { dispatch: mapDispatch, state: mapState } = React.useContext(MapContext)
 
-  // Keep the projection in sync with zoom at all times — not only while the
-  // map-settings sidebar is mounted. The globe projection degrades past
-  // MAX_GLOBE_ZOOM, so we force mercator regardless of which panels are open.
+  useClearBuildingFocus()
   const activeMap = mapState?.map?.map
   useUrlFlyTo(isMapLoaded ? activeMap : undefined, organization.country ?? undefined)
 
+  // Lives here, not in the map-settings sidebar, so the projection follows zoom whichever panels are open.
   React.useEffect(() => {
     if (!activeMap) return
 
@@ -190,13 +184,9 @@ export function MapViewer({ width = '100%', height = '100%', organization, mapti
     setIsMapLoaded(true)
   }
 
-  // Enable the perf HUD by appending ?debug=1 to the URL. Never reaches
-  // production users unless they explicitly opt in.
   const isDebug = searchParams.get('debug') === '1'
 
-  // useCallback so the onDblClick prop identity is stable across renders of
-  // MapViewer; a new function each render caused react-map-gl to detach/re-attach
-  // the listener. The console.log is intentional dev-only coordinate debugging.
+  // Stable identity: react-map-gl re-attaches the listener whenever this prop changes.
   const onDblClick = React.useCallback((e) => {
     if (process.env.NODE_ENV === 'production') return
     const { lng, lat } = e.lngLat

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import type { FilterState } from '../../../../types/global'
+
 // TODO: Enforce more striclty type later
 type FilterType = {
   id: number // id of the filter
@@ -65,8 +67,7 @@ export function filterHelper(data: any[], filters: FilterType[]) {
           break
 
         case 'number':
-          // Cell values can arrive as numeric strings from external portals, so
-          // coerce both sides (the ordering operators below coerce implicitly).
+          // External portals send numeric strings; the ordering operators below coerce implicitly.
           if (operator === 'equals') return Number(row[field]) === Number(value)
           if (operator === 'lessThan') return row[field] < value
           if (operator === 'between' && secondValue != null) return value <= row[field] && row[field] <= secondValue
@@ -138,4 +139,14 @@ export const getNarrowedFilterOptions = (
   }
 
   return newBaseOptions
+}
+
+/** Drops one value from the filter with this id, or the whole filter when no value is given or none remain. */
+export function removeFilterValue(filters: FilterState[], id: number, value?: string): FilterState[] {
+  return filters.flatMap((filter) => {
+    if (filter.id !== id) return [filter]
+    if (value === undefined || !Array.isArray(filter.value)) return []
+    const remaining = filter.value.filter(item => item !== value)
+    return remaining.length > 0 ? [{ ...filter, value: remaining }] : []
+  })
 }

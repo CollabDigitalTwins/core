@@ -117,6 +117,7 @@ export default function DetailActions({
               row={selectedItem}
               dataType={DataTypesNames.building}
               variant="outline"
+              setView={setView}
             />
           )
           : selectedSite

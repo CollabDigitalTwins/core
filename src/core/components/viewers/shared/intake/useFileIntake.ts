@@ -7,14 +7,14 @@ import { useSession } from 'next-auth/react'
 import * as React from 'react'
 import { toast } from 'sonner'
 
-import { typeOfFile } from '../../../ui/FilesManager/src/fileType'
+import { PLACED_BY_USER, typeOfFile } from '../../../ui/FilesManager/src/fileType'
 import { beginTask, endTask, updateTask } from '../../../ui/FilesManager/src/uploadProgress'
 import { useUploadLabels } from '../../../ui/FilesManager/src/UploadProgressBar'
 import { uploadFile as performUploadFile } from '../../../ui/uploadFile'
 import { DEFAULT_SPLAT_PLACEMENT } from '../splat/splatUpAxis'
 
 import type { SourceUpAxis } from '../../../../types/dbTypes'
-import type { FileType } from '../../../ui/FilesManager/src/fileType'
+import type { GeoreferenceColumns } from '../../../../utils/geo/georeference'
 
 /** Where a freshly uploaded file lands: scene metres in a 3D viewer, degrees on the map. */
 export interface IntakePlacement {
@@ -42,8 +42,6 @@ export interface FileIntakeOptions {
 export interface IntakeResult {
   id?: number
 }
-
-const PLACED_BY_USER: readonly FileType[] = ['3d-file', 'cad-file', 'splat-file']
 
 const recordIdOf = (result: unknown): number | undefined => {
   const first = Array.isArray(result) ? result[0] : result
@@ -94,8 +92,11 @@ export function useFileIntake({
 
     try {
       let toUpload = file
+      let georeference: GeoreferenceColumns | null = null
       if (isIfc) {
         const { convertIfcToFragmentsFile } = await import('../../../ui/FilesManager/src/convertIfcToFragmentsFile')
+        const { readIfcGeoreference } = await import('../../../ui/FilesManager/src/ifcGeoreference')
+        georeference = await readIfcGeoreference(file)
         toUpload = await convertIfcToFragmentsFile(file, (progress) => {
           updateTask(taskId, { progress: Math.round(progress * 100) })
         })
@@ -124,6 +125,7 @@ export function useFileIntake({
         sourceUp: splatInScene ? DEFAULT_SPLAT_PLACEMENT.sourceUp as SourceUpAxis : undefined,
         onProgress: progress => updateTask(taskId, { progress }),
         existingNames: namesRef.current,
+        georeference,
       })
 
       return { id: recordIdOf(result) }

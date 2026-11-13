@@ -8,6 +8,7 @@ import { arcgisLayerSource, arcgisLayerUrl, fetchLayerInfo, isArcgisLayerUrl } f
 import { parseGeoJSON, type ParsedGeoJSON } from './geojsonFile'
 import { fetchWithProxyFallback } from './http'
 import { detectMapService } from './mapServices'
+import { URL_DATASET_PUBLISHER } from './orgDatasetFiles'
 
 import type { Dataset, MapServiceKind } from '../../../../../types/datasetTypes'
 
@@ -54,7 +55,7 @@ export async function arcgisUrlDataset(url: string, organization?: number): Prom
     organization,
     name,
     type: 'ArcGIS',
-    publisher: 'Local / URL',
+    publisher: URL_DATASET_PUBLISHER,
     description: `Imported: ${layerUrl}`,
     url: layerUrl,
     countrySubdivision: '',

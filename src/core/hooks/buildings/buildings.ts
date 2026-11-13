@@ -24,3 +24,9 @@ export const useBuildingOsmIds = () =>
 
 export const useCreateBuilding = () =>
   useCoreHooks().building.useCreateBuilding();
+
+export const useBuildingAssociations = (id: number | null) =>
+  useCoreHooks().building.useBuildingAssociations(id);
+
+export const useRemoveBuilding = () =>
+  useCoreHooks().building.useRemoveBuilding();

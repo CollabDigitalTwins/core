@@ -25,7 +25,6 @@ import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
-import { Button, Switch } from '../../../../../components/ui/'
 import { pluginDatasetId } from '../../../../../plugins/host/pluginDatasetId'
 import { MapContext, DatasetsContext } from '../../../../../store'
 import { ViewerNames } from '../../../../../types/dbTypes'
@@ -38,6 +37,7 @@ import { ClusterManager } from '../../utils/ClusterManager'
 import { isRasterDataset } from '../src/mapServices'
 import { reorderedDatasets, sortByOrder } from '../utils'
 
+import { DatasetLayerActions } from './src/DatasetLayerActions'
 import { DatasetStylePanel } from './src/DatasetStylePanel'
 import { useDatasetLoadDisplay } from './src/useDatasetLoadDisplay'
 import { hasWmsTimeControl, WmsDatasetControls } from './src/WmsDatasetControls'
@@ -56,7 +56,6 @@ const isBuildingDataset = (dataset: Dataset): dataset is BuildingDataset =>
 
 interface SortableDatasetRowProps {
   dataset: Dataset
-  onToggleDataset: (dataset: Dataset) => void
   onToggleStyle: (datasetName: string) => void
   styleOpen: boolean
   legend?: React.ReactNode
@@ -65,7 +64,6 @@ interface SortableDatasetRowProps {
 
 const SortableDatasetRow: React.FC<SortableDatasetRowProps> = ({
   dataset,
-  onToggleDataset,
   onToggleStyle,
   styleOpen,
   legend,
@@ -96,31 +94,19 @@ const SortableDatasetRow: React.FC<SortableDatasetRowProps> = ({
         >
           <LR.GripVertical className="h-3.5 w-3.5" aria-hidden />
         </button>
-        <Switch
-          checked={dataset.visible !== false}
-          onCheckedChange={() => onToggleDataset(dataset)}
-          aria-label={name}
-          className="shrink-0"
-          style={dataset.visible === false || isRaster ? {} : { backgroundColor: dataset.layerColor.color }}
-        />
+        {isRaster || dataset.visible === false
+          ? <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-muted-foreground/40" aria-hidden />
+          : <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: dataset.layerColor.color }} aria-hidden />}
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium leading-5" title={name}>{name}</p>
           {subtitle && <p className="truncate text-xs text-muted-foreground" title={subtitleTooltip}>{subtitle}</p>}
         </div>
         {indicator}
-        {isStylable && (
-          <Button
-            variant={styleOpen ? 'secondary' : 'ghost'}
-            size="icon"
-            aria-expanded={styleOpen}
-            aria-label={t(styleOpen ? 'closeStyle' : 'style')}
-            title={t(styleOpen ? 'closeStyle' : 'style')}
-            onClick={() => onToggleStyle(dataset.name)}
-            className="h-7 w-7 shrink-0"
-          >
-            {styleOpen ? <LR.X className="h-4 w-4" aria-hidden /> : <LR.Settings2 className="h-4 w-4" aria-hidden />}
-          </Button>
-        )}
+        <DatasetLayerActions
+          dataset={dataset}
+          styleOpen={styleOpen}
+          onToggleStyle={isStylable ? onToggleStyle : undefined}
+        />
       </div>
       {legend && <div className="pb-1.5 pl-9 pr-2">{legend}</div>}
       {isStylable && styleOpen && (
@@ -214,11 +200,6 @@ export default function DatasetManagerMenu() {
     previousNamesRef.current = currentNames
   }, [map, addedDatasets])
 
-  const onToggleDataset = (dataset: Dataset) => {
-    const datasetId = dataset.id;
-    datasetDispatch({ type: 'TOGGLE_DATASET_VISIBILITY', payload: { datasetId } })
-  }
-
   const toggleDatasetExpansion = (datasetName: string) => {
     setExpandedDatasets((prev) => {
       const newSet = new Set(prev)
@@ -285,7 +266,6 @@ export default function DatasetManagerMenu() {
                       <SortableDatasetRow
                         key={dataset.name}
                         dataset={dataset}
-                        onToggleDataset={onToggleDataset}
                         onToggleStyle={toggleDatasetExpansion}
                         styleOpen={expandedDatasets.has(dataset.name)}
                         legend={legendFor(dataset)}

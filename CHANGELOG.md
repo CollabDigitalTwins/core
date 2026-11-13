@@ -7,6 +7,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-11-13
+
 ### Added
 - File geolocation (`viewers/shared/placement/GeolocationDialog`): a "Geolocate" item on file menus for BIM models,
   point clouds, 3D models and splats. It takes coordinates in WGS 84, NAD83 / NAD83(CSRS) UTM, NAD83(CSRS) MTM,

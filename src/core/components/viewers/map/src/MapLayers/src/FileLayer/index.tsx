@@ -96,9 +96,15 @@ export const FileLayers = () => {
   const editingFileIdRef = React.useRef<string | null>(null)
   const [editMode, setEditMode] = React.useState<PlacementMode>('translate')
 
+  const editingFileId = editingFile ? String(editingFile.id) : null
   React.useEffect(() => {
-    editingFileIdRef.current = editingFile ? String(editingFile.id) : null
-  }, [editingFile])
+    editingFileIdRef.current = editingFileId
+    // Each session starts from the stored row, never from the last session's unsaved drag.
+    tempPositionsRef.current = {}
+    tempRotationsRef.current = {}
+    tempElevationsRef.current = {}
+    tempScalesRef.current = {}
+  }, [editingFileId])
 
   const handleExitEditFileMode = React.useCallback(() => {
     fileDispatch({ type: 'EDIT_FILE', payload: { file: null } })

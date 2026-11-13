@@ -5,6 +5,7 @@
 
 import * as React from 'react'
 
+import { GeolocationDialog } from '../../../viewers/shared/placement/GeolocationDialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,9 +33,11 @@ export const ViewerContextMenu: React.FC<ViewerContextMenuProps> = ({
     onClose()
     onAction(action, f)
   }, [onAction, onClose])
+  const [isGeolocating, setIsGeolocating] = React.useState(false)
 
   return (
-    <DropdownMenu open modal={false} onOpenChange={(open) => { if (!open) onClose() }}>
+    <>
+    <DropdownMenu open={!isGeolocating} modal={false} onOpenChange={(open) => { if (!open) onClose() }}>
       <DropdownMenuTrigger
         className="fixed opacity-0 pointer-events-none w-px h-px"
         style={{ left: x, top: y }}
@@ -45,8 +48,11 @@ export const ViewerContextMenu: React.FC<ViewerContextMenuProps> = ({
           options={options}
           onAction={handleAction}
           confirmDelete={true}
+          onGeolocate={() => setIsGeolocating(true)}
         />
       </DropdownMenuContent>
     </DropdownMenu>
+    <GeolocationDialog file={file} open={isGeolocating} onOpenChange={(open) => { if (!open) onClose() }} />
+    </>
   )
 }

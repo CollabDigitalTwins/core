@@ -78,8 +78,8 @@ describe('FileMenuContent scene tools', () => {
 })
 
 describe('FileMenuContent placement', () => {
-  const renderFile = (file: Partial<DbFile>) => render(
-    <FileMenuContent file={{ id: 2, name: 'chair.glb', isVisible: true, ...file } as DbFile} onAction={vi.fn()} options={SCENE_OPTIONS} />,
+  const renderFile = (file: Partial<DbFile>, { hostsGeolocation = true } = {}) => render(
+    <FileMenuContent file={{ id: 2, name: 'chair.glb', isVisible: true, ...file } as DbFile} onAction={vi.fn()} options={SCENE_OPTIONS} onGeolocate={hostsGeolocation ? vi.fn() : undefined} />,
   )
 
   it('offers Place for a model that has no position in the scene yet', () => {
@@ -108,6 +108,11 @@ describe('FileMenuContent placement', () => {
 
   it('does not offer Geolocate for a document', () => {
     renderFile({ name: 'spec.pdf', extension: 'pdf' })
+    expect(items()).not.toEqual(expect.arrayContaining(['geolocateTitle']))
+  })
+
+  it('does not offer Geolocate when no caller hosts the dialog', () => {
+    renderFile({ extension: 'frag' }, { hostsGeolocation: false })
     expect(items()).not.toEqual(expect.arrayContaining(['geolocateTitle']))
   })
 })

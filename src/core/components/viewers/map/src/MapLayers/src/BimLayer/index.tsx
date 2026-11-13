@@ -129,6 +129,10 @@ export const BimLayer = () => {
     const editingBimModelRef = React.useRef<string | null>(editingBimModelId);
     React.useEffect(() => {
         editingBimModelRef.current = editingBimModelId;
+        // Each session starts from the stored row, never from the last session's unsaved drag.
+        tempPositionsRef.current = {};
+        tempRotationsRef.current = {};
+        tempElevationsRef.current = {};
     }, [editingBimModelId]);
 
     // A model with nowhere to draw asks for a point before it can be a layer at all.

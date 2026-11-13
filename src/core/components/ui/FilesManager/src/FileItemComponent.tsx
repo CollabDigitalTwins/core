@@ -34,10 +34,12 @@ export interface FileMenuContentProps {
   onAction: (action: FileAction, file: DbFile) => void | Promise<void>
   options: FileAction[]
   confirmDelete?: boolean
+  /** Opens the geolocation dialog, which the caller mounts outside the menu so the menu can close first. */
+  onGeolocate?: (file: DbFile) => void
 }
 
 /** Shared menu items used by both FileItemComponent's dropdown and MapContextMenu. */
-export function FileMenuContent({ file, onAction, options, confirmDelete = true }: FileMenuContentProps) {
+export function FileMenuContent({ file, onAction, options, confirmDelete = true, onGeolocate }: FileMenuContentProps) {
   const t = useTranslations('FileItemComponent')
   const tDialog = useTranslations('FileMoreOptions')
   const { ability } = usePermissions()
@@ -45,8 +47,7 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
   const canUpdateFile = ability.can('update', 'File')
   const canDeleteFile = ability.can('delete', 'File')
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
-  const [isGeolocating, setIsGeolocating] = React.useState(false)
-  const canGeolocate = options.includes('info') && GEOLOCATABLE.includes(typeOfRecord(file))
+  const canGeolocate = !!onGeolocate && options.includes('info') && GEOLOCATABLE.includes(typeOfRecord(file))
   const [isDeleting, setIsDeleting] = React.useState(false)
 
   const { state: menusState } = React.useContext(MenusContext)
@@ -164,8 +165,7 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
       )}
       {canGeolocate && (
         <DropdownMenuItem
-          onSelect={(e) => { e.preventDefault() }}
-          onClick={() => setIsGeolocating(true)}
+          onClick={() => onGeolocate?.(file)}
           disabled={!canReadFile || !canUpdateFile}
         >
           <LR.MapPinned className="h-4 w-4" />
@@ -207,7 +207,6 @@ export function FileMenuContent({ file, onAction, options, confirmDelete = true 
         itemName={file.name}
         dataType={tDialog('file')}
       />
-      {canGeolocate && <GeolocationDialog file={file} open={isGeolocating} onOpenChange={setIsGeolocating} />}
     </>
   )
 }
@@ -228,6 +227,8 @@ export const FileItemComponent = React.memo(function FileItemComponent({
 }: FileItemComponentProps) {
   const t = useTranslations('FileItemComponent')
   const Icon = getFileIcon(file)
+  const [isGeolocating, setIsGeolocating] = React.useState(false)
+  const geolocateOnClose = React.useRef(false)
 
   return (
     <div className={`flex items-center justify-between px-2 py-1 hover:bg-accent/50 rounded-md transition-colors ${
@@ -247,15 +248,27 @@ export const FileItemComponent = React.memo(function FileItemComponent({
             <LR.MoreVertical className="h-4 w-4" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuContent
+          align="end"
+          className="w-44"
+          onCloseAutoFocus={(e) => {
+            // Opening while the menu still holds Radix's body pointer-events lock leaves the dialog unclickable.
+            if (!geolocateOnClose.current) return
+            geolocateOnClose.current = false
+            e.preventDefault()
+            setIsGeolocating(true)
+          }}
+        >
           <FileMenuContent
             file={file}
             onAction={onAction}
             options={options}
             confirmDelete={confirmDelete}
+            onGeolocate={() => { geolocateOnClose.current = true }}
           />
         </DropdownMenuContent>
       </DropdownMenu>
+      <GeolocationDialog file={file} open={isGeolocating} onOpenChange={setIsGeolocating} />
     </div>
   )
 })

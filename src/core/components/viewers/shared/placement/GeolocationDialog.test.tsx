@@ -64,4 +64,36 @@ describe('GeolocationDialog', () => {
 
     expect(screen.queryByRole('button', { name: 'revert' })).toBeNull()
   })
+
+  it('keeps an edit when the row is re-rendered with a fresh file object', () => {
+    const file = { id: 3, name: 'model.frag', ...PETAWAWA } as DbFile
+    const { rerender } = render(<GeolocationDialog file={file} open onOpenChange={vi.fn()} />)
+    fireEvent.change(screen.getByLabelText('easting'), { target: { value: '1' } })
+
+    rerender(<GeolocationDialog file={{ ...file }} open onOpenChange={vi.fn()} />)
+
+    expect(screen.getByLabelText('easting')).toHaveProperty('value', '1')
+  })
+
+  it('resets one field to the value the dialog opened with', () => {
+    renderDialog(PETAWAWA)
+    fireEvent.change(screen.getByLabelText('easting'), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText('northing'), { target: { value: '2' } })
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'resetField' })[0])
+
+    expect(screen.getByLabelText('easting')).toHaveProperty('value', '242177.285039641')
+    expect(screen.getByLabelText('northing')).toHaveProperty('value', '2')
+  })
+
+  it('resets every field at once', () => {
+    renderDialog(PETAWAWA)
+    fireEvent.change(screen.getByLabelText('easting'), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText('northing'), { target: { value: '2' } })
+
+    fireEvent.click(screen.getByRole('button', { name: 'resetAll' }))
+
+    expect(screen.getByLabelText('northing')).toHaveProperty('value', '5085871.80253713')
+    expect(screen.queryByRole('button', { name: 'resetField' })).toBeNull()
+  })
 })

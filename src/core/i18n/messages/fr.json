@@ -2441,6 +2441,8 @@
     "rotation": "Rotation depuis le nord (°)",
     "preview": "Latitude {lat}, longitude {lng}",
     "invalid": "Saisissez des coordonnées dans un système de coordonnées convertible",
+    "resetAll": "Tout réinitialiser",
+    "resetField": "Rétablir la valeur enregistrée",
     "save": "Enregistrer l'emplacement",
     "revert": "Revenir à la position d'origine",
     "saved": "« {name} » géolocalisé",

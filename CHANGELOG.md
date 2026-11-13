@@ -11,7 +11,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - File geolocation (`viewers/shared/placement/GeolocationDialog`): a "Geolocate" item on file menus for BIM models,
   point clouds, 3D models and splats. It takes coordinates in WGS 84, NAD83 / NAD83(CSRS) UTM, NAD83(CSRS) MTM,
   WGS 84 UTM or any proj4 definition, converts them with proj4, and keeps the source so "Revert to source position"
-  can undo later moves. Strings are in a new `Geolocation` i18n namespace.
+  can undo later moves. Each field has a reset button and "Reset all" restores the values the dialog opened with.
+  Strings are in a new `Geolocation` i18n namespace. `FileMenuContent` shows the item only when given `onGeolocate`,
+  and the caller mounts `GeolocationDialog` outside the menu.
 - IFC uploads read `IfcMapConversion` and `IfcProjectedCRS` (`ui/FilesManager/src/ifcGeoreference`) and place the
   model at its georeferenced location, anchored at the IFC origin. It can still be moved, and reverted, afterwards.
 - `utils/geo/georeference` (`georeferenceToPlacement`, `manualGeoreference`, `isOverridden`, `sourcePlacementPatch`,
@@ -59,6 +61,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - `Data/HeaderButtons`, split into `PageActions` and `ResultActions`; the `FilterButtons.srFilters` string.
 
 ### Fixed
+- Moving a model or file on the map again starts from its stored position, not from where the previous Move left it.
 - Datasets added through "Add dataset" now appear under Organizational and can be removed from the map; opening the
   Layers tab no longer replaces the organizational list with Martin tiles only.
 - Files linked to a building from the map, through the sidebar or by placing them on its footprint, show in that

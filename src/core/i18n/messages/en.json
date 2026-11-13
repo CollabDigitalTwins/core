@@ -2444,6 +2444,8 @@
     "rotation": "Rotation from north (°)",
     "preview": "Latitude {lat}, longitude {lng}",
     "invalid": "Enter coordinates in a coordinate system that can be converted",
+    "resetAll": "Reset all",
+    "resetField": "Reset to the stored value",
     "save": "Save location",
     "revert": "Revert to source position",
     "saved": "Geolocated \"{name}\"",

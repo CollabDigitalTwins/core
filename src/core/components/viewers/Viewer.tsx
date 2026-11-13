@@ -140,7 +140,7 @@ export function Viewer({ organization, storageBaseUrl, martinBaseUrl, pointcloud
     if (defaultLanguage) void switchLanguage(defaultLanguage)
   }, [organization])
 
-  // Handle context changes (from sidebar, HeaderButtons, etc.)
+  // Handle context changes (from sidebar, ResultActions, etc.)
   React.useEffect(() => {
     if (!isMounted || !currentViewer || currentViewer === validViewer || isUpdatingRef.current) {
       return

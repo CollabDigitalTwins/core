@@ -150,4 +150,23 @@ describe('fetchOrganizationalFileDatasets', () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 403, json: async () => ({}) }) as any
     await expect(ds.getFeatures()).rejects.toThrow(/403/)
   })
+
+  it('rebuilds a saved map service from its source URL', async () => {
+    const description = JSON.stringify({ sourceUrl: 'https://maps.example.com/wms', serviceType: 'wms', layer: 'roads' })
+    mockFilesFetch([{ ...validRow, id: 9, name: 'Roads WMS', description }])
+    const [ds] = await fetchOrganizationalFileDatasets(42)
+    expect(ds).toMatchObject({
+      id: 'org-minio-9',
+      name: 'Roads WMS',
+      organization: 42,
+      mapService: { kind: 'wms', url: 'https://maps.example.com/wms', layer: 'roads' },
+    })
+  })
+
+  it('reads a saved GeoJSON URL from its source rather than object storage', async () => {
+    const description = JSON.stringify({ sourceUrl: 'https://data.example.com/parks.geojson', serviceType: 'geojson' })
+    mockFilesFetch([{ ...validRow, description }])
+    const [ds] = await fetchOrganizationalFileDatasets(42)
+    expect(ds.sourceUrl).toBe('https://data.example.com/parks.geojson')
+  })
 })

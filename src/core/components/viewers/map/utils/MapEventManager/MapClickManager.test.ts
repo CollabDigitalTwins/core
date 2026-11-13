@@ -216,3 +216,54 @@ describe('MapClickManager dismissal and suspension', () => {
     expect(published[published.length - 1]).toHaveLength(1)
   })
 })
+
+describe('MapClickManager.onEmptyClick', () => {
+  function emptyClickFor(hitLayerIds: string[]) {
+    const map = makeMap(hitLayerIds)
+    const manager = new MapClickManager(map as never)
+    manager.register('buildings', MapLayerClickPriority.BuildingLayersClickPriority, () => [])
+    const listener = vi.fn()
+    const unsubscribe = manager.onEmptyClick(listener)
+    return { map, manager, listener, unsubscribe }
+  }
+
+  it('fires when no registered layer is hit', () => {
+    const { map, listener } = emptyClickFor(['basemap-water'])
+    map.click()
+    expect(listener).toHaveBeenCalledWith(event)
+  })
+
+  it('does not fire when a registered layer is hit', () => {
+    const { map, listener } = emptyClickFor(['buildings'])
+    map.click()
+    expect(listener).not.toHaveBeenCalled()
+  })
+
+  it('does not fire when a legacy layer is hit', () => {
+    const { map, manager, listener } = emptyClickFor(['legacy'])
+    manager.registerLegacy('legacy', MapLayerClickPriority.FileLayerCLickPriority, () => {})
+    map.click()
+    expect(listener).not.toHaveBeenCalled()
+  })
+
+  it('does not fire while suspended', () => {
+    const { map, manager, listener } = emptyClickFor(['basemap-water'])
+    manager.setSuspended(true)
+    map.click()
+    expect(listener).not.toHaveBeenCalled()
+  })
+
+  it('does not fire while an active tool owns the click', () => {
+    const { map, manager, listener } = emptyClickFor(['basemap-water'])
+    manager.registerLegacy('tool', MapLayerClickPriority.ActiveTool, () => {})
+    map.click()
+    expect(listener).not.toHaveBeenCalled()
+  })
+
+  it('stops firing after unsubscribe', () => {
+    const { map, listener, unsubscribe } = emptyClickFor(['basemap-water'])
+    unsubscribe()
+    map.click()
+    expect(listener).not.toHaveBeenCalled()
+  })
+})

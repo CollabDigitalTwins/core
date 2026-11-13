@@ -92,6 +92,9 @@ export function typeOfFile(file: File): FileType {
 
 export const isMapFile = (file: Pick<DbFile, 'type'>): boolean => file.type?.toLowerCase() === 'map-file'
 
+/** Kinds the user positions in the BIM scene; IFC models and point clouds carry their own coordinates. */
+export const PLACED_BY_USER: readonly FileType[] = ['3d-file', 'cad-file', 'splat-file']
+
 export function typeOfRecord(file: DbFile): FileType {
   const stored = file.type?.toLowerCase() ?? ''
   return byExtension(file.extension ?? '')

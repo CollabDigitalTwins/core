@@ -446,7 +446,11 @@
     "appliedLayers": "{count, plural, one {Couche} other {Couches}}",
     "style": "Style",
     "reorder": "Glisser pour réordonner",
-    "closeStyle": "Fermer le style"
+    "closeStyle": "Fermer le style",
+    "hide": "Masquer la couche",
+    "show": "Afficher la couche",
+    "zoomToExtent": "Zoomer sur l'étendue",
+    "deactivate": "Retirer de la carte"
   },
   "MapLegend": {
     "title": "Légende",
@@ -580,7 +584,8 @@
     "pointCloudsTitle": "Nuages de points",
     "addPointCloudTitle": "Ajouter un nuage de points",
     "uploadingFile": "Téléchargement en cours...",
-    "bimTitle": "BIM"
+    "bimTitle": "BIM",
+    "geolocateTitle": "Géolocaliser"
   },
   "FileMoreOptions": {
     "open": "Ouvrir le menu",
@@ -643,7 +648,6 @@
   "FilterButtons": {
     "addBuilding": "Bâtiment",
     "fileType": "Type de fichier",
-    "srFilters": "Ouvrir les filtres",
     "no": "Aucun",
     "noMatch": " ne correspond à votre recherche",
     "noAvail": " disponible.",
@@ -717,7 +721,15 @@
     "viewButton": "Voir tout sur la carte",
     "compare": "Comparer",
     "addBuilding": "Ajouter un bâtiment",
-    "addUser": "Ajouter un utilisateur"
+    "addUser": "Ajouter un utilisateur",
+    "resultCount": "{count, plural, one {# résultat} other {# résultats}}",
+    "clearAll": "Tout effacer",
+    "filters": "Filtres",
+    "removeFilter": "Retirer le filtre {label}",
+    "site": "Site",
+    "building": "Bâtiment",
+    "infrastructure": "Infrastructure",
+    "fileType": "Type de fichier"
   },
   "InfrastructureDetails": {
     "toastSuccessCreate": "Infrastructure créée avec succès",
@@ -779,7 +791,9 @@
     "subdivisionTitle": "Division administrative",
     "municipalTitle": "Municipal",
     "liveDataTitle": "Données en direct",
-    "noDatasets": "Aucun ensemble de données disponible."
+    "noDatasets": "Aucun ensemble de données disponible.",
+    "addToMap": "Ajouter à la carte",
+    "removeFromMap": "Sur la carte — cliquer pour retirer"
   },
   "LightingManagement": {
     "lightingTitle": "Éclairage",
@@ -860,7 +874,8 @@
     "deleteSite": "Supprimer le site",
     "deleteUser": "Supprimer l'utilisateur",
     "userDeleted": "Utilisateur supprimé avec succès",
-    "userDeleteFailed": "Échec de la suppression de l'utilisateur"
+    "userDeleteFailed": "Échec de la suppression de l'utilisateur",
+    "deleteBuilding": "Supprimer le bâtiment"
   },
   "NavUser": {
     "dropdownLabel": "Mon compte",
@@ -2213,10 +2228,6 @@
     "turnModelConfirm": "Faire pivoter",
     "scaledFile": "« {name} » redimensionné",
     "positionAcceptedToast": "La position du fichier a été enregistrée.",
-    "linkBuildingTitle": "Lier à ce bâtiment ?",
-    "linkBuildingBody": "« {file} » a été placé sur « {building} ». Le lier classe le modèle sous ce bâtiment. Vous pouvez le placer sans le lier s'il appartient ailleurs.",
-    "linkBuildingConfirm": "Lier",
-    "linkBuildingCancel": "Ne pas lier",
     "linkedToBuilding": "« {file} » a été lié à « {building} »",
     "linkFailed": "« {file} » a été placé, mais n'a pas pu être lié à « {building} »"
   },
@@ -2414,5 +2425,40 @@
       "deletedUser": "Utilisateur inconnu",
       "empty": "Aucun téléversement ne correspond."
     }
+  },
+  "Geolocation": {
+    "title": "Géolocaliser « {name} »",
+    "description": "Indiquez où se trouve le fichier dans son système de coordonnées d'origine. L'origine est conservée : vous pourrez y revenir après avoir déplacé le fichier sur la carte.",
+    "crs": "Système de coordonnées",
+    "customCrs": "Autre (définition proj4)",
+    "proj4Def": "Définition proj4",
+    "easting": "Abscisse (m)",
+    "northing": "Ordonnée (m)",
+    "longitude": "Longitude",
+    "latitude": "Latitude",
+    "sourceHeight": "Hauteur d'origine (m)",
+    "sourceHeightHint": "La hauteur d'origine est conservée à titre indicatif. Sur la carte, l'élévation se mesure depuis le terrain ; ajustez-la avec Déplacer.",
+    "rotation": "Rotation depuis le nord (°)",
+    "preview": "Latitude {lat}, longitude {lng}",
+    "invalid": "Saisissez des coordonnées dans un système de coordonnées convertible",
+    "save": "Enregistrer l'emplacement",
+    "revert": "Revenir à la position d'origine",
+    "saved": "« {name} » géolocalisé",
+    "reverted": "« {name} » est revenu à sa position d'origine",
+    "saveFailed": "Impossible d'enregistrer l'emplacement de « {name} »"
+  },
+  "DeleteBuildingDialog": {
+    "title": "Retirer {name} de cette organisation ?",
+    "body": "Les autres organisations qui partagent ce bâtiment le conservent. Si aucune ne le partage, il est supprimé.",
+    "associated": "Lié à ce bâtiment : {files, plural, one {# fichier} other {# fichiers}}, {sensors, plural, one {# capteur} other {# capteurs}}, {comments, plural, one {# commentaire} other {# commentaires}}.",
+    "defaultOutcome": "Les fichiers sont détachés et restent dans Fichiers. Les capteurs et commentaires sont supprimés.{isDefaultLocation, select, true { L’emplacement par défaut sur la carte est effacé.} other {}}",
+    "transferToggle": "Les déplacer vers un autre bâtiment",
+    "transferPlaceholder": "Choisir un bâtiment",
+    "transferOutcome": "Les fichiers, capteurs et commentaires{isDefaultLocation, select, true {, ainsi que l’emplacement par défaut sur la carte,} other {}} passent à {target}.",
+    "confirm": "Retirer le bâtiment",
+    "cancel": "Annuler",
+    "removed": "Bâtiment retiré",
+    "failed": "Impossible de retirer le bâtiment",
+    "loadFailed": "Impossible de charger ce qui est lié à ce bâtiment. Réessayez."
   }
 }

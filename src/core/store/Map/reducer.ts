@@ -5,6 +5,7 @@ import { type MapGeoJSONFeature } from 'maplibre-gl'
 
 import type { MapClickManager } from '../../components/viewers/map/utils/MapEventManager/MapClickManager'
 import type { MapHoverManager } from '../../components/viewers/map/utils/MapEventManager/MapHoverManager'
+import type { Building } from '../../types/dbTypes'
 import type { CursorType } from '../../types/global'
 import type {
   Coordinates,
@@ -47,6 +48,7 @@ export interface MapTypes {
   /** The building whose footprint is open for reshaping; `seedRing` starts it when none is stored yet. */
   editingFootprint?: { buildingId: number, seedRing: [number, number][] | null } | null
   popupStack: PopupStack | null
+  focusedBuildings: Building[]
 }
 
 export type MapState = MapTypes
@@ -76,6 +78,7 @@ export type MapPayload = {
   ['UPDATE_TERRAIN_LEVEL']: Pick<MapTypes, 'terrainLevel'>
   ['UPDATE_SHOW_3D_BUILDINGS']: Pick<MapTypes, 'show3dBuildings'>
   ['SET_EDITING_FOOTPRINT']: Pick<MapTypes, 'editingFootprint'>
+  ['SET_FOCUSED_BUILDINGS']: Pick<MapTypes, 'focusedBuildings'>
   ['SET_POPUP_STACK']: { entries: PopupEntry[] } | null
   ['SET_POPUP_INDEX']: { activeIndex: number }
 }
@@ -114,9 +117,6 @@ export const MapReducer = (state: MapState, action: MapActions) => {
     case 'SET_BOUNDARY_GEOJSON':
       return {
         ...state,
-        // Fix: write the real `geojson` state field. Was writing a stray
-        // `boundaryGeojson` key, so the geojson never updated. (Bug found via unit
-        // test; action is currently unused → zero blast radius.)
         geojson: action.payload.geojson,
       }
     case 'SET_MAP':
@@ -235,6 +235,11 @@ export const MapReducer = (state: MapState, action: MapActions) => {
       return {
         ...state,
         editingFootprint: action.payload.editingFootprint,
+      }
+    case 'SET_FOCUSED_BUILDINGS':
+      return {
+        ...state,
+        focusedBuildings: action.payload.focusedBuildings,
       }
     default:
       return state

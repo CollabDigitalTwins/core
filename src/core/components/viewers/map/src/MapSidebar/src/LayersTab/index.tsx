@@ -15,7 +15,6 @@ import { usePluginDatasets } from '../../../../../../../plugins/host/pluginDatas
 import { DatasetsContext, useMapContext } from '../../../../../../../store'
 import { DatasetGroup } from '../../../../../../../types/dbTypes'
 import { ViewerSidebarPanel } from '../../../../../../ui/ViewerSidebar/Panel'
-import { fetchLocalDatasets } from '../../../../datasets/src/localDatasets'
 import { datasetVisibleForOrg, getOrgVisibility } from '../../../../datasets/src/orgVisibility'
 import { useDatasetFavourites } from '../../../../datasets/src/useDatasetFavourites'
 import { useDatasetsForPortals } from '../../../../datasets/src/useDatasetsForPortals'
@@ -55,7 +54,7 @@ function sanitizeDatasets(list: Dataset[]) {
   return filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
 }
 
-export function LayersTab({ martinBaseUrl, organization }: { martinBaseUrl?: string; organization?: Organization }) {
+export function LayersTab({ organization }: { martinBaseUrl?: string; organization?: Organization }) {
   const [searchQuery, setSearchQuery] = React.useState('')
 
   const { state: mapState } = useMapContext()
@@ -66,7 +65,7 @@ export function LayersTab({ martinBaseUrl, organization }: { martinBaseUrl?: str
   const municipality = currentLocation?.municipality ?? org?.municipality ?? null
   const countrySubdivision = currentLocation?.countrySubdivision ?? org?.countrySubdivision ?? null
 
-  const { state: datasetState, dispatch: datasetDispatch } = React.useContext(DatasetsContext)
+  const { state: datasetState } = React.useContext(DatasetsContext)
 
   const orgVisibility = React.useMemo(() => getOrgVisibility(org?.id), [org?.id])
 
@@ -101,39 +100,6 @@ export function LayersTab({ martinBaseUrl, organization }: { martinBaseUrl?: str
   const municipal = useDatasetsForPortals(filteredMunicipalPortals)
   const subdivision = useDatasetsForPortals(filteredSubdivisionPortals)
   const national = useDatasetsForPortals(filteredNationalPortals)
-
-  React.useEffect(() => {
-    const loadOrganizationalDatasets = async () => {
-      try {
-        const martinBaseUrlClean = (martinBaseUrl ?? '').replace(/\/+$/, '')
-        if (!martinBaseUrlClean) return
-
-        const datasetsUrl = martinBaseUrlClean.includes('/tiles/index.json')
-          ? martinBaseUrlClean
-          : `${martinBaseUrlClean}/tiles/index.json`
-
-        const localPortal = {
-          id: -1,
-          name: 'Organizational Datasets',
-          apiUrl: datasetsUrl,
-          dataManagementSystem: 'Other' as const,
-          countrySubdivision: null,
-          municipality: null,
-          group: 'Organizational' as const,
-        }
-
-        const organizationalDatasets = await fetchLocalDatasets(localPortal as any)
-        const visible = organizationalDatasets.filter(ds => datasetVisibleForOrg(ds, orgVisibility))
-        if (visible.length > 0) {
-          datasetDispatch({ type: 'SET_DATASETS', payload: { datasets: visible } })
-        }
-      }
-      catch (error) {
-        console.error('Failed to load organizational datasets:', error)
-      }
-    }
-    void loadOrganizationalDatasets()
-  }, [datasetDispatch, orgVisibility])
 
   const nationalDatasets = React.useMemo(
     () => sanitizeDatasets(national.datasets.filter(ds => datasetVisibleForOrg(ds, orgVisibility))),

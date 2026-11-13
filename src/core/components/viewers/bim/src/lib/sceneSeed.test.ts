@@ -8,8 +8,10 @@ import { selectSceneSeedFiles } from './sceneSeed'
 const placeable = (extension?: string | null) => extension === 'glb' || extension === 'dxf'
 const empty = () => false
 
-const file = (overrides: Partial<{ id: number; extension: string | null; isVisible: boolean }>) =>
-  ({ id: 1, extension: 'glb', isVisible: true, ...overrides })
+const PLACED = { fileTransformX: 0, fileTransformY: 0, fileTransformZ: 0 }
+
+const file = (overrides: Partial<{ id: number; extension: string | null; isVisible: boolean; fileTransformX: number | null }>) =>
+  ({ id: 1, extension: 'glb', isVisible: true, ...PLACED, ...overrides })
 
 describe('selectSceneSeedFiles', () => {
   it('seeds the files opted in on the record', () => {
@@ -32,5 +34,11 @@ describe('selectSceneSeedFiles', () => {
 
   it('treats a missing flag as not opted in', () => {
     expect(selectSceneSeedFiles([file({ isVisible: undefined })], placeable, empty)).toHaveLength(0)
+  })
+
+  it('waits for a file with no scene position to be placed', () => {
+    const files = [file({ id: 1, fileTransformX: null }), file({ id: 2 })]
+
+    expect(selectSceneSeedFiles(files, placeable, empty).map(f => f.id)).toEqual([2])
   })
 })

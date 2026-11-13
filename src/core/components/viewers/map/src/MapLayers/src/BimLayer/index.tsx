@@ -12,6 +12,7 @@ import * as THREE from "three";
 
 import { useDeleteFile, useFiles } from "../../../../../../../hooks/files/files";
 import { BimContext, BuildingsContext, MapContext } from "../../../../../../../store";
+import { GeoreferenceSource } from "../../../../../../../types/dbTypes";
 import { markerOcclusionProps } from "../../../../../../../utils/markerUtils";
 import ConfirmDialog from "../../../../../../ConfirmDialog";
 import { writeModelMatrix } from "../../../../utils/modelMatrix";
@@ -25,6 +26,7 @@ import { disposeThreeScene } from "../disposeThreeScene";
 import { PlaceOnMap } from "../PlaceOnMap";
 
 import { deletedModelIds } from "./deletedModelIds";
+import { ifcOriginOffset } from "./ifcOriginOffset";
 
 import type { Building, DbFile } from "../../../../../../../types/dbTypes";
 import type { FileAction } from "../../../../../../../types/global";
@@ -218,11 +220,14 @@ export const BimLayer = () => {
                 if (!model.box.isEmpty()) {
                     const center = model.box.getCenter(new THREE.Vector3());
                     const size   = model.box.getSize(new THREE.Vector3());
-                    model.object.position.set(-center.x, 0, -center.z);
+                    const anchor = bimFile.georeferenceSource === GeoreferenceSource.ifc
+                        ? await ifcOriginOffset(model)
+                        : new THREE.Vector3(-center.x, 0, -center.z);
+                    model.object.position.copy(anchor);
 
-                    // lodCamera: above the model's new IFC-space centre (XZ is now 0,0)
-                    lodCamera.position.set(0, center.y + Math.max(size.x, size.y, size.z) * 2, 0);
-                    lodCamera.lookAt(0, center.y, 0);
+                    const lookAt = new THREE.Vector3(center.x + anchor.x, center.y, center.z + anchor.z);
+                    lodCamera.position.set(lookAt.x, center.y + Math.max(size.x, size.y, size.z) * 2, lookAt.z);
+                    lodCamera.lookAt(lookAt);
                 } else {
                     lodCamera.position.set(0, 100, 0);
                     lodCamera.lookAt(0, 0, 0);
@@ -268,10 +273,7 @@ export const BimLayer = () => {
             let model: FRAGS.FragmentsModel | null = null;
             let lastAppliedRotation = originalRotation;
             let lastLodUpdate = 0;
-            // Render-on-demand: cache terrain elevation off the per-frame path and
-            // only keep repainting while the camera recently moved, so an idle map
-            // with a placed model stops re-rendering instead of pinning the main
-            // thread (this was the freeze after a geocoder flyTo to high zoom).
+            // Render-on-demand: an idle map with a placed model must stop repainting, or it pins the main thread.
             let cachedTerrainElev = 0;
             let lastMoveTime = performance.now();
             const SETTLE_MS = 1000;
@@ -311,8 +313,7 @@ export const BimLayer = () => {
 
                     void loadModel(buildingModel, fragments, scene, map, lodCamera).then(loaded => {
                         model = loaded;
-                        // Open the settle window so the just-loaded fragments stream
-                        // in and paint over the next frames, then idle.
+                        // Open the settle window so the just-loaded fragments stream in before idling.
                         lastMoveTime = performance.now();
                         recomputeTerrainElev();
                         map.triggerRepaint();
@@ -332,8 +333,7 @@ export const BimLayer = () => {
                     onMapMoveEnd = () => {
                         lastMoveTime = performance.now();
                         if (model) void fragments.core.update(true);
-                        // Terrain tiles for the new view are loaded once the camera
-                        // settles — refresh the cached elevation here, not per frame.
+                        // Terrain tiles for the new view exist only once the camera settles.
                         recomputeTerrainElev();
                         map.triggerRepaint();
                     };
@@ -378,19 +378,14 @@ export const BimLayer = () => {
                     }
 
                     const modelOrigin   = [modelLongitude, modelLatitude] as LngLatLike;
-                    // Use the cached terrain elevation (refreshed on moveend); query
-                    // live only while actively editing this model's position. Keeps
-                    // the expensive queryTerrainElevation off the hot path — the
-                    // per-frame query was a main driver of the high-zoom freeze.
+                    // queryTerrainElevation is too expensive per frame; only a model being edited queries live.
                     const terrainElev   = editingBimModelRef.current === bimFileKey
                         ? (map.queryTerrainElevation([modelLongitude, modelLatitude]) ?? cachedTerrainElev)
                         : cachedTerrainElev;
                     const modelAltitude = modelElevation + terrainElev;
                     const scaling       = 1;
 
-                    // ── Build renderCamera (VP × M, for Three.js rendering) ───
-                    // Reused temps — render() allocates nothing. Math is identical
-                    // to the prior allocate-every-frame version.
+                    // renderCamera = VP × M, built from reused temps.
                     _scaleVec.set(scaling, scaling, scaling);
                     _vp.fromArray(args.defaultProjectionData.mainMatrix);
                     writeModelMatrix(_m, modelOrigin, modelAltitude).scale(_scaleVec);
@@ -423,10 +418,7 @@ export const BimLayer = () => {
                             lastLodUpdate = now;
                             void fragments.core.update();
                         }
-                        // Render-on-demand: only keep the frame loop alive while the
-                        // camera recently moved (settle window, for fragment
-                        // streaming) or this model is being edited. Idle map ⇒ no
-                        // self-scheduled repaints ⇒ main thread freed (no freeze).
+                        // Keep repainting only while fragments stream after a move or this model is edited.
                         if (
                             editingBimModelRef.current === bimFileKey ||
                             now - lastMoveTime < SETTLE_MS

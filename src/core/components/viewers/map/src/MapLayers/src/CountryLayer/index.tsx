@@ -208,28 +208,32 @@ export const CountryLayer = ({ organization, maptilerKey }: { organization?: Org
 
   }, [orgHasLocation])
 
-  const commitSubdivision = React.useCallback((code: string) => {
-    if (code === (currentLocation?.countrySubdivision || null)) return
+  const setSubdivision = React.useCallback((code: string | null) => {
+    const urlCode = new URLSearchParams(window.location.search).get('countrySubdivision')
+    if (code === (currentLocation?.countrySubdivision || null) && code === urlCode) return
 
     mapDispatch({
       type: 'UPDATE_LOCATION',
       payload: {
-        currentLocation: { ...(currentLocation ?? {}), countrySubdivision: code } as any,
+        currentLocation: { ...(currentLocation ?? {}), countrySubdivision: code ?? undefined } as any,
       },
     })
 
     replaceUrlParams(params => {
-      params.set('countrySubdivision', code)
+      if (code) params.set('countrySubdivision', code)
+      else params.delete('countrySubdivision')
       return params
     })
   }, [currentLocation, mapDispatch])
+  const clearSubdivision = React.useCallback(() => setSubdivision(null), [setSubdivision])
 
   useCameraSubdivision({
     map,
     layerId: SUBDIVISION_FILL_ID,
     sourceId: SUBDIVISION_SOURCE_ID,
     enabled: !orgHasLocation && !buildingOwnsLocation,
-    onResolve: commitSubdivision,
+    onResolve: setSubdivision,
+    onClear: clearSubdivision,
   })
 
   useSubdivisionHover({

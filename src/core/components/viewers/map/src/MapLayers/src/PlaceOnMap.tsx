@@ -12,7 +12,6 @@ import { useFile } from "../../../../../../hooks/files/files"
 import { MapContext } from "../../../../../../store"
 
 import { resolveClickPlacement } from "../../Placement/resolveClickPlacement"
-import { useBuildingLinkConfirm } from "../../Placement/useBuildingLinkConfirm"
 
 import type { Building, DbFile } from "../../../../../../types/dbTypes"
 import type * as maplibregl from "maplibre-gl"
@@ -40,9 +39,6 @@ export const PlaceOnMap: React.FC<PlaceOnMapProps> = ({ file, gesture = "click",
     buildingsRef.current = buildings ?? []
     const { updateFile } = useFile(file.id)
     const t = useTranslations("Placement")
-    const { confirmLink, dialog } = useBuildingLinkConfirm()
-    const confirmLinkRef = React.useRef(confirmLink)
-    confirmLinkRef.current = confirmLink
 
     // Stable refs so the map effect never needs to re-register
     const onPlacedRef = React.useRef(onPlaced)
@@ -75,20 +71,17 @@ export const PlaceOnMap: React.FC<PlaceOnMapProps> = ({ file, gesture = "click",
             map.off("mousemove", keepCrosshair)
             clearCursor()
 
-            // A click on a footprint offers that building, but the file is the user's to file.
             const building = buildingId === null
                 ? null
                 : buildingsRef.current.find(candidate => candidate.id === buildingId) ?? null
-            const linked = building !== null
-                && await confirmLinkRef.current(building.buildingName ?? String(building.id), file.name)
 
             try {
                 const patch: Partial<DbFile> = { lat, lng, elevation, type: 'map-file' }
-                if (linked && buildingId !== null) patch.attachedFilesBuildingId = buildingId
+                if (building) patch.attachedFilesBuildingId = building.id
                 await updateFile(patch)
                 Object.assign(file, patch)
-                onPlacedRef.current(file, lat, lng, linked ? buildingId : null)
-                toast.success(linked && building
+                onPlacedRef.current(file, lat, lng, building?.id ?? null)
+                toast.success(building
                     ? t("linkedToBuilding", { file: file.name, building: building.buildingName ?? String(building.id) })
                     : t("positionAcceptedToast"))
             } catch (err) {
@@ -121,5 +114,5 @@ export const PlaceOnMap: React.FC<PlaceOnMapProps> = ({ file, gesture = "click",
         }
     }, [map, gesture, updateFile])
 
-    return <>{dialog}</>
+    return null
 }

@@ -23,6 +23,9 @@ export const HOVER_COLOUR = "#e0e0e0";
 /** Lighter than the default grey so footprints tied to a database building stand out. */
 export const ASSIGNED_COLOUR = "#cccccc";
 
+/** Footprint colour for buildings the user asked to see on the map. */
+export const FOCUS_COLOUR = "#f59e0b";
+
 /** How far a sensor-coloured footprint is lifted toward white on hover. */
 const HOVER_LIFT = 0.18;
 
@@ -55,18 +58,26 @@ export function osmColourEntries(
   return entries.sort(byOsmLabel);
 }
 
+/** Paint for CDT-drawn footprints, keyed by the `dbId` each feature carries. */
+export function drawnFootprintColour(focusedIds: readonly number[]): PaintExpression | string {
+  if (focusedIds.length === 0) return ASSIGNED_COLOUR;
+  return ["case", ["in", ["get", "dbId"], ["literal", [...focusedIds]]], FOCUS_COLOUR, ASSIGNED_COLOUR];
+}
+
 /**
- * The layer's `fill-extrusion-color`: click and hover highlights, then sensor colour, then the
- * assigned grey, then the tile default — which is returned unchanged when nothing applies.
+ * The layer's `fill-extrusion-color`: click, hover and focus highlights, then sensor colour, then
+ * the assigned grey, then the tile default — which is returned unchanged when nothing applies.
  */
 export function buildingColourExpression({
   osmColours,
   assignedOsmIds = [],
+  focusedOsmIds = [],
   clickedKey,
   hoveredKey,
 }: {
   osmColours: readonly (readonly [string, string])[];
   assignedOsmIds?: readonly string[];
+  focusedOsmIds?: readonly string[];
   clickedKey?: string | number | null;
   hoveredKey?: string | number | null;
 }): PaintExpression {
@@ -84,6 +95,8 @@ export function buildingColourExpression({
       sensorColour ? lerpHex(sensorColour, "#ffffff", HOVER_LIFT) : HOVER_COLOUR,
     );
   }
+
+  if (focusedOsmIds.length > 0) branches.push(matchesAnyOsmId(focusedOsmIds), FOCUS_COLOUR);
 
   if (branches.length === 0) return lookup;
   return ["case", ...branches, lookup];

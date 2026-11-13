@@ -9,9 +9,12 @@ import {
   ASSIGNED_COLOUR,
   buildingColourExpression,
   DEFAULT_COLOUR_EXPRESSION,
+  drawnFootprintColour,
+  FOCUS_COLOUR,
   HOVER_COLOUR,
   osmColourEntries,
 } from "./buildingColourExpression";
+import { matchesAnyOsmId } from "./osmIdExpression";
 
 import type { BuildingSensorAverage } from "../../../../../../ui/Sensors/buildingSensorColours";
 
@@ -56,6 +59,18 @@ describe("osmColourEntries", () => {
     const forwards = osmColourEntries(averages, [building(1, "111"), building(2, "222")]);
     const backwards = osmColourEntries(averages, [building(2, "222"), building(1, "111")]);
     expect(forwards).toEqual(backwards);
+  });
+});
+
+describe("drawnFootprintColour", () => {
+  it("returns ASSIGNED_COLOUR when nothing is focused", () => {
+    expect(drawnFootprintColour([])).toBe(ASSIGNED_COLOUR);
+  });
+
+  it("switches focused database ids to FOCUS_COLOUR", () => {
+    expect(drawnFootprintColour([4, 7])).toEqual([
+      "case", ["in", ["get", "dbId"], ["literal", [4, 7]]], FOCUS_COLOUR, ASSIGNED_COLOUR,
+    ]);
   });
 });
 
@@ -129,6 +144,26 @@ describe("buildingColourExpression", () => {
         ],
       ],
     ]);
+  });
+
+  it("focused footprints get FOCUS_COLOUR below clicked and hovered", () => {
+    const expr = buildingColourExpression({
+      osmColours: [],
+      clickedKey: "900",
+      hoveredKey: "901",
+      focusedOsmIds: ["123"],
+    });
+    expect(expr[0]).toBe("case");
+    expect(expr[2]).toBe(highlightColor);
+    expect(expr[4]).toBe(HOVER_COLOUR);
+    expect(expr[5]).toEqual(matchesAnyOsmId(["123"]));
+    expect(expr[6]).toBe(FOCUS_COLOUR);
+    expect(expr[7]).toEqual(DEFAULT_COLOUR_EXPRESSION);
+  });
+
+  it("no focus leaves the expression unchanged", () => {
+    const input = { osmColours: [["123", "#ff0000"]] as [string, string][], clickedKey: "900" };
+    expect(buildingColourExpression({ ...input, focusedOsmIds: [] })).toEqual(buildingColourExpression(input));
   });
 
   it("emits no branch for an absent or empty highlight key", () => {

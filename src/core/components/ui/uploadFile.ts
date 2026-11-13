@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { sourcePlacementPatch, type GeoreferenceColumns } from '../../utils/geo/georeference'
 import { uniqueFileName } from '../../utils/uniqueFileName'
 import { getFileExtension } from '../../utils/utils'
 import { getAttachmentFieldName } from '../viewers/Data/details/getAttachmentFileName'
@@ -32,6 +33,18 @@ interface UploadFileArgs {
   onProgress?: (percent: number) => void
   existingNames?: string[]
   sourceUp?: SourceUpAxis
+  /** A georeferenced file stands where its source puts it, whatever position the caller passed. */
+  georeference?: GeoreferenceColumns | null
+}
+
+function safeSourcePlacement(georeference: GeoreferenceColumns) {
+  try {
+    return sourcePlacementPatch(georeference)
+  }
+  catch (error) {
+    console.warn('uploadFile: the georeference could not be converted; the file keeps the caller position', error)
+    return null
+  }
 }
 
 export async function uploadFile({
@@ -55,6 +68,7 @@ export async function uploadFile({
   onProgress,
   existingNames,
   sourceUp,
+  georeference,
 }: UploadFileArgs) {
   if (!file && (!files || files.length === 0)) return null
 
@@ -110,6 +124,8 @@ export async function uploadFile({
       fileScale: scale,
       fileSourceUp: sourceUp,
       isVisible: isVisible ?? false,
+      ...georeference,
+      ...(georeference ? safeSourcePlacement(georeference) : null),
     }
 
     const result = await uploadFile({ fileData, buildingId })

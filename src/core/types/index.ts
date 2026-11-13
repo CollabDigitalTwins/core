@@ -12,6 +12,8 @@ export type {
   Sensor,
   SensorType,
   Building,
+  BuildingAssociations,
+  BuildingRemoval,
   DbFile,
   Site,
   OpenDataPortal,

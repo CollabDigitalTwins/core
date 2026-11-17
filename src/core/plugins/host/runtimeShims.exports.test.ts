@@ -12,6 +12,7 @@ import * as sdkIndex from '../sdk/index'
 import * as sdkMessages from '../sdk/messages'
 import * as sdkState from '../sdk/state'
 import * as sdkStore from '../sdk/store'
+import * as sdkTour from '../sdk/tour'
 import * as sdkUi from '../sdk/ui'
 
 import { PLUGIN_RUNTIME_SHIMS } from './runtimeShims'
@@ -27,6 +28,7 @@ const SDK_MODULES: Record<string, Record<string, unknown>> = {
   '@collabdt/core/plugins-sdk/state': sdkState,
   '@collabdt/core/plugins-sdk/ui': sdkUi,
   '@collabdt/core/plugins-sdk/components': sdkComponents,
+  '@collabdt/core/plugins-sdk/tour': sdkTour,
   '@collabdt/core/plugins-sdk/charts': sdkCharts,
 }
 

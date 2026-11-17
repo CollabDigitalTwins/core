@@ -8,6 +8,12 @@ repository root.
 
 ## [Unreleased]
 
+### Added
+- `@collabdt/core/plugins-sdk/tour` as an external, with its declarations (`GuidedTour`, `useTour`,
+  `browserTourStore`, `findSidebarPageLink`, `setToolbarPanel`, `TourBody`, `splitTerm`). The types are also
+  exported from `@collabdt/plugin-kit/types/tour`. Using it requires a platform running `@collabdt/core` with
+  the same addition.
+
 ## [0.13.0] - 2026-10-23
 
 ### Added

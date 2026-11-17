@@ -15,6 +15,7 @@ export default defineConfig({
     'src/types/bim.ts',
     'src/types/legend.ts',
     'src/types/ui.ts',
+    'src/types/tour.ts',
   ],
   format: ['esm'],
   dts: true,

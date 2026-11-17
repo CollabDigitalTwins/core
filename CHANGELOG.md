@@ -7,6 +7,16 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Added
+- Guided tours (`components/tour`): `GuidedTour` spotlights page elements step by step and leaves the page usable
+  underneath. A step targets a `data-tour="<id>"` anchor, a function that returns an element, or `null` for a
+  centred card. It can run `onEnter` when it opens and can `invite` a click that ends the tour. Plain-string bodies
+  turn `term — description` lines into a definition list. Theme it with `--tour-*` CSS variables on a `className`;
+  the defaults follow the platform tokens. `useTour` remembers finished tours through a `TourStore`;
+  `browserTourStore` keeps them in session or local storage. `findSidebarPageLink` and `setToolbarPanel` find the
+  app's own sidebar and toolbar elements. Strings are in a new `GuidedTour` i18n namespace.
+- `@collabdt/core/plugins-sdk/tour`: all of the above for runtime-loaded plugins.
+
 ## [0.19.0] - 2026-11-13
 
 ### Added

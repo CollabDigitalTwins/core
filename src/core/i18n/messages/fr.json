@@ -452,6 +452,14 @@
     "zoomToExtent": "Zoomer sur l'étendue",
     "deactivate": "Retirer de la carte"
   },
+  "GuidedTour": {
+    "next": "Suivant",
+    "back": "Précédent",
+    "finish": "Terminer",
+    "hide": "Masquer la visite",
+    "missing": "Cet élément n'est pas affiché pour le moment. Vous pouvez continuer.",
+    "progress": "Étape {step} sur {total}"
+  },
   "MapLegend": {
     "title": "Légende",
     "titlePlural": "Légendes",

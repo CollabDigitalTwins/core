@@ -27,6 +27,7 @@ import type * as SdkData from '../sdk/data'
 import type * as SdkIndex from '../sdk/index'
 import type * as SdkMessages from '../sdk/messages'
 import type * as SdkStore from '../sdk/store'
+import type * as SdkTour from '../sdk/tour'
 
 // --- Compile-time assertions ---
 
@@ -35,6 +36,7 @@ type DeclaredConfig = typeof import('@collabdt/core/plugins-sdk/config')
 type DeclaredData = typeof import('@collabdt/core/plugins-sdk/data')
 type DeclaredMessages = typeof import('@collabdt/core/plugins-sdk/messages')
 type DeclaredStore = typeof import('@collabdt/core/plugins-sdk/store')
+type DeclaredTour = typeof import('@collabdt/core/plugins-sdk/tour')
 
 // The invariant, one-directional: whatever the kit promises a plugin, core must deliver.
 // `Real extends Declared` lets a declaration narrower than core pass while one promising
@@ -95,6 +97,15 @@ const _useDeleteComments: Provides<typeof SdkData.useDeleteComments, DeclaredDat
 const _useDownloadFile: Provides<typeof SdkData.useDownloadFile, DeclaredData['useDownloadFile']> = true
 const _usePluginDataset: Provides<typeof SdkData.usePluginDataset, DeclaredData['usePluginDataset']> = true
 
+const _guidedTour: Provides<typeof SdkTour.GuidedTour, DeclaredTour['GuidedTour']> = true
+const _tourBody: Provides<typeof SdkTour.TourBody, DeclaredTour['TourBody']> = true
+const _splitTerm: Provides<typeof SdkTour.splitTerm, DeclaredTour['splitTerm']> = true
+const _useTour: Provides<typeof SdkTour.useTour, DeclaredTour['useTour']> = true
+const _browserTourStore: Provides<typeof SdkTour.browserTourStore, DeclaredTour['browserTourStore']> = true
+const _findSidebarPageLink: Provides<typeof SdkTour.findSidebarPageLink, DeclaredTour['findSidebarPageLink']> = true
+const _setToolbarPanel: Provides<typeof SdkTour.setToolbarPanel, DeclaredTour['setToolbarPanel']> = true
+const _tourStep: Provides<SdkTour.TourStep, import('@collabdt/core/plugins-sdk/tour').TourStep> = true
+
 const _validCapabilities: Provides<typeof SdkIndex.VALID_CAPABILITIES, DeclaredSdk['VALID_CAPABILITIES']> = true
 const _hostApi: Provides<typeof SdkIndex.PLUGIN_HOST_API, DeclaredSdk['PLUGIN_HOST_API']> = true
 const _validateManifest: Provides<typeof SdkIndex.validateManifest, DeclaredSdk['validateManifest']> = true
@@ -141,6 +152,7 @@ void [
   _usePluginConfig, _usePluginId,
   _usePluginMessage, _usePluginTranslations, _pluginTranslator,
   _usePluginStore,
+  _guidedTour, _tourBody, _splitTerm, _useTour, _browserTourStore, _findSidebarPageLink, _setToolbarPanel, _tourStep,
   _validCapabilities, _hostApi, _validateManifest, _resolvePluginEntry,
   useCoreTranslationCallSites,
 ]

@@ -34,6 +34,12 @@ describe('message catalogues', () => {
     }
   })
 
+  it('gives every locale the new GuidedTour namespace', () => {
+    for (const [name, locale] of [['es', es], ['fr', fr]] as const) {
+      expect(keysOf((locale as never)['GuidedTour']), name).toEqual(keysOf((en as never)['GuidedTour']))
+    }
+  })
+
   it('gives every locale the same UsageReport keys, nested ones included', () => {
     const report = (locale: unknown) => (locale as { UsageReport: Record<string, unknown> }).UsageReport
     for (const [name, locale] of [['es', es], ['fr', fr]] as const) {

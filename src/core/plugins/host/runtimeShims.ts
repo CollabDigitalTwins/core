@@ -123,6 +123,15 @@ export const PLUGIN_RUNTIME_SHIMS: readonly RuntimeShim[] = [
     ],
   },
   {
+    file: 'sdk-tour.js',
+    bridge: 'sdkTour',
+    specifier: '@collabdt/core/plugins-sdk/tour',
+    exports: [
+      'GuidedTour', 'TourBody', 'splitTerm', 'useTour', 'browserTourStore',
+      'findSidebarPageLink', 'setToolbarPanel',
+    ],
+  },
+  {
     file: 'sdk-charts.js',
     bridge: 'sdkCharts',
     specifier: '@collabdt/core/plugins-sdk/charts',

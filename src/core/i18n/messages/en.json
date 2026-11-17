@@ -452,6 +452,14 @@
     "zoomToExtent": "Zoom to extent",
     "deactivate": "Remove from map"
   },
+  "GuidedTour": {
+    "next": "Next",
+    "back": "Back",
+    "finish": "Finish",
+    "hide": "Hide tour",
+    "missing": "This part isn't on screen right now. You can keep going.",
+    "progress": "Step {step} of {total}"
+  },
   "MapLegend": {
     "title": "Legend",
     "titlePlural": "Legends",

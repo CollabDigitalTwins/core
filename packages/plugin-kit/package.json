@@ -42,6 +42,10 @@
     "./types/ui": {
       "types": "./dist/types/ui.d.ts",
       "default": "./dist/types/ui.js"
+    },
+    "./types/tour": {
+      "types": "./dist/types/tour.d.ts",
+      "default": "./dist/types/tour.js"
     }
   },
   "scripts": {

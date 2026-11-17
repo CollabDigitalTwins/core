@@ -288,3 +288,26 @@ declare module '@collabdt/core/plugins-sdk/charts' {
   export const XAxis: import('./charts').RechartsComponent
   export const YAxis: import('./charts').RechartsComponent
 }
+
+declare module '@collabdt/core/plugins-sdk/tour' {
+  export type TourTarget = import('./tour').TourTarget
+  export type TourStep = import('./tour').TourStep
+  export type GuidedTourLabels = import('./tour').GuidedTourLabels
+  export type GuidedTourProps = import('./tour').GuidedTourProps
+  export type TourStore = import('./tour').TourStore
+  export type BrowserTourStoreOptions = import('./tour').BrowserTourStoreOptions
+
+  /** A step-by-step guide that spotlights parts of the page while leaving it usable underneath. */
+  export const GuidedTour: import('./tour').GuidedTourComponent
+  export const TourBody: import('./tour').TourBodyComponent
+  export function splitTerm(line: string): [string | null, string]
+
+  /** Whether a tour is showing: open until hidden or finished, then closed for as long as `store` remembers. */
+  export function useTour(tourId: string, store?: TourStore): { open: boolean; start: () => void; hide: () => void }
+  export function browserTourStore(options: BrowserTourStoreOptions, backing?: import('./tour').FlagStorage | null): TourStore
+
+  /** The app sidebar's button for a page, matched on its title. */
+  export function findSidebarPageLink(title: string, lookup?: Pick<Document, 'querySelectorAll'>): HTMLElement | null
+  /** Opens or closes the toolbar dropdown holding `element` through the toggle that controls it. */
+  export function setToolbarPanel(element: Element | null, open: boolean, lookup?: Pick<Document, 'querySelectorAll' | 'getElementById'>): void
+}

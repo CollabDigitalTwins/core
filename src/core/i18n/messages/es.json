@@ -452,6 +452,14 @@
     "zoomToExtent": "Acercar a la extensión",
     "deactivate": "Quitar del mapa"
   },
+  "GuidedTour": {
+    "next": "Siguiente",
+    "back": "Atrás",
+    "finish": "Terminar",
+    "hide": "Ocultar recorrido",
+    "missing": "Esta parte no está en pantalla ahora. Puede continuar.",
+    "progress": "Paso {step} de {total}"
+  },
   "MapLegend": {
     "title": "Leyenda",
     "titlePlural": "Leyendas",

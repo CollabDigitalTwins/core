@@ -24,6 +24,7 @@ export function ToolbarBody({ viewer, tools }: Props) {
       <SubmenuProvider>
         <Menubar
           id={`${viewer}-toolbar`}
+          data-tour="toolbar"
           className="flex flex-row px-1 gap-1 justify-center w-fit bg-primary-light rounded space-y-0"
         >
           {tools.map((tool, index) => (

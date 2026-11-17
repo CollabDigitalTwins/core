@@ -460,6 +460,70 @@
     "missing": "Cet élément n'est pas affiché pour le moment. Vous pouvez continuer.",
     "progress": "Étape {step} sur {total}"
   },
+  "PlatformTour": {
+    "welcome": {
+      "title": "Bienvenue sur la plateforme CDT",
+      "body": "Les bâtiments, cartes, modèles et données de votre organisation, au même endroit.\nCette visite présente les principales parties de l'écran. Elle dure environ une minute et vous pouvez la masquer à tout moment."
+    },
+    "sidebar": {
+      "title": "Navigation",
+      "body": "La barre latérale mène à chaque visionneuse et page de données. Utilisez le chevron sur son bord pour la réduire ou l'agrandir."
+    },
+    "viewers": {
+      "title": "Visionneuses",
+      "body": "Carte — le contexte urbain : sites, bâtiments et jeux de données sur une carte 3D.\nBIM — maquettes numériques (IFC), nuages de points et splats, élément par élément."
+    },
+    "search": {
+      "map": {
+        "title": "Rechercher sur la carte",
+        "body": "Saisissez une adresse ou un lieu pour y déplacer la carte."
+      },
+      "bim": {
+        "title": "Rechercher dans le modèle",
+        "body": "Trouvez des éléments des modèles chargés par nom, type ou propriété."
+      }
+    },
+    "panel": {
+      "map": {
+        "title": "Panneau de la carte",
+        "body": "Ouvre le panneau latéral avec les bâtiments, sites et couches de la carte."
+      },
+      "bim": {
+        "title": "Panneau du modèle",
+        "body": "Ouvre le panneau latéral avec les modèles chargés, leur structure et les propriétés de l'élément sélectionné."
+      }
+    },
+    "toolbar": {
+      "map": {
+        "title": "Outils de la carte",
+        "body": "Comparer — deux bâtiments côte à côte.\nJeux de données — superposez les données de votre organisation et les données ouvertes.\nAjouter — placez un bâtiment, un site ou un fichier sur la carte.\nMesurer — distances et surfaces.\nPartager — un lien vers la vue actuelle."
+      },
+      "bim": {
+        "title": "Outils du modèle",
+        "body": "Coupe — plans de coupe à travers le modèle.\nCadrer — ajuste les modèles à la vue.\nAjouter — chargez un modèle IFC ou un nuage de points.\nMesurer — longueur, surface, volume et angle.\nPartager — un lien vers la vue actuelle."
+      }
+    },
+    "data": {
+      "title": "Pages de données",
+      "body": "Sites — les lieux gérés par votre organisation.\nBâtiments — chaque bâtiment avec ses détails et fichiers.\nFichiers — modèles, plans et documents téléversés.\nInfrastructures — routes, voies ferrées et autres réseaux.\nLes pages ajoutées par des plugins apparaissent aussi dans cette liste."
+    },
+    "plugins": {
+      "title": "Plugins",
+      "body": "Parcourez et ajoutez des plugins qui étendent la plateforme avec de nouveaux outils et pages."
+    },
+    "support": {
+      "title": "Assistance",
+      "body": "Contactez l'équipe, suggérez une fonctionnalité ou signalez un bogue. Guide relance la visite de la page où vous êtes."
+    },
+    "account": {
+      "title": "Votre compte",
+      "body": "Paramètres, utilisation et déconnexion."
+    },
+    "done": {
+      "title": "Vous êtes prêt",
+      "body": "Ouvrez Assistance → Guide à tout moment pour revoir cette visite.\nLa documentation complète se trouve sur docs.collabdt.org."
+    }
+  },
   "MapLegend": {
     "title": "Légende",
     "titlePlural": "Légendes",
@@ -1954,6 +2018,7 @@
     "featureSubmitSuccess": "Demande de fonctionnalité envoyée avec succès. Merci !"
   },
   "supportMenu": {
+    "guide": "Guide",
     "contactTeam": "Contacter l'équipe",
     "suggestFeature": "Suggérer une fonctionnalité",
     "reportBug": "Signaler un bug"

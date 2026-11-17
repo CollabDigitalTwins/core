@@ -70,6 +70,8 @@ type SidebarContextProps = {
   setBugReportOpen: (open: boolean) => void
   featureRequestOpen: boolean
   setFeatureRequestOpen: (open: boolean) => void
+  guideOpen: boolean
+  setGuideOpen: (open: boolean) => void
 }
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null)
@@ -126,6 +128,7 @@ const SidebarProvider = React.forwardRef<
     const [openInfo, setOpenInfo] = React.useState(false)
     const [bugReportOpen, setBugReportOpen] = React.useState(false)
     const [featureRequestOpen, setFeatureRequestOpen] = React.useState(false)
+    const [guideOpen, setGuideOpen] = React.useState(false)
 
     // This is the internal state of the sidebar.
     // We use openProp and setOpenProp for control from outside the component.
@@ -225,8 +228,10 @@ const SidebarProvider = React.forwardRef<
         setBugReportOpen,
         featureRequestOpen,
         setFeatureRequestOpen,
+        guideOpen,
+        setGuideOpen,
       }),
-      [sidebarState, open, setOpenMenu, isMobile, openMobile, setOpenMobile, openInfo, setOpenInfo, toggleMenuSidebar, toggleInfoSidebar, geocodeEarthApiKey, geocoderUrl, bugReportOpen, featureRequestOpen],
+      [sidebarState, open, setOpenMenu, isMobile, openMobile, setOpenMobile, openInfo, setOpenInfo, toggleMenuSidebar, toggleInfoSidebar, geocodeEarthApiKey, geocoderUrl, bugReportOpen, featureRequestOpen, guideOpen],
     )
 
     return (

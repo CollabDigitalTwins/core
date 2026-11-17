@@ -71,14 +71,16 @@ export default function NavigationBar({ geocodeEarthApiKey, geocoderUrl }: Navig
               className="group/sidebar-trigger w-6  justify-end opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-transparent"
               onClick={toggleInfoSidebar}
               title={t('openInfoTitle')}
+              data-tour="viewer-panel-toggle"
             >
               <LR.Menu className="h-4 w-4" />
             </Button>
           )}
 
-      {/* geocode search */}
-      {currentViewer === ViewerNames.map && <Geocoder geocodeEarthApiKey={geocodeEarthApiKey} geocoderUrl={geocoderUrl} />}
-      {currentViewer === ViewerNames.bim && <BIMSearchTool />}
+      <div data-tour="viewer-search">
+        {currentViewer === ViewerNames.map && <Geocoder geocodeEarthApiKey={geocodeEarthApiKey} geocoderUrl={geocoderUrl} />}
+        {currentViewer === ViewerNames.bim && <BIMSearchTool />}
+      </div>
       </Menubar>
     </Menubar>
   )

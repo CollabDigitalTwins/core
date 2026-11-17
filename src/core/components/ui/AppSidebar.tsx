@@ -19,6 +19,7 @@ import { ViewerNames } from '../../types'
 
 import { BugReportDialog } from '../support/BugReportDialog'
 import { FeatureRequestDialog } from '../support/FeatureRequestDialog'
+import { PlatformTour } from '../tour/platform/PlatformTour'
 
 import { Button } from './Button'
 import { CdtIcon } from './Icons/CdtIcon'
@@ -95,7 +96,7 @@ export function AppSidebar({ children, signOut, userMenuItems }: AppSidebarProps
           </button>
         </div>
       )}
-      <Sidebar collapsible={collapsibleType} className="border-none z-50 shadow-md relative" >
+      <Sidebar collapsible={collapsibleType} className="border-none z-50 shadow-md relative" data-tour="sidebar">
         {/* Sidebar toggle button - right side inside Sidebar */}
         {(sidebarState === 'expanded') && (
           <div id='sidebar-toggle-button' className='absolute right-2 top-2 flex items-center justify-center pointer-events-auto z-50'>
@@ -124,8 +125,9 @@ export function AppSidebar({ children, signOut, userMenuItems }: AppSidebarProps
               : 'justify-center pb-4'
           }`}
         >
-            {/* Nav User */}
-            <NavUser signOut={signOut} userMenuItems={userMenuItems} />
+            <div data-tour="sidebar-account" className="w-full">
+              <NavUser signOut={signOut} userMenuItems={userMenuItems} />
+            </div>
 
             {!isCollapsed ? (
               <Link
@@ -161,6 +163,7 @@ export function AppSidebar({ children, signOut, userMenuItems }: AppSidebarProps
         userEmail={session?.user?.email ?? undefined}
         viewer={currentViewer}
       />
+      <PlatformTour />
     </>
   )
 }

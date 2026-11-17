@@ -460,6 +460,70 @@
     "missing": "Esta parte no está en pantalla ahora. Puede continuar.",
     "progress": "Paso {step} de {total}"
   },
+  "PlatformTour": {
+    "welcome": {
+      "title": "Bienvenido a la plataforma CDT",
+      "body": "Edificios, mapas, modelos y datos de su organización, en un solo lugar.\nEste recorrido muestra las partes principales de la pantalla. Toma alrededor de un minuto y puede ocultarlo en cualquier momento."
+    },
+    "sidebar": {
+      "title": "Navegación",
+      "body": "La barra lateral lleva a cada visor y página de datos. Use el chevrón de su borde para contraerla o expandirla."
+    },
+    "viewers": {
+      "title": "Visores",
+      "body": "Mapa — el contexto urbano: sitios, edificios y conjuntos de datos en un mapa 3D.\nBIM — modelos de información de edificios (IFC), nubes de puntos y splats, elemento por elemento."
+    },
+    "search": {
+      "map": {
+        "title": "Buscar en el mapa",
+        "body": "Escriba una dirección o un lugar para llevar el mapa allí."
+      },
+      "bim": {
+        "title": "Buscar en el modelo",
+        "body": "Encuentre elementos de los modelos cargados por nombre, tipo o propiedad."
+      }
+    },
+    "panel": {
+      "map": {
+        "title": "Panel del mapa",
+        "body": "Abre el panel lateral con los edificios, sitios y capas del mapa."
+      },
+      "bim": {
+        "title": "Panel del modelo",
+        "body": "Abre el panel lateral con los modelos cargados, su estructura y las propiedades del elemento seleccionado."
+      }
+    },
+    "toolbar": {
+      "map": {
+        "title": "Herramientas del mapa",
+        "body": "Comparar — dos edificios lado a lado.\nConjuntos de datos — superponga los datos de su organización y datos abiertos.\nAgregar — coloque un edificio, sitio o archivo en el mapa.\nMedir — distancias y áreas.\nCompartir — un enlace a la vista actual."
+      },
+      "bim": {
+        "title": "Herramientas del modelo",
+        "body": "Corte — planos de sección a través del modelo.\nEncuadrar — ajusta los modelos a la vista.\nAgregar — cargue un modelo IFC o una nube de puntos.\nMedir — longitud, área, volumen y ángulo.\nCompartir — un enlace a la vista actual."
+      }
+    },
+    "data": {
+      "title": "Páginas de datos",
+      "body": "Sitios — los lugares que gestiona su organización.\nEdificios — cada edificio con sus detalles y archivos.\nArchivos — modelos, planos y documentos que ha subido.\nInfraestructura — carreteras, ferrocarriles y otras redes.\nLas páginas agregadas por plugins también aparecen en esta lista."
+    },
+    "plugins": {
+      "title": "Plugins",
+      "body": "Explore y agregue plugins que amplían la plataforma con nuevas herramientas y páginas."
+    },
+    "support": {
+      "title": "Soporte",
+      "body": "Contacte al equipo, sugiera una función o reporte un error. Guía repite el recorrido de la página en la que está."
+    },
+    "account": {
+      "title": "Su cuenta",
+      "body": "Configuración, uso y cierre de sesión."
+    },
+    "done": {
+      "title": "Todo listo",
+      "body": "Abra Soporte → Guía en cualquier momento para ver este recorrido de nuevo.\nLa documentación completa está en docs.collabdt.org."
+    }
+  },
   "MapLegend": {
     "title": "Leyenda",
     "titlePlural": "Leyendas",
@@ -1954,6 +2018,7 @@
     "featureSubmitSuccess": "Solicitud de función enviada correctamente. ¡Gracias!"
   },
   "supportMenu": {
+    "guide": "Guía",
     "contactTeam": "Contactar al equipo",
     "suggestFeature": "Sugerir una función",
     "reportBug": "Reportar un error"

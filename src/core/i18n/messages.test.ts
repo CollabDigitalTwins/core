@@ -40,6 +40,16 @@ describe('message catalogues', () => {
     }
   })
 
+  it('gives every locale the same PlatformTour keys, nested ones included', () => {
+    const paths = (node: unknown, prefix = ''): string[] => (typeof node === 'object' && node !== null
+      ? Object.entries(node).flatMap(([key, value]) => paths(value, `${prefix}${key}.`))
+      : [prefix]).sort()
+    for (const [name, locale] of [['es', es], ['fr', fr]] as const) {
+      expect(paths((locale as never)['PlatformTour']), name).toEqual(paths((en as never)['PlatformTour']))
+      expect(keysOf((locale as never)['supportMenu']), name).toEqual(keysOf((en as never)['supportMenu']))
+    }
+  })
+
   it('gives every locale the same UsageReport keys, nested ones included', () => {
     const report = (locale: unknown) => (locale as { UsageReport: Record<string, unknown> }).UsageReport
     for (const [name, locale] of [['es', es], ['fr', fr]] as const) {

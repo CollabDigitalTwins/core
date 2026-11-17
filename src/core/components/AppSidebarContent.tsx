@@ -123,7 +123,7 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, stora
 
   const {
     sidebarState, setOpenInfo, isMobile, openMobile, setOpenMobile,
-    setBugReportOpen, setFeatureRequestOpen,
+    setBugReportOpen, setFeatureRequestOpen, setGuideOpen,
   } = useSidebar()
 
   const pluginPages = usePluginDataPages()
@@ -276,6 +276,10 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, stora
     if (isMobile) setOpenMobile(false)
     setFeatureRequestOpen(true)
   }
+  const openGuide = () => {
+    if (isMobile) setOpenMobile(false)
+    setGuideOpen(true)
+  }
 
   return (
     <>
@@ -290,7 +294,7 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, stora
         {isCollapsed && <Separator className="z-30 w-2/3 mx-auto" />}
 
         <div className='overflow-y-auto overflow-x-hidden'>
-          <SidebarGroup>
+          <SidebarGroup data-tour="sidebar-viewers">
             <SidebarGroupLabel>{t('3dViewer')}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -324,7 +328,7 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, stora
             <>
               {isCollapsed && <Separator className="z-30 w-2/3 mx-auto" />}
 
-              <SidebarGroup>
+              <SidebarGroup data-tour="sidebar-data">
                 <SidebarGroupLabel>{t('data')}</SidebarGroupLabel>
 
                 <SidebarGroupContent>
@@ -359,7 +363,7 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, stora
             </>
           )}
           {isCollapsed && <Separator className="z-30 w-2/3 mx-auto" />}
-          <SidebarGroup>
+          <SidebarGroup data-tour="sidebar-plugins">
             <SidebarGroupLabel>{t('plugins')}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -400,7 +404,7 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, stora
           </SidebarGroup>
         )}
         {/* Services */}
-        <SidebarGroup>
+        <SidebarGroup data-tour="sidebar-support">
           <SidebarGroupLabel>{t('service')}</SidebarGroupLabel>
           <SidebarMenu>
             {serviceItems.map((item, index) => (
@@ -411,6 +415,7 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, stora
                     item={item}
                     onOpenBug={openBugDialog}
                     onOpenFeature={openFeatureDialog}
+                    onOpenGuide={openGuide}
                   />
                 ) : (
                   <SidebarMenuButton asChild>

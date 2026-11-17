@@ -16,6 +16,13 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   `browserTourStore` keeps them in session or local storage. `findSidebarPageLink` and `setToolbarPanel` find the
   app's own sidebar and toolbar elements. Strings are in a new `GuidedTour` i18n namespace.
 - `@collabdt/core/plugins-sdk/tour`: all of the above for runtime-loaded plugins.
+- Platform overview tour (`components/tour/platform/PlatformTour`), mounted by `AppSidebar`: walks the sidebar,
+  the Map and BIM viewers, their search, side panel and toolbar, the data pages, plugins, support and the account
+  menu. It opens once per device on a first visit and again from a new Guide item in the Support menu. Strings are
+  in a new `PlatformTour` i18n namespace and `supportMenu.guide`.
+- `useSidebar()` returns `guideOpen` and `setGuideOpen`; `SupportMenu` takes `onOpenGuide`.
+- `data-tour` anchors on the app shell: `sidebar`, `sidebar-viewers`, `sidebar-data`, `sidebar-plugins`,
+  `sidebar-support`, `sidebar-account`, `viewer-search`, `viewer-panel-toggle` and `toolbar`.
 
 ## [0.19.0] - 2026-11-13
 

@@ -460,6 +460,70 @@
     "missing": "This part isn't on screen right now. You can keep going.",
     "progress": "Step {step} of {total}"
   },
+  "PlatformTour": {
+    "welcome": {
+      "title": "Welcome to the CDT platform",
+      "body": "Buildings, maps, models and data for your organization, in one place.\nThis tour shows the main parts of the screen. It takes about a minute, and you can hide it at any time."
+    },
+    "sidebar": {
+      "title": "Navigation",
+      "body": "The sidebar takes you to every viewer and data page. Use the chevron on its edge to collapse or expand it."
+    },
+    "viewers": {
+      "title": "Viewers",
+      "body": "Map — the city context: sites, buildings and datasets on a 3D map.\nBIM — building information models (IFC), point clouds and splats, element by element."
+    },
+    "search": {
+      "map": {
+        "title": "Search the map",
+        "body": "Type an address or a place name to fly the map there."
+      },
+      "bim": {
+        "title": "Search the model",
+        "body": "Find elements in the loaded models by name, type or property."
+      }
+    },
+    "panel": {
+      "map": {
+        "title": "Map panel",
+        "body": "Opens the side panel with the buildings, sites and layers on the map."
+      },
+      "bim": {
+        "title": "Model panel",
+        "body": "Opens the side panel with the loaded models, their structure and the properties of the selected element."
+      }
+    },
+    "toolbar": {
+      "map": {
+        "title": "Map tools",
+        "body": "Compare — two buildings side by side.\nDatasets — overlay your organization's datasets and open data.\nAdd — place a building, site or file on the map.\nMeasure — distances and areas.\nShare — a link to the current view."
+      },
+      "bim": {
+        "title": "Model tools",
+        "body": "Clipping — cut section planes through the model.\nFit — frame the models in view.\nAdd — load an IFC model or point cloud.\nMeasure — length, area, volume and angle.\nShare — a link to the current view."
+      }
+    },
+    "data": {
+      "title": "Data pages",
+      "body": "Sites — the places your organization manages.\nBuildings — every building with its details and files.\nFiles — models, drawings and documents you have uploaded.\nInfrastructure — roads, rail and other networks.\nPages added by plugins appear in this list too."
+    },
+    "plugins": {
+      "title": "Plugins",
+      "body": "Browse and add plugins that extend the platform with new tools and pages."
+    },
+    "support": {
+      "title": "Support",
+      "body": "Contact the team, suggest a feature or report a bug. Guide replays the tour for the page you are on."
+    },
+    "account": {
+      "title": "Your account",
+      "body": "Settings, usage and sign out."
+    },
+    "done": {
+      "title": "You are ready",
+      "body": "Open Support → Guide at any time to see this tour again.\nThe full documentation is at docs.collabdt.org."
+    }
+  },
   "MapLegend": {
     "title": "Legend",
     "titlePlural": "Legends",
@@ -1957,6 +2021,7 @@
     "featureSubmitSuccess": "Feature request submitted successfully. Thank you!"
   },
   "supportMenu": {
+    "guide": "Guide",
     "contactTeam": "Contact Team",
     "suggestFeature": "Suggest Feature",
     "reportBug": "Report Bug"

@@ -48,7 +48,7 @@ export const TOUR_CSS = `
 .cdt-tour-body dl { margin: 0; display: grid; gap: 0.35rem; }
 .cdt-tour-body dt { font-weight: 600; color: var(--tour-accent); }
 .cdt-tour-body dd { margin: 0 0 0 0.75rem; }
-.cdt-tour-missing { border-left: 3px solid var(--tour-warning); background: color-mix(in srgb, var(--tour-warning) 12%, var(--tour-surface)); padding: 0.3rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+.cdt-tour-missing { border: 1px solid var(--tour-warning); background: color-mix(in srgb, var(--tour-warning) 12%, var(--tour-surface)); padding: 0.3rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
 
 .cdt-tour-card > footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.6rem 1rem 0.9rem; }
 .cdt-tour-dots { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }

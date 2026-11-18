@@ -101,7 +101,7 @@ export function FileTab() {
 
   return (
     <ViewerSidebarPanel search={{ value: searchQuery, onChange: setSearchQuery }}>
-      <div ref={layoutRef} className="grid flex-1 min-h-0" style={{ gridTemplateRows }}>
+      <div ref={layoutRef} className="grid flex-1 min-h-0" style={{ gridTemplateRows }} data-tour="panel-file-sections">
         {sectionIds.map(id => (
           <React.Fragment key={id}>
             <div className="min-h-0 overflow-hidden">

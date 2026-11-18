@@ -16,7 +16,6 @@ export const TOUR_CSS = `
   --tour-scrim: rgba(0, 0, 0, 0.45);
   --tour-ring: var(--tour-accent);
   --tour-focus: hsl(var(--ring, 0 0% 3.9%));
-  --tour-warning: #eda100;
 }
 .cdt-tour { position: fixed; inset: 0; z-index: var(--tour-z, 2147483000); pointer-events: none; color: var(--tour-ink); }
 .cdt-tour * { box-sizing: border-box; }
@@ -47,8 +46,22 @@ export const TOUR_CSS = `
 .cdt-tour-body p { margin: 0; }
 .cdt-tour-body dl { margin: 0; display: grid; gap: 0.35rem; }
 .cdt-tour-body dt { font-weight: 600; color: var(--tour-accent); }
-.cdt-tour-body dd { margin: 0 0 0 0.75rem; }
-.cdt-tour-missing { border: 1px solid var(--tour-warning); background: color-mix(in srgb, var(--tour-warning) 12%, var(--tour-surface)); padding: 0.3rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+.cdt-tour-body dd { margin: 0; }
+.cdt-tour-items { list-style: none; margin: 0 -0.4rem; padding: 0; display: grid; gap: 0.15rem; }
+.cdt-tour-item { display: grid; grid-template-columns: 2rem 1fr auto; align-items: center; column-gap: 0.65rem; width: 100%; padding: 0.4rem; border: 1px solid transparent; border-radius: 8px; background: none; font: inherit; color: inherit; text-align: left; }
+button.cdt-tour-item { cursor: pointer; }
+button.cdt-tour-item:hover { border-color: var(--tour-muted); background: color-mix(in srgb, var(--tour-accent) 7%, transparent); }
+.cdt-tour-item-icon { display: flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 6px; background: color-mix(in srgb, var(--tour-accent) 12%, transparent); color: var(--tour-accent); }
+.cdt-tour-item-icon svg { width: 1.05rem; height: 1.05rem; }
+.cdt-tour-item-text { display: flex; flex-direction: column; min-width: 0; }
+.cdt-tour-item-text strong { font-weight: 600; color: var(--tour-accent); }
+.cdt-tour-item-go { font-size: 1.2rem; line-height: 1; color: var(--tour-accent); opacity: 0.6; }
+button.cdt-tour-item:hover .cdt-tour-item-go { opacity: 1; }
+.cdt-tour-waiting { display: grid; gap: 0.35rem; }
+.cdt-tour-waiting > span:not(.cdt-tour-sr) { height: 0.55rem; border-radius: 999px; background: linear-gradient(90deg, var(--tour-muted) 25%, color-mix(in srgb, var(--tour-muted) 40%, var(--tour-surface)) 50%, var(--tour-muted) 75%); background-size: 200% 100%; animation: cdt-tour-shimmer 1.2s linear infinite; }
+.cdt-tour-waiting > span:nth-child(2) { width: 60%; }
+@keyframes cdt-tour-shimmer { to { background-position: -200% 0; } }
+.cdt-tour-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 .cdt-tour-card > footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.6rem 1rem 0.9rem; }
 .cdt-tour-dots { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
@@ -63,7 +76,7 @@ export const TOUR_CSS = `
 .cdt-tour button:focus-visible { outline: 2px solid var(--tour-focus); outline-offset: 2px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .cdt-tour-spot.is-settled, .cdt-tour-ring.is-settled, .cdt-tour-arrow.is-settled, .cdt-tour-card.is-settled { transition: none; animation: none; }
+  .cdt-tour-spot.is-settled, .cdt-tour-ring.is-settled, .cdt-tour-arrow.is-settled, .cdt-tour-card.is-settled, .cdt-tour-waiting > span { transition: none; animation: none; }
   .cdt-tour-card { transform: none; }
 }
 `

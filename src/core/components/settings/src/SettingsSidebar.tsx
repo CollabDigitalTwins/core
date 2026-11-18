@@ -13,6 +13,8 @@ import {
   SidebarMenuItem,
 } from '../../ui/Sidebar'
 
+import { canSeeSettingsTab } from './settingsTabs'
+
 import type { SettingsTabKey } from './types'
 
 type SettingsTab = {
@@ -34,18 +36,7 @@ export default function SettingsSidebar({ tabs, activeTab, onTabChange }: Settin
 
   const isMobile = useIsMobile()
 
-  // Helper to check if tab should be visible
-  const isTabVisible = (tabKey: SettingsTabKey) => {
-    if (tabKey === 'users') {
-      return ability.can('update', 'Role')
-    }
-    if (tabKey === 'organization') {
-      return ability.can('update', 'Organization')
-    }
-    return true
-  }
-
-  const visibleTabs = tabs.filter(tab => isTabVisible(tab.key))
+  const visibleTabs = tabs.filter(tab => canSeeSettingsTab((action, subject) => ability.can(action, subject), tab.key))
 
   // Mobile: the desktop sidebar list below is `hidden` under md, with no
   // other way to reach it — swap to a dropdown so tabs (e.g. "Organization")
@@ -81,6 +72,7 @@ export default function SettingsSidebar({ tabs, activeTab, onTabChange }: Settin
               variant="ghost"
               onClick={() => onTabChange(tab.key)}
               disabled={tab.disabled}
+              data-tour={`settings-tab-${tab.key}`}
             >
               <span>{tab.label}</span>
             </Button>

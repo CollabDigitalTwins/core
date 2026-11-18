@@ -81,7 +81,7 @@ export function usePluginToolbarTools(
   }, [contributions, extraProps])
 }
 
-function pluginToolId(contribution: PluginContribution<ToolbarCapability>) {
+export function pluginToolId(contribution: PluginContribution<ToolbarCapability>) {
   return `plugin:${contribution.pluginId}:${contribution.id}` as const
 }
 

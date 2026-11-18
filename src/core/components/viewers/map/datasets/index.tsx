@@ -302,7 +302,7 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
   // UI
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpenAction}>
-      <DialogContent className="h-screen sm:h-[90vh] sm:max-h-[90vh] w-full max-w-full sm:w-[88vw] sm:max-w-[88vw] p-0 gap-0 overflow-hidden flex flex-col">
+      <DialogContent data-tour="datasets" className="h-screen sm:h-[90vh] sm:max-h-[90vh] w-full max-w-full sm:w-[88vw] sm:max-w-[88vw] p-0 gap-0 overflow-hidden flex flex-col">
         {view === 'table' ? (
           <>
             <DialogHeader className="bg-background z-50 sticky top-0 p-4 sm:p-6 flex flex-row flex-wrap justify-between items-end gap-2 text-left">
@@ -312,7 +312,7 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
                   {t('dialogDescription')}
                 </DialogDescription>
               </div>
-              <div className="flex flex-row flex-wrap justify-between items-center w-full sm:w-auto">
+              <div className="flex flex-row flex-wrap justify-between items-center w-full sm:w-auto" data-tour="datasets-search">
                 <div className="flex flex-wrap gap-2 font-medium w-full sm:w-auto">
                   <div className="relative flex-1 min-w-[140px] sm:flex-none">
                     <LR.Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -371,30 +371,31 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="hidden md:!flex justify-between px-3 flex-shrink-0">
+                <div className="hidden md:!flex justify-between px-3 flex-shrink-0" data-tour="datasets-tabs">
                   {' '}
                   {/* Prevent tabs from shrinking */}
                   <TabsList className="pointer-events-auto sticky flex z-40 top-[100px] bg-transparent">
-                    <TabsTrigger className="hover:text-foreground gap-2" value="applied">
+                    <TabsTrigger className="hover:text-foreground gap-2" value="applied" data-tour="datasets-tab-applied">
                       <Badge variant="outline">{addedDatasets.length}</Badge>
                       {t('appliedTab')}
                     </TabsTrigger>
-                    <TabsTrigger className="hover:text-foreground gap-2" value="favourites">
+                    <TabsTrigger className="hover:text-foreground gap-2" value="favourites" data-tour="datasets-tab-favourites">
                       {t('favoritesTab')}
                     </TabsTrigger>
-                    <TabsTrigger className="hover:text-foreground" value="organizational">{t('organizationalTab')}</TabsTrigger>
-                    <TabsTrigger className="hover:text-foreground" value="all">{t('allDataTab')}</TabsTrigger>
-                    <TabsTrigger className="hover:text-foreground" value="national">{t('nationalTab')}</TabsTrigger>
-                    <TabsTrigger className="hover:text-foreground" value="countrySubdivision">{t('countrySubdivisionTab')}</TabsTrigger>
+                    <TabsTrigger className="hover:text-foreground" value="organizational" data-tour="datasets-tab-organizational">{t('organizationalTab')}</TabsTrigger>
+                    <TabsTrigger className="hover:text-foreground" value="all" data-tour="datasets-tab-all">{t('allDataTab')}</TabsTrigger>
+                    <TabsTrigger className="hover:text-foreground" value="national" data-tour="datasets-tab-national">{t('nationalTab')}</TabsTrigger>
+                    <TabsTrigger className="hover:text-foreground" value="countrySubdivision" data-tour="datasets-tab-countrySubdivision">{t('countrySubdivisionTab')}</TabsTrigger>
                     {showMunicipalTab && (
-                      <TabsTrigger className="hover:text-foreground" value="municipal">{t('municipalTab')}</TabsTrigger>
+                      <TabsTrigger className="hover:text-foreground" value="municipal" data-tour="datasets-tab-municipal">{t('municipalTab')}</TabsTrigger>
                     )}
-                    <TabsTrigger className="hover:text-foreground" value="liveData">{t('liveDataTab')}</TabsTrigger>
+                    <TabsTrigger className="hover:text-foreground" value="liveData" data-tour="datasets-tab-liveData">{t('liveDataTab')}</TabsTrigger>
                   </TabsList>
                 </div>
                 <TabsContent
                   value={currentTab}
                   className="flex-1 pointer-events-auto mt-0 min-h-0" // min-h-0 is crucial for flex children
+                  data-tour="datasets-list"
                 >
                   {currentTabLoading ? (
                     <DatasetSkeleton />

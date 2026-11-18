@@ -166,7 +166,7 @@ export function CommentsSection() {
   }, [viewer, commentsVisible, menusDispatch])
 
   return (
-    <div className="flex-1 flex flex-col space-y-4 overflow-hidden">
+    <div className="flex-1 flex flex-col space-y-4 overflow-hidden" data-tour="panel-comments">
       <div className="px-4">
         <SearchInput
           placeholder={t('searchComments')}

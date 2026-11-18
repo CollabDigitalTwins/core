@@ -5,6 +5,7 @@
 
 import * as React from 'react'
 
+import { contentBox } from './contentBox'
 import { fitsBeside, intersect } from './placement'
 
 import type { Box } from './placement'
@@ -14,6 +15,7 @@ const SETTLE_FRAMES = 10
 const MAX_SETTLE_FRAMES = 60
 const CARD_WIDTH = 360
 const CARD_INSET = 32
+const CONTROL_MAX_HEIGHT = 56
 export const HIDE_BUTTON_CLASS = 'cdt-tour-hide'
 
 export interface TourLayout { target: Box | null; avoid: Box[]; settled: boolean }
@@ -47,9 +49,15 @@ function scrollBlock(element: Element): ScrollLogicalPosition {
   return box.height > window.innerHeight || !fitsBeside(box, cardWidthFor(window.innerWidth), window.innerWidth) ? 'start' : 'nearest'
 }
 
+/** A control is lit around what it draws, so the ring stays centred on an icon set to one side of its button. */
+function litBox(element: Element): Box {
+  const box = boxOf(element)
+  return box.height <= CONTROL_MAX_HEIGHT ? contentBox(element) ?? box : box
+}
+
 /** The target's box cut to the scrolling boxes around it, so a half-scrolled row is lit only where it shows. */
 function shownBox(element: Element): Box | null {
-  let box: Box | null = boxOf(element)
+  let box: Box | null = litBox(element)
   for (let parent = element.parentElement; parent && box; parent = parent.parentElement) {
     if (getComputedStyle(parent).overflowY !== 'visible') box = intersect(box, boxOf(parent))
   }
@@ -128,6 +136,19 @@ export function useTourKeys(go: (delta: number) => void, onHide: () => void) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [latest])
+}
+
+const viewportSize = () => (typeof window === 'undefined' ? { width: 0, height: 0 } : { width: window.innerWidth, height: window.innerHeight })
+
+/** The window size, kept current so the card re-places itself when the window is resized. */
+export function useViewportSize() {
+  const [size, setSize] = React.useState(viewportSize)
+  React.useEffect(() => {
+    const onResize = () => setSize(viewportSize())
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+  return size
 }
 
 export function useMeasuredHeight(ref: React.RefObject<HTMLElement | null>, fallback: number): number {

@@ -28,7 +28,7 @@ export function ToolbarBody({ viewer, tools }: Props) {
           className="flex flex-row px-1 gap-1 justify-center w-fit bg-primary-light rounded space-y-0"
         >
           {tools.map((tool, index) => (
-            <div key={index} className="flex items-center">
+            <div key={index} className="flex items-center" data-tour={tool.id ? `tool-${tool.id}` : undefined}>
               <ToolbarButton tool={tool} />
             </div>
           ))}

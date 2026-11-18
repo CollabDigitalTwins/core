@@ -52,7 +52,7 @@ export function ViewerSidebarShell({ tabs, organization }: ViewerSidebarShellPro
   return (
     // Fills the ViewerSidebar overlay wrapper (Sidebar.tsx), which owns the resizable width.
     // pr-2 keeps a consistent right gutter so content never sits flush against the edge/handle.
-    <div className="w-full flex flex-col h-full min-h-0 bg-background border-r border-border pr-2">
+    <div className="w-full flex flex-col h-full min-h-0 bg-background border-r border-border pr-2" data-tour="viewer-panel">
       <Header
         currentBuilding={currentBuilding}
         loadingBuildingInfo={loadingBuildingInfo}
@@ -70,6 +70,7 @@ export function ViewerSidebarShell({ tabs, organization }: ViewerSidebarShellPro
       {activeTab && (
         <div
           role="tabpanel"
+          data-tour="panel-tab"
           id={sidebarPanelId(activeTab.id)}
           aria-labelledby={sidebarTabId(activeTab.id)}
           className="flex-1 min-h-0 flex flex-col"

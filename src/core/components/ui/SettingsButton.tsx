@@ -45,7 +45,7 @@ export default function SettingsButton() {
   }
 
   return (
-    <div className="absolute top-24 right-0 m-[10px] z-10" onClick={onclick}>
+    <div className="absolute top-24 right-0 m-[10px] z-10" onClick={onclick} data-tour="map-settings">
       <Menubar className="flex flex-row gap-2 justify-center w-[28.99px] bg-primary-light rounded space-y-0 p-0">
         <ToolbarButton tool={tool} />
       </Menubar>

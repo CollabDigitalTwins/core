@@ -273,8 +273,8 @@ export function SensorsSection() {
   }
 
   return (
-    <div className="flex-1 flex flex-col space-y-4 overflow-hidden">
-      <div className="px-4 flex items-center gap-2">
+    <div className="flex-1 flex flex-col space-y-4 overflow-hidden" data-tour="panel-sensors">
+      <div className="px-4 flex items-center gap-2" data-tour="panel-sensors-toolbar">
         <SearchInput
           placeholder={t('searchSensors')}
           value={searchQuery}

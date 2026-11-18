@@ -291,6 +291,7 @@ declare module '@collabdt/core/plugins-sdk/charts' {
 
 declare module '@collabdt/core/plugins-sdk/tour' {
   export type TourTarget = import('./tour').TourTarget
+  export type TourItem = import('./tour').TourItem
   export type TourStep = import('./tour').TourStep
   export type GuidedTourLabels = import('./tour').GuidedTourLabels
   export type GuidedTourProps = import('./tour').GuidedTourProps

@@ -394,7 +394,7 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, stora
       <SidebarFooter className={`w-full flex flex-col gap-4 ${isCollapsed ? 'items-center justify-center px-0 pb-4' : 'items-start justify-start px-2 pb-4'}`}>
         {/* Preferences */}
         {organization.languages?.length > 1 && (
-          <SidebarGroup>
+          <SidebarGroup data-tour="sidebar-language">
             <SidebarGroupLabel>{t('preferences')}</SidebarGroupLabel>
             <SidebarMenu>
               <SidebarMenuItem>

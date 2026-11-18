@@ -45,7 +45,7 @@ export function ViewerSidebarPanel({
     >
       {search && (
         // 'scroll' already pads the panel; 'sections' pads per-child.
-        <div className={variant === 'sections' ? 'px-4' : undefined}>
+        <div className={variant === 'sections' ? 'px-4' : undefined} data-tour="panel-search">
           <SearchInput
             placeholder={search.placeholder ?? 'Search...'}
             value={search.value}

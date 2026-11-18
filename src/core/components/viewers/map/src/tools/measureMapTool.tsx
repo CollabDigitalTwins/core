@@ -572,11 +572,11 @@ export const MeasureMapTool: React.FC<MeasureToolProps> = ({ tool }) => {
 
   return (
     <ToolbarSubmenu tool={tool}>
-      <DropdownMenuItem onClick={() => handleMeasureTypeChange('line')}>
+      <DropdownMenuItem onClick={() => handleMeasureTypeChange('line')} data-tour="measure-distance">
         <LR.Ruler />
         <span>{t('distance')}</span>
       </DropdownMenuItem>
-      <DropdownMenuItem onClick={() => handleMeasureTypeChange('area')}>
+      <DropdownMenuItem onClick={() => handleMeasureTypeChange('area')} data-tour="measure-area">
         <LR.Square />
         <span>{t('area')}</span>
       </DropdownMenuItem>

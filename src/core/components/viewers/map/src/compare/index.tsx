@@ -55,6 +55,7 @@ export default function Compare({ tool, building }: CompareProps) {
   const { compareItems, setCompareItems, comparing, setComparing } = useBuildingsContext()
 
   const [isOpen, setIsOpen] = React.useState(false)
+  const cardId = React.useId()
 
   const toggleOpen = () => {
     setIsOpen(!isOpen)
@@ -129,12 +130,14 @@ export default function Compare({ tool, building }: CompareProps) {
         className="flex justify-center items-center h-9 w-9 pointer-events-auto"
         onClick={toggleOpen}
         title={tool.title}
+        aria-expanded={isOpen}
+        aria-controls={cardId}
         disabled={!ability.can('read', 'Building')}
       >
         <LR.Columns3 />
       </Button>
 
-      <Card className={`${cardAnimationClasses} z-20 w-[80vw] max-w-[900px]`} data-state={isOpen ? 'open' : 'closed'}>
+      <Card id={cardId} className={`${cardAnimationClasses} z-20 w-[80vw] max-w-[900px]`} data-state={isOpen ? 'open' : 'closed'}>
         <CardHeader className="flex flex-row justify-between items-center py-0">
           <CardTitle>
             {t('compareBuildings')}

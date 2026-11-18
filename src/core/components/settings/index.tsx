@@ -33,7 +33,7 @@ export function UserSettings({ storageBaseUrl }: { storageBaseUrl?: string }) {
           <SettingsHeader title={t('settings')} />
 
           <div className="flex flex-col md:flex-row gap-2 p-6 flex-1 min-h-0 overflow-y-auto md:overflow-hidden">
-            <div className="flex-shrink-0 md:pr-4 lg:w-[280px]">
+            <div className="flex-shrink-0 md:pr-4 lg:w-[280px]" data-tour="settings-sections">
               <SettingsSidebar
                 tabs={tabs}
                 activeTab={activeTab}

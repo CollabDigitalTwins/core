@@ -32,8 +32,10 @@ export default function DatasetMapTool({ tool, organization, martinBaseUrl }: Da
         size="icon"
         variant="ghost"
         className="flex justify-center items-center h-9 w-9 pointer-events-auto"
-        onClick={() => setIsOpen(true)}
+        onClick={() => setIsOpen(open => !open)}
         title={tool?.title}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
         disabled={!ability.can('read', 'File')}
 
       >

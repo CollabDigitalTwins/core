@@ -81,10 +81,14 @@ describe('GuidedTour', () => {
     expect(screen.getByRole('heading', { name: 'Filters' })).toBeInTheDocument()
   })
 
-  it('says so when a step target is not on screen', () => {
+  it('shows a loading placeholder while a step target has not appeared, then gives up quietly', () => {
+    vi.useFakeTimers()
     render(<GuidedTour steps={STEPS} onHide={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: 'next' }))
-    expect(screen.getByText('missing')).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('missing')
+    act(() => { vi.advanceTimersByTime(5000) })
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    vi.useRealTimers()
   })
 
   it('renders term lines as a definition list', () => {
@@ -92,6 +96,33 @@ describe('GuidedTour', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Done' }))
     expect(screen.getAllByRole('term')[0]).toHaveTextContent('Observed')
     expect(screen.getAllByRole('definition')).toHaveLength(2)
+  })
+
+  it('lists step items, as buttons when they can be selected', () => {
+    const onSelect = vi.fn()
+    const items = [
+      { id: 'map', term: 'Map', description: 'The city context.', onSelect },
+      { id: 'bim', term: 'BIM', description: 'Models.' },
+    ]
+    render(<GuidedTour steps={[{ ...STEPS[0], items }]} onHide={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /Map/ }))
+    expect(onSelect).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('button', { name: /BIM/ })).not.toBeInTheDocument()
+    expect(screen.getByText('Models.')).toBeInTheDocument()
+  })
+
+  it('opens on the step named by startAt', () => {
+    render(<GuidedTour steps={STEPS} onHide={vi.fn()} startAt="filters" />)
+    expect(screen.getByRole('heading', { name: 'Filters' })).toBeInTheDocument()
+  })
+
+  it('calls onFinish instead of onHide when finished', () => {
+    const onHide = vi.fn()
+    const onFinish = vi.fn()
+    render(<GuidedTour steps={STEPS} onHide={onHide} onFinish={onFinish} startAt="done" />)
+    fireEvent.click(screen.getByRole('button', { name: 'finish' }))
+    expect(onFinish).toHaveBeenCalledOnce()
+    expect(onHide).not.toHaveBeenCalled()
   })
 
   it('uses the labels it is given', () => {
@@ -106,6 +137,14 @@ describe('GuidedTour', () => {
     fireEvent.click(screen.getByRole('button', { name: 'next' }))
     rerender(<GuidedTour steps={[STEPS[0], { ...STEPS[1], onEnter }]} onHide={vi.fn()} />)
     expect(onEnter).toHaveBeenCalledOnce()
+  })
+
+  it('runs the cleanup an entry callback returns when the step closes', () => {
+    const cleanup = vi.fn()
+    render(<GuidedTour steps={[{ ...STEPS[0], onEnter: () => cleanup }, STEPS[1]]} onHide={vi.fn()} />)
+    expect(cleanup).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'next' }))
+    expect(cleanup).toHaveBeenCalledOnce()
   })
 
   it('finishes when an invited target is clicked', () => {

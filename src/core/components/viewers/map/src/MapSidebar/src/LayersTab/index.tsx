@@ -140,10 +140,10 @@ export function LayersTab({ organization }: { martinBaseUrl?: string; organizati
       search={{ value: searchQuery, onChange: setSearchQuery }}
     >
       <div className="flex-1 min-h-0 overflow-y-auto space-y-2 divide-y">
-        <div className="pb-2">
+        <div className="pb-2" data-tour="panel-layers-applied">
           <AppliedDatasetsSection />
         </div>
-        <div className="pt-2">
+        <div className="pt-2" data-tour="panel-layers-available">
           <AvailableDatasetsSection
             query={searchQuery}
             allDatasets={allDatasets}

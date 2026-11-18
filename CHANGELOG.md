@@ -10,8 +10,10 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ### Added
 - Guided tours (`components/tour`): `GuidedTour` spotlights page elements step by step and leaves the page usable
   underneath. A step targets a `data-tour="<id>"` anchor, a function that returns an element, or `null` for a
-  centred card. It can run `onEnter` when it opens and can `invite` a click that ends the tour. Plain-string bodies
-  turn `term — description` lines into a definition list. Theme it with `--tour-*` CSS variables on a `className`;
+  centred card. It can run `onEnter` when it opens, whose returned function runs when the step closes, and can
+  `invite` a click that ends the tour. Plain-string bodies turn `term — description` lines into a definition list;
+  a step's `items` (`TourItem`) render as icon rows, which are buttons when they have `onSelect`. `startAt` opens the
+  tour on a given step and `onFinish` replaces `onHide` for the Finish button. Theme it with `--tour-*` CSS variables on a `className`;
   the defaults follow the platform tokens. `useTour` remembers finished tours through a `TourStore`;
   `browserTourStore` keeps them in session or local storage. `findSidebarPageLink` and `setToolbarPanel` find the
   app's own sidebar and toolbar elements. Strings are in a new `GuidedTour` i18n namespace.
@@ -20,11 +22,29 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - `@collabdt/core/plugins-sdk/tour`: all of the above for runtime-loaded plugins.
 - Platform overview tour (`components/tour/platform/PlatformTour`), mounted by `AppSidebar`: walks the sidebar,
   the Map and BIM viewers, their search, side panel and toolbar, the data pages, plugins, support and the account
-  menu. It opens once per device on a first visit and again from a new Guide item in the Support menu. Strings are
+  menu. The viewers, toolbar tools, data pages and Settings are buttons that branch into a closer tour of that part:
+  the Map tour demonstrates a search for Carleton University, opens the side panel and each toolbar tool, and covers
+  the zoom, compass and map settings controls; finishing a branch returns to the overview. Each side panel tab, the
+  datasets menu and each of its collections, the Plugins page, the Support options, the Add options, the Share
+  options and a measuring demo on the Carleton campus have closer tours or buttons of their own. Toolbar tools
+  and side panel tabs added by plugins are included. The spotlight centres on what a control draws, not its padded
+  box. Items a role cannot use, such as the Organization settings or Add options without create rights, are left
+  out, and the card re-places itself when the window is resized. A Language step, before Support, lists the
+  organization's languages and switches to one; it only appears when there is more than one. A branch follows the viewer: moving to another viewer or page switches to its tour. It opens once per device on a first visit and again from a new Guide item in the Support menu. Strings are
   in a new `PlatformTour` i18n namespace and `supportMenu.guide`.
 - `useSidebar()` returns `guideOpen` and `setGuideOpen`; `SupportMenu` takes `onOpenGuide`.
+- `hooks/ui/useChangeViewer`: switches viewer the way the app sidebar does.
+- `settings/src/settingsTabs`: `canSeeSettingsTab`, the role rule for which settings sections show, shared by the
+  settings page and the tour.
 - `data-tour` anchors on the app shell: `sidebar`, `sidebar-viewers`, `sidebar-data`, `sidebar-plugins`,
-  `sidebar-support`, `sidebar-account`, `viewer-search`, `viewer-panel-toggle` and `toolbar`.
+  `sidebar-support`, `sidebar-account`, `viewer-search`, `viewer-panel-toggle`, `viewer-panel`, `toolbar`,
+  `tool-<toolId>` on each toolbar tool, `map-settings`, `data-title`, `data-filters`, `data-table`,
+  `settings-sections`, `settings-content`, `datasets-search`, `datasets-tabs`, `datasets-list`, `panel-search`,
+  `panel-tab`, `panel-file-sections`, `panel-layers-applied`, `panel-layers-available`, `panel-layers-drawings`,
+  `panel-layers-classifier`, `panel-comments`, `panel-sensors`, `panel-sensors-toolbar`, `measure-distance`,
+  `measure-area`, `share-qr`, `share-copy`, `share-screenshot`, `datasets-tab-<tab>`, `plugins-tabs`, `plugins-list`,
+  `settings-tab-<section>` and `sidebar-language`. The map Compare and Datasets buttons set
+  `aria-expanded`.
 
 ## [0.19.0] - 2026-11-13
 

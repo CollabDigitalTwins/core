@@ -17,7 +17,22 @@ vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
 }))
 
+vi.mock('next/navigation', async importOriginal => ({
+  ...await importOriginal<typeof import('next/navigation')>(),
+  useRouter: () => ({ refresh: vi.fn() }),
+}))
+
 vi.mock('../../ui/ViewerSidebar', () => ({ ViewerSidebar: () => null }))
+
+vi.mock('../../../store/Permissions/context', async importOriginal => ({
+  ...await importOriginal<typeof import('../../../store/Permissions/context')>(),
+  usePermissions: () => ({ ability: { can: () => true } }),
+}))
+
+vi.mock('./usePluginTourEntries', async importOriginal => {
+  const actual = await importOriginal<typeof import('./usePluginTourEntries')>()
+  return { ...actual, usePluginTourEntries: () => actual.NO_PLUGIN_ENTRIES }
+})
 
 const matchMedia = (query: string) => ({
   matches: false, media: query, onchange: null,
@@ -70,5 +85,16 @@ describe('PlatformTour', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Guide' }))
     expect(screen.getByRole('dialog', { name: 'welcome.title' })).toBeInTheDocument()
+  })
+
+  it('branches into a closer tour from an item and comes back to the step it left', () => {
+    renderTour(memoryStore())
+    fireEvent.click(screen.getByRole('button', { name: 'viewers.title' }))
+    fireEvent.click(screen.getByRole('button', { name: /viewers\.items\.map\.term/ }))
+    expect(screen.getByRole('dialog', { name: 'viewerTour.map.title' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'tools.map-share.title' }))
+    fireEvent.click(screen.getByRole('button', { name: 'backToOverview' }))
+    expect(screen.getByRole('dialog', { name: 'viewers.title' })).toBeInTheDocument()
   })
 })

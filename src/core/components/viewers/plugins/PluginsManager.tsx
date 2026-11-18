@@ -238,7 +238,7 @@ export function PluginsManager({ listings, actions, registryActions }: Props) {
             className="flex flex-1 min-h-0 flex-col"
           >
             {/* Tabs and Search Row */}
-            <div className="flex flex-col sm:flex-row sm:justify-between items-stretch sm:items-end px-3 sm:px-6 py-4 gap-3 sm:gap-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between items-stretch sm:items-end px-3 sm:px-6 py-4 gap-3 sm:gap-4" data-tour="plugins-tabs">
               {tabs.length > 1 ? (
                 <TabsList className="w-auto sm:flex-1">
                   {tabs.map(target => (
@@ -348,7 +348,7 @@ function PluginTable({
   }
 
   return (
-    <div ref={tableRef} className="min-w-0 overflow-hidden rounded-xl border">
+    <div ref={tableRef} className="min-w-0 overflow-hidden rounded-xl border" data-tour="plugins-list">
       <div
         role="row"
         className={`${PLUGIN_ROW_GRID} border-b bg-muted/30 px-3 py-1 text-xs text-muted-foreground`}

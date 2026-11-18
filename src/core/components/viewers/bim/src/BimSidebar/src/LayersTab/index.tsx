@@ -91,7 +91,7 @@ export function LayersTab() {
         }}
       >
         <div ref={layoutRef} className="grid flex-1 min-h-0" style={{ gridTemplateRows }}>
-          <div className="min-h-0 overflow-hidden">
+          <div className="min-h-0 overflow-hidden" data-tour="panel-layers-drawings">
             <LayerGroupSection
               title={t('drawingsGroup')}
               icon={FloorplanIcon}
@@ -154,7 +154,7 @@ export function LayersTab() {
             </div>
           )}
 
-          <div className="min-h-0 overflow-hidden">
+          <div className="min-h-0 overflow-hidden" data-tour="panel-layers-classifier">
             <LayerGroupSection
               title={t('classifierGroup')}
               icon={LR.ListTree}

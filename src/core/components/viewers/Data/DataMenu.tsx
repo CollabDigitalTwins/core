@@ -445,7 +445,7 @@ const handleBackToTable = () => {
               <>
                 {/* Title Row */}
                 {!hideTitle && (
-                  <div className="flex flex-row justify-between items-start gap-3 px-3 sm:px-6 py-6">
+                  <div className="flex flex-row justify-between items-start gap-3 px-3 sm:px-6 py-6" data-tour="data-title">
                     <div className="flex flex-col gap-1.5 min-w-0">
                       <div className="flex items-center gap-2">
                         <MenuIcon className="h-8 w-8 shrink-0" />
@@ -462,7 +462,7 @@ const handleBackToTable = () => {
                 )}
 
                 {/* Search & Filter & Actions Row */}
-                <div className="flex flex-wrap items-center gap-2 px-3 sm:px-6 py-4">
+                <div className="flex flex-wrap items-center gap-2 px-3 sm:px-6 py-4" data-tour="data-filters">
                   <div className="w-full sm:w-80">
                     <Input
                       placeholder={`${t('searchPlaceholder')} ${headerTitle}...`}
@@ -571,7 +571,7 @@ const handleBackToTable = () => {
           {/* Scrollable Content Area */}
           <div className="flex-1 overflow-hidden">
             {view === 'table' ? (
-              <div className="h-full flex flex-col md:p-6 overflow-auto">
+              <div className="h-full flex flex-col md:p-6 overflow-auto" data-tour="data-table">
                 <DataTable
                   columns={currentViewer === ViewerNames.users ? userColumns : tableColumns}
                   data={filteredData}

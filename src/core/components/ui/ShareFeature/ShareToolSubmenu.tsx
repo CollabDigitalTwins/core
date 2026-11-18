@@ -251,7 +251,7 @@ export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({
   return (
     <ToolbarSubmenu tool={tool}>
       <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
-        <DropdownMenuItem onClick={(e) => { e.preventDefault() }} className="cursor-pointer">
+        <DropdownMenuItem onClick={(e) => { e.preventDefault() }} className="cursor-pointer" data-tour="share-qr">
           <DialogTrigger asChild>
             <button onClick={() => void handleShareQR()} disabled={isLoadingQRCode} className="flex w-full gap-2 items-center">
               {isLoadingQRCode ? <LoadingSpinner /> : <ScanQrCode size={16} />}
@@ -275,7 +275,7 @@ export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({
       </Dialog>
 
       {/* Copy to clipboard */}
-      <DropdownMenuItem onClick={() => void handleClickShare()} disabled={isLoadingShareLink} onSelect={(e) => { e.preventDefault() }} className="cursor-pointer">
+      <DropdownMenuItem onClick={() => void handleClickShare()} disabled={isLoadingShareLink} onSelect={(e) => { e.preventDefault() }} className="cursor-pointer" data-tour="share-copy">
         <div className="flex items-center w-full gap-2">
           {isLoadingShareLink ? <LoadingSpinner /> : <Link size={16} />}
           <span>{isLoadingShareLink ? t('copying') : t('copy')}</span>
@@ -285,7 +285,7 @@ export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({
       {/* Screenshot */}
       {canTakeScreenshot && (
         <Dialog open={screenshotDialogOpen} onOpenChange={setScreenshotDialogOpen}>
-          <DropdownMenuItem onClick={(e) => { e.preventDefault() }} className="cursor-pointer">
+          <DropdownMenuItem onClick={(e) => { e.preventDefault() }} className="cursor-pointer" data-tour="share-screenshot">
             <DialogTrigger asChild>
               <button onClick={() => void handleClickScreenshot()} className="flex w-full gap-2 items-center">
                 <Camera size={16}/>

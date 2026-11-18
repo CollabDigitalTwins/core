@@ -457,7 +457,7 @@
     "back": "Back",
     "finish": "Finish",
     "hide": "Hide tour",
-    "missing": "This part isn't on screen right now. You can keep going.",
+    "missing": "Waiting for this part of the screen to appear.",
     "progress": "Step {step} of {total}"
   },
   "PlatformTour": {
@@ -471,57 +471,745 @@
     },
     "viewers": {
       "title": "Viewers",
-      "body": "Map — the city context: sites, buildings and datasets on a 3D map.\nBIM — building information models (IFC), point clouds and splats, element by element."
+      "body": "Two ways to look at your organization's data. Pick one for a closer look.",
+      "items": {
+        "map": {
+          "term": "Map",
+          "description": "The city context: sites, buildings and datasets on a 3D map."
+        },
+        "bim": {
+          "term": "BIM",
+          "description": "Building information models (IFC), point clouds and splats, element by element."
+        }
+      }
     },
     "search": {
       "map": {
         "title": "Search the map",
-        "body": "Type an address or a place name to fly the map there."
+        "body": "Type an address or a place name to fly the map there.",
+        "items": {
+          "open": {
+            "term": "Watch a search",
+            "description": "See the map find Carleton University."
+          }
+        }
       },
       "bim": {
         "title": "Search the model",
-        "body": "Find elements in the loaded models by name, type or property."
+        "body": "Find elements in the loaded models by name, type or property.",
+        "items": {
+          "open": {
+            "term": "Search the model",
+            "description": "Open the BIM viewer and look closer."
+          }
+        }
       }
+    },
+    "searchDemo": {
+      "title": "Search the map",
+      "body": "Type an address or a place name and the map flies there. Watch it find Carleton University."
     },
     "panel": {
       "map": {
-        "title": "Map panel",
+        "title": "Open the map panel",
         "body": "Opens the side panel with the buildings, sites and layers on the map."
       },
       "bim": {
-        "title": "Model panel",
+        "title": "Open the BIM panel",
         "body": "Opens the side panel with the loaded models, their structure and the properties of the selected element."
       }
     },
     "toolbar": {
       "map": {
         "title": "Map tools",
-        "body": "Compare — two buildings side by side.\nDatasets — overlay your organization's datasets and open data.\nAdd — place a building, site or file on the map.\nMeasure — distances and areas.\nShare — a link to the current view."
+        "body": "Pick a tool to see what it does."
       },
       "bim": {
         "title": "Model tools",
-        "body": "Clipping — cut section planes through the model.\nFit — frame the models in view.\nAdd — load an IFC model or point cloud.\nMeasure — length, area, volume and angle.\nShare — a link to the current view."
+        "body": "Pick a tool to see what it does."
+      }
+    },
+    "tools": {
+      "map-compare": {
+        "title": "Compare",
+        "body": "Put buildings side by side to compare their details."
+      },
+      "map-database": {
+        "title": "Datasets",
+        "body": "Overlay your organization's datasets and open data on the map.",
+        "items": {
+          "open": {
+            "term": "Open the datasets menu",
+            "description": "Take a tour of the catalogue of datasets you can put on the map."
+          }
+        }
+      },
+      "map-add": {
+        "title": "Add",
+        "body": "Place a building, site, sensor or file on the map, or leave a comment.",
+        "items": {
+          "file": {
+            "term": "File",
+            "description": "Place a model, drawing or document on the map."
+          },
+          "comment": {
+            "term": "Comment",
+            "description": "Pin a comment to a spot for your team."
+          },
+          "dataset": {
+            "term": "Dataset",
+            "description": "Upload your own GeoJSON, shapefile or similar and draw it on the map."
+          },
+          "site": {
+            "term": "Site",
+            "description": "Draw the boundary of a place your organization manages."
+          },
+          "sensor": {
+            "term": "Sensor",
+            "description": "Place a sensor and connect it to its live readings."
+          },
+          "building": {
+            "term": "Building",
+            "description": "Add a building at a spot on the map."
+          }
+        }
+      },
+      "map-measure": {
+        "title": "Measure",
+        "body": "Measure distances and areas on the map.",
+        "items": {
+          "distance": {
+            "term": "Distance",
+            "description": "Click points along a path; the total length shows on the line. Watch it measure Carleton's campus."
+          },
+          "area": {
+            "term": "Area",
+            "description": "Click the corners of a shape; its area shows inside. Watch it measure part of the campus."
+          },
+          "clear": {
+            "term": "Clear",
+            "description": "Remove the measurements from the map."
+          }
+        }
+      },
+      "map-share": {
+        "title": "Share",
+        "body": "Copy a link to the current view."
+      },
+      "bim-clipping": {
+        "title": "Clipping",
+        "body": "Cut section planes through the model to see inside."
+      },
+      "bim-camera-fit": {
+        "title": "Fit",
+        "body": "Frame all loaded models in view."
+      },
+      "bim-add": {
+        "title": "Add",
+        "body": "Load an IFC model, point cloud or splat."
+      },
+      "bim-dimensions": {
+        "title": "Measure",
+        "body": "Measure length, area, volume and angle."
+      },
+      "bim-share": {
+        "title": "Share",
+        "body": "Copy a link to the current view."
+      },
+      "plugin": {
+        "body": "Added by a plugin your organization uses."
       }
     },
     "data": {
       "title": "Data pages",
-      "body": "Sites — the places your organization manages.\nBuildings — every building with its details and files.\nFiles — models, drawings and documents you have uploaded.\nInfrastructure — roads, rail and other networks.\nPages added by plugins appear in this list too."
+      "body": "Every record your organization keeps, as searchable lists. Pick a page for a closer look; pages added by plugins appear in the sidebar too.",
+      "items": {
+        "sites": {
+          "term": "Sites",
+          "description": "The places your organization manages."
+        },
+        "buildings": {
+          "term": "Buildings",
+          "description": "Every building with its details and files."
+        },
+        "files": {
+          "term": "Files",
+          "description": "Models, drawings and documents you have uploaded."
+        },
+        "infrastructure": {
+          "term": "Infrastructure",
+          "description": "Roads, rail and other networks."
+        }
+      }
     },
     "plugins": {
       "title": "Plugins",
-      "body": "Browse and add plugins that extend the platform with new tools and pages."
+      "body": "Browse and add plugins that extend the platform with new tools and pages.",
+      "items": {
+        "open": {
+          "term": "Open Plugins",
+          "description": "See which plugins you have and add more."
+        }
+      }
+    },
+    "language": {
+      "title": "Language",
+      "body": "Choose the language the platform speaks.",
+      "items": {
+        "En": {
+          "term": "English",
+          "description": "Switch the platform to English."
+        },
+        "Fr": {
+          "term": "Français",
+          "description": "Switch the platform to Français."
+        },
+        "Es": {
+          "term": "Español",
+          "description": "Switch the platform to Español."
+        }
+      }
     },
     "support": {
       "title": "Support",
-      "body": "Contact the team, suggest a feature or report a bug. Guide replays the tour for the page you are on."
+      "body": "Contact the team, suggest a feature or report a bug. Guide replays the tour for the page you are on.",
+      "items": {
+        "guide": {
+          "term": "Guide",
+          "description": "Replays this tour for the page you are on."
+        },
+        "contact": {
+          "term": "Contact team",
+          "description": "Email the CDT team at info@collabdt.org."
+        },
+        "feature": {
+          "term": "Suggest a feature",
+          "description": "Tell us what would help you."
+        },
+        "bug": {
+          "term": "Report a bug",
+          "description": "Tell us what went wrong, with a screenshot."
+        }
+      }
     },
     "account": {
       "title": "Your account",
-      "body": "Settings, usage and sign out."
+      "body": "Open the menu under your name.",
+      "items": {
+        "settings": {
+          "term": "Settings",
+          "description": "Your profile, password, users and organization."
+        },
+        "signOut": {
+          "term": "Sign out",
+          "description": "End your session on this device."
+        }
+      }
     },
     "done": {
       "title": "You are ready",
       "body": "Open Support → Guide at any time to see this tour again.\nThe full documentation is at docs.collabdt.org."
+    },
+    "backToOverview": "Back to overview",
+    "viewerTour": {
+      "map": {
+        "title": "The map viewer",
+        "body": "Your city in 3D, with sites, buildings and datasets in context. Here is each part of the screen."
+      },
+      "bim": {
+        "title": "The BIM viewer",
+        "body": "Building models element by element: IFC, point clouds and splats. Here is each part of the screen."
+      }
+    },
+    "panelTabs": {
+      "map": {
+        "title": "Map panel",
+        "body": "Everything about the map, in tabs. Pick one for a closer look."
+      },
+      "bim": {
+        "title": "BIM panel",
+        "body": "Everything about the model, in tabs. Pick one for a closer look."
+      },
+      "items": {
+        "file": {
+          "term": "Files",
+          "description": "The models and documents of the selected building."
+        },
+        "layers": {
+          "term": "Layers",
+          "description": "Turn layers on and off and change how they are drawn."
+        },
+        "communication": {
+          "term": "Comments",
+          "description": "Discuss with your team, pinned to the place they are about."
+        },
+        "sensors": {
+          "term": "Sensors",
+          "description": "Live readings from the sensors in view."
+        },
+        "settings": {
+          "term": "Settings",
+          "description": "Display settings for this viewer."
+        }
+      },
+      "plugin": "Added by a plugin."
+    },
+    "mapControls": {
+      "title": "Map navigation",
+      "body": "Try them here.",
+      "items": {
+        "zoomIn": {
+          "term": "Zoom in",
+          "description": "Get closer."
+        },
+        "zoomOut": {
+          "term": "Zoom out",
+          "description": "See more of the area."
+        },
+        "compass": {
+          "term": "Compass",
+          "description": "Drag to rotate and tilt; click to face north again."
+        }
+      }
+    },
+    "mapSettings": {
+      "title": "Map settings",
+      "body": "Opens the side panel's settings: the base map and how the map is drawn.",
+      "items": {
+        "open": {
+          "term": "Open map settings",
+          "description": "Base map, measurements and where the map starts."
+        }
+      }
+    },
+    "dataPage": {
+      "title": {
+        "body": "The buttons on the right act on the whole list, like adding a new entry."
+      },
+      "filters": {
+        "title": "Search and filter",
+        "body": "Narrow the list by name, or with the filters."
+      },
+      "table": {
+        "title": "The list",
+        "body": "Click a row to open its details. The menu at the end of each row has more actions, like showing it on the map."
+      }
+    },
+    "settingsPage": {
+      "sections": {
+        "title": "Settings",
+        "body": "Pick a section.",
+        "items": {
+          "account": {
+            "term": "Account",
+            "description": "Your name, picture and password."
+          },
+          "users": {
+            "term": "Users",
+            "description": "Invite people and manage their roles. Administrators only."
+          },
+          "organization": {
+            "term": "Organization",
+            "description": "Name, logo and defaults for everyone. Administrators only."
+          }
+        }
+      },
+      "content": {
+        "title": "Section details",
+        "body": "Edit the selected section here."
+      }
+    },
+    "shareOptions": {
+      "items": {
+        "qr": {
+          "term": "QR code",
+          "description": "A code to open this view on a phone."
+        },
+        "copy": {
+          "term": "Copy link",
+          "description": "A link to this exact view, copied to your clipboard."
+        },
+        "screenshot": {
+          "term": "Screenshot",
+          "description": "Download the view as an image or a PDF."
+        }
+      }
+    },
+    "measureDemo": {
+      "distance": {
+        "title": "Measure a distance",
+        "body": "Each click adds a point and the line shows the running total. Here: Carleton's campus from Sunnyside Avenue to the Rideau River."
+      },
+      "area": {
+        "title": "Measure an area",
+        "body": "Click the corners and the shape closes by itself, with its area inside. Here: the heart of Carleton's campus."
+      }
+    },
+    "datasetsTour": {
+      "search": {
+        "title": "Find a dataset",
+        "body": "Look up the dataset you need.",
+        "items": {
+          "search": {
+            "term": "Search",
+            "description": "Match datasets by name."
+          },
+          "filters": {
+            "term": "Filters",
+            "description": "Narrow by type, source and more."
+          },
+          "addPortal": {
+            "term": "Add portal",
+            "description": "Connect another open data portal. Administrators only."
+          }
+        }
+      },
+      "tabs": {
+        "title": "Collections",
+        "body": "Datasets grouped by where they come from. Pick one to open it.",
+        "items": {
+          "applied": {
+            "term": "Applied",
+            "description": "What is on your map right now."
+          },
+          "favourites": {
+            "term": "Favourites",
+            "description": "The datasets you starred."
+          },
+          "organizational": {
+            "term": "Organizational",
+            "description": "Your organization's own data."
+          },
+          "all": {
+            "term": "All datasets",
+            "description": "Everything you can use."
+          },
+          "national": {
+            "term": "National",
+            "description": "Country-wide open data."
+          },
+          "subdivision": {
+            "term": "Country subdivision",
+            "description": "Open data from your province or state."
+          },
+          "municipal": {
+            "term": "Municipal",
+            "description": "Open data from your city, when it has a portal."
+          },
+          "liveData": {
+            "term": "Live data",
+            "description": "Feeds that update in real time."
+          }
+        }
+      },
+      "list": {
+        "title": "The datasets",
+        "body": "Every row is one dataset.",
+        "items": {
+          "apply": {
+            "term": "Apply",
+            "description": "Tick the box to draw the dataset on the map."
+          },
+          "favourite": {
+            "term": "Favourite",
+            "description": "Star it to find it again quickly."
+          },
+          "publish": {
+            "term": "Publish",
+            "description": "Share your own uploads with others. Administrators only."
+          },
+          "details": {
+            "term": "Details",
+            "description": "Click the row for its description, source and styling."
+          }
+        }
+      }
+    },
+    "panelTour": {
+      "search": {
+        "title": "Search the tab",
+        "body": "Filter what this tab lists by name."
+      },
+      "file": {
+        "sections": {
+          "title": "File sections",
+          "body": "Each kind of file has its own section; drag the dividers to resize them.",
+          "items": {
+            "bim": {
+              "term": "BIM",
+              "description": "IFC models of the selected building."
+            },
+            "models": {
+              "term": "Models",
+              "description": "3D models such as glTF and OBJ."
+            },
+            "pointClouds": {
+              "term": "Point clouds",
+              "description": "Laser scans and photogrammetry."
+            },
+            "files": {
+              "term": "Files",
+              "description": "Drawings, reports and other documents. The + adds one, the switch shows them on the map."
+            }
+          }
+        }
+      },
+      "layers": {
+        "applied": {
+          "title": "Applied datasets",
+          "body": "What is drawn on the map. Drag to reorder, open a row to style it, or switch them all off."
+        },
+        "available": {
+          "title": "Available datasets",
+          "body": "Open a group to add more datasets to the map.",
+          "items": {
+            "favourites": {
+              "term": "Favourites",
+              "description": "Datasets you starred."
+            },
+            "organizational": {
+              "term": "Organizational",
+              "description": "Your organization's own data."
+            },
+            "all": {
+              "term": "All",
+              "description": "Everything you can use."
+            },
+            "national": {
+              "term": "National",
+              "description": "Country-wide open data."
+            },
+            "subdivision": {
+              "term": "Subdivision",
+              "description": "Open data from your province or state."
+            },
+            "municipal": {
+              "term": "Municipal",
+              "description": "Open data from your city, when it has a portal."
+            },
+            "liveData": {
+              "term": "Live data",
+              "description": "Feeds that update in real time."
+            }
+          }
+        },
+        "drawings": {
+          "title": "Drawings",
+          "body": "2D views cut from the model.",
+          "items": {
+            "floorplans": {
+              "term": "Floorplans",
+              "description": "One plan per storey."
+            },
+            "elevations": {
+              "term": "Elevations",
+              "description": "The building seen from each side."
+            },
+            "custom": {
+              "term": "Custom",
+              "description": "Views you saved yourself, when there are any."
+            }
+          }
+        },
+        "classifier": {
+          "title": "Classifier",
+          "body": "Show, hide or isolate parts of the model.",
+          "items": {
+            "spatial": {
+              "term": "Spatial",
+              "description": "By site, building and storey."
+            },
+            "ifcClasses": {
+              "term": "IFC classes",
+              "description": "By element type, such as walls or doors."
+            }
+          }
+        }
+      },
+      "communication": {
+        "topics": {
+          "title": "BCF topics",
+          "body": "Issues tracked on the model, in the BIM Collaboration Format.",
+          "items": {
+            "add": {
+              "term": "Add topic",
+              "description": "Raise an issue on what you are looking at."
+            },
+            "export": {
+              "term": "Export BCF",
+              "description": "Download the topics for another BIM tool."
+            },
+            "import": {
+              "term": "Import BCF",
+              "description": "Bring in topics from another BIM tool."
+            }
+          }
+        },
+        "comments": {
+          "title": "Comments",
+          "body": "Conversations pinned to places.",
+          "items": {
+            "search": {
+              "term": "Search",
+              "description": "Find a comment by its text."
+            },
+            "add": {
+              "term": "Add comment",
+              "description": "Click a spot to pin a new comment there."
+            },
+            "visibility": {
+              "term": "Show or hide",
+              "description": "Turn the comment pins in the viewer on or off."
+            }
+          }
+        }
+      },
+      "sensors": {
+        "toolbar": {
+          "title": "Sensor tools",
+          "body": "Find sensors and choose how they are shown.",
+          "items": {
+            "search": {
+              "term": "Search",
+              "description": "Find a sensor by name."
+            },
+            "visibility": {
+              "term": "Show or hide",
+              "description": "Turn every sensor on the map on or off."
+            },
+            "legend": {
+              "term": "Legend",
+              "description": "Show what the colours of the readings mean."
+            },
+            "filters": {
+              "term": "Group by",
+              "description": "List sensors by type or by tag."
+            }
+          }
+        },
+        "list": {
+          "title": "Your sensors",
+          "body": "Each group lists its sensors with their latest reading; the + adds another."
+        }
+      },
+      "settings": {
+        "map": {
+          "title": "Map settings",
+          "body": "How the map looks and where it starts.",
+          "items": {
+            "style": {
+              "term": "Map style",
+              "description": "The base map, terrain, projection and which buildings show."
+            },
+            "measurements": {
+              "term": "Measurements",
+              "description": "The colour of measurement lines."
+            },
+            "location": {
+              "term": "Location",
+              "description": "Where the map opens: coordinates, zoom and region."
+            }
+          }
+        },
+        "bim": {
+          "title": "Viewer settings",
+          "body": "How the model is shown.",
+          "items": {
+            "camera": {
+              "term": "Camera",
+              "description": "Perspective or orthographic, and how you move around."
+            },
+            "grid": {
+              "term": "Grid",
+              "description": "The ground grid under the model."
+            },
+            "measurements": {
+              "term": "Measurements",
+              "description": "Units and colours of measurements."
+            },
+            "lighting": {
+              "term": "Lighting",
+              "description": "Sun and ambient light."
+            },
+            "pointClouds": {
+              "term": "Point clouds",
+              "description": "Point size and colouring, when a cloud is loaded."
+            },
+            "splats": {
+              "term": "Gaussian splats",
+              "description": "Splat display, when one is loaded."
+            }
+          }
+        }
+      }
+    },
+    "viewerPanel": {
+      "title": "Viewer panel",
+      "body": "The button at the top left opens the panel of the viewer you are on, with everything about what is on screen in tabs.",
+      "items": {
+        "map": {
+          "term": "Map panel",
+          "description": "Files, layers, comments, sensors and settings for the map."
+        },
+        "bim": {
+          "term": "BIM panel",
+          "description": "Files, layers, comments, sensors and settings for the model."
+        }
+      }
+    },
+    "pluginsTour": {
+      "tabs": {
+        "title": "Plugin lists",
+        "body": "Switch lists, or search them all.",
+        "items": {
+          "all": {
+            "term": "All",
+            "description": "Every plugin available to you."
+          },
+          "running": {
+            "term": "Running",
+            "description": "Plugins switched on for you right now."
+          },
+          "installed": {
+            "term": "Installed",
+            "description": "Plugins your organization has installed."
+          },
+          "notInstalled": {
+            "term": "Not installed",
+            "description": "Plugins you could install."
+          },
+          "search": {
+            "term": "Search",
+            "description": "Find a plugin by name."
+          }
+        }
+      },
+      "list": {
+        "title": "Your plugins",
+        "body": "Each row is one plugin.",
+        "items": {
+          "run": {
+            "term": "Run",
+            "description": "Switch a plugin on or off for yourself."
+          },
+          "install": {
+            "term": "Install",
+            "description": "Add it to your organization. Administrators only."
+          },
+          "enable": {
+            "term": "Enable",
+            "description": "Turn it on for everyone in your organization. Administrators only."
+          },
+          "visibleTo": {
+            "term": "Visible to",
+            "description": "Choose who can see it. Administrators only."
+          },
+          "details": {
+            "term": "Details",
+            "description": "Click the row for its description, version and permissions."
+          }
+        }
+      }
     }
   },
   "MapLegend": {

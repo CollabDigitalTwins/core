@@ -6,14 +6,24 @@ import type * as React from 'react'
 /** A `data-tour` anchor id, a function finding the element, or `null` to centre the card. */
 export type TourTarget = string | (() => Element | null | undefined) | null
 
+/** A row under a step's body; with `onSelect` it is a button, e.g. one that starts a tour of the part it names. */
+export interface TourItem {
+  id: string
+  term: string
+  description: string
+  icon?: React.ComponentType<{ className?: string }>
+  onSelect?: () => void
+}
+
 export interface TourStep {
   id: string
   target: TourTarget
   title: string
   /** A string splits on newlines; `term — description` lines become a definition list. */
   body: React.ReactNode
-  /** Runs when the step opens, to open a panel or select something the target needs. */
-  onEnter?: () => void
+  items?: TourItem[]
+  /** Runs when the step opens, to open a panel the target needs; a returned function runs when the step closes. */
+  onEnter?: () => void | (() => void)
   /** Points an arrow at the target and ends the tour when the target is clicked. */
   invite?: boolean
   /** Whether to scroll the target into view; `false` for targets that fill the page, like a map. */
@@ -33,6 +43,10 @@ export interface GuidedTourProps {
   steps: TourStep[]
   /** Called when the viewer hides, escapes or finishes the tour. */
   onHide: () => void
+  /** Called by Finish on the last step instead of `onHide`, e.g. to return to the tour this one branched from. */
+  onFinish?: () => void
+  /** The id of the step to open on; the first step when absent or unknown. */
+  startAt?: string
   /** Elements the card must not cover, such as the panel a step points into. */
   avoid?: () => Element[]
   /** Shown at the start of the card's header, e.g. a logo. */

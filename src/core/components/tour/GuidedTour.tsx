@@ -9,6 +9,7 @@ import { createPortal } from 'react-dom'
 
 import { placeCard, visiblePart } from './placement'
 import { TourBody } from './TourBody'
+import { useTourTurn } from './tourQueue'
 import { TOUR_CSS } from './tourStyles'
 import { cardWidthFor, HIDE_BUTTON_CLASS, useFinishOnClick, useLatest, useMeasuredHeight, useTourKeys, useTourLayout } from './useTourLayout'
 
@@ -65,8 +66,12 @@ function useFocusHandoff(ref: React.RefObject<HTMLElement | null>, mounted: bool
   }, [ref, mounted])
 }
 
-/** A step-by-step guide that spotlights parts of the page while leaving it usable underneath. */
-export function GuidedTour({ steps, onHide, avoid, header, labels, className }: GuidedTourProps) {
+/** A step-by-step guide that spotlights parts of the page while leaving it usable underneath; open tours show one at a time. */
+export function GuidedTour(props: GuidedTourProps) {
+  return useTourTurn() ? <ActiveTour {...props} /> : null
+}
+
+function ActiveTour({ steps, onHide, avoid, header, labels, className }: GuidedTourProps) {
   const text = useLabels(labels)
   const titleId = React.useId()
   const [index, setIndex] = React.useState(0)

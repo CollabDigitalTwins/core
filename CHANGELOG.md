@@ -15,6 +15,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   the defaults follow the platform tokens. `useTour` remembers finished tours through a `TourStore`;
   `browserTourStore` keeps them in session or local storage. `findSidebarPageLink` and `setToolbarPanel` find the
   app's own sidebar and toolbar elements. Strings are in a new `GuidedTour` i18n namespace.
+  Open tours show one at a time, in the order they opened, and the platform tour always goes first. The tour
+  layers above the app shell by default; set `--tour-z` on a `className` to move it.
 - `@collabdt/core/plugins-sdk/tour`: all of the above for runtime-loaded plugins.
 - Platform overview tour (`components/tour/platform/PlatformTour`), mounted by `AppSidebar`: walks the sidebar,
   the Map and BIM viewers, their search, side panel and toolbar, the data pages, plugins, support and the account

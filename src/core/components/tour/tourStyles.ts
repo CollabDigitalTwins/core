@@ -18,7 +18,7 @@ export const TOUR_CSS = `
   --tour-focus: hsl(var(--ring, 0 0% 3.9%));
   --tour-warning: #eda100;
 }
-.cdt-tour { pointer-events: none; color: var(--tour-ink); }
+.cdt-tour { position: fixed; inset: 0; z-index: var(--tour-z, 2147483000); pointer-events: none; color: var(--tour-ink); }
 .cdt-tour * { box-sizing: border-box; }
 [data-tour] { scroll-margin-top: 64px; }
 

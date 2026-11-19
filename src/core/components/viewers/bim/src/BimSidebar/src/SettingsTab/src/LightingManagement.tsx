@@ -105,6 +105,7 @@ export function LightingManagement() {
     <SettingsSection
       icon={LR.Sun}
       title={t('lightingTitle')}
+      tourAnchor="settings-lighting"
     >
       <div className="space-y-4">
         <div className="space-y-2">

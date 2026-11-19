@@ -160,6 +160,7 @@ export function GridManagement() {
     <SettingsSection
       icon={LR.Grid3x3}
       title={t('gridTitle')}
+      tourAnchor="settings-grid"
       switchVariant={{
         checked: gridVisible,
         onCheckedChange: setGridVisible,

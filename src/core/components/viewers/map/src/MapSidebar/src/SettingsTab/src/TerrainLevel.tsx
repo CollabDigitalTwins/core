@@ -126,7 +126,7 @@ export function TerrainLevel() {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" data-tour="settings-terrain">
       <label className="text-sm font-medium">{tMap('terrain')}</label>
       <Tabs value={terrainLevel} onValueChange={handleTerrainLevel} variant="switch">
         <TabsList className="grid w-full grid-cols-3">

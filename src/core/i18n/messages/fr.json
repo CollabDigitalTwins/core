@@ -463,15 +463,20 @@
   "PlatformTour": {
     "welcome": {
       "title": "Bienvenue sur la plateforme CDT",
-      "body": "Les bâtiments, cartes, modèles et données de votre organisation, au même endroit.\nCette visite présente les principales parties de l'écran. Elle dure environ une minute et vous pouvez la masquer à tout moment."
+      "body": "Les bâtiments, cartes, modèles et données de votre organisation, au même endroit.\nCette visite vous présente les principales fonctionnalités et comment naviguer dans la plateforme. Vous pouvez la masquer et la rouvrir à tout moment depuis @support → @guide.",
+      "shortcut": {
+        "map": "Visiter la visionneuse de carte",
+        "bim": "Visiter la visionneuse BIM",
+        "data": "Visiter cette page"
+      }
     },
     "sidebar": {
       "title": "Navigation",
-      "body": "La barre latérale mène à chaque visionneuse et page de données. Utilisez le chevron sur son bord pour la réduire ou l'agrandir."
+      "body": "La barre latérale mène à chaque visionneuse et page de données. Utilisez le chevron pour l'agrandir et le × pour la réduire."
     },
     "viewers": {
-      "title": "Visionneuses",
-      "body": "Deux façons de voir les données de votre organisation. Choisissez-en une pour la découvrir.",
+      "title": "Visionneuses 3D",
+      "body": "Voyez les données de votre organisation en 3D, en contexte. Choisissez-en une pour la découvrir.",
       "items": {
         "map": {
           "term": "Carte",
@@ -484,25 +489,9 @@
       }
     },
     "search": {
-      "map": {
-        "title": "Rechercher sur la carte",
-        "body": "Saisissez une adresse ou un lieu pour y déplacer la carte.",
-        "items": {
-          "open": {
-            "term": "Voir une recherche",
-            "description": "Regardez la carte trouver l'Université Carleton."
-          }
-        }
-      },
       "bim": {
         "title": "Rechercher dans le modèle",
-        "body": "Trouvez des éléments des modèles chargés par nom, type ou propriété.",
-        "items": {
-          "open": {
-            "term": "Rechercher dans la maquette",
-            "description": "Ouvrez la visionneuse BIM pour voir de plus près."
-          }
-        }
+        "body": "Trouvez des éléments des modèles chargés par nom, type ou propriété."
       }
     },
     "searchDemo": {
@@ -622,7 +611,7 @@
     },
     "data": {
       "title": "Pages de données",
-      "body": "Tous les enregistrements de votre organisation, en listes consultables. Choisissez une page pour la découvrir; les pages ajoutées par des plugins apparaissent aussi dans la barre latérale.",
+      "body": "Tous les enregistrements de votre organisation, en listes consultables. Les pages ajoutées par des plugins apparaissent aussi ici. Choisissez-en une pour la découvrir.",
       "items": {
         "sites": {
           "term": "Sites",
@@ -705,10 +694,6 @@
           "description": "Terminez votre session sur cet appareil."
         }
       }
-    },
-    "done": {
-      "title": "Vous êtes prêt",
-      "body": "Ouvrez Assistance → Guide à tout moment pour revoir cette visite.\nLa documentation complète se trouve sur docs.collabdt.org."
     },
     "backToOverview": "Retour à l'aperçu",
     "viewerTour": {
@@ -1091,70 +1076,6 @@
           "title": "Vos capteurs",
           "body": "Chaque groupe liste ses capteurs avec leur dernière mesure; le + en ajoute un."
         }
-      },
-      "settings": {
-        "map": {
-          "title": "Paramètres de la carte",
-          "body": "L'apparence de la carte et son point de départ.",
-          "items": {
-            "style": {
-              "term": "Style de carte",
-              "description": "Le fond de carte, le relief, la projection et les bâtiments affichés."
-            },
-            "measurements": {
-              "term": "Mesures",
-              "description": "La couleur des lignes de mesure."
-            },
-            "location": {
-              "term": "Emplacement",
-              "description": "Où la carte s'ouvre : coordonnées, zoom et région."
-            }
-          }
-        },
-        "bim": {
-          "title": "Paramètres de la visionneuse",
-          "body": "L'affichage de la maquette.",
-          "items": {
-            "camera": {
-              "term": "Caméra",
-              "description": "Perspective ou orthographique, et la façon de se déplacer."
-            },
-            "grid": {
-              "term": "Grille",
-              "description": "La grille au sol sous la maquette."
-            },
-            "measurements": {
-              "term": "Mesures",
-              "description": "Unités et couleurs des mesures."
-            },
-            "lighting": {
-              "term": "Éclairage",
-              "description": "Soleil et lumière ambiante."
-            },
-            "pointClouds": {
-              "term": "Nuages de points",
-              "description": "Taille et couleur des points, quand un nuage est chargé."
-            },
-            "splats": {
-              "term": "Splats gaussiens",
-              "description": "Affichage des splats, quand un splat est chargé."
-            }
-          }
-        }
-      }
-    },
-    "viewerPanel": {
-      "title": "Panneau de la visionneuse",
-      "body": "Le bouton en haut à gauche ouvre le panneau de la visionneuse où vous êtes, avec tout ce qui est à l'écran en onglets.",
-      "items": {
-        "map": {
-          "term": "Panneau de la carte",
-          "description": "Fichiers, couches, commentaires, capteurs et paramètres de la carte."
-        },
-        "bim": {
-          "term": "Panneau BIM",
-          "description": "Fichiers, couches, commentaires, capteurs et paramètres de la maquette."
-        }
       }
     },
     "pluginsTour": {
@@ -1209,6 +1130,142 @@
             "description": "Cliquez la ligne pour sa description, sa version et ses permissions."
           }
         }
+      }
+    },
+    "interfaces": {
+      "title": "Deux façons de voir vos données",
+      "body": "Explorez les données de votre organisation dans les visionneuses 3D, ou parcourez-les sous forme de listes dans les pages de données."
+    },
+    "explore": {
+      "title": "Que voulez-vous explorer ?",
+      "body": "Choisissez une partie de la plateforme pour une visite détaillée. Ouvrez @support → @guide pour revenir à cette visite à tout moment.",
+      "items": {
+        "viewers": {
+          "term": "Visionneuses 3D",
+          "description": "La recherche, le panneau latéral, la barre d'outils et les contrôles à l'écran."
+        },
+        "data": {
+          "term": "Pages de données",
+          "description": "Les listes de vos enregistrements, avec filtres."
+        }
+      }
+    },
+    "exploreViewers": {
+      "title": "Quelle visionneuse ?",
+      "body": "Choisissez une visionneuse pour visiter son écran."
+    },
+    "exploreData": {
+      "title": "Quelle page de données ?",
+      "body": "Choisissez une page pour la visiter."
+    },
+    "attribution": {
+      "title": "Attribution",
+      "body": "Qui a produit le fond de carte et les données à l'écran. Cliquez sur le ⓘ pour la lire."
+    },
+    "viewCube": {
+      "title": "Cube de vue",
+      "body": "Indique où regarde la caméra. Cliquez sur une face, une arête ou un coin pour voir la maquette de ce côté."
+    },
+    "legend": {
+      "title": "Légende",
+      "body": "Les couches et capteurs que vous activez expliquent leurs couleurs ici, en bas à gauche. Celle-ci est un exemple.",
+      "items": {
+        "collapse": {
+          "term": "Réduire ou agrandir",
+          "description": "Le chevron replie la légende quand elle cache la carte. Essayez."
+        },
+        "entries": {
+          "term": "Lire les couleurs",
+          "description": "Chaque pastille est une valeur ou un intervalle ; comparez-la à ce que vous voyez sur la carte."
+        },
+        "source": {
+          "term": "D'où viennent les légendes",
+          "description": "Les jeux de données appliqués, les capteurs et les couches de plugins ajoutent chacun une section."
+        }
+      }
+    },
+    "menuPath": {
+      "support": "Assistance",
+      "guide": "Guide"
+    },
+    "bimState": {
+      "noBuilding": {
+        "title": "Choisissez un bâtiment",
+        "body": "La visionneuse BIM montre un bâtiment à la fois. Cherchez un bâtiment ici et choisissez-le pour ouvrir ses maquettes."
+      },
+      "noBimFiles": {
+        "title": "Ajoutez un fichier 3D",
+        "body": "Ce bâtiment n'a pas encore de fichier 3D. Glissez une maquette BIM (IFC), un nuage de points ou un splat sur la carte, ou utilisez Télécharger un fichier."
+      }
+    },
+    "legendDemo": {
+      "title": "Légende (exemple)",
+      "age": {
+        "title": "Âge des bâtiments",
+        "before1950": "Avant 1950",
+        "from1950": "1950 – 1990",
+        "after1990": "Après 1990"
+      },
+      "temperature": {
+        "title": "Capteurs de température",
+        "cold": "Moins de 18 °C",
+        "mild": "18 – 24 °C",
+        "warm": "Plus de 24 °C"
+      }
+    },
+    "settingsTour": {
+      "map-style": {
+        "title": "Style de carte",
+        "body": "Le fond de carte sous vos données. Regardez-le changer, puis choisissez celui qui vous plaît ; votre choix est conservé.",
+        "pick": "Passer à ce fond de carte."
+      },
+      "terrain": {
+        "title": "Relief",
+        "body": "Ajoute collines et vallées à la carte. Regardez-le changer ; il revient quand vous continuez."
+      },
+      "projection": {
+        "title": "Projection",
+        "body": "Globe courbe la carte comme la Terre ; Mercator l'aplatit. Regardez-la changer."
+      },
+      "buildings": {
+        "title": "Bâtiments 3D",
+        "body": "Affiche ou masque les bâtiments extrudés du fond de carte. Regardez-les s'éteindre et se rallumer."
+      },
+      "measurements": {
+        "title": "Mesures",
+        "body": "La couleur des lignes tracées par les outils de mesure."
+      },
+      "location": {
+        "title": "Emplacement",
+        "body": "Où la carte s'ouvre : saisissez des coordonnées ou utilisez la vue actuelle."
+      },
+      "render-mode": {
+        "title": "Mode de rendu",
+        "body": "Ombre dessine le soleil et les ombres ; Basique est plus léger et rapide. Regardez-le changer."
+      },
+      "bim-projection": {
+        "title": "Projection",
+        "body": "Perspective paraît naturelle ; Orthographique garde les lignes parallèles, pratique pour les plans et élévations. Regardez-la changer."
+      },
+      "navigation": {
+        "title": "Navigation",
+        "body": "Comment le glisser déplace la caméra : orbiter autour de la maquette ou s'y promener."
+      },
+      "grid": {
+        "title": "Grille",
+        "body": "La grille au sol sous la maquette. Regardez-la s'éteindre et se rallumer ; les curseurs règlent sa taille et son espacement."
+      },
+      "lighting": {
+        "title": "Éclairage",
+        "body": "Déplacez le soleil selon l'heure et la date, et réglez la qualité des ombres."
+      },
+      "bim-measurements": {
+        "title": "Mesures",
+        "body": "Unités, précision et couleurs des outils de mesure."
+      },
+      "point-clouds": {
+        "title": "Nuages de points et splats",
+        "body": "Taille, densité et couleur des points ; les splats ont leur propre section plus bas."
       }
     }
   },

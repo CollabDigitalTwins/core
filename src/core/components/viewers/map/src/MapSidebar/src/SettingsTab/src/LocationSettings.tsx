@@ -217,7 +217,7 @@ export function LocationSettings({ countryCode }: { countryCode?: string }) {
   const handleZoomKeyDown = (e) => { if (e.key === 'Enter') commitZoom(); };
 
   return (
-    <SettingsSection icon={LR.MapPin} title={t('location')} defaultOpen={true}>
+    <SettingsSection icon={LR.MapPin} title={t('location')} defaultOpen={true} tourAnchor="settings-location">
 
       {/* Latitude & Longitude Inputs in 2 columns */}
       <div className="flex gap-4">

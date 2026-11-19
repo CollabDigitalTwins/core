@@ -64,6 +64,7 @@ export function PointCloudSettings() {
     <SettingsSection
       icon={LR.Grip}
       title={t('title')}
+      tourAnchor="settings-point-clouds"
     >
       <div className="space-y-3 px-1 pb-2">
         <SliderWithInput

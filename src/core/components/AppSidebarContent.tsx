@@ -294,48 +294,15 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, stora
         {isCollapsed && <Separator className="z-30 w-2/3 mx-auto" />}
 
         <div className='overflow-y-auto overflow-x-hidden'>
-          <SidebarGroup data-tour="sidebar-viewers">
-            <SidebarGroupLabel>{t('3dViewer')}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {viewerItems.filter(item => isViewerAllowed(item.id as ViewerKey, appContent))
-                  .filter(canRenderItem)
-                  .map(item => {
-                    const active = item.id === currentViewer;
-                    return (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton asChild>
-                          <Button
-                            onClick={item.onClick}
-                            title={isCollapsed ? item.title : undefined}
-                            className={buildBtnClass(active)}
-                            variant="ghost"
-                          >
-                            <item.icon className={buildIconClass(active)} />
-                            <span className={`${isCollapsed ? 'hidden' : 'inline'} ${active ? 'font-bold text-primary' : ''}`}>{item.title}</span>
-                          </Button>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })
-                }
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-
-
-          {visibleDatasetItems.length > 0 && (
-            <>
-              {isCollapsed && <Separator className="z-30 w-2/3 mx-auto" />}
-
-              <SidebarGroup data-tour="sidebar-data">
-                <SidebarGroupLabel>{t('data')}</SidebarGroupLabel>
-
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {visibleDatasetItems.map(item => {
-                      const active = item.id === currentViewer
-
+          <div data-tour="sidebar-interfaces">
+            <SidebarGroup data-tour="sidebar-viewers">
+              <SidebarGroupLabel>{t('3dViewer')}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {viewerItems.filter(item => isViewerAllowed(item.id as ViewerKey, appContent))
+                    .filter(canRenderItem)
+                    .map(item => {
+                      const active = item.id === currentViewer;
                       return (
                         <SidebarMenuItem key={item.title}>
                           <SidebarMenuButton asChild>
@@ -346,22 +313,57 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, stora
                               variant="ghost"
                             >
                               <item.icon className={buildIconClass(active)} />
-                              <span
-                                className={`${isCollapsed ? 'hidden' : 'inline'} ${active ? 'font-bold text-primary' : ''
-                                  }`}
-                              >
-                                {item.title}
-                              </span>
+                              <span className={`${isCollapsed ? 'hidden' : 'inline'} ${active ? 'font-bold text-primary' : ''}`}>{item.title}</span>
                             </Button>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
-                      )
-                    })}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            </>
-          )}
+                      );
+                    })
+                  }
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+
+            {visibleDatasetItems.length > 0 && (
+              <>
+                {isCollapsed && <Separator className="z-30 w-2/3 mx-auto" />}
+
+                <SidebarGroup data-tour="sidebar-data">
+                  <SidebarGroupLabel>{t('data')}</SidebarGroupLabel>
+
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {visibleDatasetItems.map(item => {
+                        const active = item.id === currentViewer
+
+                        return (
+                          <SidebarMenuItem key={item.title}>
+                            <SidebarMenuButton asChild>
+                              <Button
+                                onClick={item.onClick}
+                                title={isCollapsed ? item.title : undefined}
+                                className={buildBtnClass(active)}
+                                variant="ghost"
+                              >
+                                <item.icon className={buildIconClass(active)} />
+                                <span
+                                  className={`${isCollapsed ? 'hidden' : 'inline'} ${active ? 'font-bold text-primary' : ''
+                                    }`}
+                                >
+                                  {item.title}
+                                </span>
+                              </Button>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        )
+                      })}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+              </>
+            )}
+          </div>
           {isCollapsed && <Separator className="z-30 w-2/3 mx-auto" />}
           <SidebarGroup data-tour="sidebar-plugins">
             <SidebarGroupLabel>{t('plugins')}</SidebarGroupLabel>

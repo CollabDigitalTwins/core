@@ -53,7 +53,7 @@ export function ToggleProjection() {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" data-tour="settings-bim-projection">
       <label className="text-sm font-medium">{t('perspectiveLabel')}</label>
       <Tabs value={cameraMode} onValueChange={handleCameraModeChange} variant="switch">
         <TabsList className="grid w-full grid-cols-2">

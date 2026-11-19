@@ -83,6 +83,7 @@ export function MeasurementSettings() {
     <SettingsSection
       icon={LR.Ruler}
       title={t('title')}
+      tourAnchor="settings-bim-measurements"
     >
       <div className="space-y-4">
         {/* Line colour */}

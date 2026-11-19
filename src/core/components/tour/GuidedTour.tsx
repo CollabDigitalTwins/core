@@ -88,17 +88,44 @@ function useFocusHandoff(ref: React.RefObject<HTMLElement | null>, mounted: bool
   }, [ref, mounted])
 }
 
+/** The next step in `delta`'s direction that does not ask to be skipped, or null past either end. */
+function nextIndex(steps: TourStep[], from: number, delta: number): number | null {
+  for (let i = from + delta; i >= 0 && i < steps.length; i += delta) {
+    if (!steps[i].skip?.()) return i
+  }
+  return null
+}
+
+function useStepReport(stepId: string, onStepChange: GuidedTourProps['onStepChange']) {
+  const latest = useLatest(onStepChange)
+  React.useEffect(() => latest.current?.(stepId), [stepId, latest])
+}
+
+const HOST_PRESS_EVENTS = ['pointerdown', 'mousedown', 'touchstart'] as const
+
+/** Stops presses on the tour reaching `document`, where hosts such as Radix menus treat them as outside presses and close. */
+function useHostPressShield() {
+  const [root, setRoot] = React.useState<HTMLDivElement | null>(null)
+  React.useEffect(() => {
+    if (!root) return
+    const stop = (event: Event) => event.stopPropagation()
+    HOST_PRESS_EVENTS.forEach(type => root.addEventListener(type, stop))
+    return () => HOST_PRESS_EVENTS.forEach(type => root.removeEventListener(type, stop))
+  }, [root])
+  return setRoot
+}
+
 /** A step-by-step guide that spotlights parts of the page while leaving it usable underneath; open tours show one at a time. */
 export function GuidedTour(props: GuidedTourProps) {
   return useTourTurn() ? <ActiveTour {...props} /> : null
 }
 
-function ActiveTour({ steps, onHide, onFinish = onHide, startAt, avoid, header, labels, className }: GuidedTourProps) {
+function ActiveTour({ steps, onHide, onFinish = onHide, onStepChange, startAt, avoid, header, labels, className }: GuidedTourProps) {
   const text = useLabels(labels)
   const titleId = React.useId()
   const [index, setIndex] = React.useState(() => Math.max(0, steps.findIndex(s => s.id === startAt)))
   const step = steps[Math.min(index, steps.length - 1)]
-  const last = index >= steps.length - 1
+  const last = nextIndex(steps, index, 1) === null
   const layout = useTourLayout(index, step, avoid)
   const cardRef = React.useRef<HTMLDivElement>(null)
   const nextRef = React.useRef<HTMLButtonElement>(null)
@@ -111,9 +138,13 @@ function ActiveTour({ steps, onHide, onFinish = onHide, startAt, avoid, header, 
   useFocusHandoff(nextRef, client)
 
   const go = React.useCallback((delta: number) => {
-    if (delta > 0 && last) onFinish()
-    else setIndex(i => Math.min(Math.max(i + delta, 0), steps.length - 1))
-  }, [last, onFinish, steps.length])
+    const next = nextIndex(steps, index, delta)
+    if (next === null) {
+      if (delta > 0) onFinish()
+    } else setIndex(next)
+  }, [steps, index, onFinish])
+  useStepReport(step.id, onStepChange)
+  const rootRef = useHostPressShield()
   useTourKeys(go, onHide)
   useFinishOnClick(index, step, onHide)
 
@@ -125,8 +156,7 @@ function ActiveTour({ steps, onHide, onFinish = onHide, startAt, avoid, header, 
   const card = placeCard(spot, { width: cardWidthFor(viewport.width), height: cardHeight }, viewport, arrow ? [...layout.avoid, arrow] : layout.avoid)
 
   return createPortal(
-    // Hosts close dropdowns on any press outside them, and the tour is portalled outside.
-    <div className={className ? `cdt-tour ${className}` : 'cdt-tour'} onPointerDown={event => event.stopPropagation()}>
+    <div ref={rootRef} className={className ? `cdt-tour ${className}` : 'cdt-tour'}>
       <style>{TOUR_CSS}</style>
       {spot ? <div className={settledClass('cdt-tour-spot', layout.settled)} style={spot} /> : <div className="cdt-tour-scrim" />}
       {spot && <div className={settledClass('cdt-tour-ring', layout.settled)} style={spot} />}
@@ -139,6 +169,7 @@ function ActiveTour({ steps, onHide, onFinish = onHide, startAt, avoid, header, 
       <div ref={cardRef} className={settledClass('cdt-tour-card', layout.settled)} role="dialog" aria-modal="false" aria-labelledby={titleId} style={{ left: card.left, top: card.top, maxHeight: card.maxHeight }}>
         <header>
           {header}
+          {step.shortcut && <button type="button" className="cdt-tour-shortcut" onClick={step.shortcut.onSelect}>{step.shortcut.label} ›</button>}
           <small>{text.progress(index + 1, steps.length)}</small>
         </header>
         <div className="cdt-tour-body" aria-live="polite">

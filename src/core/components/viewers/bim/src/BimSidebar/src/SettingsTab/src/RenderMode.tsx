@@ -38,7 +38,7 @@ export function RenderMode() {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" data-tour="settings-render-mode">
       <label className="text-sm font-medium">{t('renderModeTitle')}</label>
       <Tabs value={renderMode} onValueChange={handleCameraModeChange} variant="switch">
         <TabsList className="grid w-full grid-cols-2">

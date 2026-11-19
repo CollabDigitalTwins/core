@@ -53,6 +53,33 @@ describe('GuidedTour', () => {
     expect(screen.getByRole('heading', { name: 'Welcome' })).toBeInTheDocument()
   })
 
+  it('passes over steps that ask to be skipped, both ways, and finishes when none are left', () => {
+    const onHide = vi.fn()
+    const steps = STEPS.map(s => (s.id === 'filters' ? { ...s, skip: () => true } : s))
+    render(<GuidedTour steps={steps} onHide={onHide} />)
+    fireEvent.click(screen.getByRole('button', { name: 'next' }))
+    expect(onHide).not.toHaveBeenCalled()
+    expect(screen.getByRole('heading', { name: 'Done' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'back' }))
+    expect(screen.getByRole('heading', { name: 'Welcome' })).toBeInTheDocument()
+  })
+
+  it('reports each step as it opens', () => {
+    const onStepChange = vi.fn()
+    render(<GuidedTour steps={STEPS} onHide={vi.fn()} onStepChange={onStepChange} />)
+    fireEvent.click(screen.getByRole('button', { name: 'next' }))
+    expect(onStepChange.mock.calls.map(([id]) => id)).toEqual(['welcome', 'filters'])
+  })
+
+  it('keeps presses on the card from reaching the page, where open menus would close on them', () => {
+    const onDocumentPress = vi.fn()
+    document.addEventListener('pointerdown', onDocumentPress)
+    render(<GuidedTour steps={STEPS} onHide={vi.fn()} />)
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'next' }))
+    document.removeEventListener('pointerdown', onDocumentPress)
+    expect(onDocumentPress).not.toHaveBeenCalled()
+  })
+
   it('jumps to a step from its dot', () => {
     render(<GuidedTour steps={STEPS} onHide={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: 'Done' }))

@@ -38,12 +38,16 @@ export const TOUR_CSS = `
 .cdt-tour-card { position: fixed; z-index: 9; width: min(360px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-x: hidden; overflow-y: auto; pointer-events: auto; background: var(--tour-surface); border-radius: 12px; box-shadow: 0 18px 48px color-mix(in srgb, var(--tour-ink) 35%, transparent); opacity: 0; transform: translateY(6px); }
 .cdt-tour-card.is-settled { opacity: 1; transform: none; transition: opacity 220ms ease-out, transform 220ms ease-out; }
 .cdt-tour-card > header { position: relative; overflow: hidden; display: flex; align-items: center; gap: 0.75rem; background: var(--tour-header-bg); color: var(--tour-header-fg); padding: 0.7rem 1rem; border-radius: 12px 12px 0 0; }
-.cdt-tour-card > header small { margin-left: auto; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.85; }
+.cdt-tour-shortcut { padding: 0.2rem 0.6rem; border: 1px solid color-mix(in srgb, var(--tour-header-fg) 55%, transparent); border-radius: 999px; background: none; font: inherit; font-size: 0.75rem; font-weight: 600; color: inherit; cursor: pointer; white-space: nowrap; }
+.cdt-tour-shortcut:hover { background: color-mix(in srgb, var(--tour-header-fg) 15%, transparent); }
+.cdt-tour-card > header small { margin-left: auto;font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.85; }
 
 .cdt-tour-body { padding: 0.9rem 1rem 0.4rem; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.82rem; line-height: 1.45; color: var(--tour-text); }
 .cdt-tour-body h3 { display: flex; flex-direction: column; gap: 0.35rem; margin: 0; font-size: 1.05rem; font-weight: 600; color: var(--tour-ink); }
 .cdt-tour-body h3::before { content: ''; display: block; width: 2.25rem; height: 4px; background: var(--tour-accent); }
 .cdt-tour-body p { margin: 0; }
+.cdt-tour-menu-path { display: inline-flex; align-items: center; gap: 0.25em; font-weight: 600; color: var(--tour-ink); white-space: nowrap; }
+.cdt-tour-menu-path svg { width: 1em; height: 1em; }
 .cdt-tour-body dl { margin: 0; display: grid; gap: 0.35rem; }
 .cdt-tour-body dt { font-weight: 600; color: var(--tour-accent); }
 .cdt-tour-body dd { margin: 0; }

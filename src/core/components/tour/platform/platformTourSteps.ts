@@ -2,13 +2,14 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import * as LR from 'lucide-react'
+import * as React from 'react'
 
 import { ViewerNames } from '../../../types/dbTypes'
 
-import { NO_PLUGIN_ENTRIES } from './usePluginTourEntries'
+import { MenuPathText } from './MenuPathText'
 
-import type { DataPage, PlatformTourActions, Translate, ViewerChrome } from './platformTourTypes'
-import type { PluginEntry, PluginTourEntries } from './usePluginTourEntries'
+import type { DataPage, PlatformTourActions, PlatformTourId, TourAvailability, Translate, ViewerChrome } from './platformTourTypes'
+import type { PluginEntry } from './usePluginTourEntries'
 import type { Language, ViewerKey } from '../../../types/dbTypes'
 import type { TourItem, TourStep } from '../tourTypes'
 
@@ -33,12 +34,35 @@ export const VIEWER_TOOLS: Record<ViewerChrome, { id: string; icon: Icon }[]> = 
   ],
 }
 
+export const VIEWERS: { viewer: ViewerChrome; icon: Icon }[] = [
+  { viewer: 'map', icon: LR.Map },
+  { viewer: 'bim', icon: LR.Box },
+]
+
 export const DATA_PAGES: { page: DataPage; icon: Icon }[] = [
   { page: 'sites', icon: LR.BoxSelect },
   { page: 'buildings', icon: LR.Building2 },
   { page: 'files', icon: LR.GalleryVerticalEnd },
   { page: 'infrastructure', icon: LR.TrainTrack },
 ]
+
+export const EVERYTHING_AVAILABLE: TourAvailability = {
+  viewers: VIEWERS.map(({ viewer }) => viewer),
+  dataPages: DATA_PAGES.map(({ page }) => page),
+}
+
+/** The tour of the page the viewer is on, folded into the overview and offered as a shortcut from its first card. */
+export interface PageSection {
+  tour: PlatformTourId
+  label: string
+  steps: TourStep[]
+}
+
+export interface OverviewOptions {
+  languages?: Language[]
+  available?: TourAvailability
+  section?: PageSection
+}
 
 export const toolStepId = (toolId: string) => `tool-${toolId}`
 
@@ -57,24 +81,29 @@ export const pluginItem = (description: string, entry: PluginEntry, onSelect: ()
   id: entry.id, icon: entry.icon, term: entry.label, description, onSelect,
 })
 
-const toolItem = (t: Translate, toolId: string, icon: Icon, onSelect: () => void): TourItem => ({
-  id: toolId, icon, onSelect, term: t(`tools.${toolId}.title`), description: t(`tools.${toolId}.body`),
+const withMenuPath = (t: Translate, s: TourStep, key = s.id): TourStep => ({
+  ...s,
+  body: React.createElement(MenuPathText, { text: t(`${key}.body`), labels: { support: t('menuPath.support'), guide: t('menuPath.guide') } }),
 })
 
-function viewerSteps(t: Translate, chrome: ViewerChrome, a: PlatformTourActions, plugins: PluginTourEntries): TourStep[] {
-  const goTo = (toolId: string) => () => a.branch(chrome, 'toolbar', toolStepId(toolId))
-  const tools = [
-    ...VIEWER_TOOLS[chrome].map(tool => toolItem(t, tool.id, tool.icon, goTo(tool.id))),
-    ...plugins.tools[chrome].map(tool => pluginItem(t('tools.plugin.body'), tool, goTo(tool.id))),
-  ]
+export const availableViewers = (available: TourAvailability) => VIEWERS.filter(({ viewer }) => available.viewers.includes(viewer))
+
+export const availableDataPages = (available: TourAvailability) => DATA_PAGES.filter(({ page }) => available.dataPages.includes(page))
+
+function interfaceSteps(t: Translate, available: TourAvailability, a: PlatformTourActions): TourStep[] {
+  const viewers = {
+    ...step(t, 'viewers', 'sidebar-viewers'),
+    items: availableViewers(available).map(({ viewer, icon }) => item(t, 'viewers.items', viewer, icon, () => a.branch(viewer, 'viewers'))),
+  }
+  const pages = availableDataPages(available)
+  if (pages.length === 0) return [viewers]
   return [
-    { ...step(t, 'search', 'viewer-search', `search.${chrome}`), items: [item(t, `search.${chrome}.items`, 'open', LR.Search, () => a.branch(chrome, 'search', 'search'))] },
-    { ...step(t, 'panel', 'viewer-panel-toggle', 'viewerPanel'), items: [item(t, 'viewerPanel.items', chrome, LR.PanelLeft, () => a.branch(chrome, 'panel', 'panel'))] },
-    { ...step(t, 'toolbar', 'toolbar', `toolbar.${chrome}`), scroll: false, items: tools },
+    step(t, 'interfaces', 'sidebar-interfaces'),
+    viewers,
+    { ...step(t, 'data', 'sidebar-data'), items: pages.map(({ page, icon }) => item(t, 'data.items', page, icon, () => a.branch(`data-${page}`, 'data'))) },
   ]
 }
 
-/** The platform overview, top to bottom; its items open a closer tour of the part they name. */
 function languageSteps(t: Translate, languages: Language[], a: PlatformTourActions): TourStep[] {
   if (languages.length < 2) return []
   return [{
@@ -83,23 +112,29 @@ function languageSteps(t: Translate, languages: Language[], a: PlatformTourActio
   }]
 }
 
-export function platformTourSteps(viewer: ViewerKey | undefined, t: Translate, a: PlatformTourActions, plugins = NO_PLUGIN_ENTRIES, languages: Language[] = []): TourStep[] {
-  const chrome = chromeOf(viewer)
+const singleOr = <T>(options: T[], several: PlatformTourId, only: (option: T) => PlatformTourId) =>
+  options.length > 1 ? several : only(options[0])
+
+function exploreStep(t: Translate, available: TourAvailability, a: PlatformTourActions): TourStep {
+  const viewers = available.viewers
+  const pages = available.dataPages
+  return {
+    ...withMenuPath(t, step(t, 'explore', null)),
+    items: [
+      ...(viewers.length ? [item(t, 'explore.items', 'viewers', LR.Box, () => a.branch(singleOr(viewers, 'explore-viewers', v => v), 'explore'))] : []),
+      ...(pages.length ? [item(t, 'explore.items', 'data', LR.Table2, () => a.branch(singleOr(pages, 'explore-data', p => `data-${p}`), 'explore'))] : []),
+    ],
+  }
+}
+
+const withShortcut = (section: PageSection | undefined, a: PlatformTourActions) => (s: TourStep): TourStep =>
+  section ? { ...s, shortcut: { label: section.label, onSelect: () => a.branch(section.tour, s.id) } } : s
+
+function generalSteps(t: Translate, a: PlatformTourActions, languages: Language[], available: TourAvailability): TourStep[] {
   return [
-    step(t, 'welcome', null),
+    withMenuPath(t, step(t, 'welcome', null)),
     step(t, 'sidebar', 'sidebar'),
-    {
-      ...step(t, 'viewers', 'sidebar-viewers'),
-      items: [
-        item(t, 'viewers.items', 'map', LR.Map, () => a.branch('map', 'viewers')),
-        item(t, 'viewers.items', 'bim', LR.Box, () => a.branch('bim', 'viewers')),
-      ],
-    },
-    ...(chrome ? viewerSteps(t, chrome, a, plugins) : []),
-    {
-      ...step(t, 'data', 'sidebar-data'),
-      items: DATA_PAGES.map(({ page, icon }) => item(t, 'data.items', page, icon, () => a.branch(`data-${page}`, 'data'))),
-    },
+    ...interfaceSteps(t, available, a),
     { ...step(t, 'plugins', 'sidebar-plugins'), items: [item(t, 'plugins.items', 'open', LR.Blocks, () => a.branch('plugins', 'plugins'))] },
     ...languageSteps(t, languages, a),
     {
@@ -118,6 +153,15 @@ export function platformTourSteps(viewer: ViewerKey | undefined, t: Translate, a
         item(t, 'account.items', 'signOut', LR.LogOut),
       ],
     },
-    step(t, 'done', null),
+  ]
+}
+
+/** The platform overview, then the page the viewer is on, ending on a choice of closer tours; overview cards offer a shortcut to that page's tour. */
+export function platformTourSteps(t: Translate, a: PlatformTourActions, { languages = [], available = EVERYTHING_AVAILABLE, section }: OverviewOptions = {}): TourStep[] {
+  const shortcut = withShortcut(section, a)
+  return [
+    ...generalSteps(t, a, languages, available).map(shortcut),
+    ...(section?.steps ?? []),
+    shortcut(exploreStep(t, available, a)),
   ]
 }

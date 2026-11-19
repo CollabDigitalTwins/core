@@ -463,15 +463,20 @@
   "PlatformTour": {
     "welcome": {
       "title": "Bienvenido a la plataforma CDT",
-      "body": "Edificios, mapas, modelos y datos de su organización, en un solo lugar.\nEste recorrido muestra las partes principales de la pantalla. Toma alrededor de un minuto y puede ocultarlo en cualquier momento."
+      "body": "Edificios, mapas, modelos y datos de su organización, en un solo lugar.\nEste recorrido le muestra las funciones principales y cómo moverse por la plataforma. Puede ocultarlo y volver a abrirlo en cualquier momento desde @support → @guide.",
+      "shortcut": {
+        "map": "Recorrer el visor de mapa",
+        "bim": "Recorrer el visor BIM",
+        "data": "Recorrer esta página"
+      }
     },
     "sidebar": {
       "title": "Navegación",
-      "body": "La barra lateral lleva a cada visor y página de datos. Use el chevrón de su borde para contraerla o expandirla."
+      "body": "La barra lateral lleva a cada visor y página de datos. Use el chevrón para expandirla y la × para contraerla."
     },
     "viewers": {
-      "title": "Visores",
-      "body": "Dos formas de ver los datos de su organización. Elija uno para verlo de cerca.",
+      "title": "Visores 3D",
+      "body": "Vea los datos de su organización en 3D, en contexto. Elija uno para verlo de cerca.",
       "items": {
         "map": {
           "term": "Mapa",
@@ -484,25 +489,9 @@
       }
     },
     "search": {
-      "map": {
-        "title": "Buscar en el mapa",
-        "body": "Escriba una dirección o un lugar para llevar el mapa allí.",
-        "items": {
-          "open": {
-            "term": "Ver una búsqueda",
-            "description": "Mire cómo el mapa encuentra Carleton University."
-          }
-        }
-      },
       "bim": {
         "title": "Buscar en el modelo",
-        "body": "Encuentre elementos de los modelos cargados por nombre, tipo o propiedad.",
-        "items": {
-          "open": {
-            "term": "Buscar en el modelo",
-            "description": "Abra el visor BIM y véalo de cerca."
-          }
-        }
+        "body": "Encuentre elementos de los modelos cargados por nombre, tipo o propiedad."
       }
     },
     "searchDemo": {
@@ -622,7 +611,7 @@
     },
     "data": {
       "title": "Páginas de datos",
-      "body": "Todos los registros de su organización, en listas con búsqueda. Elija una página para verla de cerca; las páginas agregadas por plugins también aparecen en la barra lateral.",
+      "body": "Todos los registros de su organización, en listas con búsqueda. Las páginas agregadas por plugins también aparecen aquí. Elija una para verla de cerca.",
       "items": {
         "sites": {
           "term": "Sitios",
@@ -705,10 +694,6 @@
           "description": "Termine su sesión en este dispositivo."
         }
       }
-    },
-    "done": {
-      "title": "Todo listo",
-      "body": "Abra Soporte → Guía en cualquier momento para ver este recorrido de nuevo.\nLa documentación completa está en docs.collabdt.org."
     },
     "backToOverview": "Volver al resumen",
     "viewerTour": {
@@ -1091,70 +1076,6 @@
           "title": "Sus sensores",
           "body": "Cada grupo lista sus sensores con su última lectura; el + agrega otro."
         }
-      },
-      "settings": {
-        "map": {
-          "title": "Configuración del mapa",
-          "body": "Cómo se ve el mapa y dónde empieza.",
-          "items": {
-            "style": {
-              "term": "Estilo del mapa",
-              "description": "El mapa base, el terreno, la proyección y qué edificios se ven."
-            },
-            "measurements": {
-              "term": "Mediciones",
-              "description": "El color de las líneas de medición."
-            },
-            "location": {
-              "term": "Ubicación",
-              "description": "Dónde abre el mapa: coordenadas, zoom y región."
-            }
-          }
-        },
-        "bim": {
-          "title": "Configuración del visor",
-          "body": "Cómo se muestra el modelo.",
-          "items": {
-            "camera": {
-              "term": "Cámara",
-              "description": "Perspectiva u ortográfica, y cómo se desplaza."
-            },
-            "grid": {
-              "term": "Cuadrícula",
-              "description": "La cuadrícula bajo el modelo."
-            },
-            "measurements": {
-              "term": "Mediciones",
-              "description": "Unidades y colores de las mediciones."
-            },
-            "lighting": {
-              "term": "Iluminación",
-              "description": "Luz solar y ambiental."
-            },
-            "pointClouds": {
-              "term": "Nubes de puntos",
-              "description": "Tamaño y color de los puntos, si hay una nube cargada."
-            },
-            "splats": {
-              "term": "Splats gaussianos",
-              "description": "Visualización de splats, si hay uno cargado."
-            }
-          }
-        }
-      }
-    },
-    "viewerPanel": {
-      "title": "Panel del visor",
-      "body": "El botón arriba a la izquierda abre el panel del visor en el que está, con todo lo que hay en pantalla en pestañas.",
-      "items": {
-        "map": {
-          "term": "Panel del mapa",
-          "description": "Archivos, capas, comentarios, sensores y configuración del mapa."
-        },
-        "bim": {
-          "term": "Panel BIM",
-          "description": "Archivos, capas, comentarios, sensores y configuración del modelo."
-        }
       }
     },
     "pluginsTour": {
@@ -1209,6 +1130,142 @@
             "description": "Haga clic en la fila para ver descripción, versión y permisos."
           }
         }
+      }
+    },
+    "interfaces": {
+      "title": "Dos formas de ver sus datos",
+      "body": "Vea los datos de su organización en los visores 3D, o recórralos como listas en las páginas de datos."
+    },
+    "explore": {
+      "title": "¿Qué le gustaría explorar?",
+      "body": "Elija una parte de la plataforma para un recorrido más detallado. Abra @support → @guide para volver a este recorrido en cualquier momento.",
+      "items": {
+        "viewers": {
+          "term": "Visores 3D",
+          "description": "La búsqueda, el panel lateral, la barra de herramientas y los controles en pantalla."
+        },
+        "data": {
+          "term": "Páginas de datos",
+          "description": "Listas de sus registros, con filtros."
+        }
+      }
+    },
+    "exploreViewers": {
+      "title": "¿Qué visor?",
+      "body": "Elija un visor para recorrer su pantalla."
+    },
+    "exploreData": {
+      "title": "¿Qué página de datos?",
+      "body": "Elija una página para recorrerla."
+    },
+    "attribution": {
+      "title": "Atribución",
+      "body": "Quién creó el mapa base y los datos en pantalla. Haga clic en la ⓘ para leerla."
+    },
+    "viewCube": {
+      "title": "Cubo de vista",
+      "body": "Muestra hacia dónde mira la cámara. Haga clic en una cara, arista o esquina para ver el modelo desde ese lado."
+    },
+    "legend": {
+      "title": "Leyenda",
+      "body": "Las capas y sensores que active explican sus colores aquí, abajo a la izquierda. Esta es un ejemplo.",
+      "items": {
+        "collapse": {
+          "term": "Contraer o expandir",
+          "description": "El chevrón pliega la leyenda cuando tapa el mapa. Pruébelo."
+        },
+        "entries": {
+          "term": "Leer los colores",
+          "description": "Cada muestra es un valor o rango; compárelo con lo que ve en el mapa."
+        },
+        "source": {
+          "term": "De dónde salen las leyendas",
+          "description": "Los conjuntos de datos aplicados, los sensores y las capas de plugins agregan cada uno una sección."
+        }
+      }
+    },
+    "menuPath": {
+      "support": "Soporte",
+      "guide": "Guía"
+    },
+    "bimState": {
+      "noBuilding": {
+        "title": "Elija un edificio",
+        "body": "El visor BIM muestra un edificio a la vez. Busque un edificio aquí y selecciónelo para abrir sus modelos."
+      },
+      "noBimFiles": {
+        "title": "Agregue un archivo 3D",
+        "body": "Este edificio aún no tiene archivos 3D. Arrastre un modelo BIM (IFC), una nube de puntos o un splat sobre la tarjeta, o use Subir archivo."
+      }
+    },
+    "legendDemo": {
+      "title": "Leyenda (ejemplo)",
+      "age": {
+        "title": "Antigüedad del edificio",
+        "before1950": "Antes de 1950",
+        "from1950": "1950 – 1990",
+        "after1990": "Después de 1990"
+      },
+      "temperature": {
+        "title": "Sensores de temperatura",
+        "cold": "Menos de 18 °C",
+        "mild": "18 – 24 °C",
+        "warm": "Más de 24 °C"
+      }
+    },
+    "settingsTour": {
+      "map-style": {
+        "title": "Estilo del mapa",
+        "body": "El mapa base bajo sus datos. Mire cómo cambia y elija el que prefiera; su elección se mantiene.",
+        "pick": "Cambiar a este mapa base."
+      },
+      "terrain": {
+        "title": "Relieve",
+        "body": "Agrega colinas y valles al mapa. Mire cómo cambia; vuelve atrás al continuar."
+      },
+      "projection": {
+        "title": "Proyección",
+        "body": "Globo curva el mapa como la Tierra; Mercator lo aplana. Mire cómo cambia."
+      },
+      "buildings": {
+        "title": "Edificios 3D",
+        "body": "Muestra u oculta los edificios extruidos del mapa base. Mire cómo se apagan y encienden."
+      },
+      "measurements": {
+        "title": "Mediciones",
+        "body": "El color de las líneas que dibujan las herramientas de medición."
+      },
+      "location": {
+        "title": "Ubicación",
+        "body": "Dónde se abre el mapa: escriba coordenadas o use la vista actual."
+      },
+      "render-mode": {
+        "title": "Modo de renderizado",
+        "body": "Sombreado dibuja luz solar y sombras; Básico es más ligero y rápido. Mire cómo cambia."
+      },
+      "bim-projection": {
+        "title": "Proyección",
+        "body": "Perspectiva se ve natural; Ortográfica mantiene las líneas paralelas, útil para plantas y alzados. Mire cómo cambia."
+      },
+      "navigation": {
+        "title": "Navegación",
+        "body": "Cómo mueve la cámara al arrastrar: orbitar alrededor del modelo o caminar por él."
+      },
+      "grid": {
+        "title": "Cuadrícula",
+        "body": "La cuadrícula bajo el modelo. Mire cómo se apaga y enciende; los controles fijan su tamaño y espaciado."
+      },
+      "lighting": {
+        "title": "Iluminación",
+        "body": "Mueva el sol por hora y fecha, y ajuste la calidad de las sombras."
+      },
+      "bim-measurements": {
+        "title": "Mediciones",
+        "body": "Unidades, precisión y colores de las herramientas de medición."
+      },
+      "point-clouds": {
+        "title": "Nubes de puntos y splats",
+        "body": "Tamaño, densidad y color de los puntos; los splats tienen su propia sección debajo."
       }
     }
   },

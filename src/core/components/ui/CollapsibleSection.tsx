@@ -39,6 +39,8 @@ interface CollapsibleSectionProps {
   dragHandleProps?: React.HTMLAttributes<HTMLElement> & { ref?: React.Ref<HTMLElement> }
   /** True while this section is the one being dragged to a new position. */
   isReordering?: boolean
+  /** A `data-tour` anchor on the section, for guided tours. */
+  tourAnchor?: string
 }
 
 export function CollapsibleSection({
@@ -60,6 +62,7 @@ export function CollapsibleSection({
   onOpenChange,
   dragHandleProps,
   isReordering,
+  tourAnchor,
 }: CollapsibleSectionProps) {
   // Controlled when `open` is supplied (the Layers tab drives its sections so it
   // can give the collapsed ones no more height than their header), uncontrolled
@@ -96,7 +99,7 @@ export function CollapsibleSection({
   }, [switchVariant?.checked])
 
   return (
-    <div className="w-full min-h-0 flex flex-col p-2 pb-2 " style={style}>
+    <div className="w-full min-h-0 flex flex-col p-2 pb-2 " style={style} data-tour={tourAnchor}>
       <div className="flex-shrink-0">
         <div
           {...dragHandlers}

@@ -41,7 +41,7 @@ export function NavigationMode() {
   if (!navigation || !navState) return null
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" data-tour="settings-navigation">
       <label className="text-sm font-medium">{t('navigation')}</label>
       <Tabs
         value={navState.mode}

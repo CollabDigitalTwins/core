@@ -71,7 +71,7 @@ export function MapProjection() {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" data-tour="settings-projection">
       <label className="text-sm font-medium">{tMap('mapProjection')}</label>
       <Tabs value={mapProjection} onValueChange={value => handleMapProjection(value as MapProjectionType)} variant="switch">
         <TabsList className="grid w-full grid-cols-2">

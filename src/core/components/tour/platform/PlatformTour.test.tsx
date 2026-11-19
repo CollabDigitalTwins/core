@@ -87,14 +87,21 @@ describe('PlatformTour', () => {
     expect(screen.getByRole('dialog', { name: 'welcome.title' })).toBeInTheDocument()
   })
 
-  it('branches into a closer tour from an item and comes back to the step it left', () => {
+  it('offers the tour of the page the viewer is on from the first card', () => {
     renderTour(memoryStore())
-    fireEvent.click(screen.getByRole('button', { name: 'viewers.title' }))
+    fireEvent.click(screen.getByRole('button', { name: /welcome\.shortcut\.map/ }))
+    expect(screen.getByRole('dialog', { name: 'viewerTour.map.title' })).toBeInTheDocument()
+  })
+
+  it('ends on a choice of closer tours, and comes back to it from the one picked', () => {
+    renderTour(memoryStore())
+    fireEvent.click(screen.getByRole('button', { name: 'explore.title' }))
+    fireEvent.click(screen.getByRole('button', { name: /explore\.items\.viewers\.term/ }))
     fireEvent.click(screen.getByRole('button', { name: /viewers\.items\.map\.term/ }))
     expect(screen.getByRole('dialog', { name: 'viewerTour.map.title' })).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'tools.map-share.title' }))
+    fireEvent.click(screen.getByRole('button', { name: 'legend.title' }))
     fireEvent.click(screen.getByRole('button', { name: 'backToOverview' }))
-    expect(screen.getByRole('dialog', { name: 'viewers.title' })).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'exploreViewers.title' })).toBeInTheDocument()
   })
 })

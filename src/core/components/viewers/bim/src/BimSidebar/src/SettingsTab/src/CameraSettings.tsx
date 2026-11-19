@@ -19,7 +19,7 @@ export function CameraSettings() {
   const t = useTranslations('CameraSettings')
 
   return (
-    <SettingsSection icon={LR.Camera} title={t('title')}>
+    <SettingsSection icon={LR.Camera} title={t('title')} tourAnchor="settings-camera">
       <div className="space-y-3 px-1 pb-2">
         <RenderMode />
         <ToggleProjection />

@@ -12,7 +12,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   underneath. A step targets a `data-tour="<id>"` anchor, a function that returns an element, or `null` for a
   centred card. It can run `onEnter` when it opens, whose returned function runs when the step closes, and can
   `invite` a click that ends the tour. Plain-string bodies turn `term — description` lines into a definition list;
-  a step's `items` (`TourItem`) render as icon rows, which are buttons when they have `onSelect`. `startAt` opens the
+  a step's `items` (`TourItem`) render as icon rows, which are buttons when they have `onSelect`. A `shortcut` puts a small button at
+  the top of the card, and `skip` passes over a step that does not apply right now. `onStepChange` reports each
+  step as it opens. Presses on the card never reach `document`, so an open menu the step points at stays open. `startAt` opens the
   tour on a given step and `onFinish` replaces `onHide` for the Finish button. Theme it with `--tour-*` CSS variables on a `className`;
   the defaults follow the platform tokens. `useTour` remembers finished tours through a `TourStore`;
   `browserTourStore` keeps them in session or local storage. `findSidebarPageLink` and `setToolbarPanel` find the
@@ -21,9 +23,14 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   layers above the app shell by default; set `--tour-z` on a `className` to move it.
 - `@collabdt/core/plugins-sdk/tour`: all of the above for runtime-loaded plugins.
 - Platform overview tour (`components/tour/platform/PlatformTour`), mounted by `AppSidebar`: walks the sidebar,
-  the Map and BIM viewers, their search, side panel and toolbar, the data pages, plugins, support and the account
-  menu. The viewers, toolbar tools, data pages and Settings are buttons that branch into a closer tour of that part:
-  the Map tour demonstrates a search for Carleton University, opens the side panel and each toolbar tool, and covers
+  the two ways to see data (3D viewers and data pages), plugins, support and the account menu, then the tour of
+  the page the person is on (also a shortcut at the top of every overview card), and ends on a choice of closer
+  tours of the 3D viewers or the data pages. Only the viewers and data pages the organization shows are offered, and each one's row opens its tour.
+  The welcome and closing cards show Support → Guide with the sidebar's icons.
+  A viewer tour covers its search, side panel and toolbar (each tool branches into a closer look). The map adds
+  its controls, settings, attribution and an example legend; BIM adds hints on its empty card (pick a building, add
+  a 3D file) and its view cube. The map and BIM settings tours walk each control and briefly change it to show the
+  effect, then put it back. The tour reopens on the step it was on if it remounts. The Map tour demonstrates a search for Carleton University, opens the side panel and each toolbar tool, and covers
   the zoom, compass and map settings controls; finishing a branch returns to the overview. Each side panel tab, the
   datasets menu and each of its collections, the Plugins page, the Support options, the Add options, the Share
   options and a measuring demo on the Carleton campus have closer tours or buttons of their own. Toolbar tools
@@ -43,7 +50,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   `panel-tab`, `panel-file-sections`, `panel-layers-applied`, `panel-layers-available`, `panel-layers-drawings`,
   `panel-layers-classifier`, `panel-comments`, `panel-sensors`, `panel-sensors-toolbar`, `measure-distance`,
   `measure-area`, `share-qr`, `share-copy`, `share-screenshot`, `datasets-tab-<tab>`, `plugins-tabs`, `plugins-list`,
-  `settings-tab-<section>` and `sidebar-language`. The map Compare and Datasets buttons set
+  `settings-tab-<section>`, `sidebar-language`, `sidebar-interfaces`, `bim-empty` (with `data-state`), `legend-demo` and `settings-*` on each
+  map and BIM setting; the BIM view cube has the `cdt-view-cube` class. `CollapsibleSection` and `SettingsSection`
+  take `tourAnchor`. The map Compare and Datasets buttons set
   `aria-expanded`.
 
 ## [0.19.0] - 2026-11-13

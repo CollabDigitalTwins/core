@@ -47,9 +47,9 @@ export function MapCustomization() {
 
   return (
     <>
-      <SettingsSection icon={LR.Map} title={tSettings('mapStyle')} defaultOpen={true}>
+      <SettingsSection icon={LR.Map} title={tSettings('mapStyle')} defaultOpen={true} tourAnchor="settings-map">
         <div className="space-y-6">
-          <div className="space-y-2">
+          <div className="space-y-2" data-tour="settings-map-style">
             <Select
               value={resolvedMapStyle.url}
               onValueChange={(value: string) => {
@@ -78,7 +78,7 @@ export function MapCustomization() {
         </div>
       </SettingsSection>
 
-      <SettingsSection icon={LR.Ruler} title={tMeasurements('title')}>
+      <SettingsSection icon={LR.Ruler} title={tMeasurements('title')} tourAnchor="settings-measurements">
         <div className="space-y-2">
           <label className="text-sm font-medium">{tMeasurements('lineColour')}</label>
           <div className="p-2 border rounded-md bg-white">

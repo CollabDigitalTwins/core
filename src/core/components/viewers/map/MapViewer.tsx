@@ -10,6 +10,7 @@ import Map, { NavigationControl } from 'react-map-gl/maplibre'
 
 import { PluginMapLayerHost } from '../../../plugins/host/PluginMapLayerHost'
 import { MapContext } from '../../../store'
+import { TourLegendDemo } from '../../tour/platform/TourLegendDemo'
 import { SensorLegend } from '../../ui/Sensors/SensorLegend'
 import SettingsButton from '../../ui/SettingsButton'
 import { StatsOverlay } from '../../ui/stats'
@@ -228,6 +229,7 @@ export function MapViewer({ width = '100%', height = '100%', organization, mapti
                   on a phone that centre reaches all the way to this corner. */}
               <div className="absolute bottom-20 md:bottom-[10px] left-3 z-10 flex max-w-[calc(100vw-1.5rem)] flex-col gap-2 pointer-events-none">
                 <MapTilerKeyNotice maptilerKey={maptilerKey} />
+                <TourLegendDemo />
                 <SensorLegend />
                 <DatasetManagerMenu />
               </div>

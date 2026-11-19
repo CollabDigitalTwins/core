@@ -13,7 +13,9 @@ import { switchLanguage } from '../../../utils/utils'
 import { useSidebar } from '../../ui/Sidebar'
 import { useLatest } from '../useTourLayout'
 
-import { anchorMapRegion, MEASURE_REGION, pressWhenShown, runTimeline, searchFor, setToolOpen } from './platformHost'
+import { anchorMapRegion, focusTourCard, MEASURE_REGION, pressWhenShown, runTimeline, searchFor, setToolOpen } from './platformHost'
+
+import { useMapStyleTour } from './useMapStyleTour'
 
 import type { LngLat } from './platformHost'
 import type { MeasureKind, PlatformTourActions } from './platformTourTypes'
@@ -68,6 +70,7 @@ export function usePlatformTourActions(branch: PlatformTourActions['branch']): P
   const { ability } = usePermissions()
   const router = useRouter()
   const map = useLatest(useMapViewer().map)
+  const { mapStyles, setMapStyle, demoMapStyle } = useMapStyleTour()
 
   return React.useMemo(() => ({
     can: (action, subject) => ability.can(action, subject),
@@ -78,7 +81,10 @@ export function usePlatformTourActions(branch: PlatformTourActions['branch']): P
       return () => setOpenInfo(false)
     },
     selectPanelTab: tab => dispatch({ type: 'SET_SIDEBAR_SELECTED_TAB', payload: { selectedTab: tab } }),
-    demoSearch: () => searchFor(document.querySelector('[data-tour="viewer-search"]'), DEMO_PLACE, () => map.current?.flyTo(DEMO_CAMERA)),
+    demoSearch: () => searchFor(document.querySelector('[data-tour="viewer-search"]'), DEMO_PLACE, () => {
+      focusTourCard()
+      map.current?.flyTo(DEMO_CAMERA)
+    }),
     demoMeasure: kind => demoMeasure(map.current, kind, () => toolsDispatch({ type: 'CLEAR-TOOLS' })),
     pressControl: anchor => void pressWhenShown(anchor),
     openFeatureRequest: () => setFeatureRequestOpen(true),
@@ -88,5 +94,8 @@ export function usePlatformTourActions(branch: PlatformTourActions['branch']): P
     zoomIn: () => map.current?.zoomIn(),
     zoomOut: () => map.current?.zoomOut(),
     resetNorth: () => map.current?.resetNorthPitch(),
-  }), [ability, router, branch, openViewer, setOpenInfo, dispatch, toolsDispatch, map, setFeatureRequestOpen, setBugReportOpen])
+    mapStyles,
+    setMapStyle,
+    demoMapStyle,
+  }), [ability, router, branch, openViewer, setOpenInfo, dispatch, toolsDispatch, map, setFeatureRequestOpen, setBugReportOpen, mapStyles, setMapStyle, demoMapStyle])
 }

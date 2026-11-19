@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 
 import { ViewerNames } from '../../../types/dbTypes'
 
-import { followViewer } from './tourRoutes'
+import { followViewer, pageTourOf } from './tourRoutes'
 
 import type { Leg } from './tourRoutes'
 
@@ -34,5 +34,27 @@ describe('followViewer', () => {
   it('returns to the overview step it left from on a page without its own tour', () => {
     const legs: Leg[] = [overview, { tour: 'map', returnTo: 'viewers' }]
     expect(followViewer(legs, ViewerNames.users)).toEqual([{ tour: 'platform', startAt: 'viewers' }])
+  })
+
+  it('keeps the toolbar tour and the viewer or data page choices on any page that fits them', () => {
+    const tools: Leg[] = [overview, { tour: 'map', returnTo: 'explore' }, { tour: 'tools', returnTo: 'toolbar' }]
+    const choice: Leg[] = [overview, { tour: 'explore-viewers', returnTo: 'explore' }]
+    expect(followViewer(tools, ViewerNames.bim)).toBe(tools)
+    expect(followViewer(choice, ViewerNames.files)).toBe(choice)
+  })
+})
+
+describe('pageTourOf', () => {
+  const available = { viewers: ['map' as const], dataPages: ['files' as const] }
+
+  it('picks the tour of the viewer or data page the person is on', () => {
+    expect(pageTourOf(ViewerNames.map, available)).toBe('map')
+    expect(pageTourOf(ViewerNames.files, available)).toBe('data-files')
+  })
+
+  it('has none for a page the organization does not show, or one without a tour', () => {
+    expect(pageTourOf(ViewerNames.bim, available)).toBeNull()
+    expect(pageTourOf(ViewerNames.infrastructure, available)).toBeNull()
+    expect(pageTourOf(ViewerNames.settings, available)).toBeNull()
   })
 })

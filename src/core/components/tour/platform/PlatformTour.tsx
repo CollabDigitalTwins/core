@@ -48,6 +48,7 @@ export function PlatformTour({ store }: { store?: TourStore }) {
         startAt={tour.startAt}
         onHide={hide}
         onFinish={tour.branched ? tour.back : hide}
+        onStepChange={tour.remember}
         labels={tour.branched ? { finish: t('backToOverview') } : undefined}
         header={<CdtIcon monochromatic />}
       />

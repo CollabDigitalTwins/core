@@ -124,3 +124,58 @@ export function anchorMapRegion(map: ProjectingMap, coords: LngLat[], anchor: st
     box.remove()
   }
 }
+
+/** Puts focus back on the tour card, so its arrow keys work after a demo typed into the page. */
+export function focusTourCard(root: Document = document): void {
+  root.querySelector<HTMLElement>('.cdt-tour-card .cdt-tour-next')?.focus({ preventScroll: true })
+}
+
+/** Runs `action` once no dropdown menu is open, so a closing menu cannot dismiss the one it opens; returns a cancel. */
+export function afterMenusClose(action: () => void, root: ParentNode = document): () => void {
+  let frame = 0
+  let frames = 0
+  const attempt = () => {
+    if (!root.querySelector('[role="menu"]') || ++frames >= WAIT_FRAMES) action()
+    else frame = requestAnimationFrame(attempt)
+  }
+  frame = requestAnimationFrame(attempt)
+  return () => cancelAnimationFrame(frame)
+}
+
+/** Expands the collapsible section marked with the `data-tour` anchor if it is collapsed. */
+export function openSection(anchor: string, root: ParentNode = document): void {
+  const header = root.querySelector<HTMLElement>(`[data-tour="${anchor}"] [aria-expanded]`)
+  if (header?.getAttribute('aria-expanded') === 'false') header.click()
+}
+
+const DEMO_DELAY_MS = 700
+
+const activeTab = (group: Element) => group.querySelector<HTMLElement>('[role="tab"][data-state="active"]')
+
+/** Switches the tab group in the anchor to another enabled tab after a beat, and back when the step closes. */
+export function demoTabs(anchor: string, root: ParentNode = document): () => void {
+  let original: HTMLElement | null = null
+  const timer = window.setTimeout(() => {
+    const group = root.querySelector(`[data-tour="${anchor}"]`)
+    original = group && activeTab(group)
+    const other = group?.querySelector<HTMLElement>('[role="tab"][data-state="inactive"]:not([disabled])')
+    if (other) press(other)
+  }, DEMO_DELAY_MS)
+  return () => {
+    window.clearTimeout(timer)
+    if (original?.isConnected && original.dataset.state !== 'active') press(original)
+  }
+}
+
+/** Flips the first switch in the anchor after a beat, and back when the step closes. */
+export function demoSwitch(anchor: string, root: ParentNode = document): () => void {
+  let flipped: HTMLElement | null = null
+  const timer = window.setTimeout(() => {
+    flipped = root.querySelector<HTMLElement>(`[data-tour="${anchor}"] [role="switch"]:not([disabled])`)
+    flipped?.click()
+  }, DEMO_DELAY_MS)
+  return () => {
+    window.clearTimeout(timer)
+    if (flipped?.isConnected) flipped.click()
+  }
+}

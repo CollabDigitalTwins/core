@@ -7,11 +7,12 @@ import { ViewerNames } from '../../../types/dbTypes'
 import { canSeeSettingsTab } from '../../settings/src/settingsTabs'
 import { SIDEBAR_TAB_META } from '../../ui/ViewerSidebar/sidebarTabs'
 
-import { findToolTarget, MEASURE_REGION, setToolOpen } from './platformHost'
-import { chromeOf, DATA_PAGES, item, pluginItem, step, toolStepId, VIEWER_TOOLS } from './platformTourSteps'
+import { afterMenusClose, demoSwitch, demoTabs, findToolTarget, MEASURE_REGION, openSection, setToolOpen } from './platformHost'
+import { availableDataPages, availableViewers, chromeOf, DATA_PAGES, EVERYTHING_AVAILABLE, item, pluginItem, step, toolStepId, VIEWER_TOOLS } from './platformTourSteps'
+import { showTourDemo, TOUR_LEGEND_DEMO_TARGET } from './tourDemos'
 import { NO_PLUGIN_ENTRIES } from './usePluginTourEntries'
 
-import type { DataPage, MeasureKind, PlatformTourActions, PlatformTourId, Translate, ViewerChrome } from './platformTourTypes'
+import type { DataPage, MeasureKind, PlatformTourActions, PlatformTourId, TourAvailability, Translate, ViewerChrome } from './platformTourTypes'
 import type { PluginEntry, PluginTourEntries } from './usePluginTourEntries'
 import type { SidebarTabType } from '../../../store/Menus/reducer'
 import type { ViewerKey } from '../../../types/dbTypes'
@@ -29,6 +30,18 @@ type Icon = TourItem['icon']
 export const PANEL_TABS = Object.keys(SIDEBAR_TAB_META) as SidebarTabType[]
 
 const MAP_CONTROLS = () => document.querySelector('.maplibregl-ctrl-top-right .maplibregl-ctrl-group')
+
+const MAP_ATTRIBUTION = () => document.querySelector('.maplibregl-ctrl-attrib')
+
+const VIEW_CUBE = () => document.querySelector('.cdt-view-cube')
+
+const bimEmptyCard = (state: string) => () => document.querySelector(`[data-tour="bim-empty"][data-state="${state}"]`)
+
+/** A hint on the BIM viewer's empty card, passed over unless the card is showing that state. */
+const bimStateStep = (t: Translate, id: string, state: string): TourStep => ({
+  ...step(t, id, bimEmptyCard(state), `bimState.${state}`),
+  skip: () => !bimEmptyCard(state)(),
+})
 
 const DATASETS_TOOL = 'map-database'
 
@@ -75,8 +88,11 @@ function toolItems(t: Translate, toolId: string, a: PlatformTourActions): TourIt
 }
 
 const openWhileShown = (toolId: string) => () => {
-  setToolOpen(toolId, true)
-  return () => setToolOpen(toolId, false)
+  const cancel = afterMenusClose(() => setToolOpen(toolId, true))
+  return () => {
+    cancel()
+    setToolOpen(toolId, false)
+  }
 }
 
 const pluginToolStep = (t: Translate, tool: PluginEntry): TourStep => ({
@@ -122,15 +138,61 @@ function mapControlSteps(t: Translate, a: PlatformTourActions): TourStep[] {
   ]
 }
 
+const toolItem = (t: Translate, toolId: string, icon: Icon, onSelect: () => void): TourItem => ({
+  id: toolId, icon, onSelect, term: t(`tools.${toolId}.title`), description: t(`tools.${toolId}.body`),
+})
+
+function toolbarStep(t: Translate, chrome: ViewerChrome, a: PlatformTourActions, plugins: PluginTourEntries): TourStep {
+  const goTo = (toolId: string) => () => a.branch('tools', 'toolbar', toolStepId(toolId))
+  return {
+    ...step(t, 'toolbar', 'toolbar', `toolbar.${chrome}`),
+    scroll: false,
+    items: [
+      ...VIEWER_TOOLS[chrome].map(tool => toolItem(t, tool.id, tool.icon, goTo(tool.id))),
+      ...plugins.tools[chrome].map(tool => pluginItem(t('tools.plugin.body'), tool, goTo(tool.id))),
+    ],
+  }
+}
+
+function legendStep(t: Translate, a: PlatformTourActions): TourStep {
+  return {
+    ...withEntry(step(t, 'legend', TOUR_LEGEND_DEMO_TARGET, 'legend'), () => showTourDemo('legend')),
+    scroll: false,
+    items: items(t, 'legend.items', [['collapse', LR.ChevronUp, () => a.pressControl('legend-demo')], ['entries', LR.Palette], ['source', LR.Layers]]),
+  }
+}
+
 function viewerTour(t: Translate, chrome: ViewerChrome, a: PlatformTourActions, plugins: PluginTourEntries): SubTour {
   return {
     steps: [
       withEntry(step(t, 'intro', null, `viewerTour.${chrome}`), () => a.openViewer(ViewerNames[chrome])),
-      chrome === 'map' ? withEntry(step(t, 'search', 'viewer-search', 'searchDemo'), a.demoSearch) : step(t, 'search', 'viewer-search', 'search.bim'),
+      ...(chrome === 'map'
+        ? [withEntry(step(t, 'search', 'viewer-search', 'searchDemo'), a.demoSearch)]
+        : [step(t, 'search', 'viewer-search', 'search.bim'), bimStateStep(t, 'no-building', 'noBuilding'), bimStateStep(t, 'no-file', 'noBimFiles')]),
       ...panelSteps(t, chrome, a, plugins),
-      ...(chrome === 'map' ? mapControlSteps(t, a) : []),
-      ...toolSteps(t, chrome, a, plugins),
+      toolbarStep(t, chrome, a, plugins),
+      ...(chrome === 'map'
+        ? [...mapControlSteps(t, a), { ...step(t, 'attribution', MAP_ATTRIBUTION), scroll: false }, legendStep(t, a)]
+        : [{ ...step(t, 'view-cube', VIEW_CUBE, 'viewCube'), scroll: false }]),
     ],
+  }
+}
+
+function viewerChooser(t: Translate, available: TourAvailability, a: PlatformTourActions): SubTour {
+  return {
+    steps: [{
+      ...step(t, 'choose', null, 'exploreViewers'),
+      items: availableViewers(available).map(({ viewer, icon }) => item(t, 'viewers.items', viewer, icon, () => a.branch(viewer, 'choose'))),
+    }],
+  }
+}
+
+function dataChooser(t: Translate, available: TourAvailability, a: PlatformTourActions): SubTour {
+  return {
+    steps: [{
+      ...step(t, 'choose', null, 'exploreData'),
+      items: availableDataPages(available).map(({ page, icon }) => item(t, 'data.items', page, icon, () => a.branch(`data-${page}`, 'choose'))),
+    }],
   }
 }
 
@@ -189,7 +251,41 @@ function layersSteps(t: Translate, chrome: ViewerChrome): TourStep[] {
   ]
 }
 
-function panelTabSteps(t: Translate, tab: SidebarTabType, chrome: ViewerChrome): TourStep[] {
+/** A settings step inside a collapsible section, which it expands first; `demo` then changes a value until the step closes. */
+function settingsStep(t: Translate, id: string, anchor: string, section: string, demo?: () => () => void): TourStep {
+  return withEntry(step(t, id, anchor, `settingsTour.${id}`), () => {
+    openSection(section)
+    return demo?.()
+  })
+}
+
+function mapSettingsSteps(t: Translate, a: PlatformTourActions): TourStep[] {
+  return [
+    {
+      ...settingsStep(t, 'map-style', 'settings-map-style', 'settings-map', a.demoMapStyle),
+      items: a.mapStyles.map(style => ({ id: style.url, icon: LR.Map, term: style.name, description: t('settingsTour.map-style.pick'), onSelect: () => a.setMapStyle(style.url) })),
+    },
+    settingsStep(t, 'terrain', 'settings-terrain', 'settings-map', () => demoTabs('settings-terrain')),
+    settingsStep(t, 'projection', 'settings-projection', 'settings-map', () => demoTabs('settings-projection')),
+    settingsStep(t, 'buildings', 'settings-buildings', 'settings-map', () => demoSwitch('settings-buildings')),
+    settingsStep(t, 'measurements', 'settings-measurements', 'settings-measurements'),
+    settingsStep(t, 'location', 'settings-location', 'settings-location'),
+  ]
+}
+
+function bimSettingsSteps(t: Translate): TourStep[] {
+  return [
+    settingsStep(t, 'render-mode', 'settings-render-mode', 'settings-camera', () => demoTabs('settings-render-mode')),
+    settingsStep(t, 'bim-projection', 'settings-bim-projection', 'settings-camera', () => demoTabs('settings-bim-projection')),
+    settingsStep(t, 'navigation', 'settings-navigation', 'settings-camera'),
+    settingsStep(t, 'grid', 'settings-grid', 'settings-grid', () => demoSwitch('settings-grid')),
+    settingsStep(t, 'lighting', 'settings-lighting', 'settings-lighting'),
+    settingsStep(t, 'bim-measurements', 'settings-bim-measurements', 'settings-bim-measurements'),
+    settingsStep(t, 'point-clouds', 'settings-point-clouds', 'settings-point-clouds'),
+  ]
+}
+
+function panelTabSteps(t: Translate, tab: SidebarTabType, chrome: ViewerChrome, a: PlatformTourActions): TourStep[] {
   const key = `panelTour.${tab}`
   const search = step(t, 'search', 'panel-search', 'panelTour.search')
   switch (tab) {
@@ -208,12 +304,7 @@ function panelTabSteps(t: Translate, tab: SidebarTabType, chrome: ViewerChrome):
         step(t, 'list', 'panel-sensors', `${key}.list`),
       ]
     case 'settings':
-      return [{
-        ...step(t, 'sections', 'panel-tab', `${key}.${chrome}`),
-        items: chrome === 'map'
-          ? items(t, `${key}.map.items`, [['style', LR.Map], ['measurements', LR.Ruler], ['location', LR.MapPin]])
-          : items(t, `${key}.bim.items`, [['camera', LR.Camera], ['grid', LR.Grid3x3], ['measurements', LR.Ruler], ['lighting', LR.Sun], ['pointClouds', LR.Grip], ['splats', LR.Sparkles]]),
-      }]
+      return chrome === 'map' ? mapSettingsSteps(t, a) : bimSettingsSteps(t)
   }
 }
 
@@ -224,7 +315,7 @@ function panelTabTour(t: Translate, tab: SidebarTabType, chrome: ViewerChrome, a
       a.selectPanelTab(tab)
       return close
     },
-    steps: panelTabSteps(t, tab, chrome),
+    steps: panelTabSteps(t, tab, chrome, a),
   }
 }
 
@@ -278,12 +369,16 @@ export const dataPageOf = (tour: PlatformTourId) => DATA_PAGES.find(({ page }) =
 
 export const panelTabOf = (tour: PlatformTourId) => PANEL_TABS.find(tab => tour === `panel-${tab}`)
 
-/** The closer tour an item opens; `viewer` picks the map or BIM version of a side panel tab. */
-export function subTour(tour: Exclude<PlatformTourId, 'platform'>, t: Translate, a: PlatformTourActions, viewer?: ViewerKey, plugins = NO_PLUGIN_ENTRIES): SubTour {
+/** The closer tour an item opens; `viewer` picks the map or BIM version of a side panel tab or the toolbar. */
+export function subTour(tour: Exclude<PlatformTourId, 'platform'>, t: Translate, a: PlatformTourActions, viewer?: ViewerKey, plugins = NO_PLUGIN_ENTRIES, available = EVERYTHING_AVAILABLE): SubTour {
   const page = dataPageOf(tour)
   const tab = panelTabOf(tour)
+  const chrome = chromeOf(viewer) ?? 'map'
   if (page) return dataTour(t, page, a)
-  if (tab) return panelTabTour(t, tab, chromeOf(viewer) ?? 'map', a)
+  if (tab) return panelTabTour(t, tab, chrome, a)
+  if (tour === 'tools') return { steps: toolSteps(t, chrome, a, plugins) }
+  if (tour === 'explore-viewers') return viewerChooser(t, available, a)
+  if (tour === 'explore-data') return dataChooser(t, available, a)
   if (tour === 'settings') return settingsTour(t, a)
   if (tour === 'plugins') return pluginsTour(t, a)
   if (tour === 'datasets') return datasetsTour(t, a)

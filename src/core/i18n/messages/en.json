@@ -463,15 +463,20 @@
   "PlatformTour": {
     "welcome": {
       "title": "Welcome to the CDT platform",
-      "body": "Buildings, maps, models and data for your organization, in one place.\nThis tour shows the main parts of the screen. It takes about a minute, and you can hide it at any time."
+      "body": "Buildings, maps, models and data for your organization, in one place.\nThis tour shows you the main features and how to move around the platform. You can hide it and open it again at any time from @support → @guide.",
+      "shortcut": {
+        "map": "Tour the map viewer",
+        "bim": "Tour the BIM viewer",
+        "data": "Tour this page"
+      }
     },
     "sidebar": {
       "title": "Navigation",
-      "body": "The sidebar takes you to every viewer and data page. Use the chevron on its edge to collapse or expand it."
+      "body": "The sidebar takes you to every viewer and data page. Use the chevron to expand it and the × to collapse it."
     },
     "viewers": {
-      "title": "Viewers",
-      "body": "Two ways to look at your organization's data. Pick one for a closer look.",
+      "title": "3D viewers",
+      "body": "See your organization's data in 3D, in context. Pick one for a closer look.",
       "items": {
         "map": {
           "term": "Map",
@@ -484,25 +489,9 @@
       }
     },
     "search": {
-      "map": {
-        "title": "Search the map",
-        "body": "Type an address or a place name to fly the map there.",
-        "items": {
-          "open": {
-            "term": "Watch a search",
-            "description": "See the map find Carleton University."
-          }
-        }
-      },
       "bim": {
         "title": "Search the model",
-        "body": "Find elements in the loaded models by name, type or property.",
-        "items": {
-          "open": {
-            "term": "Search the model",
-            "description": "Open the BIM viewer and look closer."
-          }
-        }
+        "body": "Find elements in the loaded models by name, type or property."
       }
     },
     "searchDemo": {
@@ -622,7 +611,7 @@
     },
     "data": {
       "title": "Data pages",
-      "body": "Every record your organization keeps, as searchable lists. Pick a page for a closer look; pages added by plugins appear in the sidebar too.",
+      "body": "Every record your organization keeps, as searchable lists. Pages added by plugins appear here too. Pick one for a closer look.",
       "items": {
         "sites": {
           "term": "Sites",
@@ -705,10 +694,6 @@
           "description": "End your session on this device."
         }
       }
-    },
-    "done": {
-      "title": "You are ready",
-      "body": "Open Support → Guide at any time to see this tour again.\nThe full documentation is at docs.collabdt.org."
     },
     "backToOverview": "Back to overview",
     "viewerTour": {
@@ -1091,70 +1076,6 @@
           "title": "Your sensors",
           "body": "Each group lists its sensors with their latest reading; the + adds another."
         }
-      },
-      "settings": {
-        "map": {
-          "title": "Map settings",
-          "body": "How the map looks and where it starts.",
-          "items": {
-            "style": {
-              "term": "Map style",
-              "description": "The base map, terrain, projection and which buildings show."
-            },
-            "measurements": {
-              "term": "Measurements",
-              "description": "The colour of measurement lines."
-            },
-            "location": {
-              "term": "Location",
-              "description": "Where the map opens: coordinates, zoom and region."
-            }
-          }
-        },
-        "bim": {
-          "title": "Viewer settings",
-          "body": "How the model is shown.",
-          "items": {
-            "camera": {
-              "term": "Camera",
-              "description": "Perspective or orthographic, and how you move around."
-            },
-            "grid": {
-              "term": "Grid",
-              "description": "The ground grid under the model."
-            },
-            "measurements": {
-              "term": "Measurements",
-              "description": "Units and colours of measurements."
-            },
-            "lighting": {
-              "term": "Lighting",
-              "description": "Sun and ambient light."
-            },
-            "pointClouds": {
-              "term": "Point clouds",
-              "description": "Point size and colouring, when a cloud is loaded."
-            },
-            "splats": {
-              "term": "Gaussian splats",
-              "description": "Splat display, when one is loaded."
-            }
-          }
-        }
-      }
-    },
-    "viewerPanel": {
-      "title": "Viewer panel",
-      "body": "The button at the top left opens the panel of the viewer you are on, with everything about what is on screen in tabs.",
-      "items": {
-        "map": {
-          "term": "Map panel",
-          "description": "Files, layers, comments, sensors and settings for the map."
-        },
-        "bim": {
-          "term": "BIM panel",
-          "description": "Files, layers, comments, sensors and settings for the model."
-        }
       }
     },
     "pluginsTour": {
@@ -1209,6 +1130,142 @@
             "description": "Click the row for its description, version and permissions."
           }
         }
+      }
+    },
+    "interfaces": {
+      "title": "Two ways to see your data",
+      "body": "Look at your organization's data in the 3D viewers, or browse it as lists in the data pages."
+    },
+    "explore": {
+      "title": "What would you like to explore?",
+      "body": "Pick a part of the platform for a closer tour. Open @support → @guide to come back to this tour at any time.",
+      "items": {
+        "viewers": {
+          "term": "3D viewers",
+          "description": "Search, the side panel, the toolbar and the controls on screen."
+        },
+        "data": {
+          "term": "Data pages",
+          "description": "Lists of your records, with filters."
+        }
+      }
+    },
+    "exploreViewers": {
+      "title": "Which viewer?",
+      "body": "Pick a viewer to tour its screen."
+    },
+    "exploreData": {
+      "title": "Which data page?",
+      "body": "Pick a page to tour it."
+    },
+    "attribution": {
+      "title": "Attribution",
+      "body": "Who made the base map and data on screen. Click the ⓘ to read it."
+    },
+    "viewCube": {
+      "title": "View cube",
+      "body": "Shows which way the camera faces. Click a face, edge or corner to look at the model from that side."
+    },
+    "legend": {
+      "title": "Legend",
+      "body": "Layers and sensors you turn on explain their colours here, at the bottom left. This one is an example.",
+      "items": {
+        "collapse": {
+          "term": "Collapse or expand",
+          "description": "The chevron folds the legend away when it covers the map. Try it."
+        },
+        "entries": {
+          "term": "Read the colours",
+          "description": "Each swatch is a value or range; match it to what you see on the map."
+        },
+        "source": {
+          "term": "Where legends come from",
+          "description": "Applied datasets, sensors and plugin layers each add a section."
+        }
+      }
+    },
+    "menuPath": {
+      "support": "Support",
+      "guide": "Guide"
+    },
+    "bimState": {
+      "noBuilding": {
+        "title": "Pick a building",
+        "body": "The BIM viewer shows one building at a time. Search for a building here and pick it to open its models."
+      },
+      "noBimFiles": {
+        "title": "Add a 3D file",
+        "body": "This building has no 3D files yet. Drag a BIM model (IFC), point cloud or splat onto the card, or use Upload File."
+      }
+    },
+    "legendDemo": {
+      "title": "Legend (example)",
+      "age": {
+        "title": "Building age",
+        "before1950": "Before 1950",
+        "from1950": "1950 – 1990",
+        "after1990": "After 1990"
+      },
+      "temperature": {
+        "title": "Temperature sensors",
+        "cold": "Below 18 °C",
+        "mild": "18 – 24 °C",
+        "warm": "Above 24 °C"
+      }
+    },
+    "settingsTour": {
+      "map-style": {
+        "title": "Map style",
+        "body": "The base map under your data. Watch it switch, then pick the one you like; your choice stays.",
+        "pick": "Switch to this base map."
+      },
+      "terrain": {
+        "title": "Terrain",
+        "body": "Adds hills and valleys to the map. Watch it change; it goes back when you move on."
+      },
+      "projection": {
+        "title": "Projection",
+        "body": "Globe curves the map like the Earth; Mercator lays it flat. Watch it switch."
+      },
+      "buildings": {
+        "title": "3D buildings",
+        "body": "Shows or hides the extruded buildings of the base map. Watch them turn off and on."
+      },
+      "measurements": {
+        "title": "Measurements",
+        "body": "The colour of the lines the measuring tools draw."
+      },
+      "location": {
+        "title": "Location",
+        "body": "Where the map opens: type coordinates or use the current view."
+      },
+      "render-mode": {
+        "title": "Render mode",
+        "body": "Shadowed draws sunlight and shadows; Basic is lighter and faster. Watch it switch."
+      },
+      "bim-projection": {
+        "title": "Projection",
+        "body": "Perspective looks natural; Orthographic keeps lines parallel, good for plans and elevations. Watch it switch."
+      },
+      "navigation": {
+        "title": "Navigation",
+        "body": "How dragging moves the camera: orbit around the model, or walk through it."
+      },
+      "grid": {
+        "title": "Grid",
+        "body": "The ground grid under the model. Watch it turn off and on; the sliders set its size and spacing."
+      },
+      "lighting": {
+        "title": "Lighting",
+        "body": "Move the sun by time of day and date, and set the shadow quality."
+      },
+      "bim-measurements": {
+        "title": "Measurements",
+        "body": "Units, precision and colours of the measuring tools."
+      },
+      "point-clouds": {
+        "title": "Point clouds and splats",
+        "body": "Point size, density and colour for point clouds; splats have their own section below."
       }
     }
   },

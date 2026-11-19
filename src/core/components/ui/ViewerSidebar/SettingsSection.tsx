@@ -19,6 +19,8 @@ interface SettingsSectionProps {
     disabled?: boolean
   }
   defaultOpen?: boolean
+  /** A `data-tour` anchor on the section, for guided tours. */
+  tourAnchor?: string
 }
 
 /**
@@ -31,6 +33,7 @@ export function SettingsSection({
   children,
   switchVariant,
   defaultOpen = false,
+  tourAnchor,
 }: SettingsSectionProps) {
   return (
     <CollapsibleSection
@@ -39,6 +42,7 @@ export function SettingsSection({
       chevronPosition="right"
       switchVariant={switchVariant}
       defaultOpen={defaultOpen}
+      tourAnchor={tourAnchor}
     >
       {children}
     </CollapsibleSection>

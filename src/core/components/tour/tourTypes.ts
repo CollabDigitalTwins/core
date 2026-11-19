@@ -28,6 +28,10 @@ export interface TourStep {
   invite?: boolean
   /** Whether to scroll the target into view; `false` for targets that fill the page, like a map. */
   scroll?: boolean
+  /** A small button at the top of the card, e.g. one that skips to the tour of the page the viewer is on. */
+  shortcut?: { label: string; onSelect: () => void }
+  /** Checked when Next or Back would reach the step; `true` passes over it, e.g. a hint for a state the page is not in. */
+  skip?: () => boolean
 }
 
 export interface GuidedTourLabels {
@@ -45,6 +49,8 @@ export interface GuidedTourProps {
   onHide: () => void
   /** Called by Finish on the last step instead of `onHide`, e.g. to return to the tour this one branched from. */
   onFinish?: () => void
+  /** Called with the id of each step as it opens, e.g. to reopen on it if the tour remounts. */
+  onStepChange?: (stepId: string) => void
   /** The id of the step to open on; the first step when absent or unknown. */
   startAt?: string
   /** Elements the card must not cover, such as the panel a step points into. */

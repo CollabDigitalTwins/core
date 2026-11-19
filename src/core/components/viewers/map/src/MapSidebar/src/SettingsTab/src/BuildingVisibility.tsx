@@ -20,7 +20,7 @@ export function BuildingVisibility() {
   }
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between" data-tour="settings-buildings">
       <label className="flex items-center gap-2 text-sm font-medium" htmlFor="show-3d-buildings">
         <LR.Building2 className="w-4 h-4" />
         {tMap('buildings3d')}

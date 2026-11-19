@@ -351,7 +351,7 @@ export function BimLoadingState() {
           dimBackdrop && 'bg-background/50 backdrop-blur-[1px]',
         )}
       >
-        <Card className={cn("w-[536px] pointer-events-auto flex flex-col justify-start items-center gap-2")}>
+        <Card className={cn("w-[536px] pointer-events-auto flex flex-col justify-start items-center gap-2")} data-tour="bim-empty" data-state={currentState}>
           <CardHeader className="flex justify-center items-center">
             <div className="w-12 h-12 p-2 bg-card rounded-md shadow-sm border border-border flex justify-center items-center">
               {currentState === 'noBuilding' ? (

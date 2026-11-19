@@ -8,6 +8,8 @@ import { CurrentCamera } from './CurrentCamera'
 import { CurrentWorld } from './CurrentWorld'
 
 
+const VIEW_CUBE_CLASS = 'cdt-view-cube'
+
 export class ViewportGizmo extends OBC.Component implements OBC.Disposable {
   static readonly uuid = 'c51594f0-68af-4318-ac86-c2e0e7ee62df' as const
 
@@ -219,6 +221,7 @@ export class ViewportGizmo extends OBC.Component implements OBC.Disposable {
       size: 75,
       placement: 'top-right' as const,
       type: 'cube' as const,
+      className: VIEW_CUBE_CLASS,
       ...(container && {container}),
       top: {label: this._labels.top},
       right: {label: this._labels.right},

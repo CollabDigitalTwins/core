@@ -73,7 +73,9 @@ export function pressWhenShown(anchor: string, root: ParentNode = document): () 
   let frames = 0
   const attempt = () => {
     const control = root.querySelector<HTMLElement>(`[data-tour="${anchor}"]`)
-    if (control) press(control.querySelector('button') ?? control)
+    const input = control?.querySelector('input')
+    if (input) input.focus()
+    else if (control) press(control.querySelector('button') ?? control)
     else if (++frames < WAIT_FRAMES) frame = requestAnimationFrame(attempt)
   }
   attempt()

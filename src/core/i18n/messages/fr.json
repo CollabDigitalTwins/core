@@ -484,28 +484,28 @@
         },
         "bim": {
           "term": "BIM",
-          "description": "Maquettes numériques (IFC), nuages de points et splats, élément par élément."
+          "description": "Les fichiers 3D d'un bâtiment : maquettes IFC, nuages de points, splats, modèles 3D et dessins CAO."
         }
       }
     },
     "search": {
       "bim": {
-        "title": "Rechercher dans le modèle",
-        "body": "Trouvez des éléments des modèles chargés par nom, type ou propriété."
+        "title": "Trouver un bâtiment",
+        "body": "Recherchez les bâtiments de votre organisation par nom ou adresse, puis choisissez-en un pour l'ouvrir dans la visionneuse."
       }
     },
     "searchDemo": {
       "title": "Rechercher sur la carte",
-      "body": "Tapez une adresse ou un lieu et la carte s'y rend. Regardez-la trouver l'Université Carleton."
+      "body": "Tapez une adresse, un lieu ou l'un de vos bâtiments, choisissez un résultat et la carte s'y rend. Regardez-la trouver Carleton University."
     },
     "panel": {
       "map": {
         "title": "Ouvrir le panneau de la carte",
-        "body": "Ouvre le panneau latéral avec les bâtiments, sites et couches de la carte."
+        "body": "Ouvre le panneau latéral avec les fichiers, couches, commentaires, capteurs et paramètres de la carte."
       },
       "bim": {
         "title": "Ouvrir le panneau BIM",
-        "body": "Ouvre le panneau latéral avec les modèles chargés, leur structure et les propriétés de l'élément sélectionné."
+        "body": "Ouvre le panneau latéral avec les fichiers, couches, commentaires, capteurs et paramètres du bâtiment."
       }
     },
     "toolbar": {
@@ -535,11 +535,11 @@
       },
       "map-add": {
         "title": "Ajouter",
-        "body": "Placez un bâtiment, un site, un capteur ou un fichier sur la carte, ou laissez un commentaire.",
+        "body": "Ajoutez un fichier, un commentaire, un jeu de données, un site, un capteur ou un bâtiment à la carte.",
         "items": {
           "file": {
             "term": "Fichier",
-            "description": "Placez une maquette, un plan ou un document sur la carte."
+            "description": "Téléversez un modèle, un dessin, un document ou une image, puis double-cliquez sur la carte pour le placer."
           },
           "comment": {
             "term": "Commentaire",
@@ -547,7 +547,7 @@
           },
           "dataset": {
             "term": "Jeu de données",
-            "description": "Téléversez votre GeoJSON, shapefile ou autre et affichez-le sur la carte."
+            "description": "Ajoutez un fichier GeoJSON, ou collez un lien vers du GeoJSON, ArcGIS, WMS, WMTS ou des tuiles XYZ, et affichez-le sur la carte."
           },
           "site": {
             "term": "Site",
@@ -559,7 +559,7 @@
           },
           "building": {
             "term": "Bâtiment",
-            "description": "Ajoutez un bâtiment à un endroit de la carte."
+            "description": "Ajoutez un bâtiment à partir d'une adresse, en choisissant son emprise sur la carte ou en la dessinant."
           }
         }
       },
@@ -577,25 +577,25 @@
           },
           "clear": {
             "term": "Effacer",
-            "description": "Retirez les mesures de la carte."
+            "description": "Effacez les mesures et arrêtez de mesurer."
           }
         }
       },
       "map-share": {
         "title": "Partager",
-        "body": "Copiez un lien vers la vue actuelle."
+        "body": "Partagez la vue actuelle par lien ou code QR, ou enregistrez une capture."
       },
       "bim-clipping": {
         "title": "Coupe",
-        "body": "Tracez des plans de coupe dans la maquette pour voir à l'intérieur."
+        "body": "Ajoutez des plans de coupe ou une boîte de section pour voir l'intérieur de la maquette. Un plan peut aussi devenir un dessin."
       },
       "bim-camera-fit": {
         "title": "Cadrer",
-        "body": "Cadre toutes les maquettes chargées dans la vue."
+        "body": "Cadrez la sélection. Sans sélection, cadrez les maquettes IFC, ou toute la scène s'il n'y en a aucune."
       },
       "bim-add": {
         "title": "Ajouter",
-        "body": "Chargez une maquette IFC, un nuage de points ou un splat."
+        "body": "Ajoutez un fichier, un commentaire, un dessin CAO (DXF) ou un capteur à la maquette."
       },
       "bim-dimensions": {
         "title": "Mesurer",
@@ -603,7 +603,7 @@
       },
       "bim-share": {
         "title": "Partager",
-        "body": "Copiez un lien vers la vue actuelle."
+        "body": "Partagez la vue actuelle par lien ou code QR, ou enregistrez une capture."
       },
       "plugin": {
         "body": "Ajouté par un plugin qu'utilise votre organisation."
@@ -611,7 +611,7 @@
     },
     "data": {
       "title": "Pages de données",
-      "body": "Tous les enregistrements de votre organisation, en listes consultables. Les pages ajoutées par des plugins apparaissent aussi ici. Choisissez-en une pour la découvrir.",
+      "body": "Les sites, bâtiments, fichiers et infrastructures de votre organisation sous forme de listes consultables. Les pages ajoutées par des plugins apparaissent aussi ici. Choisissez-en une pour l'explorer.",
       "items": {
         "sites": {
           "term": "Sites",
@@ -623,21 +623,21 @@
         },
         "files": {
           "term": "Fichiers",
-          "description": "Maquettes, plans et documents que vous avez téléversés."
+          "description": "Les modèles, nuages de points, dessins et documents de votre organisation."
         },
         "infrastructure": {
           "term": "Infrastructures",
-          "description": "Routes, voies ferrées et autres réseaux."
+          "description": "Routes, voies ferrées, installations, divisions de terrain et autres infrastructures."
         }
       }
     },
     "plugins": {
       "title": "Plugins",
-      "body": "Parcourez et ajoutez des plugins qui étendent la plateforme avec de nouveaux outils et pages.",
+      "body": "Voyez les plugins disponibles et activez-les. Les administrateurs peuvent en installer d'autres.",
       "items": {
         "open": {
-          "term": "Ouvrir Plugins",
-          "description": "Voyez vos plugins et ajoutez-en d'autres."
+          "term": "Ajouter des plugins",
+          "description": "Voyez vos plugins et activez-les ou désactivez-les."
         }
       }
     },
@@ -661,33 +661,33 @@
     },
     "support": {
       "title": "Assistance",
-      "body": "Contactez l'équipe, suggérez une fonctionnalité ou signalez un bogue. Guide relance la visite de la page où vous êtes.",
+      "body": "Contactez l'équipe, suggérez une fonction ou signalez un bogue. Guide rouvre cette visite.",
       "items": {
         "guide": {
           "term": "Guide",
-          "description": "Relance cette visite pour la page où vous êtes."
+          "description": "Rouvre cette visite, y compris la page où vous êtes."
         },
         "contact": {
           "term": "Contacter l'équipe",
-          "description": "Écrivez à l'équipe CDT à info@collabdt.org."
+          "description": "Ouvre la page de contact de CDT."
         },
         "feature": {
-          "term": "Suggérer une fonction",
+          "term": "Suggérer une fonctionnalité",
           "description": "Dites-nous ce qui vous aiderait."
         },
         "bug": {
-          "term": "Signaler un bogue",
-          "description": "Dites-nous ce qui n'a pas marché, avec une capture."
+          "term": "Signaler un bug",
+          "description": "Dites-nous ce qui n'a pas marché ; vous pouvez joindre une capture."
         }
       }
     },
     "account": {
       "title": "Votre compte",
-      "body": "Ouvrez le menu sous votre nom.",
+      "body": "Cliquez sur votre nom pour ouvrir le menu de votre compte.",
       "items": {
         "settings": {
           "term": "Paramètres",
-          "description": "Votre profil, votre mot de passe, les utilisateurs et l'organisation."
+          "description": "Votre profil et votre mot de passe, ainsi que les utilisateurs et l'organisation si votre rôle le permet."
         },
         "signOut": {
           "term": "Déconnexion",
@@ -695,7 +695,7 @@
         }
       }
     },
-    "backToOverview": "Retour à l'aperçu",
+    "backToOverview": "Retour à la visite précédente",
     "viewerTour": {
       "map": {
         "title": "La visionneuse de carte",
@@ -703,34 +703,34 @@
       },
       "bim": {
         "title": "La visionneuse BIM",
-        "body": "Les maquettes élément par élément : IFC, nuages de points et splats. Voici chaque partie de l'écran."
+        "body": "Les fichiers 3D d'un bâtiment : maquettes IFC, nuages de points, splats, modèles 3D et dessins CAO. Voici chaque partie de l'écran."
       }
     },
     "panelTabs": {
       "map": {
         "title": "Panneau de la carte",
-        "body": "Tout sur la carte, en onglets. Choisissez-en un pour le découvrir."
+        "body": "Le panneau latéral de la carte, en onglets. Choisissez-en un pour l'explorer."
       },
       "bim": {
         "title": "Panneau BIM",
-        "body": "Tout sur la maquette, en onglets. Choisissez-en un pour le découvrir."
+        "body": "Le panneau latéral BIM, en onglets. Choisissez-en un pour l'explorer."
       },
       "items": {
         "file": {
           "term": "Fichiers",
-          "description": "Les maquettes et documents du bâtiment sélectionné."
+          "description": "Modèles, nuages de points et documents : ceux de votre organisation sur la carte, ceux du bâtiment sélectionné en BIM."
         },
         "layers": {
           "term": "Couches",
-          "description": "Affichez ou masquez des couches et changez leur rendu."
+          "description": "Sur la carte, ajoutez, affichez et stylisez des jeux de données ; en BIM, ouvrez des dessins et affichez ou masquez des parties de la maquette."
         },
         "communication": {
           "term": "Commentaires",
-          "description": "Échangez avec votre équipe, ancré au lieu concerné."
+          "description": "Des commentaires épinglés à des endroits, et des sujets BCF en BIM."
         },
         "sensors": {
           "term": "Capteurs",
-          "description": "Mesures en direct des capteurs visibles."
+          "description": "Les capteurs de cette visionneuse, avec leurs dernières mesures."
         },
         "settings": {
           "term": "Paramètres",
@@ -753,7 +753,7 @@
         },
         "compass": {
           "term": "Boussole",
-          "description": "Faites glisser pour pivoter et incliner; cliquez pour revenir au nord."
+          "description": "Faites glisser pour pivoter et incliner ; cliquez pour faire face au nord et aplanir la vue."
         }
       }
     },
@@ -763,21 +763,21 @@
       "items": {
         "open": {
           "term": "Ouvrir les paramètres de la carte",
-          "description": "Fond de carte, mesures et point de départ de la carte."
+          "description": "Fond de carte, relief, projection, bâtiments 3D, mesures et emplacement."
         }
       }
     },
     "dataPage": {
       "title": {
-        "body": "Les boutons à droite agissent sur toute la liste, comme ajouter une nouvelle entrée."
+        "body": "Les boutons à droite ajoutent une nouvelle entrée. Dans Bâtiments, le menu ⋯ importe et exporte aussi la liste."
       },
       "filters": {
         "title": "Rechercher et filtrer",
-        "body": "Réduisez la liste par nom ou avec les filtres."
+        "body": "Cherchez dans la liste ou affinez-la avec les filtres."
       },
       "table": {
         "title": "La liste",
-        "body": "Cliquez sur une ligne pour ouvrir ses détails. Le menu en bout de ligne offre d'autres actions, comme l'afficher sur la carte."
+        "body": "Cliquez sur une ligne pour ouvrir ses détails. Le menu ⋯ au bout de chaque ligne offre d'autres actions pour cette entrée."
       }
     },
     "settingsPage": {
@@ -787,21 +787,21 @@
         "items": {
           "account": {
             "term": "Compte",
-            "description": "Votre nom, votre photo et votre mot de passe."
+            "description": "Votre nom, votre photo, votre mot de passe et la connexion Google."
           },
           "users": {
             "term": "Utilisateurs",
-            "description": "Invitez des personnes et gérez leurs rôles. Administrateurs seulement."
+            "description": "Créez des comptes avec un mot de passe temporaire et gérez leurs rôles. Administrateurs seulement."
           },
           "organization": {
             "term": "Organisation",
-            "description": "Nom, logo et valeurs par défaut pour tous. Administrateurs seulement."
+            "description": "Logo, couleurs, titre, emplacement et point de départ de la carte."
           }
         }
       },
       "content": {
         "title": "Détails de la section",
-        "body": "Modifiez ici la section sélectionnée."
+        "body": "Les détails de la section sélectionnée. Cliquez sur Modifier pour les changer, si votre rôle le permet."
       }
     },
     "shareOptions": {
@@ -812,7 +812,7 @@
         },
         "copy": {
           "term": "Copier le lien",
-          "description": "Un lien vers cette vue exacte, copié dans le presse-papiers."
+          "description": "Un lien qui ouvre cette vue, copié dans le presse-papiers."
         },
         "screenshot": {
           "term": "Capture d'écran",
@@ -837,7 +837,7 @@
         "items": {
           "search": {
             "term": "Recherche",
-            "description": "Par nom."
+            "description": "Trouvez des jeux de données par n'importe quel détail, comme le nom ou la description."
           },
           "filters": {
             "term": "Filtres",
@@ -875,11 +875,11 @@
           },
           "subdivision": {
             "term": "Subdivision",
-            "description": "Données ouvertes de votre province ou État."
+            "description": "Données ouvertes de la province ou de l'État actuel."
           },
           "municipal": {
             "term": "Municipaux",
-            "description": "Données ouvertes de votre ville, si elle a un portail."
+            "description": "Données ouvertes de la ville actuelle, lorsqu'elle est connue."
           },
           "liveData": {
             "term": "En direct",
@@ -901,11 +901,11 @@
           },
           "publish": {
             "term": "Publier",
-            "description": "Partagez vos propres téléversements. Administrateurs seulement."
+            "description": "Sur une ligne GeoJSON, publiez le jeu de données en tuiles vectorielles."
           },
           "details": {
             "term": "Détails",
-            "description": "Cliquez la ligne pour sa description, sa source et son style."
+            "description": "Cliquez sur la ligne pour voir sa source, sa licence, ses dates et sa description."
           }
         }
       }
@@ -913,7 +913,7 @@
     "panelTour": {
       "search": {
         "title": "Rechercher dans l'onglet",
-        "body": "Filtrez par nom ce que liste cet onglet."
+        "body": "Filtrez par nom les listes de cet onglet. Dans l'onglet Couches de la carte, seuls les jeux de données disponibles sont filtrés."
       },
       "file": {
         "sections": {
@@ -922,19 +922,19 @@
           "items": {
             "bim": {
               "term": "BIM",
-              "description": "Maquettes IFC du bâtiment sélectionné."
+              "description": "Modèles IFC (.ifc, .frag)."
             },
             "models": {
               "term": "Modèles",
-              "description": "Modèles 3D comme glTF et OBJ."
+              "description": "Modèles 3D (glTF, OBJ, FBX, DAE) et splats gaussiens."
             },
             "pointClouds": {
               "term": "Nuages de points",
-              "description": "Balayages laser et photogrammétrie."
+              "description": "Nuages de points (LAS, LAZ, COPC, E57)."
             },
             "files": {
               "term": "Fichiers",
-              "description": "Plans, rapports et autres documents. Le + en ajoute un, l'interrupteur les affiche sur la carte."
+              "description": "Dessins CAO, images et documents. Le + en ajoute un ; l'interrupteur les affiche ou les masque dans la visionneuse."
             }
           }
         }
@@ -942,7 +942,7 @@
       "layers": {
         "applied": {
           "title": "Jeux appliqués",
-          "body": "Ce qui est affiché sur la carte. Glissez pour réordonner, ouvrez une ligne pour la styliser ou masquez-les tous."
+          "body": "Les jeux de données ajoutés à la carte. Faites glisser pour réordonner ; chaque ligne peut masquer, zoomer, styliser ou retirer son jeu. L'interrupteur les affiche ou les masque tous."
         },
         "available": {
           "title": "Jeux disponibles",
@@ -966,11 +966,11 @@
             },
             "subdivision": {
               "term": "Subdivision",
-              "description": "Données ouvertes de votre province ou État."
+              "description": "Données ouvertes de la province ou de l'État actuel."
             },
             "municipal": {
               "term": "Municipaux",
-              "description": "Données ouvertes de votre ville, si elle a un portail."
+              "description": "Données ouvertes de la ville actuelle, lorsqu'elle est connue."
             },
             "liveData": {
               "term": "En direct",
@@ -992,17 +992,17 @@
             },
             "custom": {
               "term": "Personnalisés",
-              "description": "Les vues que vous avez enregistrées, s'il y en a."
+              "description": "Dessins créés à partir d'un plan de coupe. L'onglet apparaît dès qu'il y en a un."
             }
           }
         },
         "classifier": {
           "title": "Classificateur",
-          "body": "Affichez, masquez ou isolez des parties de la maquette.",
+          "body": "Sélectionnez, colorez, masquez ou isolez des parties de la maquette.",
           "items": {
             "spatial": {
               "term": "Spatial",
-              "description": "Par site, bâtiment et étage."
+              "description": "Par bâtiment, étage et espace."
             },
             "ifcClasses": {
               "term": "Classes IFC",
@@ -1014,7 +1014,7 @@
       "communication": {
         "topics": {
           "title": "Sujets BCF",
-          "body": "Problèmes suivis sur la maquette, au format BIM Collaboration Format.",
+          "body": "Des problèmes sur la maquette au format BIM Collaboration Format (BCF). Les sujets ne durent que cette session ; exportez-les pour les garder.",
           "items": {
             "add": {
               "term": "Ajouter un sujet",
@@ -1040,7 +1040,7 @@
             },
             "add": {
               "term": "Ajouter un commentaire",
-              "description": "Cliquez un endroit pour y épingler un commentaire."
+              "description": "Écrivez le commentaire, appuyez sur +, puis double-cliquez sur un endroit pour l'y épingler."
             },
             "visibility": {
               "term": "Afficher ou masquer",
@@ -1056,15 +1056,15 @@
           "items": {
             "search": {
               "term": "Recherche",
-              "description": "Trouvez un capteur par son nom."
+              "description": "Trouvez un capteur par nom ou type."
             },
             "visibility": {
               "term": "Afficher ou masquer",
-              "description": "Affichez ou masquez tous les capteurs de la carte."
+              "description": "Affichez ou masquez les capteurs listés dans cette visionneuse."
             },
             "legend": {
               "term": "Légende",
-              "description": "Ce que signifient les couleurs des mesures."
+              "description": "Affichez la signification des couleurs des mesures, une fois des capteurs affichés."
             },
             "filters": {
               "term": "Regrouper par",
@@ -1074,7 +1074,7 @@
         },
         "list": {
           "title": "Vos capteurs",
-          "body": "Chaque groupe liste ses capteurs avec leur dernière mesure; le + en ajoute un."
+          "body": "Les capteurs groupés par type ou étiquette, avec leur dernière mesure s'il y en a une. L'interrupteur d'un groupe l'affiche dans la visionneuse ; dans les groupes par type, le + ajoute un capteur."
         }
       }
     },
@@ -1097,11 +1097,11 @@
           },
           "notInstalled": {
             "term": "Non installés",
-            "description": "Les plugins que vous pourriez installer."
+            "description": "Les plugins que votre organisation n'a pas encore installés. Administrateurs seulement."
           },
           "search": {
             "term": "Recherche",
-            "description": "Trouvez un plugin par son nom."
+            "description": "Trouvez un plugin par nom ou description."
           }
         }
       },
@@ -1111,7 +1111,7 @@
         "items": {
           "run": {
             "term": "Exécuter",
-            "description": "Activez ou désactivez un plugin pour vous."
+            "description": "Activez ou désactivez un plugin installé pour vous, lorsque votre organisation vous laisse choisir."
           },
           "install": {
             "term": "Installer",
@@ -1119,15 +1119,11 @@
           },
           "enable": {
             "term": "Activer",
-            "description": "Activez-le pour toute votre organisation. Administrateurs seulement."
-          },
-          "visibleTo": {
-            "term": "Visible pour",
-            "description": "Choisissez qui peut le voir. Administrateurs seulement."
+            "description": "Activez-le par défaut pour votre organisation. Administrateurs seulement."
           },
           "details": {
             "term": "Détails",
-            "description": "Cliquez la ligne pour sa description, sa version et ses permissions."
+            "description": "Cliquez sur la ligne pour voir sa description, son auteur, ce qu'il peut faire et ses interrupteurs."
           }
         }
       }
@@ -1176,11 +1172,11 @@
         },
         "entries": {
           "term": "Lire les couleurs",
-          "description": "Chaque pastille est une valeur ou un intervalle ; comparez-la à ce que vous voyez sur la carte."
+          "description": "Chaque pastille ou dégradé de couleur représente une valeur ; comparez-la à ce que vous voyez sur la carte."
         },
         "source": {
           "term": "D'où viennent les légendes",
-          "description": "Les jeux de données appliqués, les capteurs et les couches de plugins ajoutent chacun une section."
+          "description": "Les capteurs ont leur propre carte ; les jeux de données appliqués, y compris les couches de plugins, affichent leur légende dans la carte des couches appliquées."
         }
       }
     },
@@ -1195,7 +1191,7 @@
       },
       "noBimFiles": {
         "title": "Ajoutez un fichier 3D",
-        "body": "Ce bâtiment n'a pas encore de fichier 3D. Glissez une maquette BIM (IFC), un nuage de points ou un splat sur la carte, ou utilisez Télécharger un fichier."
+        "body": "Ce bâtiment n'a pas encore de fichiers 3D. Utilisez Télécharger un fichier pour ajouter une maquette IFC, un nuage de points, un splat, un modèle 3D ou un dessin CAO."
       }
     },
     "legendDemo": {
@@ -1206,30 +1202,30 @@
         "from1950": "1950 – 1990",
         "after1990": "Après 1990"
       },
-      "temperature": {
-        "title": "Capteurs de température",
-        "cold": "Moins de 18 °C",
-        "mild": "18 – 24 °C",
-        "warm": "Plus de 24 °C"
+      "floodRisk": {
+        "title": "Risque d'inondation",
+        "low": "Faible",
+        "medium": "Moyen",
+        "high": "Élevé"
       }
     },
     "settingsTour": {
       "map-style": {
         "title": "Style de carte",
-        "body": "Le fond de carte sous vos données. Regardez-le changer, puis choisissez celui qui vous plaît ; votre choix est conservé.",
+        "body": "Le fond de carte sous vos données. Regardez-le changer, puis choisissez-en un ; il reste jusqu'à ce que vous rechargiez la page.",
         "pick": "Passer à ce fond de carte."
       },
       "terrain": {
         "title": "Relief",
-        "body": "Ajoute collines et vallées à la carte. Regardez-le changer ; il revient quand vous continuez."
+        "body": "Ajoute collines et vallées quand on zoome. Les niveaux disponibles dépendent de votre organisation. L'étape en essaie un et revient en arrière quand vous continuez."
       },
       "projection": {
         "title": "Projection",
-        "body": "Globe courbe la carte comme la Terre ; Mercator l'aplatit. Regardez-la changer."
+        "body": "Globe courbe la carte comme la Terre quand on dézoome. Au-delà du niveau de zoom 5, la carte est toujours plate (Mercator)."
       },
       "buildings": {
         "title": "Bâtiments 3D",
-        "body": "Affiche ou masque les bâtiments extrudés du fond de carte. Regardez-les s'éteindre et se rallumer."
+        "body": "Affiche ou masque les bâtiments 3D : ceux du fond de carte et ceux dessinés dans la plateforme. Regardez-les disparaître et réapparaître."
       },
       "measurements": {
         "title": "Mesures",
@@ -1237,11 +1233,11 @@
       },
       "location": {
         "title": "Emplacement",
-        "body": "Où la carte s'ouvre : saisissez des coordonnées ou utilisez la vue actuelle."
+        "body": "Déplacez la carte par coordonnées et zoom, ou par province ou État et municipalité. Les champs suivent la carte quand vous la déplacez."
       },
       "render-mode": {
         "title": "Mode de rendu",
-        "body": "Ombre dessine le soleil et les ombres ; Basique est plus léger et rapide. Regardez-le changer."
+        "body": "Ombre ajoute les ombres du soleil ; Basique dessine sans elles et est plus rapide. Regardez-le changer."
       },
       "bim-projection": {
         "title": "Projection",
@@ -1249,23 +1245,23 @@
       },
       "navigation": {
         "title": "Navigation",
-        "body": "Comment le glisser déplace la caméra : orbiter autour de la maquette ou s'y promener."
+        "body": "Orbite fait tourner la caméra autour de la maquette ; Marche la déplace avec WASD ou les touches fléchées. Marche nécessite la projection Perspective."
       },
       "grid": {
         "title": "Grille",
-        "body": "La grille au sol sous la maquette. Regardez-la s'éteindre et se rallumer ; les curseurs règlent sa taille et son espacement."
+        "body": "La grille au sol sous la maquette. Regardez-la changer ; elle revient quand vous continuez. Vous pouvez aussi régler sa couleur, la taille des cellules, sa hauteur et sa rotation."
       },
       "lighting": {
         "title": "Éclairage",
-        "body": "Déplacez le soleil selon l'heure et la date, et réglez la qualité des ombres."
+        "body": "Placez le soleil selon la date et l'heure, et réglez l'intensité de la lumière, la couleur du soleil et la qualité des ombres. Les ombres n'apparaissent qu'en mode Ombre."
       },
       "bim-measurements": {
         "title": "Mesures",
-        "body": "Unités, précision et couleurs des outils de mesure."
+        "body": "Couleur de ligne, unités de longueur, surface, volume et angle, décimales et accrochage."
       },
       "point-clouds": {
         "title": "Nuages de points et splats",
-        "body": "Taille, densité et couleur des points ; les splats ont leur propre section plus bas."
+        "body": "Budget de points, taille, forme et opacité des nuages de points chargés. Les splats ont leur propre section lorsqu'un splat est chargé."
       }
     }
   },

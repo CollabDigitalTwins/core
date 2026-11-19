@@ -242,14 +242,14 @@ export function PluginsManager({ listings, actions, registryActions }: Props) {
               {tabs.length > 1 ? (
                 <TabsList className="w-auto sm:flex-1">
                   {tabs.map(target => (
-                    <TabsTrigger key={target} value={target}>
+                    <TabsTrigger key={target} value={target} data-tour={`plugins-tab-${target}`}>
                       {tabLabel[target]}
                       <Badge className="ml-1 tabular-nums">{rowsFor(target).length}</Badge>
                     </TabsTrigger>
                   ))}
                 </TabsList>
               ) : <span />}
-              <div className="w-full sm:w-80">
+              <div className="w-full sm:w-80" data-tour="plugins-search">
                 <Input
                   placeholder={t('searchPlaceholder')}
                   value={searchTerm}

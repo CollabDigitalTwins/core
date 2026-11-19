@@ -36,7 +36,7 @@ const echo = (key: string) => key
 const actions = (): PlatformTourActions => ({
   can: () => true,
   branch: vi.fn(), openViewer: vi.fn(), openPanel: vi.fn(() => () => {}), selectPanelTab: vi.fn(),
-  demoSearch: vi.fn(() => () => {}), demoMeasure: vi.fn(() => () => {}), pressControl: vi.fn(), openFeatureRequest: vi.fn(), emailTeam: vi.fn(), switchLanguage: vi.fn(), openBugReport: vi.fn(), zoomIn: vi.fn(), zoomOut: vi.fn(), resetNorth: vi.fn(),
+  demoSearch: vi.fn(() => () => {}), demoMeasure: vi.fn(() => () => {}), pressControl: vi.fn(), openFeatureRequest: vi.fn(), openContactPage: vi.fn(), switchLanguage: vi.fn(), openBugReport: vi.fn(), zoomIn: vi.fn(), zoomOut: vi.fn(), resetNorth: vi.fn(),
   mapStyles: [], setMapStyle: vi.fn(), demoMapStyle: vi.fn(() => () => {}),
 })
 
@@ -159,6 +159,21 @@ describe('subTourSteps', () => {
     const a = actions()
     subTour('datasets', echo, a).steps.find(s => s.id === 'tabs')?.items?.find(i => i.id === 'subdivision')?.onSelect?.()
     expect(a.pressControl).toHaveBeenCalledWith('datasets-tab-countrySubdivision')
+  })
+
+  it('switches the plugins page to a list from its row', () => {
+    const a = actions()
+    const tabs = subTour('plugins', echo, a).steps.find(s => s.id === 'tabs')
+    tabs?.items?.find(i => i.id === 'running')?.onSelect?.()
+    tabs?.items?.find(i => i.id === 'search')?.onSelect?.()
+    expect(a.pressControl).toHaveBeenCalledWith('plugins-tab-running')
+    expect(a.pressControl).toHaveBeenCalledWith('plugins-search')
+  })
+
+  it('offers the not-installed list only to people who can install plugins', () => {
+    const tabIds = (a: PlatformTourActions) => subTour('plugins', echo, a).steps.find(s => s.id === 'tabs')?.items?.map(i => i.id)
+    expect(tabIds(actions())).toContain('notInstalled')
+    expect(tabIds({ ...actions(), can: () => false })).not.toContain('notInstalled')
   })
 
   it('gives every overview step that leads somewhere a button to go there', () => {

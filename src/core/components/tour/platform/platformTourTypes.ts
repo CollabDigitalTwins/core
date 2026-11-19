@@ -34,7 +34,7 @@ export interface PlatformTourActions {
   demoMeasure: (kind: MeasureKind) => () => void
   pressControl: (anchor: string) => void
   openFeatureRequest: () => void
-  emailTeam: () => void
+  openContactPage: () => void
   switchLanguage: (language: Language) => void
   openBugReport: () => void
   zoomIn: () => void

@@ -335,17 +335,27 @@ function dataTour(t: Translate, page: DataPage, a: PlatformTourActions): SubTour
   }
 }
 
+const canInstallPlugins = (a: PlatformTourActions) => a.can('create', 'PluginInstallation') || a.can('update', 'PluginInstallation')
+
+const pluginTabs = (a: PlatformTourActions): [tab: string, icon: Icon][] => [
+  ['all', LR.Blocks], ['running', LR.Play], ['installed', LR.PackageCheck],
+  ...(canInstallPlugins(a) ? [['notInstalled', LR.PackagePlus] as [string, Icon]] : []),
+]
+
 function pluginsTour(t: Translate, a: PlatformTourActions): SubTour {
   const key = 'pluginsTour'
   return {
     steps: [
       {
         ...withEntry(step(t, 'tabs', 'plugins-tabs', `${key}.tabs`), () => a.openViewer(ViewerNames.plugins)),
-        items: items(t, `${key}.tabs.items`, [['all', LR.Blocks], ['running', LR.Play], ['installed', LR.PackageCheck], ['notInstalled', LR.PackagePlus], ['search', LR.Search]]),
+        items: items(t, `${key}.tabs.items`, [
+          ...pluginTabs(a).map(([tab, icon]): [string, Icon, () => void] => [tab, icon, () => a.pressControl(`plugins-tab-${tab}`)]),
+          ['search', LR.Search, () => a.pressControl('plugins-search')],
+        ]),
       },
       {
         ...step(t, 'list', 'plugins-list', `${key}.list`),
-        items: items(t, `${key}.list.items`, [['run', LR.Power], ['install', LR.Download], ['enable', LR.Building2], ['visibleTo', LR.Users], ['details', LR.ChevronRight]]),
+        items: items(t, `${key}.list.items`, [['run', LR.Power], ['install', LR.Download], ['enable', LR.Building2], ['details', LR.ChevronRight]]),
       },
     ],
   }

@@ -484,28 +484,28 @@
         },
         "bim": {
           "term": "BIM",
-          "description": "Modelos de información de edificios (IFC), nubes de puntos y splats, elemento por elemento."
+          "description": "Los archivos 3D de un edificio: modelos IFC, nubes de puntos, splats, modelos 3D y planos CAD."
         }
       }
     },
     "search": {
       "bim": {
-        "title": "Buscar en el modelo",
-        "body": "Encuentre elementos de los modelos cargados por nombre, tipo o propiedad."
+        "title": "Buscar un edificio",
+        "body": "Busque los edificios de su organización por nombre o dirección y elija uno para abrirlo en el visor."
       }
     },
     "searchDemo": {
       "title": "Buscar en el mapa",
-      "body": "Escriba una dirección o un lugar y el mapa vuela allí. Mire cómo encuentra Carleton University."
+      "body": "Escriba una dirección, un lugar o uno de sus edificios, elija un resultado y el mapa vuela hasta allí. Mire cómo encuentra Carleton University."
     },
     "panel": {
       "map": {
         "title": "Abrir el panel del mapa",
-        "body": "Abre el panel lateral con los edificios, sitios y capas del mapa."
+        "body": "Abre el panel lateral con los archivos, capas, comentarios, sensores y configuración del mapa."
       },
       "bim": {
         "title": "Abrir el panel BIM",
-        "body": "Abre el panel lateral con los modelos cargados, su estructura y las propiedades del elemento seleccionado."
+        "body": "Abre el panel lateral con los archivos, capas, comentarios, sensores y configuración del edificio."
       }
     },
     "toolbar": {
@@ -535,11 +535,11 @@
       },
       "map-add": {
         "title": "Agregar",
-        "body": "Coloque un edificio, sitio, sensor o archivo en el mapa, o deje un comentario.",
+        "body": "Agregue un archivo, comentario, conjunto de datos, sitio, sensor o edificio al mapa.",
         "items": {
           "file": {
             "term": "Archivo",
-            "description": "Coloque un modelo, plano o documento en el mapa."
+            "description": "Suba un modelo, plano, documento o imagen y haga doble clic en el mapa para ubicarlo."
           },
           "comment": {
             "term": "Comentario",
@@ -547,7 +547,7 @@
           },
           "dataset": {
             "term": "Conjunto de datos",
-            "description": "Suba su propio GeoJSON, shapefile o similar y dibújelo en el mapa."
+            "description": "Agregue un archivo GeoJSON, o pegue un enlace a GeoJSON, ArcGIS, WMS, WMTS o teselas XYZ, y dibújelo en el mapa."
           },
           "site": {
             "term": "Sitio",
@@ -559,7 +559,7 @@
           },
           "building": {
             "term": "Edificio",
-            "description": "Agregue un edificio en un punto del mapa."
+            "description": "Agregue un edificio a partir de una dirección, eligiendo su huella en el mapa o dibujándola."
           }
         }
       },
@@ -577,25 +577,25 @@
           },
           "clear": {
             "term": "Borrar",
-            "description": "Quite las mediciones del mapa."
+            "description": "Borre las mediciones y deje de medir."
           }
         }
       },
       "map-share": {
         "title": "Compartir",
-        "body": "Copie un enlace a la vista actual."
+        "body": "Comparta la vista actual como enlace o código QR, o guarde una captura."
       },
       "bim-clipping": {
         "title": "Corte",
-        "body": "Corte planos de sección a través del modelo para ver su interior."
+        "body": "Agregue planos de corte o una caja de sección para ver el interior del modelo. Un plano también puede convertirse en un plano 2D."
       },
       "bim-camera-fit": {
         "title": "Encuadrar",
-        "body": "Ajusta todos los modelos cargados a la vista."
+        "body": "Encuadre la selección. Sin selección, encuadre los modelos IFC, o toda la escena si no hay ninguno."
       },
       "bim-add": {
         "title": "Agregar",
-        "body": "Cargue un modelo IFC, una nube de puntos o un splat."
+        "body": "Agregue un archivo, comentario, plano CAD (DXF) o sensor al modelo."
       },
       "bim-dimensions": {
         "title": "Medir",
@@ -603,7 +603,7 @@
       },
       "bim-share": {
         "title": "Compartir",
-        "body": "Copie un enlace a la vista actual."
+        "body": "Comparta la vista actual como enlace o código QR, o guarde una captura."
       },
       "plugin": {
         "body": "Agregada por un plugin que usa su organización."
@@ -611,7 +611,7 @@
     },
     "data": {
       "title": "Páginas de datos",
-      "body": "Todos los registros de su organización, en listas con búsqueda. Las páginas agregadas por plugins también aparecen aquí. Elija una para verla de cerca.",
+      "body": "Los sitios, edificios, archivos e infraestructura de su organización como listas con búsqueda. Las páginas agregadas por plugins también aparecen aquí. Elija una para verla de cerca.",
       "items": {
         "sites": {
           "term": "Sitios",
@@ -623,21 +623,21 @@
         },
         "files": {
           "term": "Archivos",
-          "description": "Modelos, planos y documentos que ha subido."
+          "description": "Los modelos, nubes de puntos, planos y documentos de su organización."
         },
         "infrastructure": {
           "term": "Infraestructura",
-          "description": "Carreteras, ferrocarriles y otras redes."
+          "description": "Carreteras, vías férreas, instalaciones, divisiones de terreno y otra infraestructura."
         }
       }
     },
     "plugins": {
       "title": "Plugins",
-      "body": "Explore y agregue plugins que amplían la plataforma con nuevas herramientas y páginas.",
+      "body": "Vea los plugins disponibles para usted y actívelos. Los administradores pueden instalar más.",
       "items": {
         "open": {
-          "term": "Abrir Plugins",
-          "description": "Vea qué plugins tiene y agregue más."
+          "term": "Añadir plugins",
+          "description": "Vea sus plugins y actívelos o desactívelos."
         }
       }
     },
@@ -661,15 +661,15 @@
     },
     "support": {
       "title": "Soporte",
-      "body": "Contacte al equipo, sugiera una función o reporte un error. Guía repite el recorrido de la página en la que está.",
+      "body": "Contacte al equipo, sugiera una función o reporte un error. Guía vuelve a abrir este recorrido.",
       "items": {
         "guide": {
           "term": "Guía",
-          "description": "Repite este recorrido para la página en la que está."
+          "description": "Vuelve a abrir este recorrido, incluida la página en la que está."
         },
         "contact": {
           "term": "Contactar al equipo",
-          "description": "Escriba al equipo de CDT a info@collabdt.org."
+          "description": "Abre la página de contacto de CDT."
         },
         "feature": {
           "term": "Sugerir una función",
@@ -677,17 +677,17 @@
         },
         "bug": {
           "term": "Reportar un error",
-          "description": "Cuéntenos qué falló, con una captura."
+          "description": "Cuéntenos qué falló; puede adjuntar una captura."
         }
       }
     },
     "account": {
       "title": "Su cuenta",
-      "body": "Abra el menú bajo su nombre.",
+      "body": "Haga clic en su nombre para abrir el menú de su cuenta.",
       "items": {
         "settings": {
           "term": "Configuración",
-          "description": "Su perfil, contraseña, usuarios y organización."
+          "description": "Su perfil y contraseña, además de usuarios y organización si su rol lo permite."
         },
         "signOut": {
           "term": "Cerrar sesión",
@@ -695,7 +695,7 @@
         }
       }
     },
-    "backToOverview": "Volver al resumen",
+    "backToOverview": "Volver al recorrido anterior",
     "viewerTour": {
       "map": {
         "title": "El visor de mapa",
@@ -703,34 +703,34 @@
       },
       "bim": {
         "title": "El visor BIM",
-        "body": "Modelos de edificios elemento por elemento: IFC, nubes de puntos y splats. Estas son las partes de la pantalla."
+        "body": "Los archivos 3D de un edificio: modelos IFC, nubes de puntos, splats, modelos 3D y planos CAD. Estas son las partes de la pantalla."
       }
     },
     "panelTabs": {
       "map": {
         "title": "Panel del mapa",
-        "body": "Todo sobre el mapa, en pestañas. Elija una para verla de cerca."
+        "body": "El panel lateral del mapa, en pestañas. Elija una para verla de cerca."
       },
       "bim": {
         "title": "Panel BIM",
-        "body": "Todo sobre el modelo, en pestañas. Elija una para verla de cerca."
+        "body": "El panel lateral BIM, en pestañas. Elija una para verla de cerca."
       },
       "items": {
         "file": {
           "term": "Archivos",
-          "description": "Los modelos y documentos del edificio seleccionado."
+          "description": "Modelos, nubes de puntos y documentos: los de su organización en el mapa, los del edificio seleccionado en BIM."
         },
         "layers": {
           "term": "Capas",
-          "description": "Active o desactive capas y cambie cómo se dibujan."
+          "description": "En el mapa, agregue, muestre y dé estilo a conjuntos de datos; en BIM, abra planos y muestre u oculte partes del modelo."
         },
         "communication": {
           "term": "Comentarios",
-          "description": "Converse con su equipo, anclado al lugar del que se habla."
+          "description": "Comentarios fijados a lugares, y temas BCF en BIM."
         },
         "sensors": {
           "term": "Sensores",
-          "description": "Lecturas en vivo de los sensores a la vista."
+          "description": "Los sensores de este visor, con sus últimas lecturas."
         },
         "settings": {
           "term": "Configuración",
@@ -753,7 +753,7 @@
         },
         "compass": {
           "term": "Brújula",
-          "description": "Arrastre para girar e inclinar; haga clic para volver al norte."
+          "description": "Arrastre para girar e inclinar; haga clic para mirar al norte y aplanar la vista."
         }
       }
     },
@@ -763,21 +763,21 @@
       "items": {
         "open": {
           "term": "Abrir la configuración del mapa",
-          "description": "Mapa base, mediciones y dónde empieza el mapa."
+          "description": "Mapa base, terreno, proyección, edificios 3D, mediciones y ubicación."
         }
       }
     },
     "dataPage": {
       "title": {
-        "body": "Los botones de la derecha actúan sobre toda la lista, como agregar una entrada nueva."
+        "body": "Los botones de la derecha agregan una nueva entrada. En Edificios, el menú ⋯ también importa y exporta la lista."
       },
       "filters": {
         "title": "Buscar y filtrar",
-        "body": "Reduzca la lista por nombre o con los filtros."
+        "body": "Busque en la lista o redúzcala con los filtros."
       },
       "table": {
         "title": "La lista",
-        "body": "Haga clic en una fila para abrir sus detalles. El menú al final de cada fila tiene más acciones, como mostrarla en el mapa."
+        "body": "Haga clic en una fila para abrir sus detalles. El menú ⋯ al final de cada fila tiene más acciones para esa entrada."
       }
     },
     "settingsPage": {
@@ -787,21 +787,21 @@
         "items": {
           "account": {
             "term": "Cuenta",
-            "description": "Su nombre, foto y contraseña."
+            "description": "Su nombre, foto, contraseña e inicio de sesión con Google."
           },
           "users": {
             "term": "Usuarios",
-            "description": "Invite personas y gestione sus roles. Solo administradores."
+            "description": "Cree cuentas con una contraseña temporal y gestione sus roles. Solo administradores."
           },
           "organization": {
             "term": "Organización",
-            "description": "Nombre, logo y valores predeterminados para todos. Solo administradores."
+            "description": "Logotipo, colores, título, ubicación y dónde empieza el mapa."
           }
         }
       },
       "content": {
         "title": "Detalles de la sección",
-        "body": "Edite aquí la sección seleccionada."
+        "body": "Los detalles de la sección seleccionada. Haga clic en Editar para cambiarlos, si su rol lo permite."
       }
     },
     "shareOptions": {
@@ -812,7 +812,7 @@
         },
         "copy": {
           "term": "Copiar enlace",
-          "description": "Un enlace a esta vista exacta, copiado al portapapeles."
+          "description": "Un enlace que abre esta vista, copiado al portapapeles."
         },
         "screenshot": {
           "term": "Captura",
@@ -837,7 +837,7 @@
         "items": {
           "search": {
             "term": "Buscar",
-            "description": "Coincidencias por nombre."
+            "description": "Busque conjuntos de datos por cualquiera de sus detalles, como el nombre o la descripción."
           },
           "filters": {
             "term": "Filtros",
@@ -875,11 +875,11 @@
           },
           "subdivision": {
             "term": "Subdivisión",
-            "description": "Datos abiertos de su provincia o estado."
+            "description": "Datos abiertos de la provincia o estado actual."
           },
           "municipal": {
             "term": "Municipales",
-            "description": "Datos abiertos de su ciudad, si tiene portal."
+            "description": "Datos abiertos de la ciudad actual, cuando se conoce."
           },
           "liveData": {
             "term": "En vivo",
@@ -901,11 +901,11 @@
           },
           "publish": {
             "term": "Publicar",
-            "description": "Comparta sus propias cargas. Solo administradores."
+            "description": "En una fila GeoJSON, publique el conjunto de datos como teselas vectoriales."
           },
           "details": {
             "term": "Detalles",
-            "description": "Haga clic en la fila para ver descripción, fuente y estilo."
+            "description": "Haga clic en la fila para ver su fuente, licencia, fechas y descripción."
           }
         }
       }
@@ -913,7 +913,7 @@
     "panelTour": {
       "search": {
         "title": "Buscar en la pestaña",
-        "body": "Filtre por nombre lo que lista esta pestaña."
+        "body": "Filtre por nombre las listas de esta pestaña. En la pestaña Capas del mapa, filtra solo los conjuntos de datos disponibles."
       },
       "file": {
         "sections": {
@@ -922,19 +922,19 @@
           "items": {
             "bim": {
               "term": "BIM",
-              "description": "Modelos IFC del edificio seleccionado."
+              "description": "Modelos IFC (.ifc, .frag)."
             },
             "models": {
               "term": "Modelos",
-              "description": "Modelos 3D como glTF y OBJ."
+              "description": "Modelos 3D (glTF, OBJ, FBX, DAE) y splats gaussianos."
             },
             "pointClouds": {
               "term": "Nubes de puntos",
-              "description": "Escaneos láser y fotogrametría."
+              "description": "Nubes de puntos (LAS, LAZ, COPC, E57)."
             },
             "files": {
               "term": "Archivos",
-              "description": "Planos, informes y otros documentos. El + agrega uno, el interruptor los muestra en el mapa."
+              "description": "Planos CAD, imágenes y documentos. El + agrega uno; el interruptor los muestra u oculta en el visor."
             }
           }
         }
@@ -942,7 +942,7 @@
       "layers": {
         "applied": {
           "title": "Conjuntos aplicados",
-          "body": "Lo que está dibujado en el mapa. Arrastre para reordenar, abra una fila para darle estilo o apáguelos todos."
+          "body": "Conjuntos de datos agregados al mapa. Arrastre para reordenar; cada fila puede ocultar, acercar, dar estilo o quitar su conjunto. El interruptor los muestra u oculta todos."
         },
         "available": {
           "title": "Conjuntos disponibles",
@@ -966,11 +966,11 @@
             },
             "subdivision": {
               "term": "Subdivisión",
-              "description": "Datos abiertos de su provincia o estado."
+              "description": "Datos abiertos de la provincia o estado actual."
             },
             "municipal": {
               "term": "Municipales",
-              "description": "Datos abiertos de su ciudad, si tiene portal."
+              "description": "Datos abiertos de la ciudad actual, cuando se conoce."
             },
             "liveData": {
               "term": "En vivo",
@@ -992,17 +992,17 @@
             },
             "custom": {
               "term": "Personalizados",
-              "description": "Vistas que guardó, si las hay."
+              "description": "Planos hechos a partir de un plano de corte. La pestaña aparece cuando hay uno."
             }
           }
         },
         "classifier": {
           "title": "Clasificador",
-          "body": "Muestre, oculte o aísle partes del modelo.",
+          "body": "Seleccione, coloree, oculte o aísle partes del modelo.",
           "items": {
             "spatial": {
               "term": "Espacial",
-              "description": "Por sitio, edificio y nivel."
+              "description": "Por edificio, planta y espacio."
             },
             "ifcClasses": {
               "term": "Clases IFC",
@@ -1014,7 +1014,7 @@
       "communication": {
         "topics": {
           "title": "Temas BCF",
-          "body": "Incidencias registradas en el modelo, en formato BIM Collaboration Format.",
+          "body": "Incidencias sobre el modelo en BIM Collaboration Format (BCF). Los temas solo duran esta sesión; expórtelos para conservarlos.",
           "items": {
             "add": {
               "term": "Agregar tema",
@@ -1040,7 +1040,7 @@
             },
             "add": {
               "term": "Agregar comentario",
-              "description": "Haga clic en un lugar para anclar un comentario."
+              "description": "Escriba el comentario, pulse + y haga doble clic en un punto para fijarlo allí."
             },
             "visibility": {
               "term": "Mostrar u ocultar",
@@ -1056,15 +1056,15 @@
           "items": {
             "search": {
               "term": "Buscar",
-              "description": "Encuentre un sensor por nombre."
+              "description": "Busque un sensor por nombre o tipo."
             },
             "visibility": {
               "term": "Mostrar u ocultar",
-              "description": "Active o desactive todos los sensores del mapa."
+              "description": "Muestre u oculte los sensores listados en este visor."
             },
             "legend": {
               "term": "Leyenda",
-              "description": "Qué significan los colores de las lecturas."
+              "description": "Muestre qué significan los colores de las lecturas, cuando haya sensores visibles."
             },
             "filters": {
               "term": "Agrupar por",
@@ -1074,7 +1074,7 @@
         },
         "list": {
           "title": "Sus sensores",
-          "body": "Cada grupo lista sus sensores con su última lectura; el + agrega otro."
+          "body": "Sensores agrupados por tipo o etiqueta, con su última lectura cuando la hay. El interruptor de un grupo lo muestra en el visor; en los grupos por tipo, el + agrega un sensor."
         }
       }
     },
@@ -1097,11 +1097,11 @@
           },
           "notInstalled": {
             "term": "No instalados",
-            "description": "Plugins que podría instalar."
+            "description": "Plugins que su organización aún no ha instalado. Solo administradores."
           },
           "search": {
             "term": "Buscar",
-            "description": "Encuentre un plugin por nombre."
+            "description": "Busque un plugin por nombre o descripción."
           }
         }
       },
@@ -1111,7 +1111,7 @@
         "items": {
           "run": {
             "term": "Ejecutar",
-            "description": "Active o desactive un plugin para usted."
+            "description": "Active o desactive un plugin instalado para usted, cuando su organización le deja elegir."
           },
           "install": {
             "term": "Instalar",
@@ -1119,15 +1119,11 @@
           },
           "enable": {
             "term": "Habilitar",
-            "description": "Actívelo para toda su organización. Solo administradores."
-          },
-          "visibleTo": {
-            "term": "Visible para",
-            "description": "Elija quién puede verlo. Solo administradores."
+            "description": "Actívelo por defecto para su organización. Solo administradores."
           },
           "details": {
             "term": "Detalles",
-            "description": "Haga clic en la fila para ver descripción, versión y permisos."
+            "description": "Haga clic en la fila para ver su descripción, autor, lo que puede hacer y sus interruptores."
           }
         }
       }
@@ -1176,11 +1172,11 @@
         },
         "entries": {
           "term": "Leer los colores",
-          "description": "Cada muestra es un valor o rango; compárelo con lo que ve en el mapa."
+          "description": "Cada muestra o rampa de color representa un valor; compárela con lo que ve en el mapa."
         },
         "source": {
           "term": "De dónde salen las leyendas",
-          "description": "Los conjuntos de datos aplicados, los sensores y las capas de plugins agregan cada uno una sección."
+          "description": "Los sensores tienen su propia tarjeta; los conjuntos de datos aplicados, incluidas las capas de plugins, muestran su leyenda en la tarjeta de capas aplicadas."
         }
       }
     },
@@ -1195,7 +1191,7 @@
       },
       "noBimFiles": {
         "title": "Agregue un archivo 3D",
-        "body": "Este edificio aún no tiene archivos 3D. Arrastre un modelo BIM (IFC), una nube de puntos o un splat sobre la tarjeta, o use Subir archivo."
+        "body": "Este edificio aún no tiene archivos 3D. Use Subir archivo para agregar un modelo IFC, nube de puntos, splat, modelo 3D o plano CAD."
       }
     },
     "legendDemo": {
@@ -1206,30 +1202,30 @@
         "from1950": "1950 – 1990",
         "after1990": "Después de 1990"
       },
-      "temperature": {
-        "title": "Sensores de temperatura",
-        "cold": "Menos de 18 °C",
-        "mild": "18 – 24 °C",
-        "warm": "Más de 24 °C"
+      "floodRisk": {
+        "title": "Riesgo de inundación",
+        "low": "Bajo",
+        "medium": "Medio",
+        "high": "Alto"
       }
     },
     "settingsTour": {
       "map-style": {
         "title": "Estilo del mapa",
-        "body": "El mapa base bajo sus datos. Mire cómo cambia y elija el que prefiera; su elección se mantiene.",
+        "body": "El mapa base bajo sus datos. Mire cómo cambia y elija uno; se mantiene hasta que recargue la página.",
         "pick": "Cambiar a este mapa base."
       },
       "terrain": {
         "title": "Relieve",
-        "body": "Agrega colinas y valles al mapa. Mire cómo cambia; vuelve atrás al continuar."
+        "body": "Agrega colinas y valles al acercarse. Los niveles disponibles dependen de su organización. El paso prueba uno y vuelve atrás al continuar."
       },
       "projection": {
         "title": "Proyección",
-        "body": "Globo curva el mapa como la Tierra; Mercator lo aplana. Mire cómo cambia."
+        "body": "Globo curva el mapa como la Tierra al alejarse. Con un zoom mayor que 5, el mapa siempre es plano (Mercator)."
       },
       "buildings": {
         "title": "Edificios 3D",
-        "body": "Muestra u oculta los edificios extruidos del mapa base. Mire cómo se apagan y encienden."
+        "body": "Muestra u oculta los edificios 3D: los del mapa base y los dibujados en la plataforma. Mire cómo se apagan y se encienden."
       },
       "measurements": {
         "title": "Mediciones",
@@ -1237,11 +1233,11 @@
       },
       "location": {
         "title": "Ubicación",
-        "body": "Dónde se abre el mapa: escriba coordenadas o use la vista actual."
+        "body": "Mueva el mapa por coordenadas y zoom, o por provincia o estado y municipio. Los campos siguen al mapa cuando lo mueve."
       },
       "render-mode": {
         "title": "Modo de renderizado",
-        "body": "Sombreado dibuja luz solar y sombras; Básico es más ligero y rápido. Mire cómo cambia."
+        "body": "Sombreado agrega sombras del sol; Básico dibuja sin ellas y es más rápido. Mire cómo cambia."
       },
       "bim-projection": {
         "title": "Proyección",
@@ -1249,23 +1245,23 @@
       },
       "navigation": {
         "title": "Navegación",
-        "body": "Cómo mueve la cámara al arrastrar: orbitar alrededor del modelo o caminar por él."
+        "body": "Órbita gira la cámara alrededor del modelo; Caminar la mueve con WASD o las teclas de flecha. Caminar requiere la proyección Perspectiva."
       },
       "grid": {
         "title": "Cuadrícula",
-        "body": "La cuadrícula bajo el modelo. Mire cómo se apaga y enciende; los controles fijan su tamaño y espaciado."
+        "body": "La cuadrícula del suelo bajo el modelo. Mire cómo cambia; vuelve atrás al continuar. También puede ajustar su color, tamaños de celda, altura y rotación."
       },
       "lighting": {
         "title": "Iluminación",
-        "body": "Mueva el sol por hora y fecha, y ajuste la calidad de las sombras."
+        "body": "Ubique el sol por fecha y hora del día, y ajuste la intensidad de la luz, el color del sol y la calidad de las sombras. Las sombras solo se ven en modo Sombreado."
       },
       "bim-measurements": {
         "title": "Mediciones",
-        "body": "Unidades, precisión y colores de las herramientas de medición."
+        "body": "Color de línea, unidades de longitud, área, volumen y ángulo, decimales y ajuste."
       },
       "point-clouds": {
         "title": "Nubes de puntos y splats",
-        "body": "Tamaño, densidad y color de los puntos; los splats tienen su propia sección debajo."
+        "body": "Presupuesto de puntos, tamaño, forma y opacidad de las nubes de puntos cargadas. Los splats tienen su propia sección cuando hay uno cargado."
       }
     }
   },

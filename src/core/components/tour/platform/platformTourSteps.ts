@@ -141,7 +141,7 @@ function generalSteps(t: Translate, a: PlatformTourActions, languages: Language[
       ...step(t, 'support', 'sidebar-support'),
       items: [
         item(t, 'support.items', 'guide', LR.Compass),
-        item(t, 'support.items', 'contact', LR.Send, a.emailTeam),
+        item(t, 'support.items', 'contact', LR.Send, a.openContactPage),
         item(t, 'support.items', 'feature', LR.SquarePlus, a.openFeatureRequest),
         item(t, 'support.items', 'bug', LR.Bug, a.openBugReport),
       ],

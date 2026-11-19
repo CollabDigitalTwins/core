@@ -12,7 +12,7 @@ import { TOUR_LEGEND_DEMO_TARGET, useTourDemo } from './tourDemos'
 
 const SECTIONS = [
   { id: 'age', swatches: [['before1950', '#7f3b08'], ['from1950', '#e08214'], ['after1990', '#fdb863']] },
-  { id: 'temperature', swatches: [['cold', '#2166ac'], ['mild', '#f7f7f7'], ['warm', '#b2182b']] },
+  { id: 'floodRisk', swatches: [['low', '#c6dbef'], ['medium', '#6baed6'], ['high', '#08519c']] },
 ] as const
 
 /** The example legend the platform tour opens on the map, so a person sees one before any layer of theirs has one. */

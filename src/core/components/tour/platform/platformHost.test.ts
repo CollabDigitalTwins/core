@@ -4,7 +4,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { afterMenusClose, demoSwitch, demoTabs, findToolTarget, focusTourCard, openSection, searchFor, setToolOpen, typeInto } from './platformHost'
+import { afterMenusClose, demoSwitch, demoTabs, findToolTarget, focusTourCard, openSection, pressWhenShown, searchFor, setToolOpen, typeInto } from './platformHost'
 
 function toolbarWith(toolId: string, button: HTMLButtonElement) {
   const anchor = document.createElement('div')
@@ -173,5 +173,13 @@ describe('demoSwitch', () => {
     vi.advanceTimersByTime(1000)
     undo()
     expect(onClick).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('pressWhenShown', () => {
+  it('focuses a search box instead of clicking it', () => {
+    document.body.innerHTML = '<div data-tour="find"><input aria-label="find" /></div>'
+    pressWhenShown('find')
+    expect(document.activeElement).toBe(document.querySelector('input'))
   })
 })

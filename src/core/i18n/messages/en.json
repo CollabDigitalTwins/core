@@ -484,28 +484,28 @@
         },
         "bim": {
           "term": "BIM",
-          "description": "Building information models (IFC), point clouds and splats, element by element."
+          "description": "One building's 3D files: IFC models, point clouds, splats, 3D models and CAD drawings."
         }
       }
     },
     "search": {
       "bim": {
-        "title": "Search the model",
-        "body": "Find elements in the loaded models by name, type or property."
+        "title": "Find a building",
+        "body": "Search your organization's buildings by name or address, then pick one to open it in the viewer."
       }
     },
     "searchDemo": {
       "title": "Search the map",
-      "body": "Type an address or a place name and the map flies there. Watch it find Carleton University."
+      "body": "Type an address, a place or one of your buildings, then pick a result and the map flies there. Watch it find Carleton University."
     },
     "panel": {
       "map": {
         "title": "Open the map panel",
-        "body": "Opens the side panel with the buildings, sites and layers on the map."
+        "body": "Opens the side panel with the map's files, layers, comments, sensors and settings."
       },
       "bim": {
         "title": "Open the BIM panel",
-        "body": "Opens the side panel with the loaded models, their structure and the properties of the selected element."
+        "body": "Opens the side panel with the building's files, layers, comments, sensors and settings."
       }
     },
     "toolbar": {
@@ -535,11 +535,11 @@
       },
       "map-add": {
         "title": "Add",
-        "body": "Place a building, site, sensor or file on the map, or leave a comment.",
+        "body": "Add a file, comment, dataset, site, sensor or building to the map.",
         "items": {
           "file": {
             "term": "File",
-            "description": "Place a model, drawing or document on the map."
+            "description": "Upload a model, drawing, document or image, then double-click the map to place it."
           },
           "comment": {
             "term": "Comment",
@@ -547,7 +547,7 @@
           },
           "dataset": {
             "term": "Dataset",
-            "description": "Upload your own GeoJSON, shapefile or similar and draw it on the map."
+            "description": "Add a GeoJSON file, or paste a link to GeoJSON, ArcGIS, WMS, WMTS or XYZ tiles, and draw it on the map."
           },
           "site": {
             "term": "Site",
@@ -559,7 +559,7 @@
           },
           "building": {
             "term": "Building",
-            "description": "Add a building at a spot on the map."
+            "description": "Add a building from an address, by picking its footprint on the map, or by drawing one."
           }
         }
       },
@@ -577,25 +577,25 @@
           },
           "clear": {
             "term": "Clear",
-            "description": "Remove the measurements from the map."
+            "description": "Remove the measurements and stop measuring."
           }
         }
       },
       "map-share": {
         "title": "Share",
-        "body": "Copy a link to the current view."
+        "body": "Share the current view as a link or QR code, or save a screenshot."
       },
       "bim-clipping": {
         "title": "Clipping",
-        "body": "Cut section planes through the model to see inside."
+        "body": "Add section planes or a section box to see inside the model. A plane can also be turned into a drawing."
       },
       "bim-camera-fit": {
         "title": "Fit",
-        "body": "Frame all loaded models in view."
+        "body": "Frame the selection. With nothing selected, frame the IFC models, or the whole scene when there are none."
       },
       "bim-add": {
         "title": "Add",
-        "body": "Load an IFC model, point cloud or splat."
+        "body": "Add a file, comment, CAD drawing (DXF) or sensor to the model."
       },
       "bim-dimensions": {
         "title": "Measure",
@@ -603,7 +603,7 @@
       },
       "bim-share": {
         "title": "Share",
-        "body": "Copy a link to the current view."
+        "body": "Share the current view as a link or QR code, or save a screenshot."
       },
       "plugin": {
         "body": "Added by a plugin your organization uses."
@@ -611,7 +611,7 @@
     },
     "data": {
       "title": "Data pages",
-      "body": "Every record your organization keeps, as searchable lists. Pages added by plugins appear here too. Pick one for a closer look.",
+      "body": "Your organization's sites, buildings, files and infrastructure as searchable lists. Pages added by plugins appear here too. Pick one for a closer look.",
       "items": {
         "sites": {
           "term": "Sites",
@@ -623,27 +623,27 @@
         },
         "files": {
           "term": "Files",
-          "description": "Models, drawings and documents you have uploaded."
+          "description": "Your organization's models, point clouds, drawings and documents."
         },
         "infrastructure": {
           "term": "Infrastructure",
-          "description": "Roads, rail and other networks."
+          "description": "Roads, railways, facilities, land divisions and other infrastructure."
         }
       }
     },
     "plugins": {
       "title": "Plugins",
-      "body": "Browse and add plugins that extend the platform with new tools and pages.",
+      "body": "See the plugins available to you and switch them on. Administrators can install more.",
       "items": {
         "open": {
-          "term": "Open Plugins",
-          "description": "See which plugins you have and add more."
+          "term": "Add Plugins",
+          "description": "See your plugins and switch them on or off."
         }
       }
     },
     "language": {
       "title": "Language",
-      "body": "Choose the language the platform speaks.",
+      "body": "Choose the platform's language.",
       "items": {
         "En": {
           "term": "English",
@@ -661,41 +661,41 @@
     },
     "support": {
       "title": "Support",
-      "body": "Contact the team, suggest a feature or report a bug. Guide replays the tour for the page you are on.",
+      "body": "Contact the team, suggest a feature or report a bug. Guide opens this tour again.",
       "items": {
         "guide": {
           "term": "Guide",
-          "description": "Replays this tour for the page you are on."
+          "description": "Opens this tour again, including the page you are on."
         },
         "contact": {
-          "term": "Contact team",
-          "description": "Email the CDT team at info@collabdt.org."
+          "term": "Contact Team",
+          "description": "Opens the CDT contact page."
         },
         "feature": {
-          "term": "Suggest a feature",
+          "term": "Suggest Feature",
           "description": "Tell us what would help you."
         },
         "bug": {
-          "term": "Report a bug",
-          "description": "Tell us what went wrong, with a screenshot."
+          "term": "Report Bug",
+          "description": "Tell us what went wrong; you can attach a screenshot."
         }
       }
     },
     "account": {
       "title": "Your account",
-      "body": "Open the menu under your name.",
+      "body": "Click your name to open your account menu.",
       "items": {
         "settings": {
           "term": "Settings",
-          "description": "Your profile, password, users and organization."
+          "description": "Your profile and password, plus users and organization if your role allows."
         },
         "signOut": {
-          "term": "Sign out",
+          "term": "Log out",
           "description": "End your session on this device."
         }
       }
     },
-    "backToOverview": "Back to overview",
+    "backToOverview": "Back to previous tour",
     "viewerTour": {
       "map": {
         "title": "The map viewer",
@@ -703,34 +703,34 @@
       },
       "bim": {
         "title": "The BIM viewer",
-        "body": "Building models element by element: IFC, point clouds and splats. Here is each part of the screen."
+        "body": "One building's 3D files: IFC models, point clouds, splats, 3D models and CAD drawings. Here is each part of the screen."
       }
     },
     "panelTabs": {
       "map": {
         "title": "Map panel",
-        "body": "Everything about the map, in tabs. Pick one for a closer look."
+        "body": "The map's side panel, in tabs. Pick one for a closer look."
       },
       "bim": {
         "title": "BIM panel",
-        "body": "Everything about the model, in tabs. Pick one for a closer look."
+        "body": "The BIM side panel, in tabs. Pick one for a closer look."
       },
       "items": {
         "file": {
           "term": "Files",
-          "description": "The models and documents of the selected building."
+          "description": "Models, point clouds and documents: your organization's on the map, the selected building's in BIM."
         },
         "layers": {
           "term": "Layers",
-          "description": "Turn layers on and off and change how they are drawn."
+          "description": "On the map, add, show and style datasets; in BIM, open drawings and show or hide parts of the model."
         },
         "communication": {
           "term": "Comments",
-          "description": "Discuss with your team, pinned to the place they are about."
+          "description": "Comments pinned to places, plus BCF topics in BIM."
         },
         "sensors": {
           "term": "Sensors",
-          "description": "Live readings from the sensors in view."
+          "description": "The sensors in this viewer, with their latest readings."
         },
         "settings": {
           "term": "Settings",
@@ -753,7 +753,7 @@
         },
         "compass": {
           "term": "Compass",
-          "description": "Drag to rotate and tilt; click to face north again."
+          "description": "Drag to rotate and tilt; click to face north and flatten the view."
         }
       }
     },
@@ -763,21 +763,21 @@
       "items": {
         "open": {
           "term": "Open map settings",
-          "description": "Base map, measurements and where the map starts."
+          "description": "Base map, terrain, projection, 3D buildings, measurements and location."
         }
       }
     },
     "dataPage": {
       "title": {
-        "body": "The buttons on the right act on the whole list, like adding a new entry."
+        "body": "The buttons on the right add a new entry. On Buildings, the ⋯ menu also imports and exports the list."
       },
       "filters": {
         "title": "Search and filter",
-        "body": "Narrow the list by name, or with the filters."
+        "body": "Search the list, or narrow it with the filters."
       },
       "table": {
         "title": "The list",
-        "body": "Click a row to open its details. The menu at the end of each row has more actions, like showing it on the map."
+        "body": "Click a row to open its details. The ⋯ menu at the end of each row has more actions for that entry."
       }
     },
     "settingsPage": {
@@ -787,21 +787,21 @@
         "items": {
           "account": {
             "term": "Account",
-            "description": "Your name, picture and password."
+            "description": "Your name, picture, password and Google sign-in."
           },
           "users": {
             "term": "Users",
-            "description": "Invite people and manage their roles. Administrators only."
+            "description": "Create accounts with a temporary password and manage their roles. Administrators only."
           },
           "organization": {
             "term": "Organization",
-            "description": "Name, logo and defaults for everyone. Administrators only."
+            "description": "Logo, colours, title, location and where the map starts."
           }
         }
       },
       "content": {
         "title": "Section details",
-        "body": "Edit the selected section here."
+        "body": "The selected section's details. Click Edit to change them, if your role allows."
       }
     },
     "shareOptions": {
@@ -812,7 +812,7 @@
         },
         "copy": {
           "term": "Copy link",
-          "description": "A link to this exact view, copied to your clipboard."
+          "description": "A link that opens this view, copied to your clipboard."
         },
         "screenshot": {
           "term": "Screenshot",
@@ -837,7 +837,7 @@
         "items": {
           "search": {
             "term": "Search",
-            "description": "Match datasets by name."
+            "description": "Match datasets by any of their details, such as name or description."
           },
           "filters": {
             "term": "Filters",
@@ -875,11 +875,11 @@
           },
           "subdivision": {
             "term": "Country subdivision",
-            "description": "Open data from your province or state."
+            "description": "Open data for the current province or state."
           },
           "municipal": {
             "term": "Municipal",
-            "description": "Open data from your city, when it has a portal."
+            "description": "Open data for the current city, when one is known."
           },
           "liveData": {
             "term": "Live data",
@@ -901,11 +901,11 @@
           },
           "publish": {
             "term": "Publish",
-            "description": "Share your own uploads with others. Administrators only."
+            "description": "On a GeoJSON row, publish the dataset as vector tiles."
           },
           "details": {
             "term": "Details",
-            "description": "Click the row for its description, source and styling."
+            "description": "Click the row for its source, licence, dates and description."
           }
         }
       }
@@ -913,7 +913,7 @@
     "panelTour": {
       "search": {
         "title": "Search the tab",
-        "body": "Filter what this tab lists by name."
+        "body": "Filter this tab's lists by name. On the map's Layers tab, it filters the available datasets only."
       },
       "file": {
         "sections": {
@@ -922,19 +922,19 @@
           "items": {
             "bim": {
               "term": "BIM",
-              "description": "IFC models of the selected building."
+              "description": "IFC models (.ifc, .frag)."
             },
             "models": {
               "term": "Models",
-              "description": "3D models such as glTF and OBJ."
+              "description": "3D models (glTF, OBJ, FBX, DAE) and Gaussian splats."
             },
             "pointClouds": {
               "term": "Point clouds",
-              "description": "Laser scans and photogrammetry."
+              "description": "Point clouds (LAS, LAZ, COPC, E57)."
             },
             "files": {
               "term": "Files",
-              "description": "Drawings, reports and other documents. The + adds one, the switch shows them on the map."
+              "description": "CAD drawings, images and documents. The + adds one; the switch shows or hides them in the viewer."
             }
           }
         }
@@ -942,7 +942,7 @@
       "layers": {
         "applied": {
           "title": "Applied datasets",
-          "body": "What is drawn on the map. Drag to reorder, open a row to style it, or switch them all off."
+          "body": "Datasets added to the map. Drag to reorder; each row can hide, zoom to, style or remove its dataset. The switch shows or hides them all."
         },
         "available": {
           "title": "Available datasets",
@@ -966,11 +966,11 @@
             },
             "subdivision": {
               "term": "Subdivision",
-              "description": "Open data from your province or state."
+              "description": "Open data for the current province or state."
             },
             "municipal": {
               "term": "Municipal",
-              "description": "Open data from your city, when it has a portal."
+              "description": "Open data for the current city, when one is known."
             },
             "liveData": {
               "term": "Live data",
@@ -992,17 +992,17 @@
             },
             "custom": {
               "term": "Custom",
-              "description": "Views you saved yourself, when there are any."
+              "description": "Drawings made from a clipping plane. The tab appears once there is one."
             }
           }
         },
         "classifier": {
           "title": "Classifier",
-          "body": "Show, hide or isolate parts of the model.",
+          "body": "Select, colour, hide or isolate parts of the model.",
           "items": {
             "spatial": {
               "term": "Spatial",
-              "description": "By site, building and storey."
+              "description": "By building, storey and space."
             },
             "ifcClasses": {
               "term": "IFC classes",
@@ -1014,7 +1014,7 @@
       "communication": {
         "topics": {
           "title": "BCF topics",
-          "body": "Issues tracked on the model, in the BIM Collaboration Format.",
+          "body": "Issues on the model in BIM Collaboration Format (BCF). Topics last only for this session; export them to keep them.",
           "items": {
             "add": {
               "term": "Add topic",
@@ -1040,7 +1040,7 @@
             },
             "add": {
               "term": "Add comment",
-              "description": "Click a spot to pin a new comment there."
+              "description": "Write the comment, press +, then double-click a spot to pin it there."
             },
             "visibility": {
               "term": "Show or hide",
@@ -1056,15 +1056,15 @@
           "items": {
             "search": {
               "term": "Search",
-              "description": "Find a sensor by name."
+              "description": "Find a sensor by name or type."
             },
             "visibility": {
               "term": "Show or hide",
-              "description": "Turn every sensor on the map on or off."
+              "description": "Show or hide the listed sensors in this viewer."
             },
             "legend": {
               "term": "Legend",
-              "description": "Show what the colours of the readings mean."
+              "description": "Show what the colours of the readings mean, once sensors are shown."
             },
             "filters": {
               "term": "Group by",
@@ -1074,7 +1074,7 @@
         },
         "list": {
           "title": "Your sensors",
-          "body": "Each group lists its sensors with their latest reading; the + adds another."
+          "body": "Sensors grouped by type or tag, with their latest reading when there is one. A group's switch shows it in the viewer; in type groups, the + adds a sensor."
         }
       }
     },
@@ -1097,11 +1097,11 @@
           },
           "notInstalled": {
             "term": "Not installed",
-            "description": "Plugins you could install."
+            "description": "Plugins your organization has not installed yet. Administrators only."
           },
           "search": {
             "term": "Search",
-            "description": "Find a plugin by name."
+            "description": "Find a plugin by name or description."
           }
         }
       },
@@ -1111,7 +1111,7 @@
         "items": {
           "run": {
             "term": "Run",
-            "description": "Switch a plugin on or off for yourself."
+            "description": "Switch an installed plugin on or off for yourself, when your organization lets you choose."
           },
           "install": {
             "term": "Install",
@@ -1119,15 +1119,11 @@
           },
           "enable": {
             "term": "Enable",
-            "description": "Turn it on for everyone in your organization. Administrators only."
-          },
-          "visibleTo": {
-            "term": "Visible to",
-            "description": "Choose who can see it. Administrators only."
+            "description": "Turn it on for your organization by default. Administrators only."
           },
           "details": {
             "term": "Details",
-            "description": "Click the row for its description, version and permissions."
+            "description": "Click the row for its description, author, what it can do, and its switches."
           }
         }
       }
@@ -1176,11 +1172,11 @@
         },
         "entries": {
           "term": "Read the colours",
-          "description": "Each swatch is a value or range; match it to what you see on the map."
+          "description": "Each swatch or colour ramp stands for a value; match it to what you see on the map."
         },
         "source": {
           "term": "Where legends come from",
-          "description": "Applied datasets, sensors and plugin layers each add a section."
+          "description": "Sensors get their own card; applied datasets, including plugin layers, show their legend in the Applied layers card."
         }
       }
     },
@@ -1195,7 +1191,7 @@
       },
       "noBimFiles": {
         "title": "Add a 3D file",
-        "body": "This building has no 3D files yet. Drag a BIM model (IFC), point cloud or splat onto the card, or use Upload File."
+        "body": "This building has no 3D files yet. Use Upload File to add an IFC model, point cloud, splat, 3D model or CAD drawing."
       }
     },
     "legendDemo": {
@@ -1206,30 +1202,30 @@
         "from1950": "1950 – 1990",
         "after1990": "After 1990"
       },
-      "temperature": {
-        "title": "Temperature sensors",
-        "cold": "Below 18 °C",
-        "mild": "18 – 24 °C",
-        "warm": "Above 24 °C"
+      "floodRisk": {
+        "title": "Flood risk",
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
       }
     },
     "settingsTour": {
       "map-style": {
         "title": "Map style",
-        "body": "The base map under your data. Watch it switch, then pick the one you like; your choice stays.",
+        "body": "The base map under your data. Watch it switch, then pick one; it stays until you reload the page.",
         "pick": "Switch to this base map."
       },
       "terrain": {
         "title": "Terrain",
-        "body": "Adds hills and valleys to the map. Watch it change; it goes back when you move on."
+        "body": "Adds hills and valleys when zoomed in. Which levels you can pick depends on your organization. The step tries one and switches back when you move on."
       },
       "projection": {
         "title": "Projection",
-        "body": "Globe curves the map like the Earth; Mercator lays it flat. Watch it switch."
+        "body": "Globe curves the map like the Earth when zoomed out. Zoomed in past level 5, the map is always flat (Mercator)."
       },
       "buildings": {
         "title": "3D buildings",
-        "body": "Shows or hides the extruded buildings of the base map. Watch them turn off and on."
+        "body": "Shows or hides the 3D buildings: the base map's and the ones drawn in the platform. Watch them turn off and on."
       },
       "measurements": {
         "title": "Measurements",
@@ -1237,11 +1233,11 @@
       },
       "location": {
         "title": "Location",
-        "body": "Where the map opens: type coordinates or use the current view."
+        "body": "Move the map by coordinates and zoom, or by province or state and municipality. The fields follow the map as you move it."
       },
       "render-mode": {
         "title": "Render mode",
-        "body": "Shadowed draws sunlight and shadows; Basic is lighter and faster. Watch it switch."
+        "body": "Shadowed adds sun shadows; Basic draws without them and is faster. Watch it switch."
       },
       "bim-projection": {
         "title": "Projection",
@@ -1249,23 +1245,23 @@
       },
       "navigation": {
         "title": "Navigation",
-        "body": "How dragging moves the camera: orbit around the model, or walk through it."
+        "body": "Orbit turns the camera around the model; Walk moves it with WASD or the arrow keys. Walk needs the Perspective projection."
       },
       "grid": {
         "title": "Grid",
-        "body": "The ground grid under the model. Watch it turn off and on; the sliders set its size and spacing."
+        "body": "The ground grid under the model. Watch it switch; it goes back when you move on. You can also set its colour, cell sizes, height and rotation."
       },
       "lighting": {
         "title": "Lighting",
-        "body": "Move the sun by time of day and date, and set the shadow quality."
+        "body": "Place the sun by date and time of day, and set light intensity, sun colour and shadow quality. Shadows show only in Shadowed mode."
       },
       "bim-measurements": {
         "title": "Measurements",
-        "body": "Units, precision and colours of the measuring tools."
+        "body": "Line colour, units for length, area, volume and angle, decimal places and snapping."
       },
       "point-clouds": {
         "title": "Point clouds and splats",
-        "body": "Point size, density and colour for point clouds; splats have their own section below."
+        "body": "Point budget, size, shape and opacity of the loaded point clouds. Splats get their own section when one is loaded."
       }
     }
   },

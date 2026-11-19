@@ -22,7 +22,7 @@ import type { MeasureKind, PlatformTourActions } from './platformTourTypes'
 import type { ViewerKey } from '../../../types/dbTypes'
 import type { Map as MapLibreMap } from 'maplibre-gl'
 
-const TEAM_EMAIL = 'mailto:info@collabdt.org'
+const CONTACT_PAGE = 'https://collabdt.org/En/contact'
 const DEMO_PLACE = 'Carleton University'
 const DEMO_CAMERA = { center: [-75.6972, 45.3857] as LngLat, zoom: 16, pitch: 55, bearing: -20, speed: 1.2 }
 const CAMPUS_CAMERA = { center: [-75.6960, 45.3842] as LngLat, zoom: 15.4, pitch: 0, bearing: 0, duration: 1500 }
@@ -88,7 +88,7 @@ export function usePlatformTourActions(branch: PlatformTourActions['branch']): P
     demoMeasure: kind => demoMeasure(map.current, kind, () => toolsDispatch({ type: 'CLEAR-TOOLS' })),
     pressControl: anchor => void pressWhenShown(anchor),
     openFeatureRequest: () => setFeatureRequestOpen(true),
-    emailTeam: () => window.location.assign(TEAM_EMAIL),
+    openContactPage: () => window.open(CONTACT_PAGE, '_blank'),
     switchLanguage: language => void switchLanguage(language, undefined, router),
     openBugReport: () => setBugReportOpen(true),
     zoomIn: () => map.current?.zoomIn(),

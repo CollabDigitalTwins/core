@@ -8,11 +8,13 @@ import { arcgisLayerUrl } from '../../viewers/map/datasets/src/arcgisLayer'
 import { rendererField } from '../../viewers/map/utils/datasetStyle'
 
 import { DEMO_DELAY_MS } from './platformHost'
-import { createZoningDemo, createZoningMenuDemo, ZONING_LAYER_URL, ZONING_SEARCH, zoningAlreadyApplied, zoningMenuOwnsDataset } from './zoningDemo'
+import { createZoningDemo, createZoningMenuDemo, restoreZoningSearch, zoningAlreadyApplied, zoningLoadFailed, zoningMenuOwnsDataset } from './zoningDemo'
 
 import type { DatasetPort, ZoningStage } from './zoningDemo'
 import type { Dataset, FieldProfile } from '../../../types/datasetTypes'
 
+const ZONING_LAYER_URL = 'https://services.arcgis.com/G6F8XLCl5KtAlZ2G/ArcGIS/rest/services/IM_ExistingColourZoning_Sept25/FeatureServer/0'
+const ZONING_SEARCH = 'Existing Colour Zoning'
 const ZONING_ID = `url-arcgis:${arcgisLayerUrl(ZONING_LAYER_URL)}`
 const CATALOGUE_ID = 'catalogue-zoning'
 const STAGES: ZoningStage[] = ['load', 'legend', 'layer', 'colour', 'style', 'remove']
@@ -211,6 +213,21 @@ describe('createZoningMenuDemo', () => {
     expect(searchValue()).toBe('parks')
   })
 
+  it('puts back the search at once on request while the demo holds, and not after it let go', () => {
+    renderDialog('unchecked')
+    const input = document.querySelector<HTMLInputElement>('[data-tour="datasets-search"] input')!
+    input.value = 'parks'
+    const close = createZoningMenuDemo(fakePort())('find')
+    vi.advanceTimersByTime(ZONING_SEARCH.length * TYPING_MS)
+    restoreZoningSearch()
+    expect(searchValue()).toBe('parks')
+    close()
+    vi.advanceTimersByTime(FRAME)
+    input.value = 'later'
+    restoreZoningSearch()
+    expect(searchValue()).toBe('later')
+  })
+
   it('does not own a dataset the person ticks themselves', () => {
     const port = fakePort()
     renderDialog('unchecked', () => { port.add(named('mine', 'Parks')); port.add(named(ZONING_ID, 'Existing Colour Zoning')) })
@@ -272,6 +289,69 @@ describe('createZoningDemo', () => {
     close()
     vi.advanceTimersByTime(FRAME)
     expect(toggle.getAttribute('aria-expanded')).toBe('true')
+  })
+
+  it.each(['layer', 'colour', 'style'] as const)('opens a folded legend card when jumping straight to the %s step', async stage => {
+    const row = document.querySelector(`[data-tour="dataset-row:${ZONING_ID}"]`)!
+    row.remove()
+    const toggle = renderLegendCard(false)
+    toggle.addEventListener('click', () => { if (toggle.getAttribute('aria-expanded') === 'true') document.body.append(row) })
+    const { loader, demo } = setup()
+    const closeLoad = demo('load')
+    loader.resolve()
+    await flush()
+    const close = demo(stage)
+    closeLoad()
+    vi.advanceTimersByTime(DEMO_DELAY_MS + FRAME * 3)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+    expect(clicks).toContain('dataset-style')
+    close()
+    vi.advanceTimersByTime(FRAME)
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+  })
+
+  it('removes the layer even when the tour expanded the legend', async () => {
+    const row = document.querySelector(`[data-tour="dataset-row:${ZONING_ID}"]`)!
+    const toggle = renderLegendCard(false)
+    toggle.addEventListener('click', () => { if (toggle.getAttribute('aria-expanded') === 'false') row.remove() })
+    let removedWhileMounted = false
+    row.querySelector('[data-tour="dataset-remove"]')?.addEventListener('click', () => { removedWhileMounted = row.isConnected })
+    const { loader, demo } = setup()
+    const closeLoad = demo('load')
+    loader.resolve()
+    await flush()
+    const closeLegend = demo('legend')
+    closeLoad()
+    vi.advanceTimersByTime(DEMO_DELAY_MS + FRAME)
+    const close = demo('remove')
+    closeLegend()
+    vi.advanceTimersByTime(DEMO_DELAY_MS + FRAME)
+    expect(removedWhileMounted).toBe(true)
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    close()
+    vi.advanceTimersByTime(FRAME)
+  })
+
+  it('leaves the legend state alone once removing the last layer unmounts the card', async () => {
+    const toggle = renderLegendCard(false)
+    document.querySelector('[data-tour="dataset-remove"]')?.addEventListener('click', () => {
+      toggle.closest('[data-tour="legend-applied"]')?.remove()
+    })
+    const { loader, demo } = setup()
+    const closeLoad = demo('load')
+    loader.resolve()
+    await flush()
+    const closeLegend = demo('legend')
+    closeLoad()
+    vi.advanceTimersByTime(DEMO_DELAY_MS + FRAME)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+    const close = demo('remove')
+    closeLegend()
+    vi.advanceTimersByTime(DEMO_DELAY_MS + FRAME)
+    expect(clicks).toContain('dataset-remove')
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+    close()
+    vi.advanceTimersByTime(FRAME)
   })
 
   it("expands the layer's style", async () => {
@@ -420,6 +500,32 @@ describe('createZoningDemo', () => {
     expect(port.add).not.toHaveBeenCalled()
     expect(port.update).not.toHaveBeenCalled()
     expect(clicks).toEqual([])
+  })
+
+  it('keeps reporting the failed load after it lets go, until it starts again', async () => {
+    const { loader, demo } = setup()
+    const close = demo('load')
+    expect(zoningLoadFailed()).toBe(false)
+    loader.reject()
+    await flush()
+    close()
+    vi.advanceTimersByTime(FRAME)
+    expect(zoningLoadFailed()).toBe(true)
+    const again = demo('load')
+    expect(zoningLoadFailed()).toBe(false)
+    again()
+    vi.advanceTimersByTime(FRAME)
+  })
+
+  it('does not count its own copy as already applied while it shows it', async () => {
+    const { port, loader, demo } = setup()
+    const close = demo('load')
+    loader.resolve()
+    await flush()
+    expect(zoningAlreadyApplied(port.applied())).toBe(false)
+    close()
+    vi.advanceTimersByTime(FRAME)
+    expect(zoningAlreadyApplied([zoningDataset()])).toBe(true)
   })
 
   it('treats the catalogue copy of the zoning map as already applied', async () => {

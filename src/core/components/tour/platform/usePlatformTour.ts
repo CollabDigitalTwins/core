@@ -14,7 +14,7 @@ import { useLatest } from '../useTourLayout'
 
 import { DATA_PAGES, platformTourSteps, VIEWERS } from './platformTourSteps'
 import { subTour } from './subTourSteps'
-import { followViewer, pageTourOf } from './tourRoutes'
+import { followViewer, pageTourOf, yieldsToPluginTours } from './tourRoutes'
 import { usePlatformTourActions } from './usePlatformTourActions'
 import { usePluginTourEntries } from './usePluginTourEntries'
 
@@ -100,5 +100,5 @@ export function usePlatformTour(viewer: ViewerKey | undefined) {
   const reset = React.useCallback(() => setTrail(OVERVIEW), [])
   const remember = React.useCallback((stepId: string) => setTrail(legs => rememberStep(legs, stepId)), [])
 
-  return { key: `${trail.length}:${leg.tour}`, steps: tour.steps, startAt: leg.startAt, branched: trail.length > 1, back, reset, remember }
+  return { key: `${trail.length}:${leg.tour}`, steps: tour.steps, startAt: leg.startAt, branched: trail.length > 1, yieldsToPluginTours: yieldsToPluginTours(leg), back, reset, remember }
 }

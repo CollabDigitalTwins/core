@@ -3,7 +3,7 @@
 
 import * as React from 'react'
 
-export type TourDemo = 'legend'
+type TourDemo = 'legend'
 
 export const TOUR_LEGEND_DEMO_TARGET = 'legend-demo'
 

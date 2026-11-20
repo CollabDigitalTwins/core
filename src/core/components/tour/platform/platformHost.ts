@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { anchorSelector, findAnchor } from '../hostTargets'
+
 const TYPING_DELAY_MS = 70
 const EXPAND_DELAY_MS = 150
 
-export const findToolButton = (toolId: string, root: ParentNode = document) =>
-  root.querySelector<HTMLButtonElement>(`[data-tour="tool-${toolId}"] button`)
+const findToolButton = (toolId: string, root: ParentNode = document) =>
+  root.querySelector<HTMLButtonElement>(`${anchorSelector(`tool-${toolId}`)} button`)
 
 const isExpanded = (button: HTMLElement) => button.getAttribute('aria-expanded') === 'true'
 
@@ -18,7 +20,7 @@ export function openToolPanel(toolId: string, root: Document = document): Elemen
 
 /** What a tool step spotlights: the dropdown or card the tool opened, else its toolbar button. */
 export const findToolTarget = (toolId: string, root: Document = document): Element | null =>
-  openToolPanel(toolId, root) ?? root.querySelector(`[data-tour="tool-${toolId}"]`)
+  openToolPanel(toolId, root) ?? findAnchor(`tool-${toolId}`, root)
 
 /** Opens or closes a toolbar tool's dropdown or card; tools without `aria-expanded` are left alone. */
 export function setToolOpen(toolId: string, open: boolean, root: ParentNode = document): void {
@@ -47,12 +49,12 @@ export function typeInto(input: HTMLInputElement, text: string, onTyped: () => v
   return () => window.clearInterval(timer)
 }
 
-/** Expands the collapsed search in `container` if needed, then types `text` into it; returns a cancel. */
-export function searchFor(container: Element | null, text: string, onTyped: () => void): () => void {
-  const input = container?.querySelector('input')
-  if (!input) return () => {}
-  if (input.getBoundingClientRect().width > 0) return typeInto(input, text, onTyped)
-  container?.querySelector('button')?.click()
+function searchFor(input: HTMLInputElement, container: Element, text: string, onTyped: () => void): () => void {
+  if (input.getBoundingClientRect().width > 0) {
+    input.focus()
+    return typeInto(input, text, onTyped)
+  }
+  container.querySelector('button')?.click()
   let cancelTyping = () => {}
   const timer = window.setTimeout(() => { cancelTyping = typeInto(input, text, onTyped) }, EXPAND_DELAY_MS)
   return () => {
@@ -70,6 +72,9 @@ export const press = (element: HTMLElement) => {
   element.click()
 }
 
+/** Frames a demo keeps watching for a write it made to arrive, about a minute. */
+export const ARRIVAL_FRAMES = 3600
+
 /** Calls `then` once `ready()` is true, checking each frame for up to `frames`, else `giveUp`; returns a cancel. */
 export function waitFor(ready: () => boolean, then: () => void, frames = 600, giveUp?: () => void): () => void {
   let frame = 0
@@ -85,39 +90,90 @@ export function waitFor(ready: () => boolean, then: () => void, frames = 600, gi
 
 const CLOSED_FRAMES = 3
 
-/** Calls `closed` once an element `find` has returned goes missing for a few frames; returns a cancel. */
+const SELECTABLE = '[role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"], [cmdk-item]'
+
+/** Calls `closed` once an element `find` returned goes missing for a few frames, unless the person picked an item in it first; returns a cancel. */
 export function onClosed(find: () => Element | null, closed: () => void): () => void {
   let frame = 0
-  let seen = false
+  let watched: Element | null = null
   let missing = 0
+  const stop = () => {
+    cancelAnimationFrame(frame)
+    document.removeEventListener('click', disarmOnSelect, true)
+  }
+  function disarmOnSelect(event: MouseEvent) {
+    const picked = event.target instanceof Element ? event.target.closest(SELECTABLE) : null
+    if (picked && watched?.contains(picked)) stop()
+  }
   const check = () => {
-    if (find()?.isConnected) {
-      seen = true
+    const found = find()
+    if (found?.isConnected) {
+      watched = found
       missing = 0
-    } else if (seen && ++missing >= CLOSED_FRAMES) {
+    } else if (watched && ++missing >= CLOSED_FRAMES) {
+      stop()
       closed()
       return
     }
     frame = requestAnimationFrame(check)
   }
+  document.addEventListener('click', disarmOnSelect, true)
   frame = requestAnimationFrame(check)
-  return () => cancelAnimationFrame(frame)
+  return stop
 }
 
-/** Clicks the search suggestion whose text includes `text` once it shows and `DEMO_DELAY_MS` passed, else `otherwise`; returns a cancel. */
-export function pickSuggestion(container: Element | null, text: string, picked: () => void, otherwise: () => void): () => void {
+function pickSuggestion(container: Element, text: string, picked: () => void, otherwise: () => void): () => void {
   let timer = 0
-  const match = () => [...container?.querySelectorAll<HTMLElement>('[cmdk-item]') ?? []]
+  const match = () => [...container.querySelectorAll<HTMLElement>('[cmdk-item]')]
     .find(item => item.textContent?.toLowerCase().includes(text.toLowerCase()))
   const cancelWait = waitFor(() => !!match(), () => {
     timer = window.setTimeout(() => {
-      match()?.click()
+      const suggestion = match()
+      if (!suggestion) return otherwise()
+      suggestion.click()
       picked()
     }, DEMO_DELAY_MS)
   }, SUGGESTION_FRAMES, otherwise)
   return () => {
     cancelWait()
     window.clearTimeout(timer)
+  }
+}
+
+// Hands the arrow keys back to the card after a demo typed into the page.
+const focusTourCard = () => document.querySelector<HTMLElement>('.cdt-tour-card .cdt-tour-next')?.focus({ preventScroll: true })
+
+function setInputMode(input: HTMLInputElement, mode: string | null) {
+  if (mode === null) input.removeAttribute('inputmode')
+  else input.setAttribute('inputmode', mode)
+}
+
+/** Types `text` into the search in `container` and picks its suggestion, else calls `fallback`; cancelling before then puts the search back. */
+export function searchAndPick(container: Element | null, text: string, fallback: () => void): () => void {
+  const input = container?.querySelector('input')
+  if (!container || !input) return () => {}
+  const original = { value: input.value, mode: input.getAttribute('inputmode') }
+  let finished = false
+  // inputmode none keeps the soft keyboard shut while the demo types.
+  setInputMode(input, 'none')
+  const finish = () => {
+    finished = true
+    setInputMode(input, original.mode)
+    focusTourCard()
+  }
+  let cancelPick = () => {}
+  const cancelSearch = searchFor(input, container, text, () => {
+    cancelPick = pickSuggestion(container, text, finish, () => {
+      fallback()
+      finish()
+    })
+  })
+  return () => {
+    cancelSearch()
+    cancelPick()
+    if (finished) return
+    setInputMode(input, original.mode)
+    if (input.value !== original.value) setNativeValue(input, original.value)
   }
 }
 
@@ -135,7 +191,7 @@ export interface Schedule {
 }
 
 /** Timers and waits that skip their action once `stopped()` is true. */
-export function schedule(stopped: () => boolean): Schedule {
+export function schedule(stopped: () => boolean = () => false): Schedule {
   const cancels: (() => void)[] = []
   return {
     after: (ms, then) => {
@@ -157,7 +213,7 @@ export function pressWhenShown(anchor: string, root: ParentNode = document): () 
   let frame = 0
   let frames = 0
   const attempt = () => {
-    const control = root.querySelector<HTMLElement>(`[data-tour="${anchor}"]`)
+    const control = findAnchor(anchor, root)
     const input = control?.querySelector('input')
     if (input) input.focus()
     else if (control) press(control.querySelector('button') ?? control)
@@ -212,11 +268,6 @@ export function anchorMapRegion(map: ProjectingMap, coords: LngLat[], anchor: st
   }
 }
 
-/** Puts focus back on the tour card, so its arrow keys work after a demo typed into the page. */
-export function focusTourCard(root: Document = document): void {
-  root.querySelector<HTMLElement>('.cdt-tour-card .cdt-tour-next')?.focus({ preventScroll: true })
-}
-
 /** Runs `action` once no dropdown menu is open, so a closing menu cannot dismiss the one it opens; returns a cancel. */
 export function afterMenusClose(action: () => void, root: ParentNode = document): () => void {
   let frame = 0
@@ -231,7 +282,7 @@ export function afterMenusClose(action: () => void, root: ParentNode = document)
 
 /** Expands the collapsible section marked with the `data-tour` anchor if it is collapsed. */
 export function openSection(anchor: string, root: ParentNode = document): void {
-  const header = root.querySelector<HTMLElement>(`[data-tour="${anchor}"] [aria-expanded]`)
+  const header = root.querySelector<HTMLElement>(`${anchorSelector(anchor)} [aria-expanded]`)
   if (header?.getAttribute('aria-expanded') === 'false') header.click()
 }
 
@@ -243,7 +294,7 @@ const activeTab = (group: Element) => group.querySelector<HTMLElement>('[role="t
 export function demoTabs(anchor: string, root: ParentNode = document): () => void {
   let original: HTMLElement | null = null
   const timer = window.setTimeout(() => {
-    const group = root.querySelector(`[data-tour="${anchor}"]`)
+    const group = findAnchor(anchor, root)
     original = group && activeTab(group)
     const other = group?.querySelector<HTMLElement>('[role="tab"][data-state="inactive"]:not([disabled])')
     if (other) press(other)
@@ -258,7 +309,7 @@ export function demoTabs(anchor: string, root: ParentNode = document): () => voi
 export function demoSwitch(anchor: string, root: ParentNode = document): () => void {
   let flipped: HTMLElement | null = null
   const timer = window.setTimeout(() => {
-    flipped = root.querySelector<HTMLElement>(`[data-tour="${anchor}"] [role="switch"]:not([disabled])`)
+    flipped = root.querySelector<HTMLElement>(`${anchorSelector(anchor)} [role="switch"]:not([disabled])`)
     flipped?.click()
   }, DEMO_DELAY_MS)
   return () => {

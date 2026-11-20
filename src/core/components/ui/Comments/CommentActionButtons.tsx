@@ -136,6 +136,7 @@ export function CommentActionButtons({
           {...bind(onDelete)}
           title={labels?.delete ?? 'Delete'}
           aria-label={labels?.delete ?? 'Delete'}
+          data-tour="item-delete"
           disabled={!canDelete}
         >
           <LR.Trash2 className="h-4 w-4" />

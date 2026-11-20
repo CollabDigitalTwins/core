@@ -4,7 +4,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { afterMenusClose, DEMO_DELAY_MS, demoSwitch, demoTabs, expandIfCollapsed, findToolTarget, focusTourCard, onClosed, openSection, openToolPanel, pickSuggestion, pressWhenShown, schedule, searchFor, setToolOpen, typeInto, waitFor } from './platformHost'
+import { afterMenusClose, DEMO_DELAY_MS, demoSwitch, demoTabs, expandIfCollapsed, findToolTarget, onClosed, openSection, openToolPanel, pressWhenShown, schedule, searchAndPick, setToolOpen, typeInto, waitFor } from './platformHost'
 
 function toolbarWith(toolId: string, button: HTMLButtonElement) {
   const anchor = document.createElement('div')
@@ -88,25 +88,7 @@ describe('typeInto', () => {
   })
 })
 
-describe('searchFor', () => {
-  it('expands a collapsed search before typing into it', () => {
-    vi.useFakeTimers()
-    const container = document.createElement('div')
-    const expand = document.createElement('button')
-    const onExpand = vi.fn()
-    expand.addEventListener('click', onExpand)
-    const input = document.createElement('input')
-    container.append(expand, input)
-    const onTyped = vi.fn()
-    searchFor(container, 'ab', onTyped)
-    expect(onExpand).toHaveBeenCalledOnce()
-    vi.advanceTimersByTime(1000)
-    expect(input.value).toBe('ab')
-    expect(onTyped).toHaveBeenCalledOnce()
-  })
-})
-
-describe('pickSuggestion', () => {
+describe('searchAndPick', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => setTimeout(() => cb(0), 16))
@@ -114,57 +96,76 @@ describe('pickSuggestion', () => {
   })
   afterEach(() => vi.unstubAllGlobals())
 
-  function searchBox() {
-    const container = document.createElement('div')
-    container.append(document.createElement('input'))
-    const item = document.createElement('div')
-    item.setAttribute('cmdk-item', '')
-    item.textContent = 'Carleton University, Ottawa'
-    const clicked = vi.fn()
-    item.addEventListener('click', clicked)
-    return { container, item, clicked }
+  function openSearch() {
+    document.body.innerHTML = '<div id="search"><input /></div><div class="cdt-tour-card"><button class="cdt-tour-next"></button></div>'
+    const container = document.getElementById('search')!
+    const input = container.querySelector('input')!
+    input.getBoundingClientRect = () => ({ width: 200 }) as DOMRect
+    return { container, input }
   }
 
-  it('picks Carleton University from the search results', () => {
-    const { container, item, clicked } = searchBox()
-    const picked = vi.fn()
-    const flyTo = vi.fn()
-    pickSuggestion(container, 'Carleton University', picked, flyTo)
-    setTimeout(() => container.append(item), 48)
-    vi.advanceTimersByTime(48 + 16)
-    expect(clicked).not.toHaveBeenCalled()
-    vi.advanceTimersByTime(DEMO_DELAY_MS + 16)
-    expect(clicked).toHaveBeenCalledOnce()
-    expect(picked).toHaveBeenCalledOnce()
-    expect(flyTo).not.toHaveBeenCalled()
-  })
-
-  it('flies to Carleton when no result appears', () => {
-    const { container } = searchBox()
-    const picked = vi.fn()
-    const flyTo = vi.fn()
-    pickSuggestion(container, 'Carleton University', picked, flyTo)
+  it('types the place, picks its suggestion and hands focus back to the tour card', () => {
+    const { container, input } = openSearch()
+    const clicked = vi.fn()
+    input.addEventListener('input', () => {
+      if (input.value !== 'Carleton' || document.activeElement !== input) return
+      container.insertAdjacentHTML('beforeend', '<div cmdk-item>Carleton University</div>')
+      container.querySelector('[cmdk-item]')?.addEventListener('click', clicked)
+    })
+    const fallback = vi.fn()
+    searchAndPick(container, 'Carleton', fallback)
     vi.advanceTimersByTime(60_000)
-    expect(flyTo).toHaveBeenCalledOnce()
-    expect(picked).not.toHaveBeenCalled()
+    expect(clicked).toHaveBeenCalledOnce()
+    expect(fallback).not.toHaveBeenCalled()
+    expect(document.activeElement).toHaveClass('cdt-tour-next')
   })
 
-  it('stops waiting and clicking when cancelled', () => {
-    const { container, item, clicked } = searchBox()
-    container.append(item)
-    const cancel = pickSuggestion(container, 'Carleton University', vi.fn(), vi.fn())
+  it('falls back and hands focus back when no suggestion shows', () => {
+    const { container } = openSearch()
+    const fallback = vi.fn()
+    searchAndPick(container, 'Carleton', fallback)
+    vi.advanceTimersByTime(60_000)
+    expect(fallback).toHaveBeenCalledOnce()
+    expect(document.activeElement).toHaveClass('cdt-tour-next')
+  })
+
+  it('expands a collapsed search before typing into it', () => {
+    document.body.innerHTML = '<div id="search"><button></button><input /></div>'
+    const container = document.getElementById('search')!
+    const onExpand = vi.fn()
+    container.querySelector('button')!.addEventListener('click', onExpand)
+    searchAndPick(container, 'ab', vi.fn())
+    expect(onExpand).toHaveBeenCalledOnce()
+    vi.advanceTimersByTime(1000)
+    expect(container.querySelector('input')!.value).toBe('ab')
+  })
+
+  it('puts back what the search held when cancelled mid-typing', () => {
+    const { container, input } = openSearch()
+    input.value = 'Ottawa'
+    const cancel = searchAndPick(container, 'Carleton', vi.fn())
+    vi.advanceTimersByTime(150)
+    expect(input.value).not.toBe('Ottawa')
     cancel()
-    vi.advanceTimersByTime(DEMO_DELAY_MS + 100)
-    expect(clicked).not.toHaveBeenCalled()
+    expect(input.value).toBe('Ottawa')
   })
-})
 
-describe('focusTourCard', () => {
-  it('moves focus from the page back to the tour card', () => {
-    document.body.innerHTML = '<input id="page" /><div class="cdt-tour-card"><button class="cdt-tour-next">Next</button></div>'
-    document.querySelector<HTMLInputElement>('#page')?.focus()
-    focusTourCard()
-    expect(document.activeElement).toHaveTextContent('Next')
+  it('keeps the soft keyboard closed while it types, and restores the input mode after', () => {
+    const { container, input } = openSearch()
+    input.setAttribute('inputmode', 'search')
+    const cancel = searchAndPick(container, 'Carleton', vi.fn())
+    expect(input.getAttribute('inputmode')).toBe('none')
+    cancel()
+    expect(input.getAttribute('inputmode')).toBe('search')
+  })
+
+  it('does nothing more once cancelled', () => {
+    const { container, input } = openSearch()
+    const fallback = vi.fn()
+    searchAndPick(container, 'Carleton', fallback)()
+    vi.advanceTimersByTime(60_000)
+    expect(input.value).toBe('')
+    expect(fallback).not.toHaveBeenCalled()
   })
 })
 
@@ -345,6 +346,30 @@ describe('onClosed', () => {
     document.body.append(gone)
     vi.advanceTimersByTime(16 * 20)
     expect(closed).not.toHaveBeenCalled()
+  })
+
+  it.each(['role="menuitem"', 'role="menuitemradio"', 'role="menuitemcheckbox"', 'cmdk-item'])('does not call back when the person picks a [%s] inside it', attribute => {
+    document.body.innerHTML = `<div id="card"><div ${attribute}><span id="label">Distance</span></div></div>`
+    const closed = vi.fn()
+    onClosed(card, closed)
+    vi.advanceTimersByTime(16 * 3)
+    document.getElementById('label')?.click()
+    card()?.remove()
+    vi.advanceTimersByTime(16 * 20)
+    expect(closed).not.toHaveBeenCalled()
+  })
+
+  it('still calls back after a close button or an outside click, or an item outside it', () => {
+    document.body.innerHTML = '<div id="card"><button id="close"></button></div><div role="menuitem" id="elsewhere"></div>'
+    const closed = vi.fn()
+    onClosed(card, closed)
+    vi.advanceTimersByTime(16 * 3)
+    document.getElementById('elsewhere')?.click()
+    document.body.click()
+    document.getElementById('close')?.click()
+    card()?.remove()
+    vi.advanceTimersByTime(16 * 20)
+    expect(closed).toHaveBeenCalledOnce()
   })
 
   it('stops when cancelled', () => {

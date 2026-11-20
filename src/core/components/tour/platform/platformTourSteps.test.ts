@@ -9,10 +9,12 @@ import { Language, ViewerNames } from '../../../types/dbTypes'
 import { arcgisLayerUrl } from '../../viewers/map/datasets/src/arcgisLayer'
 
 import { DATA_PAGES, platformTourSteps, toolStepId } from './platformTourSteps'
-import { PANEL_TABS, subTour } from './subTourSteps'
-import { ZONING_LAYER_URL } from './zoningDemo'
+import { subTour } from './subTourSteps'
+import { createZoningDemo, createZoningMenuDemo } from './zoningDemo'
 
 import type { PlatformTourActions, PlatformTourId, TourAvailability } from './platformTourTypes'
+import type { DatasetPort } from './zoningDemo'
+import type { SidebarTabType } from '../../../store/Menus/reducer'
 import type { TourStep } from '../tourTypes'
 
 const ANCHORS = new Set([
@@ -27,6 +29,10 @@ const ANCHORS = new Set([
   'settings-point-clouds', 'legend-demo', 'legend-applied', 'plugin-row-hello-map',
 ])
 
+const PANEL_TABS: SidebarTabType[] = ['file', 'layers', 'communication', 'sensors', 'settings']
+
+const ZONING_LAYER_URL = 'https://services.arcgis.com/G6F8XLCl5KtAlZ2G/ArcGIS/rest/services/IM_ExistingColourZoning_Sept25/FeatureServer/0'
+
 const SUB_TOURS: Exclude<PlatformTourId, 'platform'>[] = [
   'map', 'bim', 'tools', 'explore-viewers', 'explore-data', 'settings', 'plugins', 'datasets', 'measure',
   ...DATA_PAGES.map(({ page }) => `data-${page}` as const),
@@ -40,10 +46,12 @@ const actions = (): PlatformTourActions => ({
   inOttawa: () => true,
   canDemoSearch: () => true,
   zoningApplied: () => false,
-  branch: vi.fn(), leave: vi.fn(), openViewer: vi.fn(), openPanel: vi.fn(() => () => {}), selectPanelTab: vi.fn(),
+  isMobile: () => false,
+  branch: vi.fn(), leave: vi.fn(), openViewer: vi.fn(), openMenu: vi.fn(() => () => {}), openPanel: vi.fn(() => () => {}), selectPanelTab: vi.fn(),
   demoSearch: vi.fn(() => () => {}), demoMeasure: vi.fn(() => () => {}), pressControl: vi.fn(), openFeatureRequest: vi.fn(), openContactPage: vi.fn(), switchLanguage: vi.fn(), openBugReport: vi.fn(), zoomIn: vi.fn(), zoomOut: vi.fn(), resetNorth: vi.fn(),
   mapStyles: [], setMapStyle: vi.fn(), demoMapStyle: vi.fn(() => () => {}), demoZoning: vi.fn(() => () => {}), demoZoningMenu: vi.fn(() => () => {}),
   demoHelloMap: vi.fn(() => () => {}), toggleHelloMapControl: vi.fn(),
+  sensorTypesExist: () => true, demoComment: vi.fn(() => () => {}), demoSensor: vi.fn(() => () => {}),
 })
 
 const resolve = (key: string) => key.split('.').reduce<unknown>((node, part) => (node as Record<string, unknown>)?.[part], en.PlatformTour)
@@ -57,6 +65,16 @@ describe('platformTourSteps', () => {
   it('walks the sidebar from welcome to a choice of closer tours', () => {
     const steps = platformTourSteps(echo, actions())
     expect(steps.map(s => s.id)).toEqual(['welcome', 'sidebar', 'interfaces', 'viewers', 'data', 'plugins', 'support', 'account', 'explore'])
+  })
+
+  it('opens the app sidebar while a step points into it, so it shows on phones too', () => {
+    const a = actions()
+    const steps = platformTourSteps(echo, a, { languages: [Language.En, Language.Fr] })
+    const inSidebar = steps.filter(s => typeof s.target === 'string' && s.target.startsWith('sidebar'))
+    inSidebar.forEach(s => s.onEnter?.())
+    expect(inSidebar.map(s => s.id)).toEqual(['sidebar', 'interfaces', 'viewers', 'data', 'plugins', 'language', 'support', 'account'])
+    expect(a.openMenu).toHaveBeenCalledTimes(inSidebar.length)
+    expect(steps.filter(s => !inSidebar.includes(s)).every(s => s.onEnter === undefined)).toBe(true)
   })
 
   it('folds in the tour of the page the viewer is on, with a shortcut to it from every overview card', () => {
@@ -185,8 +203,8 @@ describe('subTourSteps', () => {
   it('skips the Hello Map steps when its row is not on the page', () => {
     document.body.innerHTML = ''
     const steps = subTour('plugins', echo, actions()).steps
-    const skipped = ['hello-open', 'hello-install', 'hello-controls'].map(id => steps.find(s => s.id === id)?.skip?.())
-    expect(skipped).toEqual([true, true, true])
+    const skipped = ['hello-open', 'hello-install', 'hello-controls', 'hello-controls-user'].map(id => steps.find(s => s.id === id)?.skip?.())
+    expect(skipped).toEqual([true, true, true, true])
   })
 
   it('offers each Hello Map control only to a role that can use it', () => {
@@ -201,9 +219,22 @@ describe('subTourSteps', () => {
     const a = actions()
     const steps = subTour('plugins', echo, a).steps
     steps.forEach(s => s.onEnter?.())
-    expect(steps.map(s => s.id)).toEqual(['tabs', 'list', 'hello-open', 'hello-install', 'hello-controls', 'hello-uninstall'])
+    expect(steps.map(s => s.id)).toEqual(['tabs', 'list', 'hello-open', 'hello-install', 'hello-controls', 'hello-controls-user', 'hello-uninstall'])
     expect(a.pressControl).toHaveBeenCalledWith('plugins-tab-all')
-    expect(vi.mocked(a.demoHelloMap).mock.calls.map(([stage]) => stage)).toEqual(['open', 'install', 'controls', 'uninstall'])
+    expect(vi.mocked(a.demoHelloMap).mock.calls.map(([stage]) => stage)).toEqual(['open', 'install', 'controls', 'controls', 'uninstall'])
+  })
+
+  it('lets the organization switches be pressed only on a Hello Map the tour installed', () => {
+    document.body.innerHTML = '<li data-tour="plugin-row-hello-map"></li>'
+    const steps = subTour('plugins', echo, actions()).steps
+    const own = steps.find(s => s.id === 'hello-controls-user')
+    const pressable = own?.items?.filter(i => i.onSelect).map(i => i.id)
+    const skipped = ['hello-controls', 'hello-controls-user'].map(id => steps.find(s => s.id === id)?.skip?.())
+    document.body.innerHTML = ''
+    expect(own?.items?.map(i => i.id)).toEqual(['installed', 'org-enabled', 'allow-override', 'user-run'])
+    expect(pressable).toEqual(['user-run'])
+    expect(own?.body).toBe('pluginsTour.hello.controlsUser')
+    expect(skipped).toEqual([true, false])
   })
 
   it('explains the read-only summary when the role has no Hello Map control', () => {
@@ -311,7 +342,7 @@ describe('subTourSteps', () => {
 
   it('shows the zoning steps in Ottawa and the example legend elsewhere', () => {
     const ids = (ottawa: boolean) => subTour('map', echo, { ...actions(), inOttawa: () => ottawa }).steps.map(s => s.id).slice(ottawa ? -6 : -4)
-    expect(ids(true)).toEqual(['zoning-load', 'zoning-legend', 'zoning-layer', 'zoning-colour', 'zoning-style', 'zoning-remove'])
+    expect(ids(true)).toEqual(['zoning-legend', 'zoning-layer', 'zoning-colour', 'zoning-style', 'zoning-remove', 'legend'])
     expect(ids(false)).toEqual(['navigation', 'map-settings', 'attribution', 'legend'])
   })
 
@@ -328,6 +359,21 @@ describe('subTourSteps', () => {
     expect(resolved).toEqual(['legend-applied', 'legend-applied', 'zoning', 'zoning-panel', 'zoning-panel', 'legend-applied'])
     expect(steps.every(s => s.scroll === false)).toBe(true)
     expect(vi.mocked(a.demoZoning).mock.calls.map(([stage]) => stage)).toEqual(['load', 'legend', 'layer', 'colour', 'style', 'remove'])
+  })
+
+  it('skips the remaining zoning steps for the example legend once the zoning map fails to load', async () => {
+    vi.useFakeTimers()
+    const port: DatasetPort = { applied: () => [], add: vi.fn(), update: vi.fn(), remove: vi.fn() }
+    const close = createZoningDemo(port, { load: () => Promise.reject(new Error('offline')), fly: vi.fn() })('load')
+    const steps = subTour('map', echo, actions()).steps
+    const skipped = () => steps.filter(s => s.id.startsWith('zoning-') || s.id === 'legend').map(s => [s.id, !!s.skip?.()])
+    expect(skipped().filter(([, skip]) => skip).map(([id]) => id)).toEqual(['legend'])
+    await vi.advanceTimersByTimeAsync(0)
+    expect(skipped().filter(([, skip]) => !skip).map(([id]) => id)).toEqual(['legend'])
+    close()
+    await vi.advanceTimersByTimeAsync(16)
+    expect(skipped().filter(([, skip]) => !skip).map(([id]) => id)).toEqual(['legend'])
+    vi.useRealTimers()
   })
 
   it('shows the example legend instead of the zoning steps when the zoning map is already applied', () => {
@@ -357,6 +403,31 @@ describe('subTourSteps', () => {
     expect(resolved).toEqual(['hello-install', 'hello-controls', 'hello-installed'])
   })
 
+  it('runs the zoning apply step even before the search results show, unless the row is already ticked', () => {
+    const apply = subTour('datasets', echo, actions()).steps.find(s => s.id === 'zoning-apply')
+    document.body.innerHTML = ''
+    const beforeResults = apply?.skip?.()
+    document.body.innerHTML = '<div data-tour="datasets-list"><table><tr><td>Existing Colour Zoning</td><td><span data-tour="dataset-apply"><button data-state="checked"></button></span></td></tr></table></div>'
+    const ticked = apply?.skip?.()
+    document.body.innerHTML = ''
+    expect([beforeResults, ticked]).toEqual([false, true])
+  })
+
+  it('points the datasets collections step at whichever tab picker shows', () => {
+    const tabs = subTour('datasets', echo, actions()).steps.find(s => s.id === 'tabs')
+    document.body.innerHTML = '<div data-tour="datasets-tabs" id="tabs"></div><div data-tour="datasets-tab-select" id="select"></div>'
+    document.getElementById('select')!.getClientRects = () => [{}] as unknown as DOMRectList
+    const target = typeof tabs?.target === 'function' ? (tabs.target() as Element | null)?.id : tabs?.target
+    document.body.innerHTML = ''
+    expect(target).toBe('select')
+  })
+
+  it('leaves the settings sections as plain rows on phones, where they are a dropdown', () => {
+    const rows = (isMobile: boolean) => subTour('settings', echo, { ...actions(), isMobile: () => isMobile }).steps[0].items?.map(i => !!i.onSelect)
+    expect(rows(false)).toEqual([true, true, true])
+    expect(rows(true)).toEqual([false, false, false])
+  })
+
   it('adds the zoning search steps to the datasets tour only in Ottawa', () => {
     const ids = (ottawa: boolean) => subTour('datasets', echo, { ...actions(), inOttawa: () => ottawa }).steps.map(s => s.id)
     expect(ids(true)).toEqual(['search', 'zoning-find', 'zoning-apply', 'zoning-applied', 'zoning-remove', 'tabs', 'list'])
@@ -375,6 +446,40 @@ describe('subTourSteps', () => {
     expect(steps.map(s => s.id)).toEqual(['map-style', 'terrain', 'projection', 'buildings', 'measurements', 'location'])
     expect(a.demoMapStyle).toHaveBeenCalledOnce()
     expect(a.setMapStyle).toHaveBeenCalledWith('streets')
+  })
+
+  it('adds the comment demo to the map Communication tab only for a role that can create and delete comments', () => {
+    const ids = (a: PlatformTourActions, viewer: string = ViewerNames.map) => subTour('panel-communication', echo, a, viewer as never).steps.map(s => s.id)
+    const only = (action: string) => ({ ...actions(), can: (act: string, subject: string) => subject !== 'Comment' || act === action })
+    expect(ids(actions())).toEqual(['comments', 'comment-add', 'comment-place', 'comment-delete'])
+    expect(ids(only('create'))).toEqual(['comments'])
+    expect(ids(only('delete'))).toEqual(['comments'])
+    expect(ids(actions(), ViewerNames.bim)).toEqual(['topics', 'comments'])
+  })
+
+  it('adds the sensor demo to the map Sensors tab only with permission and at least one sensor type', () => {
+    const ids = (a: PlatformTourActions, viewer: string = ViewerNames.map) => subTour('panel-sensors', echo, a, viewer as never).steps.map(s => s.id)
+    expect(ids(actions())).toEqual(['toolbar', 'list', 'sensor-add', 'sensor-place', 'sensor-delete'])
+    expect(ids({ ...actions(), sensorTypesExist: () => false })).toEqual(['toolbar', 'list'])
+    expect(ids({ ...actions(), can: (act: string, subject: string) => subject !== 'Sensor' || act !== 'delete' })).toEqual(['toolbar', 'list'])
+    expect(ids(actions(), ViewerNames.bim)).toEqual(['toolbar', 'list'])
+  })
+
+  it('runs each demo stage with the label its copy names', () => {
+    const a = actions()
+    for (const tab of ['panel-communication', 'panel-sensors'] as const) subTour(tab, echo, a, ViewerNames.map).steps.forEach(s => s.onEnter?.())
+    expect(vi.mocked(a.demoComment).mock.calls).toEqual(['add', 'place', 'delete'].map(stage => [stage, 'panelTour.communication.demo.label']))
+    expect(vi.mocked(a.demoSensor).mock.calls).toEqual(['add', 'place', 'delete'].map(stage => [stage, 'panelTour.sensors.demo.label']))
+  })
+
+  it('points the demo steps at the add dialog and then at the placed row, never at another row', () => {
+    document.body.innerHTML = `
+      <div data-tour="panel-comments" id="panel"><div data-tour="comment-item:1" id="other"></div></div>
+      <div data-tour="comment-input" id="dialog"></div>`
+    const steps = subTour('panel-communication', echo, actions(), ViewerNames.map).steps.filter(s => s.id.startsWith('comment-'))
+    const resolved = steps.map(s => (typeof s.target === 'function' ? (s.target() as Element | null)?.id : s.target))
+    document.body.innerHTML = ''
+    expect(resolved).toEqual(['dialog', 'panel', 'panel'])
   })
 
   it('walks the BIM settings one control at a time', () => {
@@ -441,6 +546,25 @@ describe('closing a card the tour opened', () => {
     undo?.()
   })
 
+  it('puts back the datasets search before closing the dialog when leaving mid zoning demo', () => {
+    document.body.innerHTML = `<div data-tour="tool-map-database"><button aria-expanded="true"></button></div>
+      <div data-tour="datasets"><div data-tour="datasets-search"><input value="parks" /></div></div>`
+    let searchWhenClosed: string | undefined
+    document.querySelector('[data-tour="tool-map-database"] button')?.addEventListener('click', () => {
+      searchWhenClosed = document.querySelector<HTMLInputElement>('[data-tour="datasets-search"] input')?.value
+      document.querySelector('[data-tour="datasets"]')?.remove()
+    })
+    const a = { ...actions(), demoZoningMenu: createZoningMenuDemo({ applied: () => [], add: vi.fn(), update: vi.fn(), remove: vi.fn() }) }
+    const tour = subTour('datasets', echo, a)
+    const undo = tour.setup?.()
+    const closeFind = tour.steps.find(s => s.id === 'zoning-find')?.onEnter?.()
+    frames(100)
+    if (closeFind) closeFind()
+    undo?.()
+    expect(searchWhenClosed).toBe('parks')
+    frames()
+  })
+
   it('leaves a side panel tab tour when the person closes the panel, not when the tour does', () => {
     document.body.innerHTML = '<div data-tour="viewer-panel"></div>'
     const a = actions()
@@ -458,6 +582,31 @@ describe('closing a card the tour opened', () => {
     frames()
     expect(a.leave).toHaveBeenCalledOnce()
     live?.()
+  })
+
+  it('leaves a side panel tab tour when the panel slides shut but stays mounted', () => {
+    document.body.innerHTML = '<div id="overlay" data-state="open" aria-hidden="false"><div data-tour="viewer-panel"></div></div>'
+    const a = actions()
+    const undo = subTour('panel-sensors', echo, a, ViewerNames.map).setup?.()
+    frames()
+    const overlay = document.getElementById('overlay')!
+    overlay.dataset.state = 'closed'
+    overlay.setAttribute('aria-hidden', 'true')
+    frames()
+    expect(a.leave).toHaveBeenCalledOnce()
+    undo?.()
+  })
+
+  it('stays on a side panel tab tour while a modal dialog hides the app from assistive tech', () => {
+    document.body.innerHTML = '<div id="app"><div data-state="open" aria-hidden="false"><div data-tour="viewer-panel"></div></div></div>'
+    const a = actions()
+    const undo = subTour('panel-communication', echo, a, ViewerNames.map).setup?.()
+    frames()
+    document.getElementById('app')!.setAttribute('aria-hidden', 'true')
+    document.body.insertAdjacentHTML('beforeend', '<div role="dialog" data-state="open"></div>')
+    frames()
+    expect(a.leave).not.toHaveBeenCalled()
+    undo?.()
   })
 
   const openTool = (id: string) => {
@@ -483,6 +632,19 @@ describe('closing a card the tour opened', () => {
     document.getElementById('card')?.remove()
     frames()
     expect(b.leave).not.toHaveBeenCalled()
+  })
+
+  it('stays in the tools tour when the person picks an option and the dropdown closes', () => {
+    openTool('map-add')
+    document.getElementById('card')?.insertAdjacentHTML('beforeend', '<div role="menuitem" id="add-file">File</div>')
+    const a = actions()
+    const undo = subTour('tools', echo, a, ViewerNames.map).steps.find(s => s.id === toolStepId('map-add'))?.onEnter?.()
+    frames()
+    document.getElementById('add-file')?.click()
+    document.getElementById('card')?.remove()
+    frames()
+    expect(a.leave).not.toHaveBeenCalled()
+    if (undo) undo()
   })
 
   it('treats an open share dialog as the share dropdown still being open', () => {

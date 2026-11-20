@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { schedule } from './platformHost'
+
+import type { Schedule } from './platformHost'
+
 interface Hold {
   count: number
   undo: () => void
@@ -28,5 +32,17 @@ export function holdDemo(key: string, start: () => () => void): () => void {
       holds.delete(key)
       hold.undo()
     })
+  }
+}
+
+/** Holds the demo under `key` and runs one stage of it; the returned cancel stops the stage, runs its leave, and releases. */
+export function runStage(key: string, start: () => () => void, run: (s: Schedule) => void | (() => void), stopped?: () => boolean): () => void {
+  const release = holdDemo(key, start)
+  const s = schedule(stopped)
+  const leave = run(s)
+  return () => {
+    s.cancel()
+    if (typeof leave === 'function') leave()
+    release()
   }
 }

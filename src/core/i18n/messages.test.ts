@@ -34,17 +34,12 @@ describe('message catalogues', () => {
     }
   })
 
-  it('gives every locale the new GuidedTour namespace', () => {
-    for (const [name, locale] of [['es', es], ['fr', fr]] as const) {
-      expect(keysOf((locale as never)['GuidedTour']), name).toEqual(keysOf((en as never)['GuidedTour']))
-    }
-  })
-
-  it('gives every locale the same PlatformTour keys, nested ones included', () => {
+  it('gives every locale the same GuidedTour and PlatformTour keys, nested ones included', () => {
     const paths = (node: unknown, prefix = ''): string[] => (typeof node === 'object' && node !== null
       ? Object.entries(node).flatMap(([key, value]) => paths(value, `${prefix}${key}.`))
       : [prefix]).sort()
     for (const [name, locale] of [['es', es], ['fr', fr]] as const) {
+      expect(paths((locale as never)['GuidedTour']), name).toEqual(paths((en as never)['GuidedTour']))
       expect(paths((locale as never)['PlatformTour']), name).toEqual(paths((en as never)['PlatformTour']))
       expect(keysOf((locale as never)['supportMenu']), name).toEqual(keysOf((en as never)['supportMenu']))
     }

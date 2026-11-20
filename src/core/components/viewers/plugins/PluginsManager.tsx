@@ -183,7 +183,12 @@ export function PluginsManager({ listings, actions, registryActions }: Props) {
         })
         toast.error(t('toastFailed', { name }))
       } finally {
-        setWriting(current => ({ ...current, [slug]: (current[slug] ?? 1) - 1 }))
+        setWriting(current => {
+          const left = (current[slug] ?? 1) - 1
+          if (left > 0) return { ...current, [slug]: left }
+          const { [slug]: _done, ...rest } = current
+          return rest
+        })
       }
     },
     [t],

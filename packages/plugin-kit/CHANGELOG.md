@@ -13,8 +13,8 @@ repository root.
   `browserTourStore`, `findSidebarPageLink`, `setToolbarPanel`, `TourBody`, `splitTerm`). The types are also
   exported from `@collabdt/plugin-kit/types/tour`. Using it requires a platform running `@collabdt/core` with
   the same addition.
-  Steps take `items` (`TourItem`: icon rows, buttons when they have `onSelect`), `onEnter` may return a
-  cleanup and `shortcut` adds a small button at the top of the card and `skip` passes over a step; `GuidedTour` takes `startAt`, `onFinish` and `onStepChange`.
+  Steps also take `items`, `shortcut` and `skip`, and `onEnter` may return a cleanup; `GuidedTour` takes `startAt`,
+  `onFinish` and `onStepChange`.
 
 ## [0.13.0] - 2026-10-23
 

@@ -22,6 +22,7 @@ import {
   SidebarFooter,
   useSidebar,
 } from '../components/ui/Sidebar'
+import { useChangeViewer } from '../hooks/ui/useChangeViewer'
 import { useUserRole } from '../hooks/users/users'
 import { usePluginDataPages } from '../plugins/host/usePluginDataPages'
 import { AppConfigContext, MapContext, useMenusContext } from '../store'
@@ -46,10 +47,6 @@ import { isViewerAllowed } from './viewers/viewerAccess'
 
 import type { Organization, Language, ViewerKey } from '../types/dbTypes'
 import type { RoleNames } from '../types/global'
-
-
-
-
 
 export const handleChangeViewer = (
   viewer: ViewerKey,
@@ -111,8 +108,7 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, stora
   const logoFallbacks = orgLogoCandidates(storageBaseUrl, organization?.name)
 
 
-  const { dispatch: menusDispatch, state: menusState } = useMenusContext()
-  const { setSelectedItem, setSelectedSite, setSelectedFile, setView } = useMenusContext()
+  const { state: menusState } = useMenusContext()
 
   const { data: session } = useSession()
   const { userRole } = useUserRole(session?.user?.id || '')
@@ -122,16 +118,13 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, stora
   )
 
   const {
-    sidebarState, setOpenInfo, isMobile, openMobile, setOpenMobile,
+    sidebarState, isMobile, openMobile, setOpenMobile,
     setBugReportOpen, setFeatureRequestOpen, setGuideOpen,
   } = useSidebar()
 
   const pluginPages = usePluginDataPages()
 
-  const changeViewer = (viewer: ViewerKey) => {
-    handleChangeViewer(viewer, setSelectedItem, setSelectedSite, setSelectedFile, setView, menusDispatch)
-    setOpenInfo(false)
-  }
+  const changeViewer = useChangeViewer()
 
   const handleMapClick = () => {
     changeViewer(ViewerNames.map)

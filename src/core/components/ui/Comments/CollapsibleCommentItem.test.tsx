@@ -83,6 +83,12 @@ describe('CollapsibleCommentItem', () => {
     expect(onAction).toHaveBeenCalledWith('delete', 1)
   })
 
+  it('marks its row and delete button for the guided tour', () => {
+    render(<CollapsibleCommentItem comment={baseComment} onAction={vi.fn()} />)
+
+    expect(document.querySelector('[data-tour="comment-item:1"] [data-tour="item-delete"]')).toBe(screen.getByTitle('deleteComment'))
+  })
+
   it('does not render edit/delete buttons when the session user is not the author', () => {
     const otherAuthor = { ...baseComment, authorId: 99 }
     const onAction = vi.fn()

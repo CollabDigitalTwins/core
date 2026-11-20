@@ -331,6 +331,7 @@ export function SensorsSection() {
             className="mt-2 px-4 "
             variant='outline'
             onClick={() => handleAddSensor()}
+            data-tour="sensors-add"
           >
             {t('addSensorTitle')}
           </Button>
@@ -353,6 +354,7 @@ export function SensorsSection() {
               className="overflow-y-auto"
               itemCount={sensorsOfType.length}
               onAddItem={() => handleAddSensor(typeId)}
+              tourAnchor={`sensor-type:${typeId}`}
               addItemTitle={t('addSensorTitle')}
               defaultOpen={false}
               switchVariant={{
@@ -394,6 +396,7 @@ export function SensorsSection() {
             className="overflow-y-auto"
             itemCount={sensorsOfTag.length}
             defaultOpen={false}
+            tourAnchor={`sensor-tag:${tag}`}
             switchVariant={{
               checked: isTagVisible,
               onCheckedChange: () => toggleSensorTagVisibility(tag),

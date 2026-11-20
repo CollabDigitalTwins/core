@@ -42,4 +42,18 @@ describe('SupportMenu', () => {
 
     await waitFor(() => expect(onOpenGuide).toHaveBeenCalledOnce())
   })
+
+  it('leaves out the Guide item when no guide is wired up', async () => {
+    render(
+      <MenusProvider>
+        <SidebarProvider>
+          <SupportMenu item={{ title: 'Support' }} isCollapsed={false} onOpenBug={vi.fn()} onOpenFeature={vi.fn()} />
+        </SidebarProvider>
+      </MenusProvider>,
+    )
+
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Support' }), { key: 'Enter' })
+    await screen.findByRole('menuitem', { name: 'reportBug' })
+    expect(screen.queryByRole('menuitem', { name: 'guide' })).not.toBeInTheDocument()
+  })
 })

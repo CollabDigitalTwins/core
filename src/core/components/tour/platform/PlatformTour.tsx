@@ -10,7 +10,7 @@ import { useMenusContext } from '../../../store'
 import { CdtIcon } from '../../ui/Icons/CdtIcon'
 import { useSidebar } from '../../ui/Sidebar'
 import { GuidedTour } from '../GuidedTour'
-import { PLATFORM_TOUR_PRIORITY, TourPriorityContext } from '../tourQueue'
+import { PLATFORM_TOUR_PLUGINS_PRIORITY, PLATFORM_TOUR_PRIORITY, TourPriorityContext } from '../tourQueue'
 import { browserTourStore } from '../tourStore'
 
 import { PLATFORM_TOUR_ID } from './platformTourSteps'
@@ -20,7 +20,7 @@ import type { TourStore } from '../tourStore'
 
 const defaultStore = () => browserTourStore({ storage: 'local', namespace: 'cdt' })
 
-/** The platform tour: opens once per device on first visit, and again from Support → Guide; plugin tours wait for it. */
+/** The platform tour: opens once per device on first visit, and again from Support → Guide; plugin tours wait for it until the plugins section. */
 export function PlatformTour({ store }: { store?: TourStore }) {
   const resolved = React.useMemo(() => store ?? defaultStore(), [store])
   const t = useTranslations('PlatformTour')
@@ -41,7 +41,7 @@ export function PlatformTour({ store }: { store?: TourStore }) {
 
   if (!guideOpen) return null
   return (
-    <TourPriorityContext.Provider value={PLATFORM_TOUR_PRIORITY}>
+    <TourPriorityContext.Provider value={tour.yieldsToPluginTours ? PLATFORM_TOUR_PLUGINS_PRIORITY : PLATFORM_TOUR_PRIORITY}>
       <GuidedTour
         key={tour.key}
         steps={tour.steps}

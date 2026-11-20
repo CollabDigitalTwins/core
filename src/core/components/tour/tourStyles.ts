@@ -35,12 +35,12 @@ export const TOUR_CSS = `
 .cdt-tour-hide:hover { background: var(--tour-accent-strong); }
 .cdt-tour-hide span { font-size: 1rem; line-height: 1; }
 
-.cdt-tour-card { position: fixed; z-index: 9; width: min(360px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-x: hidden; overflow-y: auto; pointer-events: auto; background: var(--tour-surface); border-radius: 12px; box-shadow: 0 18px 48px color-mix(in srgb, var(--tour-ink) 35%, transparent); opacity: 0; transform: translateY(6px); }
+.cdt-tour-card { position: fixed; z-index: 9; width: min(360px, calc(100vw - 32px)); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-x: hidden; overflow-y: auto; pointer-events: auto; background: var(--tour-surface); border-radius: 12px; box-shadow: 0 18px 48px color-mix(in srgb, var(--tour-ink) 35%, transparent); opacity: 0; transform: translateY(6px); }
 .cdt-tour-card.is-settled { opacity: 1; transform: none; transition: opacity 220ms ease-out, transform 220ms ease-out; }
-.cdt-tour-card > header { position: relative; overflow: hidden; display: flex; align-items: center; gap: 0.75rem; background: var(--tour-header-bg); color: var(--tour-header-fg); padding: 0.7rem 1rem; border-radius: 12px 12px 0 0; }
-.cdt-tour-shortcut { padding: 0.2rem 0.6rem; border: 1px solid color-mix(in srgb, var(--tour-header-fg) 55%, transparent); border-radius: 999px; background: none; font: inherit; font-size: 0.75rem; font-weight: 600; color: inherit; cursor: pointer; white-space: nowrap; }
+.cdt-tour-card > header { position: sticky; top: 0; z-index: 1; overflow: hidden; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.75rem; background: var(--tour-header-bg); color: var(--tour-header-fg); padding: 0.7rem 1rem; border-radius: 12px 12px 0 0; }
+.cdt-tour-shortcut { padding: 0.2rem 0.6rem; border: 1px solid color-mix(in srgb, var(--tour-header-fg) 55%, transparent); border-radius: 999px; background: none; font: inherit; font-size: 0.75rem; font-weight: 600; color: inherit; cursor: pointer; min-width: 0; text-align: left; }
 .cdt-tour-shortcut:hover { background: color-mix(in srgb, var(--tour-header-fg) 15%, transparent); }
-.cdt-tour-card > header small { margin-left: auto;font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.85; }
+.cdt-tour-card > header small { margin-left: auto; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.85; }
 
 .cdt-tour-body { padding: 0.9rem 1rem 0.4rem; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.82rem; line-height: 1.45; color: var(--tour-text); }
 .cdt-tour-body h3 { display: flex; flex-direction: column; gap: 0.35rem; margin: 0; font-size: 1.05rem; font-weight: 600; color: var(--tour-ink); }
@@ -67,17 +67,26 @@ button.cdt-tour-item:hover .cdt-tour-item-go { opacity: 1; }
 @keyframes cdt-tour-shimmer { to { background-position: -200% 0; } }
 .cdt-tour-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-.cdt-tour-card > footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.6rem 1rem 0.9rem; }
+.cdt-tour-card > footer { position: sticky; bottom: 0; background: var(--tour-surface); border-radius: 0 0 12px 12px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.6rem 1rem 0.9rem; }
 .cdt-tour-dots { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
 .cdt-tour-dots button { width: 8px; height: 8px; padding: 0; border: none; border-radius: 999px; background: var(--tour-muted); cursor: pointer; }
 .cdt-tour-dots button[aria-current='step'] { width: 18px; background: var(--tour-accent); }
-.cdt-tour-actions { display: flex; gap: 0.4rem; margin-left: auto; }
-.cdt-tour-actions button { font: inherit; font-size: 0.8rem; font-weight: 600; border-radius: 6px; padding: 0.4rem 0.8rem; white-space: nowrap; cursor: pointer; }
+.cdt-tour-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.4rem; min-width: 0; margin-left: auto; }
+.cdt-tour-actions button { font: inherit; font-size: 0.8rem; font-weight: 600; border-radius: 6px; padding: 0.4rem 0.8rem; text-align: center; cursor: pointer; }
 .cdt-tour-back { background: none; border: 1px solid var(--tour-muted); color: var(--tour-ink); }
 .cdt-tour-back:disabled { opacity: 0.4; cursor: default; }
 .cdt-tour-next { background: var(--tour-accent); border: 1px solid var(--tour-accent); color: var(--tour-on-accent); }
 .cdt-tour-next:hover { background: var(--tour-accent-strong); border-color: var(--tour-accent-strong); }
 .cdt-tour button:focus-visible { outline: 2px solid var(--tour-focus); outline-offset: 2px; }
+
+@media (pointer: coarse) {
+  .cdt-tour-dots { display: none; }
+  .cdt-tour-actions button, .cdt-tour-hide { min-height: 44px; padding-inline: 1rem; }
+  .cdt-tour-shortcut { min-height: 36px; }
+}
+@media (max-width: 767px) {
+  .cdt-tour-hide { top: auto; bottom: 72px; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .cdt-tour-spot.is-settled, .cdt-tour-ring.is-settled, .cdt-tour-arrow.is-settled, .cdt-tour-card.is-settled, .cdt-tour-waiting > span { transition: none; animation: none; }

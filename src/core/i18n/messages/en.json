@@ -463,7 +463,7 @@
   "PlatformTour": {
     "welcome": {
       "title": "Welcome to the CDT platform",
-      "body": "Buildings, maps, models and data for your organization, in one place.\nThis tour shows you the main features and how to move around the platform. You can hide it and open it again at any time from @support → @guide.",
+      "body": "This tour shows you the main features and how to move around the platform. You can hide it and open it again at any time from @support → @guide.",
       "shortcut": {
         "map": "Tour the map viewer",
         "bim": "Tour the BIM viewer",
@@ -500,7 +500,7 @@
     },
     "searchDemo": {
       "title": "Search the map",
-      "body": "Type an address, a place or one of your buildings, then pick a result and the map flies there. Watch it find Carleton University and pick it from the list."
+      "body": "Type an address, a place or one of your buildings, then pick a result and the map flies there. Watch it search for Carleton University and fly there."
     },
     "panel": {
       "map": {
@@ -735,7 +735,7 @@
       },
       "items": {
         "file": {
-          "term": "Files",
+          "term": "File",
           "description": "Models, point clouds and documents: your organization's on the map, the selected building's in BIM."
         },
         "layers": {
@@ -743,7 +743,7 @@
           "description": "On the map, add, show and style datasets; in BIM, open drawings and show or hide parts of the model."
         },
         "communication": {
-          "term": "Comments",
+          "term": "Communication",
           "description": "Comments pinned to places, plus BCF topics in BIM."
         },
         "sensors": {
@@ -809,7 +809,7 @@
           },
           "users": {
             "term": "Users",
-            "description": "Create accounts with a temporary password and manage their roles. Administrators only."
+            "description": "Create accounts with a temporary password and manage their roles."
           },
           "organization": {
             "term": "Organization",
@@ -873,7 +873,7 @@
           },
           "addPortal": {
             "term": "Add portal",
-            "description": "Connect another open data portal. Administrators only."
+            "description": "Connect another open data portal."
           }
         }
       },
@@ -912,7 +912,7 @@
             "description": "Your organization's own data."
           },
           "all": {
-            "term": "All datasets",
+            "term": "All Datasets",
             "description": "Everything you can use."
           },
           "national": {
@@ -920,7 +920,7 @@
             "description": "Country-wide open data."
           },
           "subdivision": {
-            "term": "Country subdivision",
+            "term": "Country Subdivision",
             "description": "Open data for the current province or state."
           },
           "municipal": {
@@ -928,7 +928,7 @@
             "description": "Open data for the current city, when one is known."
           },
           "liveData": {
-            "term": "Live data",
+            "term": "Live Data",
             "description": "Feeds that update in real time."
           }
         }
@@ -987,11 +987,11 @@
       },
       "layers": {
         "applied": {
-          "title": "Applied datasets",
+          "title": "Applied Datasets",
           "body": "Datasets added to the map. Drag to reorder; each row can hide, zoom to, style or remove its dataset. The switch shows or hides them all."
         },
         "available": {
-          "title": "Available datasets",
+          "title": "Available Datasets",
           "body": "Open a group to add more datasets to the map.",
           "items": {
             "favourites": {
@@ -1019,7 +1019,7 @@
               "description": "Open data for the current city, when one is known."
             },
             "liveData": {
-              "term": "Live data",
+              "term": "Live Data",
               "description": "Feeds that update in real time."
             }
           }
@@ -1051,7 +1051,7 @@
               "description": "By building, storey and space."
             },
             "ifcClasses": {
-              "term": "IFC classes",
+              "term": "IFC Classes",
               "description": "By element type, such as walls or doors."
             }
           }
@@ -1063,7 +1063,7 @@
           "body": "Issues on the model in BIM Collaboration Format (BCF). Topics last only for this session; export them to keep them.",
           "items": {
             "add": {
-              "term": "Add topic",
+              "term": "Add Topic",
               "description": "Raise an issue on what you are looking at."
             },
             "export": {
@@ -1093,6 +1093,21 @@
               "description": "Turn the comment pins in the viewer on or off."
             }
           }
+        },
+        "demo": {
+          "label": "Tour demo comment"
+        },
+        "comment-add": {
+          "title": "Write a comment",
+          "body": "The + in the Comments header opens Add Comment. Write the comment, then press the + beside it. The tour writes a demo comment and presses +."
+        },
+        "comment-place": {
+          "title": "Place it on the map",
+          "body": "After the +, double-click the map where the comment belongs. The tour double-clicks the centre of the map, and the comment shows on the map and in this list. Everyone in your organization can see it."
+        },
+        "comment-delete": {
+          "title": "Delete it",
+          "body": "The bin on a comment deletes it together with its replies, without asking. Only its author sees the bin. The tour deletes the demo comment."
         }
       },
       "sensors": {
@@ -1121,6 +1136,21 @@
         "list": {
           "title": "Your sensors",
           "body": "Sensors grouped by type or tag, with their latest reading when there is one. A group's switch shows it in the viewer; in type groups, the + adds a sensor."
+        },
+        "demo": {
+          "label": "Tour demo sensor"
+        },
+        "sensor-add": {
+          "title": "Add a sensor",
+          "body": "A type group's + opens Add Sensor with that type picked; with no sensors listed, Add Sensor under the empty list opens it too. Pick a Type, give it a Sensor Name and a Data URL; leaving the URL field counts the data points it finds there. Data Format, Update Frequency and Tags can keep their defaults. The tour fills in a demo temperature feed and presses Place Sensor."
+        },
+        "sensor-place": {
+          "title": "Place it on the map",
+          "body": "After Place Sensor, double-click the map where the sensor is. The tour double-clicks the centre of the map, and the sensor joins its type's group in this list. Everyone in your organization can see it."
+        },
+        "sensor-delete": {
+          "title": "Delete it",
+          "body": "The bin at the bottom of a sensor deletes it, without asking. Only its author sees the bin. The tour deletes the demo sensor."
         }
       }
     },
@@ -1143,7 +1173,7 @@
           },
           "notInstalled": {
             "term": "Not installed",
-            "description": "Plugins your organization has not installed yet. Administrators only."
+            "description": "Plugins your organization has not installed yet."
           },
           "search": {
             "term": "Search",
@@ -1204,6 +1234,7 @@
             }
           }
         },
+        "controlsUser": "Your organization had Hello Map before the tour, so the tour does not touch its organization switches. Your own switch, when your role has one, works here, and the tour switches it back when you leave.",
         "controlsReadOnly": "Your organization's administrators decide whether this plugin runs. The row tells you what they chose.",
         "uninstall": {
           "title": "Uninstall it",
@@ -1252,7 +1283,7 @@
       },
       "legend": {
         "title": "Expand the legend",
-        "body": "The Applied layers card lists every layer on the map. Its chevron opens or folds the card; the tour opens it."
+        "body": "The Layers card lists every layer on the map. Its chevron opens or folds the card; the tour opens it."
       },
       "layer": {
         "title": "Expand the layer",
@@ -1260,11 +1291,11 @@
       },
       "colour": {
         "title": "Colour by a field",
-        "body": "Zoning starts coloured by PARENTZONE, the publisher's own colours; the tour switches Colour by to ZONE_MAIN and the map recolours by main zone."
+        "body": "Zoning starts in the publisher's own colours. The tour sets Colour by to the main zone field (ZONE_MAIN) and the map recolours by main zone."
       },
       "style": {
         "title": "Labels and more style",
-        "body": "More style holds the opacity, border colour, border width and labels. The tour writes each parcel's ZONE_CODE on the map, darkens the border and lowers the opacity."
+        "body": "More style holds the opacity, border colour, border width and labels. The tour writes each parcel's ZONE_CODE on the map, darkens the border and sets the opacity to 60%."
       },
       "remove": {
         "title": "Remove a layer",
@@ -1285,7 +1316,7 @@
         },
         "source": {
           "term": "Where legends come from",
-          "description": "Sensors get their own card; applied datasets, including plugin layers, show their legend in the Applied layers card."
+          "description": "Sensors get their own card; applied datasets, including plugin layers, show their legend in the Layers card."
         }
       }
     },
@@ -1326,15 +1357,15 @@
       },
       "terrain": {
         "title": "Terrain",
-        "body": "Adds hills and valleys when zoomed in. Which levels you can pick depends on your organization. The step tries one and switches back when you move on."
+        "body": "Adds hills and valleys to the map. Which levels you can pick depends on your organization's country and the platform's setup. The step tries one and switches back when you move on."
       },
       "projection": {
         "title": "Projection",
-        "body": "Globe curves the map like the Earth when zoomed out. Zoomed in past level 5, the map is always flat (Mercator)."
+        "body": "Globe curves the map like the Earth when zoomed out. Zoomed in past level 5, the map is always flat (Mercator). Watch it switch; it goes back when you move on."
       },
       "buildings": {
-        "title": "3D buildings",
-        "body": "Shows or hides the 3D buildings: the base map's and the ones drawn in the platform. Watch them turn off and on."
+        "title": "3D Buildings",
+        "body": "Shows or hides the 3D buildings: the base map's and the ones drawn in the platform. Watch it switch; it goes back when you move on."
       },
       "measurements": {
         "title": "Measurements",
@@ -1346,11 +1377,11 @@
       },
       "render-mode": {
         "title": "Render mode",
-        "body": "Shadowed adds sun shadows; Basic draws without them and is faster. Watch it switch."
+        "body": "Shadowed adds sun shadows; Basic draws without them and is faster. Watch it switch; it goes back when you move on."
       },
       "bim-projection": {
         "title": "Projection",
-        "body": "Perspective looks natural; Orthographic keeps lines parallel, good for plans and elevations. Watch it switch."
+        "body": "Perspective looks natural; Orthographic keeps lines parallel, good for plans and elevations. Watch it switch; it goes back when you move on."
       },
       "navigation": {
         "title": "Navigation",

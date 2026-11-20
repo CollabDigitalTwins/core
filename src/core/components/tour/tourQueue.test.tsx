@@ -6,7 +6,7 @@ import { render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { describe, expect, it } from 'vitest'
 
-import { PLATFORM_TOUR_PRIORITY, TourPriorityContext, useTourTurn } from './tourQueue'
+import { PLATFORM_TOUR_PLUGINS_PRIORITY, PLATFORM_TOUR_PRIORITY, TourPriorityContext, useTourTurn } from './tourQueue'
 
 function Probe({ name }: { name: string }) {
   return useTourTurn() ? <p>{name}</p> : null
@@ -42,6 +42,22 @@ describe('useTourTurn', () => {
   it('lets the platform tour take over a plugin tour that is already showing', () => {
     const { rerender, unmount } = render(<Page platform={false} plugins={['plugin']} />)
     rerender(<Page platform plugins={['plugin']} />)
+    expect(screen.getByText('platform')).toBeTruthy()
+    expect(screen.queryByText('plugin')).toBeNull()
+    unmount()
+  })
+
+  it('hands the turn to a lower-priority tour while a token drops below it, and takes it back', () => {
+    function Shifting({ priority }: { priority: number }) {
+      return <TourPriorityContext.Provider value={priority}><Probe name="platform" /></TourPriorityContext.Provider>
+    }
+    const page = (priority: number) => <><Probe name="plugin" /><Shifting priority={priority} /></>
+    const { rerender, unmount } = render(page(PLATFORM_TOUR_PRIORITY))
+    expect(screen.getByText('platform')).toBeTruthy()
+    rerender(page(PLATFORM_TOUR_PLUGINS_PRIORITY))
+    expect(screen.getByText('plugin')).toBeTruthy()
+    expect(screen.queryByText('platform')).toBeNull()
+    rerender(page(PLATFORM_TOUR_PRIORITY))
     expect(screen.getByText('platform')).toBeTruthy()
     expect(screen.queryByText('plugin')).toBeNull()
     unmount()

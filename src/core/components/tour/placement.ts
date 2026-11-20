@@ -69,13 +69,31 @@ export const fitsBeside = (target: Box, cardWidth: number, viewportWidth: number
 
 export interface Placement { left: number; top: number; maxHeight?: number }
 
+const capped = (left: number, top: number, viewport: Size): Placement => ({ left, top, maxHeight: viewport.height - top - MARGIN })
+
+// Docks at the edge with more room outside the target, so a short card covers only the target's far end.
+function dockToEdge(target: Box, card: Size, viewport: Size, blocked: Box[]): Placement {
+  const left = Math.max(MARGIN, (viewport.width - card.width) / 2)
+  const column = { left, top: 0, width: card.width, height: viewport.height }
+  const inColumn = blocked.filter(b => overlaps(b, column))
+  const upper = inColumn.filter(b => b.top + b.height / 2 < viewport.height / 2)
+  const ceiling = Math.max(MARGIN, ...upper.map(bottom))
+  const floor = Math.min(viewport.height - MARGIN, ...inColumn.filter(b => !upper.includes(b)).map(b => b.top))
+  const above = target.top - GAP - ceiling
+  const below = floor - bottom(target) - GAP
+  const height = Math.min(card.height, Math.max(above, below, MIN_HEIGHT))
+  return { left, top: below >= above ? floor - height : ceiling, maxHeight: height }
+}
+
 /** The free spot nearest the target, clear of it and of `avoid`, shortening the card before covering the target. */
 export function placeCard(target: Box | null, card: Size, viewport: Size, avoid: Box[] = []): Placement {
-  const anchor = target ?? { left: viewport.width / 2, top: viewport.height / 2, width: 0, height: 0 }
   const blocked = avoid.map(b => inflate(b, GAP))
-  const beside = target && tallestFree(anchor, card, viewport, [...blocked, inflate(target, GAP)])
-  if (beside) return { left: beside.left, top: beside.top, ...(beside.height < card.height && { maxHeight: beside.height }) }
-  const spot = nearestFree(anchor, card, viewport, blocked)
-  if (spot) return { left: spot.left, top: spot.top }
-  return { left: Math.max(MARGIN, (viewport.width - card.width) / 2), top: Math.max(MARGIN, viewport.height - card.height - MARGIN) }
+  if (target) {
+    const beside = tallestFree(target, card, viewport, [...blocked, inflate(target, GAP)])
+    return beside ? { left: beside.left, top: beside.top, maxHeight: beside.height } : dockToEdge(target, card, viewport, blocked)
+  }
+  const centre = { left: viewport.width / 2, top: viewport.height / 2, width: 0, height: 0 }
+  const spot = nearestFree(centre, card, viewport, blocked)
+  if (spot) return capped(spot.left, spot.top, viewport)
+  return capped(Math.max(MARGIN, (viewport.width - card.width) / 2), Math.max(MARGIN, viewport.height - card.height - MARGIN), viewport)
 }

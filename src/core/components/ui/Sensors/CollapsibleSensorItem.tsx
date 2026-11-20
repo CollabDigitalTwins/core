@@ -126,6 +126,7 @@ export function CollapsibleSensorItem({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onClick={onSelect}
+      data-tour={`sensor-item:${sensor.id}`}
     >
       {/* Sensor Header */}
       <div className="flex items-start justify-between p-3 hover:bg-accent/50 transition-colors">

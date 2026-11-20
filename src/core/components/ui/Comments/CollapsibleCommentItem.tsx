@@ -132,6 +132,7 @@ export function CollapsibleCommentItem({
   return (
     <div
       ref={containerRef}
+      data-tour={`comment-item:${comment.id}`}
       className={cn(
         'transition-colors',
         !isReply && 'rounded-md border',

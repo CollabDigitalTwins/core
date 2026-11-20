@@ -16,6 +16,8 @@ const CAMPUS_MEASURES: Record<MeasureKind, LngLat[]> = {
 
 const CAMPUS_MIN_MAX_ZOOM = 15
 const MEASURE_CLICK_GAP_MS = 700
+const NARROW_WIDTH = 768
+const CARD_SHARE_OF_HEIGHT = 0.45
 
 interface ReachableMap {
   getMaxBounds: () => { contains: (lngLat: [number, number]) => boolean } | null
@@ -32,9 +34,29 @@ export function canReachCampus(map: ReachableMap | null): boolean {
     && map.getMinZoom() <= CAMPUS_CAMERA.zoom
 }
 
-export function measureCoordsAround(kind: MeasureKind, center: LngLat): LngLat[] {
+function measureCoordsAround(kind: MeasureKind, center: LngLat): LngLat[] {
   const [dLng, dLat] = [center[0] - CAMPUS_CAMERA.center[0], center[1] - CAMPUS_CAMERA.center[1]]
   return CAMPUS_MEASURES[kind].map(([lng, lat]): LngLat => [lng + dLng, lat + dLat])
+}
+
+const boundsOf = (coords: LngLat[]): [LngLat, LngLat] => {
+  const lngs = coords.map(([lng]) => lng)
+  const lats = coords.map(([, lat]) => lat)
+  return [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]]
+}
+
+function frameCampus(map: MapLibreMap, coords: LngLat[]) {
+  if (window.innerWidth >= NARROW_WIDTH) return void map.flyTo(CAMPUS_CAMERA)
+  const padding = { top: 72, left: 24, right: 24, bottom: Math.round(window.innerHeight * CARD_SHARE_OF_HEIGHT) }
+  map.fitBounds(boundsOf(coords), { padding, duration: CAMPUS_CAMERA.duration })
+}
+
+/** The map point in the middle of what a left-hand overlay, such as the side panel, leaves in view. */
+export function uncoveredCentre(map: MapLibreMap, cover: Element | null) {
+  const box = map.getContainer().getBoundingClientRect()
+  const coverRight = cover?.getBoundingClientRect().right ?? box.left
+  const left = coverRight > box.left && coverRight < box.right ? coverRight : box.left
+  return map.unproject([(left + box.right) / 2 - box.left, box.height / 2])
 }
 
 const clickMap = (map: MapLibreMap, lngLat: LngLat) =>
@@ -45,13 +67,17 @@ export function demoMeasure(map: MapLibreMap | null, kind: MeasureKind, onCampus
   if (!map) return () => {}
   const { lng, lat } = map.getCenter()
   const coords = onCampus ? CAMPUS_MEASURES[kind] : measureCoordsAround(kind, [lng, lat])
-  if (onCampus) map.flyTo(CAMPUS_CAMERA)
+  if (onCampus) frameCampus(map, coords)
   setToolOpen('map-measure', true)
   const stopWatching = onClosed(() => openToolPanel('map-measure'), leave)
   const removeRegion = anchorMapRegion(map, coords, MEASURE_REGION)
   let cancelPress = () => {}
+  const pickKind = () => {
+    stopWatching()
+    cancelPress = pressWhenShown(`measure-${kind}`)
+  }
   const cancelTimeline = runTimeline([
-    [onCampus ? CAMPUS_CAMERA.duration : 0, () => { cancelPress = pressWhenShown(`measure-${kind}`) }],
+    [onCampus ? CAMPUS_CAMERA.duration : 0, pickKind],
     ...coords.map((coord): [number, () => void] => [MEASURE_CLICK_GAP_MS, () => clickMap(map, coord)]),
   ])
   return () => {

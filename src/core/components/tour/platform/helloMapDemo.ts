@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
-import { holdDemo } from './liveDemo'
-import { DEMO_DELAY_MS, expandIfCollapsed, press, schedule, waitFor } from './platformHost'
+import { anchorSelector, findAnchor } from '../hostTargets'
+
+import { runStage } from './liveDemo'
+import { ARRIVAL_FRAMES, DEMO_DELAY_MS, expandIfCollapsed, press, schedule, waitFor } from './platformHost'
 
 import type { Schedule } from './platformHost'
 
 const HELLO_MAP = 'hello-map'
-const ROW = '[data-tour="plugin-row-hello-map"]'
 
 export type HelloMapStage = 'open' | 'install' | 'controls' | 'uninstall'
 
@@ -24,19 +25,21 @@ interface Pending {
 }
 
 const ORG_CONTROLS: ReadonlySet<HelloMapControl> = new Set(['installed', 'org-enabled', 'allow-override'])
-const UNINSTALL_WATCH_FRAMES = 3600
+
+/** Whether the switch changes Hello Map for the whole organization rather than for the person. */
+export const isOrgControl = (control: HelloMapControl) => ORG_CONTROLS.has(control)
 
 let session: Session | null = null
 let pendingUndo: Pending | null = null
 
-export const helloMapRow = () => document.querySelector<HTMLElement>(ROW)
+export const helloMapRow = () => findAnchor(`plugin-row-${HELLO_MAP}`)
 
 const inRow = (selector: string) => helloMapRow()?.querySelector<HTMLElement>(selector) ?? null
 
 /** The `data-tour` control inside the Hello Map row, never the same control in another plugin's row. */
-export const helloMapControl = (anchor: string) => inRow(`[data-tour="${anchor}"]`)
+export const helloMapControl = (anchor: string) => inRow(anchorSelector(anchor))
 
-const switchOf = (control: HelloMapControl) => inRow(`[data-tour="plugin-${control}"] [role="switch"]`)
+const switchOf = (control: HelloMapControl) => inRow(`${anchorSelector(`plugin-${control}`)} [role="switch"]`)
 
 const isOn = (toggle: HTMLElement) => toggle.getAttribute('aria-checked') === 'true'
 
@@ -44,14 +47,15 @@ const installButton = () => helloMapControl('plugin-install')
 
 const idle = () => !inRow('[data-tour="plugin-controls"][aria-busy="true"]')
 
-export const helloMapInstalledByTour = () => session?.installedByTour === true && !installButton()
+export const helloMapInstalledByTour = () => session?.installedByTour === true
 
-const confirmButton = () => document.querySelector<HTMLElement>('[data-tour="confirm-action"]')
+const confirmButton = () => findAnchor('confirm-action')
 
-const cancelButton = () => document.querySelector<HTMLElement>('[data-tour="confirm-cancel"]')
+const cancelButton = () => findAnchor('confirm-cancel')
 
-// The first aria-expanded button is the row's own toggle; later ones are popovers in its cells.
-const expandRow = () => expandIfCollapsed(inRow('button[aria-expanded]'))
+const rowToggle = () => inRow('button[aria-expanded]')
+
+const expandRow = () => expandIfCollapsed(rowToggle())
 
 function forget(state: Session) {
   state.installedByTour = false
@@ -85,9 +89,28 @@ const switchesShown = (state: Session) => idle()
   && [...state.flipped.keys()].every(control => !!switchOf(control))
   && (!state.installedByTour || !!switchOf('installed'))
 
-function undo(state: Session) {
+function whenRowMounts(s: Schedule, then: () => void) {
+  const observer = new MutationObserver(() => {
+    if (!helloMapRow()) return
+    observer.disconnect()
+    then()
+  })
+  observer.observe(document.body, { childList: true, subtree: true })
+  s.track(() => observer.disconnect())
+}
+
+const switchIs = (control: HelloMapControl, on: boolean) => {
+  const toggle = switchOf(control)
+  return !!toggle && isOn(toggle) === on
+}
+
+const unchangedSinceTour = (state: Session) =>
+  (!state.installedByTour || switchIs('installed', true))
+  && [...state.flipped].every(([control, original]) => switchIs(control, !original))
+
+function undo(state: Session, deferred = false) {
   if (!state.installedByTour && state.flipped.size === 0) return
-  const s = schedule(() => false)
+  const s = schedule()
   const pending: Pending = { schedule: s, session: state }
   const done = () => {
     if (pendingUndo === pending) pendingUndo = null
@@ -96,7 +119,7 @@ function undo(state: Session) {
   s.when(() => !!helloMapRow(), () => {
     expandRow()
     s.when(() => switchesShown(state) || !!installButton(), () => {
-      if (installButton()) {
+      if (installButton() || (deferred && !unchangedSinceTour(state))) {
         forget(state)
         return done()
       }
@@ -104,7 +127,7 @@ function undo(state: Session) {
       if (state.installedByTour) uninstall(s, state, () => {}, done)
       else done()
     }, done)
-  }, done)
+  }, () => whenRowMounts(s, () => undo(state, true)))
 }
 
 function start(): () => void {
@@ -144,18 +167,11 @@ const stages: Record<HelloMapStage, (s: Schedule, state: Session) => void | (() 
 
 /** Runs one stage of the Hello Map demo; leaving flips back the switches it changed and uninstalls what it installed. */
 export function demoHelloMap(stage: HelloMapStage): () => void {
-  const release = holdDemo(HELLO_MAP, start)
-  const s = schedule(() => false)
-  const leave = session ? stages[stage](s, session) : undefined
-  return () => {
-    s.cancel()
-    if (typeof leave === 'function') leave()
-    release()
-  }
+  return runStage(HELLO_MAP, start, s => (session ? stages[stage](s, session) : undefined))
 }
 
 function watchForUninstall(state: Session) {
-  waitFor(() => !!installButton(), () => forget(state), UNINSTALL_WATCH_FRAMES)
+  waitFor(() => !!installButton(), () => forget(state), ARRIVAL_FRAMES)
 }
 
 /** Presses a Hello Map switch; organization switches only on the Hello Map the tour installed, once its writes settle. */

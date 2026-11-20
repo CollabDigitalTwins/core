@@ -15,7 +15,8 @@ type Props = {
   isCollapsed: boolean;
   onOpenBug: () => void;
   onOpenFeature: () => void;
-  onOpenGuide: () => void;
+  // Without it the menu has no Guide item.
+  onOpenGuide?: () => void;
 };
 
 export function SupportMenu({
@@ -50,14 +51,16 @@ export function SupportMenu({
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="start">
-        <DropdownMenuItem
-          onSelect={() =>
-            openDialogAfterMenuCloses(onOpenGuide)
-          }
-        >
-          <LR.Compass className="mr-2 h-4 w-4" />
-          {t("guide")}
-        </DropdownMenuItem>
+        {onOpenGuide && (
+          <DropdownMenuItem
+            onSelect={() =>
+              openDialogAfterMenuCloses(onOpenGuide)
+            }
+          >
+            <LR.Compass className="mr-2 h-4 w-4" />
+            {t("guide")}
+          </DropdownMenuItem>
+        )}
 
         <DropdownMenuItem
           onSelect={() =>

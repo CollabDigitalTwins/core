@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 
 import { ViewerNames } from '../../../types/dbTypes'
 
-import { followViewer, pageTourOf } from './tourRoutes'
+import { followViewer, pageTourOf, yieldsToPluginTours } from './tourRoutes'
 
 import type { Leg } from './tourRoutes'
 
@@ -56,5 +56,14 @@ describe('pageTourOf', () => {
     expect(pageTourOf(ViewerNames.bim, available)).toBeNull()
     expect(pageTourOf(ViewerNames.infrastructure, available)).toBeNull()
     expect(pageTourOf(ViewerNames.settings, available)).toBeNull()
+  })
+})
+
+describe('yieldsToPluginTours', () => {
+  it('steps aside on the plugins section, but not while the Hello Map demo runs', () => {
+    expect(yieldsToPluginTours({ tour: 'plugins' })).toBe(true)
+    expect(yieldsToPluginTours({ tour: 'plugins', startAt: 'list' })).toBe(true)
+    expect(yieldsToPluginTours({ tour: 'plugins', startAt: 'hello-install' })).toBe(false)
+    expect(yieldsToPluginTours({ tour: 'map', startAt: 'list' })).toBe(false)
   })
 })

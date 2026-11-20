@@ -245,6 +245,10 @@ export function CommentInput({
     authorId,
   ])
 
+  React.useEffect(() => {
+    if (layout === 'dialog' && !isOpen && isPlacing) reset()
+  }, [layout, isOpen, isPlacing, reset])
+
   const onSubmit = () => {
     if (text.trim() === '') return
     setIsPlacing(true)
@@ -260,6 +264,7 @@ export function CommentInput({
       onChange={e => setText(e.target.value)}
       placeholder={t('placeholder')}
       className={cn('cursor-pointer')}
+      data-tour="comment-input-text"
     />
   )
 
@@ -270,6 +275,7 @@ export function CommentInput({
       onClick={onSubmit}
       className="cursor-pointer transition-transform duration-200 active:scale-90"
       disabled={text.trim() === ''}
+      data-tour="comment-submit"
     >
       <LR.Plus className={cn('w-4 h-4', 'cursor-pointer transition-transform duration-200 active:scale-90')} />
     </Button>
@@ -291,7 +297,7 @@ export function CommentInput({
         title={t('title')}
         icon={LR.MessageCircle}
       >
-        <div className="flex flex-col gap-2 pointer-events-auto">
+        <div className="flex flex-col gap-2 pointer-events-auto" data-tour="comment-input">
           <Label htmlFor={inputId}>{t('label')}</Label>
           <div className="flex flex-row gap-2">
             {inputEl}

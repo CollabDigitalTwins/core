@@ -352,7 +352,7 @@ export default function Datasets({ isOpen, setIsOpenAction, organization, martin
               <Tabs value={currentTab} className="flex flex-col gap-0 h-full" onValueChange={handleTabChange}>
                 {/* Mobile: TabsList below doesn't wrap and has no room to render below md,
                     so it's replaced with a Select driving the same currentTab state. */}
-                <div className="md:hidden px-3 pb-2 flex-shrink-0">
+                <div className="md:hidden px-3 pb-2 flex-shrink-0" data-tour="datasets-tab-select">
                   <Select value={currentTab} onValueChange={handleTabChange}>
                     <SelectTrigger>
                       <SelectValue />

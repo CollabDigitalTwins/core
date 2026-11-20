@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+/** The selector for `data-tour="<name>"`, with quotes and backslashes in the name escaped. */
+export const anchorSelector = (name: string) => `[data-tour="${name.replace(/["\\]/g, '\\$&')}"]`
+
+/** The element marked `data-tour="<name>"`, or null. */
+export const findAnchor = <T extends HTMLElement = HTMLElement>(name: string, root: ParentNode = document) =>
+  root.querySelector<T>(anchorSelector(name))
+
 type Lookup = Pick<Document, 'querySelectorAll' | 'getElementById'>
 
 /** The app sidebar's button for a page, matched on its title, which stays in the text while the sidebar is collapsed. */

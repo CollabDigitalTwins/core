@@ -137,6 +137,51 @@ describe('demoHelloMap', () => {
     expect(helloMapInstalledByTour()).toBe(false)
   })
 
+  it('gives up the later uninstall when the person changed Hello Map after the tour', async () => {
+    run('open')
+    await settle()
+    run('install')
+    await settle()
+    run('controls')
+    toggleHelloMapControl('user-run')
+    document.body.innerHTML = '<main></main>'
+    releaseAll()
+    await vi.advanceTimersByTimeAsync(FRAME * 700)
+    row.switches['user-run'] = false
+    render()
+    await settle()
+    await settle()
+    expect(count('hello-map:installed')).toBe(0)
+    expect(row.installed).toBe(true)
+  })
+
+  it('counts its install from the press, before the install write shows', async () => {
+    run('open')
+    await settle()
+    run('install')
+    await settle()
+    row.installed = false
+    render()
+    expect(helloMapInstalledByTour()).toBe(true)
+  })
+
+  it('finishes the uninstall when the Hello Map row comes back after the person left the page', async () => {
+    run('open')
+    await settle()
+    run('install')
+    await settle()
+    const page = document.body.innerHTML
+    document.body.innerHTML = '<main></main>'
+    releaseAll()
+    await vi.advanceTimersByTimeAsync(FRAME * 700)
+    expect(row.installed).toBe(true)
+    document.body.innerHTML = page
+    await settle()
+    await settle()
+    expect(presses.slice(-2)).toEqual(['hello-map:installed', 'confirm'])
+    expect(row.installed).toBe(false)
+  })
+
   it('waits for the install write before uninstalling on leave, even from a collapsed row', async () => {
     row.writeMs = 500
     run('open')

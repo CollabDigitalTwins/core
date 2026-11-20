@@ -58,7 +58,7 @@ export interface PageSection {
   steps: TourStep[]
 }
 
-export interface OverviewOptions {
+interface OverviewOptions {
   languages?: Language[]
   available?: TourAvailability
   section?: PageSection
@@ -69,9 +69,13 @@ export const toolStepId = (toolId: string) => `tool-${toolId}`
 export const chromeOf = (viewer: ViewerKey | undefined): ViewerChrome | null =>
   viewer === ViewerNames.map ? 'map' : viewer === ViewerNames.bim ? 'bim' : null
 
+export const dataPageOfViewer = (viewer: ViewerKey | undefined) => DATA_PAGES.find(({ page }) => page === viewer)?.page
+
 export const step = (t: Translate, id: string, target: TourStep['target'], key = id): TourStep => ({
   id, target, title: t(`${key}.title`), body: t(`${key}.body`),
 })
+
+export const withEntry = (s: TourStep, onEnter: TourStep['onEnter']): TourStep => ({ ...s, onEnter })
 
 export const item = (t: Translate, key: string, id: string, icon: Icon, onSelect?: () => void): TourItem => ({
   id, icon, onSelect, term: t(`${key}.${id}.term`), description: t(`${key}.${id}.description`),
@@ -130,9 +134,8 @@ function exploreStep(t: Translate, available: TourAvailability, a: PlatformTourA
 const withShortcut = (section: PageSection | undefined, a: PlatformTourActions) => (s: TourStep): TourStep =>
   section ? { ...s, shortcut: { label: section.label, onSelect: () => a.branch(section.tour, s.id) } } : s
 
-function generalSteps(t: Translate, a: PlatformTourActions, languages: Language[], available: TourAvailability): TourStep[] {
+function sidebarSteps(t: Translate, a: PlatformTourActions, languages: Language[], available: TourAvailability): TourStep[] {
   return [
-    withMenuPath(t, step(t, 'welcome', null)),
     step(t, 'sidebar', 'sidebar'),
     ...interfaceSteps(t, available, a),
     { ...step(t, 'plugins', 'sidebar-plugins'), items: [item(t, 'plugins.items', 'open', LR.Blocks, () => a.branch('plugins', 'plugins'))] },
@@ -153,14 +156,14 @@ function generalSteps(t: Translate, a: PlatformTourActions, languages: Language[
         item(t, 'account.items', 'signOut', LR.LogOut),
       ],
     },
-  ]
+  ].map(s => withEntry(s, a.openMenu))
 }
 
 /** The platform overview, then the page the viewer is on, ending on a choice of closer tours; overview cards offer a shortcut to that page's tour. */
 export function platformTourSteps(t: Translate, a: PlatformTourActions, { languages = [], available = EVERYTHING_AVAILABLE, section }: OverviewOptions = {}): TourStep[] {
   const shortcut = withShortcut(section, a)
   return [
-    ...generalSteps(t, a, languages, available).map(shortcut),
+    ...[withMenuPath(t, step(t, 'welcome', null)), ...sidebarSteps(t, a, languages, available)].map(shortcut),
     ...(section?.steps ?? []),
     shortcut(exploreStep(t, available, a)),
   ]

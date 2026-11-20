@@ -164,6 +164,7 @@ export function CollapsibleSection({
                   onAddItem()
                 }}
                 title={addItemTitle}
+                data-tour="section-add"
               >
                 <LR.Plus className="h-3 w-3" />
               </Button>

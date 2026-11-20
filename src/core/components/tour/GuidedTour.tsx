@@ -101,15 +101,15 @@ function useStepReport(stepId: string, onStepChange: GuidedTourProps['onStepChan
   React.useEffect(() => latest.current?.(stepId), [stepId, latest])
 }
 
-const HOST_PRESS_EVENTS = ['pointerdown', 'mousedown', 'touchstart'] as const
+const HOST_PRESS_EVENTS = ['pointerdown', 'mousedown', 'touchstart', 'touchmove', 'wheel'] as const
 
-/** Stops presses on the tour reaching `document`, where hosts such as Radix menus treat them as outside presses and close. */
+// Radix menus close on presses that reach `document`, and modal dialogs block scrolls there.
 function useHostPressShield() {
   const [root, setRoot] = React.useState<HTMLDivElement | null>(null)
   React.useEffect(() => {
     if (!root) return
     const stop = (event: Event) => event.stopPropagation()
-    HOST_PRESS_EVENTS.forEach(type => root.addEventListener(type, stop))
+    HOST_PRESS_EVENTS.forEach(type => root.addEventListener(type, stop, { passive: true }))
     return () => HOST_PRESS_EVENTS.forEach(type => root.removeEventListener(type, stop))
   }, [root])
   return setRoot

@@ -6,7 +6,8 @@
 import * as React from 'react'
 
 import { contentBox } from './contentBox'
-import { fitsBeside, intersect } from './placement'
+import { findAnchor } from './hostTargets'
+import { fitsBeside, intersect, visiblePart } from './placement'
 
 import type { Box } from './placement'
 import type { TourStep, TourTarget } from './tourTypes'
@@ -40,12 +41,26 @@ const boxOf = (element: Element): Box => {
 export function resolveTarget(target: TourTarget): Element | null {
   if (target === null) return null
   if (typeof target === 'function') return rendered(target())
-  return rendered(document.querySelector(`[data-tour="${target.replace(/["\\]/g, '\\$&')}"]`))
+  return rendered(findAnchor(target))
 }
 
-/** Tall targets and targets too wide to sit beside go to the top, leaving the card the room below. */
+function clipToScrollers(box: Box | null, element: Element): Box | null {
+  for (let parent = element.parentElement; parent && box; parent = parent.parentElement) {
+    if (getComputedStyle(parent).overflowY !== 'visible') box = intersect(box, boxOf(parent))
+  }
+  return box
+}
+
+function fullyInView(element: Element): boolean {
+  const box = boxOf(element)
+  const shown = clipToScrollers(visiblePart(box, { width: window.innerWidth, height: window.innerHeight }), element)
+  return shown !== null && shown.width === box.width && shown.height === box.height
+}
+
+// Tall or wide targets go to the top so the card has the room below; one already in view stays put.
 function scrollBlock(element: Element): ScrollLogicalPosition {
   const box = boxOf(element)
+  if (fullyInView(element)) return 'nearest'
   return box.height > window.innerHeight || !fitsBeside(box, cardWidthFor(window.innerWidth), window.innerWidth) ? 'start' : 'nearest'
 }
 
@@ -56,13 +71,7 @@ function litBox(element: Element): Box {
 }
 
 /** The target's box cut to the scrolling boxes around it, so a half-scrolled row is lit only where it shows. */
-function shownBox(element: Element): Box | null {
-  let box: Box | null = litBox(element)
-  for (let parent = element.parentElement; parent && box; parent = parent.parentElement) {
-    if (getComputedStyle(parent).overflowY !== 'visible') box = intersect(box, boxOf(parent))
-  }
-  return box
-}
+const shownBox = (element: Element): Box | null => clipToScrollers(litBox(element), element)
 
 function avoidBoxes(avoid: (() => Element[]) | undefined): Box[] {
   const elements = [...(avoid?.() ?? []), document.querySelector(`.${HIDE_BUTTON_CLASS}`)]
@@ -138,15 +147,21 @@ export function useTourKeys(go: (delta: number) => void, onHide: () => void) {
   }, [latest])
 }
 
-const viewportSize = () => (typeof window === 'undefined' ? { width: 0, height: 0 } : { width: window.innerWidth, height: window.innerHeight })
+const viewportSize = () => (typeof window === 'undefined'
+  ? { width: 0, height: 0 }
+  : { width: window.innerWidth, height: window.visualViewport?.height ?? window.innerHeight })
 
-/** The window size, kept current so the card re-places itself when the window is resized. */
+/** The visible window size, kept current so the card re-places itself on a resize or when the soft keyboard opens. */
 export function useViewportSize() {
   const [size, setSize] = React.useState(viewportSize)
   React.useEffect(() => {
     const onResize = () => setSize(viewportSize())
     window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
+    window.visualViewport?.addEventListener('resize', onResize)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      window.visualViewport?.removeEventListener('resize', onResize)
+    }
   }, [])
   return size
 }

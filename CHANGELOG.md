@@ -8,61 +8,44 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ## [Unreleased]
 
 ### Added
-- Guided tours (`components/tour`): `GuidedTour` spotlights page elements step by step and leaves the page usable
-  underneath. A step targets a `data-tour="<id>"` anchor, a function that returns an element, or `null` for a
-  centred card. It can run `onEnter` when it opens, whose returned function runs when the step closes, and can
-  `invite` a click that ends the tour. Plain-string bodies turn `term — description` lines into a definition list;
-  a step's `items` (`TourItem`) render as icon rows, which are buttons when they have `onSelect`. A `shortcut` puts a small button at
-  the top of the card, and `skip` passes over a step that does not apply right now. `onStepChange` reports each
-  step as it opens. Presses on the card never reach `document`, so an open menu the step points at stays open. `startAt` opens the
-  tour on a given step and `onFinish` replaces `onHide` for the Finish button. Theme it with `--tour-*` CSS variables on a `className`;
-  the defaults follow the platform tokens. `useTour` remembers finished tours through a `TourStore`;
-  `browserTourStore` keeps them in session or local storage. `findSidebarPageLink` and `setToolbarPanel` find the
-  app's own sidebar and toolbar elements. Strings are in a new `GuidedTour` i18n namespace.
-  Open tours show one at a time, in the order they opened, and the platform tour always goes first. The tour
-  layers above the app shell by default; set `--tour-z` on a `className` to move it.
-  The share tool's QR code and screenshot dialogs carry `share-qr-card` and `share-screenshot-card` anchors, which the tour spotlights while open.
-- `@collabdt/core/plugins-sdk/tour`: all of the above for runtime-loaded plugins.
-- Platform overview tour (`components/tour/platform/PlatformTour`), mounted by `AppSidebar`: walks the sidebar,
-  the two ways to see data (3D viewers and data pages), plugins, support and the account menu, then the tour of
-  the page the person is on (also a shortcut at the top of every overview card), and ends on a choice of closer
-  tours of the 3D viewers or the data pages. Only the viewers and data pages the organization shows are offered, and each one's row opens its tour.
-  The welcome and closing cards show Support → Guide with the sidebar's icons.
-  A viewer tour covers its search, side panel and toolbar (each tool branches into a closer look). The map adds
-  its controls, settings, attribution and an example legend; BIM adds hints on its empty card (pick a building, add
-  a 3D file) and its view cube. The map and BIM settings tours walk each control and briefly change it to show the
-  effect, then put it back. The tour reopens on the step it was on if it remounts. Whenever the map can reach Ottawa, the Map tour demonstrates a search for Carleton University (only for an organization with a
-  geocoder); it opens the side panel and each toolbar tool, and covers
-  the zoom, compass and map settings controls; finishing a branch returns to the overview, and so does closing the card a section depends on (the datasets menu, the side panel, a tool's dropdown or card) to the step it branched from. Each side panel tab, the
-  datasets menu and each of its collections, the Plugins page, the Support options, the Add options, the Share
-  options and a measuring demo have closer tours or buttons of their own; the measuring demo runs on the Carleton campus whenever
-  the map can reach Ottawa. Elsewhere the search and measure demos stay on the current map. Toolbar tools
-  and side panel tabs added by plugins are included. The spotlight centres on what a control draws, not its padded
-  box. Items a role cannot use, such as the Organization settings or Add options without create rights, are left
-  out, and the card re-places itself when the window is resized. A Language step, before Support, lists the
-  organization's languages and switches to one; it only appears when there is more than one. A branch follows the viewer: moving to another viewer or page switches to its tour. It opens once per device on a first visit and again from a new Guide item in the Support menu. Strings are
-  in a new `PlatformTour` i18n namespace and `supportMenu.guide`.
-  Whenever the map can reach Ottawa, the map legend and Datasets tours add, restyle and remove Ottawa's zoning dataset
-  live; when that dataset is already on the map, the legend tour shows the example legend instead. The plugins tour
-  installs and uninstalls the Hello Map demo plugin and shows the controls your role allows.
-- `useSidebar()` returns `guideOpen` and `setGuideOpen`; `SupportMenu` takes `onOpenGuide`.
-- `hooks/ui/useChangeViewer`: switches viewer the way the app sidebar does.
-- `settings/src/settingsTabs`: `canSeeSettingsTab`, the role rule for which settings sections show, shared by the
-  settings page and the tour.
-- `data-tour` anchors on the app shell: `sidebar`, `sidebar-viewers`, `sidebar-data`, `sidebar-plugins`,
-  `sidebar-support`, `sidebar-account`, `viewer-search`, `viewer-panel-toggle`, `viewer-panel`, `toolbar`,
-  `tool-<toolId>` on each toolbar tool, `map-settings`, `data-title`, `data-filters`, `data-table`,
-  `settings-sections`, `settings-content`, `datasets-search`, `datasets-tabs`, `datasets-list`, `panel-search`,
-  `panel-tab`, `panel-file-sections`, `panel-layers-applied`, `panel-layers-available`, `panel-layers-drawings`,
-  `panel-layers-classifier`, `panel-comments`, `panel-sensors`, `panel-sensors-toolbar`, `measure-distance`,
-  `measure-area`, `share-qr`, `share-copy`, `share-screenshot`, `datasets-tab-<tab>`, `plugins-tabs`, `plugins-list`,
-  `settings-tab-<section>`, `sidebar-language`, `sidebar-interfaces`, `bim-empty` (with `data-state`), `legend-demo` and `settings-*` on each
-  map and BIM setting; the BIM view cube has the `cdt-view-cube` class. `CollapsibleSection` and `SettingsSection`
-  take `tourAnchor`. The map Compare and Datasets buttons set
-  `aria-expanded`.
-- `data-tour` anchors on the Applied layers card, dataset style controls, dataset apply boxes, plugin rows and controls,
-  the confirm dialog action and the `confirm-cancel` anchor on its cancel button. The plugin detail controls
-  (`data-tour="plugin-controls"`) carry `aria-busy` while one of the plugin's writes is in flight.
+- Guided tours (`components/tour`): `GuidedTour` spotlights a `data-tour` anchor, an element or a centred card step
+  by step and leaves the page usable. Steps take `items` (`TourItem` rows), `onEnter` (its return runs on close),
+  `invite`, `shortcut` and `skip`; the tour takes `startAt`, `onFinish` and `onStepChange`. Also `useTour`,
+  `browserTourStore`, `findSidebarPageLink`, `setToolbarPanel`, `--tour-*` theming with `--tour-z` for the layer,
+  and a `GuidedTour` i18n namespace. `components/tour/hostTargets` also exports `findAnchor` and `anchorSelector`.
+- `@collabdt/core/plugins-sdk/tour`: the same for runtime-loaded plugins.
+- Open tours show one at a time and the platform tour goes first; a plugin's own tour runs from the platform tour's
+  plugins section.
+- `PlatformTour` in `AppSidebar`: opens once per device and from Support → Guide, walks the sidebar, the page the
+  person is on and a choice of closer tours, with branches into each viewer, data page, side panel tab, tool, the
+  datasets menu, settings and plugins. Strings are in a `PlatformTour` i18n namespace and `supportMenu.guide`.
+- Live demos, each undone on leaving: map search, measuring, map and BIM settings, Hello Map install and controls,
+  and placing and deleting a comment and a sensor. Where the map can reach Ottawa, the search and measure demos use
+  the Carleton campus, the legend tour adds, restyles and removes Ottawa's zoning dataset, and the Datasets tour
+  finds, ticks and unticks it; otherwise the legend tour shows an example legend.
+- `useSidebar()` returns `guideOpen` and `setGuideOpen`. `SupportMenu` takes an optional `onOpenGuide` and shows its
+  Guide item only when given one. `hooks/ui/useChangeViewer` switches viewer the way the app sidebar does;
+  `settings/src/settingsTabs` exports `canSeeSettingsTab`.
+- `data-tour` anchors. App shell: `sidebar`, `sidebar-interfaces`, `sidebar-viewers`, `sidebar-data`,
+  `sidebar-plugins`, `sidebar-language`, `sidebar-support`, `sidebar-account`, `viewer-search`,
+  `viewer-panel-toggle`, `viewer-panel`, `toolbar`, `tool-<toolId>`, `map-settings`, `legend-demo`, `bim-empty` (with
+  `data-state`). Side panel: `panel-search`, `panel-tab`, `panel-file-sections`, `panel-layers-*`, `panel-comments`,
+  `panel-sensors`, `panel-sensors-toolbar`, `comment-item:<id>`, `sensor-item:<id>`, `item-delete`, `section-add`,
+  `sensor-type:<typeId>`, `sensor-tag:<tag>`, `sensors-add`, `settings-*`. Dialogs: `datasets`, `datasets-search`,
+  `datasets-tabs`, `datasets-tab-select`, `datasets-tab-<tab>`, `datasets-list`, `dataset-apply`, `comment-input`,
+  `comment-input-text`, `comment-submit`, `sensor-input`, `sensor-input-name`, `sensor-input-url`, `sensor-place`,
+  `share-qr`, `share-copy`, `share-screenshot`, `share-qr-card`, `share-screenshot-card`, `confirm-action`,
+  `confirm-cancel`, `measure-distance`, `measure-area`. Map legend's Layers card: `legend-applied`,
+  `dataset-row:<id>`, `dataset-style`, `dataset-style-panel`, `dataset-more-style`, `dataset-remove`. Pages:
+  `data-title`, `data-filters`, `data-table`, `settings-sections`, `settings-tab-<section>`, `settings-content`,
+  `plugins-tabs`, `plugins-tab-<tab>`, `plugins-search`, `plugins-list`, `plugin-row-<slug>`, `plugin-install`,
+  `plugin-controls`. `CollapsibleSection` and `SettingsSection` take `tourAnchor`; the BIM view cube has the
+  `cdt-view-cube` class; the map Compare and Datasets buttons set `aria-expanded`; `plugin-controls` sets
+  `aria-busy` while a write is in flight.
+
+### Fixed
+- Closing the add-comment or add-sensor dialog's tool while placing now ends placing, so a later double-click on the
+  map no longer creates the comment or sensor.
 
 ## [0.19.0] - 2026-11-13
 

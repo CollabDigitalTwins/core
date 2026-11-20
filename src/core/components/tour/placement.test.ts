@@ -53,9 +53,27 @@ describe('placeCard', () => {
   it('sits over a target that fills the screen, still clear of the panels', () => {
     const target = { left: 0, top: 0, width: 1600, height: 900 }
     const toolbar = { left: 600, top: 400, width: 400, height: 100 }
-    const placed = asBox(placeCard(target, CARD, VIEWPORT, [toolbar]))
-    expect(intersect(placed, toolbar)).toBeNull()
-    expect(insideViewport(placed)).toBe(true)
+    const placed = placeCard(target, CARD, VIEWPORT, [toolbar])
+    const box = { left: placed.left, top: placed.top, width: CARD.width, height: placed.maxHeight ?? CARD.height }
+    expect(intersect(box, toolbar)).toBeNull()
+    expect(insideViewport(box)).toBe(true)
+  })
+
+  it('docks to the far edge of a phone screen instead of covering the middle of a tall target', () => {
+    const placed = placeCard({ left: 0, top: 0, width: 288, height: 640 }, { width: 328, height: 400 }, { width: 360, height: 640 })
+    expect(placed.top + (placed.maxHeight ?? 400)).toBe(624)
+    expect(placed.maxHeight).toBe(200)
+  })
+
+  it('docks above a panel it must avoid at the bottom of the screen', () => {
+    const pill = { left: 130, top: 530, width: 100, height: 40 }
+    const placed = placeCard({ left: 0, top: 0, width: 288, height: 640 }, { width: 328, height: 400 }, { width: 360, height: 640 }, [pill])
+    expect(placed.top + (placed.maxHeight ?? 400)).toBeLessThanOrEqual(pill.top)
+  })
+
+  it('caps the card at the visible height below where it sits', () => {
+    const placed = placeCard(null, CARD, VIEWPORT)
+    expect(placed.maxHeight).toBe(VIEWPORT.height - placed.top - 16)
   })
 })
 

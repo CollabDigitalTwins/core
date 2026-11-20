@@ -9,6 +9,8 @@ import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { MenusProvider } from '../../../store/Menus/context'
 import { SidebarProvider, useSidebar } from '../../ui/Sidebar'
 
+import { useTourTurn } from '../tourQueue'
+
 import { PlatformTour } from './PlatformTour'
 
 import type { TourStore } from '../tourStore'
@@ -34,7 +36,12 @@ vi.mock('./usePluginTourEntries', async importOriginal => {
   return { ...actual, usePluginTourEntries: () => actual.NO_PLUGIN_ENTRIES }
 })
 
-const matchMedia = (query: string) => ({
+vi.mock('./useMapItemPorts', () => {
+  const port = { items: () => [], remove: vi.fn(), openDialog: vi.fn(), closeDialog: vi.fn(), placeAtCentre: vi.fn(), typeIds: () => [], preselectType: vi.fn() }
+  return { useCommentPort: () => port, useSensorPort: () => port }
+})
+
+const matchMedia =(query: string) => ({
   matches: false, media: query, onchange: null,
   addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn(), dispatchEvent: vi.fn(),
 })
@@ -54,11 +61,21 @@ function GuideButton() {
   return <button type="button" onClick={() => setGuideOpen(true)}>Guide</button>
 }
 
-function renderTour(store: TourStore) {
+function PluginTourCard({ onDone }: { onDone: () => void }) {
+  return useTourTurn() ? <><p>plugin tour</p><button type="button" onClick={onDone}>finish plugin</button></> : null
+}
+
+function PluginTour() {
+  const [done, setDone] = React.useState(false)
+  return done ? null : <PluginTourCard onDone={() => setDone(true)} />
+}
+
+function renderTour(store: TourStore, withPlugin = false) {
   return render(
     <MenusProvider>
       <SidebarProvider>
         <GuideButton />
+        {withPlugin && <PluginTour />}
         <PlatformTour store={store} />
       </SidebarProvider>
     </MenusProvider>,
@@ -103,5 +120,17 @@ describe('PlatformTour', () => {
     fireEvent.click(screen.getByRole('button', { name: 'legend.title' }))
     fireEvent.click(screen.getByRole('button', { name: 'backToOverview' }))
     expect(screen.getByRole('dialog', { name: 'exploreViewers.title' })).toBeInTheDocument()
+  })
+
+  it('steps aside for a waiting plugin tour on the plugins section and returns to the same step', () => {
+    renderTour(memoryStore(), true)
+    fireEvent.click(screen.getByRole('button', { name: 'plugins.title' }))
+    expect(screen.queryByText('plugin tour')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /plugins\.items\.open\.term/ }))
+    expect(screen.getByText('plugin tour')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'finish plugin' }))
+    expect(screen.getByRole('dialog', { name: 'pluginsTour.tabs.title' })).toBeInTheDocument()
   })
 })

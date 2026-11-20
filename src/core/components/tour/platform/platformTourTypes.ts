@@ -2,6 +2,7 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 import type { HelloMapControl, HelloMapStage } from './helloMapDemo'
+import type { PlaceStage } from './placeDemo'
 import type { ZoningMenuStage, ZoningStage } from './zoningDemo'
 import type { SidebarTabKey, SidebarTabType } from '../../../store/Menus/reducer'
 import type { Language, ViewerKey } from '../../../types/dbTypes'
@@ -29,11 +30,13 @@ export interface TourAvailability {
 export interface PlatformTourActions {
   can: (action: string, subject: string) => boolean
   inOttawa: () => boolean
+  isMobile: () => boolean
   canDemoSearch: () => boolean
   zoningApplied: () => boolean
   branch: (tour: PlatformTourId, returnTo: string, startAt?: string) => void
   leave: () => void
   openViewer: (viewer: ViewerKey) => void
+  openMenu: () => () => void
   openPanel: () => () => void
   selectPanelTab: (tab: SidebarTabKey) => void
   demoSearch: () => () => void
@@ -53,4 +56,7 @@ export interface PlatformTourActions {
   demoZoningMenu: (stage: ZoningMenuStage) => () => void
   demoHelloMap: (stage: HelloMapStage) => () => void
   toggleHelloMapControl: (control: HelloMapControl) => void
+  sensorTypesExist: () => boolean
+  demoComment: (stage: PlaceStage, text: string) => () => void
+  demoSensor: (stage: PlaceStage, name: string) => () => void
 }

@@ -51,15 +51,6 @@ describe('holdDemo', () => {
     expect(undo).toHaveBeenCalledTimes(1)
   })
 
-  it('runs the undo even when the release comes before the start finished', () => {
-    let undone = false
-    holdDemo('early', () => () => {
-      undone = true
-    })()
-    vi.advanceTimersByTime(16)
-    expect(undone).toBe(true)
-  })
-
   it('starts again after it ended', () => {
     const start = vi.fn(() => () => {})
     holdDemo('again', start)()

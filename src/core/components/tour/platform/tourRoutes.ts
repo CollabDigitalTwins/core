@@ -3,7 +3,7 @@
 
 import { ViewerNames } from '../../../types/dbTypes'
 
-import { chromeOf } from './platformTourSteps'
+import { chromeOf, dataPageOfViewer } from './platformTourSteps'
 import { dataPageOf, panelTabOf } from './subTourSteps'
 
 import type { PlatformTourId, TourAvailability } from './platformTourTypes'
@@ -23,10 +23,9 @@ export function tourFits(tour: SubTourId, viewer: ViewerKey | undefined): boolea
   return viewer === (dataPageOf(tour) ?? ViewerNames.map)
 }
 
-/** The closer tour for a viewer or page, or null when it has none. */
-export function tourOfViewer(viewer: ViewerKey | undefined): SubTourId | null {
+function tourOfViewer(viewer: ViewerKey | undefined): SubTourId | null {
   if (viewer === ViewerNames.map || viewer === ViewerNames.bim || viewer === ViewerNames.settings || viewer === ViewerNames.plugins) return viewer
-  const page = dataPageOf(`data-${String(viewer)}` as SubTourId)
+  const page = dataPageOfViewer(viewer)
   return page ? `data-${page}` : null
 }
 
@@ -34,7 +33,7 @@ export function tourOfViewer(viewer: ViewerKey | undefined): SubTourId | null {
 export function pageTourOf(viewer: ViewerKey | undefined, available: TourAvailability): SubTourId | null {
   const chrome = chromeOf(viewer)
   if (chrome) return available.viewers.includes(chrome) ? chrome : null
-  const page = dataPageOf(`data-${String(viewer)}` as SubTourId)
+  const page = dataPageOfViewer(viewer)
   return page && available.dataPages.includes(page) ? `data-${page}` : null
 }
 
@@ -48,3 +47,6 @@ export function followViewer(legs: Leg[], viewer: ViewerKey | undefined): Leg[] 
     ? [overview, { tour: next, returnTo: firstBranch.returnTo }]
     : [{ ...overview, startAt: firstBranch.returnTo }]
 }
+
+/** Whether the platform tour lets a plugin's own tour go first: on the plugins section, until the Hello Map demo starts. */
+export const yieldsToPluginTours = (leg: Leg) => leg.tour === 'plugins' && !leg.startAt?.startsWith('hello-')

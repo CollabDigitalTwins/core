@@ -9,9 +9,9 @@ import { AppConfigContext, MapContext } from '../../../store'
 import { buildMapStylesCatalog, resolveMapStyle } from '../../viewers/map/utils/mapStyleCatalog'
 import { useLatest } from '../useTourLayout'
 
-import type { MapStyle } from '../../../types/map'
+import { DEMO_DELAY_MS } from './platformHost'
 
-const DEMO_DELAY_MS = 700
+import type { MapStyle } from '../../../types/map'
 
 /** The organization's map styles, and a demo that switches to the next one and back unless the person picks one meanwhile. */
 export function useMapStyleTour() {

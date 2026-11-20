@@ -417,6 +417,10 @@ export function SensorInput({
     user?.id,
   ])
 
+  React.useEffect(() => {
+    if (layout === 'dialog' && !isOpen && isPlacing) reset()
+  }, [layout, isOpen, isPlacing, reset])
+
   const updateSensor = (index: number, field: keyof SensorFormData, value: any) => {
     setSensors(prev =>
       prev.map((sensor, i) => (i === index ? { ...sensor, [field]: value } : sensor))
@@ -471,7 +475,7 @@ export function SensorInput({
     : t('placeSensorTooltipBim')
 
   const sensorForm = (
-    <div className="space-y-6">
+    <div className="space-y-6" data-tour="sensor-input">
       {sensors.map((sensor, index) => (
         <div key={index} className="space-y-4">
           {index > 0 && <Separator />}
@@ -504,6 +508,7 @@ export function SensorInput({
                 value={sensor.name}
                 onChange={e => updateSensor(index, 'name', e.target.value)}
                 placeholder={t('namePlaceholder')}
+                data-tour="sensor-input-name"
               />
             </div>
           </div>
@@ -517,6 +522,7 @@ export function SensorInput({
               onChange={e => updateSensor(index, 'data', e.target.value)}
               onBlur={e => { void checkDataUrl(index, e.target.value, sensor.dataFormat) }}
               placeholder={t('dataUrlPlaceholder')}
+              data-tour="sensor-input-url"
             />
             {preview[index] && (
               <p className={cn('text-xs', preview[index].ok ? 'text-muted-foreground' : 'text-destructive')}>
@@ -606,6 +612,7 @@ export function SensorInput({
                     onClick={() => onPlaceSensor(index)}
                     disabled={!sensor.name.trim() || !sensor.data.trim()}
                     className="w-full"
+                    data-tour="sensor-place"
                   >
                     {t('placeSensor')}
                   </Button>

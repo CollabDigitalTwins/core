@@ -227,7 +227,7 @@ export function MapViewer({ width = '100%', height = '100%', organization, mapti
               {/* Bottom-left stack: legend above the layers/styling card, gap auto-managed by flex.
                   Lifted clear of the toolbar below the md breakpoint: the toolbar is centred and
                   on a phone that centre reaches all the way to this corner. */}
-              <div className="absolute bottom-20 md:bottom-[10px] left-3 z-10 flex max-w-[calc(100vw-1.5rem)] flex-col gap-2 pointer-events-none">
+              <div className="absolute bottom-20 md:bottom-[10px] left-3 z-10 flex max-h-[calc(100dvh-7rem)] max-w-[calc(100vw-1.5rem)] flex-col gap-2 overflow-y-auto pointer-events-none md:max-h-none md:overflow-visible">
                 <MapTilerKeyNotice maptilerKey={maptilerKey} />
                 <TourLegendDemo />
                 <SensorLegend />

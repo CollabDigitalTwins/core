@@ -38,6 +38,9 @@ export const TourPriorityContext = React.createContext(0)
 
 export const PLATFORM_TOUR_PRIORITY = 100
 
+/** Below a plugin's own tour, so the platform tour steps aside while the plugins section opens. */
+export const PLATFORM_TOUR_PLUGINS_PRIORITY = -1
+
 /** Whether this tour is the one on screen; every open tour waits its turn so only one shows at a time. */
 export function useTourTurn(): boolean {
   const priority = React.useContext(TourPriorityContext)

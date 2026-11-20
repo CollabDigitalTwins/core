@@ -492,11 +492,15 @@
       "bim": {
         "title": "Trouver un bâtiment",
         "body": "Recherchez les bâtiments de votre organisation par nom ou adresse, puis choisissez-en un pour l'ouvrir dans la visionneuse."
+      },
+      "map": {
+        "title": "Rechercher sur la carte",
+        "body": "Saisissez une adresse, un lieu ou l'un de vos bâtiments, puis choisissez un résultat et la carte s'y envole."
       }
     },
     "searchDemo": {
       "title": "Rechercher sur la carte",
-      "body": "Tapez une adresse, un lieu ou l'un de vos bâtiments, choisissez un résultat et la carte s'y rend. Regardez-la trouver Carleton University."
+      "body": "Tapez une adresse, un lieu ou l'un de vos bâtiments, choisissez un résultat et la carte s'y rend. Regardez-la trouver Carleton University et la choisir dans la liste."
     },
     "panel": {
       "map": {
@@ -574,6 +578,20 @@
           "area": {
             "term": "Surface",
             "description": "Cliquez les coins d'une forme; sa surface s'affiche à l'intérieur. Regardez-la mesurer une partie du campus."
+          },
+          "clear": {
+            "term": "Effacer",
+            "description": "Effacez les mesures et arrêtez de mesurer."
+          }
+        },
+        "itemsAnywhere": {
+          "distance": {
+            "term": "Distance",
+            "description": "Cliquez des points le long d'un trajet; la longueur totale s'affiche sur la ligne. Regardez-la mesurer un trajet sur la carte."
+          },
+          "area": {
+            "term": "Surface",
+            "description": "Cliquez les coins d'une forme; sa surface s'affiche à l'intérieur. Regardez-la mesurer une forme sur la carte."
           },
           "clear": {
             "term": "Effacer",
@@ -828,6 +846,16 @@
       "area": {
         "title": "Mesurer une surface",
         "body": "Cliquez les coins et la forme se ferme d'elle-même, avec sa surface à l'intérieur. Ici : le cœur du campus de Carleton."
+      },
+      "anywhere": {
+        "distance": {
+          "title": "Mesurer une distance",
+          "body": "Chaque clic ajoute un point et la ligne affiche le total. Ici : un trajet au milieu de la carte."
+        },
+        "area": {
+          "title": "Mesurer une surface",
+          "body": "Cliquez les coins et la forme se ferme d'elle-même, avec sa surface à l'intérieur. Ici : une forme au milieu de la carte."
+        }
       }
     },
     "datasetsTour": {
@@ -847,6 +875,24 @@
             "term": "Ajouter un portail",
             "description": "Connectez un autre portail de données ouvertes. Administrateurs seulement."
           }
+        }
+      },
+      "zoning": {
+        "find": {
+          "title": "Chercher un jeu de données",
+          "body": "La visite saisit « Existing Colour Zoning » dans la recherche, sous l'onglet municipal, pour trouver la carte de zonage de la Ville d'Ottawa, issue d'Ottawa ouvert."
+        },
+        "apply": {
+          "title": "L'ajouter à la carte",
+          "body": "Cochez la case d'une ligne pour dessiner ce jeu de données sur la carte. La visite coche la carte de zonage."
+        },
+        "applied": {
+          "title": "Ce qui est sur la carte",
+          "body": "L'onglet Appliqués liste tous les jeux de données dessinés sur la carte en ce moment."
+        },
+        "remove": {
+          "title": "Le retirer de la carte",
+          "body": "Décochez la case pour retirer le jeu de données de la carte. La visite décoche la carte de zonage qu'elle a ajoutée."
         }
       },
       "tabs": {
@@ -1126,6 +1172,43 @@
             "description": "Cliquez sur la ligne pour voir sa description, son auteur, ce qu'il peut faire et ses interrupteurs."
           }
         }
+      },
+      "hello": {
+        "open": {
+          "title": "Ouvrir un plugin",
+          "body": "Cliquez sur une ligne pour voir la description du plugin, son auteur, ce qu’il peut faire et ses interrupteurs. La visite ouvre Hello Map, un petit plugin de démonstration fourni avec la plateforme."
+        },
+        "install": {
+          "title": "L’installer",
+          "body": "Installer dans l’organisation ajoute le plugin pour tous les membres de votre organisation. La visite installe Hello Map."
+        },
+        "controls": {
+          "title": "Vos commandes",
+          "body": "Ce que vous pouvez modifier dépend de votre rôle. Choisissez-en une pour l’essayer. Les interrupteurs de l’organisation ne fonctionnent ici que si la visite a installé Hello Map, et la visite remet comme avant ceux qu’elle a modifiés quand vous partez.",
+          "items": {
+            "installed": {
+              "term": "Installé",
+              "description": "Le désactiver le désinstalle pour toute l’organisation, après votre confirmation."
+            },
+            "org-enabled": {
+              "term": "Activé",
+              "description": "L’exécute pour tout le monde par défaut."
+            },
+            "allow-override": {
+              "term": "Laisser le choix aux utilisateurs",
+              "description": "Permet à chacun de l’activer ou de le désactiver pour lui-même."
+            },
+            "user-run": {
+              "term": "L’exécuter pour moi",
+              "description": "L’active ou le désactive pour vous seulement, lorsque votre organisation permet de choisir."
+            }
+          }
+        },
+        "controlsReadOnly": "Les administrateurs de votre organisation décident si ce plugin s’exécute. La ligne vous indique leur choix.",
+        "uninstall": {
+          "title": "Le désinstaller",
+          "body": "Désactivez Installé et confirmez pour retirer le plugin de votre organisation. La visite désinstalle Hello Map, qu’elle a installé."
+        }
       }
     },
     "interfaces": {
@@ -1161,6 +1244,32 @@
     "viewCube": {
       "title": "Cube de vue",
       "body": "Indique où regarde la caméra. Cliquez sur une face, une arête ou un coin pour voir la maquette de ce côté."
+    },
+    "zoningDemo": {
+      "load": {
+        "title": "Ajouter un jeu de données",
+        "body": "La visite ajoute la carte de zonage de la Ville d'Ottawa, issue d'Ottawa ouvert. Les gros jeux de données prennent quelques secondes à charger ; l'anneau à côté de la couche indique où en est le chargement."
+      },
+      "legend": {
+        "title": "Déplier la légende",
+        "body": "La carte Couches appliquées liste chaque couche de la carte. Son chevron ouvre ou replie la carte ; la visite l'ouvre."
+      },
+      "layer": {
+        "title": "Déplier la couche",
+        "body": "Le chevron d'une couche ouvre son style. La visite ouvre le style de la couche de zonage."
+      },
+      "colour": {
+        "title": "Colorer selon un champ",
+        "body": "Le zonage est d'abord coloré selon PARENTZONE, les couleurs de l'éditeur ; la visite passe Colorer selon à ZONE_MAIN et la carte se recolore par zone principale."
+      },
+      "style": {
+        "title": "Étiquettes et Plus de style",
+        "body": "Plus de style regroupe l'opacité, la couleur de bordure, l'épaisseur de bordure et les étiquettes. La visite écrit le ZONE_CODE de chaque parcelle sur la carte, fonce la bordure et baisse l'opacité."
+      },
+      "remove": {
+        "title": "Retirer une couche",
+        "body": "Le × retire la couche de la carte. La visite retire la couche de zonage qu'elle a ajoutée."
+      }
     },
     "legend": {
       "title": "Légende",

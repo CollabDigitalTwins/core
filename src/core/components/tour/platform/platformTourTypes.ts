@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import type { HelloMapControl, HelloMapStage } from './helloMapDemo'
+import type { ZoningMenuStage, ZoningStage } from './zoningDemo'
 import type { SidebarTabKey, SidebarTabType } from '../../../store/Menus/reducer'
 import type { Language, ViewerKey } from '../../../types/dbTypes'
 import type { MapStyle } from '../../../types/map'
@@ -26,12 +28,16 @@ export interface TourAvailability {
 /** What a step's buttons and entry callbacks can do to the app, and what the viewer's role allows. */
 export interface PlatformTourActions {
   can: (action: string, subject: string) => boolean
+  inOttawa: () => boolean
+  canDemoSearch: () => boolean
+  zoningApplied: () => boolean
   branch: (tour: PlatformTourId, returnTo: string, startAt?: string) => void
+  leave: () => void
   openViewer: (viewer: ViewerKey) => void
   openPanel: () => () => void
   selectPanelTab: (tab: SidebarTabKey) => void
   demoSearch: () => () => void
-  demoMeasure: (kind: MeasureKind) => () => void
+  demoMeasure: (kind: MeasureKind, inOttawa: boolean) => () => void
   pressControl: (anchor: string) => void
   openFeatureRequest: () => void
   openContactPage: () => void
@@ -43,4 +49,8 @@ export interface PlatformTourActions {
   mapStyles: MapStyle[]
   setMapStyle: (url: string) => void
   demoMapStyle: () => () => void
+  demoZoning: (stage: ZoningStage) => () => void
+  demoZoningMenu: (stage: ZoningMenuStage) => () => void
+  demoHelloMap: (stage: HelloMapStage) => () => void
+  toggleHelloMapControl: (control: HelloMapControl) => void
 }

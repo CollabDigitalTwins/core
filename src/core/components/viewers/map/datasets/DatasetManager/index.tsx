@@ -83,6 +83,7 @@ const SortableDatasetRow: React.FC<SortableDatasetRowProps> = ({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
       className="group rounded-md"
+      data-tour={`dataset-row:${dataset.id}`}
     >
       <div className="flex items-center gap-2 rounded-md px-1.5 py-1.5 hover:bg-muted/50">
         <button
@@ -110,7 +111,7 @@ const SortableDatasetRow: React.FC<SortableDatasetRowProps> = ({
       </div>
       {legend && <div className="pb-1.5 pl-9 pr-2">{legend}</div>}
       {isStylable && styleOpen && (
-        <div className="mb-1.5 ml-9 mr-1.5 rounded-md border bg-muted/30">
+        <div className="mb-1.5 ml-9 mr-1.5 rounded-md border bg-muted/30" data-tour="dataset-style-panel">
           <DatasetStylePanel dataset={dataset} />
         </div>
       )}
@@ -243,7 +244,7 @@ export default function DatasetManagerMenu() {
     <>
       {legends.probes}
       {!openInfo && cardCount > 0 && (
-        <div data-state={menuOpen ? 'open' : 'closed'} className={openAnimation}>
+        <div data-state={menuOpen ? 'open' : 'closed'} data-tour="legend-applied" className={openAnimation}>
           <LegendCard
             title={t('appliedLayers', { count: cardCount })}
             count={cardCount}

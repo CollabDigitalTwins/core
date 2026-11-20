@@ -2,9 +2,9 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { afterMenusClose, demoSwitch, demoTabs, findToolTarget, focusTourCard, openSection, pressWhenShown, searchFor, setToolOpen, typeInto } from './platformHost'
+import { afterMenusClose, DEMO_DELAY_MS, demoSwitch, demoTabs, expandIfCollapsed, findToolTarget, focusTourCard, onClosed, openSection, openToolPanel, pickSuggestion, pressWhenShown, schedule, searchFor, setToolOpen, typeInto, waitFor } from './platformHost'
 
 function toolbarWith(toolId: string, button: HTMLButtonElement) {
   const anchor = document.createElement('div')
@@ -106,6 +106,59 @@ describe('searchFor', () => {
   })
 })
 
+describe('pickSuggestion', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => setTimeout(() => cb(0), 16))
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => clearTimeout(id))
+  })
+  afterEach(() => vi.unstubAllGlobals())
+
+  function searchBox() {
+    const container = document.createElement('div')
+    container.append(document.createElement('input'))
+    const item = document.createElement('div')
+    item.setAttribute('cmdk-item', '')
+    item.textContent = 'Carleton University, Ottawa'
+    const clicked = vi.fn()
+    item.addEventListener('click', clicked)
+    return { container, item, clicked }
+  }
+
+  it('picks Carleton University from the search results', () => {
+    const { container, item, clicked } = searchBox()
+    const picked = vi.fn()
+    const flyTo = vi.fn()
+    pickSuggestion(container, 'Carleton University', picked, flyTo)
+    setTimeout(() => container.append(item), 48)
+    vi.advanceTimersByTime(48 + 16)
+    expect(clicked).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(DEMO_DELAY_MS + 16)
+    expect(clicked).toHaveBeenCalledOnce()
+    expect(picked).toHaveBeenCalledOnce()
+    expect(flyTo).not.toHaveBeenCalled()
+  })
+
+  it('flies to Carleton when no result appears', () => {
+    const { container } = searchBox()
+    const picked = vi.fn()
+    const flyTo = vi.fn()
+    pickSuggestion(container, 'Carleton University', picked, flyTo)
+    vi.advanceTimersByTime(60_000)
+    expect(flyTo).toHaveBeenCalledOnce()
+    expect(picked).not.toHaveBeenCalled()
+  })
+
+  it('stops waiting and clicking when cancelled', () => {
+    const { container, item, clicked } = searchBox()
+    container.append(item)
+    const cancel = pickSuggestion(container, 'Carleton University', vi.fn(), vi.fn())
+    cancel()
+    vi.advanceTimersByTime(DEMO_DELAY_MS + 100)
+    expect(clicked).not.toHaveBeenCalled()
+  })
+})
+
 describe('focusTourCard', () => {
   it('moves focus from the page back to the tour card', () => {
     document.body.innerHTML = '<input id="page" /><div class="cdt-tour-card"><button class="cdt-tour-next">Next</button></div>'
@@ -181,5 +234,141 @@ describe('pressWhenShown', () => {
     document.body.innerHTML = '<div data-tour="find"><input aria-label="find" /></div>'
     pressWhenShown('find')
     expect(document.activeElement).toBe(document.querySelector('input'))
+  })
+})
+
+describe('waitFor', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => setTimeout(() => cb(0), 16))
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => clearTimeout(id))
+  })
+
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('waits for a condition before acting', () => {
+    let calls = 0
+    const then = vi.fn()
+    waitFor(() => ++calls > 3, then)
+    vi.advanceTimersByTime(16 * 2)
+    expect(then).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(16 * 10)
+    expect(then).toHaveBeenCalledTimes(1)
+  })
+
+  it('gives up after the frame budget', () => {
+    const then = vi.fn()
+    const giveUp = vi.fn()
+    waitFor(() => false, then, 5, giveUp)
+    vi.advanceTimersByTime(16 * 20)
+    expect(then).not.toHaveBeenCalled()
+    expect(giveUp).toHaveBeenCalledOnce()
+  })
+})
+
+describe('schedule', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => setTimeout(() => cb(0), 16))
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => clearTimeout(id))
+  })
+
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('calls a wait\'s give-up when the condition never comes, unless the schedule stopped', () => {
+    let stopped = false
+    const giveUp = vi.fn()
+    const s = schedule(() => stopped)
+    s.when(() => false, vi.fn(), giveUp)
+    vi.advanceTimersByTime(16 * 700)
+    expect(giveUp).toHaveBeenCalledOnce()
+    stopped = true
+    s.when(() => false, vi.fn(), giveUp)
+    vi.advanceTimersByTime(16 * 700)
+    expect(giveUp).toHaveBeenCalledOnce()
+  })
+})
+
+describe('expandIfCollapsed', () => {
+  it('presses a collapsed toggle and leaves an expanded one alone', () => {
+    document.body.innerHTML = '<button id="closed" aria-expanded="false"></button><button id="open" aria-expanded="true"></button>'
+    const clicked = vi.fn()
+    document.addEventListener('click', clicked)
+    expandIfCollapsed(document.querySelector<HTMLElement>('#closed'))
+    expandIfCollapsed(document.querySelector<HTMLElement>('#open'))
+    expandIfCollapsed(null)
+    document.removeEventListener('click', clicked)
+    expect(clicked).toHaveBeenCalledOnce()
+  })
+})
+
+describe('onClosed', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => setTimeout(() => cb(0), 16))
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => clearTimeout(id))
+  })
+
+  afterEach(() => vi.unstubAllGlobals())
+
+  const card = () => document.querySelector('#card')
+
+  it('calls back once a seen element goes away', () => {
+    document.body.innerHTML = '<div id="card"></div>'
+    const closed = vi.fn()
+    onClosed(card, closed)
+    vi.advanceTimersByTime(16 * 3)
+    expect(closed).not.toHaveBeenCalled()
+    card()?.remove()
+    vi.advanceTimersByTime(16 * 20)
+    expect(closed).toHaveBeenCalledOnce()
+  })
+
+  it('does not fire before the element first appears', () => {
+    const closed = vi.fn()
+    onClosed(card, closed)
+    vi.advanceTimersByTime(16 * 20)
+    expect(closed).not.toHaveBeenCalled()
+    document.body.innerHTML = '<div id="card"></div>'
+    vi.advanceTimersByTime(16 * 5)
+    expect(closed).not.toHaveBeenCalled()
+  })
+
+  it('ignores a flicker shorter than a few frames', () => {
+    document.body.innerHTML = '<div id="card"></div>'
+    const closed = vi.fn()
+    onClosed(card, closed)
+    vi.advanceTimersByTime(16)
+    const gone = card()!
+    gone.remove()
+    vi.advanceTimersByTime(16)
+    document.body.append(gone)
+    vi.advanceTimersByTime(16 * 20)
+    expect(closed).not.toHaveBeenCalled()
+  })
+
+  it('stops when cancelled', () => {
+    document.body.innerHTML = '<div id="card"></div>'
+    const closed = vi.fn()
+    const cancel = onClosed(card, closed)
+    vi.advanceTimersByTime(16 * 2)
+    cancel()
+    card()?.remove()
+    vi.advanceTimersByTime(16 * 20)
+    expect(closed).not.toHaveBeenCalled()
+  })
+})
+
+describe('openToolPanel', () => {
+  it('returns a tool card only while its button is expanded', () => {
+    const button = document.createElement('button')
+    button.setAttribute('aria-expanded', 'false')
+    button.setAttribute('aria-controls', 'panel')
+    toolbarWith('map-measure', button)
+    document.body.insertAdjacentHTML('beforeend', '<div id="panel"></div>')
+    expect(openToolPanel('map-measure')).toBeNull()
+    button.setAttribute('aria-expanded', 'true')
+    expect(openToolPanel('map-measure')?.id).toBe('panel')
+    expect(openToolPanel('map-add')).toBeNull()
   })
 })

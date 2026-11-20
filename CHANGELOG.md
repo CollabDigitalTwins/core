@@ -21,6 +21,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   app's own sidebar and toolbar elements. Strings are in a new `GuidedTour` i18n namespace.
   Open tours show one at a time, in the order they opened, and the platform tour always goes first. The tour
   layers above the app shell by default; set `--tour-z` on a `className` to move it.
+  The share tool's QR code and screenshot dialogs carry `share-qr-card` and `share-screenshot-card` anchors, which the tour spotlights while open.
 - `@collabdt/core/plugins-sdk/tour`: all of the above for runtime-loaded plugins.
 - Platform overview tour (`components/tour/platform/PlatformTour`), mounted by `AppSidebar`: walks the sidebar,
   the two ways to see data (3D viewers and data pages), plugins, support and the account menu, then the tour of
@@ -30,15 +31,20 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   A viewer tour covers its search, side panel and toolbar (each tool branches into a closer look). The map adds
   its controls, settings, attribution and an example legend; BIM adds hints on its empty card (pick a building, add
   a 3D file) and its view cube. The map and BIM settings tours walk each control and briefly change it to show the
-  effect, then put it back. The tour reopens on the step it was on if it remounts. The Map tour demonstrates a search for Carleton University, opens the side panel and each toolbar tool, and covers
-  the zoom, compass and map settings controls; finishing a branch returns to the overview. Each side panel tab, the
+  effect, then put it back. The tour reopens on the step it was on if it remounts. Whenever the map can reach Ottawa, the Map tour demonstrates a search for Carleton University (only for an organization with a
+  geocoder); it opens the side panel and each toolbar tool, and covers
+  the zoom, compass and map settings controls; finishing a branch returns to the overview, and so does closing the card a section depends on (the datasets menu, the side panel, a tool's dropdown or card) to the step it branched from. Each side panel tab, the
   datasets menu and each of its collections, the Plugins page, the Support options, the Add options, the Share
-  options and a measuring demo on the Carleton campus have closer tours or buttons of their own. Toolbar tools
+  options and a measuring demo have closer tours or buttons of their own; the measuring demo runs on the Carleton campus whenever
+  the map can reach Ottawa. Elsewhere the search and measure demos stay on the current map. Toolbar tools
   and side panel tabs added by plugins are included. The spotlight centres on what a control draws, not its padded
   box. Items a role cannot use, such as the Organization settings or Add options without create rights, are left
   out, and the card re-places itself when the window is resized. A Language step, before Support, lists the
   organization's languages and switches to one; it only appears when there is more than one. A branch follows the viewer: moving to another viewer or page switches to its tour. It opens once per device on a first visit and again from a new Guide item in the Support menu. Strings are
   in a new `PlatformTour` i18n namespace and `supportMenu.guide`.
+  Whenever the map can reach Ottawa, the map legend and Datasets tours add, restyle and remove Ottawa's zoning dataset
+  live; when that dataset is already on the map, the legend tour shows the example legend instead. The plugins tour
+  installs and uninstalls the Hello Map demo plugin and shows the controls your role allows.
 - `useSidebar()` returns `guideOpen` and `setGuideOpen`; `SupportMenu` takes `onOpenGuide`.
 - `hooks/ui/useChangeViewer`: switches viewer the way the app sidebar does.
 - `settings/src/settingsTabs`: `canSeeSettingsTab`, the role rule for which settings sections show, shared by the
@@ -54,6 +60,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   map and BIM setting; the BIM view cube has the `cdt-view-cube` class. `CollapsibleSection` and `SettingsSection`
   take `tourAnchor`. The map Compare and Datasets buttons set
   `aria-expanded`.
+- `data-tour` anchors on the Applied layers card, dataset style controls, dataset apply boxes, plugin rows and controls,
+  the confirm dialog action and the `confirm-cancel` anchor on its cancel button. The plugin detail controls
+  (`data-tour="plugin-controls"`) carry `aria-busy` while one of the plugin's writes is in flight.
 
 ## [0.19.0] - 2026-11-13
 

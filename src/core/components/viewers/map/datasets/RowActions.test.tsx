@@ -90,6 +90,13 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
+describe('RowActions — tour anchors', () => {
+  it('marks the apply box for the tour', () => {
+    renderRow(orgUpload)
+    expect(screen.getByRole('checkbox').parentElement).toHaveAttribute('data-tour', 'dataset-apply')
+  })
+})
+
 describe('RowActions — delete', () => {
   it('offers delete on the organization\'s own upload', () => {
     renderRow(orgUpload)

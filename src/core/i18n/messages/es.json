@@ -492,11 +492,15 @@
       "bim": {
         "title": "Buscar un edificio",
         "body": "Busque los edificios de su organización por nombre o dirección y elija uno para abrirlo en el visor."
+      },
+      "map": {
+        "title": "Buscar en el mapa",
+        "body": "Escriba una dirección, un lugar o uno de sus edificios, luego elija un resultado y el mapa vuela hasta allí."
       }
     },
     "searchDemo": {
       "title": "Buscar en el mapa",
-      "body": "Escriba una dirección, un lugar o uno de sus edificios, elija un resultado y el mapa vuela hasta allí. Mire cómo encuentra Carleton University."
+      "body": "Escriba una dirección, un lugar o uno de sus edificios, elija un resultado y el mapa vuela hasta allí. Mire cómo encuentra Carleton University y la elige de la lista."
     },
     "panel": {
       "map": {
@@ -574,6 +578,20 @@
           "area": {
             "term": "Área",
             "description": "Haga clic en las esquinas de una forma; su área aparece dentro. Mire cómo mide parte del campus."
+          },
+          "clear": {
+            "term": "Borrar",
+            "description": "Borre las mediciones y deje de medir."
+          }
+        },
+        "itemsAnywhere": {
+          "distance": {
+            "term": "Distancia",
+            "description": "Haga clic en puntos a lo largo de un recorrido; la longitud total aparece en la línea. Mire cómo mide un recorrido en el mapa."
+          },
+          "area": {
+            "term": "Área",
+            "description": "Haga clic en las esquinas de una forma; su área aparece dentro. Mire cómo mide una forma en el mapa."
           },
           "clear": {
             "term": "Borrar",
@@ -828,6 +846,16 @@
       "area": {
         "title": "Medir un área",
         "body": "Haga clic en las esquinas y la forma se cierra sola, con su área dentro. Aquí: el corazón del campus de Carleton."
+      },
+      "anywhere": {
+        "distance": {
+          "title": "Medir una distancia",
+          "body": "Cada clic agrega un punto y la línea muestra el total. Aquí: un recorrido por el centro del mapa."
+        },
+        "area": {
+          "title": "Medir un área",
+          "body": "Haga clic en las esquinas y la forma se cierra sola, con su área dentro. Aquí: una forma en el centro del mapa."
+        }
       }
     },
     "datasetsTour": {
@@ -847,6 +875,24 @@
             "term": "Agregar portal",
             "description": "Conecte otro portal de datos abiertos. Solo administradores."
           }
+        }
+      },
+      "zoning": {
+        "find": {
+          "title": "Buscar un conjunto de datos",
+          "body": "El recorrido escribe \"Existing Colour Zoning\" en la búsqueda, en la pestaña municipal, para encontrar el mapa de zonificación de Ottawa de Open Ottawa."
+        },
+        "apply": {
+          "title": "Agregarlo al mapa",
+          "body": "Marque la casilla de una fila para dibujar ese conjunto de datos en el mapa. El recorrido marca el mapa de zonificación."
+        },
+        "applied": {
+          "title": "Lo que está en el mapa",
+          "body": "La pestaña Aplicados muestra todos los conjuntos de datos dibujados en el mapa ahora."
+        },
+        "remove": {
+          "title": "Quitarlo del mapa",
+          "body": "Desmarque la casilla para quitar el conjunto de datos del mapa. El recorrido desmarca el mapa de zonificación que agregó."
         }
       },
       "tabs": {
@@ -1126,6 +1172,43 @@
             "description": "Haga clic en la fila para ver su descripción, autor, lo que puede hacer y sus interruptores."
           }
         }
+      },
+      "hello": {
+        "open": {
+          "title": "Abrir un plugin",
+          "body": "Haga clic en una fila para ver la descripción del plugin, su autor, lo que puede hacer y sus interruptores. El recorrido abre Hello Map, un pequeño plugin de demostración incluido en la plataforma."
+        },
+        "install": {
+          "title": "Instalarlo",
+          "body": "Instalar en la organización añade el plugin para todas las personas de su organización. El recorrido instala Hello Map."
+        },
+        "controls": {
+          "title": "Sus controles",
+          "body": "Lo que puede cambiar depende de su rol. Elija uno para probarlo. Los interruptores de la organización solo funcionan aquí si el recorrido instaló Hello Map, y el recorrido deja como estaban los que haya cambiado cuando salga.",
+          "items": {
+            "installed": {
+              "term": "Instalado",
+              "description": "Al desactivarlo se desinstala para toda la organización, después de que lo confirme."
+            },
+            "org-enabled": {
+              "term": "Activado",
+              "description": "Lo ejecuta para todas las personas por defecto."
+            },
+            "allow-override": {
+              "term": "Permitir que cada persona elija",
+              "description": "Permite que cada persona lo active o desactive para sí misma."
+            },
+            "user-run": {
+              "term": "Ejecutarlo para mí",
+              "description": "Lo activa o desactiva solo para usted, cuando su organización permite elegir."
+            }
+          }
+        },
+        "controlsReadOnly": "Los administradores de su organización deciden si este plugin se ejecuta. La fila le indica lo que eligieron.",
+        "uninstall": {
+          "title": "Desinstalarlo",
+          "body": "Desactive Instalado y confirme para quitar el plugin de su organización. El recorrido desinstala Hello Map, que él mismo instaló."
+        }
       }
     },
     "interfaces": {
@@ -1161,6 +1244,32 @@
     "viewCube": {
       "title": "Cubo de vista",
       "body": "Muestra hacia dónde mira la cámara. Haga clic en una cara, arista o esquina para ver el modelo desde ese lado."
+    },
+    "zoningDemo": {
+      "load": {
+        "title": "Añadir un conjunto de datos",
+        "body": "El recorrido añade el mapa de zonificación de la Ciudad de Ottawa, de Open Ottawa. Los conjuntos de datos grandes tardan unos segundos en cargar; el anillo junto a la capa muestra cuánto falta."
+      },
+      "legend": {
+        "title": "Expandir la leyenda",
+        "body": "La tarjeta Capas aplicadas enumera cada capa del mapa. Su chevrón abre o pliega la tarjeta; el recorrido la abre."
+      },
+      "layer": {
+        "title": "Expandir la capa",
+        "body": "El chevrón de una capa abre su estilo. El recorrido abre el estilo de la capa de zonificación."
+      },
+      "colour": {
+        "title": "Colorear por un campo",
+        "body": "La zonificación empieza coloreada por PARENTZONE, los colores del editor; el recorrido cambia Colorear por a ZONE_MAIN y el mapa se recolorea por zona principal."
+      },
+      "style": {
+        "title": "Etiquetas y Más estilo",
+        "body": "Más estilo reúne la opacidad, el color del borde, el grosor del borde y las etiquetas. El recorrido escribe el ZONE_CODE de cada parcela en el mapa, oscurece el borde y baja la opacidad."
+      },
+      "remove": {
+        "title": "Quitar una capa",
+        "body": "La × quita la capa del mapa. El recorrido quita la capa de zonificación que añadió."
+      }
     },
     "legend": {
       "title": "Leyenda",

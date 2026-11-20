@@ -7,17 +7,21 @@ import { ViewerNames } from '../../../types/dbTypes'
 import { canSeeSettingsTab } from '../../settings/src/settingsTabs'
 import { SIDEBAR_TAB_META } from '../../ui/ViewerSidebar/sidebarTabs'
 
-import { afterMenusClose, demoSwitch, demoTabs, findToolTarget, MEASURE_REGION, openSection, setToolOpen } from './platformHost'
+import { helloMapControl, helloMapInstalledByTour, helloMapRow } from './helloMapDemo'
+import { afterMenusClose, demoSwitch, demoTabs, findToolTarget, MEASURE_REGION, onClosed, openSection, openToolPanel, setToolOpen } from './platformHost'
 import { availableDataPages, availableViewers, chromeOf, DATA_PAGES, EVERYTHING_AVAILABLE, item, pluginItem, step, toolStepId, VIEWER_TOOLS } from './platformTourSteps'
 import { showTourDemo, TOUR_LEGEND_DEMO_TARGET } from './tourDemos'
 import { NO_PLUGIN_ENTRIES } from './usePluginTourEntries'
+import { zoningMenuOwnsDataset, zoningMenuRow, zoningRow, zoningStylePanel } from './zoningDemo'
 
+import type { HelloMapControl, HelloMapStage } from './helloMapDemo'
 import type { DataPage, MeasureKind, PlatformTourActions, PlatformTourId, TourAvailability, Translate, ViewerChrome } from './platformTourTypes'
 import type { PluginEntry, PluginTourEntries } from './usePluginTourEntries'
+import type { ZoningMenuStage, ZoningStage } from './zoningDemo'
 import type { SidebarTabType } from '../../../store/Menus/reducer'
 import type { ViewerKey } from '../../../types/dbTypes'
 import type { SettingsTabKey } from '../../settings/src/types'
-import type { TourItem, TourStep } from '../tourTypes'
+import type { TourItem, TourStep, TourTarget } from '../tourTypes'
 
 export interface SubTour {
   steps: TourStep[]
@@ -66,7 +70,8 @@ const MAP_TAB_SUBJECT: Partial<Record<SidebarTabType, string>> = { file: 'File',
 const SETTINGS_SECTIONS: [key: SettingsTabKey, icon: Icon][] = [['account', LR.UserRound], ['users', LR.Users], ['organization', LR.Building2]]
 
 function toolItems(t: Translate, toolId: string, a: PlatformTourActions): TourItem[] | undefined {
-  const key = `tools.${toolId}.items`
+  const ottawa = a.inOttawa()
+  const key = toolId === 'map-measure' && !ottawa ? 'tools.map-measure.itemsAnywhere' : `tools.${toolId}.items`
   const from = toolStepId(toolId)
   switch (toolId) {
     case 'map-database':
@@ -87,31 +92,43 @@ function toolItems(t: Translate, toolId: string, a: PlatformTourActions): TourIt
   }
 }
 
-const openWhileShown = (toolId: string) => () => {
+const SHARE_DIALOGS = '[data-tour="share-qr-card"], [data-tour="share-screenshot-card"]'
+
+const SHARE_TOOLS = ['map-share', 'bim-share']
+
+const toolCard = (toolId: string) => () =>
+  openToolPanel(toolId) ?? (SHARE_TOOLS.includes(toolId) ? document.querySelector(SHARE_DIALOGS) : null)
+
+const openWhileShown = (toolId: string, leave: () => void) => () => {
   const cancel = afterMenusClose(() => setToolOpen(toolId, true))
+  const stopWatching = onClosed(toolCard(toolId), leave)
   return () => {
+    stopWatching()
     cancel()
     setToolOpen(toolId, false)
   }
 }
 
-const pluginToolStep = (t: Translate, tool: PluginEntry): TourStep => ({
+const pluginToolStep = (t: Translate, tool: PluginEntry, a: PlatformTourActions): TourStep => ({
   id: toolStepId(tool.id),
   target: () => findToolTarget(tool.id),
   title: tool.label,
   body: t('tools.plugin.body'),
   scroll: false,
-  onEnter: openWhileShown(tool.id),
+  onEnter: openWhileShown(tool.id, a.leave),
 })
+
+export const shareDialogOr = (toolId: string) => (): Element | null =>
+  document.querySelector(SHARE_DIALOGS) ?? findToolTarget(toolId)
 
 function toolSteps(t: Translate, chrome: ViewerChrome, a: PlatformTourActions, plugins: PluginTourEntries): TourStep[] {
   const core = VIEWER_TOOLS[chrome].map(({ id }): TourStep => ({
-    ...step(t, toolStepId(id), () => findToolTarget(id), `tools.${id}`),
+    ...step(t, toolStepId(id), SHARE_TOOLS.includes(id) ? shareDialogOr(id) : () => findToolTarget(id), `tools.${id}`),
     scroll: false,
     items: toolItems(t, id, a),
-    onEnter: id === DATASETS_TOOL ? undefined : openWhileShown(id),
+    onEnter: id === DATASETS_TOOL ? undefined : openWhileShown(id, a.leave),
   }))
-  return [...core, ...plugins.tools[chrome].map(tool => pluginToolStep(t, tool))]
+  return [...core, ...plugins.tools[chrome].map(tool => pluginToolStep(t, tool, a))]
 }
 
 function panelSteps(t: Translate, chrome: ViewerChrome, a: PlatformTourActions, plugins: PluginTourEntries): TourStep[] {
@@ -162,17 +179,29 @@ function legendStep(t: Translate, a: PlatformTourActions): TourStep {
   }
 }
 
+const ZONING_STEPS: [stage: ZoningStage, target: TourTarget][] = [
+  ['load', 'legend-applied'], ['legend', 'legend-applied'], ['layer', zoningRow], ['colour', zoningStylePanel], ['style', zoningStylePanel], ['remove', 'legend-applied'],
+]
+
+const zoningSteps = (t: Translate, a: PlatformTourActions): TourStep[] => ZONING_STEPS.map(([stage, target]) => ({
+  ...withEntry(step(t, `zoning-${stage}`, target, `zoningDemo.${stage}`), () => a.demoZoning(stage)),
+  scroll: false,
+}))
+
 function viewerTour(t: Translate, chrome: ViewerChrome, a: PlatformTourActions, plugins: PluginTourEntries): SubTour {
+  const ottawa = a.inOttawa()
+  const searchDemo = ottawa && a.canDemoSearch()
+  const zoningDemo = ottawa && !a.zoningApplied()
   return {
     steps: [
       withEntry(step(t, 'intro', null, `viewerTour.${chrome}`), () => a.openViewer(ViewerNames[chrome])),
       ...(chrome === 'map'
-        ? [withEntry(step(t, 'search', 'viewer-search', 'searchDemo'), a.demoSearch)]
+        ? [searchDemo ? withEntry(step(t, 'search', 'viewer-search', 'searchDemo'), a.demoSearch) : step(t, 'search', 'viewer-search', 'search.map')]
         : [step(t, 'search', 'viewer-search', 'search.bim'), bimStateStep(t, 'no-building', 'noBuilding'), bimStateStep(t, 'no-file', 'noBimFiles')]),
       ...panelSteps(t, chrome, a, plugins),
       toolbarStep(t, chrome, a, plugins),
       ...(chrome === 'map'
-        ? [...mapControlSteps(t, a), { ...step(t, 'attribution', MAP_ATTRIBUTION), scroll: false }, legendStep(t, a)]
+        ? [...mapControlSteps(t, a), { ...step(t, 'attribution', MAP_ATTRIBUTION), scroll: false }, ...(zoningDemo ? zoningSteps(t, a) : [legendStep(t, a)])]
         : [{ ...step(t, 'view-cube', VIEW_CUBE, 'viewCube'), scroll: false }]),
     ],
   }
@@ -202,15 +231,33 @@ const DATASET_COLLECTIONS: [id: string, icon: Icon, tab: string][] = [
   ['municipal', LR.Building2, 'municipal'], ['liveData', LR.Radio, 'liveData'],
 ]
 
+const ZONING_MENU_STEPS: [stage: ZoningMenuStage, target: string, skip?: () => boolean][] = [
+  ['find', 'datasets-search'],
+  ['apply', 'datasets-list', () => !zoningMenuRow() || zoningMenuRow()?.dataset.state === 'checked'],
+  ['applied', 'datasets-list', () => !zoningMenuRow()],
+  ['remove', 'datasets-list', () => !zoningMenuOwnsDataset()],
+]
+
+const zoningMenuSteps = (t: Translate, a: PlatformTourActions): TourStep[] => ZONING_MENU_STEPS.map(([stage, target, skip]) => ({
+  ...withEntry(step(t, `zoning-${stage}`, target, `datasetsTour.zoning.${stage}`), () => a.demoZoningMenu(stage)),
+  skip,
+}))
+
 function datasetsTour(t: Translate, a: PlatformTourActions): SubTour {
   const key = 'datasetsTour'
+  const ottawa = a.inOttawa()
   return {
     setup: () => {
       setToolOpen(DATASETS_TOOL, true)
-      return () => setToolOpen(DATASETS_TOOL, false)
+      const stopWatching = onClosed(() => document.querySelector('[data-tour="datasets"]'), a.leave)
+      return () => {
+        stopWatching()
+        setToolOpen(DATASETS_TOOL, false)
+      }
     },
     steps: [
       { ...step(t, 'search', 'datasets-search', `${key}.search`), items: items(t, `${key}.search.items`, [['search', LR.Search], ['filters', LR.ListFilter], ...(a.can('create', 'OpenDataPortal') ? [['addPortal', LR.Plus] as [string, Icon]] : [])]) },
+      ...(ottawa ? zoningMenuSteps(t, a) : []),
       {
         ...step(t, 'tabs', 'datasets-tabs', `${key}.tabs`),
         items: items(t, `${key}.tabs.items`, DATASET_COLLECTIONS.map(([id, icon, tab]) => [id, icon, () => a.pressControl(`datasets-tab-${tab}`)])),
@@ -224,8 +271,9 @@ function datasetsTour(t: Translate, a: PlatformTourActions): SubTour {
 }
 
 function measureTour(t: Translate, a: PlatformTourActions): SubTour {
+  const ottawa = a.inOttawa()
   const demo = (kind: MeasureKind): TourStep => ({
-    ...withEntry(step(t, kind, MEASURE_REGION, `measureDemo.${kind}`), () => a.demoMeasure(kind)),
+    ...withEntry(step(t, kind, MEASURE_REGION, ottawa ? `measureDemo.${kind}` : `measureDemo.anywhere.${kind}`), () => a.demoMeasure(kind, ottawa)),
     scroll: false,
   })
   return { steps: [demo('distance'), demo('area')] }
@@ -313,7 +361,11 @@ function panelTabTour(t: Translate, tab: SidebarTabType, chrome: ViewerChrome, a
     setup: () => {
       const close = a.openPanel()
       a.selectPanelTab(tab)
-      return close
+      const stopWatching = onClosed(() => document.querySelector('[data-tour="viewer-panel"]'), a.leave)
+      return () => {
+        stopWatching()
+        close()
+      }
     },
     steps: panelTabSteps(t, tab, chrome, a),
   }
@@ -354,11 +406,37 @@ function pluginsTour(t: Translate, a: PlatformTourActions): SubTour {
         ]),
       },
       {
-        ...step(t, 'list', 'plugins-list', `${key}.list`),
+        ...withEntry(step(t, 'list', 'plugins-list', `${key}.list`), () => a.pressControl('plugins-tab-all')),
         items: items(t, `${key}.list.items`, [['run', LR.Power], ['install', LR.Download], ['enable', LR.Building2], ['details', LR.ChevronRight]]),
       },
+      ...helloMapSteps(t, a),
     ],
   }
+}
+
+const HELLO_MAP_CONTROLS: [id: HelloMapControl, icon: Icon, allowed: (a: PlatformTourActions) => boolean][] = [
+  ['installed', LR.PackageCheck, canInstallPlugins],
+  ['org-enabled', LR.Building2, a => a.can('update', 'PluginInstallation')],
+  ['allow-override', LR.Users, a => a.can('update', 'PluginInstallation')],
+  ['user-run', LR.Play, a => a.can('update', 'PluginUserSetting')],
+]
+
+function helloMapSteps(t: Translate, a: PlatformTourActions): TourStep[] {
+  const key = 'pluginsTour.hello'
+  const helloStep = (stage: HelloMapStage, target: TourTarget, skip: () => boolean): TourStep =>
+    ({ ...withEntry(step(t, `hello-${stage}`, target, `${key}.${stage}`), () => a.demoHelloMap(stage)), skip })
+  const controls = HELLO_MAP_CONTROLS.filter(([, , allowed]) => allowed(a))
+  const controlsStep = helloStep('controls', () => helloMapControl('plugin-controls'), () => !helloMapRow())
+  return [
+    helloStep('open', 'plugin-row-hello-map', () => !helloMapRow()),
+    helloStep('install', () => helloMapControl('plugin-install'), () => !canInstallPlugins(a) || !helloMapControl('plugin-install')),
+    {
+      ...controlsStep,
+      body: controls.length ? controlsStep.body : t(`${key}.controlsReadOnly`),
+      items: controls.map(([id, icon]) => item(t, `${key}.controls.items`, id, icon, () => a.toggleHelloMapControl(id))),
+    },
+    helloStep('uninstall', () => helloMapControl('plugin-installed'), () => !helloMapInstalledByTour()),
+  ]
 }
 
 function settingsTour(t: Translate, a: PlatformTourActions): SubTour {

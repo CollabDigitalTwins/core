@@ -81,7 +81,7 @@ export function PluginRow({ slug, name, icon, version, status, standing, columns
   }
 
   return (
-    <li className="border-b last:border-b-0" data-testid={`plugin-${slug}`}>
+    <li className="border-b last:border-b-0" data-testid={`plugin-${slug}`} data-tour={`plugin-row-${slug}`}>
       <div className={cn(PLUGIN_ROW_GRID, 'px-3 py-2.5 text-sm hover:bg-muted/40')} style={pluginRowStyle(columns)}>
         <div className="flex min-w-0 items-center gap-2">
           <button

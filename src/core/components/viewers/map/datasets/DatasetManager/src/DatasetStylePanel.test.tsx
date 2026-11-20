@@ -43,6 +43,11 @@ function renderPanel() {
 beforeEach(() => { vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline'))) })
 
 describe('DatasetStylePanel', () => {
+  it('marks More style for the tour', () => {
+    renderPanel()
+    expect(screen.getByRole('button', { name: /more style|moreStyle/i }).getAttribute('data-tour')).toBe('dataset-more-style')
+  })
+
   it('shows colouring first and keeps the finer settings behind a toggle', () => {
     renderPanel()
     expect(screen.getByText('colourBy')).toBeTruthy()

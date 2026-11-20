@@ -75,7 +75,14 @@ export function usePlatformTour(viewer: ViewerKey | undefined) {
   const branch = React.useCallback((tour: PlatformTourId, returnTo: string, startAt?: string) => {
     setTrail(legs => [...legs, { tour, startAt, returnTo }])
   }, [])
-  const actions = usePlatformTourActions(branch)
+  const latestViewer = useLatest(viewer)
+  const back = React.useCallback(() => {
+    setTrail(legs => {
+      const parent = legs[legs.length - 2]
+      return parent ? followViewer([...legs.slice(0, -2), { ...parent, startAt: legs[legs.length - 1].returnTo }], latestViewer.current) : legs
+    })
+  }, [latestViewer])
+  const actions = usePlatformTourActions(branch, back)
   const plugins = usePluginTourEntries()
   const languages = (useOrganization()?.languages as Language[] | undefined) ?? NO_LANGUAGES
   const available = useTourAvailability()
@@ -90,13 +97,6 @@ export function usePlatformTour(viewer: ViewerKey | undefined) {
   const { setup } = tour
   React.useEffect(() => setup?.(), [setup])
 
-  const latestViewer = useLatest(viewer)
-  const back = React.useCallback(() => {
-    setTrail(legs => {
-      const parent = legs[legs.length - 2]
-      return parent ? followViewer([...legs.slice(0, -2), { ...parent, startAt: legs[legs.length - 1].returnTo }], latestViewer.current) : legs
-    })
-  }, [latestViewer])
   const reset = React.useCallback(() => setTrail(OVERVIEW), [])
   const remember = React.useCallback((stepId: string) => setTrail(legs => rememberStep(legs, stepId)), [])
 

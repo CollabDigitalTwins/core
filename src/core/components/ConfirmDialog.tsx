@@ -77,11 +77,12 @@ export default function ConfirmDialog({
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-                <AlertDialogCancel>{cancelLabel ?? t('cancel')}</AlertDialogCancel>
+                <AlertDialogCancel data-tour="confirm-cancel">{cancelLabel ?? t('cancel')}</AlertDialogCancel>
                 <AlertDialogAction
                 onClick={(e) => { void handleConfirm(e) }}
                 className={tone === 'destructive' ? 'bg-red-600 hover:bg-red-700' : undefined}
                 disabled={isDeleting}
+                data-tour="confirm-action"
                 >
                 {isDeleting ? <LoadingSpinner /> : confirmLabel ?? t('delete')}
                 </AlertDialogAction>

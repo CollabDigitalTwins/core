@@ -49,6 +49,7 @@ const CAPABILITY_ICON: Record<string, LucideIcon> = {
 interface Props {
   listing: PluginListing
   ability: PluginsAbility
+  writing?: boolean
   onSetInstalled: (installed: boolean) => void
   onSetOrgEnabled: (enabled: boolean) => void
   onSetAllowUserOverride: (allow: boolean) => void
@@ -60,6 +61,7 @@ interface Props {
 export function PluginDetails({
   listing,
   ability,
+  writing = false,
   onSetInstalled,
   onSetOrgEnabled,
   onSetAllowUserOverride,
@@ -127,10 +129,10 @@ export function PluginDetails({
         )}
       </div>
 
-      <div className="flex min-w-0 flex-col gap-2.5">
+      <div className="flex min-w-0 flex-col gap-2.5" data-tour="plugin-controls" aria-busy={writing}>
         {status === 'available' ? (
           ability.canInstall && (
-            <Button size="sm" onClick={() => onSetInstalled(true)}>
+            <Button size="sm" onClick={() => onSetInstalled(true)} data-tour="plugin-install">
               <LR.PackagePlus className="mr-1.5 h-4 w-4" />
               {t('addToOrg')}
             </Button>
@@ -141,6 +143,7 @@ export function PluginDetails({
               <ControlGroup label={t('orgGroup')} who={t('orgGroupWho')}>
                 {ability.canInstall && (
                   <ControlRow
+                    tour="plugin-installed"
                     label={t('orgInstalled')}
                     hint={listing.installed
                       ? t('orgInstalledOnHint')
@@ -156,6 +159,7 @@ export function PluginDetails({
                 {ability.canConfigureOrg && (
                   <>
                     <ControlRow
+                      tour="plugin-org-enabled"
                       label={t('orgEnabled')}
                       hint={listing.orgEnabled
                         ? t('orgEnabledOnHint')
@@ -168,6 +172,7 @@ export function PluginDetails({
                       />
                     </ControlRow>
                     <ControlRow
+                      tour="plugin-allow-override"
                       label={t('orgAllowOverride')}
                       hint={listing.allowUserOverride
                         ? t('orgAllowOverrideOnHint')
@@ -190,7 +195,7 @@ export function PluginDetails({
 
             <ControlGroup label={t('userGroup')}>
               {choice === 'choose' ? (
-                <ControlRow label={t('userRun')}>
+                <ControlRow tour="plugin-user-run" label={t('userRun')}>
                   <Switch
                     checked={userEnabled}
                     onCheckedChange={onSetUserEnabled}
@@ -253,14 +258,16 @@ function ControlGroup({
 function ControlRow({
   label,
   hint,
+  tour,
   children,
 }: {
   label: string
   hint?: string
+  tour?: string
   children: React.ReactNode
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 py-1.5 [&+&]:border-t [&+&]:border-border/60">
+    <div data-tour={tour} className="flex items-center justify-between gap-3 py-1.5 [&+&]:border-t [&+&]:border-border/60">
       <span className="text-sm leading-tight">
         {label}
         {hint && <small className="mt-0.5 block text-xs text-muted-foreground">{hint}</small>}

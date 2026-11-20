@@ -82,6 +82,7 @@ export function PluginsManager({ listings, actions, registryActions }: Props) {
 
   // Optimistic overrides: the switch moves at once, reverts if the write fails, and the next fetch clears it.
   const [overrides, setOverrides] = React.useState<Record<string, Partial<PluginListing>>>({})
+  const [writing, setWriting] = React.useState<Record<string, number>>({})
 
   const listingRows = React.useMemo(
     () => resolved.map(row => {
@@ -169,6 +170,7 @@ export function PluginsManager({ listings, actions, registryActions }: Props) {
       success: string,
     ) => {
       setOverrides(current => ({ ...current, [slug]: { ...current[slug], ...patch } }))
+      setWriting(current => ({ ...current, [slug]: (current[slug] ?? 0) + 1 }))
 
       try {
         await write()
@@ -180,6 +182,8 @@ export function PluginsManager({ listings, actions, registryActions }: Props) {
           return rest
         })
         toast.error(t('toastFailed', { name }))
+      } finally {
+        setWriting(current => ({ ...current, [slug]: (current[slug] ?? 1) - 1 }))
       }
     },
     [t],
@@ -293,6 +297,7 @@ export function PluginsManager({ listings, actions, registryActions }: Props) {
                       ability={ability}
                       actions={boundActions}
                       commit={commit}
+                      writing={(writing[row.slug] ?? 0) > 0}
                       devTeam={devTeam}
                       registryActions={boundRegistryActions}
                     />
@@ -401,6 +406,7 @@ function Row({
   ability,
   actions,
   commit,
+  writing,
   devTeam,
   registryActions,
 }: {
@@ -409,6 +415,7 @@ function Row({
   ability: PluginsAbility
   actions: PluginsActions
   commit: Commit
+  writing: boolean
   devTeam: DevTeamView | null
   registryActions: RegistryActions
 }) {
@@ -468,6 +475,7 @@ function Row({
           <PluginDetails
             listing={listing}
             ability={ability}
+            writing={writing}
             onSetInstalled={setInstalled}
             onSetOrgEnabled={setOrgEnabled}
             onSetAllowUserOverride={allow => void commit(

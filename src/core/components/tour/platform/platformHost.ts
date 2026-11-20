@@ -9,12 +9,16 @@ export const findToolButton = (toolId: string, root: ParentNode = document) =>
 
 const isExpanded = (button: HTMLElement) => button.getAttribute('aria-expanded') === 'true'
 
-/** What a tool step spotlights: the dropdown or card the tool opened, else its toolbar button. */
-export function findToolTarget(toolId: string, root: Document = document): Element | null {
+/** The dropdown or card a tool opened; null while it is closed or the tool has no `aria-expanded`. */
+export function openToolPanel(toolId: string, root: Document = document): Element | null {
   const button = findToolButton(toolId, root)
   const panelId = button && isExpanded(button) ? button.getAttribute('aria-controls') : null
-  return (panelId && root.getElementById(panelId)) || root.querySelector(`[data-tour="tool-${toolId}"]`)
+  return panelId ? root.getElementById(panelId) : null
 }
+
+/** What a tool step spotlights: the dropdown or card the tool opened, else its toolbar button. */
+export const findToolTarget = (toolId: string, root: Document = document): Element | null =>
+  openToolPanel(toolId, root) ?? root.querySelector(`[data-tour="tool-${toolId}"]`)
 
 /** Opens or closes a toolbar tool's dropdown or card; tools without `aria-expanded` are left alone. */
 export function setToolOpen(toolId: string, open: boolean, root: ParentNode = document): void {
@@ -26,7 +30,7 @@ export function setToolOpen(toolId: string, open: boolean, root: ParentNode = do
   button.click()
 }
 
-const setNativeValue = (input: HTMLInputElement, value: string) => {
+export const setNativeValue = (input: HTMLInputElement, value: string) => {
   Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, value)
   input.dispatchEvent(new Event('input', { bubbles: true }))
 }
@@ -58,11 +62,92 @@ export function searchFor(container: Element | null, text: string, onTyped: () =
 }
 
 const WAIT_FRAMES = 120
+const SUGGESTION_FRAMES = 300
 
-const press = (element: HTMLElement) => {
+export const press = (element: HTMLElement) => {
   // Radix tabs select on mousedown, menu items on click.
   element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }))
   element.click()
+}
+
+/** Calls `then` once `ready()` is true, checking each frame for up to `frames`, else `giveUp`; returns a cancel. */
+export function waitFor(ready: () => boolean, then: () => void, frames = 600, giveUp?: () => void): () => void {
+  let frame = 0
+  let waited = 0
+  const attempt = () => {
+    if (ready()) then()
+    else if (++waited < frames) frame = requestAnimationFrame(attempt)
+    else giveUp?.()
+  }
+  attempt()
+  return () => cancelAnimationFrame(frame)
+}
+
+const CLOSED_FRAMES = 3
+
+/** Calls `closed` once an element `find` has returned goes missing for a few frames; returns a cancel. */
+export function onClosed(find: () => Element | null, closed: () => void): () => void {
+  let frame = 0
+  let seen = false
+  let missing = 0
+  const check = () => {
+    if (find()?.isConnected) {
+      seen = true
+      missing = 0
+    } else if (seen && ++missing >= CLOSED_FRAMES) {
+      closed()
+      return
+    }
+    frame = requestAnimationFrame(check)
+  }
+  frame = requestAnimationFrame(check)
+  return () => cancelAnimationFrame(frame)
+}
+
+/** Clicks the search suggestion whose text includes `text` once it shows and `DEMO_DELAY_MS` passed, else `otherwise`; returns a cancel. */
+export function pickSuggestion(container: Element | null, text: string, picked: () => void, otherwise: () => void): () => void {
+  let timer = 0
+  const match = () => [...container?.querySelectorAll<HTMLElement>('[cmdk-item]') ?? []]
+    .find(item => item.textContent?.toLowerCase().includes(text.toLowerCase()))
+  const cancelWait = waitFor(() => !!match(), () => {
+    timer = window.setTimeout(() => {
+      match()?.click()
+      picked()
+    }, DEMO_DELAY_MS)
+  }, SUGGESTION_FRAMES, otherwise)
+  return () => {
+    cancelWait()
+    window.clearTimeout(timer)
+  }
+}
+
+/** Presses a disclosure button only while it is collapsed. */
+export function expandIfCollapsed(button: HTMLElement | null | undefined): void {
+  if (button?.getAttribute('aria-expanded') === 'false') press(button)
+}
+
+/** A demo stage's pending timers and waits, all cancelled together when the stage closes. */
+export interface Schedule {
+  after: (ms: number, then: () => void) => void
+  when: (ready: () => boolean, then: () => void, giveUp?: () => void) => void
+  track: (cancel: () => void) => void
+  cancel: () => void
+}
+
+/** Timers and waits that skip their action once `stopped()` is true. */
+export function schedule(stopped: () => boolean): Schedule {
+  const cancels: (() => void)[] = []
+  return {
+    after: (ms, then) => {
+      const timer = window.setTimeout(() => { if (!stopped()) then() }, ms)
+      cancels.push(() => window.clearTimeout(timer))
+    },
+    when: (ready, then, giveUp) => {
+      cancels.push(waitFor(() => stopped() || ready(), () => { if (!stopped()) then() }, undefined, giveUp))
+    },
+    track: cancel => { cancels.push(cancel) },
+    cancel: () => cancels.forEach(cancel => cancel()),
+  }
 }
 
 export const MEASURE_REGION = 'measure-demo-region'
@@ -150,7 +235,7 @@ export function openSection(anchor: string, root: ParentNode = document): void {
   if (header?.getAttribute('aria-expanded') === 'false') header.click()
 }
 
-const DEMO_DELAY_MS = 700
+export const DEMO_DELAY_MS = 700
 
 const activeTab = (group: Element) => group.querySelector<HTMLElement>('[role="tab"][data-state="active"]')
 

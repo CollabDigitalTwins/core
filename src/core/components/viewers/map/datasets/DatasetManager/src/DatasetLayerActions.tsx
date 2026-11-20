@@ -55,6 +55,7 @@ export function DatasetLayerActions({ dataset, styleOpen = false, onToggleStyle 
           size="icon"
           className="h-7 w-7"
           aria-expanded={styleOpen}
+          data-tour="dataset-style"
           aria-label={styleLabel}
           title={styleLabel}
           onClick={() => onToggleStyle(dataset.name)}
@@ -62,7 +63,7 @@ export function DatasetLayerActions({ dataset, styleOpen = false, onToggleStyle 
           <LR.ChevronDown className={`h-4 w-4 transition-transform duration-200 ${styleOpen ? 'rotate-180' : ''}`} aria-hidden />
         </Button>
       )}
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={deactivate} aria-label={t('deactivate')} title={t('deactivate')}>
+      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={deactivate} data-tour="dataset-remove" aria-label={t('deactivate')} title={t('deactivate')}>
         <LR.X className="h-4 w-4" aria-hidden />
       </Button>
     </div>

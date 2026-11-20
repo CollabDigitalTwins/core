@@ -327,6 +327,25 @@ describe('the collapsed row', () => {
   })
 })
 
+describe('tour anchors', () => {
+  it("marks a plugin's row and controls for the tour", () => {
+    permissions.current = ADMIN
+    const { unmount } = render(<PluginsManager listings={[listing()]} />)
+
+    const row = card()
+    expect(row).toHaveAttribute('data-tour', 'plugin-row-space-planning')
+    for (const anchor of ['plugin-installed', 'plugin-org-enabled', 'plugin-allow-override', 'plugin-user-run']) {
+      expect(row.querySelector(`[data-tour="${anchor}"] [role="switch"]`)).not.toBeNull()
+    }
+    expect(row.querySelector('[data-tour="plugin-controls"]')).not.toBeNull()
+    unmount()
+
+    render(<PluginsManager listings={[listing({ status: 'available', installed: false })]} />)
+    const install = card().querySelector('[data-tour="plugin-install"]')
+    expect(install).toHaveTextContent('addToOrg')
+  })
+})
+
 describe('tabs', () => {
   it('lists only running plugins under running', () => {
     permissions.current = MEMBER
@@ -379,6 +398,27 @@ describe('toasts', () => {
 
     resolveWrite()
     await vi.waitFor(() => expect(toast.success).toHaveBeenCalledWith('toastUserEnabled'))
+  })
+
+  it('marks the controls busy while a write is in flight', async () => {
+    permissions.current = MEMBER
+    let resolveWrite: () => void = () => {}
+    const actions: PluginsActions = {
+      setInstalled: vi.fn(),
+      setOrgEnabled: vi.fn(),
+      setAllowUserOverride: vi.fn(),
+      setUserEnabled: vi.fn().mockReturnValue(new Promise<void>(resolve => {
+        resolveWrite = resolve
+      })),
+    }
+    render(<PluginsManager listings={[listing({ userEnabled: false })]} actions={actions} />)
+    const controls = () => card().querySelector('[data-tour="plugin-controls"]')
+
+    within(card()).getByRole('switch', { name: 'userRun' }).click()
+
+    await vi.waitFor(() => expect(controls()).toHaveAttribute('aria-busy', 'true'))
+    resolveWrite()
+    await vi.waitFor(() => expect(controls()).toHaveAttribute('aria-busy', 'false'))
   })
 
   it('reverts the switch when the write fails, so it never looks saved', async () => {

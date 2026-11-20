@@ -492,11 +492,15 @@
       "bim": {
         "title": "Find a building",
         "body": "Search your organization's buildings by name or address, then pick one to open it in the viewer."
+      },
+      "map": {
+        "title": "Search the map",
+        "body": "Type an address, a place or one of your buildings, then pick a result and the map flies there."
       }
     },
     "searchDemo": {
       "title": "Search the map",
-      "body": "Type an address, a place or one of your buildings, then pick a result and the map flies there. Watch it find Carleton University."
+      "body": "Type an address, a place or one of your buildings, then pick a result and the map flies there. Watch it find Carleton University and pick it from the list."
     },
     "panel": {
       "map": {
@@ -574,6 +578,20 @@
           "area": {
             "term": "Area",
             "description": "Click the corners of a shape; its area shows inside. Watch it measure part of the campus."
+          },
+          "clear": {
+            "term": "Clear",
+            "description": "Remove the measurements and stop measuring."
+          }
+        },
+        "itemsAnywhere": {
+          "distance": {
+            "term": "Distance",
+            "description": "Click points along a path; the total length shows on the line. Watch it measure a path on the map."
+          },
+          "area": {
+            "term": "Area",
+            "description": "Click the corners of a shape; its area shows inside. Watch it measure a shape on the map."
           },
           "clear": {
             "term": "Clear",
@@ -828,6 +846,16 @@
       "area": {
         "title": "Measure an area",
         "body": "Click the corners and the shape closes by itself, with its area inside. Here: the heart of Carleton's campus."
+      },
+      "anywhere": {
+        "distance": {
+          "title": "Measure a distance",
+          "body": "Each click adds a point and the line shows the running total. Here: a path across the middle of the map."
+        },
+        "area": {
+          "title": "Measure an area",
+          "body": "Click the corners and the shape closes by itself, with its area inside. Here: a shape in the middle of the map."
+        }
       }
     },
     "datasetsTour": {
@@ -847,6 +875,24 @@
             "term": "Add portal",
             "description": "Connect another open data portal. Administrators only."
           }
+        }
+      },
+      "zoning": {
+        "find": {
+          "title": "Search for a dataset",
+          "body": "The tour types \"Existing Colour Zoning\" into the search, on the municipal tab, to find Ottawa's zoning map from Open Ottawa."
+        },
+        "apply": {
+          "title": "Add it to the map",
+          "body": "Tick the box on a row to draw that dataset on the map. The tour ticks the zoning map."
+        },
+        "applied": {
+          "title": "What is on the map",
+          "body": "The Applied tab lists every dataset drawn on the map right now."
+        },
+        "remove": {
+          "title": "Take it off the map",
+          "body": "Untick the box to remove the dataset from the map. The tour unticks the zoning map it added."
         }
       },
       "tabs": {
@@ -1126,6 +1172,43 @@
             "description": "Click the row for its description, author, what it can do, and its switches."
           }
         }
+      },
+      "hello": {
+        "open": {
+          "title": "Open a plugin",
+          "body": "Click a row to see the plugin's description, author, what it can do and its switches. The tour opens Hello Map, a small demo plugin that ships with the platform."
+        },
+        "install": {
+          "title": "Install it",
+          "body": "Install to organization adds the plugin for everyone in your organization. The tour installs Hello Map."
+        },
+        "controls": {
+          "title": "Your controls",
+          "body": "What you can change depends on your role. Pick one to try it. The organization switches work here only if the tour installed Hello Map, and the tour switches back any it changed when you leave.",
+          "items": {
+            "installed": {
+              "term": "Installed",
+              "description": "Off uninstalls it for the whole organization, after you confirm."
+            },
+            "org-enabled": {
+              "term": "Enabled",
+              "description": "Runs it for everyone by default."
+            },
+            "allow-override": {
+              "term": "Let people choose",
+              "description": "Lets each person switch it on or off for themselves."
+            },
+            "user-run": {
+              "term": "Run this for me",
+              "description": "Switches it on or off for you only, when your organization lets people choose."
+            }
+          }
+        },
+        "controlsReadOnly": "Your organization's administrators decide whether this plugin runs. The row tells you what they chose.",
+        "uninstall": {
+          "title": "Uninstall it",
+          "body": "Turn Installed off and confirm to remove the plugin from your organization. The tour uninstalls Hello Map, which it installed."
+        }
       }
     },
     "interfaces": {
@@ -1161,6 +1244,32 @@
     "viewCube": {
       "title": "View cube",
       "body": "Shows which way the camera faces. Click a face, edge or corner to look at the model from that side."
+    },
+    "zoningDemo": {
+      "load": {
+        "title": "Add a dataset",
+        "body": "The tour adds the City of Ottawa's zoning map from Open Ottawa. Large datasets take a few seconds to load; the ring next to the layer shows how far along it is."
+      },
+      "legend": {
+        "title": "Expand the legend",
+        "body": "The Applied layers card lists every layer on the map. Its chevron opens or folds the card; the tour opens it."
+      },
+      "layer": {
+        "title": "Expand the layer",
+        "body": "The chevron on a layer opens its style. The tour opens the zoning layer's style."
+      },
+      "colour": {
+        "title": "Colour by a field",
+        "body": "Zoning starts coloured by PARENTZONE, the publisher's own colours; the tour switches Colour by to ZONE_MAIN and the map recolours by main zone."
+      },
+      "style": {
+        "title": "Labels and more style",
+        "body": "More style holds the opacity, border colour, border width and labels. The tour writes each parcel's ZONE_CODE on the map, darkens the border and lowers the opacity."
+      },
+      "remove": {
+        "title": "Remove a layer",
+        "body": "The × takes the layer off the map. The tour removes the zoning layer it added."
+      }
     },
     "legend": {
       "title": "Legend",

@@ -267,7 +267,7 @@ export default function RowActions({
 
   return (
     <div className="flex items-center flex-nowrap gap-0.5 sm:gap-1">
-      <span className="relative inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center">
+      <span className="relative inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center" data-tour="dataset-apply">
         <Checkbox
           checked={checked}
           disabled={isChecking || !ability.can('read', 'File')}

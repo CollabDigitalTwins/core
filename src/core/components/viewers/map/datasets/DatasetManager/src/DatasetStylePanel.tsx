@@ -208,6 +208,7 @@ export function DatasetStylePanel({ dataset }: { dataset: Dataset }) {
         variant="ghost"
         size="sm"
         aria-expanded={showsMore}
+        data-tour="dataset-more-style"
         onClick={() => setShowsMore(shown => !shown)}
         className="h-7 gap-1.5 self-start px-2 text-xs text-muted-foreground"
       >

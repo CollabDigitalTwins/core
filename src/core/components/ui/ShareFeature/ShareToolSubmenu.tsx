@@ -260,7 +260,7 @@ export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({
           </DialogTrigger>
         </DropdownMenuItem>
 
-        <DialogContent className="flex flex-col items-center gap-4 max-w-sm">
+        <DialogContent className="flex flex-col items-center gap-4 max-w-sm" data-tour="share-qr-card">
           <DialogHeader>
             <DialogTitle>
               {dialogTitleKey === 'map'
@@ -294,7 +294,7 @@ export const ShareToolSubmenu: React.FC<ShareToolSubmenuProps> = ({
             </DialogTrigger>
           </DropdownMenuItem>
 
-          <DialogContent>
+          <DialogContent data-tour="share-screenshot-card">
             <DialogHeader>
               <DialogTitle>{t('ssDownload')}</DialogTitle>
             </DialogHeader>

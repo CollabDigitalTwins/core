@@ -13,13 +13,14 @@ import { isViewerAllowed } from '../../viewers/viewerAccess'
 import { useLatest } from '../useTourLayout'
 
 import { DATA_PAGES, platformTourSteps, VIEWERS } from './platformTourSteps'
-import { subTour } from './subTourSteps'
+import { dataPageOf, subTour } from './subTourSteps'
 import { followViewer, pageTourOf, yieldsToPluginTours } from './tourRoutes'
 import { usePlatformTourActions } from './usePlatformTourActions'
 import { usePluginTourEntries } from './usePluginTourEntries'
 
 import type { PageSection } from './platformTourSteps'
 import type { PlatformTourId, TourAvailability, Translate } from './platformTourTypes'
+import type { SubTour } from './subTourSteps'
 import type { Leg } from './tourRoutes'
 import type { Language, ViewerKey } from '../../../types/dbTypes'
 
@@ -60,7 +61,8 @@ const rememberStep = (legs: Leg[], stepId: string): Leg[] => {
 function pageSection(viewer: ViewerKey | undefined, t: Translate, available: TourAvailability): PageSection | undefined {
   const tour = pageTourOf(viewer, available)
   if (!tour) return undefined
-  return { tour, label: t(`welcome.shortcut.${tour.startsWith('data-') ? 'data' : tour}`) }
+  const page = dataPageOf(tour)
+  return { tour, label: page ? t('welcome.shortcut.data', { page: t(`data.items.${page}.term`) }) : t(`welcome.shortcut.${tour}`) }
 }
 
 const onPage = (section: PageSection | undefined): Leg[] =>
@@ -89,16 +91,17 @@ export function usePlatformTour(viewer: ViewerKey | undefined) {
 
   const leg = trail[trail.length - 1]
   const section = React.useMemo(() => pageSection(viewer, t, available), [viewer, t, available])
-  const tour = React.useMemo(() => {
-    if (leg.tour !== 'platform') return subTour(leg.tour, t, actions, viewer, plugins, available)
-    return { steps: platformTourSteps(t, actions, { languages, available, section }) }
-  }, [leg.tour, viewer, t, actions, plugins, languages, available, section])
+  const latestSection = useLatest(section)
+  const start = React.useCallback((fromOverview: boolean) => setTrail(fromOverview ? OVERVIEW : onPage(latestSection.current)), [latestSection])
+  const tour = React.useMemo((): SubTour => {
+    if (leg.tour === 'platform') return { steps: platformTourSteps(t, actions, { languages, available, section }) }
+    const closer = subTour(leg.tour, t, actions, viewer, plugins, available)
+    const toOverview = { label: t('overviewShortcut'), onSelect: () => start(true) }
+    return { ...closer, steps: closer.steps.map(s => ({ shortcut: toOverview, ...s })) }
+  }, [leg.tour, viewer, t, actions, plugins, languages, available, section, start])
   const { setup } = tour
   React.useEffect(() => setup?.(), [setup])
 
-  const latestSection = useLatest(section)
-  const start = React.useCallback((fromOverview: boolean) => setTrail(fromOverview ? OVERVIEW : onPage(latestSection.current)), [latestSection])
-  const continueToPage = React.useCallback(() => setTrail(onPage(latestSection.current)), [latestSection])
   const remember = React.useCallback((stepId: string) => setTrail(legs => rememberStep(legs, stepId)), [])
 
   const overview = leg.tour === 'platform'
@@ -111,7 +114,7 @@ export function usePlatformTour(viewer: ViewerKey | undefined) {
     yieldsToPluginTours: yieldsToPluginTours(leg),
     back,
     start,
-    continueToPage: overview && section ? continueToPage : undefined,
+    continueToPage: overview && section ? () => start(false) : undefined,
     remember,
   }
 }

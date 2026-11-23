@@ -46,3 +46,23 @@ export function runStage(key: string, start: () => () => void, run: (s: Schedule
     release()
   }
 }
+
+/** Takes `hold` `delay` ms after entry; returns the leave that cancels or releases it. */
+export const holdFrom = (delay: number, hold: () => () => void) => () => {
+  let release = () => {}
+  const timer = setTimeout(() => { release = hold() }, delay)
+  return () => {
+    clearTimeout(timer)
+    release()
+  }
+}
+
+/** Takes `hold` on entry and lets go after `delay` ms, or on leaving if that comes first. */
+export const holdFor = (delay: number, hold: () => () => void) => () => {
+  const release = hold()
+  const timer = setTimeout(release, delay)
+  return () => {
+    clearTimeout(timer)
+    release()
+  }
+}

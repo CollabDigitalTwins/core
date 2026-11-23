@@ -8,7 +8,7 @@ import type { SidebarTabKey, SidebarTabType } from '../../../store/Menus/reducer
 import type { Language, ViewerKey } from '../../../types/dbTypes'
 import type { MapStyle } from '../../../types/map'
 
-export type Translate = (key: string) => string
+export type Translate = (key: string, values?: Record<string, string>) => string
 
 export type ViewerChrome = 'map' | 'bim'
 

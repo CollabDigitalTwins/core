@@ -76,6 +76,12 @@ export const step = (t: Translate, id: string, target: TourStep['target'], key =
 
 export const withEntry = (s: TourStep, onEnter: TourStep['onEnter']): TourStep => ({ ...s, onEnter })
 
+/** One step entry that runs each of `entries` and, on leaving, each of their leaves. */
+export const allEntries = (...entries: TourStep['onEnter'][]): TourStep['onEnter'] => () => {
+  const leaves = entries.map(enter => enter?.())
+  return () => leaves.forEach(leave => typeof leave === 'function' && leave())
+}
+
 export const item = (t: Translate, key: string, id: string, icon: Icon, onSelect?: () => void): TourItem => ({
   id, icon, onSelect, term: t(`${key}.${id}.term`), description: t(`${key}.${id}.description`),
 })

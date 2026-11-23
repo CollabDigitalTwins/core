@@ -9,10 +9,10 @@ import { SIDEBAR_TAB_META } from '../../ui/ViewerSidebar/sidebarTabs'
 import { findAnchor } from '../hostTargets'
 
 import { helloMapControl, helloMapInstalledByTour, helloMapRow, isOrgControl } from './helloMapDemo'
+import { holdDemo, holdFor, holdFrom } from './liveDemo'
 import { placeDialogTarget, placedTarget } from './placeDemo'
-import { holdDemo } from './liveDemo'
 import { afterMenusClose, DEMO_DELAY_MS, demoSwitch, demoTabs, findToolTarget, MEASURE_REGION, onClosed, openSection, openToolPanel, setToolOpen } from './platformHost'
-import { availableDataPages, availableViewers, chromeOf, DATA_PAGES, EVERYTHING_AVAILABLE, item, pluginItem, step, toolStepId, VIEWER_TOOLS, withEntry } from './platformTourSteps'
+import { allEntries, availableDataPages, availableViewers, chromeOf, DATA_PAGES, EVERYTHING_AVAILABLE, item, pluginItem, step, toolStepId, VIEWER_TOOLS, withEntry } from './platformTourSteps'
 import { showTourDemo, TOUR_LEGEND_DEMO_TARGET } from './tourDemos'
 import { NO_PLUGIN_ENTRIES } from './usePluginTourEntries'
 import { restoreZoningSearch, zoningLoadFailed, zoningMenuOwnsDataset, zoningMenuRow, zoningRow, zoningStylePanel } from './zoningDemo'
@@ -192,38 +192,13 @@ const holdDatasetsDialog = () => holdDemo('datasets-dialog', () => {
   return () => setToolOpen(DATASETS_TOOL, false)
 })
 
-type Entry = () => void | (() => void)
-
-const both = (...entries: Entry[]) => () => {
-  const leaves = entries.map(enter => enter())
-  return () => leaves.forEach(leave => typeof leave === 'function' && leave())
-}
-
-const holdFrom = (delay: number, hold: () => () => void) => () => {
-  let release = () => {}
-  const timer = setTimeout(() => { release = hold() }, delay)
-  return () => {
-    clearTimeout(timer)
-    release()
-  }
-}
-
-const holdFor = (delay: number, hold: () => () => void) => () => {
-  const release = hold()
-  const timer = setTimeout(release, delay)
-  return () => {
-    clearTimeout(timer)
-    release()
-  }
-}
-
 const datasetsButton = () => findToolTarget(DATASETS_TOOL)
 
 const datasetsDialogSteps = (t: Translate, a: PlatformTourActions): TourStep[] => [
   { ...withEntry(step(t, 'zoning-open', datasetsButton, 'zoningDemo.open'), holdFrom(DEMO_DELAY_MS, holdDatasetsDialog)), scroll: false },
-  ...zoningMenuSteps(t, a, ZONING_MENU_STEPS.slice(0, 2)).map(s => ({ ...s, onEnter: both(holdDatasetsDialog, () => s.onEnter?.()) })),
+  ...zoningMenuSteps(t, a, ZONING_MENU_STEPS.slice(0, 2)).map(s => ({ ...s, onEnter: allEntries(holdDatasetsDialog, s.onEnter) })),
   {
-    ...withEntry(step(t, 'zoning-close', datasetsButton, 'zoningDemo.close'), both(() => a.demoZoningMenu('close'), holdFor(DEMO_DELAY_MS, holdDatasetsDialog))),
+    ...withEntry(step(t, 'zoning-close', datasetsButton, 'zoningDemo.close'), allEntries(() => a.demoZoningMenu('close'), holdFor(DEMO_DELAY_MS, holdDatasetsDialog))),
     scroll: false,
   },
 ]

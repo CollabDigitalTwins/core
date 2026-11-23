@@ -467,9 +467,9 @@
       "shortcut": {
         "map": "Tour the map viewer",
         "bim": "Tour the BIM viewer",
-        "data": "Tour this page",
-        "plugins": "Tour the plugins page",
-        "settings": "Tour the settings page"
+        "data": "Tour the {page} page",
+        "plugins": "Tour the Plugins page",
+        "settings": "Tour the Settings page"
       }
     },
     "sidebar": {
@@ -715,6 +715,7 @@
         }
       }
     },
+    "overviewShortcut": "Platform overview",
     "backToOverview": "Back to previous tour",
     "viewerTour": {
       "map": {

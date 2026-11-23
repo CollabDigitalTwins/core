@@ -151,6 +151,7 @@ function useFieldInUse(): React.RefObject<Element | null> {
   }, [])
   return inUse
 }
+
 const inHostDialog = (target: EventTarget | null) => target instanceof HTMLElement && target.closest('[role="dialog"]:not(.cdt-tour-card)') !== null
 
 export function useTourKeys(go: (delta: number) => void, onHide: () => void) {

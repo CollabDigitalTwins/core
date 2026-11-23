@@ -467,9 +467,9 @@
       "shortcut": {
         "map": "Visiter la visionneuse de carte",
         "bim": "Visiter la visionneuse BIM",
-        "data": "Visiter cette page",
-        "plugins": "Visiter la page des plugins",
-        "settings": "Visiter la page des paramètres"
+        "data": "Visiter la page {page}",
+        "plugins": "Visiter la page Plugins",
+        "settings": "Visiter la page Paramètres"
       }
     },
     "sidebar": {
@@ -715,6 +715,7 @@
         }
       }
     },
+    "overviewShortcut": "Aperçu de la plateforme",
     "backToOverview": "Retour à la visite précédente",
     "viewerTour": {
       "map": {

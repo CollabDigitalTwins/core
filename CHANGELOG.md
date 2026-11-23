@@ -17,9 +17,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - Open tours show one at a time and the platform tour goes first; a plugin's own tour runs from the platform tour's
   plugins section.
 - `PlatformTour` in `AppSidebar`: opens once per device and from Support → Guide, walks the sidebar and a choice of
-  closer tours, then continues into the tour of the page the person is on. Reopened from Guide, it starts on that
-  page's tour, or on the overview when a `viewer=` link opened the page. Branches cover each viewer, data page, side
-  panel tab, tool, the datasets menu, settings and plugins. Strings are in a `PlatformTour` i18n namespace and
+  closer tours, then continues into the tour of the page the person is on. Reopened from Guide, it starts on the
+  overview while the person is still on the page they loaded, else on that page's tour, which links back to the
+  overview. Branches cover each viewer, data page, side panel tab, tool, the datasets menu, settings and plugins. Strings are in a `PlatformTour` i18n namespace and
   `supportMenu.guide`.
 - Live demos, each undone on leaving: map search, measuring, map and BIM settings, Hello Map install and controls,
   and placing and deleting a comment and a sensor. Where the map can reach Ottawa, the search and measure demos use

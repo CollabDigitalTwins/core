@@ -467,9 +467,9 @@
       "shortcut": {
         "map": "Recorrer el visor de mapa",
         "bim": "Recorrer el visor BIM",
-        "data": "Recorrer esta página",
-        "plugins": "Recorrer la página de plugins",
-        "settings": "Recorrer la página de configuración"
+        "data": "Recorrer la página de {page}",
+        "plugins": "Recorrer la página de Plugins",
+        "settings": "Recorrer la página de Configuración"
       }
     },
     "sidebar": {
@@ -715,6 +715,7 @@
         }
       }
     },
+    "overviewShortcut": "Vista general de la plataforma",
     "backToOverview": "Volver al recorrido anterior",
     "viewerTour": {
       "map": {

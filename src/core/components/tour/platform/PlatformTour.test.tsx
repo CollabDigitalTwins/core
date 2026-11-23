@@ -6,7 +6,9 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
+import { useMenusContext } from '../../../store'
 import { MenusProvider } from '../../../store/Menus/context'
+import { ViewerNames } from '../../../types/dbTypes'
 import { SidebarProvider, useSidebar } from '../../ui/Sidebar'
 
 import { useTourTurn } from '../tourQueue'
@@ -63,6 +65,11 @@ function GuideButton() {
   return <button type="button" onClick={() => setGuideOpen(true)}>Guide</button>
 }
 
+function GoToPlugins() {
+  const { dispatch } = useMenusContext()
+  return <button type="button" onClick={() => dispatch({ type: 'SET_VIEWER', payload: { currentViewer: ViewerNames.plugins } })}>Plugins page</button>
+}
+
 function PluginTourCard({ onDone }: { onDone: () => void }) {
   return useTourTurn() ? <><p>plugin tour</p><button type="button" onClick={onDone}>finish plugin</button></> : null
 }
@@ -77,6 +84,7 @@ function renderTour(store: TourStore, withPlugin = false) {
     <MenusProvider>
       <SidebarProvider>
         <GuideButton />
+        <GoToPlugins />
         {withPlugin && <PluginTour />}
         <PlatformTour store={store} />
       </SidebarProvider>
@@ -103,12 +111,22 @@ describe('PlatformTour', () => {
     expect(store.done.has('platform')).toBe(true)
 
     fireEvent.click(screen.getByRole('button', { name: 'Guide' }))
-    expect(screen.getByRole('dialog', { name: 'viewerTour.map.title' })).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'welcome.title' })).toBeInTheDocument()
   })
 
-  it('reopens from the overview on a page a viewer= link opened', () => {
-    window.history.replaceState({}, '', '/?viewer=map')
+  it('reopens on the tour of the page the person moved to, with a way back to the overview', () => {
     renderTour(memoryStore(['platform']))
+    fireEvent.click(screen.getByRole('button', { name: 'Plugins page' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Guide' }))
+    expect(screen.getByRole('dialog', { name: 'pluginsTour.tabs.title' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /overviewShortcut/ }))
+    expect(screen.getByRole('dialog', { name: 'welcome.title' })).toBeInTheDocument()
+  })
+
+  it('reopens on the overview on the page a viewer= link loaded', () => {
+    window.history.replaceState({}, '', '/?viewer=plugins')
+    renderTour(memoryStore(['platform']))
+    fireEvent.click(screen.getByRole('button', { name: 'Plugins page' }))
     fireEvent.click(screen.getByRole('button', { name: 'Guide' }))
     expect(screen.getByRole('dialog', { name: 'welcome.title' })).toBeInTheDocument()
   })

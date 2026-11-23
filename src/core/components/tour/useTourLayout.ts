@@ -130,21 +130,43 @@ export function useFinishOnClick(stepIndex: number, step: TourStep, onHide: () =
   }, [stepIndex, invite, latest])
 }
 
-const isTyping = (target: EventTarget | null) => target instanceof HTMLElement && target.closest('input, select, textarea, [contenteditable="true"]') !== null
+const EDITABLE = 'input, select, textarea, [contenteditable="true"]'
+
+const editableOf = (target: EventTarget | null) => (target instanceof HTMLElement ? target.closest(EDITABLE) : null)
+
+/** The field the person clicked or typed into last; a field the page or a demo focused leaves the arrows to the tour. */
+function useFieldInUse(): React.RefObject<Element | null> {
+  const inUse = React.useRef<Element | null>(null)
+  React.useEffect(() => {
+    const claim = (event: Event) => {
+      const field = editableOf(event.target)
+      if (field && (event.type === 'pointerdown' || (event as KeyboardEvent).key.length === 1)) inUse.current = field
+    }
+    document.addEventListener('pointerdown', claim, true)
+    document.addEventListener('keydown', claim, true)
+    return () => {
+      document.removeEventListener('pointerdown', claim, true)
+      document.removeEventListener('keydown', claim, true)
+    }
+  }, [])
+  return inUse
+}
 const inHostDialog = (target: EventTarget | null) => target instanceof HTMLElement && target.closest('[role="dialog"]:not(.cdt-tour-card)') !== null
 
 export function useTourKeys(go: (delta: number) => void, onHide: () => void) {
   const latest = useLatest({ go, onHide })
+  const fieldInUse = useFieldInUse()
   React.useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (isTyping(event.target)) return
+      const field = editableOf(event.target)
+      if (field && field === fieldInUse.current) return
       if (event.key === 'ArrowRight') latest.current.go(1)
       else if (event.key === 'ArrowLeft') latest.current.go(-1)
       else if (event.key === 'Escape' && !inHostDialog(event.target)) latest.current.onHide()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [latest])
+  }, [latest, fieldInUse])
 }
 
 const viewportSize = () => (typeof window === 'undefined'

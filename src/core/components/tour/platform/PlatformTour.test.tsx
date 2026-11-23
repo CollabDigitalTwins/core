@@ -4,7 +4,7 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
-import { beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { MenusProvider } from '../../../store/Menus/context'
 import { SidebarProvider, useSidebar } from '../../ui/Sidebar'
@@ -50,6 +50,8 @@ beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn()
   vi.stubGlobal('matchMedia', matchMedia)
 })
+
+afterEach(() => window.history.replaceState({}, '', '/'))
 
 function memoryStore(done: string[] = []): TourStore & { done: Set<string> } {
   const set = new Set(done)
@@ -101,7 +103,24 @@ describe('PlatformTour', () => {
     expect(store.done.has('platform')).toBe(true)
 
     fireEvent.click(screen.getByRole('button', { name: 'Guide' }))
+    expect(screen.getByRole('dialog', { name: 'viewerTour.map.title' })).toBeInTheDocument()
+  })
+
+  it('reopens from the overview on a page a viewer= link opened', () => {
+    window.history.replaceState({}, '', '/?viewer=map')
+    renderTour(memoryStore(['platform']))
+    fireEvent.click(screen.getByRole('button', { name: 'Guide' }))
     expect(screen.getByRole('dialog', { name: 'welcome.title' })).toBeInTheDocument()
+  })
+
+  it('continues from the overview into the page tour from its first step, and ends the guide there', () => {
+    renderTour(memoryStore())
+    fireEvent.click(screen.getByRole('button', { name: 'explore.title' }))
+    fireEvent.click(screen.getByRole('button', { name: 'welcome.shortcut.map' }))
+    expect(screen.getByRole('dialog', { name: 'viewerTour.map.title' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'legend.title' }))
+    fireEvent.click(screen.getByRole('button', { name: 'finish' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('offers the tour of the page the viewer is on from the first card', () => {

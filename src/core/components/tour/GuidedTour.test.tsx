@@ -108,6 +108,15 @@ describe('GuidedTour', () => {
     expect(screen.getByRole('heading', { name: 'Filters' })).toBeInTheDocument()
   })
 
+  it('steps with the arrow keys from a field the page focused, but leaves them to a field the person typed in', () => {
+    render(<GuidedTour steps={STEPS} onHide={vi.fn()} />)
+    const field = appendVisible(document.createElement('input'))
+    fireEvent.keyDown(field, { key: 'ArrowRight' })
+    fireEvent.keyDown(field, { key: 'a' })
+    fireEvent.keyDown(field, { key: 'ArrowRight' })
+    expect(screen.getByRole('heading', { name: 'Filters' })).toBeInTheDocument()
+  })
+
   it('shows a loading placeholder while a step target has not appeared, then gives up quietly', () => {
     vi.useFakeTimers()
     render(<GuidedTour steps={STEPS} onHide={vi.fn()} />)

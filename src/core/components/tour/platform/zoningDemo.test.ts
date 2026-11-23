@@ -561,6 +561,28 @@ describe('createZoningDemo', () => {
     expect(port.applied().map(d => d.id)).toEqual(['mine'])
   })
 
+  it('keeps the dataset the Datasets dialog added and styles that one', async () => {
+    const { port, loader, demo } = setup()
+    document.body.innerHTML = `
+      <div data-tour="datasets-search"><input value="" /></div>
+      <div data-tour="datasets-list"><table><tbody>${rowHtml('Existing Colour Zoning', 'unchecked')}</tbody></table></div>`
+    document.querySelector('[data-tour="dataset-apply"] button')?.addEventListener('click', () => port.add({ ...zoningDataset(), id: CATALOGUE_ID, name: 'Existing Colour Zoning' }))
+    const menu = createZoningMenuDemo(port)
+    const leaveApply = menu('apply')
+    vi.advanceTimersByTime(FRAME * 2)
+    const leaveClose = menu('close')
+    leaveApply()
+    leaveClose()
+    const leaveLoad = demo('load')
+    document.body.innerHTML = `<li data-tour="dataset-row:${CATALOGUE_ID}"><button data-tour="dataset-remove"></button></li>`
+    await vi.advanceTimersByTimeAsync(FRAME * 2)
+    expect(port.applied().map(d => d.id)).toEqual([CATALOGUE_ID])
+    expect(loader.load).not.toHaveBeenCalled()
+    leaveLoad()
+    await vi.advanceTimersByTimeAsync(FRAME * 2)
+    expect(port.applied()).toEqual([])
+  })
+
   it('leaves an already-applied zoning dataset alone', async () => {
     const { port, loader, fly, demo } = setup([zoningDataset()])
     let close = () => {}

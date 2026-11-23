@@ -467,7 +467,9 @@
       "shortcut": {
         "map": "Tour the map viewer",
         "bim": "Tour the BIM viewer",
-        "data": "Tour this page"
+        "data": "Tour this page",
+        "plugins": "Tour the plugins page",
+        "settings": "Tour the settings page"
       }
     },
     "sidebar": {
@@ -669,11 +671,11 @@
         },
         "Fr": {
           "term": "Français",
-          "description": "Switch the platform to Français."
+          "description": "Passer la plateforme en français."
         },
         "Es": {
           "term": "Español",
-          "description": "Switch the platform to Español."
+          "description": "Cambiar la plataforma a español."
         }
       }
     },
@@ -701,7 +703,7 @@
     },
     "account": {
       "title": "Your account",
-      "body": "Click your name to open your account menu.",
+      "body": "Click your avatar to open your account menu.",
       "items": {
         "settings": {
           "term": "Settings",
@@ -1277,9 +1279,17 @@
       "body": "Shows which way the camera faces. Click a face, edge or corner to look at the model from that side."
     },
     "zoningDemo": {
-      "load": {
+      "open": {
         "title": "Add a dataset",
-        "body": "The tour adds the City of Ottawa's zoning map from Open Ottawa. Large datasets take a few seconds to load; the ring next to the layer shows how far along it is."
+        "body": "Datasets on the toolbar opens the dataset catalogue. The tour opens it."
+      },
+      "close": {
+        "title": "Close the menu",
+        "body": "Close Datasets to get back to the map. The tour closes it."
+      },
+      "load": {
+        "title": "Your dataset on the map",
+        "body": "Now you can use the legend to manage the zoning map. Large datasets take a few seconds to load; the ring next to the layer shows how far along it is."
       },
       "legend": {
         "title": "Expand the legend",

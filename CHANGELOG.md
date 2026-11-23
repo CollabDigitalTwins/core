@@ -16,9 +16,11 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - `@collabdt/core/plugins-sdk/tour`: the same for runtime-loaded plugins.
 - Open tours show one at a time and the platform tour goes first; a plugin's own tour runs from the platform tour's
   plugins section.
-- `PlatformTour` in `AppSidebar`: opens once per device and from Support → Guide, walks the sidebar, the page the
-  person is on and a choice of closer tours, with branches into each viewer, data page, side panel tab, tool, the
-  datasets menu, settings and plugins. Strings are in a `PlatformTour` i18n namespace and `supportMenu.guide`.
+- `PlatformTour` in `AppSidebar`: opens once per device and from Support → Guide, walks the sidebar and a choice of
+  closer tours, then continues into the tour of the page the person is on. Reopened from Guide, it starts on that
+  page's tour, or on the overview when a `viewer=` link opened the page. Branches cover each viewer, data page, side
+  panel tab, tool, the datasets menu, settings and plugins. Strings are in a `PlatformTour` i18n namespace and
+  `supportMenu.guide`.
 - Live demos, each undone on leaving: map search, measuring, map and BIM settings, Hello Map install and controls,
   and placing and deleting a comment and a sensor. Where the map can reach Ottawa, the search and measure demos use
   the Carleton campus, the legend tour adds, restyles and removes Ottawa's zoning dataset, and the Datasets tour

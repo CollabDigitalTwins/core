@@ -17,6 +17,8 @@ import type { DatasetPort } from './zoningDemo'
 import type { SidebarTabType } from '../../../store/Menus/reducer'
 import type { TourStep } from '../tourTypes'
 
+const LEGEND_STAGE_IDS = ['zoning-load', 'zoning-legend', 'zoning-layer', 'zoning-colour', 'zoning-style', 'zoning-remove']
+
 const ANCHORS = new Set([
   'sidebar', 'sidebar-interfaces', 'sidebar-viewers', 'viewer-search', 'viewer-panel-toggle', 'viewer-panel', 'toolbar',
   'sidebar-data', 'sidebar-plugins', 'sidebar-support', 'sidebar-account', 'map-settings',
@@ -77,13 +79,13 @@ describe('platformTourSteps', () => {
     expect(steps.filter(s => !inSidebar.includes(s)).every(s => s.onEnter === undefined)).toBe(true)
   })
 
-  it('folds in the tour of the page the viewer is on, with a shortcut to it from every overview card', () => {
+  it('keeps the page tour out of the overview, with a shortcut to it from every overview card', () => {
     const a = actions()
-    const section = { tour: 'bim' as const, label: 'Tour the BIM viewer', steps: subTour('bim', echo, a, ViewerNames.bim).steps }
+    const section = { tour: 'bim' as const, label: 'Tour the BIM viewer' }
     const steps = platformTourSteps(echo, a, { section })
     const ids = steps.map(s => s.id)
     steps.find(s => s.id === 'support')?.shortcut?.onSelect()
-    expect(ids.slice(ids.indexOf('account') + 1)).toEqual(['intro', 'search', 'no-building', 'no-file', 'panel-toggle', 'panel', 'toolbar', 'view-cube', 'explore'])
+    expect(ids.slice(ids.indexOf('account') + 1)).toEqual(['explore'])
     expect(steps.filter(s => s.shortcut?.label === 'Tour the BIM viewer').map(s => s.id)).toEqual([...ids.slice(0, ids.indexOf('account') + 1), 'explore'])
     expect(a.branch).toHaveBeenCalledWith('bim', 'support')
   })
@@ -340,6 +342,22 @@ describe('subTourSteps', () => {
     expect(a.pressControl).toHaveBeenCalledWith('legend-demo')
   })
 
+  it('adds the zoning map through the Datasets dialog before the legend steps', () => {
+    const ids = subTour('map', echo, actions()).steps.map(s => s.id)
+    expect(ids.slice(ids.indexOf('zoning-open'), ids.indexOf('zoning-legend'))).toEqual(['zoning-open', 'zoning-find', 'zoning-apply', 'zoning-close', 'zoning-load'])
+  })
+
+  it('runs the datasets menu find and apply stages in the map tour, then holds it while the dialog closes', () => {
+    vi.useFakeTimers()
+    const a = actions()
+    const steps = subTour('map', echo, a).steps
+    const leaves = ['zoning-find', 'zoning-apply', 'zoning-close'].map(id => steps.find(s => s.id === id)?.onEnter?.())
+    leaves.forEach(leave => typeof leave === 'function' && leave())
+    vi.runOnlyPendingTimers()
+    vi.useRealTimers()
+    expect(vi.mocked(a.demoZoningMenu).mock.calls.map(([stage]) => stage)).toEqual(['find', 'apply', 'close'])
+  })
+
   it('shows the zoning steps in Ottawa and the example legend elsewhere', () => {
     const ids = (ottawa: boolean) => subTour('map', echo, { ...actions(), inOttawa: () => ottawa }).steps.map(s => s.id).slice(ottawa ? -6 : -4)
     expect(ids(true)).toEqual(['zoning-legend', 'zoning-layer', 'zoning-colour', 'zoning-style', 'zoning-remove', 'legend'])
@@ -352,7 +370,7 @@ describe('subTourSteps', () => {
       <li data-tour="dataset-row:other"><div data-tour="dataset-style-panel" id="other"></div></li>
       <li id="zoning" data-tour="dataset-row:${zoningId}"><div data-tour="dataset-style-panel" id="zoning-panel"></div></li>`
     const a = actions()
-    const steps = subTour('map', echo, a).steps.filter(s => s.id.startsWith('zoning-'))
+    const steps = subTour('map', echo, a).steps.filter(s => LEGEND_STAGE_IDS.includes(s.id))
     steps.forEach(s => s.onEnter?.())
     const resolved = steps.map(s => (typeof s.target === 'function' ? (s.target() as Element | null)?.id : s.target))
     document.body.innerHTML = ''
@@ -366,7 +384,7 @@ describe('subTourSteps', () => {
     const port: DatasetPort = { applied: () => [], add: vi.fn(), update: vi.fn(), remove: vi.fn() }
     const close = createZoningDemo(port, { load: () => Promise.reject(new Error('offline')), fly: vi.fn() })('load')
     const steps = subTour('map', echo, actions()).steps
-    const skipped = () => steps.filter(s => s.id.startsWith('zoning-') || s.id === 'legend').map(s => [s.id, !!s.skip?.()])
+    const skipped = () => steps.filter(s => LEGEND_STAGE_IDS.includes(s.id) || s.id === 'legend').map(s => [s.id, !!s.skip?.()])
     expect(skipped().filter(([, skip]) => skip).map(([id]) => id)).toEqual(['legend'])
     await vi.advanceTimersByTimeAsync(0)
     expect(skipped().filter(([, skip]) => !skip).map(([id]) => id)).toEqual(['legend'])

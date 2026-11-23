@@ -467,7 +467,9 @@
       "shortcut": {
         "map": "Recorrer el visor de mapa",
         "bim": "Recorrer el visor BIM",
-        "data": "Recorrer esta página"
+        "data": "Recorrer esta página",
+        "plugins": "Recorrer la página de plugins",
+        "settings": "Recorrer la página de configuración"
       }
     },
     "sidebar": {
@@ -665,15 +667,15 @@
       "items": {
         "En": {
           "term": "English",
-          "description": "Cambie la plataforma a English."
+          "description": "Switch the platform to English."
         },
         "Fr": {
           "term": "Français",
-          "description": "Cambie la plataforma a Français."
+          "description": "Passer la plateforme en français."
         },
         "Es": {
           "term": "Español",
-          "description": "Cambie la plataforma a Español."
+          "description": "Cambiar la plataforma a español."
         }
       }
     },
@@ -701,7 +703,7 @@
     },
     "account": {
       "title": "Su cuenta",
-      "body": "Haga clic en su nombre para abrir el menú de su cuenta.",
+      "body": "Haga clic en su avatar para abrir el menú de su cuenta.",
       "items": {
         "settings": {
           "term": "Configuración",
@@ -1277,9 +1279,17 @@
       "body": "Muestra hacia dónde mira la cámara. Haga clic en una cara, arista o esquina para ver el modelo desde ese lado."
     },
     "zoningDemo": {
-      "load": {
+      "open": {
         "title": "Añadir un conjunto de datos",
-        "body": "El recorrido añade el mapa de zonificación de la Ciudad de Ottawa, de Open Ottawa. Los conjuntos de datos grandes tardan unos segundos en cargar; el anillo junto a la capa muestra cuánto falta."
+        "body": "Conjuntos de datos, en la barra de herramientas, abre el catálogo de datos. El recorrido lo abre."
+      },
+      "close": {
+        "title": "Cerrar el menú",
+        "body": "Cierre Conjuntos de datos para volver al mapa. El recorrido lo cierra."
+      },
+      "load": {
+        "title": "Su conjunto de datos en el mapa",
+        "body": "Ahora puede usar la leyenda para gestionar el mapa de zonificación. Los conjuntos de datos grandes tardan unos segundos en cargar; el anillo junto a la capa muestra cuánto falta."
       },
       "legend": {
         "title": "Expandir la leyenda",

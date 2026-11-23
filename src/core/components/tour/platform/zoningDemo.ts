@@ -26,6 +26,7 @@ const DEMO_STYLE = {
 
 let owned = false
 let failed = false
+let zoningId = ZONING_ID
 
 const appliedBeforeTour = (applied: Dataset[]) =>
   applied.some(dataset => dataset.id === ZONING_ID || dataset.url === ZONING_LAYER)
@@ -52,11 +53,11 @@ interface ZoningDeps {
 }
 
 const rowControl = (anchor: string) =>
-  document.querySelector<HTMLElement>(`${anchorSelector(`dataset-row:${ZONING_ID}`)} ${anchorSelector(anchor)}`)
+  document.querySelector<HTMLElement>(`${anchorSelector(`dataset-row:${zoningId}`)} ${anchorSelector(anchor)}`)
 
 export const zoningStylePanel = () => rowControl('dataset-style-panel')
 
-export const zoningRow = () => findAnchor(`dataset-row:${ZONING_ID}`)
+export const zoningRow = () => findAnchor(`dataset-row:${zoningId}`)
 
 const legendToggle = () =>
   document.querySelector<HTMLElement>('[data-tour="legend-applied"] [aria-expanded]')
@@ -72,7 +73,9 @@ export function createZoningDemo(port: DatasetPort, deps: ZoningDeps): (stage: Z
   let loading = false
   let generation = 0
   let legendOpenedByTour = false
-  const zoning = () => port.applied().find(dataset => dataset.id === ZONING_ID)
+  let adopting = false
+  let stopAdopting = () => {}
+  const zoning = () => port.applied().find(dataset => dataset.id === zoningId)
   const colourProfile = () => zoning()?.fields?.find(field => field.name === COLOUR_FIELD)
 
   const restyle = (changes: (dataset: Dataset) => Partial<DatasetStyle>) => {
@@ -82,6 +85,7 @@ export function createZoningDemo(port: DatasetPort, deps: ZoningDeps): (stage: Z
 
   const addLayer = () => {
     const hold = generation
+    zoningId = ZONING_ID
     loading = true
     deps.load(ZONING_LAYER_URL).then(dataset => {
       loading = false
@@ -95,7 +99,7 @@ export function createZoningDemo(port: DatasetPort, deps: ZoningDeps): (stage: Z
   }
 
   const restoreLayer = () => {
-    if (!zoning() && !loading) addLayer()
+    if (!zoning() && !loading && !adopting) addLayer()
   }
 
   const unfoldLegend = () => {
@@ -116,18 +120,36 @@ export function createZoningDemo(port: DatasetPort, deps: ZoningDeps): (stage: Z
     legendOpenedByTour = false
   }
 
+  const adopt = (claim: MenuClaim) => {
+    if ('id' in claim) {
+      zoningId = claim.id
+      return
+    }
+    adopting = true
+    const settle = () => { adopting = false }
+    stopAdopting = waitFor(() => claim.arrived().length > 0, () => {
+      zoningId = claim.arrived()[0].id
+      settle()
+    }, ARRIVAL_FRAMES, settle)
+  }
+
   const start = () => {
     generation++
     failed = false
-    owned = !appliedBeforeTour(port.applied())
+    const claim = claimMenuDataset()
+    owned = !!claim || !appliedBeforeTour(port.applied())
     if (!owned) return () => {}
     deps.fly()
-    addLayer()
+    if (claim) adopt(claim)
+    else addLayer()
     return () => {
       generation++
+      stopAdopting()
+      adopting = false
       foldLegend()
-      if (owned) port.remove(ZONING_ID)
+      if (owned) port.remove(zoningId)
       owned = false
+      zoningId = ZONING_ID
     }
   }
 
@@ -169,9 +191,21 @@ export function createZoningDemo(port: DatasetPort, deps: ZoningDeps): (stage: Z
 
 const ZONING_SEARCH = 'Existing Colour Zoning'
 
-export type ZoningMenuStage = 'find' | 'apply' | 'applied' | 'remove'
+export type ZoningMenuStage = 'find' | 'apply' | 'applied' | 'remove' | 'close'
 
 const menuOwned = new Map<string, string>()
+let menuArrival: (() => Dataset[]) | null = null
+
+type MenuClaim = { id: string } | { arrived: () => Dataset[] }
+
+const claimMenuDataset = (): MenuClaim | null => {
+  const [id] = menuOwned.keys()
+  const arrived = menuArrival
+  menuOwned.clear()
+  menuArrival = null
+  if (id) return { id }
+  return arrived ? { arrived } : null
+}
 
 export const zoningMenuOwnsDataset = () => menuOwned.size > 0
 
@@ -200,7 +234,6 @@ export function restoreZoningSearch(): void {
 /** Runs one stage of the zoning demo in the Datasets dialog; leaving clears the search and removes what the demo added. */
 export function createZoningMenuDemo(port: DatasetPort): (stage: ZoningMenuStage) => () => void {
   let cancelOwnership = () => {}
-  let pendingTick: (() => Dataset[]) | null = null
 
   const dropOwned = () => {
     menuOwned.forEach((_, id) => port.remove(id))
@@ -216,8 +249,8 @@ export function createZoningMenuDemo(port: DatasetPort): (stage: ZoningMenuStage
     searchHeld = searchInput()?.value ?? ''
     return () => {
       cancelOwnership()
-      if (pendingTick) removeOnArrival(pendingTick)
-      pendingTick = null
+      if (menuArrival) removeOnArrival(menuArrival)
+      menuArrival = null
       restoreZoningSearch()
       searchHeld = null
       dropOwned()
@@ -225,11 +258,11 @@ export function createZoningMenuDemo(port: DatasetPort): (stage: ZoningMenuStage
   }
 
   const ownOnArrival = (arrived: () => Dataset[]) => {
-    pendingTick = arrived
+    menuArrival = arrived
     cancelOwnership()
-    cancelOwnership = waitFor(() => arrived().length > 0, () => {
+    cancelOwnership = waitFor(() => menuArrival === arrived && arrived().length > 0, () => {
       arrived().forEach(dataset => menuOwned.set(dataset.id, dataset.name))
-      pendingTick = null
+      menuArrival = null
     }, ARRIVAL_FRAMES)
   }
 
@@ -271,6 +304,7 @@ export function createZoningMenuDemo(port: DatasetPort): (stage: ZoningMenuStage
       const tab = findAnchor('datasets-tab-applied')
       if (tab) press(tab)
     },
+    close: () => {},
     remove: s => {
       if (!zoningMenuOwnsDataset()) return
       if (ownedBox()) untick()

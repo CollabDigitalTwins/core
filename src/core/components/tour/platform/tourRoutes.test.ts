@@ -50,12 +50,13 @@ describe('pageTourOf', () => {
   it('picks the tour of the viewer or data page the person is on', () => {
     expect(pageTourOf(ViewerNames.map, available)).toBe('map')
     expect(pageTourOf(ViewerNames.files, available)).toBe('data-files')
+    expect(pageTourOf(ViewerNames.plugins, available)).toBe('plugins')
+    expect(pageTourOf(ViewerNames.settings, available)).toBe('settings')
   })
 
   it('has none for a page the organization does not show, or one without a tour', () => {
     expect(pageTourOf(ViewerNames.bim, available)).toBeNull()
     expect(pageTourOf(ViewerNames.infrastructure, available)).toBeNull()
-    expect(pageTourOf(ViewerNames.settings, available)).toBeNull()
   })
 })
 

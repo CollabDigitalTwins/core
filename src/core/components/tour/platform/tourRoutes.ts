@@ -11,7 +11,8 @@ import type { ViewerKey } from '../../../types/dbTypes'
 
 type SubTourId = Exclude<PlatformTourId, 'platform'>
 
-export interface Leg { tour: PlatformTourId; startAt?: string; returnTo?: string }
+/** One tour on the trail; a `chained` leg follows the overview or opens on its own, so finishing it ends the guide. */
+export interface Leg { tour: PlatformTourId; startAt?: string; returnTo?: string; chained?: boolean }
 
 const hasSidePanel = (viewer: ViewerKey | undefined) => viewer === ViewerNames.map || viewer === ViewerNames.bim
 
@@ -29,8 +30,9 @@ function tourOfViewer(viewer: ViewerKey | undefined): SubTourId | null {
   return page ? `data-${page}` : null
 }
 
-/** The viewer or data page tour for where the viewer is now, when this organization shows that page. */
+/** The tour of the page the viewer is on now, when this organization shows that page. */
 export function pageTourOf(viewer: ViewerKey | undefined, available: TourAvailability): SubTourId | null {
+  if (viewer === ViewerNames.settings || viewer === ViewerNames.plugins) return viewer
   const chrome = chromeOf(viewer)
   if (chrome) return available.viewers.includes(chrome) ? chrome : null
   const page = dataPageOfViewer(viewer)
@@ -44,7 +46,7 @@ export function followViewer(legs: Leg[], viewer: ViewerKey | undefined): Leg[] 
   const [overview, firstBranch] = legs
   const next = tourOfViewer(viewer)
   return next
-    ? [overview, { tour: next, returnTo: firstBranch.returnTo }]
+    ? [overview, { tour: next, returnTo: firstBranch.returnTo, chained: firstBranch.chained }]
     : [{ ...overview, startAt: firstBranch.returnTo }]
 }
 

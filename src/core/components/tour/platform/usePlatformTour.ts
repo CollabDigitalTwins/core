@@ -19,9 +19,8 @@ import { usePlatformTourActions } from './usePlatformTourActions'
 import { usePluginTourEntries } from './usePluginTourEntries'
 
 import type { PageSection } from './platformTourSteps'
-import type { PlatformTourActions, PlatformTourId, TourAvailability, Translate } from './platformTourTypes'
+import type { PlatformTourId, TourAvailability, Translate } from './platformTourTypes'
 import type { Leg } from './tourRoutes'
-import type { PluginTourEntries } from './usePluginTourEntries'
 import type { Language, ViewerKey } from '../../../types/dbTypes'
 
 const OVERVIEW: Leg[] = [{ tour: 'platform' }]
@@ -58,16 +57,16 @@ const rememberStep = (legs: Leg[], stepId: string): Leg[] => {
   return top.startAt === stepId ? legs : [...legs.slice(0, -1), { ...top, startAt: stepId }]
 }
 
-interface SectionContext { t: Translate; actions: PlatformTourActions; plugins: PluginTourEntries; available: TourAvailability }
-
-function pageSection(viewer: ViewerKey | undefined, { t, actions, plugins, available }: SectionContext): PageSection | undefined {
+function pageSection(viewer: ViewerKey | undefined, t: Translate, available: TourAvailability): PageSection | undefined {
   const tour = pageTourOf(viewer, available)
   if (!tour) return undefined
-  const label = t(`welcome.shortcut.${tour.startsWith('data-') ? 'data' : tour}`)
-  return { tour, label, steps: subTour(tour, t, actions, viewer, plugins, available).steps }
+  return { tour, label: t(`welcome.shortcut.${tour.startsWith('data-') ? 'data' : tour}`) }
 }
 
-/** The overview and the closer tours its items branch into; a branch follows the viewer to other pages and returns to the step it left from. */
+const onPage = (section: PageSection | undefined): Leg[] =>
+  section ? [OVERVIEW[0], { tour: section.tour, chained: true }] : OVERVIEW
+
+/** The overview, the current page's tour it continues into, and the closer tours its items branch into; a branch returns to the step it left from. */
 export function usePlatformTour(viewer: ViewerKey | undefined) {
   const t = useTranslations('PlatformTour')
   const [trail, setTrail] = React.useState<Leg[]>(OVERVIEW)
@@ -89,16 +88,30 @@ export function usePlatformTour(viewer: ViewerKey | undefined) {
   useFollowViewer(viewer, setTrail)
 
   const leg = trail[trail.length - 1]
+  const section = React.useMemo(() => pageSection(viewer, t, available), [viewer, t, available])
   const tour = React.useMemo(() => {
     if (leg.tour !== 'platform') return subTour(leg.tour, t, actions, viewer, plugins, available)
-    const section = pageSection(viewer, { t, actions, plugins, available })
     return { steps: platformTourSteps(t, actions, { languages, available, section }) }
-  }, [leg.tour, viewer, t, actions, plugins, languages, available])
+  }, [leg.tour, viewer, t, actions, plugins, languages, available, section])
   const { setup } = tour
   React.useEffect(() => setup?.(), [setup])
 
-  const reset = React.useCallback(() => setTrail(OVERVIEW), [])
+  const latestSection = useLatest(section)
+  const start = React.useCallback((fromOverview: boolean) => setTrail(fromOverview ? OVERVIEW : onPage(latestSection.current)), [latestSection])
+  const continueToPage = React.useCallback(() => setTrail(onPage(latestSection.current)), [latestSection])
   const remember = React.useCallback((stepId: string) => setTrail(legs => rememberStep(legs, stepId)), [])
 
-  return { key: `${trail.length}:${leg.tour}`, steps: tour.steps, startAt: leg.startAt, branched: trail.length > 1, yieldsToPluginTours: yieldsToPluginTours(leg), back, reset, remember }
+  const overview = leg.tour === 'platform'
+  return {
+    key: `${trail.length}:${leg.tour}`,
+    steps: tour.steps,
+    startAt: leg.startAt,
+    returns: trail.length > 1 && !leg.chained,
+    pageLabel: overview ? section?.label : undefined,
+    yieldsToPluginTours: yieldsToPluginTours(leg),
+    back,
+    start,
+    continueToPage: overview && section ? continueToPage : undefined,
+    remember,
+  }
 }

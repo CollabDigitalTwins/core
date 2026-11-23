@@ -10,7 +10,8 @@ import { findAnchor } from '../hostTargets'
 
 import { helloMapControl, helloMapInstalledByTour, helloMapRow, isOrgControl } from './helloMapDemo'
 import { placeDialogTarget, placedTarget } from './placeDemo'
-import { afterMenusClose, demoSwitch, demoTabs, findToolTarget, MEASURE_REGION, onClosed, openSection, openToolPanel, setToolOpen } from './platformHost'
+import { holdDemo } from './liveDemo'
+import { afterMenusClose, DEMO_DELAY_MS, demoSwitch, demoTabs, findToolTarget, MEASURE_REGION, onClosed, openSection, openToolPanel, setToolOpen } from './platformHost'
 import { availableDataPages, availableViewers, chromeOf, DATA_PAGES, EVERYTHING_AVAILABLE, item, pluginItem, step, toolStepId, VIEWER_TOOLS, withEntry } from './platformTourSteps'
 import { showTourDemo, TOUR_LEGEND_DEMO_TARGET } from './tourDemos'
 import { NO_PLUGIN_ENTRIES } from './usePluginTourEntries'
@@ -186,7 +187,49 @@ const ZONING_STEPS: [stage: ZoningStage, target: TourTarget][] = [
   ['load', 'legend-applied'], ['legend', 'legend-applied'], ['layer', zoningRow], ['colour', zoningStylePanel], ['style', zoningStylePanel], ['remove', 'legend-applied'],
 ]
 
+const holdDatasetsDialog = () => holdDemo('datasets-dialog', () => {
+  setToolOpen(DATASETS_TOOL, true)
+  return () => setToolOpen(DATASETS_TOOL, false)
+})
+
+type Entry = () => void | (() => void)
+
+const both = (...entries: Entry[]) => () => {
+  const leaves = entries.map(enter => enter())
+  return () => leaves.forEach(leave => typeof leave === 'function' && leave())
+}
+
+const holdFrom = (delay: number, hold: () => () => void) => () => {
+  let release = () => {}
+  const timer = setTimeout(() => { release = hold() }, delay)
+  return () => {
+    clearTimeout(timer)
+    release()
+  }
+}
+
+const holdFor = (delay: number, hold: () => () => void) => () => {
+  const release = hold()
+  const timer = setTimeout(release, delay)
+  return () => {
+    clearTimeout(timer)
+    release()
+  }
+}
+
+const datasetsButton = () => findToolTarget(DATASETS_TOOL)
+
+const datasetsDialogSteps = (t: Translate, a: PlatformTourActions): TourStep[] => [
+  { ...withEntry(step(t, 'zoning-open', datasetsButton, 'zoningDemo.open'), holdFrom(DEMO_DELAY_MS, holdDatasetsDialog)), scroll: false },
+  ...zoningMenuSteps(t, a, ZONING_MENU_STEPS.slice(0, 2)).map(s => ({ ...s, onEnter: both(holdDatasetsDialog, () => s.onEnter?.()) })),
+  {
+    ...withEntry(step(t, 'zoning-close', datasetsButton, 'zoningDemo.close'), both(() => a.demoZoningMenu('close'), holdFor(DEMO_DELAY_MS, holdDatasetsDialog))),
+    scroll: false,
+  },
+]
+
 const zoningSteps = (t: Translate, a: PlatformTourActions): TourStep[] => [
+  ...datasetsDialogSteps(t, a),
   ...ZONING_STEPS.map(([stage, target]): TourStep => ({
     ...withEntry(step(t, `zoning-${stage}`, target, `zoningDemo.${stage}`), () => a.demoZoning(stage)),
     scroll: false,
@@ -245,7 +288,7 @@ const ZONING_MENU_STEPS: [stage: ZoningMenuStage, target: string, skip?: () => b
   ['remove', 'datasets-list', () => !zoningMenuOwnsDataset()],
 ]
 
-const zoningMenuSteps = (t: Translate, a: PlatformTourActions): TourStep[] => ZONING_MENU_STEPS.map(([stage, target, skip]) => ({
+const zoningMenuSteps = (t: Translate, a: PlatformTourActions, stages = ZONING_MENU_STEPS): TourStep[] => stages.map(([stage, target, skip]) => ({
   ...withEntry(step(t, `zoning-${stage}`, target, `datasetsTour.zoning.${stage}`), () => a.demoZoningMenu(stage)),
   skip,
 }))

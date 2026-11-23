@@ -467,7 +467,9 @@
       "shortcut": {
         "map": "Visiter la visionneuse de carte",
         "bim": "Visiter la visionneuse BIM",
-        "data": "Visiter cette page"
+        "data": "Visiter cette page",
+        "plugins": "Visiter la page des plugins",
+        "settings": "Visiter la page des paramètres"
       }
     },
     "sidebar": {
@@ -665,15 +667,15 @@
       "items": {
         "En": {
           "term": "English",
-          "description": "Passez la plateforme en English."
+          "description": "Switch the platform to English."
         },
         "Fr": {
           "term": "Français",
-          "description": "Passez la plateforme en Français."
+          "description": "Passer la plateforme en français."
         },
         "Es": {
           "term": "Español",
-          "description": "Passez la plateforme en Español."
+          "description": "Cambiar la plataforma a español."
         }
       }
     },
@@ -701,7 +703,7 @@
     },
     "account": {
       "title": "Votre compte",
-      "body": "Cliquez sur votre nom pour ouvrir le menu de votre compte.",
+      "body": "Cliquez sur votre avatar pour ouvrir le menu de votre compte.",
       "items": {
         "settings": {
           "term": "Paramètres",
@@ -1277,9 +1279,17 @@
       "body": "Indique où regarde la caméra. Cliquez sur une face, une arête ou un coin pour voir le modèle de ce côté."
     },
     "zoningDemo": {
-      "load": {
+      "open": {
         "title": "Ajouter un ensemble de données",
-        "body": "La visite ajoute la carte de zonage de la Ville d'Ottawa, issue d'Ottawa ouvert. Les gros ensembles de données prennent quelques secondes à charger ; l'anneau à côté de la couche indique où en est le chargement."
+        "body": "Ensembles de données, dans la barre d'outils, ouvre le catalogue de données. La visite l'ouvre."
+      },
+      "close": {
+        "title": "Fermer le menu",
+        "body": "Fermez Ensembles de données pour revenir à la carte. La visite le ferme."
+      },
+      "load": {
+        "title": "Vos données sur la carte",
+        "body": "Vous pouvez maintenant utiliser la légende pour gérer la carte de zonage. Les gros ensembles de données prennent quelques secondes à charger ; l'anneau à côté de la couche indique où en est le chargement."
       },
       "legend": {
         "title": "Déplier la légende",

@@ -51,11 +51,10 @@ export const EVERYTHING_AVAILABLE: TourAvailability = {
   dataPages: DATA_PAGES.map(({ page }) => page),
 }
 
-/** The tour of the page the viewer is on, folded into the overview and offered as a shortcut from its first card. */
+/** The tour of the page the viewer is on, offered as a shortcut from the overview's cards. */
 export interface PageSection {
   tour: PlatformTourId
   label: string
-  steps: TourStep[]
 }
 
 interface OverviewOptions {
@@ -159,12 +158,11 @@ function sidebarSteps(t: Translate, a: PlatformTourActions, languages: Language[
   ].map(s => withEntry(s, a.openMenu))
 }
 
-/** The platform overview, then the page the viewer is on, ending on a choice of closer tours; overview cards offer a shortcut to that page's tour. */
+/** The platform overview, ending on a choice of closer tours; its cards offer a shortcut to the tour of the page the viewer is on. */
 export function platformTourSteps(t: Translate, a: PlatformTourActions, { languages = [], available = EVERYTHING_AVAILABLE, section }: OverviewOptions = {}): TourStep[] {
   const shortcut = withShortcut(section, a)
   return [
     ...[withMenuPath(t, step(t, 'welcome', null)), ...sidebarSteps(t, a, languages, available)].map(shortcut),
-    ...(section?.steps ?? []),
     shortcut(exploreStep(t, available, a)),
   ]
 }

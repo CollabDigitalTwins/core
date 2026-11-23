@@ -5,8 +5,6 @@
 
 import * as React from "react";
 
-import { DEFAULT_MAP_STYLE } from '../../components/viewers/map/utils/mapStyleCatalog';
-
 import { MapReducer } from './reducer'
 
 import type { MapActions, MapState } from './reducer';
@@ -17,7 +15,7 @@ type InitialStateType = {
 
 const initialState: InitialStateType = {
   map: {
-    mapStyle: DEFAULT_MAP_STYLE,
+    mapStyle: null,
     map: null,
     cursor: '',
     currentLocation: null,

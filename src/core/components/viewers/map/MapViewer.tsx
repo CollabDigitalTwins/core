@@ -21,9 +21,10 @@ import { MapLayers } from './src/MapLayers'
 import { MapTilerKeyNotice } from './src/MapTilerKeyNotice'
 import { MapClickManager } from './utils/MapEventManager/MapClickManager'
 import { MapHoverManager } from './utils/MapEventManager/MapHoverManager'
-import { DEFAULT_MAP_STYLE } from './utils/mapStyleCatalog'
+import { organizationDefaultMapStyle } from './utils/mapStyleCatalog'
 import { resolveStyleSpec, TERRAIN_SPEC } from './utils/mapStyleSpec'
 import { presentLevels } from './utils/urlLocation/locationTarget'
+import { useMapLastView } from './utils/urlLocation/useMapLastView'
 import { useUrlFlyTo } from './utils/urlLocation/useUrlFlyTo'
 import { resolveBounds } from './utils/validateBounds'
 
@@ -91,6 +92,7 @@ export function MapViewer({ width = '100%', height = '100%', organization, mapti
   useClearBuildingFocus()
   const activeMap = mapState?.map?.map
   useUrlFlyTo(isMapLoaded ? activeMap : undefined, organization.country ?? undefined)
+  useMapLastView(isMapLoaded ? activeMap : undefined)
 
   // Lives here, not in the map-settings sidebar, so the projection follows zoom whichever panels are open.
   React.useEffect(() => {
@@ -197,7 +199,7 @@ export function MapViewer({ width = '100%', height = '100%', organization, mapti
     console.log('📍 Map coordinates:', coordinates)
   }, [])
 
-  const mapStyle = mapState?.map.mapStyle ?? DEFAULT_MAP_STYLE;
+  const mapStyle = mapState?.map.mapStyle ?? organizationDefaultMapStyle(organization.defaultMapStyle);
   const mapStyleSpec = React.useMemo(() => resolveStyleSpec(mapStyle, maptilerKey), [mapStyle, maptilerKey]);
 
   return (

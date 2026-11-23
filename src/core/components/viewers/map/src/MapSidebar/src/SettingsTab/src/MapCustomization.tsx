@@ -7,12 +7,12 @@ import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
-import { AppConfigContext, MapContext } from '../../../../../../../../store'
+import { MapContext } from '../../../../../../../../store'
 import { ColorInput } from '../../../../../../../ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../../../ui/Select'
 import { Tabs, TabsList, TabsTrigger } from '../../../../../../../ui/Tabs'
 import { SettingsSection } from '../../../../../../../ui/ViewerSidebar/SettingsSection'
-import { buildMapStylesCatalog, resolveMapStyle } from '../../../../../utils/mapStyleCatalog'
+import { useOrganizationMapStyles } from '../../../../../utils/useOrganizationMapStyles'
 
 import { BuildingVisibility } from './BuildingVisibility'
 import { MapProjection } from './MapProjection'
@@ -27,19 +27,9 @@ export function MapCustomization() {
   const tMap = useTranslations('MapCustomization')
 
   // Contexts
-  const { state: appConfigState } = React.useContext(AppConfigContext)
   const { dispatch: mapDispatch, state: mapState } = React.useContext(MapContext)
-  const { dimensionsColour, mapStyle: currentMapStyle } = mapState.map
-
-  const mapStylesArray = React.useMemo(
-    () => buildMapStylesCatalog(appConfigState.appConfig.organization?.mapStyles),
-    [appConfigState.appConfig.organization?.mapStyles],
-  )
-
-  const resolvedMapStyle = React.useMemo(
-    () => resolveMapStyle(currentMapStyle, mapStylesArray),
-    [currentMapStyle, mapStylesArray],
-  )
+  const { dimensionsColour } = mapState.map
+  const { styles: mapStylesArray, current: resolvedMapStyle } = useOrganizationMapStyles()
 
   const handleDimensionsColour = (value: string) => {
     mapDispatch({ type: 'UPDATE_DIMENSIONS_COLOUR', payload: { dimensionsColour: value } })

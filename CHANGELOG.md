@@ -7,6 +7,26 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Added
+- `Organization.defaultMapStyle` (`dbTypes`) and the `MapStyleName` enum (`Satellite`, `Streets`, `Dark`, `Positron`,
+  `Maplibre`): the built-in style an organization's map opens on. Null keeps Satellite.
+- `organizationDefaultMapStyle(name)` in `viewers/map/utils/mapStyleCatalog`, and an optional `fallback` argument on
+  `resolveMapStyle`.
+- `useOrganizationMapStyles` (`viewers/map/utils`): the organization's style catalog and the style the map shows
+  from it, falling back to the organization's `defaultMapStyle`.
+- `SignIn` takes an optional `onAuthError(code)`: it sees each sign-in error code, from the form or the `?error=`
+  query, and returning true suppresses `SignIn`'s own message so the host can show its own.
+- Last view: once the user moves the map or the BIM camera, `MapViewer` and `BimViewer` remember where it settles
+  (per instance and user, in browser storage, kept 30 days). `Viewer` then offers to reopen it, through a toast,
+  when an entry URL names no location. Exports `LastViewPrompt`, `useLastViewScope` and the `lastViewStore`
+  helpers including `rememberView` (`viewers/shared/lastView`), `useMapLastView` (`viewers/map/utils/urlLocation`),
+  `useBimLastView` (`viewers/bim/src/lib`), `withBimCameraParams` (`viewers/bim/utils/setCameraLookAt`) and a
+  `LastView` i18n namespace.
+
+### Changed
+- The map store's initial `mapStyle` is `null` until the user picks one; readers fall back to the organization's
+  default style.
+
 ## [0.20.0] - 2026-11-23
 
 ### Added

@@ -22,6 +22,7 @@ import { SidebarTrigger } from '../ui/Sidebar'
 
 import { withBuildingId } from './bim/src/lib/buildingLocationParams'
 import { MapViewer } from './map/MapViewer'
+import { LastViewPrompt } from './shared/lastView/LastViewPrompt'
 import { isViewerAllowed } from './viewerAccess'
 
 import type { Organization, ViewerKey } from '../../types/dbTypes'
@@ -227,6 +228,7 @@ export function Viewer({ organization, storageBaseUrl, martinBaseUrl, pointcloud
       {selectedViewer}
       <Toolbar viewer={validViewer} storageBaseUrl={storageBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} geocodeEarthApiKey={geocodeEarthApiKey} geocoderUrl={geocoderUrl} />
       <UploadProgressToasts />
+      <LastViewPrompt />
     </>
   )
 }

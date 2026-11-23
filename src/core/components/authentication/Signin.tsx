@@ -20,9 +20,10 @@ import { AuthHeader } from './SignInAuthHeader'
 
 interface SignInContentProps {
   recaptchaSiteKey?: string
+  onAuthError?: (code: string) => boolean
 }
 
-function SignInContent({ recaptchaSiteKey, }) {
+function SignInContent({ recaptchaSiteKey, onAuthError }: SignInContentProps) {
   const [step, setStep] = React.useState<
   'login'
   | 'mfa'
@@ -61,12 +62,19 @@ function SignInContent({ recaptchaSiteKey, }) {
   const [googleError, setGoogleError] = React.useState(
     searchParams.get('error')
   )
+  const urlErrorReported = React.useRef(false)
   //Clean up the Google query error in URL, and have it only return /orgName/signin to clear frontend error responses
   React.useEffect(() => {
     if (googleError) {
       window.history.replaceState({}, '', `/${orgName}/signin`)
     }
   }, [googleError, orgName])
+
+  React.useEffect(() => {
+    if (!googleError || urlErrorReported.current) return
+    urlErrorReported.current = true
+    onAuthError?.(googleError)
+  }, [googleError, onAuthError])
 
   const t = useTranslations('Signin')
   const tMfa = useTranslations('MFA')
@@ -103,6 +111,11 @@ function SignInContent({ recaptchaSiteKey, }) {
       })
 
       if (result?.error) {
+        if (result.code && onAuthError?.(result.code)) {
+          setIsLoading(false)
+          resetCaptcha()
+          return
+        }
 
         if (result.code === 'rate_limit_error') {
 
@@ -728,12 +741,14 @@ const handleResetPassword = async () => {
 interface SignInProps {
   recaptchaSiteKey?: string
   storageBaseUrl?: string
+  /** Sees each sign-in error code (form result or `?error=`); return true to suppress SignIn's own message. */
+  onAuthError?: (code: string) => boolean
 }
 
-export function SignIn({ recaptchaSiteKey,storageBaseUrl, }: SignInProps) {
+export function SignIn({ recaptchaSiteKey, storageBaseUrl, onAuthError }: SignInProps) {
   return (
     <AuthPage storageBaseUrl={storageBaseUrl}>
-      <SignInContent recaptchaSiteKey={recaptchaSiteKey} />
+      <SignInContent recaptchaSiteKey={recaptchaSiteKey} onAuthError={onAuthError} />
     </AuthPage>
   )
 }

@@ -2140,6 +2140,12 @@
     "countrySubdivision": "Subdivisión del país",
     "selectCountrySubdivision": "Seleccionar subdivisión"
   },
+  "LastView": {
+    "title": "¿Continuar donde lo dejó?",
+    "mapDescription": "Volver a su última vista del mapa.",
+    "bimDescription": "Volver a su última vista 3D del edificio.",
+    "goBack": "Volver"
+  },
   "ShareTool": {
     "generating": "Generando...",
     "generate": "Generar código QR",

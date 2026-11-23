@@ -6,6 +6,7 @@ import { act, render, screen, fireEvent } from '@testing-library/react'
 import * as React from 'react'
 
 const { signInMock } = vi.hoisted(() => ({ signInMock: vi.fn() }))
+let searchError: string | null = null
 
 vi.mock('./AuthPage', () => ({
   AuthPage: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -20,7 +21,7 @@ vi.mock('next-auth/react', () => ({
 }))
 vi.mock('next/navigation', () => ({
   useParams: () => ({ instance: 'canada' }),
-  useSearchParams: () => ({ get: () => null }),
+  useSearchParams: () => ({ get: () => searchError }),
 }))
 vi.mock('react-google-recaptcha', () => ({
   __esModule: true,
@@ -45,7 +46,10 @@ vi.mock('../ui', () => ({
 
 import { SignIn } from './Signin'
 
-beforeEach(() => signInMock.mockReset())
+beforeEach(() => {
+  signInMock.mockReset()
+  searchError = null
+})
 
 describe('SignIn', () => {
   it('renders the email/password form on first render', () => {
@@ -89,6 +93,50 @@ describe('SignIn', () => {
     })
 
     expect(screen.getByText(/Invalid email or password/i)).toBeInTheDocument()
+  })
+
+  it('hands the error code to onAuthError and shows nothing when it is handled', async () => {
+    signInMock.mockResolvedValue({ error: 'CredentialsSignin', code: 'host_specific' })
+    const onAuthError = vi.fn(() => true)
+    render(<SignIn onAuthError={onAuthError} />)
+
+    const [emailInput, passwordInput] = screen.getAllByPlaceholderText(/placeholder/i)
+    fireEvent.change(emailInput, { target: { value: 'a@b.com' } })
+    fireEvent.change(passwordInput, { target: { value: 'pw1234567890' } })
+    fireEvent.click(screen.getByTestId('recaptcha'))
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /login/i }))
+    })
+
+    expect(onAuthError).toHaveBeenCalledWith('host_specific')
+    expect(screen.queryByText(/Captcha Verification Expired/i)).not.toBeInTheDocument()
+  })
+
+  it('falls back to its own message when onAuthError leaves the code unhandled', async () => {
+    signInMock.mockResolvedValue({ error: 'CredentialsSignin', code: 'invalid_credentials' })
+    render(<SignIn onAuthError={() => false} />)
+
+    const [emailInput, passwordInput] = screen.getAllByPlaceholderText(/placeholder/i)
+    fireEvent.change(emailInput, { target: { value: 'a@b.com' } })
+    fireEvent.change(passwordInput, { target: { value: 'pw1234567890' } })
+    fireEvent.click(screen.getByTestId('recaptcha'))
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /login/i }))
+    })
+
+    expect(screen.getByText(/Invalid email or password/i)).toBeInTheDocument()
+  })
+
+  it('reports the ?error= code from the URL to onAuthError once', () => {
+    searchError = 'host_specific'
+    const onAuthError = vi.fn(() => true)
+    const { rerender } = render(<SignIn onAuthError={onAuthError} />)
+    rerender(<SignIn onAuthError={vi.fn(() => true)} />)
+
+    expect(onAuthError).toHaveBeenCalledTimes(1)
+    expect(onAuthError).toHaveBeenCalledWith('host_specific')
   })
 
   it('moves to the MFA step when signIn returns mfa_required', async () => {

@@ -24,6 +24,7 @@ import { FloorplanTool } from "./src/FloorplanTool";
 import { Highlighter } from "./src/Highlighter";
 import { IfcClasses } from "./src/IfcClasses";
 import { createBimWorld } from "./src/lib/createBimWorld";
+import { useBimLastView } from "./src/lib/useBimLastView";
 
 import { ViewModeCoordinator } from "./src/lib/ViewModeCoordinator";
 import { ModelsSync } from "./src/ModelsSync";
@@ -208,6 +209,7 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
 
     // Enforces Y-up for three / camera-controls whenever the world's controls appear.
     useBimCoordinateSystem(bimState.bim.world?.camera?.controls ?? null);
+    useBimLastView();
 
     // Control ViewportGizmo based on current viewer
     React.useEffect(() => {

@@ -3,6 +3,7 @@
 
 import { SATELLITE_STYLE_URL, STREETS_STYLE_URL } from './mapStyleSpec'
 
+import type { MapStyleName } from '../../../../types/dbTypes'
 import type { MapStyle } from '../../../../types/map'
 
 /**
@@ -22,6 +23,11 @@ export const BUILT_IN_MAP_STYLES: MapStyle[]  = [
  * The default/fallback map style used when no style is selected or organization config is unavailable.
  */
 export const DEFAULT_MAP_STYLE: MapStyle = BUILT_IN_MAP_STYLES[0]; // Satellite
+
+/** The built-in style an organization opens on; null or unknown falls back to Satellite. */
+export function organizationDefaultMapStyle(name?: MapStyleName | `${MapStyleName}` | null): MapStyle {
+  return BUILT_IN_MAP_STYLES.find(style => style.name === name) ?? DEFAULT_MAP_STYLE
+}
 
 /**
  * Type guard to check if a value is a valid map style object.
@@ -120,23 +126,17 @@ export function buildMapStylesCatalog(organizationStyles: unknown): MapStyle[] {
   return catalog
 }
 
-/**
- * Resolves the current map style safely.
- * If the current style URL is not in the catalog, falls back to the default.
- *
- * @param currentStyle - The currently selected map style
- * @param catalog - Available map styles
- * @returns Valid MapStyle from catalog or default
- */
+/** The selected style when the catalog still has it, otherwise the fallback (Satellite unless given). */
 export function resolveMapStyle(
   currentStyle: MapStyle | null | undefined,
-  catalog: MapStyle[]
+  catalog: MapStyle[],
+  fallback: MapStyle = DEFAULT_MAP_STYLE,
 ): MapStyle {
   if (!currentStyle) {
-    return DEFAULT_MAP_STYLE
+    return fallback
   }
 
   // Check if current style is in catalog by URL
   const found = catalog.find((s) => s.url === currentStyle.url)
-  return found || DEFAULT_MAP_STYLE
+  return found || fallback
 }

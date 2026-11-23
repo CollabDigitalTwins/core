@@ -3,7 +3,7 @@
 
 import { describe, expect, it, vi } from 'vitest'
 
-import { setCameraLookAt } from './setCameraLookAt'
+import { setCameraLookAt, withBimCameraParams } from './setCameraLookAt'
 
 import type * as OBC from '@thatopen/components'
 
@@ -24,5 +24,18 @@ describe('setCameraLookAt', () => {
 
     expect(setLookAt).toHaveBeenCalledWith(20, 40, 40, -30, 10, -5, true)
     expect(result.sharing).toBe(false)
+  })
+})
+
+describe('withBimCameraParams', () => {
+  it('writes a camera that setCameraLookAt restores, keeping the other params', () => {
+    const setLookAt = vi.fn()
+    const params = withBimCameraParams(new URLSearchParams('buildingId=7'), { x: 1.23456, y: -2, z: 3 }, { x: 4, y: 5, z: 6 })
+
+    const result = setCameraLookAt(worldWith(setLookAt), params)
+
+    expect(setLookAt).toHaveBeenCalledWith(1.235, -2, 3, 4, 5, 6, true)
+    expect(result.sharing).toBe(true)
+    expect(params.get('buildingId')).toBe('7')
   })
 })

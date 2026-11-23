@@ -9,6 +9,7 @@ import * as THREE from 'three'
 // Utilities
 import { BimContext, BuildingsContext } from '../../../../../store'
 import { ShareToolSubmenu } from '../../../../ui/ShareFeature'
+import { withBimCameraParams } from '../../utils/setCameraLookAt'
 
 import type { Tool } from '../../../../../types/tools'
 
@@ -39,24 +40,13 @@ export const ShareBimTool: React.FC<ShareToolProps> = ({ tool }) => {
       const target = new THREE.Vector3()
       const camTarget = world.camera.controls.getTarget(target) // THREE.PerspectiveCamera
 
-      // Start with existing URL parameters from the current page
-      const currentUrl = new URL(window.location.href)
-      const params = new URLSearchParams(currentUrl.search)
-
-      // Add/override BIM-specific parameters
-      params.set('viewer', 'bim')
-      params.set('camX', camPosition.x.toFixed(3) || '0')
-      params.set('camY', camPosition.y.toFixed(3) || '0')
-      params.set('camZ', camPosition.z.toFixed(3) || '0')
-      params.set('tarX', camTarget.x.toFixed(3) || '0')
-      params.set('tarY', camTarget.y.toFixed(3) || '0')
-      params.set('tarZ', camTarget.z.toFixed(3) || '0')
+      const shared = withBimCameraParams(new URLSearchParams(window.location.search), camPosition, camTarget)
+      shared.set('viewer', 'bim')
       if (building) {
-        params.set('buildingId', String(building.id))
+        shared.set('buildingId', String(building.id))
       }
 
-      const shareUrl = `${origin}${pathname}?${params.toString()}`
-      return shareUrl
+      return `${origin}${pathname}?${shared.toString()}`
     }
   }
 

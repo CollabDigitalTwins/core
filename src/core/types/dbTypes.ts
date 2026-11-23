@@ -65,6 +65,7 @@ export enum CityGmlElevationRef { Bottom = 'Bottom', Ground = 'Ground', Eaves = 
 export enum CityGmlSurfaceMaterial { Asphalt = 'Asphalt', Concrete = 'Concrete', Gravel = 'Gravel', Soil = 'Soil', Grass = 'Grass', PavingStones = 'PavingStones' }
 export enum CityGmlTrafficSurfaceFunction { DrivingLane = 'DrivingLane', CycleLane = 'CycleLane', Sidewalk = 'Sidewalk', ParkingBay = 'ParkingBay', Crosswalk = 'Crosswalk', TrafficIsland = 'TrafficIsland', Embankment = 'Embankment' }
 export enum Language { En = 'En', Fr = 'Fr', Es = 'Es' }
+export enum MapStyleName { Satellite = 'Satellite', Streets = 'Streets', Dark = 'Dark', Positron = 'Positron', Maplibre = 'Maplibre' }
 
 
 export interface User {
@@ -129,6 +130,7 @@ export interface Organization {
     bearing?: number | null;
     pitch?: number | null;
     mapStyles: unknown[]; // Json[] in Prisma, keep as unknown[] in core
+    defaultMapStyle?: MapStyleName | `${MapStyleName}` | null;
     minZoom?: number | null;
     maxBounds: number[]
     appContent: (ViewerNames | `${ViewerNames}`)[]

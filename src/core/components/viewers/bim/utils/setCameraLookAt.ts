@@ -18,3 +18,13 @@ export function setCameraLookAt(world: OBC.World, searchParams: URLSearchParams)
     void world.camera.controls.setLookAt(camX, camY, camZ, tarX, tarY, tarZ, true);
     return { sharing: shared !== null, cameraPosition: { x: camX, y: camY, z: camZ }, targetPosition: { x: tarX, y: tarY, z: tarZ } };
 }
+
+type Point = { x: number; y: number; z: number };
+
+/** `params` with the BIM camera written in, in the form `setCameraLookAt` reads back. */
+export function withBimCameraParams(params: URLSearchParams, position: Point, target: Point): URLSearchParams {
+    const next = new URLSearchParams(params.toString());
+    const values = [position.x, position.y, position.z, target.x, target.y, target.z];
+    CAMERA_PARAMS.forEach((key, index) => next.set(key, values[index].toFixed(3)));
+    return next;
+}

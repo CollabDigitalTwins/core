@@ -5,8 +5,8 @@
 
 import * as React from 'react'
 
-import { AppConfigContext, MapContext } from '../../../store'
-import { buildMapStylesCatalog, resolveMapStyle } from '../../viewers/map/utils/mapStyleCatalog'
+import { MapContext } from '../../../store'
+import { useOrganizationMapStyles } from '../../viewers/map/utils/useOrganizationMapStyles'
 import { useLatest } from '../useTourLayout'
 
 import { DEMO_DELAY_MS } from './platformHost'
@@ -15,11 +15,9 @@ import type { MapStyle } from '../../../types/map'
 
 /** The organization's map styles, and a demo that switches to the next one and back unless the person picks one meanwhile. */
 export function useMapStyleTour() {
-  const { state: appConfig } = React.useContext(AppConfigContext)
-  const { state: mapState, dispatch } = React.useContext(MapContext)
-  const organizationStyles = appConfig.appConfig.organization?.mapStyles
-  const styles = React.useMemo(() => buildMapStylesCatalog(organizationStyles), [organizationStyles])
-  const current = useLatest(resolveMapStyle(mapState.map.mapStyle, styles))
+  const { dispatch } = React.useContext(MapContext)
+  const { styles, current: shown } = useOrganizationMapStyles()
+  const current = useLatest(shown)
 
   const picked = React.useRef(false)
   const apply = React.useCallback((mapStyle: MapStyle) => dispatch({ type: 'UPDATE_MAP_STYLE', payload: { mapStyle } }), [dispatch])

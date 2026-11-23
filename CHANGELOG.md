@@ -7,6 +7,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-11-23
+
 ### Added
 - `Organization.defaultMapStyle` (`dbTypes`) and the `MapStyleName` enum (`Satellite`, `Streets`, `Dark`, `Positron`,
   `Maplibre`): the built-in style an organization's map opens on. Null keeps Satellite.

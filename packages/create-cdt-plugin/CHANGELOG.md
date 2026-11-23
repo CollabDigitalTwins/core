@@ -8,6 +8,10 @@ repository root.
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-11-23
+
+Using plugin-kit v0.14.0
+
 ## [0.13.0] - 2026-10-23
 
 Using plugin-kit v0.13.0

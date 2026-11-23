@@ -7,6 +7,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-11-23
+
 ### Added
 - Guided tours (`components/tour`): `GuidedTour` spotlights a `data-tour` anchor, an element or a centred card step
   by step and leaves the page usable. Steps take `items` (`TourItem` rows), `onEnter` (its return runs on close),

@@ -34,6 +34,22 @@ export interface TourStep {
   skip?: () => boolean
 }
 
+/** A tour listed in the sections dialog; `start` opens it on the step with that id. */
+export interface TourSection {
+  id: string
+  title: string
+  description?: string
+  steps: { id: string; title: string }[]
+  start: (stepId: string) => void
+}
+
+export interface TourSections {
+  /** Called when the dialog opens, so the list reflects the page at that moment. */
+  list: () => TourSection[]
+  /** The id of the section this tour is; picking one of its steps moves within the open tour. */
+  current: string
+}
+
 export interface GuidedTourLabels {
   next: string
   back: string
@@ -57,6 +73,8 @@ export interface GuidedTourProps {
   avoid?: () => Element[]
   /** Shown at the start of the card's header, e.g. a logo. */
   header?: React.ReactNode
+  /** Adds a button to the card's header that lists every section in a dialog, to jump to any of their steps. */
+  sections?: TourSections
   labels?: Partial<GuidedTourLabels>
   /** Scopes CSS variable overrides (`--tour-accent`, …) to this tour. */
   className?: string

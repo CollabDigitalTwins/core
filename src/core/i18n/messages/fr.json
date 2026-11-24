@@ -458,12 +458,26 @@
     "finish": "Terminer",
     "hide": "Masquer la visite",
     "missing": "En attente de l'affichage de cette partie de l'écran.",
-    "progress": "Étape {step} sur {total}"
+    "progress": "Étape {step} sur {total}",
+    "sections": {
+      "open": "Toutes les sections de la visite",
+      "title": "Sections de la visite",
+      "back": "Retour à la visite",
+      "location": "Vous êtes à : {section} · étape {step}",
+      "search": "Rechercher dans les sections de la visite",
+      "searchPlaceholder": "Rechercher une section, p. ex. capteurs, mesure, légende",
+      "tours": "Visites",
+      "start": "Commencer à l'étape 1",
+      "here": "Vous êtes ici",
+      "steps": "{count, plural, one {# étape} other {# étapes}}",
+      "matches": "{count, plural, =0 {Aucune section ne correspond.} one {# section correspond} other {# sections correspondent}}",
+      "result": "{section} · étape {step}"
+    }
   },
   "PlatformTour": {
     "welcome": {
       "title": "Bienvenue sur la plateforme CDT",
-      "body": "Cette visite vous présente les principales fonctionnalités et comment naviguer dans la plateforme. Vous pouvez la masquer et la rouvrir à tout moment depuis @support → @guide.",
+      "body": "Les principales fonctionnalités et comment naviguer. Rouvrez ce guide à tout moment depuis @support → @guide.",
       "shortcut": {
         "map": "Visiter la visionneuse de carte",
         "bim": "Visiter la visionneuse BIM",
@@ -493,16 +507,16 @@
     "search": {
       "bim": {
         "title": "Trouver un bâtiment",
-        "body": "Recherchez les bâtiments de votre organisation par nom ou adresse, puis choisissez-en un pour l'ouvrir dans la visionneuse."
+        "body": "Recherchez les bâtiments de votre organisation par nom ou adresse, puis choisissez-en un pour l'ouvrir."
       },
       "map": {
         "title": "Rechercher sur la carte",
-        "body": "Saisissez une adresse, un lieu ou l'un de vos bâtiments, puis choisissez un résultat et la carte s'y envole."
+        "body": "Saisissez une adresse, un lieu ou l'un de vos bâtiments, puis choisissez un résultat pour vous y rendre."
       }
     },
     "searchDemo": {
       "title": "Rechercher sur la carte",
-      "body": "Tapez une adresse, un lieu ou l'un de vos bâtiments, choisissez un résultat et la carte s'y rend. Regardez-la chercher Carleton University et s'y rendre."
+      "body": "Saisissez une adresse, un lieu ou l'un de vos bâtiments, puis choisissez un résultat pour vous y rendre. Ici : Carleton University."
     },
     "panel": {
       "map": {
@@ -535,7 +549,7 @@
         "items": {
           "open": {
             "term": "Ouvrir le menu des ensembles de données",
-            "description": "Découvrez le catalogue d'ensembles de données à afficher sur la carte."
+            "description": "Parcourez les ensembles de données à afficher sur la carte."
           }
         }
       },
@@ -575,11 +589,11 @@
         "items": {
           "distance": {
             "term": "Distance",
-            "description": "Cliquez sur des points le long d'un trajet ; la longueur totale s'affiche sur la ligne. Regardez-la mesurer le campus de Carleton."
+            "description": "Cliquez sur des points le long d'un trajet ; la longueur s'affiche sur la ligne."
           },
           "area": {
             "term": "Surface",
-            "description": "Cliquez sur les coins d'une forme ; sa surface s'affiche à l'intérieur. Regardez-la mesurer une partie du campus."
+            "description": "Cliquez sur les coins d'une forme ; sa surface s'affiche à l'intérieur."
           },
           "clear": {
             "term": "Effacer",
@@ -589,11 +603,11 @@
         "itemsAnywhere": {
           "distance": {
             "term": "Distance",
-            "description": "Cliquez sur des points le long d'un trajet ; la longueur totale s'affiche sur la ligne. Regardez-la mesurer un trajet sur la carte."
+            "description": "Cliquez sur des points le long d'un trajet ; la longueur s'affiche sur la ligne."
           },
           "area": {
             "term": "Surface",
-            "description": "Cliquez sur les coins d'une forme ; sa surface s'affiche à l'intérieur. Regardez-la mesurer une forme sur la carte."
+            "description": "Cliquez sur les coins d'une forme ; sa surface s'affiche à l'intérieur."
           },
           "clear": {
             "term": "Effacer",
@@ -611,7 +625,7 @@
       },
       "bim-camera-fit": {
         "title": "Cadrer",
-        "body": "Cadrez la sélection. Sans sélection, cadrez les modèles IFC, ou toute la scène s'il n'y en a aucune."
+        "body": "Cadrez la sélection, ou les modèles IFC sans sélection."
       },
       "bim-add": {
         "title": "Ajouter",
@@ -631,7 +645,7 @@
     },
     "data": {
       "title": "Pages de données",
-      "body": "Les sites, bâtiments, fichiers et infrastructures de votre organisation sous forme de listes consultables. Les pages ajoutées par des plugins apparaissent aussi ici. Choisissez-en une pour l'explorer.",
+      "body": "Les sites, bâtiments, fichiers et infrastructures de votre organisation sous forme de listes consultables, avec les pages ajoutées par des plugins. Choisissez-en une pour l'explorer.",
       "items": {
         "sites": {
           "term": "Sites",
@@ -681,11 +695,11 @@
     },
     "support": {
       "title": "Assistance",
-      "body": "Contactez l'équipe, suggérez une fonctionnalité ou signalez un bug. Guide rouvre cette visite.",
+      "body": "Contactez l'équipe, suggérez une fonctionnalité ou signalez un bug.",
       "items": {
         "guide": {
           "term": "Guide",
-          "description": "Rouvre cette visite, y compris la page où vous êtes."
+          "description": "Rouvre ce guide, y compris la page où vous êtes."
         },
         "contact": {
           "term": "Contacter l'équipe",
@@ -720,11 +734,11 @@
     "viewerTour": {
       "map": {
         "title": "La visionneuse de carte",
-        "body": "Votre ville en 3D, avec sites, bâtiments et ensembles de données en contexte. Voici chaque partie de l'écran."
+        "body": "Votre ville en 3D, avec sites, bâtiments et ensembles de données en contexte."
       },
       "bim": {
         "title": "La visionneuse BIM",
-        "body": "Les fichiers 3D d'un bâtiment : modèles IFC, nuages de points, splats, modèles 3D et dessins CAO. Voici chaque partie de l'écran."
+        "body": "Les modèles IFC, nuages de points, splats, modèles 3D et dessins CAO d'un bâtiment."
       }
     },
     "panelTabs": {
@@ -883,11 +897,11 @@
       "zoning": {
         "find": {
           "title": "Chercher un ensemble de données",
-          "body": "La visite saisit « Existing Colour Zoning » dans la recherche, sous l'onglet municipal, pour trouver la carte de zonage de la Ville d'Ottawa, issue d'Ottawa ouvert."
+          "body": "Cherchez « Existing Colour Zoning » sous l'onglet Municipal pour trouver la carte de zonage d'Ottawa."
         },
         "apply": {
           "title": "L'ajouter à la carte",
-          "body": "Cochez la case d'une ligne pour dessiner cet ensemble de données sur la carte. La visite coche la carte de zonage."
+          "body": "Cochez la case d'une ligne pour dessiner cet ensemble de données sur la carte."
         },
         "applied": {
           "title": "Ce qui est sur la carte",
@@ -895,7 +909,7 @@
         },
         "remove": {
           "title": "Le retirer de la carte",
-          "body": "Décochez la case pour retirer l'ensemble de données de la carte. La visite décoche la carte de zonage qu'elle a ajoutée."
+          "body": "Décochez la case pour retirer l'ensemble de données de la carte."
         }
       },
       "tabs": {
@@ -1102,15 +1116,15 @@
         },
         "comment-add": {
           "title": "Écrire un commentaire",
-          "body": "Le + de l'en-tête Commentaires ouvre Ajouter un commentaire. Écrivez le commentaire, puis appuyez sur le + à côté. La visite écrit un commentaire de démonstration et appuie sur +."
+          "body": "Le + de l'en-tête Commentaires ouvre Ajouter un commentaire. Écrivez le commentaire, puis appuyez sur le + à côté."
         },
         "comment-place": {
           "title": "Le placer sur la carte",
-          "body": "Après le +, double-cliquez sur la carte là où va le commentaire. La visite double-clique au centre de la carte, et le commentaire apparaît sur la carte et dans cette liste. Toute votre organisation peut le voir."
+          "body": "Puis double-cliquez sur la carte là où il va. Il apparaît sur la carte et dans cette liste, pour toute votre organisation."
         },
         "comment-delete": {
           "title": "Le supprimer",
-          "body": "La corbeille d'un commentaire le supprime avec ses réponses, sans confirmation. Seul son auteur voit la corbeille. La visite supprime le commentaire de démonstration."
+          "body": "La corbeille supprime un commentaire et ses réponses, sans confirmation. Seul l'auteur la voit."
         }
       },
       "sensors": {
@@ -1138,22 +1152,22 @@
         },
         "list": {
           "title": "Vos capteurs",
-          "body": "Les capteurs groupés par type ou étiquette, avec leur dernière mesure s'il y en a une. L'interrupteur d'un groupe l'affiche dans la visionneuse ; dans les groupes par type, le + ajoute un capteur."
+          "body": "Les capteurs groupés par type ou étiquette, avec leur dernière mesure. L'interrupteur d'un groupe l'affiche dans la visionneuse ; dans les groupes par type, le + ajoute un capteur."
         },
         "demo": {
           "label": "Capteur de démonstration de la visite"
         },
         "sensor-add": {
           "title": "Ajouter un capteur",
-          "body": "Le + d'un groupe par type ouvre Ajouter un capteur avec ce type choisi ; sans capteur dans la liste, Ajouter un capteur sous la liste vide l'ouvre aussi. Choisissez un Type, puis saisissez un Nom du capteur et une URL des données ; en quittant le champ de l'URL, le nombre de points de données trouvés s'affiche. Format des données, Fréquence de mise à jour et Étiquettes peuvent garder leurs valeurs par défaut. La visite remplit un flux de température de démonstration et appuie sur Placer le capteur."
+          "body": "Le + d'un groupe par type ouvre Ajouter un capteur avec ce type choisi. Donnez-lui un nom et une URL des données ; les autres champs peuvent garder leurs valeurs par défaut."
         },
         "sensor-place": {
           "title": "Le placer sur la carte",
-          "body": "Après Placer le capteur, double-cliquez sur la carte là où se trouve le capteur. La visite double-clique au centre de la carte, et le capteur rejoint le groupe de son type dans cette liste. Toute votre organisation peut le voir."
+          "body": "Puis double-cliquez sur la carte là où se trouve le capteur. Il rejoint le groupe de son type, pour toute votre organisation."
         },
         "sensor-delete": {
           "title": "Le supprimer",
-          "body": "La corbeille au bas d'un capteur le supprime, sans confirmation. Seul son auteur voit la corbeille. La visite supprime le capteur de démonstration."
+          "body": "La corbeille au bas d'un capteur le supprime, sans confirmation. Seul l'auteur la voit."
         }
       }
     },
@@ -1209,15 +1223,15 @@
       "hello": {
         "open": {
           "title": "Ouvrir un plugin",
-          "body": "Cliquez sur une ligne pour voir la description du plugin, son auteur, ce qu'il peut faire et ses interrupteurs. La visite ouvre Hello Map, un petit plugin de démonstration fourni avec la plateforme."
+          "body": "Cliquez sur une ligne pour voir la description du plugin, son auteur, ses capacités et ses interrupteurs. Ici : Hello Map, un petit plugin de démonstration."
         },
         "install": {
           "title": "L'installer",
-          "body": "Installer dans l'organisation ajoute le plugin pour tous les membres de votre organisation. La visite installe Hello Map."
+          "body": "Installer dans l'organisation ajoute le plugin pour toute votre organisation."
         },
         "controls": {
           "title": "Vos commandes",
-          "body": "Ce que vous pouvez modifier dépend de votre rôle. Choisissez-en une pour l'essayer. Les interrupteurs de l'organisation ne fonctionnent ici que si la visite a installé Hello Map, et la visite remet comme avant ceux qu'elle a modifiés quand vous partez.",
+          "body": "Ce que vous pouvez modifier dépend de votre rôle. Choisissez-en un pour l'essayer ; vos changements sont annulés quand vous partez.",
           "items": {
             "installed": {
               "term": "Installé",
@@ -1237,11 +1251,11 @@
             }
           }
         },
-        "controlsUser": "Votre organisation avait Hello Map avant la visite, donc la visite ne touche pas à ses interrupteurs d'organisation. Votre propre interrupteur, si votre rôle en a un, fonctionne ici, et la visite le remet comme avant quand vous partez.",
+        "controlsUser": "Hello Map était déjà installé, donc ses interrupteurs d'organisation restent tels quels. Votre propre interrupteur, si votre rôle en a un, est rétabli quand vous partez.",
         "controlsReadOnly": "Les administrateurs de votre organisation décident si ce plugin s'exécute. La ligne vous indique leur choix.",
         "uninstall": {
           "title": "Le désinstaller",
-          "body": "Désactivez Installé et confirmez pour retirer le plugin de votre organisation. La visite désinstalle Hello Map, qu'elle a installé."
+          "body": "Désactivez Installé et confirmez pour retirer le plugin de votre organisation."
         }
       }
     },
@@ -1251,7 +1265,7 @@
     },
     "explore": {
       "title": "Que voulez-vous explorer ?",
-      "body": "Choisissez une partie de la plateforme pour une visite détaillée. Ouvrez @support → @guide pour revenir à cette visite à tout moment.",
+      "body": "Choisissez une partie de la plateforme pour l'explorer. Rouvrez ce guide à tout moment depuis @support → @guide.",
       "items": {
         "viewers": {
           "term": "Visionneuses 3D",
@@ -1265,11 +1279,11 @@
     },
     "exploreViewers": {
       "title": "Quelle visionneuse ?",
-      "body": "Choisissez une visionneuse pour visiter son écran."
+      "body": "Choisissez une visionneuse."
     },
     "exploreData": {
       "title": "Quelle page de données ?",
-      "body": "Choisissez une page pour la visiter."
+      "body": "Choisissez une page."
     },
     "attribution": {
       "title": "Attribution",
@@ -1282,35 +1296,35 @@
     "zoningDemo": {
       "open": {
         "title": "Ajouter un ensemble de données",
-        "body": "Ensembles de données, dans la barre d'outils, ouvre le catalogue de données. La visite l'ouvre."
+        "body": "Ensembles de données, dans la barre d'outils, ouvre le catalogue de données."
       },
       "close": {
         "title": "Fermer le menu",
-        "body": "Fermez Ensembles de données pour revenir à la carte. La visite le ferme."
+        "body": "Fermez Ensembles de données pour revenir à la carte."
       },
       "load": {
         "title": "Vos données sur la carte",
-        "body": "Vous pouvez maintenant utiliser la légende pour gérer la carte de zonage. Les gros ensembles de données prennent quelques secondes à charger ; l'anneau à côté de la couche indique où en est le chargement."
+        "body": "Les gros ensembles de données prennent quelques secondes à charger ; l'anneau à côté de la couche montre la progression."
       },
       "legend": {
         "title": "Déplier la légende",
-        "body": "La carte Couches liste chaque couche de la carte. Son chevron ouvre ou replie la carte ; la visite l'ouvre."
+        "body": "La carte Couches liste chaque couche de la carte. Son chevron l'ouvre ou la replie."
       },
       "layer": {
         "title": "Déplier la couche",
-        "body": "Le chevron d'une couche ouvre son style. La visite ouvre le style de la couche de zonage."
+        "body": "Le chevron d'une couche ouvre son style."
       },
       "colour": {
         "title": "Colorer selon un champ",
-        "body": "Le zonage commence avec les couleurs de l'éditeur. La visite règle Colorer selon sur le champ de zone principale (ZONE_MAIN) et la carte se recolore par zone principale."
+        "body": "Le zonage commence avec les couleurs de l'éditeur. Colorer selon les tire d'un champ, ici la zone principale (ZONE_MAIN)."
       },
       "style": {
         "title": "Étiquettes et plus de style",
-        "body": "Plus de style regroupe l'opacité, la couleur de bordure, l'épaisseur de bordure et les étiquettes. La visite écrit le ZONE_CODE de chaque parcelle sur la carte, fonce la bordure et règle l'opacité à 60 %."
+        "body": "Plus de style règle l'opacité, la bordure et les étiquettes. Ici : le ZONE_CODE de chaque parcelle, une bordure plus foncée et 60 % d'opacité."
       },
       "remove": {
         "title": "Retirer une couche",
-        "body": "Le × retire la couche de la carte. La visite retire la couche de zonage qu'elle a ajoutée."
+        "body": "Le × retire la couche de la carte."
       }
     },
     "legend": {
@@ -1338,11 +1352,11 @@
     "bimState": {
       "noBuilding": {
         "title": "Choisir un bâtiment",
-        "body": "La visionneuse BIM montre un bâtiment à la fois. Cherchez un bâtiment ici et choisissez-le pour ouvrir ses modèles."
+        "body": "La visionneuse BIM montre un bâtiment à la fois. Cherchez-en un ici pour ouvrir ses modèles."
       },
       "noBimFiles": {
         "title": "Ajouter un fichier 3D",
-        "body": "Ce bâtiment n'a pas encore de fichiers 3D. Utilisez Télécharger un fichier pour ajouter un modèle IFC, un nuage de points, un splat, un modèle 3D ou un dessin CAO."
+        "body": "Ce bâtiment n'a pas encore de fichiers 3D. Télécharger un fichier ajoute un modèle IFC, un nuage de points, un splat, un modèle 3D ou un dessin CAO."
       }
     },
     "legendDemo": {
@@ -1363,20 +1377,20 @@
     "settingsTour": {
       "map-style": {
         "title": "Style de carte",
-        "body": "Le fond de carte sous vos données. Regardez-le changer, puis choisissez-en un ; il reste jusqu'à ce que vous rechargiez la page.",
+        "body": "Le fond de carte sous vos données. Votre choix reste jusqu'à ce que vous rechargiez la page.",
         "pick": "Passer à ce fond de carte."
       },
       "terrain": {
         "title": "Terrain",
-        "body": "Ajoute collines et vallées à la carte. Les niveaux disponibles dépendent du pays de votre organisation et de la configuration de la plateforme. L'étape en essaie un et revient en arrière quand vous continuez."
+        "body": "Ajoute collines et vallées. Les niveaux disponibles dépendent du pays de votre organisation et de la configuration de la plateforme. Rétabli quand vous continuez."
       },
       "projection": {
         "title": "Projection",
-        "body": "Globe courbe la carte comme la Terre quand on dézoome. Au-delà du niveau de zoom 5, la carte est toujours plate (Mercator). Regardez-la changer ; elle revient quand vous continuez."
+        "body": "Globe courbe la carte comme la Terre quand on dézoome ; au-delà du zoom 5, elle est toujours plate (Mercator). Rétabli quand vous continuez."
       },
       "buildings": {
         "title": "Bâtiments 3D",
-        "body": "Affiche ou masque les bâtiments 3D : ceux du fond de carte et ceux dessinés dans la plateforme. Regardez-le changer ; il revient quand vous continuez."
+        "body": "Affiche ou masque les bâtiments 3D, du fond de carte et de la plateforme. Rétabli quand vous continuez."
       },
       "measurements": {
         "title": "Mesures",
@@ -1388,11 +1402,11 @@
       },
       "render-mode": {
         "title": "Mode de rendu",
-        "body": "Ombre ajoute les ombres du soleil ; Basique dessine sans elles et est plus rapide. Regardez-le changer ; il revient quand vous continuez."
+        "body": "Ombre ajoute les ombres du soleil ; Basique s'en passe et est plus rapide. Rétabli quand vous continuez."
       },
       "bim-projection": {
         "title": "Projection",
-        "body": "Perspective paraît naturelle ; Orthographique garde les lignes parallèles, pratique pour les plans et élévations. Regardez-la changer ; elle revient quand vous continuez."
+        "body": "Perspective paraît naturelle ; Orthographique garde les lignes parallèles, pour les plans et élévations. Rétabli quand vous continuez."
       },
       "navigation": {
         "title": "Navigation",
@@ -1400,7 +1414,7 @@
       },
       "grid": {
         "title": "Grille",
-        "body": "La grille au sol sous le modèle. Regardez-la changer ; elle revient quand vous continuez. Vous pouvez aussi régler sa couleur, la taille des cellules, sa hauteur et sa rotation."
+        "body": "La grille au sol sous le modèle, avec sa couleur, la taille des cellules, sa hauteur et sa rotation. Rétabli quand vous continuez."
       },
       "lighting": {
         "title": "Éclairage",
@@ -1414,6 +1428,9 @@
         "title": "Nuages de points et splats",
         "body": "Budget de points, taille, forme et opacité des nuages de points chargés. Les splats ont leur propre section lorsqu'un splat est chargé."
       }
+    },
+    "sections": {
+      "panelTab": "{panel} : {tab}"
     }
   },
   "MapLegend": {

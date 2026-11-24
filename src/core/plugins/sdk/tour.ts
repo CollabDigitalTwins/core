@@ -17,6 +17,8 @@ export type {
   GuidedTourLabels,
   GuidedTourProps,
   TourItem,
+  TourSection,
+  TourSections,
   TourStep,
   TourStore,
   TourTarget,

@@ -2,14 +2,14 @@
 // Copyright (C) 2025 Collab Digital Twins
 
 // @vitest-environment jsdom
-import { act, fireEvent, render, renderHook, screen } from '@testing-library/react'
+import { act, fireEvent, render, renderHook, screen, within } from '@testing-library/react'
 import * as React from 'react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { GuidedTour } from './GuidedTour'
 import { useTour } from './useTour'
 
-import type { TourStep } from './tourTypes'
+import type { TourSection, TourSections, TourStep } from './tourTypes'
 
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string, values?: Record<string, number>) => (values ? `${key} ${values.step}/${values.total}` : key),
@@ -224,5 +224,73 @@ describe('useTour', () => {
     expect(result.current.open).toBe(false)
     act(() => result.current.start())
     expect(result.current.open).toBe(true)
+  })
+})
+
+describe('GuidedTour sections dialog', () => {
+  const OTHER_START = vi.fn()
+  const SECTIONS: TourSection[] = [
+    { id: 'intro', title: 'Intro', steps: STEPS.map(({ id, title }) => ({ id, title })), start: vi.fn() },
+    { id: 'sensors', title: 'Sensors', description: 'Live readings.', steps: [{ id: 'add', title: 'Add a sensor' }, { id: 'delete', title: 'Delete it' }], start: OTHER_START },
+  ]
+  const sections: TourSections = { current: 'intro', list: () => SECTIONS }
+
+  const openDialog = () => {
+    fireEvent.click(screen.getByRole('button', { name: 'open' }))
+    return screen.getByRole('dialog', { name: 'title' })
+  }
+
+  afterEach(() => OTHER_START.mockClear())
+
+  it('shows no sections button without sections', () => {
+    render(<GuidedTour steps={STEPS} onHide={vi.fn()} />)
+    expect(screen.queryByRole('button', { name: 'open' })).not.toBeInTheDocument()
+  })
+
+  it('lists every section and marks the open step', () => {
+    render(<GuidedTour steps={STEPS} onHide={vi.fn()} sections={sections} startAt="filters" />)
+    const dialog = openDialog()
+    expect(within(dialog).getByRole('navigation').textContent).toContain('Sensors')
+    expect(within(dialog).getByRole('button', { name: /Filters/ })).toHaveAttribute('aria-current', 'step')
+    expect(screen.queryByRole('heading', { name: 'Filters', level: 3 })).toBeNull()
+  })
+
+  it('goes back to the step it left from, and on Escape', () => {
+    render(<GuidedTour steps={STEPS} onHide={vi.fn()} sections={sections} startAt="filters" />)
+    fireEvent.click(within(openDialog()).getByRole('button', { name: /back/ }))
+    expect(screen.getByRole('heading', { name: 'Filters' })).toBeInTheDocument()
+    fireEvent.keyDown(openDialog(), { key: 'Escape' })
+    expect(screen.getByRole('heading', { name: 'Filters' })).toBeInTheDocument()
+  })
+
+  it('moves within the open tour when a step of its own section is picked', () => {
+    render(<GuidedTour steps={STEPS} onHide={vi.fn()} sections={sections} />)
+    fireEvent.click(within(openDialog()).getByRole('button', { name: /Done/ }))
+    expect(screen.getByRole('heading', { name: 'Done' })).toBeInTheDocument()
+  })
+
+  it('starts another section on the picked step', () => {
+    render(<GuidedTour steps={STEPS} onHide={vi.fn()} sections={sections} />)
+    const dialog = openDialog()
+    fireEvent.click(within(dialog).getByRole('button', { name: /Sensors/ }))
+    fireEvent.click(within(dialog).getByRole('button', { name: /Delete it/ }))
+    expect(OTHER_START).toHaveBeenCalledWith('delete')
+  })
+
+  it('searches the steps of every section, ignoring case and accents', () => {
+    render(<GuidedTour steps={STEPS} onHide={vi.fn()} sections={sections} />)
+    const dialog = openDialog()
+    fireEvent.change(within(dialog).getByRole('searchbox'), { target: { value: 'SÉNSOR' } })
+    const results = within(dialog).getAllByRole('listitem').map(li => li.textContent)
+    expect(results).toHaveLength(2)
+    expect(results[0]).toContain('Add a sensor')
+  })
+
+  it('ignores the arrow keys while open, so typing in the search does not move the tour', () => {
+    render(<GuidedTour steps={STEPS} onHide={vi.fn()} sections={sections} />)
+    openDialog()
+    fireEvent.keyDown(window, { key: 'ArrowRight' })
+    fireEvent.click(screen.getByRole('button', { name: /back/ }))
+    expect(screen.getByRole('heading', { name: 'Welcome' })).toBeInTheDocument()
   })
 })

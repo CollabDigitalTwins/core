@@ -135,10 +135,13 @@ function toolSteps(t: Translate, chrome: ViewerChrome, a: PlatformTourActions, p
   return [...core, ...plugins.tools[chrome].map(tool => pluginToolStep(t, tool, a))]
 }
 
+/** The side panel tabs this viewer shows to this role. */
+export const visiblePanelTabs = (chrome: ViewerChrome, a: PlatformTourActions) =>
+  PANEL_TABS.filter(tab => chrome === 'bim' || !MAP_TAB_SUBJECT[tab] || a.can('read', MAP_TAB_SUBJECT[tab]))
+
 function panelSteps(t: Translate, chrome: ViewerChrome, a: PlatformTourActions, plugins: PluginTourEntries): TourStep[] {
   const tabs = [
-    ...PANEL_TABS
-      .filter(tab => chrome === 'bim' || !MAP_TAB_SUBJECT[tab] || a.can('read', MAP_TAB_SUBJECT[tab]))
+    ...visiblePanelTabs(chrome, a)
       .map(tab => item(t, 'panelTabs.items', tab, SIDEBAR_TAB_META[tab].icon, () => a.branch(`panel-${tab}`, 'panel'))),
     ...plugins.tabs[chrome].map(tab => pluginItem(t('panelTabs.plugin'), tab, () => a.selectPanelTab(tab.id))),
   ]

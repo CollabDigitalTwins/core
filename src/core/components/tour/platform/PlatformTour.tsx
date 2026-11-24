@@ -59,6 +59,7 @@ export function PlatformTour({ store }: { store?: TourStore }) {
         onStepChange={tour.remember}
         labels={finishLabel ? { finish: finishLabel } : undefined}
         header={<CdtIcon monochromatic />}
+        sections={tour.sections}
       />
     </TourPriorityContext.Provider>
   )

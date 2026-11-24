@@ -458,12 +458,26 @@
     "finish": "Finish",
     "hide": "Hide tour",
     "missing": "Waiting for this part of the screen to appear.",
-    "progress": "Step {step} of {total}"
+    "progress": "Step {step} of {total}",
+    "sections": {
+      "open": "All tour sections",
+      "title": "Tour sections",
+      "back": "Back to tour",
+      "location": "You are on: {section} · step {step}",
+      "search": "Search tour sections",
+      "searchPlaceholder": "Search sections, e.g. sensors, measure, legend",
+      "tours": "Tours",
+      "start": "Start from step 1",
+      "here": "You are here",
+      "steps": "{count, plural, one {# step} other {# steps}}",
+      "matches": "{count, plural, =0 {No sections match.} one {# section matches} other {# sections match}}",
+      "result": "{section} · step {step}"
+    }
   },
   "PlatformTour": {
     "welcome": {
       "title": "Welcome to the CDT platform",
-      "body": "This tour shows you the main features and how to move around the platform. You can hide it and open it again at any time from @support → @guide.",
+      "body": "The main features and how to get around. Reopen this guide any time from @support → @guide.",
       "shortcut": {
         "map": "Tour the map viewer",
         "bim": "Tour the BIM viewer",
@@ -493,16 +507,16 @@
     "search": {
       "bim": {
         "title": "Find a building",
-        "body": "Search your organization's buildings by name or address, then pick one to open it in the viewer."
+        "body": "Search your organization's buildings by name or address, then pick one to open it."
       },
       "map": {
         "title": "Search the map",
-        "body": "Type an address, a place or one of your buildings, then pick a result and the map flies there."
+        "body": "Type an address, a place or one of your buildings, then pick a result to fly there."
       }
     },
     "searchDemo": {
       "title": "Search the map",
-      "body": "Type an address, a place or one of your buildings, then pick a result and the map flies there. Watch it search for Carleton University and fly there."
+      "body": "Type an address, a place or one of your buildings, then pick a result to fly there. Here: Carleton University."
     },
     "panel": {
       "map": {
@@ -535,7 +549,7 @@
         "items": {
           "open": {
             "term": "Open the datasets menu",
-            "description": "Take a tour of the catalogue of datasets you can put on the map."
+            "description": "Browse the datasets you can put on the map."
           }
         }
       },
@@ -575,11 +589,11 @@
         "items": {
           "distance": {
             "term": "Distance",
-            "description": "Click points along a path; the total length shows on the line. Watch it measure Carleton's campus."
+            "description": "Click points along a path; the length shows on the line."
           },
           "area": {
             "term": "Area",
-            "description": "Click the corners of a shape; its area shows inside. Watch it measure part of the campus."
+            "description": "Click the corners of a shape; its area shows inside."
           },
           "clear": {
             "term": "Clear",
@@ -589,11 +603,11 @@
         "itemsAnywhere": {
           "distance": {
             "term": "Distance",
-            "description": "Click points along a path; the total length shows on the line. Watch it measure a path on the map."
+            "description": "Click points along a path; the length shows on the line."
           },
           "area": {
             "term": "Area",
-            "description": "Click the corners of a shape; its area shows inside. Watch it measure a shape on the map."
+            "description": "Click the corners of a shape; its area shows inside."
           },
           "clear": {
             "term": "Clear",
@@ -611,7 +625,7 @@
       },
       "bim-camera-fit": {
         "title": "Fit",
-        "body": "Frame the selection. With nothing selected, frame the IFC models, or the whole scene when there are none."
+        "body": "Frame the selection, or the IFC models when nothing is selected."
       },
       "bim-add": {
         "title": "Add",
@@ -631,7 +645,7 @@
     },
     "data": {
       "title": "Data pages",
-      "body": "Your organization's sites, buildings, files and infrastructure as searchable lists. Pages added by plugins appear here too. Pick one for a closer look.",
+      "body": "Your organization's sites, buildings, files and infrastructure as searchable lists, plus pages added by plugins. Pick one for a closer look.",
       "items": {
         "sites": {
           "term": "Sites",
@@ -681,11 +695,11 @@
     },
     "support": {
       "title": "Support",
-      "body": "Contact the team, suggest a feature or report a bug. Guide opens this tour again.",
+      "body": "Contact the team, suggest a feature or report a bug.",
       "items": {
         "guide": {
           "term": "Guide",
-          "description": "Opens this tour again, including the page you are on."
+          "description": "Reopens this guide, including the page you are on."
         },
         "contact": {
           "term": "Contact Team",
@@ -720,11 +734,11 @@
     "viewerTour": {
       "map": {
         "title": "The map viewer",
-        "body": "Your city in 3D, with sites, buildings and datasets in context. Here is each part of the screen."
+        "body": "Your city in 3D, with sites, buildings and datasets in context."
       },
       "bim": {
         "title": "The BIM viewer",
-        "body": "One building's 3D files: IFC models, point clouds, splats, 3D models and CAD drawings. Here is each part of the screen."
+        "body": "One building's IFC models, point clouds, splats, 3D models and CAD drawings."
       }
     },
     "panelTabs": {
@@ -883,11 +897,11 @@
       "zoning": {
         "find": {
           "title": "Search for a dataset",
-          "body": "The tour types \"Existing Colour Zoning\" into the search, on the municipal tab, to find Ottawa's zoning map from Open Ottawa."
+          "body": "Search \"Existing Colour Zoning\" on the Municipal tab to find Ottawa's zoning map."
         },
         "apply": {
           "title": "Add it to the map",
-          "body": "Tick the box on a row to draw that dataset on the map. The tour ticks the zoning map."
+          "body": "Tick a row's box to draw that dataset on the map."
         },
         "applied": {
           "title": "What is on the map",
@@ -895,7 +909,7 @@
         },
         "remove": {
           "title": "Take it off the map",
-          "body": "Untick the box to remove the dataset from the map. The tour unticks the zoning map it added."
+          "body": "Untick the box to take the dataset off the map."
         }
       },
       "tabs": {
@@ -1102,15 +1116,15 @@
         },
         "comment-add": {
           "title": "Write a comment",
-          "body": "The + in the Comments header opens Add Comment. Write the comment, then press the + beside it. The tour writes a demo comment and presses +."
+          "body": "The + in the Comments header opens Add Comment. Write the comment, then press the + beside it."
         },
         "comment-place": {
           "title": "Place it on the map",
-          "body": "After the +, double-click the map where the comment belongs. The tour double-clicks the centre of the map, and the comment shows on the map and in this list. Everyone in your organization can see it."
+          "body": "Then double-click the map where it belongs. It shows on the map and in this list, for everyone in your organization."
         },
         "comment-delete": {
           "title": "Delete it",
-          "body": "The bin on a comment deletes it together with its replies, without asking. Only its author sees the bin. The tour deletes the demo comment."
+          "body": "The bin deletes a comment and its replies, without asking. Only the author sees it."
         }
       },
       "sensors": {
@@ -1138,22 +1152,22 @@
         },
         "list": {
           "title": "Your sensors",
-          "body": "Sensors grouped by type or tag, with their latest reading when there is one. A group's switch shows it in the viewer; in type groups, the + adds a sensor."
+          "body": "Sensors grouped by type or tag, with their latest reading. A group's switch shows it in the viewer; in type groups, + adds a sensor."
         },
         "demo": {
           "label": "Tour demo sensor"
         },
         "sensor-add": {
           "title": "Add a sensor",
-          "body": "A type group's + opens Add Sensor with that type picked; with no sensors listed, Add Sensor under the empty list opens it too. Pick a Type, give it a Sensor Name and a Data URL; leaving the URL field counts the data points it finds there. Data Format, Update Frequency and Tags can keep their defaults. The tour fills in a demo temperature feed and presses Place Sensor."
+          "body": "A type group's + opens Add Sensor with that type picked. Give it a name and a Data URL; the other fields can keep their defaults."
         },
         "sensor-place": {
           "title": "Place it on the map",
-          "body": "After Place Sensor, double-click the map where the sensor is. The tour double-clicks the centre of the map, and the sensor joins its type's group in this list. Everyone in your organization can see it."
+          "body": "Then double-click the map where the sensor is. It joins its type's group, for everyone in your organization."
         },
         "sensor-delete": {
           "title": "Delete it",
-          "body": "The bin at the bottom of a sensor deletes it, without asking. Only its author sees the bin. The tour deletes the demo sensor."
+          "body": "The bin at the bottom of a sensor deletes it, without asking. Only the author sees it."
         }
       }
     },
@@ -1209,15 +1223,15 @@
       "hello": {
         "open": {
           "title": "Open a plugin",
-          "body": "Click a row to see the plugin's description, author, what it can do and its switches. The tour opens Hello Map, a small demo plugin that ships with the platform."
+          "body": "Click a row for the plugin's description, author, capabilities and switches. Here: Hello Map, a small demo plugin."
         },
         "install": {
           "title": "Install it",
-          "body": "Install to organization adds the plugin for everyone in your organization. The tour installs Hello Map."
+          "body": "Install to organization adds the plugin for everyone in your organization."
         },
         "controls": {
           "title": "Your controls",
-          "body": "What you can change depends on your role. Pick one to try it. The organization switches work here only if the tour installed Hello Map, and the tour switches back any it changed when you leave.",
+          "body": "What you can change depends on your role. Pick one to try it; anything you change is reset when you leave.",
           "items": {
             "installed": {
               "term": "Installed",
@@ -1237,11 +1251,11 @@
             }
           }
         },
-        "controlsUser": "Your organization had Hello Map before the tour, so the tour does not touch its organization switches. Your own switch, when your role has one, works here, and the tour switches it back when you leave.",
+        "controlsUser": "Hello Map was already installed, so its organization switches are left alone. Your own switch, if your role has one, is reset when you leave.",
         "controlsReadOnly": "Your organization's administrators decide whether this plugin runs. The row tells you what they chose.",
         "uninstall": {
           "title": "Uninstall it",
-          "body": "Turn Installed off and confirm to remove the plugin from your organization. The tour uninstalls Hello Map, which it installed."
+          "body": "Turn Installed off and confirm to remove the plugin from your organization."
         }
       }
     },
@@ -1251,7 +1265,7 @@
     },
     "explore": {
       "title": "What would you like to explore?",
-      "body": "Pick a part of the platform for a closer tour. Open @support → @guide to come back to this tour at any time.",
+      "body": "Pick a part of the platform for a closer look. Reopen this guide any time from @support → @guide.",
       "items": {
         "viewers": {
           "term": "3D viewers",
@@ -1265,11 +1279,11 @@
     },
     "exploreViewers": {
       "title": "Which viewer?",
-      "body": "Pick a viewer to tour its screen."
+      "body": "Pick a viewer."
     },
     "exploreData": {
       "title": "Which data page?",
-      "body": "Pick a page to tour it."
+      "body": "Pick a page."
     },
     "attribution": {
       "title": "Attribution",
@@ -1282,35 +1296,35 @@
     "zoningDemo": {
       "open": {
         "title": "Add a dataset",
-        "body": "Datasets on the toolbar opens the dataset catalogue. The tour opens it."
+        "body": "Datasets on the toolbar opens the dataset catalogue."
       },
       "close": {
         "title": "Close the menu",
-        "body": "Close Datasets to get back to the map. The tour closes it."
+        "body": "Close Datasets to get back to the map."
       },
       "load": {
         "title": "Your dataset on the map",
-        "body": "Now you can use the legend to manage the zoning map. Large datasets take a few seconds to load; the ring next to the layer shows how far along it is."
+        "body": "Large datasets take a few seconds to load; the ring next to the layer shows progress."
       },
       "legend": {
         "title": "Expand the legend",
-        "body": "The Layers card lists every layer on the map. Its chevron opens or folds the card; the tour opens it."
+        "body": "The Layers card lists every layer on the map. Its chevron opens or folds it."
       },
       "layer": {
         "title": "Expand the layer",
-        "body": "The chevron on a layer opens its style. The tour opens the zoning layer's style."
+        "body": "The chevron on a layer opens its style."
       },
       "colour": {
         "title": "Colour by a field",
-        "body": "Zoning starts in the publisher's own colours. The tour sets Colour by to the main zone field (ZONE_MAIN) and the map recolours by main zone."
+        "body": "Zoning starts in the publisher's colours. Colour by takes them from a field, here the main zone (ZONE_MAIN)."
       },
       "style": {
         "title": "Labels and more style",
-        "body": "More style holds the opacity, border colour, border width and labels. The tour writes each parcel's ZONE_CODE on the map, darkens the border and sets the opacity to 60%."
+        "body": "More style sets opacity, border and labels. Here: each parcel's ZONE_CODE, a darker border and 60% opacity."
       },
       "remove": {
         "title": "Remove a layer",
-        "body": "The × takes the layer off the map. The tour removes the zoning layer it added."
+        "body": "The × takes the layer off the map."
       }
     },
     "legend": {
@@ -1338,11 +1352,11 @@
     "bimState": {
       "noBuilding": {
         "title": "Pick a building",
-        "body": "The BIM viewer shows one building at a time. Search for a building here and pick it to open its models."
+        "body": "The BIM viewer shows one building at a time. Search for one here to open its models."
       },
       "noBimFiles": {
         "title": "Add a 3D file",
-        "body": "This building has no 3D files yet. Use Upload File to add an IFC model, point cloud, splat, 3D model or CAD drawing."
+        "body": "This building has no 3D files yet. Upload File adds an IFC model, point cloud, splat, 3D model or CAD drawing."
       }
     },
     "legendDemo": {
@@ -1363,20 +1377,20 @@
     "settingsTour": {
       "map-style": {
         "title": "Map style",
-        "body": "The base map under your data. Watch it switch, then pick one; it stays until you reload the page.",
+        "body": "The base map under your data. Your pick stays until you reload the page.",
         "pick": "Switch to this base map."
       },
       "terrain": {
         "title": "Terrain",
-        "body": "Adds hills and valleys to the map. Which levels you can pick depends on your organization's country and the platform's setup. The step tries one and switches back when you move on."
+        "body": "Adds hills and valleys. Available levels depend on your organization's country and the platform's setup. Resets when you move on."
       },
       "projection": {
         "title": "Projection",
-        "body": "Globe curves the map like the Earth when zoomed out. Zoomed in past level 5, the map is always flat (Mercator). Watch it switch; it goes back when you move on."
+        "body": "Globe curves the map like the Earth when zoomed out; past zoom 5 it is always flat (Mercator). Resets when you move on."
       },
       "buildings": {
         "title": "3D Buildings",
-        "body": "Shows or hides the 3D buildings: the base map's and the ones drawn in the platform. Watch it switch; it goes back when you move on."
+        "body": "Shows or hides 3D buildings, from the base map and the platform. Resets when you move on."
       },
       "measurements": {
         "title": "Measurements",
@@ -1388,11 +1402,11 @@
       },
       "render-mode": {
         "title": "Render mode",
-        "body": "Shadowed adds sun shadows; Basic draws without them and is faster. Watch it switch; it goes back when you move on."
+        "body": "Shadowed adds sun shadows; Basic skips them and is faster. Resets when you move on."
       },
       "bim-projection": {
         "title": "Projection",
-        "body": "Perspective looks natural; Orthographic keeps lines parallel, good for plans and elevations. Watch it switch; it goes back when you move on."
+        "body": "Perspective looks natural; Orthographic keeps lines parallel, for plans and elevations. Resets when you move on."
       },
       "navigation": {
         "title": "Navigation",
@@ -1400,7 +1414,7 @@
       },
       "grid": {
         "title": "Grid",
-        "body": "The ground grid under the model. Watch it switch; it goes back when you move on. You can also set its colour, cell sizes, height and rotation."
+        "body": "The ground grid under the model, with its colour, cell sizes, height and rotation. Resets when you move on."
       },
       "lighting": {
         "title": "Lighting",
@@ -1414,6 +1428,9 @@
         "title": "Point clouds and splats",
         "body": "Point budget, size, shape and opacity of the loaded point clouds. Splats get their own section when one is loaded."
       }
+    },
+    "sections": {
+      "panelTab": "{panel}: {tab}"
     }
   },
   "MapLegend": {

@@ -15,6 +15,7 @@ import { useLatest } from '../useTourLayout'
 import { DATA_PAGES, platformTourSteps, VIEWERS } from './platformTourSteps'
 import { dataPageOf, subTour } from './subTourSteps'
 import { followViewer, pageTourOf, yieldsToPluginTours } from './tourRoutes'
+import { pageOfTour, tourSections } from './tourSections'
 import { usePlatformTourActions } from './usePlatformTourActions'
 import { usePluginTourEntries } from './usePluginTourEntries'
 
@@ -23,6 +24,7 @@ import type { PlatformTourId, TourAvailability, Translate } from './platformTour
 import type { SubTour } from './subTourSteps'
 import type { Leg } from './tourRoutes'
 import type { Language, ViewerKey } from '../../../types/dbTypes'
+import type { TourSections } from '../tourTypes'
 
 const OVERVIEW: Leg[] = [{ tour: 'platform' }]
 
@@ -102,6 +104,16 @@ export function usePlatformTour(viewer: ViewerKey | undefined) {
   const { setup } = tour
   React.useEffect(() => setup?.(), [setup])
 
+  const jump = React.useCallback((to: PlatformTourId, stepId: string) => {
+    const page = pageOfTour(to)
+    if (page) actions.openViewer(page)
+    setTrail(to === 'platform' ? [{ tour: to, startAt: stepId }] : [OVERVIEW[0], { tour: to, startAt: stepId, chained: true }])
+  }, [actions])
+  const sections = React.useMemo((): TourSections => ({
+    current: leg.tour,
+    list: () => tourSections({ t, a: actions, viewer, plugins, available, languages }, jump),
+  }), [leg.tour, t, actions, viewer, plugins, available, languages, jump])
+
   const remember = React.useCallback((stepId: string) => setTrail(legs => rememberStep(legs, stepId)), [])
 
   const overview = leg.tour === 'platform'
@@ -116,5 +128,6 @@ export function usePlatformTour(viewer: ViewerKey | undefined) {
     start,
     continueToPage: overview && section ? () => start(false) : undefined,
     remember,
+    sections,
   }
 }

@@ -7,6 +7,19 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Added
+- `GuidedTour`'s `sections` prop (`@collabdt/core/plugins-sdk/tour`, with the `TourSection` and `TourSections`
+  types): a list button in the card's header opens a dialog of every section and its steps, searchable, to jump to
+  any of them; Back to tour or Escape returns to the open step. The platform tour uses it to list the overview,
+  every page's tour and the closer tours of the current page. New `GuidedTour.sections` i18n keys.
+
+### Changed
+- Platform tour copy (`PlatformTour`, en/fr/es) is shorter and no longer narrates itself ("The tour opens…").
+
+### Fixed
+- A tour card that has no room beside its target now draws above the highlight ring instead of under it, e.g. in
+  the datasets menu.
+
 ## [0.21.1] - 2026-11-23
 
 ### Fixed

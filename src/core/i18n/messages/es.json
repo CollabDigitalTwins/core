@@ -458,12 +458,26 @@
     "finish": "Terminar",
     "hide": "Ocultar recorrido",
     "missing": "Esperando a que aparezca esta parte de la pantalla.",
-    "progress": "Paso {step} de {total}"
+    "progress": "Paso {step} de {total}",
+    "sections": {
+      "open": "Todas las secciones del recorrido",
+      "title": "Secciones del recorrido",
+      "back": "Volver al recorrido",
+      "location": "Está en: {section} · paso {step}",
+      "search": "Buscar en las secciones del recorrido",
+      "searchPlaceholder": "Buscar secciones, p. ej. sensores, medir, leyenda",
+      "tours": "Recorridos",
+      "start": "Empezar desde el paso 1",
+      "here": "Está aquí",
+      "steps": "{count, plural, one {# paso} other {# pasos}}",
+      "matches": "{count, plural, =0 {Ninguna sección coincide.} one {# sección coincide} other {# secciones coinciden}}",
+      "result": "{section} · paso {step}"
+    }
   },
   "PlatformTour": {
     "welcome": {
       "title": "Bienvenido a la plataforma CDT",
-      "body": "Este recorrido le muestra las funciones principales y cómo moverse por la plataforma. Puede ocultarlo y volver a abrirlo en cualquier momento desde @support → @guide.",
+      "body": "Las funciones principales y cómo moverse. Vuelva a abrir esta guía en cualquier momento desde @support → @guide.",
       "shortcut": {
         "map": "Recorrer el visor de mapa",
         "bim": "Recorrer el visor BIM",
@@ -493,16 +507,16 @@
     "search": {
       "bim": {
         "title": "Buscar un edificio",
-        "body": "Busque los edificios de su organización por nombre o dirección y elija uno para abrirlo en el visor."
+        "body": "Busque los edificios de su organización por nombre o dirección y elija uno para abrirlo."
       },
       "map": {
         "title": "Buscar en el mapa",
-        "body": "Escriba una dirección, un lugar o uno de sus edificios, luego elija un resultado y el mapa vuela hasta allí."
+        "body": "Escriba una dirección, un lugar o uno de sus edificios y elija un resultado para ir allí."
       }
     },
     "searchDemo": {
       "title": "Buscar en el mapa",
-      "body": "Escriba una dirección, un lugar o uno de sus edificios, elija un resultado y el mapa vuela hasta allí. Mire cómo busca Carleton University y vuela hasta allí."
+      "body": "Escriba una dirección, un lugar o uno de sus edificios y elija un resultado para ir allí. Aquí: Carleton University."
     },
     "panel": {
       "map": {
@@ -535,7 +549,7 @@
         "items": {
           "open": {
             "term": "Abrir el menú de conjuntos de datos",
-            "description": "Recorra el catálogo de conjuntos de datos que puede poner en el mapa."
+            "description": "Explore los conjuntos de datos que puede poner en el mapa."
           }
         }
       },
@@ -575,11 +589,11 @@
         "items": {
           "distance": {
             "term": "Distancia",
-            "description": "Haga clic en puntos a lo largo de un recorrido; la longitud total aparece en la línea. Mire cómo mide el campus de Carleton."
+            "description": "Haga clic en puntos a lo largo de un recorrido; la longitud aparece en la línea."
           },
           "area": {
             "term": "Área",
-            "description": "Haga clic en las esquinas de una forma; su área aparece dentro. Mire cómo mide parte del campus."
+            "description": "Haga clic en las esquinas de una forma; su área aparece dentro."
           },
           "clear": {
             "term": "Borrar",
@@ -589,11 +603,11 @@
         "itemsAnywhere": {
           "distance": {
             "term": "Distancia",
-            "description": "Haga clic en puntos a lo largo de un recorrido; la longitud total aparece en la línea. Mire cómo mide un recorrido en el mapa."
+            "description": "Haga clic en puntos a lo largo de un recorrido; la longitud aparece en la línea."
           },
           "area": {
             "term": "Área",
-            "description": "Haga clic en las esquinas de una forma; su área aparece dentro. Mire cómo mide una forma en el mapa."
+            "description": "Haga clic en las esquinas de una forma; su área aparece dentro."
           },
           "clear": {
             "term": "Borrar",
@@ -611,7 +625,7 @@
       },
       "bim-camera-fit": {
         "title": "Encuadrar",
-        "body": "Encuadre la selección. Sin selección, encuadre los modelos IFC, o toda la escena si no hay ninguno."
+        "body": "Encuadre la selección, o los modelos IFC si no hay selección."
       },
       "bim-add": {
         "title": "Añadir",
@@ -631,7 +645,7 @@
     },
     "data": {
       "title": "Páginas de datos",
-      "body": "Los sitios, edificios, archivos e infraestructura de su organización como listas con búsqueda. Las páginas añadidas por plugins también aparecen aquí. Elija una para verla de cerca.",
+      "body": "Los sitios, edificios, archivos e infraestructura de su organización como listas con búsqueda, junto con las páginas añadidas por plugins. Elija una para verla de cerca.",
       "items": {
         "sites": {
           "term": "Sitios",
@@ -681,11 +695,11 @@
     },
     "support": {
       "title": "Soporte",
-      "body": "Contacte al equipo, sugiera una función o reporte un error. Guía vuelve a abrir este recorrido.",
+      "body": "Contacte al equipo, sugiera una función o reporte un error.",
       "items": {
         "guide": {
           "term": "Guía",
-          "description": "Vuelve a abrir este recorrido, incluida la página en la que está."
+          "description": "Vuelve a abrir esta guía, incluida la página en la que está."
         },
         "contact": {
           "term": "Contactar al equipo",
@@ -720,11 +734,11 @@
     "viewerTour": {
       "map": {
         "title": "El visor de mapa",
-        "body": "Su ciudad en 3D, con sitios, edificios y conjuntos de datos en contexto. Estas son las partes de la pantalla."
+        "body": "Su ciudad en 3D, con sitios, edificios y conjuntos de datos en contexto."
       },
       "bim": {
         "title": "El visor BIM",
-        "body": "Los archivos 3D de un edificio: modelos IFC, nubes de puntos, splats, modelos 3D y planos CAD. Estas son las partes de la pantalla."
+        "body": "Los modelos IFC, nubes de puntos, splats, modelos 3D y planos CAD de un edificio."
       }
     },
     "panelTabs": {
@@ -883,11 +897,11 @@
       "zoning": {
         "find": {
           "title": "Buscar un conjunto de datos",
-          "body": "El recorrido escribe \"Existing Colour Zoning\" en la búsqueda, en la pestaña municipal, para encontrar el mapa de zonificación de Ottawa de Open Ottawa."
+          "body": "Busque \"Existing Colour Zoning\" en la pestaña Municipal para encontrar el mapa de zonificación de Ottawa."
         },
         "apply": {
           "title": "Añadirlo al mapa",
-          "body": "Marque la casilla de una fila para dibujar ese conjunto de datos en el mapa. El recorrido marca el mapa de zonificación."
+          "body": "Marque la casilla de una fila para dibujar ese conjunto de datos en el mapa."
         },
         "applied": {
           "title": "Lo que está en el mapa",
@@ -895,7 +909,7 @@
         },
         "remove": {
           "title": "Quitarlo del mapa",
-          "body": "Desmarque la casilla para quitar el conjunto de datos del mapa. El recorrido desmarca el mapa de zonificación que añadió."
+          "body": "Desmarque la casilla para quitar el conjunto de datos del mapa."
         }
       },
       "tabs": {
@@ -1102,15 +1116,15 @@
         },
         "comment-add": {
           "title": "Escribir un comentario",
-          "body": "El + del encabezado Comentarios abre Añadir comentario. Escriba el comentario y pulse el + que está a su lado. El recorrido escribe un comentario de demostración y pulsa +."
+          "body": "El + del encabezado Comentarios abre Añadir comentario. Escriba el comentario y pulse el + que está a su lado."
         },
         "comment-place": {
           "title": "Colocarlo en el mapa",
-          "body": "Después del +, haga doble clic en el mapa donde va el comentario. El recorrido hace doble clic en el centro del mapa, y el comentario aparece en el mapa y en esta lista. Todos en su organización pueden verlo."
+          "body": "Luego haga doble clic en el mapa donde va. Aparece en el mapa y en esta lista, para toda su organización."
         },
         "comment-delete": {
           "title": "Eliminarlo",
-          "body": "La papelera de un comentario lo elimina junto con sus respuestas, sin preguntar. Solo su autor ve la papelera. El recorrido elimina el comentario de demostración."
+          "body": "La papelera elimina un comentario y sus respuestas, sin preguntar. Solo el autor la ve."
         }
       },
       "sensors": {
@@ -1138,22 +1152,22 @@
         },
         "list": {
           "title": "Sus sensores",
-          "body": "Sensores agrupados por tipo o etiqueta, con su última lectura cuando la hay. El interruptor de un grupo lo muestra en el visor; en los grupos por tipo, el + añade un sensor."
+          "body": "Sensores agrupados por tipo o etiqueta, con su última lectura. El interruptor de un grupo lo muestra en el visor; en los grupos por tipo, el + añade un sensor."
         },
         "demo": {
           "label": "Sensor de demostración del recorrido"
         },
         "sensor-add": {
           "title": "Añadir un sensor",
-          "body": "El + de un grupo por tipo abre Añadir sensor con ese tipo elegido; si no hay sensores en la lista, Añadir sensor bajo la lista vacía también lo abre. Elija un Tipo y escriba un Nombre del sensor y una URL de datos; al salir del campo de la URL se cuentan los puntos de datos que hay en ella. Formato de datos, Frecuencia de actualización y Etiquetas pueden quedar como están. El recorrido rellena una fuente de temperatura de demostración y pulsa Colocar sensor."
+          "body": "El + de un grupo por tipo abre Añadir sensor con ese tipo elegido. Dele un nombre y una URL de datos; los demás campos pueden quedar como están."
         },
         "sensor-place": {
           "title": "Colocarlo en el mapa",
-          "body": "Después de Colocar sensor, haga doble clic en el mapa donde está el sensor. El recorrido hace doble clic en el centro del mapa, y el sensor se une al grupo de su tipo en esta lista. Todos en su organización pueden verlo."
+          "body": "Luego haga doble clic en el mapa donde está el sensor. Se une al grupo de su tipo, para toda su organización."
         },
         "sensor-delete": {
           "title": "Eliminarlo",
-          "body": "La papelera al pie de un sensor lo elimina, sin preguntar. Solo su autor ve la papelera. El recorrido elimina el sensor de demostración."
+          "body": "La papelera al pie de un sensor lo elimina, sin preguntar. Solo el autor la ve."
         }
       }
     },
@@ -1209,15 +1223,15 @@
       "hello": {
         "open": {
           "title": "Abrir un plugin",
-          "body": "Haga clic en una fila para ver la descripción del plugin, su autor, lo que puede hacer y sus interruptores. El recorrido abre Hello Map, un pequeño plugin de demostración incluido en la plataforma."
+          "body": "Haga clic en una fila para ver la descripción del plugin, su autor, sus capacidades y sus interruptores. Aquí: Hello Map, un pequeño plugin de demostración."
         },
         "install": {
           "title": "Instalarlo",
-          "body": "Instalar en la organización añade el plugin para todas las personas de su organización. El recorrido instala Hello Map."
+          "body": "Instalar en la organización añade el plugin para toda su organización."
         },
         "controls": {
           "title": "Sus controles",
-          "body": "Lo que puede cambiar depende de su rol. Elija uno para probarlo. Los interruptores de la organización solo funcionan aquí si el recorrido instaló Hello Map, y el recorrido deja como estaban los que haya cambiado cuando salga.",
+          "body": "Lo que puede cambiar depende de su rol. Elija uno para probarlo; sus cambios se deshacen al salir.",
           "items": {
             "installed": {
               "term": "Instalado",
@@ -1237,11 +1251,11 @@
             }
           }
         },
-        "controlsUser": "Su organización ya tenía Hello Map antes del recorrido, así que el recorrido no toca sus interruptores de organización. Su propio interruptor, si su rol lo tiene, funciona aquí, y el recorrido lo deja como estaba cuando salga.",
+        "controlsUser": "Hello Map ya estaba instalado, así que sus interruptores de organización no se tocan. Su propio interruptor, si su rol lo tiene, se restablece al salir.",
         "controlsReadOnly": "Los administradores de su organización deciden si este plugin se ejecuta. La fila le indica lo que eligieron.",
         "uninstall": {
           "title": "Desinstalarlo",
-          "body": "Desactive Instalado y confirme para quitar el plugin de su organización. El recorrido desinstala Hello Map, que él mismo instaló."
+          "body": "Desactive Instalado y confirme para quitar el plugin de su organización."
         }
       }
     },
@@ -1251,7 +1265,7 @@
     },
     "explore": {
       "title": "¿Qué le gustaría explorar?",
-      "body": "Elija una parte de la plataforma para un recorrido más detallado. Abra @support → @guide para volver a este recorrido en cualquier momento.",
+      "body": "Elija una parte de la plataforma para verla de cerca. Vuelva a abrir esta guía en cualquier momento desde @support → @guide.",
       "items": {
         "viewers": {
           "term": "Visores 3D",
@@ -1265,11 +1279,11 @@
     },
     "exploreViewers": {
       "title": "¿Qué visor?",
-      "body": "Elija un visor para recorrer su pantalla."
+      "body": "Elija un visor."
     },
     "exploreData": {
       "title": "¿Qué página de datos?",
-      "body": "Elija una página para recorrerla."
+      "body": "Elija una página."
     },
     "attribution": {
       "title": "Atribución",
@@ -1282,35 +1296,35 @@
     "zoningDemo": {
       "open": {
         "title": "Añadir un conjunto de datos",
-        "body": "Conjuntos de datos, en la barra de herramientas, abre el catálogo de datos. El recorrido lo abre."
+        "body": "Conjuntos de datos, en la barra de herramientas, abre el catálogo de datos."
       },
       "close": {
         "title": "Cerrar el menú",
-        "body": "Cierre Conjuntos de datos para volver al mapa. El recorrido lo cierra."
+        "body": "Cierre Conjuntos de datos para volver al mapa."
       },
       "load": {
         "title": "Su conjunto de datos en el mapa",
-        "body": "Ahora puede usar la leyenda para gestionar el mapa de zonificación. Los conjuntos de datos grandes tardan unos segundos en cargar; el anillo junto a la capa muestra cuánto falta."
+        "body": "Los conjuntos de datos grandes tardan unos segundos en cargar; el anillo junto a la capa muestra el progreso."
       },
       "legend": {
         "title": "Expandir la leyenda",
-        "body": "La tarjeta Capas enumera cada capa del mapa. Su chevrón abre o pliega la tarjeta; el recorrido la abre."
+        "body": "La tarjeta Capas enumera cada capa del mapa. Su chevrón la abre o la pliega."
       },
       "layer": {
         "title": "Expandir la capa",
-        "body": "El chevrón de una capa abre su estilo. El recorrido abre el estilo de la capa de zonificación."
+        "body": "El chevrón de una capa abre su estilo."
       },
       "colour": {
         "title": "Colorear por un campo",
-        "body": "La zonificación empieza con los colores del editor. El recorrido pone Colorear por en el campo de zona principal (ZONE_MAIN) y el mapa se recolorea por zona principal."
+        "body": "La zonificación empieza con los colores del editor. Colorear por los toma de un campo, aquí la zona principal (ZONE_MAIN)."
       },
       "style": {
         "title": "Etiquetas y más estilo",
-        "body": "Más estilo reúne la opacidad, el color del borde, el grosor del borde y las etiquetas. El recorrido escribe el ZONE_CODE de cada parcela en el mapa, oscurece el borde y pone la opacidad al 60 %."
+        "body": "Más estilo ajusta la opacidad, el borde y las etiquetas. Aquí: el ZONE_CODE de cada parcela, un borde más oscuro y 60 % de opacidad."
       },
       "remove": {
         "title": "Quitar una capa",
-        "body": "La × quita la capa del mapa. El recorrido quita la capa de zonificación que añadió."
+        "body": "La × quita la capa del mapa."
       }
     },
     "legend": {
@@ -1338,11 +1352,11 @@
     "bimState": {
       "noBuilding": {
         "title": "Elegir un edificio",
-        "body": "El visor BIM muestra un edificio a la vez. Busque un edificio aquí y selecciónelo para abrir sus modelos."
+        "body": "El visor BIM muestra un edificio a la vez. Busque uno aquí para abrir sus modelos."
       },
       "noBimFiles": {
         "title": "Añadir un archivo 3D",
-        "body": "Este edificio aún no tiene archivos 3D. Use Subir archivo para añadir un modelo IFC, nube de puntos, splat, modelo 3D o plano CAD."
+        "body": "Este edificio aún no tiene archivos 3D. Subir archivo añade un modelo IFC, nube de puntos, splat, modelo 3D o plano CAD."
       }
     },
     "legendDemo": {
@@ -1363,20 +1377,20 @@
     "settingsTour": {
       "map-style": {
         "title": "Estilo del mapa",
-        "body": "El mapa base bajo sus datos. Mire cómo cambia y elija uno; se mantiene hasta que recargue la página.",
+        "body": "El mapa base bajo sus datos. Su elección se mantiene hasta que recargue la página.",
         "pick": "Cambiar a este mapa base."
       },
       "terrain": {
         "title": "Terreno",
-        "body": "Añade colinas y valles al mapa. Los niveles disponibles dependen del país de su organización y de la configuración de la plataforma. El paso prueba uno y vuelve atrás al continuar."
+        "body": "Añade colinas y valles. Los niveles disponibles dependen del país de su organización y de la configuración de la plataforma. Se restablece al continuar."
       },
       "projection": {
         "title": "Proyección",
-        "body": "Globo curva el mapa como la Tierra al alejarse. Con un zoom mayor que 5, el mapa siempre es plano (Mercator). Mire cómo cambia; vuelve atrás al continuar."
+        "body": "Globo curva el mapa como la Tierra al alejarse; con zoom mayor que 5 siempre es plano (Mercator). Se restablece al continuar."
       },
       "buildings": {
         "title": "Edificios 3D",
-        "body": "Muestra u oculta los edificios 3D: los del mapa base y los dibujados en la plataforma. Mire cómo cambia; vuelve atrás al continuar."
+        "body": "Muestra u oculta los edificios 3D, del mapa base y de la plataforma. Se restablece al continuar."
       },
       "measurements": {
         "title": "Mediciones",
@@ -1388,11 +1402,11 @@
       },
       "render-mode": {
         "title": "Modo de renderizado",
-        "body": "Sombreado añade sombras del sol; Básico dibuja sin ellas y es más rápido. Mire cómo cambia; vuelve atrás al continuar."
+        "body": "Sombreado añade sombras del sol; Básico las omite y es más rápido. Se restablece al continuar."
       },
       "bim-projection": {
         "title": "Proyección",
-        "body": "Perspectiva se ve natural; Ortográfica mantiene las líneas paralelas, útil para plantas y alzados. Mire cómo cambia; vuelve atrás al continuar."
+        "body": "Perspectiva se ve natural; Ortográfica mantiene las líneas paralelas, para plantas y alzados. Se restablece al continuar."
       },
       "navigation": {
         "title": "Navegación",
@@ -1400,7 +1414,7 @@
       },
       "grid": {
         "title": "Cuadrícula",
-        "body": "La cuadrícula del suelo bajo el modelo. Mire cómo cambia; vuelve atrás al continuar. También puede ajustar su color, tamaños de celda, altura y rotación."
+        "body": "La cuadrícula del suelo bajo el modelo, con su color, tamaños de celda, altura y rotación. Se restablece al continuar."
       },
       "lighting": {
         "title": "Iluminación",
@@ -1414,6 +1428,9 @@
         "title": "Nubes de puntos y splats",
         "body": "Presupuesto de puntos, tamaño, forma y opacidad de las nubes de puntos cargadas. Los splats tienen su propia sección cuando hay uno cargado."
       }
+    },
+    "sections": {
+      "panelTab": "{panel}: {tab}"
     }
   },
   "MapLegend": {

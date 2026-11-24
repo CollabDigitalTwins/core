@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { List } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { createPortal } from 'react-dom'
@@ -11,11 +12,12 @@ import { placeCard, visiblePart } from './placement'
 import { TourBody } from './TourBody'
 import { TourItems } from './TourItems'
 import { useTourTurn } from './tourQueue'
+import { TourSectionsDialog } from './TourSectionsDialog'
 import { TOUR_CSS } from './tourStyles'
 import { cardWidthFor, HIDE_BUTTON_CLASS, useFinishOnClick, useLatest, useMeasuredHeight, useTourKeys, useTourLayout, useViewportSize } from './useTourLayout'
 
 import type { Box } from './placement'
-import type { GuidedTourLabels, GuidedTourProps, TourStep } from './tourTypes'
+import type { GuidedTourLabels, GuidedTourProps, TourSection, TourStep } from './tourTypes'
 
 const SPOT_PADDING = 6
 const ARROW_GAP = 10
@@ -115,13 +117,30 @@ function useHostPressShield() {
   return setRoot
 }
 
+const NO_STEP = () => {}
+
+/** Whether the sections dialog is open; closing it hands focus back to the card's button that opened it. */
+function useSectionsDialog() {
+  const [open, setOpen] = React.useState(false)
+  const buttonRef = React.useRef<HTMLButtonElement>(null)
+  const wasOpen = React.useRef(false)
+  React.useEffect(() => {
+    if (wasOpen.current && !open) buttonRef.current?.focus({ preventScroll: true })
+    wasOpen.current = open
+  }, [open])
+  const show = React.useCallback(() => setOpen(true), [])
+  const close = React.useCallback(() => setOpen(false), [])
+  return { open, buttonRef, show, close }
+}
+
 /** A step-by-step guide that spotlights parts of the page while leaving it usable underneath; open tours show one at a time. */
 export function GuidedTour(props: GuidedTourProps) {
   return useTourTurn() ? <ActiveTour {...props} /> : null
 }
 
-function ActiveTour({ steps, onHide, onFinish = onHide, onStepChange, startAt, avoid, header, labels, className }: GuidedTourProps) {
+function ActiveTour({ steps, onHide, onFinish = onHide, onStepChange, startAt, avoid, header, sections, labels, className }: GuidedTourProps) {
   const text = useLabels(labels)
+  const sectionsLabel = useTranslations('GuidedTour.sections')('open')
   const titleId = React.useId()
   const [index, setIndex] = React.useState(() => Math.max(0, steps.findIndex(s => s.id === startAt)))
   const step = steps[Math.min(index, steps.length - 1)]
@@ -145,10 +164,28 @@ function ActiveTour({ steps, onHide, onFinish = onHide, onStepChange, startAt, a
   }, [steps, index, onFinish])
   useStepReport(step.id, onStepChange)
   const rootRef = useHostPressShield()
-  useTourKeys(go, onHide)
+  const dialog = useSectionsDialog()
+  const jump = (section: TourSection, stepId: string) => {
+    dialog.close()
+    if (section.id !== sections?.current) return section.start(stepId)
+    const target = steps.findIndex(s => s.id === stepId)
+    if (target >= 0) setIndex(target)
+  }
+  useTourKeys(dialog.open ? NO_STEP : go, dialog.open ? dialog.close : onHide)
   useFinishOnClick(index, step, onHide)
 
   if (!client) return null
+
+  if (sections && dialog.open) {
+    return createPortal(
+      <div ref={rootRef} className={className ? `cdt-tour ${className}` : 'cdt-tour'}>
+        <style>{TOUR_CSS}</style>
+        <div className="cdt-tour-scrim" />
+        <TourSectionsDialog sections={sections} currentStep={step.id} onPick={jump} onBack={dialog.close} />
+      </div>,
+      document.body,
+    )
+  }
 
   const visible = layout.target && visiblePart(layout.target, viewport)
   const spot = visible && padded(visible)
@@ -169,6 +206,11 @@ function ActiveTour({ steps, onHide, onFinish = onHide, onStepChange, startAt, a
       <div ref={cardRef} className={settledClass('cdt-tour-card', layout.settled)} role="dialog" aria-modal="false" aria-labelledby={titleId} style={{ left: card.left, top: card.top, maxHeight: card.maxHeight }}>
         <header>
           {header}
+          {sections && (
+            <button ref={dialog.buttonRef} type="button" className="cdt-tour-sections-open" aria-label={sectionsLabel} title={sectionsLabel} onClick={dialog.show}>
+              <List aria-hidden />
+            </button>
+          )}
           {step.shortcut && <button type="button" className="cdt-tour-shortcut" onClick={step.shortcut.onSelect}>{step.shortcut.label} ›</button>}
           <small>{text.progress(index + 1, steps.length)}</small>
         </header>

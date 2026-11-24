@@ -294,6 +294,8 @@ declare module '@collabdt/core/plugins-sdk/tour' {
   export type TourItem = import('./tour').TourItem
   export type TourStep = import('./tour').TourStep
   export type GuidedTourLabels = import('./tour').GuidedTourLabels
+  export type TourSection = import('./tour').TourSection
+  export type TourSections = import('./tour').TourSections
   export type GuidedTourProps = import('./tour').GuidedTourProps
   export type TourStore = import('./tour').TourStore
   export type BrowserTourStoreOptions = import('./tour').BrowserTourStoreOptions

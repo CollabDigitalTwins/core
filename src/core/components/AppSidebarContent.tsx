@@ -205,7 +205,7 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, stora
     //   accessibleTo: [RoleNames.admin],
     // },
     {
-      title: t('addPlugins'),
+      title: t('library'),
       id: ViewerNames.plugins,
       icon: LR.Blocks,
       onClick: () => changeViewer(ViewerNames.plugins),
@@ -219,7 +219,7 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, stora
       id: 'support',
       url: 'mailto:info@collabdt.org?subject=Support Request - CDT Platform',
       icon: LR.LifeBuoy,
-      tooltip: t('contact')
+      tooltip: t('support')
     },
     // {
     //   title: t('feedback'),

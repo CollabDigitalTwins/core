@@ -72,6 +72,7 @@ export function PluginsManager({ listings, actions, registryActions }: Props) {
 
   const viewerConfig = VIEWER_CONFIG[ViewerNames.plugins]
   const headerTitle = t('title')
+  const sectionTitle = useTranslations('AppSidebar')('plugins')
   const MenuIcon = viewerConfig?.icon
 
   const { listings: resolved, isLoading } = usePluginsData(listings)
@@ -227,7 +228,7 @@ export function PluginsManager({ listings, actions, registryActions }: Props) {
             <Breadcrumb className="px-3">
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbPage>{headerTitle}</BreadcrumbPage>
+                  <BreadcrumbPage>{sectionTitle}</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>

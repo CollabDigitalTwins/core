@@ -100,9 +100,8 @@
     "landTitle": "Terrain",
     "infrastructureTitle": "Infrastructure",
     "preferences": "Préférences",
-    "addPlugins": "Ajouter des plugins",
-    "lcaTitle": "ACV",
-    "contact": "Contact the Team"
+    "library": "Bibliothèque",
+    "lcaTitle": "ACV"
   },
   "AssociateBuildings": {
     "title": "Bâtiments trouvés dans ce site",
@@ -670,7 +669,7 @@
       "body": "Voyez les plugins disponibles et activez-les. Les administrateurs peuvent en installer d'autres.",
       "items": {
         "open": {
-          "term": "Ajouter des plugins",
+          "term": "Bibliothèque",
           "description": "Voyez vos plugins et activez-les ou désactivez-les."
         }
       }
@@ -3006,7 +3005,7 @@
     "noResults": "Aucun résultat pour « {query} »."
   },
   "PluginsPage": {
-    "title": "Plugins",
+    "title": "Bibliothèque de plugins",
     "searchPlaceholder": "Rechercher des plugins",
     "noResults": "Aucun plugin ne correspond à « {query} ».",
     "empty": "Aucun plugin n’est encore disponible dans cette organisation.",

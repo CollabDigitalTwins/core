@@ -101,8 +101,7 @@
     "infrastructureTitle": "Infraestructura",
     "preferences": "Preferencias",
     "lcaTitle": "ACV (LCA)",
-    "addPlugins": "Añadir plugins",
-    "contact": "Contact the Team"
+    "library": "Biblioteca"
   },
   "AssociateBuildings": {
     "title": "Edificios encontrados dentro de este sitio",
@@ -670,7 +669,7 @@
       "body": "Vea los plugins disponibles para usted y actívelos. Los administradores pueden instalar más.",
       "items": {
         "open": {
-          "term": "Añadir plugins",
+          "term": "Biblioteca",
           "description": "Vea sus plugins y actívelos o desactívelos."
         }
       }
@@ -3006,7 +3005,7 @@
     "noResults": "No hay coincidencias con «{query}»."
   },
   "PluginsPage": {
-    "title": "Plugins",
+    "title": "Biblioteca de plugins",
     "searchPlaceholder": "Buscar plugins",
     "noResults": "Ningún plugin coincide con «{query}».",
     "empty": "Todavía no hay plugins disponibles en esta organización.",

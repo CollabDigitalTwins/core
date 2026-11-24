@@ -101,8 +101,7 @@
     "infrastructureTitle": "Infrastructure",
     "preferences": "Preferences",
     "lcaTitle": "LCA",
-    "addPlugins": "Add Plugins",
-    "contact": "Contact the Team"
+    "library": "Library"
   },
   "AssociateBuildings": {
     "title": "Buildings found inside this site",
@@ -670,7 +669,7 @@
       "body": "See the plugins available to you and switch them on. Administrators can install more.",
       "items": {
         "open": {
-          "term": "Add Plugins",
+          "term": "Library",
           "description": "See your plugins and switch them on or off."
         }
       }
@@ -3009,7 +3008,7 @@
     "noResults": "Nothing matches \"{query}\"."
   },
   "PluginsPage": {
-    "title": "Plugins",
+    "title": "Plugin Library",
     "searchPlaceholder": "Search plugins",
     "noResults": "No plugins match \"{query}\".",
     "empty": "No plugins are available in this organization yet.",

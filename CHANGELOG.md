@@ -16,7 +16,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ### Changed
 - Platform tour copy (`PlatformTour`, en/fr/es) is shorter and no longer narrates itself ("The tour opens…").
 - The plugins page is the "Plugin Library": its sidebar link reads "Library" (es "Biblioteca", fr "Bibliothèque")
-  instead of "Add Plugins", also in the tour, and its breadcrumb reads "Plugins". The message key
+  instead of "Add Plugins", also in the tour, with "Plugin Library" on hover, and its breadcrumb reads "Plugins". The message key
   `AppSidebar.addPlugins` is renamed `AppSidebar.library`.
 
 ### Fixed

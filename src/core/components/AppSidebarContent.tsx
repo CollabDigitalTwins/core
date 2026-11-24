@@ -77,6 +77,7 @@ interface AppSidebarProps {
 export function AppSidebarContent({ organization, countrySubdivisionsData, storageBaseUrl, }: AppSidebarProps) {
   // Translations
   const t = useTranslations('AppSidebar')
+  const pluginLibraryTitle = useTranslations('PluginsPage')('title')
 
   const { dispatch: appConfigDispatch } = React.useContext(AppConfigContext)
   const { dispatch: mapDispatch } = React.useContext(MapContext)
@@ -207,6 +208,7 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, stora
     {
       title: t('library'),
       id: ViewerNames.plugins,
+      tooltip: pluginLibraryTitle,
       icon: LR.Blocks,
       onClick: () => changeViewer(ViewerNames.plugins),
     }
@@ -369,7 +371,7 @@ export function AppSidebarContent({ organization, countrySubdivisionsData, stora
                       <SidebarMenuButton asChild>
                         <Button
                           onClick={item.onClick}
-                          title={isCollapsed ? item.title : undefined}
+                          title={item.tooltip ?? (isCollapsed ? item.title : undefined)}
                           className={buildBtnClass(active)}
                           variant="ghost"
                         >

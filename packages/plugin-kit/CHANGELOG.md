@@ -8,6 +8,8 @@ repository root.
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-11-24
+
 ### Added
 - `TourSection` and `TourSections` declarations for `@collabdt/core/plugins-sdk/tour`, and `sections` on
   `GuidedTourProps`, matching the core release that adds the tour sections dialog.

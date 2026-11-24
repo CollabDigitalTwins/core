@@ -19,6 +19,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ### Fixed
 - A tour card that has no room beside its target now draws above the highlight ring instead of under it, e.g. in
   the datasets menu.
+- "Pick up where you left off?" never appeared for users whose browser storage was full: the last view now evicts
+  the dataset and BIM spatial-structure caches to make room, as do those caches' own writes. The viewer also
+  deletes cache keys no current code reads (the retired `features:` tile cache and older spatial-structure versions).
 
 ## [0.21.1] - 2026-11-23
 

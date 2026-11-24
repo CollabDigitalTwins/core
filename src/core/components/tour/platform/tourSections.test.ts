@@ -6,28 +6,17 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { ViewerNames } from '../../../types/dbTypes'
 
+import { stubTourActions } from './__tests__/stubTourActions'
 import { EVERYTHING_AVAILABLE } from './platformTourSteps'
 import { pageOfTour, tourSections } from './tourSections'
 import { NO_PLUGIN_ENTRIES } from './usePluginTourEntries'
 
-import type { PlatformTourActions } from './platformTourTypes'
 import type { SectionContext } from './tourSections'
 import type { ViewerKey } from '../../../types/dbTypes'
 
 const echo = (key: string) => key
 
-const actions = (can = () => true): PlatformTourActions => ({
-  can,
-  inOttawa: () => false,
-  canDemoSearch: () => false,
-  zoningApplied: () => false,
-  isMobile: () => false,
-  branch: vi.fn(), leave: vi.fn(), openViewer: vi.fn(), openMenu: vi.fn(() => () => {}), openPanel: vi.fn(() => () => {}), selectPanelTab: vi.fn(),
-  demoSearch: vi.fn(() => () => {}), demoMeasure: vi.fn(() => () => {}), pressControl: vi.fn(), openFeatureRequest: vi.fn(), openContactPage: vi.fn(), switchLanguage: vi.fn(), openBugReport: vi.fn(), zoomIn: vi.fn(), zoomOut: vi.fn(), resetNorth: vi.fn(),
-  mapStyles: [], setMapStyle: vi.fn(), demoMapStyle: vi.fn(() => () => {}), demoZoning: vi.fn(() => () => {}), demoZoningMenu: vi.fn(() => () => {}),
-  demoHelloMap: vi.fn(() => () => {}), toggleHelloMapControl: vi.fn(),
-  sensorTypesExist: () => true, demoComment: vi.fn(() => () => {}), demoSensor: vi.fn(() => () => {}),
-})
+const actions = (can = () => true) => stubTourActions({ can, inOttawa: () => false, canDemoSearch: () => false })
 
 const context = (viewer: ViewerKey | undefined, overrides: Partial<SectionContext> = {}): SectionContext => ({
   t: echo, a: actions(), viewer, plugins: NO_PLUGIN_ENTRIES, available: EVERYTHING_AVAILABLE, languages: [], ...overrides,

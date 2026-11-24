@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { setItemMakingRoom } from '../../../../utils/browserStorage'
 import { toQueryString } from '../../map/utils/urlLocation/locationParams'
 import { presentLevels } from '../../map/utils/urlLocation/locationTarget'
 
@@ -14,10 +15,10 @@ export const LAST_VIEW_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000
 
 const storageKey = (scope: string) => `cdt:lastView:${scope}`
 
-/** Browser storage can be blocked or full; losing a last view is never worth an error. */
+/** Evicts refetchable caches to fit; storage that is blocked or still full loses the view rather than throwing. */
 export function saveLastView(scope: string, view: Omit<LastView, 'savedAt'>, now = Date.now()): void {
   try {
-    window.localStorage.setItem(storageKey(scope), JSON.stringify({ ...view, savedAt: now }))
+    setItemMakingRoom(storageKey(scope), JSON.stringify({ ...view, savedAt: now }))
   }
   catch { /* storage unavailable */ }
 }

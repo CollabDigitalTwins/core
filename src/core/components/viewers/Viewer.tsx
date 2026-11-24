@@ -14,6 +14,7 @@ import { BuildingsContext, MenusContext } from '../../store'
 import { ViewerNames } from '../../types'
 
 // Deep import, not the ui barrel: the barrel drags heavy modules into the eager map bundle.
+import { pruneRetiredStorage } from '../../utils/browserStorage'
 import { switchLanguage } from '../../utils/utils'
 import { UserSettings } from '../settings'
 import { Toolbar } from '../Toolbar'
@@ -134,6 +135,8 @@ export function Viewer({ organization, storageBaseUrl, martinBaseUrl, pointcloud
       setIsMounted(true)
     }
   }, [isMounted, validViewer, menusDispatch])
+
+  React.useEffect(pruneRetiredStorage, [])
 
   React.useEffect(() => {
     if (!organization) return

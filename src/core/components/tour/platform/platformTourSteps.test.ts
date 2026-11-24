@@ -8,6 +8,7 @@ import en from '../../../i18n/messages/en.json'
 import { Language, ViewerNames } from '../../../types/dbTypes'
 import { arcgisLayerUrl } from '../../viewers/map/datasets/src/arcgisLayer'
 
+import { stubTourActions } from './__tests__/stubTourActions'
 import { DATA_PAGES, platformTourSteps, toolStepId } from './platformTourSteps'
 import { subTour } from './subTourSteps'
 import { createZoningDemo, createZoningMenuDemo } from './zoningDemo'
@@ -43,18 +44,7 @@ const SUB_TOURS: Exclude<PlatformTourId, 'platform'>[] = [
 
 const echo = (key: string) => key
 
-const actions = (): PlatformTourActions => ({
-  can: () => true,
-  inOttawa: () => true,
-  canDemoSearch: () => true,
-  zoningApplied: () => false,
-  isMobile: () => false,
-  branch: vi.fn(), leave: vi.fn(), openViewer: vi.fn(), openMenu: vi.fn(() => () => {}), openPanel: vi.fn(() => () => {}), selectPanelTab: vi.fn(),
-  demoSearch: vi.fn(() => () => {}), demoMeasure: vi.fn(() => () => {}), pressControl: vi.fn(), openFeatureRequest: vi.fn(), openContactPage: vi.fn(), switchLanguage: vi.fn(), openBugReport: vi.fn(), zoomIn: vi.fn(), zoomOut: vi.fn(), resetNorth: vi.fn(),
-  mapStyles: [], setMapStyle: vi.fn(), demoMapStyle: vi.fn(() => () => {}), demoZoning: vi.fn(() => () => {}), demoZoningMenu: vi.fn(() => () => {}),
-  demoHelloMap: vi.fn(() => () => {}), toggleHelloMapControl: vi.fn(),
-  sensorTypesExist: () => true, demoComment: vi.fn(() => () => {}), demoSensor: vi.fn(() => () => {}),
-})
+const actions = () => stubTourActions()
 
 const resolve = (key: string) => key.split('.').reduce<unknown>((node, part) => (node as Record<string, unknown>)?.[part], en.PlatformTour)
 

@@ -3,6 +3,8 @@
 
 import * as OBC from '@thatopen/components'
 
+import { SPATIAL_STRUCTURE_CACHE_PREFIX, setItemMakingRoom } from '../../../../utils/browserStorage'
+
 import { type BimTreeNode } from './lib/bimTree'
 import {
   buildSpatialTree,
@@ -24,8 +26,6 @@ import {
  */
 export class SpatialStructure extends OBC.Component {
   static readonly uuid = '8f7e4d2c-1a9b-4e6f-8c3d-5b2a9f7e4d2c' as const
-  /** v3: v2 kept the nameless IFCBUILDING wrapper these trees now drop. */
-  private static readonly cacheKeyPrefix = 'bim:spatial-structure:v3'
   /** Trees past this size are rebuilt rather than cached; they blow the quota anyway. */
   private static readonly maxCachedNodes = 20_000
 
@@ -205,7 +205,7 @@ export class SpatialStructure extends OBC.Component {
   // ---------------------------------------------------------------------------
 
   private getCacheKey(modelId: string): string {
-    return `${SpatialStructure.cacheKeyPrefix}:${modelId}`
+    return `${SPATIAL_STRUCTURE_CACHE_PREFIX}${modelId}`
   }
 
   private readCache(modelId: string): BimTreeNode[] | null {
@@ -229,7 +229,7 @@ export class SpatialStructure extends OBC.Component {
 
     try {
       if (this.countNodes(nodes) > SpatialStructure.maxCachedNodes) return
-      window.localStorage.setItem(
+      setItemMakingRoom(
         this.getCacheKey(modelId),
         JSON.stringify(nodes.map(node => this.serialize(node))),
       )

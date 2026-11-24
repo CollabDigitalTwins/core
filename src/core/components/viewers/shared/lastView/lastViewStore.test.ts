@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { failNextWriteOnQuota } from '../../../../utils/__tests__/failNextWriteOnQuota'
+
 import { LAST_VIEW_MAX_AGE_MS, namesALocation, readLastView, saveLastView } from './lastViewStore'
 
 afterEach(() => {
@@ -28,6 +30,15 @@ describe('lastViewStore', () => {
 
     window.localStorage.setItem('cdt:lastView:east:1', JSON.stringify({ viewer: 'map', url: '//evil.example', savedAt: Date.now() }))
     expect(readLastView('east:1')).toBeNull()
+  })
+
+  it('saves into a store that refetchable caches have filled', () => {
+    window.localStorage.setItem('datasetCache:k', '1')
+    failNextWriteOnQuota()
+
+    saveLastView('east:1', { viewer: 'map', url: '/east?lat=1&lng=2' }, 100)
+
+    expect(readLastView('east:1', 200)?.url).toBe('/east?lat=1&lng=2')
   })
 
   it('survives storage that throws', () => {

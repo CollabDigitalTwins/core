@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { foldForSearch } from '../../../../../utils/foldForSearch'
+
 export type PlaceLevel = 'country' | 'countrySubdivision' | 'municipality' | 'address'
 
 /** Parent names that disambiguate a place search; each is optional. */
@@ -28,7 +30,7 @@ export const subdivisionCountry = (value?: string | null): string =>
 /** Candidates fetched per search, so the first one inside the parent subdivision can win. */
 export const PLACE_CANDIDATES = 5
 
-const fold = (value: unknown) => (typeof value === 'string' ? value : '').normalize('NFD').replace(/\p{Diacritic}/gu, '').trim().toLowerCase()
+const fold = (value: unknown) => foldForSearch(typeof value === 'string' ? value : '').trim()
 
 /** False only when the feature names a subdivision other than the one asked for; missing data passes. */
 export function matchesContext(properties: Record<string, unknown> | null | undefined, context: PlaceContext): boolean {

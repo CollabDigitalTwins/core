@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2025 Collab Digital Twins
 
+import { DATASET_CACHE_PREFIX, setItemMakingRoom } from '../../../../../utils/browserStorage'
+
 type CacheValue<T> = {
   v: T
   e: number
@@ -9,7 +11,6 @@ type CacheValue<T> = {
 export const HOUR_MS = 60 * 60 * 1000
 export const DAY_MS = 24 * HOUR_MS
 
-const NS = 'datasetCache:'
 const mem = new Map<string, CacheValue<any>>()
 
 function now() {
@@ -17,7 +18,7 @@ function now() {
 }
 
 export function makeKey(parts: Array<string | number | null | undefined>) {
-  return NS + parts.map((p) => String(p ?? '')).join('|')
+  return DATASET_CACHE_PREFIX + parts.map((p) => String(p ?? '')).join('|')
 }
 
 export function setCache<T>(key: string, value: T, ttlMs: number) {
@@ -25,7 +26,7 @@ export function setCache<T>(key: string, value: T, ttlMs: number) {
   try {
     mem.set(key, rec)
     if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem(key, JSON.stringify(rec))
+      setItemMakingRoom(key, JSON.stringify(rec))
     }
   } catch {}
 }

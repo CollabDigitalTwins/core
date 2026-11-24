@@ -133,6 +133,18 @@ function useSectionsDialog() {
   return { open, buttonRef, show, close }
 }
 
+interface TourLayerProps { rootRef: (root: HTMLDivElement | null) => void; className?: string; children: React.ReactNode }
+
+function TourLayer({ rootRef, className, children }: TourLayerProps) {
+  return createPortal(
+    <div ref={rootRef} className={className ? `cdt-tour ${className}` : 'cdt-tour'}>
+      <style>{TOUR_CSS}</style>
+      {children}
+    </div>,
+    document.body,
+  )
+}
+
 /** A step-by-step guide that spotlights parts of the page while leaving it usable underneath; open tours show one at a time. */
 export function GuidedTour(props: GuidedTourProps) {
   return useTourTurn() ? <ActiveTour {...props} /> : null
@@ -177,13 +189,11 @@ function ActiveTour({ steps, onHide, onFinish = onHide, onStepChange, startAt, a
   if (!client) return null
 
   if (sections && dialog.open) {
-    return createPortal(
-      <div ref={rootRef} className={className ? `cdt-tour ${className}` : 'cdt-tour'}>
-        <style>{TOUR_CSS}</style>
+    return (
+      <TourLayer rootRef={rootRef} className={className}>
         <div className="cdt-tour-scrim" />
         <TourSectionsDialog sections={sections} currentStep={step.id} onPick={jump} onBack={dialog.close} />
-      </div>,
-      document.body,
+      </TourLayer>
     )
   }
 
@@ -192,9 +202,8 @@ function ActiveTour({ steps, onHide, onFinish = onHide, onStepChange, startAt, a
   const arrow = step.invite && spot ? arrowBox(spot) : null
   const card = placeCard(spot, { width: cardWidthFor(viewport.width), height: cardHeight }, viewport, arrow ? [...layout.avoid, arrow] : layout.avoid)
 
-  return createPortal(
-    <div ref={rootRef} className={className ? `cdt-tour ${className}` : 'cdt-tour'}>
-      <style>{TOUR_CSS}</style>
+  return (
+    <TourLayer rootRef={rootRef} className={className}>
       {spot ? <div className={settledClass('cdt-tour-spot', layout.settled)} style={spot} /> : <div className="cdt-tour-scrim" />}
       {spot && <div className={settledClass('cdt-tour-ring', layout.settled)} style={spot} />}
       {arrow && <div className={settledClass('cdt-tour-arrow', layout.settled)} style={arrow} aria-hidden>←</div>}
@@ -232,7 +241,6 @@ function ActiveTour({ steps, onHide, onFinish = onHide, onStepChange, startAt, a
           </div>
         </footer>
       </div>
-    </div>,
-    document.body,
+    </TourLayer>
   )
 }

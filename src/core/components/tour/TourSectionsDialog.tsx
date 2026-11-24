@@ -7,6 +7,8 @@ import { ArrowLeft } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
+import { foldForSearch } from '../../utils/foldForSearch'
+
 import type { TourSection, TourSections } from './tourTypes'
 
 type Translate = ReturnType<typeof useTranslations>
@@ -14,14 +16,12 @@ type SectionStep = TourSection['steps'][number]
 
 interface Match { section: TourSection; step: SectionStep; index: number }
 
-const fold = (text: string) => text.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase()
-
 function matchesOf(list: TourSection[], query: string): Match[] {
-  const needle = fold(query.trim())
+  const needle = foldForSearch(query.trim())
   if (!needle) return []
   return list.flatMap(section => section.steps
     .map((step, index) => ({ section, step, index }))
-    .filter(({ step }) => fold(`${step.title} ${section.title}`).includes(needle)))
+    .filter(({ step }) => foldForSearch(`${step.title} ${section.title}`).includes(needle)))
 }
 
 interface StepRowProps { number?: number; title: string; detail?: string; here: boolean; hereLabel: string; onClick: () => void }
@@ -125,6 +125,7 @@ export function TourSectionsDialog({ sections, currentStep, onPick, onBack }: To
   const selected = list.find(section => section.id === selectedId)
   const currentIndex = current ? current.steps.findIndex(step => step.id === currentStep) : -1
   const isHere = (section: TourSection, stepId: string) => section.id === sections.current && stepId === currentStep
+  const searching = query.trim() !== ''
   const select = (id: string) => {
     setSelectedId(id)
     setQuery('')
@@ -141,9 +142,9 @@ export function TourSectionsDialog({ sections, currentStep, onPick, onBack }: To
         <input ref={searchRef} type="search" aria-label={t('search')} placeholder={t('searchPlaceholder')} value={query} onChange={event => setQuery(event.target.value)} />
       </div>
       <div className="cdt-tour-sections-body">
-        <SectionNav list={list} selected={query.trim() ? undefined : selectedId} current={sections.current} onSelect={select} t={t} />
+        <SectionNav list={list} selected={searching ? undefined : selectedId} current={sections.current} onSelect={select} t={t} />
         <div className="cdt-tour-sections-steps">
-          {query.trim()
+          {searching
             ? <Matches matches={matches} isHere={isHere} onPick={onPick} t={t} />
             : selected && <SectionSteps section={selected} isHere={isHere} onPick={onPick} t={t} />}
         </div>

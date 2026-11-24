@@ -7,6 +7,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.21.2] - 2026-11-24
+
 ### Added
 - `GuidedTour`'s `sections` prop (`@collabdt/core/plugins-sdk/tour`, with the `TourSection` and `TourSections`
   types): a list button in the card's header opens a dialog of every section and its steps, searchable, to jump to

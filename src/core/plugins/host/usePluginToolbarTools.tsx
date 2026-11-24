@@ -132,9 +132,10 @@ const PluginStayActivePanel: React.FC<{
       <div
         id={panelId}
         hidden={!isOpen}
-        className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 min-w-[8rem] max-h-[60vh] overflow-y-auto overflow-x-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md pointer-events-auto"
+        className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md pointer-events-auto"
       >
-        {children}
+        {/* A transparent scroller: Chrome culls the map canvas under an opaque one's overflow, leaving black boxes. */}
+        <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden p-1">{children}</div>
       </div>
     </div>
   )

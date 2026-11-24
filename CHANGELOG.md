@@ -7,6 +7,12 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.21.1] - 2026-11-23
+
+### Fixed
+- A plugin toolbar panel taller than its dropdown no longer leaves black boxes over the map in Chrome; the dropdown
+  now scrolls in a transparent inner box.
+
 ## [0.21.0] - 2026-11-23
 
 ### Added

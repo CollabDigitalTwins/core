@@ -132,6 +132,12 @@ export const PLUGIN_RUNTIME_SHIMS: readonly RuntimeShim[] = [
     ],
   },
   {
+    file: 'sdk-geocoding.js',
+    bridge: 'sdkGeocoding',
+    specifier: '@collabdt/core/plugins-sdk/geocoding',
+    exports: ['searchAddress', 'reverseAddress'],
+  },
+  {
     file: 'sdk-charts.js',
     bridge: 'sdkCharts',
     specifier: '@collabdt/core/plugins-sdk/charts',

@@ -8,6 +8,13 @@ repository root.
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-11-25
+
+### Added
+- `@collabdt/core/plugins-sdk/geocoding` as an external, with its declarations (`searchAddress`, `reverseAddress`,
+  `PluginPlace`). `PluginPlace` is also exported from `@collabdt/plugin-kit/types/geocoding`. Using it requires a
+  platform running `@collabdt/core` with the same addition.
+
 ## [0.15.0] - 2026-11-24
 
 ### Added

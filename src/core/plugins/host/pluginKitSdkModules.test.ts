@@ -24,6 +24,7 @@ import { runTsc, TSC, type TscRun } from './__tests__/tscProbe'
 // Type-only: nothing here is loaded at runtime, so this stays a node-env test.
 import type * as SdkConfig from '../sdk/config'
 import type * as SdkData from '../sdk/data'
+import type * as SdkGeocoding from '../sdk/geocoding'
 import type * as SdkIndex from '../sdk/index'
 import type * as SdkMessages from '../sdk/messages'
 import type * as SdkStore from '../sdk/store'
@@ -37,6 +38,7 @@ type DeclaredData = typeof import('@collabdt/core/plugins-sdk/data')
 type DeclaredMessages = typeof import('@collabdt/core/plugins-sdk/messages')
 type DeclaredStore = typeof import('@collabdt/core/plugins-sdk/store')
 type DeclaredTour = typeof import('@collabdt/core/plugins-sdk/tour')
+type DeclaredGeocoding = typeof import('@collabdt/core/plugins-sdk/geocoding')
 
 // The invariant, one-directional: whatever the kit promises a plugin, core must deliver.
 // `Real extends Declared` lets a declaration narrower than core pass while one promising
@@ -106,6 +108,10 @@ const _findSidebarPageLink: Provides<typeof SdkTour.findSidebarPageLink, Declare
 const _setToolbarPanel: Provides<typeof SdkTour.setToolbarPanel, DeclaredTour['setToolbarPanel']> = true
 const _tourStep: Provides<SdkTour.TourStep, import('@collabdt/core/plugins-sdk/tour').TourStep> = true
 
+const _searchAddress: Provides<typeof SdkGeocoding.searchAddress, DeclaredGeocoding['searchAddress']> = true
+const _reverseAddress: Provides<typeof SdkGeocoding.reverseAddress, DeclaredGeocoding['reverseAddress']> = true
+const _pluginPlace: Provides<SdkGeocoding.PluginPlace, import('@collabdt/core/plugins-sdk/geocoding').PluginPlace> = true
+
 const _validCapabilities: Provides<typeof SdkIndex.VALID_CAPABILITIES, DeclaredSdk['VALID_CAPABILITIES']> = true
 const _hostApi: Provides<typeof SdkIndex.PLUGIN_HOST_API, DeclaredSdk['PLUGIN_HOST_API']> = true
 const _validateManifest: Provides<typeof SdkIndex.validateManifest, DeclaredSdk['validateManifest']> = true
@@ -153,6 +159,7 @@ void [
   _usePluginMessage, _usePluginTranslations, _pluginTranslator,
   _usePluginStore,
   _guidedTour, _tourBody, _splitTerm, _useTour, _browserTourStore, _findSidebarPageLink, _setToolbarPanel, _tourStep,
+  _searchAddress, _reverseAddress, _pluginPlace,
   _validCapabilities, _hostApi, _validateManifest, _resolvePluginEntry,
   useCoreTranslationCallSites,
 ]

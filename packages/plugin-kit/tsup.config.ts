@@ -16,6 +16,7 @@ export default defineConfig({
     'src/types/legend.ts',
     'src/types/ui.ts',
     'src/types/tour.ts',
+    'src/types/geocoding.ts',
   ],
   format: ['esm'],
   dts: true,

@@ -46,6 +46,10 @@
     "./types/tour": {
       "types": "./dist/types/tour.d.ts",
       "default": "./dist/types/tour.js"
+    },
+    "./types/geocoding": {
+      "types": "./dist/types/geocoding.d.ts",
+      "default": "./dist/types/geocoding.js"
     }
   },
   "scripts": {

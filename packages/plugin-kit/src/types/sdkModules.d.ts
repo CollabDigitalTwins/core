@@ -314,3 +314,12 @@ declare module '@collabdt/core/plugins-sdk/tour' {
   /** Opens or closes the toolbar dropdown holding `element` through the toggle that controls it. */
   export function setToolbarPanel(element: Element | null, open: boolean, lookup?: Pick<Document, 'querySelectorAll' | 'getElementById'>): void
 }
+
+declare module '@collabdt/core/plugins-sdk/geocoding' {
+  export type PluginPlace = import('./geocoding').PluginPlace
+
+  /** Forward search through the platform's configured geocoder; [] when nothing matches. */
+  export function searchAddress(text: string, options?: { countryCode?: string; size?: number }): Promise<PluginPlace[]>
+  /** Reverse lookup of the nearest address, or null. */
+  export function reverseAddress(lng: number, lat: number, options?: { countryCode?: string }): Promise<PluginPlace | null>
+}

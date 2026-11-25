@@ -8,6 +8,7 @@ import * as sdkCharts from '../sdk/charts'
 import * as sdkComponents from '../sdk/components'
 import * as sdkConfig from '../sdk/config'
 import * as sdkData from '../sdk/data'
+import * as sdkGeocoding from '../sdk/geocoding'
 import * as sdkIndex from '../sdk/index'
 import * as sdkMessages from '../sdk/messages'
 import * as sdkState from '../sdk/state'
@@ -29,6 +30,7 @@ const SDK_MODULES: Record<string, Record<string, unknown>> = {
   '@collabdt/core/plugins-sdk/ui': sdkUi,
   '@collabdt/core/plugins-sdk/components': sdkComponents,
   '@collabdt/core/plugins-sdk/tour': sdkTour,
+  '@collabdt/core/plugins-sdk/geocoding': sdkGeocoding,
   '@collabdt/core/plugins-sdk/charts': sdkCharts,
 }
 

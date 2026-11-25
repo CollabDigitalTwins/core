@@ -19,6 +19,7 @@ export const PLUGIN_EXTERNALS: readonly string[] = [
   '@collabdt/core/plugins-sdk/ui',
   '@collabdt/core/plugins-sdk/components',
   '@collabdt/core/plugins-sdk/tour',
+  '@collabdt/core/plugins-sdk/geocoding',
   '@collabdt/core/plugins-sdk/charts',
 ]
 

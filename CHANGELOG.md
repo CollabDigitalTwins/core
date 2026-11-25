@@ -7,6 +7,11 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+### Added
+- `@collabdt/core/plugins-sdk/geocoding`: `searchAddress` and `reverseAddress` give runtime-loaded plugins the
+  platform's geocoder (the configured Geocode Earth or self-hosted Pelias, falling back to public Photon/Nominatim)
+  and return `PluginPlace` (`label`, `lng`, `lat`). Provider failures reject.
+
 ## [0.21.2] - 2026-11-24
 
 ### Added
